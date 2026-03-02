@@ -179,7 +179,7 @@ const DiscordWidget = () => {
         <p className="text-xs text-muted-foreground">Entre no nosso Discord</p>
       </div>
       <a
-        href="https://discord.gg/zKUtxQcwh2"
+href="https://discord.gg/FeJ5JAZFmU"
         target="_blank"
         rel="noopener noreferrer"
         className="flex h-14 w-14 items-center justify-center rounded-full bg-success text-success-foreground shadow-[0_0_20px_hsl(197,100%,50%,0.4)] transition-all hover:scale-110 hover:shadow-[0_0_30px_hsl(197,100%,50%,0.6)]"
@@ -898,7 +898,7 @@ const Index = () => {
               <h4 className="text-sm font-bold uppercase tracking-wider text-foreground">Suporte</h4>
               <ul className="mt-4 space-y-2.5">
                 <li><a href="#" className="text-sm text-muted-foreground transition-colors hover:text-success">Central de Ajuda</a></li>
-                <li><a href="https://discord.gg/zKUtxQcwh2" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground transition-colors hover:text-success">Discord</a></li>
+                <li><a href="https://discord.gg/FeJ5JAZFmU" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground transition-colors hover:text-success">Discord</a></li>
                 <li><a href="#" className="text-sm text-muted-foreground transition-colors hover:text-success">Garantia</a></li>
                 <li><a href="#" className="text-sm text-muted-foreground transition-colors hover:text-success">Status do Serviço</a></li>
               </ul>

@@ -19,12 +19,12 @@ const DiscordBanner = ({ dismissible = true }: { dismissible?: boolean }) => {
             <MessageCircle className="w-4 h-4 animate-pulse" />
             <span>⚠️ Nosso antigo Discord caiu! Entre no novo:</span>
             <a
-              href="https://discord.gg/EM8hAyTvtj"
+href="https://discord.gg/FeJ5JAZFmU"
               target="_blank"
               rel="noopener noreferrer"
               className="underline font-bold hover:text-white/80 transition-colors ml-1"
             >
-              discord.gg/EM8hAyTvtj
+              discord.gg/FeJ5JAZFmU
             </a>
           </div>
           {dismissible && (
