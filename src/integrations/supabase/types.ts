@@ -512,6 +512,7 @@ export type Database = {
           sort_order: number | null
           status: string | null
           status_label: string | null
+          status_updated_at: string | null
           tutorial_file_url: string | null
           tutorial_text: string | null
         }
@@ -527,6 +528,7 @@ export type Database = {
           sort_order?: number | null
           status?: string | null
           status_label?: string | null
+          status_updated_at?: string | null
           tutorial_file_url?: string | null
           tutorial_text?: string | null
         }
@@ -542,6 +544,7 @@ export type Database = {
           sort_order?: number | null
           status?: string | null
           status_label?: string | null
+          status_updated_at?: string | null
           tutorial_file_url?: string | null
           tutorial_text?: string | null
         }
