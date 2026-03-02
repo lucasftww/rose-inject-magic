@@ -14,16 +14,938 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      coupon_products: {
+        Row: {
+          coupon_id: string
+          id: string
+          product_id: string
+        }
+        Insert: {
+          coupon_id: string
+          id?: string
+          product_id: string
+        }
+        Update: {
+          coupon_id?: string
+          id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupon_products_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coupon_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coupon_usage: {
+        Row: {
+          coupon_id: string
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          coupon_id: string
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          coupon_id?: string
+          created_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupon_usage_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coupon_users: {
+        Row: {
+          coupon_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          coupon_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          coupon_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupon_users_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coupons: {
+        Row: {
+          active: boolean | null
+          code: string
+          created_at: string | null
+          current_uses: number | null
+          discount_type: string
+          discount_value: number
+          expires_at: string | null
+          id: string
+          max_uses: number | null
+          min_order_value: number | null
+        }
+        Insert: {
+          active?: boolean | null
+          code: string
+          created_at?: string | null
+          current_uses?: number | null
+          discount_type?: string
+          discount_value?: number
+          expires_at?: string | null
+          id?: string
+          max_uses?: number | null
+          min_order_value?: number | null
+        }
+        Update: {
+          active?: boolean | null
+          code?: string
+          created_at?: string | null
+          current_uses?: number | null
+          discount_type?: string
+          discount_value?: number
+          expires_at?: string | null
+          id?: string
+          max_uses?: number | null
+          min_order_value?: number | null
+        }
+        Relationships: []
+      }
+      games: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          id: string
+          image_url: string | null
+          name: string
+          slug: string | null
+          sort_order: number | null
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          name: string
+          slug?: string | null
+          sort_order?: number | null
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          name?: string
+          slug?: string | null
+          sort_order?: number | null
+        }
+        Relationships: []
+      }
+      lzt_config: {
+        Row: {
+          created_at: string | null
+          currency: string | null
+          id: string
+          markup_fortnite: number | null
+          markup_lol: number | null
+          markup_minecraft: number | null
+          markup_multiplier: number | null
+          markup_valorant: number | null
+          max_fetch_price: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          markup_fortnite?: number | null
+          markup_lol?: number | null
+          markup_minecraft?: number | null
+          markup_multiplier?: number | null
+          markup_valorant?: number | null
+          max_fetch_price?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          markup_fortnite?: number | null
+          markup_lol?: number | null
+          markup_minecraft?: number | null
+          markup_multiplier?: number | null
+          markup_valorant?: number | null
+          max_fetch_price?: number | null
+        }
+        Relationships: []
+      }
+      lzt_sales: {
+        Row: {
+          buy_price: number | null
+          buyer_user_id: string | null
+          created_at: string | null
+          game: string | null
+          id: string
+          lzt_item_id: string | null
+          profit: number | null
+          sell_price: number | null
+          title: string | null
+        }
+        Insert: {
+          buy_price?: number | null
+          buyer_user_id?: string | null
+          created_at?: string | null
+          game?: string | null
+          id?: string
+          lzt_item_id?: string | null
+          profit?: number | null
+          sell_price?: number | null
+          title?: string | null
+        }
+        Update: {
+          buy_price?: number | null
+          buyer_user_id?: string | null
+          created_at?: string | null
+          game?: string | null
+          id?: string
+          lzt_item_id?: string | null
+          profit?: number | null
+          sell_price?: number | null
+          title?: string | null
+        }
+        Relationships: []
+      }
+      order_tickets: {
+        Row: {
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          product_id: string
+          product_plan_id: string
+          status: string | null
+          status_label: string | null
+          stock_item_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          product_id: string
+          product_plan_id: string
+          status?: string | null
+          status_label?: string | null
+          stock_item_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          product_id?: string
+          product_plan_id?: string
+          status?: string | null
+          status_label?: string | null
+          stock_item_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_tickets_stock_item_id_fkey"
+            columns: ["stock_item_id"]
+            isOneToOne: false
+            referencedRelation: "stock_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_settings: {
+        Row: {
+          created_at: string | null
+          enabled: boolean | null
+          id: string
+          label: string | null
+          method: string
+        }
+        Insert: {
+          created_at?: string | null
+          enabled?: boolean | null
+          id?: string
+          label?: string | null
+          method: string
+        }
+        Update: {
+          created_at?: string | null
+          enabled?: boolean | null
+          id?: string
+          label?: string | null
+          method?: string
+        }
+        Relationships: []
+      }
+      payments: {
+        Row: {
+          amount: number
+          cart_snapshot: Json | null
+          charge_id: string | null
+          coupon_id: string | null
+          created_at: string | null
+          discount_amount: number | null
+          external_id: string | null
+          id: string
+          paid_at: string | null
+          payment_method: string | null
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          cart_snapshot?: Json | null
+          charge_id?: string | null
+          coupon_id?: string | null
+          created_at?: string | null
+          discount_amount?: number | null
+          external_id?: string | null
+          id?: string
+          paid_at?: string | null
+          payment_method?: string | null
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          cart_snapshot?: Json | null
+          charge_id?: string | null
+          coupon_id?: string | null
+          created_at?: string | null
+          discount_amount?: number | null
+          external_id?: string | null
+          id?: string
+          paid_at?: string | null
+          payment_method?: string | null
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      product_features: {
+        Row: {
+          created_at: string | null
+          id: string
+          label: string
+          product_id: string
+          sort_order: number | null
+          value: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          label: string
+          product_id: string
+          sort_order?: number | null
+          value: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          label?: string
+          product_id?: string
+          sort_order?: number | null
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_features_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_media: {
+        Row: {
+          created_at: string | null
+          id: string
+          media_type: string
+          product_id: string
+          sort_order: number | null
+          url: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          media_type?: string
+          product_id: string
+          sort_order?: number | null
+          url: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          media_type?: string
+          product_id?: string
+          sort_order?: number | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_media_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_plans: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          id: string
+          name: string
+          price: number | null
+          product_id: string
+          sort_order: number | null
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          id?: string
+          name: string
+          price?: number | null
+          product_id: string
+          sort_order?: number | null
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          price?: number | null
+          product_id?: string
+          sort_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_plans_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_reviews: {
+        Row: {
+          comment: string | null
+          created_at: string | null
+          id: string
+          product_id: string
+          rating: number
+          user_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          product_id: string
+          rating?: number
+          user_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          product_id?: string
+          rating?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          description: string | null
+          features_text: string | null
+          game_id: string | null
+          id: string
+          image_url: string | null
+          name: string
+          sort_order: number | null
+          status: string | null
+          status_label: string | null
+          tutorial_file_url: string | null
+          tutorial_text: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          description?: string | null
+          features_text?: string | null
+          game_id?: string | null
+          id?: string
+          image_url?: string | null
+          name: string
+          sort_order?: number | null
+          status?: string | null
+          status_label?: string | null
+          tutorial_file_url?: string | null
+          tutorial_text?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          description?: string | null
+          features_text?: string | null
+          game_id?: string | null
+          id?: string
+          image_url?: string | null
+          name?: string
+          sort_order?: number | null
+          status?: string | null
+          status_label?: string | null
+          tutorial_file_url?: string | null
+          tutorial_text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          banned: boolean | null
+          banned_at: string | null
+          banned_reason: string | null
+          created_at: string | null
+          id: string
+          updated_at: string | null
+          user_id: string
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          banned?: boolean | null
+          banned_at?: string | null
+          banned_reason?: string | null
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id: string
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          banned?: boolean | null
+          banned_at?: string | null
+          banned_reason?: string | null
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
+      reseller_products: {
+        Row: {
+          id: string
+          product_id: string
+          reseller_id: string
+        }
+        Insert: {
+          id?: string
+          product_id: string
+          reseller_id: string
+        }
+        Update: {
+          id?: string
+          product_id?: string
+          reseller_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reseller_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reseller_products_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "resellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reseller_purchases: {
+        Row: {
+          created_at: string | null
+          id: string
+          original_price: number | null
+          paid_price: number | null
+          reseller_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          original_price?: number | null
+          paid_price?: number | null
+          reseller_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          original_price?: number | null
+          paid_price?: number | null
+          reseller_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reseller_purchases_reseller_id_fkey"
+            columns: ["reseller_id"]
+            isOneToOne: false
+            referencedRelation: "resellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resellers: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          discount_percent: number | null
+          expires_at: string | null
+          id: string
+          total_purchases: number | null
+          user_id: string
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          discount_percent?: number | null
+          expires_at?: string | null
+          id?: string
+          total_purchases?: number | null
+          user_id: string
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          discount_percent?: number | null
+          expires_at?: string | null
+          id?: string
+          total_purchases?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      scratch_card_config: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          id: string
+          price: number | null
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          id?: string
+          price?: number | null
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          id?: string
+          price?: number | null
+        }
+        Relationships: []
+      }
+      scratch_card_plays: {
+        Row: {
+          amount_paid: number | null
+          created_at: string | null
+          grid_data: Json | null
+          id: string
+          prize_id: string | null
+          user_id: string
+          won: boolean | null
+        }
+        Insert: {
+          amount_paid?: number | null
+          created_at?: string | null
+          grid_data?: Json | null
+          id?: string
+          prize_id?: string | null
+          user_id: string
+          won?: boolean | null
+        }
+        Update: {
+          amount_paid?: number | null
+          created_at?: string | null
+          grid_data?: Json | null
+          id?: string
+          prize_id?: string | null
+          user_id?: string
+          won?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scratch_card_plays_prize_id_fkey"
+            columns: ["prize_id"]
+            isOneToOne: false
+            referencedRelation: "scratch_card_prizes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scratch_card_prizes: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          name: string
+          prize_value: number | null
+          product_id: string | null
+          sort_order: number | null
+          win_percentage: number | null
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name: string
+          prize_value?: number | null
+          product_id?: string | null
+          sort_order?: number | null
+          win_percentage?: number | null
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name?: string
+          prize_value?: number | null
+          product_id?: string | null
+          sort_order?: number | null
+          win_percentage?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scratch_card_prizes_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_items: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          product_plan_id: string
+          used: boolean | null
+          used_at: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          product_plan_id: string
+          used?: boolean | null
+          used_at?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          product_plan_id?: string
+          used?: boolean | null
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_items_product_plan_id_fkey"
+            columns: ["product_plan_id"]
+            isOneToOne: false
+            referencedRelation: "product_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      system_credentials: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          env_key: string
+          help_url: string | null
+          id: string
+          name: string
+          value: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          env_key: string
+          help_url?: string | null
+          id?: string
+          name: string
+          value?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          env_key?: string
+          help_url?: string | null
+          id?: string
+          name?: string
+          value?: string | null
+        }
+        Relationships: []
+      }
+      ticket_messages: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string
+          sender_id: string
+          sender_role: string | null
+          ticket_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message: string
+          sender_id: string
+          sender_role?: string | null
+          ticket_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string
+          sender_id?: string
+          sender_role?: string | null
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "order_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_login_ips: {
+        Row: {
+          id: string
+          ip_address: string
+          logged_at: string | null
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          ip_address: string
+          logged_at?: string | null
+          user_id: string
+        }
+        Update: {
+          id?: string
+          ip_address?: string
+          logged_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +1072,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user"],
+    },
   },
 } as const
