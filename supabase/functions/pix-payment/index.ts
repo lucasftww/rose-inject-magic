@@ -820,8 +820,7 @@ Deno.serve(async (req) => {
   const userId = claimsData.claims.sub;
   const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-  const url = new URL(req.url);
-  const action = url.searchParams.get("action");
+  // url and action already declared above
 
   try {
     // ==================== CREATE PIX CHARGE (MisticPay) ====================
