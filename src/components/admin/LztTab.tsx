@@ -22,7 +22,7 @@ interface LztSale {
   profit: number;
   account_title: string | null;
   buyer_user_id: string | null;
-  sold_at: string;
+  created_at: string;
 }
 
 const SALES_PER_PAGE = 15;
@@ -60,7 +60,7 @@ const LztTab = () => {
     setLoading(true);
     const [configRes, salesRes] = await Promise.all([
       supabase.from("lzt_config").select("*").limit(1).single(),
-      supabase.from("lzt_sales").select("*").order("sold_at", { ascending: false }),
+      supabase.from("lzt_sales").select("*").order("created_at", { ascending: false }),
     ]);
     if (configRes.data) {
       const c = configRes.data as any as LztConfig;
@@ -319,9 +319,9 @@ const LztTab = () => {
                     </td>
                     <td className="py-3 pr-3">
                       <span className="text-xs text-muted-foreground whitespace-nowrap">
-                        {new Date(sale.sold_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })}
+                        {new Date(sale.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })}
                         {" "}
-                        {new Date(sale.sold_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                        {new Date(sale.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                       </span>
                     </td>
                     <td className="py-3">
@@ -384,7 +384,7 @@ const SaleRow = ({ sale, onCopy }: { sale: LztSale; onCopy: (t: string) => void 
         </button>
         <span className="text-muted-foreground/40">·</span>
         <span className="text-xs text-muted-foreground">
-          {new Date(sale.sold_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+          {new Date(sale.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
         </span>
       </div>
     </div>
