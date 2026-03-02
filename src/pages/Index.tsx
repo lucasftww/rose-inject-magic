@@ -182,7 +182,7 @@ const DiscordWidget = () => {
         href="https://discord.gg/zKUtxQcwh2"
         target="_blank"
         rel="noopener noreferrer"
-        className="flex h-14 w-14 items-center justify-center rounded-full bg-success text-success-foreground shadow-[0_0_20px_hsl(330,100%,47%,0.4)] transition-all hover:scale-110 hover:shadow-[0_0_30px_hsl(330,100%,47%,0.6)]"
+        className="flex h-14 w-14 items-center justify-center rounded-full bg-success text-success-foreground shadow-[0_0_20px_hsl(197,100%,50%,0.4)] transition-all hover:scale-110 hover:shadow-[0_0_30px_hsl(197,100%,50%,0.6)]"
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
       >
@@ -216,7 +216,7 @@ const LztContaCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap
 
   return (
     <div
-      className="group cursor-pointer overflow-hidden rounded-lg border border-border bg-card transition-all hover:border-success/40 hover:shadow-[0_0_20px_hsl(330,100%,47%,0.1)]"
+      className="group cursor-pointer overflow-hidden rounded-lg border border-border bg-card transition-all hover:border-success/40 hover:shadow-[0_0_20px_hsl(197,100%,50%,0.1)]"
       onClick={() => navigate(`/conta/${item.item_id}`)}
     >
       <div className="relative flex h-48 items-center justify-center overflow-hidden">
@@ -325,7 +325,7 @@ const ContasSection = () => {
         <motion.div className="mt-12 flex justify-center" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
           <Link
             to="/contas"
-            className="flex items-center gap-2 border-2 border-foreground/30 px-14 py-4 text-sm font-bold uppercase tracking-[0.25em] text-foreground transition-all hover:border-success hover:text-success hover:shadow-[0_0_30px_hsl(330,100%,47%,0.2)]"
+            className="flex items-center gap-2 border-2 border-foreground/30 px-14 py-4 text-sm font-bold uppercase tracking-[0.25em] text-foreground transition-all hover:border-success hover:text-success hover:shadow-[0_0_30px_hsl(197,100%,50%,0.2)]"
             style={{ fontFamily: "'Valorant', sans-serif" }}
           >
             Explorar Contas
@@ -409,7 +409,7 @@ const ProductsSection = () => {
                   variants={scaleIn}
                   custom={idx}
                   onClick={() => navigate(`/produto/${product.id}`)}
-                  className="group cursor-pointer overflow-hidden rounded-lg border border-border bg-card transition-all hover:border-success/40 hover:shadow-[0_0_20px_hsl(130,99%,41%,0.1)]"
+                  className="group cursor-pointer overflow-hidden rounded-lg border border-border bg-card transition-all hover:border-success/40 hover:shadow-[0_0_20px_hsl(197,100%,50%,0.1)]"
                 >
                   <div className="relative flex h-72 items-center justify-center overflow-hidden bg-secondary/50">
                     {product.image_url ? (
@@ -442,7 +442,7 @@ const ProductsSection = () => {
         )}
 
         <motion.div className="mt-12 flex justify-center" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
-          <Link to="/produtos" className="flex items-center gap-2 border-2 border-foreground/30 px-14 py-4 text-sm font-bold uppercase tracking-[0.25em] text-foreground transition-all hover:border-success hover:text-success hover:shadow-[0_0_30px_hsl(330,100%,47%,0.2)]" style={{ fontFamily: "'Valorant', sans-serif" }}>
+          <Link to="/produtos" className="flex items-center gap-2 border-2 border-foreground/30 px-14 py-4 text-sm font-bold uppercase tracking-[0.25em] text-foreground transition-all hover:border-success hover:text-success hover:shadow-[0_0_30px_hsl(197,100%,50%,0.2)]" style={{ fontFamily: "'Valorant', sans-serif" }}>
             Ver Todos Produtos
             <ArrowRight className="h-5 w-5" />
           </Link>
@@ -469,7 +469,7 @@ const Index = () => {
           }}
         />
         {/* Glow */}
-        <div className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[600px] w-[900px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,_hsl(330,100%,47%,0.15)_0%,_transparent_65%)]" />
+        <div className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[600px] w-[900px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,_hsl(197,100%,50%,0.15)_0%,_transparent_65%)]" />
 
         {/* Badge */}
         <motion.div
@@ -491,10 +491,10 @@ const Index = () => {
         >
           Domine o Jogo com{" "}
           <span
-            className="inline-block bg-gradient-to-r from-success via-[hsl(330,100%,60%)] to-success bg-[length:200%_100%] bg-clip-text text-transparent"
+            className="inline-block bg-gradient-to-r from-success via-[hsl(197,100%,70%)] to-success bg-[length:200%_100%] bg-clip-text text-transparent"
             style={{ fontFamily: "'Valorant', sans-serif" }}
           >
-            Inject Project
+            Royal Store
           </span>
         </motion.h1>
 
@@ -520,8 +520,8 @@ const Index = () => {
           transition={{ duration: 0.6, delay: 0.8, ease: [0.22, 1, 0.36, 1] }}
           className="z-10 mt-12 flex flex-wrap items-center justify-center gap-5"
         >
-          <Link to="/produtos" className="btn-shine group relative flex items-center gap-2 bg-success px-10 py-4 text-base font-semibold tracking-wide text-success-foreground transition-all hover:shadow-[0_0_30px_hsl(330,100%,47%,0.5)]">
-            <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,_hsl(330,100%,60%,0.3)_0%,_transparent_60%)]" />
+          <Link to="/produtos" className="btn-shine group relative flex items-center gap-2 bg-success px-10 py-4 text-base font-semibold tracking-wide text-success-foreground transition-all hover:shadow-[0_0_30px_hsl(197,100%,50%,0.5)]">
+            <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,_hsl(197,100%,70%,0.3)_0%,_transparent_60%)]" />
             <span className="relative flex items-center gap-2">
               Ver Produtos
               <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
@@ -612,7 +612,7 @@ const Index = () => {
             </p>
             <Link
               to="/produtos"
-              className="mt-8 inline-flex items-center gap-2 bg-success px-10 py-3.5 text-sm font-bold uppercase tracking-[0.2em] text-success-foreground transition-all hover:shadow-[0_0_30px_hsl(330,100%,47%,0.4)]"
+              className="mt-8 inline-flex items-center gap-2 bg-success px-10 py-3.5 text-sm font-bold uppercase tracking-[0.2em] text-success-foreground transition-all hover:shadow-[0_0_30px_hsl(197,100%,50%,0.4)]"
               style={{ fontFamily: "'Valorant', sans-serif" }}
             >
               Ver Produtos
@@ -668,7 +668,7 @@ const Index = () => {
                 key={idx}
                 variants={fadeUp}
                 custom={idx}
-                className="flex flex-col justify-between rounded-lg border border-border bg-card p-6 transition-all hover:border-success/40 hover:shadow-[0_0_20px_hsl(330,100%,47%,0.1)]"
+                className="flex flex-col justify-between rounded-lg border border-border bg-card p-6 transition-all hover:border-success/40 hover:shadow-[0_0_20px_hsl(197,100%,50%,0.1)]"
               >
                 <div>
                   <div className="flex gap-0.5">
@@ -730,7 +730,7 @@ const Index = () => {
                 key={idx}
                 variants={fadeUp}
                 custom={idx}
-                className="group relative rounded-lg border border-border bg-card p-6 transition-all hover:border-success/40 hover:shadow-[0_0_20px_hsl(330,100%,47%,0.1)]"
+                className="group relative rounded-lg border border-border bg-card p-6 transition-all hover:border-success/40 hover:shadow-[0_0_20px_hsl(197,100%,50%,0.1)]"
               >
                 <span
                   className="text-4xl font-bold text-success/20 transition-colors group-hover:text-success/40"
@@ -775,7 +775,7 @@ const Index = () => {
           <motion.div variants={fadeUp} custom={3} className="mt-10 flex justify-center">
             <Link
               to="/produtos"
-              className="flex items-center gap-2 border-2 border-foreground/30 px-14 py-4 text-sm font-bold uppercase tracking-[0.25em] text-foreground transition-all hover:border-success hover:text-success hover:shadow-[0_0_30px_hsl(330,100%,47%,0.2)]"
+              className="flex items-center gap-2 border-2 border-foreground/30 px-14 py-4 text-sm font-bold uppercase tracking-[0.25em] text-foreground transition-all hover:border-success hover:text-success hover:shadow-[0_0_30px_hsl(197,100%,50%,0.2)]"
               style={{ fontFamily: "'Valorant', sans-serif" }}
             >
               Explorar Contas
@@ -920,9 +920,9 @@ const Index = () => {
                   />
                   <button
                     type="submit"
-                    className="btn-shine relative rounded bg-success px-4 py-2 text-sm font-semibold text-success-foreground transition-all hover:shadow-[0_0_20px_hsl(330,100%,47%,0.4)]"
+                    className="btn-shine relative rounded bg-success px-4 py-2 text-sm font-semibold text-success-foreground transition-all hover:shadow-[0_0_20px_hsl(197,100%,50%,0.4)]"
                   >
-                    <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,_hsl(330,100%,60%,0.3)_0%,_transparent_60%)]" />
+                    <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,_hsl(197,100%,70%,0.3)_0%,_transparent_60%)]" />
                     <span className="relative">Inscrever</span>
                   </button>
                 </form>
