@@ -22,6 +22,11 @@ import PedidoChat from "./pages/PedidoChat";
 import Checkout from "./pages/Checkout";
 import NotFound from "./pages/NotFound";
 import Raspadinha from "./pages/Raspadinha";
+import TermosDeUso from "./pages/TermosDeUso";
+import PoliticaPrivacidade from "./pages/PoliticaPrivacidade";
+import PoliticaReembolso from "./pages/PoliticaReembolso";
+import Garantia from "./pages/Garantia";
+import CentralAjuda from "./pages/CentralAjuda";
 
 const queryClient = new QueryClient({});
 
@@ -51,6 +56,11 @@ const App = () => (
               <Route path="/pedido/:id" element={<PedidoChat />} />
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/raspadinha" element={<Raspadinha />} />
+              <Route path="/termos" element={<TermosDeUso />} />
+              <Route path="/privacidade" element={<PoliticaPrivacidade />} />
+              <Route path="/reembolso" element={<PoliticaReembolso />} />
+              <Route path="/garantia" element={<Garantia />} />
+              <Route path="/ajuda" element={<CentralAjuda />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
