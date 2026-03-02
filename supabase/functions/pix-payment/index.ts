@@ -655,19 +655,13 @@ async function validateAndCalculatePrice(
 
 // ========== MISTICPAY HELPERS ==========
 async function getMisticPayCredentials(supabaseAdmin: any): Promise<{ clientId: string; clientSecret: string } | null> {
-  const { data: ciCred } = await supabaseAdmin
-    .from("system_credentials")
-    .select("value")
-    .eq("env_key", "MISTICPAY_CLIENT_ID")
-    .maybeSingle();
-  const { data: csCred } = await supabaseAdmin
-    .from("system_credentials")
-    .select("value")
-    .eq("env_key", "MISTICPAY_CLIENT_SECRET")
-    .maybeSingle();
+  const [ciResult, csResult] = await Promise.all([
+    supabaseAdmin.from("system_credentials").select("value").eq("env_key", "MISTICPAY_CLIENT_ID").maybeSingle(),
+    supabaseAdmin.from("system_credentials").select("value").eq("env_key", "MISTICPAY_CLIENT_SECRET").maybeSingle(),
+  ]);
 
-  const clientId = ciCred?.value || Deno.env.get("MISTICPAY_CLIENT_ID");
-  const clientSecret = csCred?.value || Deno.env.get("MISTICPAY_CLIENT_SECRET");
+  const clientId = ciResult.data?.value || Deno.env.get("MISTICPAY_CLIENT_ID");
+  const clientSecret = csResult.data?.value || Deno.env.get("MISTICPAY_CLIENT_SECRET");
 
   if (!clientId || !clientSecret) return null;
   return { clientId, clientSecret };
@@ -825,7 +819,16 @@ Deno.serve(async (req) => {
   try {
     // ==================== CREATE PIX CHARGE (MisticPay) ====================
     if (action === "create" && req.method === "POST") {
-      const misticCreds = await getMisticPayCredentials(supabaseAdmin);
+      const body = await req.json();
+      const { cart_snapshot, coupon_id } = body;
+
+      // Run credentials fetch, price validation, and profile fetch in PARALLEL
+      const [misticCreds, validationResult, profileResult] = await Promise.all([
+        getMisticPayCredentials(supabaseAdmin),
+        validateAndCalculatePrice(supabaseAdmin, cart_snapshot, userId, coupon_id),
+        supabaseAdmin.from("profiles").select("username").eq("user_id", userId).maybeSingle(),
+      ]);
+
       if (!misticCreds) {
         return new Response(JSON.stringify({ error: "MisticPay credentials not configured (MISTICPAY_CLIENT_ID / MISTICPAY_CLIENT_SECRET)" }), {
           status: 500,
@@ -833,12 +836,7 @@ Deno.serve(async (req) => {
         });
       }
 
-      const body = await req.json();
-      const { cart_snapshot, coupon_id } = body;
-
-      // SERVER-SIDE PRICE VALIDATION
-      const { validatedAmount, validatedDiscount, validatedCart, error: validationError } =
-        await validateAndCalculatePrice(supabaseAdmin, cart_snapshot, userId, coupon_id);
+      const { validatedAmount, validatedDiscount, validatedCart, error: validationError } = validationResult;
 
       if (validationError) {
         return new Response(JSON.stringify({ error: validationError }), {
@@ -847,15 +845,9 @@ Deno.serve(async (req) => {
         });
       }
 
-      const amountCents = validatedAmount; // internal amount in cents
-      const amountReais = amountCents / 100; // MisticPay expects reais
-
-      // Get user profile for payer info
-      const { data: profile } = await supabaseAdmin
-        .from("profiles")
-        .select("username")
-        .eq("user_id", userId)
-        .maybeSingle();
+      const amountCents = validatedAmount;
+      const amountReais = amountCents / 100;
+      const profile = profileResult.data;
 
       const internalTxId = crypto.randomUUID();
 
