@@ -1,0 +1,1 @@
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS status_updated_at timestamp with time zone DEFAULT now();
