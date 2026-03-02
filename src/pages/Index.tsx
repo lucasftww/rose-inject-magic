@@ -887,29 +887,29 @@ const Index = () => {
             <div>
               <h4 className="text-sm font-bold uppercase tracking-wider text-foreground">Produtos</h4>
               <ul className="mt-4 space-y-2.5">
-                <li><a href="#" className="text-sm text-muted-foreground transition-colors hover:text-success">Softwares</a></li>
-                <li><a href="#" className="text-sm text-muted-foreground transition-colors hover:text-success">Contas Valorant</a></li>
-                <li><a href="#" className="text-sm text-muted-foreground transition-colors hover:text-success">Skins Premium</a></li>
-                <li><a href="#" className="text-sm text-muted-foreground transition-colors hover:text-success">Pacotes Combo</a></li>
+                <li><a href="/produtos" className="text-sm text-muted-foreground transition-colors hover:text-success">Softwares</a></li>
+                <li><a href="/contas" className="text-sm text-muted-foreground transition-colors hover:text-success">Contas Valorant</a></li>
+                <li><a href="/produtos" className="text-sm text-muted-foreground transition-colors hover:text-success">Skins Premium</a></li>
+                <li><a href="/produtos" className="text-sm text-muted-foreground transition-colors hover:text-success">Pacotes Combo</a></li>
               </ul>
             </div>
 
             <div>
               <h4 className="text-sm font-bold uppercase tracking-wider text-foreground">Suporte</h4>
               <ul className="mt-4 space-y-2.5">
-                <li><a href="#" className="text-sm text-muted-foreground transition-colors hover:text-success">Central de Ajuda</a></li>
+                <li><a href="/ajuda" className="text-sm text-muted-foreground transition-colors hover:text-success">Central de Ajuda</a></li>
                 <li><a href="https://discord.gg/FeJ5JAZFmU" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground transition-colors hover:text-success">Discord</a></li>
-                <li><a href="#" className="text-sm text-muted-foreground transition-colors hover:text-success">Garantia</a></li>
-                <li><a href="#" className="text-sm text-muted-foreground transition-colors hover:text-success">Status do Serviço</a></li>
+                <li><a href="/garantia" className="text-sm text-muted-foreground transition-colors hover:text-success">Garantia</a></li>
+                <li><a href="/status" className="text-sm text-muted-foreground transition-colors hover:text-success">Status do Serviço</a></li>
               </ul>
             </div>
 
             <div>
               <h4 className="text-sm font-bold uppercase tracking-wider text-foreground">Legal</h4>
               <ul className="mt-4 space-y-2.5">
-                <li><a href="#" className="text-sm text-muted-foreground transition-colors hover:text-success">Termos de Uso</a></li>
-                <li><a href="#" className="text-sm text-muted-foreground transition-colors hover:text-success">Política de Privacidade</a></li>
-                <li><a href="#" className="text-sm text-muted-foreground transition-colors hover:text-success">Política de Reembolso</a></li>
+                <li><a href="/termos" className="text-sm text-muted-foreground transition-colors hover:text-success">Termos de Uso</a></li>
+                <li><a href="/privacidade" className="text-sm text-muted-foreground transition-colors hover:text-success">Política de Privacidade</a></li>
+                <li><a href="/reembolso" className="text-sm text-muted-foreground transition-colors hover:text-success">Política de Reembolso</a></li>
               </ul>
               <div className="mt-6">
                 <form onSubmit={(e) => e.preventDefault()} className="mt-3 flex gap-2">
