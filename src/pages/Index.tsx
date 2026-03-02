@@ -509,7 +509,7 @@ const Index = () => {
           <span className="text-foreground font-medium">tecnologia indetectável</span>,{" "}
           <span className="text-foreground font-medium">atualizações constantes</span> e{" "}
           <span className="text-foreground font-medium">suporte dedicado 24/7</span>.
-          Mais de 20 mil clientes confiam na Inject Project para alcançar o próximo nível.
+          Mais de 20 mil clientes confiam na Royal Store para alcançar o próximo nível.
           Entrega instantânea, pagamento seguro e garantia de satisfação em todos os produtos.
         </motion.p>
 
@@ -659,7 +659,7 @@ const Index = () => {
               { name: "Matheus R.", rank: "Faceit Lvl 10 • CS2", text: "Já uso o inject do CS há 3 meses, sem problema nenhum. Suporte respondeu em 5 minutos quando precisei.", rating: 5 },
               { name: "Henrique L.", rank: "Supreme • CS2", text: "Melhor cheat de CS2 do mercado, roda suave e indetectável. Virei cliente fiel!", rating: 5 },
               { name: "Thiago A.", rank: "LEM • CS2", text: "Comprei pra testar e fiquei impressionado. Aimbot muito smooth, ninguém percebe. Top demais!", rating: 4 },
-              { name: "Felipe C.", rank: "Platina", text: "Já sou cliente há 2 anos, nunca tive problema. Confiança total na Inject Project!", rating: 5 },
+              { name: "Felipe C.", rank: "Platina", text: "Já sou cliente há 2 anos, nunca tive problema. Confiança total na Royal Store!", rating: 5 },
               { name: "Caio D.", rank: "Spoofer", text: "Tomei HWID ban no Valorant e o spoofer resolveu na hora. Voltei a jogar no mesmo dia, sem stress!", rating: 5 },
               { name: "Vinicius G.", rank: "Spoofer", text: "Spoofer top, funciona em qualquer anti-cheat. Já usei no CS2 e Valorant, nunca falhou.", rating: 5 },
               { name: "Gustavo P.", rank: "Spoofer", text: "Pensei que ia ter que trocar de PC depois do ban, mas o spoofer salvou. Recomendo 100%!", rating: 5 },
@@ -932,7 +932,7 @@ const Index = () => {
 
           <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-border pt-8 md:flex-row">
             <p className="text-xs text-muted-foreground">
-              © 2026 Inject Project. Todos os direitos reservados.
+              © 2026 Royal Store. Todos os direitos reservados.
             </p>
             <p className="text-xs text-muted-foreground">
               Feito com 💖 para gamers

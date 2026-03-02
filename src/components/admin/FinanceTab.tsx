@@ -200,7 +200,7 @@ const FinanceTab = () => {
           `).join("")}
         </table>
 
-        <p class="footer">Inject Project · Relatório gerado automaticamente</p>
+        <p class="footer">Royal Store · Relatório gerado automaticamente</p>
       </body>
       </html>
     `;
