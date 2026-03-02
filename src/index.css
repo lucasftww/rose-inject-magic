@@ -38,7 +38,7 @@
     --accent: 0 0% 18%;
     --accent-foreground: 0 0% 95%;
 
-    --success: 330 100% 47%;
+    --success: 197 100% 50%;
     --success-foreground: 0 0% 100%;
 
     --destructive: 0 62% 50%;
@@ -95,8 +95,8 @@
     background: linear-gradient(
       90deg,
       transparent,
-      hsla(330, 100%, 60%, 0.25),
-      hsla(330, 100%, 70%, 0.4),
+      hsla(197, 100%, 60%, 0.25),
+      hsla(197, 100%, 70%, 0.4),
       transparent
     );
     animation: shine-sweep 2.5s ease-in-out infinite;

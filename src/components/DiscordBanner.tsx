@@ -13,7 +13,7 @@ const DiscordBanner = ({ dismissible = true }: { dismissible?: boolean }) => {
           animate={{ height: "auto", opacity: 1 }}
           exit={{ height: 0, opacity: 0 }}
           transition={{ duration: 0.3 }}
-          className="relative w-full bg-[#F00083] text-white text-center py-2.5 px-4 text-sm font-semibold z-[60] shadow-[0_2px_20px_rgba(240,0,131,0.4)] overflow-hidden"
+          className="relative w-full bg-[#00b3ff] text-white text-center py-2.5 px-4 text-sm font-semibold z-[60] shadow-[0_2px_20px_rgba(0,179,255,0.4)] overflow-hidden"
         >
           <div className="flex items-center justify-center gap-2">
             <MessageCircle className="w-4 h-4 animate-pulse" />

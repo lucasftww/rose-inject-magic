@@ -406,9 +406,9 @@ const Raspadinha = () => {
           grad.addColorStop(0.5, "hsl(220, 100%, 47%)");
           grad.addColorStop(1, "hsl(220, 80%, 30%)");
         } else {
-          grad.addColorStop(0, "hsl(330, 80%, 30%)");
-          grad.addColorStop(0.5, "hsl(330, 100%, 47%)");
-          grad.addColorStop(1, "hsl(330, 80%, 30%)");
+          grad.addColorStop(0, "hsl(197, 80%, 30%)");
+          grad.addColorStop(0.5, "hsl(197, 100%, 50%)");
+          grad.addColorStop(1, "hsl(197, 80%, 30%)");
         }
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, w, h);
@@ -512,7 +512,7 @@ const Raspadinha = () => {
   };
 
   const isContas = mode === "contas";
-  const accentColor = isContas ? "hsl(220, 100%, 47%)" : "hsl(330, 100%, 47%)";
+  const accentColor = isContas ? "hsl(220, 100%, 47%)" : "hsl(197, 100%, 50%)";
   const accentClass = isContas ? "text-blue-400" : "text-success";
   const borderAccent = isContas ? "border-blue-500/30" : "border-success/30";
   const bgAccent = isContas ? "bg-blue-500/10" : "bg-success/10";
@@ -553,7 +553,7 @@ const Raspadinha = () => {
               style={{
                 backgroundImage: isContas
                   ? "linear-gradient(90deg, hsl(220,100%,60%), hsl(200,100%,65%), hsl(220,100%,60%))"
-                  : "linear-gradient(90deg, hsl(330,100%,47%), hsl(350,100%,65%), hsl(330,100%,47%))",
+                  : "linear-gradient(90deg, hsl(197,100%,50%), hsl(197,100%,65%), hsl(197,100%,50%))",
               }}
             >
               RASPADINHA

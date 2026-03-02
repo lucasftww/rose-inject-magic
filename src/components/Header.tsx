@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { LogOut, User, ChevronDown, Settings, ShieldAlert, Package, Menu, X } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
-import logoInject from "@/assets/logo-inject.png";
+import logoRoyal from "@/assets/logo-royal.png";
 import AuthModal from "@/components/AuthModal";
 import CartSheet from "@/components/CartSheet";
 import { useAuth } from "@/hooks/useAuth";
@@ -113,8 +113,8 @@ const Header = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 lg:gap-3 shrink-0 group">
             <motion.img
-              src={logoInject}
-              alt="Inject Project"
+              src={logoRoyal}
+              alt="Royal Store"
               className="h-9 w-9 lg:h-11 lg:w-11 object-contain shrink-0"
               whileHover={{ rotate: [0, -8, 8, 0] }}
               transition={{ duration: 0.5 }}
@@ -123,19 +123,10 @@ const Header = () => {
               className="text-xl lg:text-2xl tracking-[0.2em] whitespace-nowrap"
               style={{ fontFamily: "'Valorant', sans-serif" }}
             >
-              {isLolContext ? (
-                <>
-                  <span style={{ color: LOL_BLUE }}>INJECT</span>
-                  <span className="text-foreground/80"> PROJECT</span>
-                </>
-              ) : (
-                <>
-                  <span className="inline-block bg-gradient-to-r from-success via-[hsl(330,100%,60%)] to-success bg-[length:200%_100%] bg-clip-text text-transparent animate-[text-shine_3s_ease-in-out_infinite]">
-                    INJECT
-                  </span>
-                  <span className="text-foreground/80"> PROJECT</span>
-                </>
-              )}
+              <span className="inline-block bg-gradient-to-r from-success via-[hsl(197,100%,70%)] to-success bg-[length:200%_100%] bg-clip-text text-transparent animate-[text-shine_3s_ease-in-out_infinite]">
+                ROYAL
+              </span>
+              <span className="text-foreground/80"> STORE</span>
             </span>
           </Link>
 
@@ -495,7 +486,7 @@ const Header = () => {
                   </button>
                   <button
                     onClick={() => { setAuthTab("register"); setAuthOpen(true); setMobileMenuOpen(false); }}
-                    className="w-full bg-success py-2.5 text-sm font-semibold text-success-foreground rounded-md transition-all hover:shadow-[0_0_24px_hsl(330,100%,47%,0.45)] btn-shine"
+                    className="w-full bg-success py-2.5 text-sm font-semibold text-success-foreground rounded-md transition-all hover:shadow-[0_0_24px_hsl(197,100%,50%,0.45)] btn-shine"
                   >
                     Criar Conta
                   </button>
