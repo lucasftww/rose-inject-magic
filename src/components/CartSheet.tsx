@@ -6,7 +6,7 @@ import { Minus, Plus, ShoppingCart, Trash2, Tag, Loader2, X, Shield, Zap, Packag
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import logoInject from "@/assets/logo-inject.png";
 
 interface AppliedCoupon {
@@ -128,6 +128,7 @@ const CartSheet = ({ open, onOpenChange }: CartSheetProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl w-[95vw] p-0 border-border overflow-hidden gap-0 rounded-2xl [&>button:last-child]:hidden">
+        <DialogTitle className="sr-only">Carrinho</DialogTitle>
         {/* Close button */}
         <button
           onClick={() => onOpenChange(false)}
