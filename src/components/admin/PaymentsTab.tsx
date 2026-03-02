@@ -37,7 +37,7 @@ const PaymentsTab = () => {
     const newEnabled = !setting.enabled;
     const { error } = await supabase
       .from("payment_settings")
-      .update({ enabled: newEnabled, updated_at: new Date().toISOString() })
+      .update({ enabled: newEnabled })
       .eq("id", setting.id);
     if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
