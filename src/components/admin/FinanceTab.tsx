@@ -13,7 +13,7 @@ interface PaymentRow {
 
 interface LztSaleRow {
   sell_price: number;
-  sold_at: string;
+  created_at: string;
 }
 
 const COLORS = ["hsl(130,99%,41%)", "hsl(220,80%,55%)", "hsl(45,100%,55%)", "hsl(0,80%,55%)"];
@@ -33,18 +33,18 @@ const FinanceTab = () => {
 
     let lztQuery = supabase
       .from("lzt_sales")
-      .select("sell_price, sold_at");
+      .select("sell_price, created_at");
 
     if (period !== "all") {
       const days = period === "7d" ? 7 : 30;
       const since = new Date(Date.now() - days * 86400000).toISOString();
       paymentsQuery = paymentsQuery.gte("paid_at", since);
-      lztQuery = lztQuery.gte("sold_at", since);
+      lztQuery = lztQuery.gte("created_at", since);
     }
 
     const [pRes, lRes] = await Promise.all([
       paymentsQuery.order("paid_at", { ascending: false }),
-      lztQuery.order("sold_at", { ascending: false }),
+      lztQuery.order("created_at", { ascending: false }),
     ]);
 
     if (pRes.data) setPayments(pRes.data as any);
@@ -121,7 +121,7 @@ const FinanceTab = () => {
     });
 
     lztSales.forEach((s) => {
-      const key = new Date(s.sold_at).toLocaleDateString("pt-BR", { month: "short", year: "2-digit" });
+      const key = new Date(s.created_at).toLocaleDateString("pt-BR", { month: "short", year: "2-digit" });
       if (!months[key]) months[key] = { produtos: 0, contas: 0 };
       months[key].contas += Number(s.sell_price);
     });
