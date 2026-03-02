@@ -1,0 +1,1 @@
+DELETE FROM product_media WHERE id = '4bcab142-a901-416a-a6ca-1beb82b36bcd';
