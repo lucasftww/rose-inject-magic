@@ -6,7 +6,7 @@ import { useCart } from "@/hooks/useCart";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Copy, Check, Clock, ArrowLeft, Package, ShieldCheck, Zap, CreditCard, Wallet, Sparkles, ChevronRight, ExternalLink } from "lucide-react";
-import logoInject from "@/assets/logo-inject.png";
+import logoRoyal from "@/assets/logo-royal.png";
 import { motion } from "framer-motion";
 
 type PaymentMethod = "pix" | "card" | "crypto" | null;
@@ -619,10 +619,10 @@ description: `Compra Royal Store - ${items.length} item(s)`,
                   <div className="relative z-10 flex flex-col h-full p-10 border-r border-border/40">
                     {/* Logo */}
                     <div className="flex items-center gap-3 mb-10">
-                      <img src={logoInject} alt="Inject" className="w-9 h-9 object-contain" />
+                      <img src={logoRoyal} alt="Royal Store" className="h-9 object-contain" />
                       <span className="text-lg font-bold tracking-widest" style={{ fontFamily: "'Valorant', sans-serif" }}>
-                        <span className="text-success">INJECT</span>
-                        <span className="text-foreground/80"> PROJECT</span>
+                        <span className="text-primary">ROYAL</span>
+                        <span className="text-foreground/80"> STORE</span>
                       </span>
                     </div>
 
@@ -784,10 +784,10 @@ description: `Compra Royal Store - ${items.length} item(s)`,
                 <div className="hidden md:flex flex-col w-[45%] bg-card border-r border-border/60 relative overflow-hidden">
                   <div className="relative z-10 flex flex-col h-full p-10">
                     <div className="flex items-center gap-3 mb-8">
-                      <img src={logoInject} alt="Inject" className="w-10 h-10 object-contain" />
+                      <img src={logoRoyal} alt="Royal Store" className="h-10 object-contain" />
                       <span className="text-xl font-bold tracking-widest" style={{ fontFamily: "'Valorant', sans-serif" }}>
-                        <span className="text-success">INJECT</span>
-                        <span className="text-foreground"> PROJECT</span>
+                        <span className="text-primary">ROYAL</span>
+                        <span className="text-foreground"> STORE</span>
                       </span>
                     </div>
 
@@ -877,10 +877,10 @@ description: `Compra Royal Store - ${items.length} item(s)`,
                 <div className="hidden md:flex flex-col w-[45%] bg-card border-r border-border/60 relative overflow-hidden">
                   <div className="relative z-10 flex flex-col h-full p-10">
                     <div className="flex items-center gap-3 mb-8">
-                      <img src={logoInject} alt="Inject" className="w-10 h-10 object-contain" />
+                      <img src={logoRoyal} alt="Royal Store" className="h-10 object-contain" />
                       <span className="text-xl font-bold tracking-widest" style={{ fontFamily: "'Valorant', sans-serif" }}>
-                        <span className="text-success">INJECT</span>
-                        <span className="text-foreground"> PROJECT</span>
+                        <span className="text-primary">ROYAL</span>
+                        <span className="text-foreground"> STORE</span>
                       </span>
                     </div>
 
