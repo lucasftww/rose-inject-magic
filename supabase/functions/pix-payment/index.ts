@@ -698,7 +698,102 @@ Deno.serve(async (req) => {
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-  // Auth check
+  const url = new URL(req.url);
+  const action = url.searchParams.get("action");
+
+  // ==================== MISTICPAY WEBHOOK (no auth required) ====================
+  if (action === "webhook" && req.method === "POST") {
+    const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    try {
+      const body = await req.json();
+      console.log("MisticPay webhook received:", JSON.stringify(body).substring(0, 500));
+
+      // MisticPay sends transactionId and transactionState
+      const txId = body.transactionId || body.transaction?.transactionId;
+      const txState = body.transactionState || body.transaction?.transactionState || body.status;
+
+      if (!txId) {
+        console.error("Webhook missing transactionId");
+        return new Response(JSON.stringify({ error: "Missing transactionId" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Validate webhook credentials
+      const misticCreds = await getMisticPayCredentials(supabaseAdmin);
+      if (misticCreds) {
+        const webhookCi = req.headers.get("ci") || body.ci;
+        const webhookCs = req.headers.get("cs") || body.cs;
+        if (webhookCi && webhookCs && (webhookCi !== misticCreds.clientId || webhookCs !== misticCreds.clientSecret)) {
+          console.error("Webhook credentials mismatch");
+          return new Response(JSON.stringify({ error: "Invalid credentials" }), {
+            status: 403,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+
+      // Find payment by charge_id (MisticPay transactionId)
+      const { data: payment } = await supabaseAdmin
+        .from("payments")
+        .select("*")
+        .eq("charge_id", String(txId))
+        .maybeSingle();
+
+      if (!payment) {
+        console.error("Webhook: payment not found for txId:", txId);
+        return new Response(JSON.stringify({ error: "Payment not found" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (payment.status === "COMPLETED") {
+        console.log("Webhook: payment already completed:", payment.id);
+        return new Response(JSON.stringify({ success: true, message: "Already completed" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const newStatus = mapMisticPayStatus(txState);
+      console.log(`Webhook: payment ${payment.id} status ${payment.status} -> ${newStatus}`);
+
+      if (newStatus !== payment.status) {
+        const updates: Record<string, unknown> = { status: newStatus };
+        if (newStatus === "COMPLETED") {
+          updates.paid_at = body.updatedAt || body.transaction?.updatedAt || new Date().toISOString();
+        }
+
+        const { data: updatedPayment } = await supabaseAdmin
+          .from("payments")
+          .update(updates)
+          .eq("id", payment.id)
+          .eq("status", payment.status)
+          .select("id")
+          .maybeSingle();
+
+        if (newStatus === "COMPLETED" && updatedPayment) {
+          console.log("Webhook: fulfilling order for payment:", payment.id);
+          await fulfillOrder(supabaseAdmin, payment);
+          await sendDiscordSaleNotification(supabaseAdmin, payment);
+        }
+      }
+
+      return new Response(JSON.stringify({ success: true, status: newStatus }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    } catch (err) {
+      console.error("Webhook error:", err);
+      return new Response(JSON.stringify({ error: "Webhook processing error" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+  }
+
+  // Auth check for all other actions
   const authHeader = req.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
