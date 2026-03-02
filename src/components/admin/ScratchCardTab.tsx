@@ -125,7 +125,6 @@ const ScratchCardTab = () => {
     const { error } = await supabase.from("scratch_card_config").update({
       price: parseFloat(configPrice) || 2.50,
       active: configActive,
-      updated_at: new Date().toISOString(),
     }).eq("id", config.id);
     if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
     else toast({ title: "Configurações salvas!" });
