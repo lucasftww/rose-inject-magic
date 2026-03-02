@@ -860,7 +860,7 @@ const Index = () => {
                 className="text-2xl font-bold text-foreground"
                 style={{ fontFamily: "'Valorant', sans-serif" }}
               >
-                <span className="text-success">INJECT</span> PROJECT
+                <span className="text-success">ROYAL</span> STORE
               </h3>
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
                 Referência no mercado há mais de 5 anos. Softwares premium, contas verificadas e suporte 24/7.
