@@ -1,0 +1,1 @@
+ALTER TABLE public.products ADD COLUMN features_text text DEFAULT NULL;

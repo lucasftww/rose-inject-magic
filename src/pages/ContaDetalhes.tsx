@@ -1,0 +1,648 @@
+import { useParams, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import Header from "@/components/Header";
+import { ArrowLeft, Shield, Loader2, ChevronRight, ChevronLeft, ChevronRight as ChevronRightIcon, CheckCircle2, Swords, Users, Star, X, ShoppingCart, Check } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { useCart } from "@/hooks/useCart";
+import { toast } from "@/hooks/use-toast";
+import { useLztMarkup } from "@/hooks/useLztMarkup";
+
+import rankFerro from "@/assets/rank-ferro.png";
+import rankBronze from "@/assets/rank-bronze.png";
+import rankPrata from "@/assets/rank-prata.png";
+import rankOuro from "@/assets/rank-ouro.png";
+import rankPlatina from "@/assets/rank-platina.png";
+import rankDiamante from "@/assets/rank-diamante.png";
+import rankAscendente from "@/assets/rank-ascendente.png";
+import rankImortal from "@/assets/rank-imortal.png";
+import rankRadiante from "@/assets/rank-radiante.png";
+import rankUnranked from "@/assets/rank-unranked.png";
+
+import raritySelect from "@/assets/rarity-select.png";
+import rarityDeluxe from "@/assets/rarity-deluxe.png";
+import rarityPremium from "@/assets/rarity-premium.png";
+import rarityUltra from "@/assets/rarity-ultra.png";
+import rarityExclusive from "@/assets/rarity-exclusive.png";
+
+const rarityMap: Record<string, { name: string; img: string; color: string }> = {
+  "0cebb8be-46d7-c12a-d306-e9907bfc5a25": { name: "Select", img: raritySelect, color: "hsl(210, 55%, 60%)" },
+  "12683d76-48d7-84a3-4e09-6985794f0445": { name: "Deluxe", img: rarityDeluxe, color: "hsl(170, 55%, 45%)" },
+  "60bca009-4182-7998-dee7-b8a2558dc369": { name: "Premium", img: rarityPremium, color: "hsl(330, 50%, 55%)" },
+  "e046854e-406c-37f4-6571-7a8baeeb93ab": { name: "Ultra", img: rarityUltra, color: "hsl(45, 70%, 55%)" },
+  "411e4a55-4e59-7757-41f0-86a53f101bb5": { name: "Exclusive", img: rarityExclusive, color: "hsl(25, 65%, 55%)" },
+};
+
+const rankMap: Record<number, { name: string; img: string }> = {
+  3: { name: "Ferro 1", img: rankFerro },
+  4: { name: "Ferro 2", img: rankFerro },
+  5: { name: "Ferro 3", img: rankFerro },
+  6: { name: "Bronze 1", img: rankBronze },
+  7: { name: "Bronze 2", img: rankBronze },
+  8: { name: "Bronze 3", img: rankBronze },
+  9: { name: "Prata 1", img: rankPrata },
+  10: { name: "Prata 2", img: rankPrata },
+  11: { name: "Prata 3", img: rankPrata },
+  12: { name: "Ouro 1", img: rankOuro },
+  13: { name: "Ouro 2", img: rankOuro },
+  14: { name: "Ouro 3", img: rankOuro },
+  15: { name: "Platina 1", img: rankPlatina },
+  16: { name: "Platina 2", img: rankPlatina },
+  17: { name: "Platina 3", img: rankPlatina },
+  18: { name: "Diamante 1", img: rankDiamante },
+  19: { name: "Diamante 2", img: rankDiamante },
+  20: { name: "Diamante 3", img: rankDiamante },
+  21: { name: "Ascendente 1", img: rankAscendente },
+  22: { name: "Ascendente 2", img: rankAscendente },
+  23: { name: "Ascendente 3", img: rankAscendente },
+  24: { name: "Imortal 1", img: rankImortal },
+  25: { name: "Imortal 2", img: rankImortal },
+  26: { name: "Imortal 3", img: rankImortal },
+  27: { name: "Radiante", img: rankRadiante },
+};
+
+const fetchAccountDetail = async (itemId: string) => {
+  const projectUrl = import.meta.env.VITE_SUPABASE_URL;
+  const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  const res = await fetch(
+    `${projectUrl}/functions/v1/lzt-market?action=detail&item_id=${encodeURIComponent(itemId)}`,
+    { headers: { "Content-Type": "application/json", apikey: anonKey } }
+  );
+  if (!res.ok) throw new Error(`API Error: ${res.status}`);
+  return res.json();
+};
+
+// Fetch skin details from valorant-api.com
+const fetchValorantSkins = async (uuids: string[]) => {
+  const res = await fetch("https://valorant-api.com/v1/weapons/skins?language=pt-BR");
+  if (!res.ok) return [];
+  const data = await res.json();
+  const uuidSet = new Set(uuids.map(u => u.toLowerCase()));
+  return (data.data || []).filter((s: any) => uuidSet.has(s.uuid?.toLowerCase())).map((s: any) => ({
+    name: s.displayName,
+    image: s.levels?.[0]?.displayIcon || s.displayIcon || s.chromas?.[0]?.fullRender,
+    rarity: s.contentTierUuid ? rarityMap[s.contentTierUuid] : null,
+  })).filter((s: any) => s.image);
+};
+
+const fetchValorantAgents = async (uuids: string[]) => {
+  const res = await fetch("https://valorant-api.com/v1/agents?isPlayableCharacter=true&language=pt-BR");
+  if (!res.ok) return [];
+  const data = await res.json();
+  const uuidSet = new Set(uuids.map(u => u.toLowerCase()));
+  return (data.data || []).filter((a: any) => uuidSet.has(a.uuid?.toLowerCase())).map((a: any) => ({
+    name: a.displayName,
+    image: a.displayIcon,
+  })).filter((a: any) => a.image);
+};
+
+const fetchValorantBuddies = async (uuids: string[]) => {
+  const res = await fetch("https://valorant-api.com/v1/buddies?language=pt-BR");
+  if (!res.ok) return [];
+  const data = await res.json();
+  // Buddy UUIDs from inventory might be level UUIDs, so check both
+  const uuidSet = new Set(uuids.map(u => u.toLowerCase()));
+  const matched: any[] = [];
+  for (const buddy of (data.data || [])) {
+    if (uuidSet.has(buddy.uuid?.toLowerCase())) {
+      matched.push({ name: buddy.displayName, image: buddy.displayIcon });
+    }
+    // Also check levels
+    for (const level of (buddy.levels || [])) {
+      if (uuidSet.has(level.uuid?.toLowerCase())) {
+        matched.push({ name: buddy.displayName, image: level.displayIcon || buddy.displayIcon });
+      }
+    }
+  }
+  return matched.filter((b: any) => b.image);
+};
+
+const ContaDetalhes = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { calcPrice: rawCalcPrice, formatPrice: rawFormatPrice } = useLztMarkup();
+  const calcPrice = (price: number, currency?: string) => rawCalcPrice(price, currency, "valorant");
+  const formatPrice = (price: number, currency?: string) => rawFormatPrice(price, currency, "valorant");
+  const [selectedSkin, setSelectedSkin] = useState(0);
+  const [activeTab, setActiveTab] = useState<"skins" | "agents" | "buddies">("skins");
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const { addItem, items } = useCart();
+  const [addedToCart, setAddedToCart] = useState(false);
+
+  const isInCart = items.some((i) => i.type === "lzt-account" && i.lztItemId === id);
+
+  const handleAddToCart = () => {
+    if (!item || isInCart) return;
+    const rankName = rank?.name || "Unranked";
+    const skinCount = item.riot_valorant_skin_count ?? 0;
+    const title = `Conta ${rankName} com ${skinCount} Skins`;
+    
+    // Apply markup multiplier to price
+    const priceBRL = calcPrice(item.price, item.price_currency);
+
+    const added = addItem({
+      productId: `lzt-${item.item_id}`,
+      productName: title,
+      productImage: rank?.img || null,
+      planId: "lzt-account",
+      planName: "Conta Valorant",
+      price: priceBRL,
+      type: "lzt-account",
+      lztItemId: String(item.item_id),
+      lztPrice: item.price,
+      lztCurrency: item.price_currency || "rub",
+    });
+    if (!added) return;
+    setAddedToCart(true);
+    toast({ title: "Adicionado ao carrinho!", description: title });
+    setTimeout(() => setAddedToCart(false), 2000);
+  };
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["lzt-account-detail", id],
+    queryFn: () => fetchAccountDetail(id!),
+    enabled: !!id,
+  });
+
+  const item = data?.item;
+  const rank = item?.riot_valorant_rank ? rankMap[item.riot_valorant_rank] : null;
+  const inventory = item?.valorantInventory;
+
+  // Gallery from screenshots
+  const gallery = useMemo(() => {
+    if (!item) return [];
+    const list: { name: string; image: string }[] = [];
+    if (item.ss && Array.isArray(item.ss)) {
+      for (const ss of item.ss) {
+        if (typeof ss === "string") list.push({ name: "Screenshot", image: ss });
+        else if (ss?.original || ss?.small) list.push({ name: "Screenshot", image: ss.original || ss.small });
+      }
+    }
+    return list;
+  }, [item]);
+
+  // Fetch inventory items from valorant-api.com
+  const skinUuids = inventory?.WeaponSkins || [];
+  const agentUuids = inventory?.Agent || [];
+  const buddyUuids = inventory?.Buddy || [];
+
+  const { data: skinItems = [] } = useQuery({
+    queryKey: ["valorant-skins", skinUuids],
+    queryFn: () => fetchValorantSkins(skinUuids),
+    enabled: skinUuids.length > 0,
+    staleTime: 1000 * 60 * 30,
+  });
+
+  const { data: agentItems = [] } = useQuery({
+    queryKey: ["valorant-agents", agentUuids],
+    queryFn: () => fetchValorantAgents(agentUuids),
+    enabled: agentUuids.length > 0,
+    staleTime: 1000 * 60 * 30,
+  });
+
+  const { data: buddyItems = [] } = useQuery({
+    queryKey: ["valorant-buddies", buddyUuids],
+    queryFn: () => fetchValorantBuddies(buddyUuids),
+    enabled: buddyUuids.length > 0,
+    staleTime: 1000 * 60 * 30,
+  });
+
+  // Use skin items as main gallery if no screenshots
+  const mainGallery = gallery.length > 0 ? gallery : skinItems.slice(0, 5);
+
+  const handlePrev = () => setSelectedSkin((p) => (p > 0 ? p - 1 : mainGallery.length - 1));
+  const handleNext = () => setSelectedSkin((p) => (p < mainGallery.length - 1 ? p + 1 : 0));
+
+  const skinCount = item?.riot_valorant_skin_count ?? 0;
+  const dynamicTitle = rank
+    ? `Conta ${rank.name} com ${skinCount} Skins`
+    : `Conta Unranked com ${skinCount} Skins`;
+
+  const tabs = [
+    { key: "skins" as const, label: "Skins", icon: <Swords className="h-4 w-4" />, count: skinItems.length },
+    { key: "agents" as const, label: "Agentes", icon: <Users className="h-4 w-4" />, count: agentItems.length },
+    { key: "buddies" as const, label: "Buddies", icon: <Star className="h-4 w-4" />, count: buddyItems.length },
+  ];
+
+  const activeItems = activeTab === "skins" ? skinItems : activeTab === "agents" ? agentItems : buddyItems;
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Header />
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 pt-28 pb-20">
+        <button
+          onClick={() => navigate("/contas")}
+          className="mb-5 flex items-center gap-2 rounded-lg border border-border bg-card/50 px-4 py-2 text-sm text-muted-foreground transition-all hover:border-success/40 hover:text-success"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Voltar
+        </button>
+
+        {isLoading && (
+          <div className="flex flex-col items-center justify-center py-32">
+            <Loader2 className="h-8 w-8 animate-spin text-success" />
+            <p className="mt-3 text-sm text-muted-foreground">Carregando detalhes...</p>
+          </div>
+        )}
+
+        {error && (
+          <div className="flex flex-col items-center justify-center py-32">
+            <p className="text-lg font-semibold text-destructive">Erro ao carregar conta</p>
+            <p className="mt-1 text-sm text-muted-foreground">{(error as Error).message}</p>
+          </div>
+        )}
+
+        {item && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
+            {/* Breadcrumb */}
+            <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
+              <button onClick={() => navigate("/")} className="hover:text-success transition-colors">Início</button>
+              <ChevronRight className="h-3 w-3" />
+              <button onClick={() => navigate("/contas")} className="hover:text-success transition-colors">Valorant</button>
+              <ChevronRight className="h-3 w-3" />
+              <span className="text-foreground font-medium">{rank?.name || "Unranked"}</span>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+              {/* LEFT: Gallery only */}
+              <div className="lg:col-span-3 space-y-4">
+                {/* Single skin carousel */}
+                {skinItems.length > 0 ? (
+                  <div className="rounded-lg border border-border bg-card overflow-hidden aspect-[16/10] relative group">
+                    <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--secondary))] via-[hsl(var(--background))] to-[hsl(var(--secondary))]" />
+                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--success)/0.08),transparent_70%)]" />
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key={selectedSkin}
+                        className="relative z-[1] flex items-center justify-center h-full w-full p-8 cursor-pointer"
+                        onClick={() => setLightboxIndex(selectedSkin)}
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <img
+                          src={skinItems[selectedSkin]?.image}
+                          alt={skinItems[selectedSkin]?.name}
+                          className="max-h-full max-w-full object-contain"
+                        />
+                      </motion.div>
+                    </AnimatePresence>
+                    {skinItems.length > 1 && (
+                      <>
+                        <button onClick={handlePrev} className="absolute left-3 top-1/2 -translate-y-1/2 z-[2] flex h-10 w-10 items-center justify-center rounded-full bg-background/80 border border-border text-muted-foreground opacity-0 group-hover:opacity-100 transition-all hover:text-success hover:border-success/40">
+                          <ChevronLeft className="h-5 w-5" />
+                        </button>
+                        <button onClick={handleNext} className="absolute right-3 top-1/2 -translate-y-1/2 z-[2] flex h-10 w-10 items-center justify-center rounded-full bg-background/80 border border-border text-muted-foreground opacity-0 group-hover:opacity-100 transition-all hover:text-success hover:border-success/40">
+                          <ChevronRightIcon className="h-5 w-5" />
+                        </button>
+                      </>
+                    )}
+                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-[2] rounded-lg bg-background/80 backdrop-blur-sm border border-border px-3 py-1.5">
+                      <p className="text-xs font-medium text-muted-foreground">{selectedSkin + 1} / {skinItems.length}</p>
+                    </div>
+                    {skinItems[selectedSkin]?.name && (
+                      <div className="absolute top-3 left-3 z-[2] rounded-lg bg-background/80 backdrop-blur-sm border border-border px-3 py-1.5">
+                        <p className="text-xs font-medium text-foreground">{skinItems[selectedSkin].name}</p>
+                      </div>
+                    )}
+                  </div>
+                ) : mainGallery.length > 0 ? (
+                  <div className="relative group rounded-lg border border-border bg-card overflow-hidden aspect-[16/10]">
+                    <AnimatePresence mode="wait">
+                      <motion.img
+                        key={selectedSkin}
+                        src={mainGallery[selectedSkin]?.image}
+                        alt={mainGallery[selectedSkin]?.name}
+                        className="h-full w-full object-contain p-6"
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.2 }}
+                      />
+                    </AnimatePresence>
+                    {mainGallery.length > 1 && (
+                      <>
+                        <button onClick={handlePrev} className="absolute left-3 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-background/80 border border-border text-muted-foreground opacity-0 group-hover:opacity-100 transition-all hover:text-success hover:border-success/40">
+                          <ChevronLeft className="h-5 w-5" />
+                        </button>
+                        <button onClick={handleNext} className="absolute right-3 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-background/80 border border-border text-muted-foreground opacity-0 group-hover:opacity-100 transition-all hover:text-success hover:border-success/40">
+                          <ChevronRightIcon className="h-5 w-5" />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-border bg-card flex items-center justify-center aspect-[16/10]">
+                    <div className="flex flex-col items-center gap-4">
+                      <img src={rank?.img || rankUnranked} alt={rank?.name || "Unranked"} className="h-28 w-28 object-contain drop-shadow-xl" />
+                      <p className="text-2xl font-bold text-foreground">{rank?.name || "Unranked"}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Rank + Stats */}
+                <div className="rounded-lg border border-border bg-card p-5 space-y-4">
+                  <div className="flex items-center justify-between">
+                    {/* Último rank (esquerda) */}
+                    {item.riot_valorant_previous_rank && rankMap[item.riot_valorant_previous_rank] ? (
+                      <div className="flex flex-col items-center gap-1.5">
+                        <img src={rankMap[item.riot_valorant_previous_rank].img} alt="" className="h-16 w-16 object-contain opacity-50" />
+                        <div className="text-center">
+                          <p className="text-[9px] text-muted-foreground uppercase tracking-wider">Último rank</p>
+                          <p className="text-sm font-bold text-muted-foreground">{rankMap[item.riot_valorant_previous_rank].name}</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div />
+                    )}
+
+                    {/* Seta no meio */}
+                    <div className="flex items-center text-success">
+                      <ChevronRightIcon className="h-6 w-6" />
+                    </div>
+
+                    {/* Rank atual (direita) */}
+                    <div className="flex flex-col items-center gap-1.5">
+                      <img src={rank?.img || rankUnranked} alt={rank?.name || "Unranked"} className="h-16 w-16 object-contain" />
+                      <div className="text-center">
+                        <p className="text-[9px] text-muted-foreground uppercase tracking-wider">Rank atual</p>
+                        <p className="text-sm font-bold text-foreground">{rank?.name || "Unranked"}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="border-t border-border pt-4">
+                    <h3 className="text-sm font-bold text-foreground mb-3">Informações da Conta</h3>
+                    <div className="grid grid-cols-2 gap-2">
+                      {item.valorantRegionPhrase && <StatCell label="Região" value={item.valorantRegionPhrase} />}
+                      {item.riot_valorant_wallet_vp != null && <StatCell label="VP na conta" value={item.riot_valorant_wallet_vp} />}
+                      {item.riot_valorant_wallet_rp != null && item.riot_valorant_wallet_rp > 0 && <StatCell label="RP na conta" value={item.riot_valorant_wallet_rp} />}
+                      {item.riot_valorant_inventory_value != null && <StatCell label="Valor inventário" value={`$${item.riot_valorant_inventory_value}`} />}
+                      {item.riot_valorant_level != null && <StatCell label="Nível" value={item.riot_valorant_level} />}
+                      {item.riot_valorant_knife_count != null && item.riot_valorant_knife_count > 0 && <StatCell label="Knifes" value={item.riot_valorant_knife_count} />}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* RIGHT: Purchase + Rank + Stats + Full Acesso */}
+              <div className="lg:col-span-2 space-y-4">
+                {/* Title + Purchase */}
+                <div className="rounded-lg border border-border bg-card p-5 space-y-3.5">
+                  <h1 className="text-lg font-bold text-foreground leading-snug">{dynamicTitle}</h1>
+
+                  <div className="flex flex-wrap gap-1.5">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-success/10 border border-success/30 px-2.5 py-0.5 text-[11px] font-semibold text-success">
+                      <CheckCircle2 className="h-3 w-3" />
+                      FULL ACESSO
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-secondary border border-border px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+                      <Shield className="h-3 w-3" />
+                      Conta verificável
+                    </span>
+                  </div>
+
+                  <div className="space-y-0.5 text-xs text-muted-foreground">
+                    <p className="flex items-center gap-2"><span className="text-success font-bold">✓</span> Entrega automática</p>
+                    <p className="flex items-center gap-2"><span className="text-success font-bold">✓</span> Liberação instantânea</p>
+                  </div>
+
+                  <div className="rounded-lg bg-card border border-border p-3 flex items-end justify-between">
+                    <div>
+                      <p className="text-[10px] text-muted-foreground mb-0.5">Por</p>
+                      <p className="text-2xl font-bold text-success">
+                        {formatPrice(item.price, item.price_currency)}
+                      </p>
+                    </div>
+                    {item.rub_price && item.price_currency !== "rub" && (
+                      <p className="text-[10px] text-muted-foreground mb-1">≈ $ {(item.price / 5.5).toFixed(2)} USD</p>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={handleAddToCart}
+                    disabled={isInCart}
+                    className={`btn-shine group relative flex w-full items-center justify-center gap-2 border-2 px-5 py-3 text-xs font-bold uppercase tracking-[0.25em] transition-all ${
+                      isInCart || addedToCart
+                        ? "border-success bg-success/10 text-success cursor-default"
+                        : "border-foreground/30 text-foreground hover:border-success hover:text-success hover:shadow-[0_0_30px_hsl(130,99%,41%,0.2)]"
+                    }`}
+                    style={{ fontFamily: "'Valorant', sans-serif" }}
+                  >
+                    {isInCart || addedToCart ? (
+                      <>
+                        <Check className="h-4 w-4" />
+                        No Carrinho
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingCart className="h-4 w-4" />
+                        Adicionar ao Carrinho
+                      </>
+                    )}
+                  </button>
+
+                  {item.item_id && (
+                    <p className="text-[10px] text-muted-foreground/50 text-center break-all">Código: {item.item_id}</p>
+                  )}
+
+                  <div className="grid grid-cols-4 divide-x divide-border border border-border rounded-lg overflow-hidden">
+                    <HighlightStat label="Skins" value={item.riot_valorant_skin_count ?? 0} />
+                    <HighlightStat label="Agentes" value={item.riot_valorant_agent_count ?? 0} />
+                    <HighlightStat label="Nível" value={item.riot_valorant_level ?? 0} />
+                    <HighlightStat label="Knifes" value={item.riot_valorant_knife_count ?? 0} />
+                  </div>
+                </div>
+
+
+                {/* Full Acesso */}
+                <div className="rounded-lg border border-border bg-card p-6 pb-14">
+                  <div className="flex items-center gap-3 mb-4">
+                    <CheckCircle2 className="h-8 w-8 text-success" />
+                    <h3 className="text-xl font-bold text-foreground">Conta FULL ACESSO</h3>
+                  </div>
+                  <p className="text-base text-muted-foreground mb-5">
+                    Acesso total: email original, alteração de senha e dados, sem enrolação.
+                  </p>
+                  <ul className="space-y-3.5 text-base text-muted-foreground">
+                    <li className="flex items-center gap-2.5"><span className="text-success text-lg">•</span> Email e senha inclusos</li>
+                    <li className="flex items-center gap-2.5"><span className="text-success text-lg">•</span> Senha alterável</li>
+                    <li className="flex items-center gap-2.5"><span className="text-success text-lg">•</span> Conta verificável</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            {/* Inventory Tabs - Full width below */}
+            {(skinUuids.length > 0 || agentUuids.length > 0 || buddyUuids.length > 0) && (
+              <div className="mt-5">
+                {/* Tab buttons */}
+                <div className="flex gap-2 mb-5">
+                  {tabs.map((tab) => (
+                    <button
+                      key={tab.key}
+                      onClick={() => setActiveTab(tab.key)}
+                      className={`flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-all ${
+                        activeTab === tab.key
+                          ? "border-success bg-success/10 text-success"
+                          : "border-border bg-card text-muted-foreground hover:border-muted-foreground/50"
+                      }`}
+                    >
+                      {tab.icon}
+                      {tab.label}
+                      {tab.count > 0 && (
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                          activeTab === tab.key ? "bg-success/20 text-success" : "bg-secondary text-muted-foreground"
+                        }`}>
+                          {tab.count}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Items grid */}
+                {activeItems.length > 0 ? (
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
+                    {activeItems.map((invItem: any, i: number) => (
+                      <motion.div
+                        key={`${activeTab}-${i}`}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.2, delay: i * 0.015 }}
+                        className="group rounded-lg border border-border bg-card overflow-hidden hover:border-success/40 transition-all relative cursor-pointer"
+                        onClick={() => setLightboxIndex(i)}
+                      >
+                        {invItem.rarity && (
+                          <div className="absolute top-1.5 right-1.5 z-10">
+                            <img src={invItem.rarity.img} alt={invItem.rarity.name} className="h-5 w-5 object-contain drop-shadow-md" title={invItem.rarity.name} />
+                          </div>
+                        )}
+                        <div className="aspect-square bg-secondary/20 flex items-center justify-center p-3">
+                          <img
+                            src={invItem.image}
+                            alt={invItem.name}
+                            className="h-full w-full object-contain group-hover:scale-105 transition-transform"
+                            loading="lazy"
+                          />
+                        </div>
+                        <div className="p-2 border-t border-border flex items-center gap-1.5">
+                          {invItem.rarity && (
+                            <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: invItem.rarity.color }} />
+                          )}
+                          <p className="text-[11px] font-medium text-foreground truncate">{invItem.name}</p>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center py-12 rounded-lg border border-border bg-card">
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground mr-2" />
+                    <p className="text-sm text-muted-foreground">Carregando itens...</p>
+                  </div>
+                )}
+
+                {/* Lightbox Modal */}
+                <AnimatePresence>
+                  {lightboxIndex !== null && activeItems[lightboxIndex] && (() => {
+                    const currentItem = activeItems[lightboxIndex];
+                    const total = activeItems.length;
+                    const goPrev = () => setLightboxIndex(prev => prev !== null ? (prev - 1 + total) % total : null);
+                    const goNext = () => setLightboxIndex(prev => prev !== null ? (prev + 1) % total : null);
+                    return (
+                      <motion.div
+                        key="lightbox"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+                        onClick={() => setLightboxIndex(null)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Escape") setLightboxIndex(null);
+                          if (e.key === "ArrowLeft") goPrev();
+                          if (e.key === "ArrowRight") goNext();
+                        }}
+                        tabIndex={0}
+                        ref={(el) => el?.focus()}
+                      >
+                        <motion.div
+                          initial={{ scale: 0.9, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          exit={{ scale: 0.9, opacity: 0 }}
+                          className="relative bg-card border border-border rounded-xl max-w-lg w-[90vw] overflow-hidden"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {/* Close */}
+                          <button onClick={() => setLightboxIndex(null)} className="absolute top-3 right-3 z-10 text-muted-foreground hover:text-foreground transition-colors">
+                            <X className="h-5 w-5" />
+                          </button>
+
+                          {/* Image */}
+                          <div className="aspect-[4/3] bg-secondary/20 flex items-center justify-center p-8 border-b border-border">
+                            <img src={currentItem.image} alt={currentItem.name} className="max-h-full max-w-full object-contain" />
+                          </div>
+
+                          {/* Info */}
+                          <div className="p-5 flex flex-col items-center gap-3">
+                            <h3 className="text-base font-bold text-foreground text-center">{currentItem.name}</h3>
+                            {currentItem.rarity && (
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-muted-foreground">Edição:</span>
+                                <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary/50 px-3 py-1 text-xs font-medium" style={{ color: currentItem.rarity.color }}>
+                                  <span className="h-2 w-2 rounded-full" style={{ backgroundColor: currentItem.rarity.color }} />
+                                  {currentItem.rarity.name} Edition
+                                </span>
+                              </div>
+                            )}
+
+                            {/* Navigation */}
+                            <div className="flex items-center gap-4 mt-1">
+                              <button onClick={goPrev} className="h-9 w-9 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-muted-foreground transition-colors">
+                                <ChevronLeft className="h-4 w-4" />
+                              </button>
+                              <span className="text-sm text-muted-foreground tabular-nums">{lightboxIndex + 1}/{total}</span>
+                              <button onClick={goNext} className="h-9 w-9 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-muted-foreground transition-colors">
+                                <ChevronRight className="h-4 w-4" />
+                              </button>
+                            </div>
+
+                            <p className="text-[11px] text-muted-foreground mt-1">Clique fora da imagem ou ESC para fechar</p>
+                          </div>
+                        </motion.div>
+                      </motion.div>
+                    );
+                  })()}
+                </AnimatePresence>
+
+              </div>
+            )}
+
+            {/* Description */}
+            {item.description && (
+              <div className="mt-6 rounded-lg border border-border bg-card p-5">
+                <h3 className="text-sm font-bold text-foreground mb-2">Descrição</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{item.description}</p>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const StatCell = ({ label, value }: { label: string; value: string | number }) => (
+  <div className="flex items-center justify-between rounded-lg border border-border bg-secondary/30 px-4 py-3">
+    <span className="text-xs text-muted-foreground">{label}</span>
+    <span className="text-sm font-bold text-foreground">{value}</span>
+  </div>
+);
+
+const HighlightStat = ({ label, value }: { label: string; value: string | number }) => (
+  <div className="flex flex-col items-center py-3 px-1.5">
+    <span className="text-[10px] text-muted-foreground mb-0.5">{label}</span>
+    <span className="text-base font-bold text-success">{value}</span>
+  </div>
+);
+
+export default ContaDetalhes;

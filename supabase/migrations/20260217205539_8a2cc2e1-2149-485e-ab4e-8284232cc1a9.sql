@@ -1,0 +1,1 @@
+DELETE FROM payments WHERE user_id = '1acd6b09-4d6c-4cd0-bfd1-d16ddc55db2b';

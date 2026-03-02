@@ -1,0 +1,164 @@
+import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import type { User, Session } from "@supabase/supabase-js";
+
+interface AuthContextType {
+  user: User | null;
+  session: Session | null;
+  profile: { username: string | null; avatar_url: string | null } | null;
+  loading: boolean;
+  isAdmin: boolean;
+  signUp: (email: string, password: string, username: string) => Promise<{ error: Error | null }>;
+  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<{ error: Error | null }>;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<{ username: string | null; avatar_url: string | null } | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const trackedSessionRef = useRef<string | null>(null);
+  const isMountedRef = useRef(true);
+
+  const fetchProfile = async (userId: string) => {
+    try {
+      const { data } = await supabase
+        .from("profiles")
+        .select("username, avatar_url")
+        .eq("user_id", userId)
+        .single();
+      if (isMountedRef.current) setProfile(data);
+    } catch {
+      // silently fail
+    }
+  };
+
+  const checkAdmin = async (userId: string) => {
+    try {
+      // Use the SECURITY DEFINER function for tamper-proof admin check
+      const { data, error } = await supabase.rpc("has_role", {
+        _user_id: userId,
+        _role: "admin",
+      });
+      if (isMountedRef.current) setIsAdmin(error ? false : !!data);
+    } catch {
+      if (isMountedRef.current) setIsAdmin(false);
+    }
+  };
+
+  useEffect(() => {
+    isMountedRef.current = true;
+
+    // Listener para mudanças CONTÍNUAS de auth (NÃO controla isLoading)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, newSession) => {
+        if (!isMountedRef.current) return;
+
+        if (event === "SIGNED_OUT") {
+          setSession(null);
+          setUser(null);
+          setProfile(null);
+          setIsAdmin(false);
+          trackedSessionRef.current = null;
+          return;
+        }
+
+        // Ignora eventos sem sessão que não são sign out
+        if (!newSession) return;
+
+        setSession(newSession);
+        setUser(newSession.user);
+
+        // Usa setTimeout para evitar deadlock no callback do Supabase
+        setTimeout(() => {
+          if (!isMountedRef.current) return;
+          fetchProfile(newSession.user.id);
+          checkAdmin(newSession.user.id);
+        }, 0);
+
+        // Track login IP apenas uma vez por sessão
+        if (event === "SIGNED_IN" && newSession.access_token) {
+          const sessionId = newSession.access_token.slice(-20);
+          if (trackedSessionRef.current !== sessionId) {
+            trackedSessionRef.current = sessionId;
+            supabase.functions.invoke("track-login", {
+              headers: { Authorization: `Bearer ${newSession.access_token}` },
+            }).catch(() => {});
+          }
+        }
+      }
+    );
+
+    // Carga INICIAL — esta é a única que controla isLoading
+    const initializeAuth = async () => {
+      try {
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        if (!isMountedRef.current) return;
+
+        if (initialSession) {
+          setSession(initialSession);
+          setUser(initialSession.user);
+          // Aguarda buscar perfil e role ANTES de setar loading false
+          await Promise.all([
+            fetchProfile(initialSession.user.id),
+            checkAdmin(initialSession.user.id),
+          ]);
+        }
+      } finally {
+        if (isMountedRef.current) setLoading(false);
+      }
+    };
+
+    initializeAuth();
+
+    return () => {
+      isMountedRef.current = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const signUp = async (email: string, password: string, username: string) => {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { username },
+        emailRedirectTo: window.location.origin,
+      },
+    });
+    return { error: error as Error | null };
+  };
+
+  const signIn = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    return { error: error as Error | null };
+  };
+
+  const signOut = async () => {
+    await supabase.auth.signOut();
+  };
+
+  const resetPassword = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin,
+    });
+    return { error: error as Error | null };
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, session, profile, loading, isAdmin, signUp, signIn, signOut, resetPassword }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
+  return ctx;
+};

@@ -1,0 +1,1 @@
+ALTER TABLE public.order_tickets ADD COLUMN metadata jsonb DEFAULT '{}'::jsonb;
