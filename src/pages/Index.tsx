@@ -169,9 +169,9 @@ const FloatingWidgets = () => {
   }, []);
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex items-end gap-3">
+    <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 flex items-end gap-2 sm:gap-3">
       <div
-        className={`mb-1 rounded-lg border border-border bg-card px-4 py-3 shadow-lg transition-all duration-500 ${
+        className={`mb-1 rounded-lg border border-border bg-card px-3 py-2 sm:px-4 sm:py-3 shadow-lg transition-all duration-500 hidden sm:block ${
           showTooltip ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-2 opacity-0"
         }`}
       >
@@ -182,7 +182,7 @@ const FloatingWidgets = () => {
         href="https://discord.gg/FeJ5JAZFmU"
         target="_blank"
         rel="noopener noreferrer"
-        className="flex h-14 w-14 items-center justify-center rounded-full bg-[#5865F2] text-white shadow-[0_0_20px_rgba(88,101,242,0.4)] transition-all hover:scale-110 hover:shadow-[0_0_30px_rgba(88,101,242,0.6)]"
+        className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-[#5865F2] text-white shadow-[0_0_20px_rgba(88,101,242,0.4)] transition-all hover:scale-110 hover:shadow-[0_0_30px_rgba(88,101,242,0.6)]"
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
       >
@@ -295,11 +295,11 @@ const ContasSection = () => {
   });
 
   return (
-    <section className="border-t border-border bg-background px-6 py-24">
+    <section className="border-t border-border bg-background px-4 sm:px-6 py-16 sm:py-24">
       <div className="mx-auto max-w-7xl">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-80px" }} variants={slideInLeft}>
           <p className="text-sm font-medium uppercase tracking-[0.3em] text-success">Selecao Accounts</p>
-          <h2 className="mt-3 text-5xl font-bold tracking-tight text-foreground md:text-7xl" style={{ fontFamily: "'Valorant', sans-serif" }}>CONTAS VALORANT</h2>
+          <h2 className="mt-3 text-3xl sm:text-5xl font-bold tracking-tight text-foreground md:text-7xl" style={{ fontFamily: "'Valorant', sans-serif" }}>CONTAS VALORANT</h2>
         </motion.div>
 
         {loadingAccounts ? (
@@ -322,10 +322,10 @@ const ContasSection = () => {
           </motion.div>
         )}
 
-        <motion.div className="mt-12 flex justify-center" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
+        <motion.div className="mt-10 sm:mt-12 flex justify-center" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
           <Link
             to="/contas"
-            className="flex items-center gap-2 border-2 border-foreground/30 px-14 py-4 text-sm font-bold uppercase tracking-[0.25em] text-foreground transition-all hover:border-success hover:text-success hover:shadow-[0_0_30px_hsl(197,100%,50%,0.2)]"
+            className="flex w-full sm:w-auto items-center justify-center gap-2 border-2 border-foreground/30 px-8 sm:px-14 py-3.5 sm:py-4 text-sm font-bold uppercase tracking-[0.25em] text-foreground transition-all hover:border-success hover:text-success hover:shadow-[0_0_30px_hsl(197,100%,50%,0.2)] rounded-lg sm:rounded-none mx-4 sm:mx-0"
             style={{ fontFamily: "'Valorant', sans-serif" }}
           >
             Explorar Contas
@@ -381,11 +381,11 @@ const ProductsSection = () => {
   });
 
   return (
-    <section className="border-t border-border bg-background px-6 py-24">
+    <section className="border-t border-border bg-background px-4 sm:px-6 py-16 sm:py-24">
       <div className="mx-auto max-w-7xl">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-80px" }} variants={slideInLeft}>
           <p className="text-sm font-medium uppercase tracking-[0.3em] text-success">Selecao Premium</p>
-          <h2 className="mt-3 text-5xl font-bold tracking-tight text-foreground md:text-7xl" style={{ fontFamily: "'Valorant', sans-serif" }}>DESTAQUE</h2>
+          <h2 className="mt-3 text-3xl sm:text-5xl font-bold tracking-tight text-foreground md:text-7xl" style={{ fontFamily: "'Valorant', sans-serif" }}>DESTAQUE</h2>
         </motion.div>
 
         {isLoading ? (
@@ -441,8 +441,8 @@ const ProductsSection = () => {
           </motion.div>
         )}
 
-        <motion.div className="mt-12 flex justify-center" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
-          <Link to="/produtos" className="flex items-center gap-2 border-2 border-foreground/30 px-14 py-4 text-sm font-bold uppercase tracking-[0.25em] text-foreground transition-all hover:border-success hover:text-success hover:shadow-[0_0_30px_hsl(197,100%,50%,0.2)]" style={{ fontFamily: "'Valorant', sans-serif" }}>
+        <motion.div className="mt-10 sm:mt-12 flex justify-center" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
+          <Link to="/produtos" className="flex w-full sm:w-auto items-center justify-center gap-2 border-2 border-foreground/30 px-8 sm:px-14 py-3.5 sm:py-4 text-sm font-bold uppercase tracking-[0.25em] text-foreground transition-all hover:border-success hover:text-success hover:shadow-[0_0_30px_hsl(197,100%,50%,0.2)] rounded-lg sm:rounded-none mx-4 sm:mx-0" style={{ fontFamily: "'Valorant', sans-serif" }}>
             Ver Todos Produtos
             <ArrowRight className="h-5 w-5" />
           </Link>
@@ -456,7 +456,7 @@ const Index = () => {
     <div className="relative min-h-screen bg-background overflow-x-hidden">
       <Header />
 
-      <main className="relative flex min-h-screen flex-col items-center justify-center px-6 pt-24 pb-20 text-center">
+      <main className="relative flex min-h-screen flex-col items-center justify-center px-4 sm:px-6 pt-28 pb-16 sm:pb-20 text-center">
         {/* Grid pattern */}
         <div className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[550px] w-[900px] -translate-x-1/2 -translate-y-1/2"
           style={{
@@ -487,7 +487,7 @@ const Index = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
-          className="z-10 max-w-4xl text-5xl font-bold leading-tight tracking-tight text-foreground md:text-7xl lg:text-8xl"
+          className="z-10 max-w-4xl text-3xl sm:text-5xl font-bold leading-tight tracking-tight text-foreground md:text-7xl lg:text-8xl"
         >
           Domine o Jogo com{" "}
           <span
@@ -503,7 +503,7 @@ const Index = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className="z-10 mt-8 max-w-2xl text-lg leading-relaxed text-muted-foreground md:text-xl"
+          className="z-10 mt-6 sm:mt-8 max-w-2xl text-sm sm:text-lg leading-relaxed text-muted-foreground md:text-xl"
         >
           Somos referência no mercado há mais de 5 anos, oferecendo softwares premium com{" "}
           <span className="text-foreground font-medium">tecnologia indetectável</span>,{" "}
@@ -518,16 +518,16 @@ const Index = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          className="z-10 mt-12 flex flex-wrap items-center justify-center gap-5"
+          className="z-10 mt-8 sm:mt-12 flex w-full sm:w-auto flex-col sm:flex-row items-center justify-center gap-3 sm:gap-5 px-4 sm:px-0"
         >
-          <Link to="/produtos" className="btn-shine group relative flex items-center gap-2 bg-success px-10 py-4 text-base font-semibold tracking-wide text-success-foreground transition-all hover:shadow-[0_0_30px_hsl(197,100%,50%,0.5)]">
+          <Link to="/produtos" className="btn-shine group relative flex w-full sm:w-auto items-center justify-center gap-2 bg-success px-10 py-4 text-base font-semibold tracking-wide text-success-foreground transition-all hover:shadow-[0_0_30px_hsl(197,100%,50%,0.5)] rounded-lg sm:rounded-none">
             <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,_hsl(197,100%,70%,0.3)_0%,_transparent_60%)]" />
             <span className="relative flex items-center gap-2">
               Ver Produtos
               <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
             </span>
           </Link>
-          <button className="border border-border px-10 py-4 text-base font-medium text-muted-foreground transition-colors hover:border-foreground hover:text-foreground">
+          <button className="w-full sm:w-auto border border-border px-10 py-4 text-base font-medium text-muted-foreground transition-colors hover:border-foreground hover:text-foreground rounded-lg sm:rounded-none">
             Como Funciona
           </button>
         </motion.div>
@@ -537,7 +537,7 @@ const Index = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.8, delay: 1.0 }}
-          className="z-10 mt-20 flex flex-wrap items-center justify-center gap-8 md:gap-14"
+          className="z-10 mt-12 sm:mt-20 flex flex-wrap items-center justify-center gap-6 sm:gap-8 md:gap-14"
         >
           {trustBadges.map((item, idx) => (
             <motion.div
@@ -566,14 +566,14 @@ const Index = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 1.4 }}
-          className="z-10 mt-12 flex items-center gap-2 text-sm text-muted-foreground"
+          className="z-10 mt-8 sm:mt-12 flex flex-col sm:flex-row items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground"
         >
           <div className="flex">
             {[...Array(5)].map((_, i) => (
               <Star key={i} className="h-4 w-4 fill-success text-success" />
             ))}
           </div>
-          <span>Avaliação média 4.8/5 • Mais de 5000 avaliações positivas</span>
+          <span className="text-center">Avaliação média 4.8/5 • +5000 avaliações</span>
         </motion.div>
 
         {/* Scroll indicator */}
@@ -596,7 +596,7 @@ const Index = () => {
           <img src={bannerInject} alt="" className="h-full w-full object-cover" />
           <div className="absolute inset-0 bg-background/60 backdrop-blur-sm" />
         </div>
-        <div className="relative mx-auto max-w-7xl px-6 py-20 flex items-center justify-center">
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 py-14 sm:py-20 flex items-center justify-center">
           <motion.div
             className="text-center"
             initial={{ opacity: 0, y: 30 }}
@@ -604,7 +604,7 @@ const Index = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.7 }}
           >
-            <h2 className="text-4xl font-bold tracking-tight text-foreground md:text-6xl" style={{ fontFamily: "'Valorant', sans-serif" }}>
+            <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-foreground md:text-6xl" style={{ fontFamily: "'Valorant', sans-serif" }}>
               CHEATS <span className="text-success">&</span> ACCOUNTS
             </h2>
             <p className="mt-4 text-base text-muted-foreground max-w-xl mx-auto">
@@ -629,14 +629,14 @@ const Index = () => {
       <ContasSection />
 
       {/* Avaliações Section */}
-      <section className="border-t border-border bg-background px-6 py-24">
+      <section className="border-t border-border bg-background px-4 sm:px-6 py-16 sm:py-24">
         <div className="mx-auto max-w-7xl">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-80px" }} variants={slideInLeft}>
             <p className="text-sm font-medium uppercase tracking-[0.3em] text-success">
               Feedback
             </p>
             <h2
-              className="mt-3 text-5xl font-bold tracking-tight text-foreground md:text-7xl"
+              className="mt-3 text-3xl sm:text-5xl font-bold tracking-tight text-foreground md:text-7xl"
               style={{ fontFamily: "'Valorant', sans-serif" }}
             >
               AVALIACOES
@@ -699,14 +699,14 @@ const Index = () => {
       </section>
 
       {/* Como Funciona Section */}
-      <section className="border-t border-border bg-background px-6 py-24">
+      <section className="border-t border-border bg-background px-4 sm:px-6 py-16 sm:py-24">
         <div className="mx-auto max-w-7xl">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-80px" }} variants={slideInLeft}>
             <p className="text-sm font-medium uppercase tracking-[0.3em] text-success">
               Passo a Passo
             </p>
             <h2
-              className="mt-3 text-5xl font-bold tracking-tight text-foreground md:text-7xl"
+              className="mt-3 text-3xl sm:text-5xl font-bold tracking-tight text-foreground md:text-7xl"
               style={{ fontFamily: "'Valorant', sans-serif" }}
             >
               COMO FUNCIONA
@@ -750,7 +750,7 @@ const Index = () => {
       </section>
 
       {/* CTA Final Section */}
-      <section className="border-t border-border bg-background px-6 py-32">
+      <section className="border-t border-border bg-background px-4 sm:px-6 py-20 sm:py-32">
         <motion.div
           className="mx-auto max-w-3xl text-center"
           initial="hidden"
@@ -764,7 +764,7 @@ const Index = () => {
           <motion.h2
             variants={fadeUp}
             custom={1}
-            className="mt-6 text-5xl font-bold leading-tight tracking-tight text-foreground md:text-7xl"
+            className="mt-6 text-3xl sm:text-5xl font-bold leading-tight tracking-tight text-foreground md:text-7xl"
             style={{ fontFamily: "'Valorant', sans-serif" }}
           >
             PRONTO PARA O PROXIMO NIVEL
@@ -786,7 +786,7 @@ const Index = () => {
       </section>
 
       {/* FAQ Section */}
-      <section id="faq" className="border-t border-border bg-background px-6 py-24">
+      <section id="faq" className="border-t border-border bg-background px-4 sm:px-6 py-16 sm:py-24">
         <div className="mx-auto max-w-3xl">
           <motion.div
             initial="hidden"
@@ -799,7 +799,7 @@ const Index = () => {
               Dúvidas Frequentes
             </p>
             <h2
-              className="mt-3 text-5xl font-bold tracking-tight text-foreground md:text-7xl"
+              className="mt-3 text-3xl sm:text-5xl font-bold tracking-tight text-foreground md:text-7xl"
               style={{ fontFamily: "'Valorant', sans-serif" }}
             >
               FAQ
@@ -847,7 +847,7 @@ const Index = () => {
 
       {/* Footer */}
       <motion.footer
-        className="border-t border-border bg-background px-6 py-16"
+        className="border-t border-border bg-background px-4 sm:px-6 py-12 sm:py-16"
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
