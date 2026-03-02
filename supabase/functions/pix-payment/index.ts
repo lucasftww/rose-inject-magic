@@ -6,9 +6,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const FLOWPAY_URL = "https://flowpayments.net/api/pix";
-const FLOWPAY_CARD_URL = "https://flowpayments.net/api/card";
-const FLOWPAY_CRYPTO_URL = "https://flowpayments.net/api/crypto";
+const MISTICPAY_BASE_URL = "https://api.misticpay.com/api";
 
 // Helper: send Discord webhook notification on sale
 async function sendDiscordSaleNotification(supabaseAdmin: any, payment: any) {
@@ -45,7 +43,7 @@ async function sendDiscordSaleNotification(supabaseAdmin: any, payment: any) {
     const embed = {
       title: "💰 Nova Venda Realizada!",
       description: `@everyone\n\n${itemsList}`,
-      color: 0x00FF6A, // green accent
+      color: 0x00FF6A,
       fields: [
         {
           name: "💲 Valor Total",
@@ -121,7 +119,6 @@ async function fulfillOrder(supabaseAdmin: any, payment: any) {
     // Handle LZT Market accounts (check type or planId fallback)
     const isLztAccount = item.type === "lzt-account" || item.planId === "lzt-account";
     if (isLztAccount) {
-      // Extract lztItemId from productId if not in the snapshot (e.g. "lzt-216971233" -> "216971233")
       const lztItemId = item.lztItemId || item.productId?.replace("lzt-", "") || "";
       if (lztItemId) {
         await fulfillLztAccount(supabaseAdmin, payment, { ...item, lztItemId });
@@ -174,7 +171,6 @@ async function fulfillOrder(supabaseAdmin: any, payment: any) {
         .single();
 
       if (ticket && !stockId) {
-        // No stock available — notify client and flag for manual delivery
         await supabaseAdmin.from("ticket_messages").insert({
           ticket_id: ticket.id,
           sender_id: payment.user_id,
@@ -255,7 +251,6 @@ async function fulfillOrder(supabaseAdmin: any, payment: any) {
 
 // LZT Market account purchase and delivery
 async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
-  // Read LZT token from system_credentials
   const { data: lztCred } = await supabaseAdmin
     .from("system_credentials")
     .select("value")
@@ -267,7 +262,6 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
   let price = item.lztPrice;
   let currency = item.lztCurrency || "rub";
 
-  // Helper to find product/plan for the ticket system
   const findProductAndPlan = async () => {
     let productId: string | null = null;
     let planId: string | null = null;
@@ -315,7 +309,6 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
     return { productId, planId };
   };
 
-  // Helper to create a manual delivery ticket (fallback when LZT purchase fails)
   const createManualDeliveryTicket = async (reason: string) => {
     console.log(`Creating manual delivery ticket for LZT item ${itemId}. Reason: ${reason}`);
 
@@ -352,7 +345,6 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
       .single();
 
     if (ticket) {
-      // Message for the client
       await supabaseAdmin.from("ticket_messages").insert({
         ticket_id: ticket.id,
         sender_id: payment.user_id,
@@ -364,14 +356,12 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
     return ticket;
   };
 
-  // If no LZT token configured — create manual ticket immediately
   if (!LZT_TOKEN) {
     console.error("LZT_MARKET_TOKEN not configured — falling back to manual delivery");
     await createManualDeliveryTicket("LZT token not configured");
     return;
   }
 
-  // If price is missing, fetch current price from LZT API
   if (!price) {
     console.log(`Fetching current price for LZT item ${itemId}...`);
     try {
@@ -398,7 +388,6 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
   console.log(`Purchasing LZT account ${itemId} at price ${price} ${currency}`);
 
   try {
-    // Fast-buy the account on LZT Market
     const buyUrl = `https://api.lzt.market/${encodeURIComponent(itemId)}/fast-buy?price=${encodeURIComponent(price)}${currency ? `&currency=${encodeURIComponent(currency)}` : ""}`;
 
     const buyRes = await fetch(buyUrl, {
@@ -412,7 +401,6 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
     const buyData = await buyRes.json();
     console.log("LZT fast-buy result:", buyRes.status, JSON.stringify(buyData).substring(0, 1000));
 
-    // --- PURCHASE FAILED: fallback to manual delivery ---
     if (!buyRes.ok) {
       const reason = `HTTP ${buyRes.status}: ${JSON.stringify(buyData).substring(0, 300)}`;
       console.error("LZT fast-buy failed:", reason);
@@ -420,7 +408,6 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
       return;
     }
 
-    // --- PURCHASE SUCCEEDED ---
     const boughtItem = buyData.item;
     const loginData = boughtItem?.loginData;
 
@@ -429,7 +416,6 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
     let rawCredentials = loginData?.raw || "";
     let accountEmail = loginData?.email || boughtItem?.email || boughtItem?.emailLoginData || "";
 
-    // If no separate fields, try to parse raw (format: login:password)
     if (!email && rawCredentials) {
       const parts = rawCredentials.split(":");
       if (parts.length >= 2) {
@@ -442,7 +428,6 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
       accountEmail = boughtItem?.email || loginData?.email || "";
     }
 
-    // Build stock content
     const stockContent = email && password
       ? `Email: ${email}\nSenha: ${password}`
       : rawCredentials
@@ -456,7 +441,6 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
       return;
     }
 
-    // Create stock item
     const { data: stockItem } = await supabaseAdmin
       .from("stock_items")
       .insert({
@@ -468,7 +452,6 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
       .select("id")
       .single();
 
-    // Create order ticket with LZT metadata
     const lztMetadata = {
       type: "lzt-account",
       lzt_item_id: itemId,
@@ -510,7 +493,6 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
       });
     }
 
-    // Record sale in lzt_sales for admin dashboard
     const RUB_TO_BRL = 0.055;
     const buyPriceBrl = currency === "rub" ? Number(price) * RUB_TO_BRL : Number(price);
     const sellPriceBrl = Number(item.price) || 0;
@@ -527,13 +509,11 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
 
   } catch (err: any) {
     console.error("LZT account purchase error:", err);
-    // Network/timeout error — fallback to manual delivery
     await createManualDeliveryTicket(`Exception: ${err?.message || String(err)}`);
   }
 }
 
 // ========== SERVER-SIDE PRICE VALIDATION ==========
-// Prevents price manipulation via Burp Suite, API requests, or frontend tampering
 async function validateAndCalculatePrice(
   supabaseAdmin: any,
   cartSnapshot: any[],
@@ -548,7 +528,6 @@ async function validateAndCalculatePrice(
   const validatedCart: any[] = [];
 
   for (const item of cartSnapshot) {
-    // Handle raspadinha items
     if (item.type === "raspadinha" || item.planId === "raspadinha") {
       const { data: scratchConfig } = await supabaseAdmin
         .from("scratch_card_config")
@@ -560,21 +539,18 @@ async function validateAndCalculatePrice(
       }
       const qty = Math.max(1, Math.floor(Number(item.quantity) || 1));
       const realPrice = Number(scratchConfig.price);
-      totalAmount += realPrice * qty * 100; // convert to cents
+      totalAmount += realPrice * qty * 100;
       validatedCart.push({ ...item, price: realPrice, quantity: qty });
       continue;
     }
 
-    // Handle LZT accounts — price comes from LZT API via lzt_config markup
     if (item.type === "lzt-account") {
-      // For LZT accounts, we need the lzt_config per-game markup to validate
       const { data: lztConfig } = await supabaseAdmin
         .from("lzt_config")
         .select("markup_multiplier, markup_valorant, markup_lol, markup_fortnite, markup_minecraft")
         .limit(1)
         .single();
       
-      // Determine which markup to use based on game category
       const gameCategory = item.lztGame || item.gameCategory || "";
       let markup = lztConfig?.markup_multiplier || 1.5;
       if (gameCategory === "valorant" && lztConfig?.markup_valorant) markup = lztConfig.markup_valorant;
@@ -582,12 +558,10 @@ async function validateAndCalculatePrice(
       else if (gameCategory === "fortnite" && lztConfig?.markup_fortnite) markup = lztConfig.markup_fortnite;
       else if (gameCategory === "minecraft" && lztConfig?.markup_minecraft) markup = lztConfig.markup_minecraft;
       
-      // The lztPrice is the original price in RUB, we apply our markup
       const lztPrice = Number(item.lztPrice) || 0;
       if (lztPrice <= 0) {
         return { validatedAmount: 0, validatedDiscount: 0, validatedCart: [], error: `Preço inválido para conta LZT ${item.lztItemId}` };
       }
-      // Use Math.round instead of Math.ceil to match frontend pricing exactly
       const RUB_TO_BRL = 0.055;
       let brlPrice = lztPrice * RUB_TO_BRL;
       const expectedPrice = Math.round(brlPrice * markup * 100) / 100;
@@ -599,7 +573,6 @@ async function validateAndCalculatePrice(
       continue;
     }
 
-    // Regular products — fetch real price from database
     const planId = item.planId;
     if (!planId) {
       return { validatedAmount: 0, validatedDiscount: 0, validatedCart: [], error: "Plano não especificado" };
@@ -618,7 +591,6 @@ async function validateAndCalculatePrice(
     const qty = Math.max(1, Math.floor(Number(item.quantity) || 1));
     let realPrice = Number(plan.price);
 
-    // Check if user is a reseller and apply discount
     const { data: resellerData } = await supabaseAdmin
       .from("resellers")
       .select("discount_percent, active")
@@ -634,7 +606,6 @@ async function validateAndCalculatePrice(
     validatedCart.push({ ...item, price: realPrice, quantity: qty });
   }
 
-  // Validate coupon server-side
   let validatedDiscount = 0;
   if (couponId) {
     const { data: coupon } = await supabaseAdmin
@@ -645,16 +616,11 @@ async function validateAndCalculatePrice(
       .single();
 
     if (coupon) {
-      // Check expiry
       if (coupon.expires_at && new Date(coupon.expires_at) < new Date()) {
         console.log("Coupon expired, ignoring");
-      }
-      // Check max uses
-      else if (coupon.max_uses && coupon.current_uses >= coupon.max_uses) {
+      } else if (coupon.max_uses && coupon.current_uses >= coupon.max_uses) {
         console.log("Coupon max uses reached, ignoring");
-      }
-      // Check if user already used this coupon
-      else {
+      } else {
         const { data: usage } = await supabaseAdmin
           .from("coupon_usage")
           .select("id")
@@ -665,7 +631,6 @@ async function validateAndCalculatePrice(
         if (usage) {
           console.log("User already used this coupon, ignoring");
         } else {
-          // Check min order value
           const totalInReais = totalAmount / 100;
           if (totalInReais >= (coupon.min_order_value || 0)) {
             if (coupon.discount_type === "percentage") {
@@ -679,13 +644,50 @@ async function validateAndCalculatePrice(
     }
   }
 
-  const finalAmount = Math.max(100, totalAmount - validatedDiscount); // minimum R$1.00
+  const finalAmount = Math.max(100, totalAmount - validatedDiscount);
 
   return {
     validatedAmount: finalAmount,
     validatedDiscount: validatedDiscount / 100,
     validatedCart,
   };
+}
+
+// ========== MISTICPAY HELPERS ==========
+async function getMisticPayCredentials(supabaseAdmin: any): Promise<{ clientId: string; clientSecret: string } | null> {
+  const { data: ciCred } = await supabaseAdmin
+    .from("system_credentials")
+    .select("value")
+    .eq("env_key", "MISTICPAY_CLIENT_ID")
+    .maybeSingle();
+  const { data: csCred } = await supabaseAdmin
+    .from("system_credentials")
+    .select("value")
+    .eq("env_key", "MISTICPAY_CLIENT_SECRET")
+    .maybeSingle();
+
+  const clientId = ciCred?.value || Deno.env.get("MISTICPAY_CLIENT_ID");
+  const clientSecret = csCred?.value || Deno.env.get("MISTICPAY_CLIENT_SECRET");
+
+  if (!clientId || !clientSecret) return null;
+  return { clientId, clientSecret };
+}
+
+function misticPayHeaders(creds: { clientId: string; clientSecret: string }) {
+  return {
+    "ci": creds.clientId,
+    "cs": creds.clientSecret,
+    "Content-Type": "application/json",
+  };
+}
+
+function mapMisticPayStatus(state: string): string {
+  switch (state?.toUpperCase()) {
+    case "COMPLETO": return "COMPLETED";
+    case "FALHA": return "FAILED";
+    case "PENDENTE": return "ACTIVE";
+    default: return "ACTIVE";
+  }
 }
 
 Deno.serve(async (req) => {
@@ -723,22 +725,15 @@ Deno.serve(async (req) => {
   const userId = claimsData.claims.sub;
   const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-  // Read FLOWPAY_API_KEY from system_credentials
-  const { data: flowpayCred } = await supabaseAdmin
-    .from("system_credentials")
-    .select("value")
-    .eq("env_key", "FLOWPAY_API_KEY")
-    .maybeSingle();
-  const FLOWPAY_API_KEY = flowpayCred?.value || Deno.env.get("FLOWPAY_API_KEY");
-
   const url = new URL(req.url);
   const action = url.searchParams.get("action");
 
   try {
-    // CREATE PIX CHARGE
+    // ==================== CREATE PIX CHARGE (MisticPay) ====================
     if (action === "create" && req.method === "POST") {
-      if (!FLOWPAY_API_KEY) {
-        return new Response(JSON.stringify({ error: "FLOWPAY_API_KEY not configured" }), {
+      const misticCreds = await getMisticPayCredentials(supabaseAdmin);
+      if (!misticCreds) {
+        return new Response(JSON.stringify({ error: "MisticPay credentials not configured (MISTICPAY_CLIENT_ID / MISTICPAY_CLIENT_SECRET)" }), {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -747,7 +742,7 @@ Deno.serve(async (req) => {
       const body = await req.json();
       const { cart_snapshot, coupon_id } = body;
 
-      // SERVER-SIDE PRICE VALIDATION — ignore client amount/discount
+      // SERVER-SIDE PRICE VALIDATION
       const { validatedAmount, validatedDiscount, validatedCart, error: validationError } =
         await validateAndCalculatePrice(supabaseAdmin, cart_snapshot, userId, coupon_id);
 
@@ -758,40 +753,56 @@ Deno.serve(async (req) => {
         });
       }
 
-      const amount = validatedAmount;
+      const amountCents = validatedAmount; // internal amount in cents
+      const amountReais = amountCents / 100; // MisticPay expects reais
 
-      const fpRes = await fetch(`${FLOWPAY_URL}/create`, {
+      // Get user profile for payer info
+      const { data: profile } = await supabaseAdmin
+        .from("profiles")
+        .select("username")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      const internalTxId = crypto.randomUUID();
+
+      const mpRes = await fetch(`${MISTICPAY_BASE_URL}/transactions/create`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": FLOWPAY_API_KEY,
-        },
+        headers: misticPayHeaders(misticCreds),
         body: JSON.stringify({
-          value: amount,
+          amount: amountReais,
+          payerName: profile?.username || "Cliente",
+          payerDocument: "00000000000", // placeholder - MisticPay requires CPF
+          transactionId: internalTxId,
           description: `Compra Inject Project - ${validatedCart.length} item(s)`,
-          expiresIn: 1800,
         }),
       });
 
-      const fpData = await fpRes.json();
-      if (!fpRes.ok || !fpData.success) {
-        console.error("FlowPay error:", fpData);
-        return new Response(JSON.stringify({ error: "Erro ao criar cobrança PIX" }), {
+      const mpData = await mpRes.json();
+      console.log("MisticPay create response:", mpRes.status, JSON.stringify(mpData).substring(0, 500));
+
+      if (!mpRes.ok || !mpData.data) {
+        console.error("MisticPay error:", mpData);
+        return new Response(JSON.stringify({ error: mpData.message || "Erro ao criar cobrança PIX" }), {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
+      const chargeData = mpData.data;
+      const misticPayTxId = String(chargeData.transactionId);
+
       const { data: payment, error: insertError } = await supabaseAdmin
         .from("payments")
         .insert({
           user_id: userId,
-          charge_id: fpData.charge.id,
-          amount,
+          charge_id: misticPayTxId,
+          external_id: internalTxId,
+          amount: amountCents,
           status: "ACTIVE",
           cart_snapshot: validatedCart,
           coupon_id: coupon_id || null,
           discount_amount: validatedDiscount,
+          payment_method: "pix",
         })
         .select("id")
         .single();
@@ -809,17 +820,17 @@ Deno.serve(async (req) => {
           success: true,
           payment_id: payment.id,
           charge: {
-            id: fpData.charge.id,
-            brCode: fpData.charge.brCode,
-            qrCodeImage: fpData.charge.qrCodeImage,
-            expiresAt: fpData.charge.expiresAt,
+            id: misticPayTxId,
+            brCode: chargeData.copyPaste,
+            qrCodeImage: chargeData.qrCodeBase64 || chargeData.qrcodeUrl,
+            expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // 30min expiry
           },
         }),
         { status: 201, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // CHECK STATUS
+    // ==================== CHECK PIX STATUS (MisticPay) ====================
     if (action === "status" && req.method === "GET") {
       const paymentId = url.searchParams.get("payment_id");
       if (!paymentId) {
@@ -829,7 +840,6 @@ Deno.serve(async (req) => {
         });
       }
 
-      // SECURITY: Only allow users to check their own payments
       const { data: payment } = await supabaseAdmin
         .from("payments")
         .select("*")
@@ -850,22 +860,24 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Check on FlowPay
-      if (FLOWPAY_API_KEY) {
-        const fpRes = await fetch(`${FLOWPAY_URL}/status?id=${payment.charge_id}`, {
-          headers: { "x-api-key": FLOWPAY_API_KEY },
+      // Check on MisticPay
+      const misticCreds = await getMisticPayCredentials(supabaseAdmin);
+      if (misticCreds && payment.charge_id) {
+        const mpRes = await fetch(`${MISTICPAY_BASE_URL}/transactions/check`, {
+          method: "POST",
+          headers: misticPayHeaders(misticCreds),
+          body: JSON.stringify({ transactionId: payment.charge_id }),
         });
 
-        const fpData = await fpRes.json();
-        if (fpRes.ok) {
-          const newStatus = fpData.charge?.status || "ACTIVE";
+        const mpData = await mpRes.json();
+        if (mpRes.ok && mpData.transaction) {
+          const newStatus = mapMisticPayStatus(mpData.transaction.transactionState);
 
           if (newStatus !== payment.status) {
             const updates: Record<string, unknown> = { status: newStatus };
             if (newStatus === "COMPLETED") {
-              updates.paid_at = fpData.charge?.paidAt || new Date().toISOString();
+              updates.paid_at = mpData.transaction.updatedAt || new Date().toISOString();
             }
-            // Atomic update: only update if status hasn't changed (prevents race condition / duplicate fulfillment)
             const { data: updatedPayment } = await supabaseAdmin
               .from("payments")
               .update(updates)
@@ -874,7 +886,6 @@ Deno.serve(async (req) => {
               .select("id")
               .maybeSingle();
 
-            // Only fulfill if WE were the one to transition the status
             if (newStatus === "COMPLETED" && updatedPayment) {
               await fulfillOrder(supabaseAdmin, payment);
               await sendDiscordSaleNotification(supabaseAdmin, payment);
@@ -892,9 +903,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    // FORCE COMPLETE (admin-only manual validation)
+    // ==================== FORCE COMPLETE (admin-only) ====================
     if (action === "force-complete" && req.method === "POST") {
-      // SECURITY: Only admins can force-complete payments
       const { data: adminRole } = await supabaseAdmin
         .from("user_roles")
         .select("role")
@@ -938,7 +948,6 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Mark as completed atomically
       const { data: updatedPayment } = await supabaseAdmin
         .from("payments")
         .update({
@@ -950,7 +959,6 @@ Deno.serve(async (req) => {
         .select("id")
         .maybeSingle();
 
-      // Only fulfill if we actually transitioned the status
       if (updatedPayment) {
         await fulfillOrder(supabaseAdmin, payment);
         await sendDiscordSaleNotification(supabaseAdmin, payment);
@@ -962,301 +970,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    // CREATE CARD CHARGE
-    if (action === "create-card" && req.method === "POST") {
-      if (!FLOWPAY_API_KEY) {
-        return new Response(JSON.stringify({ error: "FLOWPAY_API_KEY not configured" }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      const body = await req.json();
-      const { cart_snapshot, coupon_id } = body;
-
-      // SERVER-SIDE PRICE VALIDATION
-      const { validatedAmount, validatedDiscount, validatedCart, error: validationError } =
-        await validateAndCalculatePrice(supabaseAdmin, cart_snapshot, userId, coupon_id);
-
-      if (validationError) {
-        return new Response(JSON.stringify({ error: validationError }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      const amount = validatedAmount;
-
-      const fpRes = await fetch(`${FLOWPAY_CARD_URL}/create`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": FLOWPAY_API_KEY,
-        },
-        body: JSON.stringify({
-          value: amount,
-          description: `Compra Inject Project - ${validatedCart.length} item(s)`,
-        }),
-      });
-
-      const fpData = await fpRes.json();
-      if (!fpRes.ok || !fpData.success) {
-        console.error("FlowPay card error:", fpData);
-        return new Response(JSON.stringify({ error: "Erro ao criar cobrança de cartão" }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      const { data: payment, error: insertError } = await supabaseAdmin
-        .from("payments")
-        .insert({
-          user_id: userId,
-          charge_id: fpData.payment.id,
-          amount,
-          status: "ACTIVE",
-          cart_snapshot: validatedCart,
-          coupon_id: coupon_id || null,
-          discount_amount: validatedDiscount,
-        })
-        .select("id")
-        .single();
-
-      if (insertError) {
-        console.error("Insert error:", insertError);
-        return new Response(JSON.stringify({ error: "Erro ao salvar pagamento" }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-          payment_id: payment.id,
-          paymentUrl: fpData.payment.paymentUrl,
-          charge_id: fpData.payment.id,
-        }),
-        { status: 201, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // CHECK CARD STATUS
-    if (action === "card-status" && req.method === "GET") {
-      const paymentId = url.searchParams.get("payment_id");
-      if (!paymentId) {
-        return new Response(JSON.stringify({ error: "payment_id required" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      // SECURITY: Only allow users to check their own payments
-      const { data: payment } = await supabaseAdmin
-        .from("payments")
-        .select("*")
-        .eq("id", paymentId)
-        .eq("user_id", userId)
-        .single();
-
-      if (!payment) {
-        return new Response(JSON.stringify({ error: "Pagamento não encontrado" }), {
-          status: 404,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      if (payment.status === "COMPLETED") {
-        return new Response(JSON.stringify({ success: true, status: "COMPLETED" }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      // Check on FlowPay Card API
-      if (FLOWPAY_API_KEY) {
-        const fpRes = await fetch(`${FLOWPAY_CARD_URL}/status?id=${payment.charge_id}`, {
-          headers: { "x-api-key": FLOWPAY_API_KEY },
-        });
-
-        const fpData = await fpRes.json();
-        if (fpRes.ok && fpData.payment) {
-          const newStatus = fpData.payment.status || "ACTIVE";
-
-          if (newStatus !== payment.status) {
-            const updates: Record<string, unknown> = { status: newStatus };
-            if (newStatus === "COMPLETED") {
-              updates.paid_at = fpData.payment.paidAt || new Date().toISOString();
-            }
-            const { data: updatedPayment } = await supabaseAdmin
-              .from("payments")
-              .update(updates)
-              .eq("id", paymentId)
-              .eq("status", payment.status)
-              .select("id")
-              .maybeSingle();
-
-            if (newStatus === "COMPLETED" && updatedPayment) {
-              await fulfillOrder(supabaseAdmin, payment);
-              await sendDiscordSaleNotification(supabaseAdmin, payment);
-            }
-          }
-
-          return new Response(JSON.stringify({ success: true, status: newStatus }), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-      }
-
-      return new Response(JSON.stringify({ success: true, status: payment.status }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // CREATE CRYPTO (USDT) CHARGE
-    if (action === "create-crypto" && req.method === "POST") {
-      if (!FLOWPAY_API_KEY) {
-        return new Response(JSON.stringify({ error: "FLOWPAY_API_KEY not configured" }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      const body = await req.json();
-      const { cart_snapshot, coupon_id } = body;
-
-      // SERVER-SIDE PRICE VALIDATION
-      const { validatedAmount, validatedDiscount, validatedCart, error: validationError } =
-        await validateAndCalculatePrice(supabaseAdmin, cart_snapshot, userId, coupon_id);
-
-      if (validationError) {
-        return new Response(JSON.stringify({ error: validationError }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      const amount = validatedAmount;
-
-      const fpRes = await fetch(`${FLOWPAY_CRYPTO_URL}/create`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": FLOWPAY_API_KEY,
-        },
-        body: JSON.stringify({
-          value: amount,
-          description: `Compra Inject Project - ${validatedCart.length} item(s)`,
-        }),
-      });
-
-      const fpData = await fpRes.json();
-      if (!fpRes.ok || !fpData.success) {
-        console.error("FlowPay crypto error:", fpData);
-        return new Response(JSON.stringify({ error: "Erro ao criar cobrança USDT" }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      const { data: payment, error: insertError } = await supabaseAdmin
-        .from("payments")
-        .insert({
-          user_id: userId,
-          charge_id: fpData.charge.id,
-          amount,
-          status: "ACTIVE",
-          cart_snapshot: validatedCart,
-          coupon_id: coupon_id || null,
-          discount_amount: validatedDiscount,
-        })
-        .select("id")
-        .single();
-
-      if (insertError) {
-        console.error("Insert error:", insertError);
-        return new Response(JSON.stringify({ error: "Erro ao salvar pagamento" }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-          payment_id: payment.id,
-          crypto: fpData.charge.crypto,
-          charge_id: fpData.charge.id,
-        }),
-        { status: 201, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // CHECK CRYPTO STATUS
-    if (action === "crypto-status" && req.method === "GET") {
-      const paymentId = url.searchParams.get("payment_id");
-      if (!paymentId) {
-        return new Response(JSON.stringify({ error: "payment_id required" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      // SECURITY: Only allow users to check their own payments
-      const { data: payment } = await supabaseAdmin
-        .from("payments")
-        .select("*")
-        .eq("id", paymentId)
-        .eq("user_id", userId)
-        .single();
-
-      if (!payment) {
-        return new Response(JSON.stringify({ error: "Pagamento não encontrado" }), {
-          status: 404,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      if (payment.status === "COMPLETED") {
-        return new Response(JSON.stringify({ success: true, status: "COMPLETED" }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      if (FLOWPAY_API_KEY) {
-        const fpRes = await fetch(`${FLOWPAY_CRYPTO_URL}/status?id=${payment.charge_id}`, {
-          headers: { "x-api-key": FLOWPAY_API_KEY },
-        });
-
-        const fpData = await fpRes.json();
-        if (fpRes.ok && fpData.charge) {
-          const newStatus = fpData.charge.status || "ACTIVE";
-
-          if (newStatus !== payment.status) {
-            const updates: Record<string, unknown> = { status: newStatus, updated_at: new Date().toISOString() };
-            if (newStatus === "COMPLETED") {
-              updates.paid_at = fpData.charge.paidAt || new Date().toISOString();
-            }
-            const { data: updatedPayment } = await supabaseAdmin
-              .from("payments")
-              .update(updates)
-              .eq("id", paymentId)
-              .eq("status", payment.status)
-              .select("id")
-              .maybeSingle();
-
-            if (newStatus === "COMPLETED" && updatedPayment) {
-              await fulfillOrder(supabaseAdmin, payment);
-              await sendDiscordSaleNotification(supabaseAdmin, payment);
-            }
-          }
-
-          return new Response(JSON.stringify({ success: true, status: newStatus }), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-      }
-
-      return new Response(JSON.stringify({ success: true, status: payment.status }), {
+    // ==================== CARD / CRYPTO — NOT SUPPORTED ====================
+    if (action === "create-card" || action === "card-status" || action === "create-crypto" || action === "crypto-status") {
+      return new Response(JSON.stringify({ error: "Método de pagamento não disponível com a gateway atual (MisticPay). Apenas PIX é suportado." }), {
+        status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
