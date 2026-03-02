@@ -45,9 +45,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         _user_id: userId,
         _role: "admin",
       });
-      if (isMountedRef.current) setIsAdmin(error ? false : !!data);
+      if (!isMountedRef.current) return;
+      // Only update isAdmin on successful response; ignore network errors
+      // to prevent kicking admin out on transient failures
+      if (!error) {
+        setIsAdmin(!!data);
+      }
     } catch {
-      if (isMountedRef.current) setIsAdmin(false);
+      // Network error — don't change isAdmin state
     }
   };
 
