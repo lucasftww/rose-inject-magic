@@ -110,26 +110,23 @@ const PedidoChat = () => {
         }
       }
 
+      // Fetch existing review (now that we have ticketData.product_id)
+      const { data: reviewData } = await supabase
+        .from("product_reviews")
+        .select("id, rating, comment")
+        .eq("product_id", ticketData.product_id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (reviewData) {
+        setExistingReview(reviewData as any);
+        setReviewRating((reviewData as any).rating);
+        setReviewComment((reviewData as any).comment || "");
+      }
+      setLoadingReview(false);
+
       setLoading(false);
     };
     fetchData();
-
-    // Fetch existing review
-    const fetchReview = async () => {
-      const { data } = await supabase
-        .from("product_reviews")
-        .select("id, rating, comment")
-        .eq("product_id", ticket?.product_id ?? "")
-        .eq("user_id", user?.id ?? "")
-        .maybeSingle();
-      if (data) {
-        setExistingReview(data as any);
-        setReviewRating((data as any).rating);
-        setReviewComment((data as any).comment || "");
-      }
-      setLoadingReview(false);
-    };
-    fetchReview();
   }, [id, user]);
 
   // Realtime subscription + polling fallback for reliable message sync
