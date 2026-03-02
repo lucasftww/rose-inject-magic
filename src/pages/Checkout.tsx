@@ -520,23 +520,81 @@ description: `Compra Royal Store - ${items.length} item(s)`,
           </motion.div>
         )}
 
-        {/* Loading state */}
+        {/* Loading state — animated progress steps */}
         {loading && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="flex flex-col items-center justify-center py-24"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="flex flex-col items-center justify-center py-16"
           >
-            <div className="relative mb-8">
-              <div className="absolute inset-0 h-20 w-20 rounded-full bg-success/15 blur-2xl animate-pulse" />
-              <div className="relative flex h-20 w-20 items-center justify-center rounded-full border border-success/20 bg-card">
-                <Loader2 className="h-8 w-8 animate-spin text-success" />
+            {/* Pulsing ring */}
+            <div className="relative mb-10">
+              <motion.div
+                animate={{ scale: [1, 1.4, 1], opacity: [0.15, 0.05, 0.15] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute inset-0 h-24 w-24 rounded-full bg-success blur-2xl"
+              />
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
+                className="relative flex h-24 w-24 items-center justify-center"
+              >
+                <svg className="h-24 w-24" viewBox="0 0 96 96">
+                  <circle cx="48" cy="48" r="44" fill="none" stroke="hsl(var(--border))" strokeWidth="2" opacity="0.3" />
+                  <circle cx="48" cy="48" r="44" fill="none" stroke="hsl(var(--success))" strokeWidth="2.5" strokeLinecap="round" strokeDasharray="80 200" />
+                </svg>
+              </motion.div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Zap className="h-8 w-8 text-success" />
               </div>
             </div>
-            <p className="text-sm font-medium text-foreground mb-1">
-              {paymentMethod === "card" ? "Criando pagamento com cartão" : paymentMethod === "crypto" ? "Criando pagamento USDT" : "Gerando QR Code PIX"}
+
+            <p className="text-base font-bold text-foreground mb-2" style={{ fontFamily: "'Valorant', sans-serif" }}>
+              {paymentMethod === "card" ? "CRIANDO PAGAMENTO" : paymentMethod === "crypto" ? "CRIANDO PAGAMENTO" : "GERANDO PIX"}
             </p>
-            <p className="text-xs text-muted-foreground">Aguarde um momento...</p>
+
+            {/* Animated progress steps */}
+            <div className="flex flex-col gap-2.5 mt-4 w-full max-w-xs">
+              {[
+                { label: "Validando carrinho", delay: 0 },
+                { label: "Conectando ao gateway", delay: 0.8 },
+                { label: "Gerando QR Code", delay: 1.8 },
+              ].map((step, i) => (
+                <motion.div
+                  key={step.label}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: step.delay, duration: 0.3 }}
+                  className="flex items-center gap-3"
+                >
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: step.delay + 0.2, type: "spring", stiffness: 300 }}
+                  >
+                    <div className="h-5 w-5 rounded-full border border-success/40 bg-success/10 flex items-center justify-center">
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: step.delay + 0.5 }}
+                        className="h-2 w-2 rounded-full bg-success"
+                      />
+                    </div>
+                  </motion.div>
+                  <span className="text-xs text-muted-foreground">{step.label}</span>
+                </motion.div>
+              ))}
+            </div>
+
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 2.5 }}
+              className="text-[10px] text-muted-foreground/50 mt-6 uppercase tracking-widest"
+            >
+              Isso leva apenas alguns segundos
+            </motion.p>
           </motion.div>
         )}
 
