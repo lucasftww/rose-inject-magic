@@ -136,12 +136,11 @@ const ProdutoDetalhes = () => {
   const allMedia = useMemo(() => {
     if (!product) return [];
     const items: { id: string; media_type: "image" | "video"; url: string; sort_order: number }[] = [];
-    // Always include main product image first
-    if (product.image_url) {
+    const media = [...(product.product_media || [])].sort((a, b) => a.sort_order - b.sort_order);
+    // Only add main image if it's not already in product_media
+    if (product.image_url && !media.some(m => m.url === product.image_url)) {
       items.push({ id: "main", media_type: "image", url: product.image_url, sort_order: -1 });
     }
-    // Then add all uploaded media
-    const media = [...(product.product_media || [])].sort((a, b) => a.sort_order - b.sort_order);
     items.push(...media);
     return items;
   }, [product]);
