@@ -868,7 +868,7 @@ Deno.serve(async (req) => {
           payerName: profile?.username || "Cliente",
           payerDocument: "00000000000", // placeholder - MisticPay requires CPF
           transactionId: internalTxId,
-          description: `Compra Inject Project - ${validatedCart.length} item(s)`,
+          description: `Compra Royal Store - ${validatedCart.length} item(s)`,
         }),
       });
 

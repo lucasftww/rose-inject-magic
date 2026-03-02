@@ -105,7 +105,7 @@ const Checkout = () => {
           headers: await getAuthHeaders(),
           body: JSON.stringify({
             amount: Math.round(finalPrice * 100),
-            description: `Compra Inject Project - ${items.length} item(s)`,
+description: `Compra Royal Store - ${items.length} item(s)`,
             cart_snapshot: buildCartSnapshot(),
             coupon_id: couponId,
             discount_amount: discountAmount,
@@ -139,7 +139,7 @@ const Checkout = () => {
           headers: await getAuthHeaders(),
           body: JSON.stringify({
             amount: Math.round(finalPrice * 100),
-            description: `Compra Inject Project - ${items.length} item(s)`,
+description: `Compra Royal Store - ${items.length} item(s)`,
             cart_snapshot: buildCartSnapshot(),
             coupon_id: couponId,
             discount_amount: discountAmount,
@@ -175,7 +175,7 @@ const Checkout = () => {
           headers: await getAuthHeaders(),
           body: JSON.stringify({
             amount: Math.round(finalPrice * 100),
-            description: `Compra Inject Project - ${items.length} item(s)`,
+            description: `Compra Royal Store - ${items.length} item(s)`,
             cart_snapshot: buildCartSnapshot(),
             coupon_id: couponId,
             discount_amount: discountAmount,
