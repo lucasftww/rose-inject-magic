@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Star, Shield, Zap, X, Loader2, ArrowLeft } from "lucide-react";
@@ -36,6 +36,7 @@ const AuthModal = ({ open, onOpenChange, defaultTab = "login" }: AuthModalProps)
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl w-[95vw] p-0 border-border overflow-hidden gap-0 rounded-2xl [&>button:last-child]:hidden">
+        <DialogTitle className="sr-only">Autenticação</DialogTitle>
         <DiscordBanner dismissible={false} />
         {/* Close button */}
         <button
