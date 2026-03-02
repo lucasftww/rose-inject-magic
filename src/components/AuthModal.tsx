@@ -6,7 +6,7 @@ import { Star, Shield, Zap, X, Loader2, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import logoInject from "@/assets/logo-inject.png";
+import logoRoyal from "@/assets/logo-royal.png";
 import DiscordBanner from "@/components/DiscordBanner";
 
 interface AuthModalProps {
@@ -50,10 +50,10 @@ const AuthModal = ({ open, onOpenChange, defaultTab = "login" }: AuthModalProps)
           <div className="hidden md:flex flex-col w-[45%] bg-card relative overflow-hidden">
             <div className="relative z-10 flex flex-col h-full p-10 pt-10">
               <div className="flex items-center gap-3 mb-8">
-                <img src={logoInject} alt="Inject" className="w-10 h-10 object-contain" />
+                <img src={logoRoyal} alt="Royal Store" className="w-10 h-10 object-contain" />
                 <span className="text-xl font-bold tracking-widest" style={{ fontFamily: "'Valorant', sans-serif" }}>
-                  <span className="text-success">INJECT</span>
-                  <span className="text-foreground"> PROJECT</span>
+                  <span className="text-success">ROYAL</span>
+                  <span className="text-foreground"> STORE</span>
                 </span>
               </div>
 
