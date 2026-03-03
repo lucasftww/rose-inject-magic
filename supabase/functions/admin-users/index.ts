@@ -103,8 +103,10 @@ serve(async (req) => {
       const ordersMap = new Map<string, number>();
       const recentPaymentsMap = new Map<string, any[]>();
       (payments || []).forEach((p: any) => {
-        // Count all payments (ACTIVE, COMPLETED, etc.) for total spent
-        spentMap.set(p.user_id, (spentMap.get(p.user_id) || 0) + p.amount);
+        // Only count COMPLETED payments for total spent
+        if (p.status === "COMPLETED") {
+          spentMap.set(p.user_id, (spentMap.get(p.user_id) || 0) + p.amount);
+        }
         const existing = recentPaymentsMap.get(p.user_id) || [];
         if (existing.length < 5) existing.push({ amount: p.amount, status: p.status, created_at: p.created_at, cart_snapshot: p.cart_snapshot });
         recentPaymentsMap.set(p.user_id, existing);
