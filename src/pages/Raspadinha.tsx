@@ -357,40 +357,44 @@ const Raspadinha = () => {
 
     const qty = pendingQuantityRef.current;
     const currentMode = pendingModeRef.current;
-    const prizesPool = currentMode === "produtos" ? prizes : contasPrizes;
 
     toast({ title: "Pagamento confirmado! 🎉", description: qty > 1 ? `Processando ${qty} raspadinhas...` : "Raspe para revelar!" });
 
-    let wonPrize: Prize | null = null;
-    for (let i = 0; i < qty; i++) {
-      wonPrize = rollWin(prizesPool);
-      if (wonPrize) break;
+    try {
+      // Call server-side edge function for secure win determination
+      const session = (await supabase.auth.getSession()).data.session;
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/scratch-card-play`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session?.access_token}`,
+            "Content-Type": "application/json",
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({
+            payment_id: paymentId,
+            mode: currentMode,
+            quantity: qty,
+          }),
+        }
+      );
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Erro ao processar raspadinha");
+      }
+
+      const newGrid: GridCell[] = data.grid;
+      setGrid(newGrid);
+      setResult({ won: data.won, prize: data.prize || undefined });
+    } catch (err: any) {
+      console.error("scratch-card-play error:", err);
+      toast({ title: "Erro ao processar raspadinha", description: err.message, variant: "destructive" });
+      resetGame();
+      return;
     }
 
-    const newGrid = generateGrid(wonPrize, prizesPool);
-    setGrid(newGrid);
-
-    if (currentMode === "produtos") {
-      const plays = Array.from({ length: qty }, (_, idx) => ({
-        user_id: user!.id,
-        prize_id: idx === 0 && wonPrize ? wonPrize.id : null,
-        won: idx === 0 && !!wonPrize,
-        amount_paid: config!.price,
-        grid_data: idx === 0 ? newGrid.map(c => ({ type: c.type, name: c.name, prizeId: c.prizeId })) : [],
-      }));
-      await supabase.from("scratch_card_plays").insert(plays);
-    } else {
-      const plays = Array.from({ length: qty }, (_, idx) => ({
-        user_id: user!.id,
-        prize_id: null,
-        won: idx === 0 && !!wonPrize,
-        amount_paid: CONTAS_PRICE,
-        grid_data: idx === 0 ? newGrid.map(c => ({ type: c.type, name: c.name, prizeId: c.prizeId })) : [],
-      }));
-      await supabase.from("scratch_card_plays").insert(plays);
-    }
-
-    setResult({ won: !!wonPrize, prize: wonPrize || undefined });
     setScratching(true);
 
     setTimeout(() => {
