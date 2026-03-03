@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import logoRoyal from "@/assets/logo-royal.png";
 import DiscordBanner from "@/components/DiscordBanner";
+import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
+
+const TURNSTILE_SITE_KEY = "0x4AAAAAAClS1zHIEKz4wE9_";
 
 interface AuthModalProps {
   open: boolean;
@@ -31,6 +34,8 @@ const AuthModal = ({ open, onOpenChange, defaultTab = "login" }: AuthModalProps)
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotSent, setForgotSent] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | undefined>();
+  const captchaRef = useRef<TurnstileInstance>(null);
   const { signIn, signUp, resetPassword } = useAuth();
 
   return (
@@ -188,16 +193,22 @@ const AuthModal = ({ open, onOpenChange, defaultTab = "login" }: AuthModalProps)
 
                 <form onSubmit={async (e) => {
                   e.preventDefault();
+                  if (!captchaToken) {
+                    toast.error("Aguarde a verificação de segurança.");
+                    return;
+                  }
                   setIsLoading(true);
                   if (tab === "login") {
-                    const { error } = await signIn(email, password);
+                    const { error } = await signIn(email, password, captchaToken);
                     if (error) { toast.error(error.message); }
                     else { toast.success("Login realizado!"); onOpenChange(false); }
                   } else {
-                    const { error } = await signUp(email, password, username);
+                    const { error } = await signUp(email, password, username, captchaToken);
                     if (error) { toast.error(error.message); }
                     else { toast.success("Conta criada com sucesso!"); onOpenChange(false); }
                   }
+                  setCaptchaToken(undefined);
+                  captchaRef.current?.reset();
                   setIsLoading(false);
                 }} className="flex flex-col gap-5">
                   {tab === "register" && (
@@ -231,7 +242,17 @@ const AuthModal = ({ open, onOpenChange, defaultTab = "login" }: AuthModalProps)
                     </div>
                   )}
 
-                  <Button type="submit" disabled={isLoading} className="w-full h-12 bg-success text-success-foreground font-semibold text-base hover:bg-success/90 mt-1">
+                  <div className="flex justify-center">
+                    <Turnstile
+                      ref={captchaRef}
+                      siteKey={TURNSTILE_SITE_KEY}
+                      onSuccess={(token) => setCaptchaToken(token)}
+                      onExpire={() => setCaptchaToken(undefined)}
+                      options={{ theme: "dark", size: "flexible" }}
+                    />
+                  </div>
+
+                  <Button type="submit" disabled={isLoading || !captchaToken} className="w-full h-12 bg-success text-success-foreground font-semibold text-base hover:bg-success/90 mt-1">
                     {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : tab === "login" ? "Entrar" : "Criar Conta"}
                   </Button>
 
