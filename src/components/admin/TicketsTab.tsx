@@ -15,7 +15,7 @@ interface Ticket {
   status: string;
   status_label: string;
   created_at: string;
-  updated_at: string;
+  created_at_sort: string;
   product_name?: string;
   plan_name?: string;
   plan_price?: number;
@@ -73,7 +73,7 @@ const TicketsTab = () => {
     const { data } = await supabase
       .from("order_tickets")
       .select("*")
-      .order("updated_at", { ascending: false });
+      .order("created_at", { ascending: false });
 
     if (data) {
       const productIds = [...new Set(data.map((t: any) => t.product_id))];
@@ -325,8 +325,6 @@ const TicketsTab = () => {
     const finalStatus = status === "closed" ? "archived" : status;
     const finalLabel = status === "closed" ? "Arquivado" : (statusOptions.find(s => s.value === status)?.label || status);
     const updates: any = { status: finalStatus, status_label: finalLabel };
-    if (finalStatus !== "open") updates.closed_at = new Date().toISOString();
-    else updates.closed_at = null;
 
     const { error } = await supabase.from("order_tickets").update(updates).eq("id", ticketId);
     if (error) {
@@ -343,7 +341,7 @@ const TicketsTab = () => {
   const archiveTicket = async (ticketId: string) => {
     const { error } = await supabase
       .from("order_tickets")
-      .update({ status: "archived" as any, status_label: "Arquivado", closed_at: new Date().toISOString() })
+      .update({ status: "archived" as any, status_label: "Arquivado" })
       .eq("id", ticketId);
     if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
@@ -357,7 +355,7 @@ const TicketsTab = () => {
   const unarchiveTicket = async (ticketId: string) => {
     const { error } = await supabase
       .from("order_tickets")
-      .update({ status: "open" as any, status_label: "Aberto", closed_at: null })
+      .update({ status: "open" as any, status_label: "Aberto" })
       .eq("id", ticketId);
     if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
