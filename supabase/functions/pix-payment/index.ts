@@ -715,19 +715,43 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Validate webhook credentials
+      // Validate webhook credentials (mandatory)
       const misticCreds = await getMisticPayCredentials(supabaseAdmin);
-      if (misticCreds) {
-        const webhookCi = req.headers.get("ci") || body.ci;
-        const webhookCs = req.headers.get("cs") || body.cs;
-        if (webhookCi && webhookCs && (webhookCi !== misticCreds.clientId || webhookCs !== misticCreds.clientSecret)) {
-          console.error("Webhook credentials mismatch");
-          return new Response(JSON.stringify({ error: "Invalid credentials" }), {
+      if (!misticCreds || !misticCreds.clientId || !misticCreds.clientSecret) {
+        console.error("Webhook rejected: MisticPay credentials not configured");
+        return new Response(JSON.stringify({ error: "Server misconfigured" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const webhookCi = req.headers.get("ci") || body.ci;
+      const webhookCs = req.headers.get("cs") || body.cs;
+
+      if (!webhookCi || !webhookCs || webhookCi !== misticCreds.clientId || webhookCs !== misticCreds.clientSecret) {
+        console.error("Webhook credentials invalid or missing. IP:", req.headers.get("x-forwarded-for") || "unknown");
+        return new Response(JSON.stringify({ error: "Invalid credentials" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Replay prevention: reject webhooks with timestamps older than 5 minutes
+      const webhookTimestamp = body.timestamp || body.createdAt;
+      if (webhookTimestamp) {
+        const webhookTime = new Date(webhookTimestamp).getTime();
+        const now = Date.now();
+        const fiveMinutes = 5 * 60 * 1000;
+        if (!isNaN(webhookTime) && Math.abs(now - webhookTime) > fiveMinutes) {
+          console.error("Webhook rejected: timestamp too old/future", webhookTimestamp);
+          return new Response(JSON.stringify({ error: "Stale webhook" }), {
             status: 403,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
       }
+
+      console.log("Webhook authenticated successfully for txId:", txId);
 
       // Find payment by charge_id (MisticPay transactionId)
       const { data: payment } = await supabaseAdmin
