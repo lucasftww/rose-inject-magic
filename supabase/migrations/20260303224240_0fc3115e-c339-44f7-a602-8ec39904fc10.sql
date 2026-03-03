@@ -1,0 +1,1 @@
+UPDATE products SET tutorial_text = 'Tutorial: https://app.flowware.pro/' WHERE tutorial_text IS NULL OR tutorial_text = '';
