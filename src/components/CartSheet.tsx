@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import AuthModal from "@/components/AuthModal";
 import logoRoyal from "@/assets/logo-royal.png";
 
 interface AppliedCoupon {
@@ -28,6 +29,7 @@ const CartSheet = ({ open, onOpenChange }: CartSheetProps) => {
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
   const [couponLoading, setCouponLoading] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
 
   const applyCoupon = async () => {
     const code = couponCode.trim().toUpperCase();
@@ -126,6 +128,7 @@ const CartSheet = ({ open, onOpenChange }: CartSheetProps) => {
   const finalPrice = Math.max(0, totalPrice - discountAmount);
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl w-[95vw] p-0 border-border overflow-hidden gap-0 rounded-2xl [&>button:last-child]:hidden">
         <DialogTitle className="sr-only">Carrinho</DialogTitle>
@@ -373,7 +376,7 @@ const CartSheet = ({ open, onOpenChange }: CartSheetProps) => {
 
                   <button
                     onClick={() => {
-                      if (!user) { toast({ title: "Faça login para comprar", variant: "destructive" }); return; }
+                      if (!user) { onOpenChange(false); setAuthOpen(true); return; }
                       onOpenChange(false);
                       const params = new URLSearchParams();
                       if (appliedCoupon) {
@@ -395,6 +398,8 @@ const CartSheet = ({ open, onOpenChange }: CartSheetProps) => {
         </div>
       </DialogContent>
     </Dialog>
+    <AuthModal open={authOpen} onOpenChange={setAuthOpen} defaultTab="register" />
+    </>
   );
 };
 

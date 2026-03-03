@@ -7,6 +7,7 @@ import { ArrowLeft, Minus, Plus, ShoppingCart, Trash2, Zap, Tag, Loader2, X } fr
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import AuthModal from "@/components/AuthModal";
 
 interface AppliedCoupon {
   id: string;
@@ -22,6 +23,7 @@ const Carrinho = () => {
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
   const [couponLoading, setCouponLoading] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
 
   const applyCoupon = async () => {
     const code = couponCode.trim().toUpperCase();
@@ -325,7 +327,7 @@ const Carrinho = () => {
 
               <button
                 onClick={() => {
-                  if (!user) { toast({ title: "Faça login para comprar", variant: "destructive" }); return; }
+                  if (!user) { setAuthOpen(true); return; }
                   const params = new URLSearchParams();
                   if (appliedCoupon) {
                     params.set("coupon_id", appliedCoupon.id);
@@ -343,6 +345,7 @@ const Carrinho = () => {
           </div>
         )}
       </div>
+      <AuthModal open={authOpen} onOpenChange={setAuthOpen} defaultTab="register" />
     </div>
   );
 };
