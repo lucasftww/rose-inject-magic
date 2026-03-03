@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import logoInject from "@/assets/logo-inject.png";
+import logoRoyal from "@/assets/logo-royal.png";
 
 interface AppliedCoupon {
   id: string;
@@ -142,7 +142,7 @@ const CartSheet = ({ open, onOpenChange }: CartSheetProps) => {
           <div className="hidden md:flex flex-col w-[45%] bg-card relative overflow-hidden">
             <div className="relative z-10 flex flex-col h-full p-10">
               <div className="flex items-center gap-3 mb-8">
-                <img src={logoInject} alt="Inject" className="w-10 h-10 object-contain" />
+                <img src={logoRoyal} alt="Royal Store" className="w-10 h-10 object-contain" />
                 <span className="text-xl font-bold tracking-widest" style={{ fontFamily: "'Valorant', sans-serif" }}>
                   <span className="text-success">MEU</span>
                   <span className="text-foreground"> CARRINHO</span>

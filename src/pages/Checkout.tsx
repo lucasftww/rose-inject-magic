@@ -295,7 +295,7 @@ description: `Compra Royal Store - ${items.length} item(s)`,
               transition={{ delay: 0.5 }}
               className="text-sm text-muted-foreground mb-12 max-w-md mx-auto"
             >
-              Seus produtos já estão disponíveis. Obrigado por comprar na Inject!
+              Seus produtos já estão disponíveis. Obrigado por comprar na Royal Store!
             </motion.p>
 
             <motion.div
