@@ -384,6 +384,10 @@ const ProdutoDetalhes = () => {
 
             <h1 className="mt-2 text-2xl font-bold text-foreground md:text-3xl">{product.name}</h1>
 
+            {product.description && (
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{product.description}</p>
+            )}
+
             {/* Reseller badge */}
             {isReseller && isResellerForProduct(product.id) && (
               <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-accent/20 border border-accent/30 px-4 py-1.5">
