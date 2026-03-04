@@ -1,0 +1,1 @@
+UPDATE products SET tutorial_text = tutorial_text || E'\nSenha para extrair: 123' WHERE active = true AND tutorial_text IS NOT NULL AND tutorial_text != '';
