@@ -104,7 +104,6 @@ const LztTab = () => {
         markup_multiplier: avgMarkup,
         max_fetch_price: p,
         ...parsedMarkups,
-        updated_at: new Date().toISOString(),
       } as any)
       .eq("id", config.id);
 
