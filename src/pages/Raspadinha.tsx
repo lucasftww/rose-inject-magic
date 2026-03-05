@@ -275,6 +275,7 @@ const Raspadinha = () => {
     setGrid([]);
     setChargeData(null);
     setPaymentId(null);
+    paymentIdRef.current = null;
     setCopied(false);
 
     pendingQuantityRef.current = quantity;
