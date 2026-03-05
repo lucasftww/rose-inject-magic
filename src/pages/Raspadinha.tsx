@@ -560,6 +560,78 @@ const Raspadinha = () => {
     setRevealed(Array(9).fill(false));
   };
 
+  const handleReplay = async () => {
+    if (!pendingPayment) return;
+    setPaymentId(pendingPayment.id);
+    paymentIdRef.current = pendingPayment.id;
+    pendingQuantityRef.current = pendingPayment.quantity;
+    pendingModeRef.current = pendingPayment.mode as RaspadinhaMode;
+    setMode(pendingPayment.mode as RaspadinhaMode);
+    setQuantity(pendingPayment.quantity);
+    setPendingPayment(null);
+    
+    // Call directly onPaymentCompleted logic
+    setPaymentPhase("paid");
+    const qty = pendingPayment.quantity;
+    const currentMode = pendingPayment.mode;
+
+    toast({ title: "Carregando sua raspadinha! 🎉" });
+
+    try {
+      const session = (await supabase.auth.getSession()).data.session;
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/scratch-card-play`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session?.access_token}`,
+            "Content-Type": "application/json",
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({
+            payment_id: pendingPayment.id,
+            mode: currentMode,
+            quantity: qty,
+          }),
+        }
+      );
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Erro ao processar raspadinha");
+      }
+
+      const newGrid: GridCell[] = data.grid;
+      setGrid(newGrid);
+      setResult({ won: data.won, prize: data.prize || undefined });
+    } catch (err: any) {
+      console.error("scratch-card-play replay error:", err);
+      toast({ title: "Erro ao processar raspadinha", description: err.message, variant: "destructive" });
+      resetGame();
+      return;
+    }
+
+    setScratching(true);
+    setTimeout(() => {
+      canvasRefs.current.forEach((canvas, i) => {
+        if (canvas) {
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            ctx.fillStyle = "#1a1a2e";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.font = "bold 22px sans-serif";
+            ctx.fillStyle = "#9b87f5";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("?", canvas.width / 2, canvas.height / 2);
+          }
+        }
+      });
+    }, 100);
+  };
+
   const isContas = mode === "contas";
   const accentColor = isContas ? "hsl(220, 100%, 47%)" : "hsl(197, 100%, 50%)";
   const accentClass = isContas ? "text-blue-400" : "text-success";
