@@ -104,6 +104,7 @@ const Raspadinha = () => {
   // Payment state
   const [paymentPhase, setPaymentPhase] = useState<PaymentPhase>("idle");
   const [paymentId, setPaymentId] = useState<string | null>(null);
+  const paymentIdRef = useRef<string | null>(null);
   const [chargeData, setChargeData] = useState<{ brCode: string; qrCodeImage: string; expiresAt: string } | null>(null);
   const [copied, setCopied] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -274,6 +275,7 @@ const Raspadinha = () => {
     setGrid([]);
     setChargeData(null);
     setPaymentId(null);
+    paymentIdRef.current = null;
     setCopied(false);
 
     pendingQuantityRef.current = quantity;
@@ -306,6 +308,7 @@ const Raspadinha = () => {
       if (!res.ok || !data.success) throw new Error(data.error || "Erro ao criar cobrança");
 
       setPaymentId(data.payment_id);
+      paymentIdRef.current = data.payment_id;
       setChargeData(data.charge);
       setPaymentPhase("paying");
       setPlaying(false);
@@ -373,7 +376,7 @@ const Raspadinha = () => {
             apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
           },
           body: JSON.stringify({
-            payment_id: paymentId,
+            payment_id: paymentIdRef.current,
             mode: currentMode,
             quantity: qty,
           }),
@@ -507,6 +510,7 @@ const Raspadinha = () => {
   const resetGame = () => {
     setPaymentPhase("idle");
     setPaymentId(null);
+    paymentIdRef.current = null;
     setChargeData(null);
     setScratching(false);
     setAllRevealed(false);
