@@ -29,16 +29,15 @@ serve(async (req) => {
       global: { headers: { Authorization: authHeader } },
     });
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
-      console.error("Auth validation error:", claimsError);
+    const { data: { user: callerUser }, error: userError } = await userClient.auth.getUser();
+    if (userError || !callerUser) {
+      console.error("Auth validation error:", userError);
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const callerId = claimsData.claims.sub;
+    const callerId = callerUser.id;
 
     // Service role client for admin operations
     const supabase = createClient(supabaseUrl, serviceRoleKey);
