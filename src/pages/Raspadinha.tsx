@@ -655,6 +655,28 @@ const Raspadinha = () => {
       <AuthModal open={authOpen} onOpenChange={setAuthOpen} defaultTab="login" />
 
       <div className="mx-auto max-w-4xl px-6 pt-28 pb-20">
+        {/* Pending payment banner */}
+        {pendingPayment && paymentPhase === "idle" && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-4 flex items-center justify-between gap-4"
+          >
+            <div>
+              <p className="text-sm font-semibold text-yellow-300">🎰 Você tem uma raspadinha pendente!</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Pagamento confirmado mas o jogo não carregou. Clique para jogar agora.
+              </p>
+            </div>
+            <button
+              onClick={handleReplay}
+              className="shrink-0 rounded-lg bg-yellow-500 px-5 py-2.5 text-sm font-bold text-black hover:bg-yellow-400 transition-colors"
+            >
+              Jogar Agora
+            </button>
+          </motion.div>
+        )}
+
         {/* Title */}
         <div className="text-center mb-8">
           <motion.div
