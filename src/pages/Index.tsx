@@ -179,7 +179,7 @@ const FloatingWidgets = () => {
         <p className="text-xs text-muted-foreground">Entre no nosso Discord</p>
       </div>
       <a
-        href="https://discord.gg/FeJ5JAZFmU"
+        href="https://discord.gg/royalstorebr"
         target="_blank"
         rel="noopener noreferrer"
         className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-[#5865F2] text-white shadow-[0_0_20px_rgba(88,101,242,0.4)] transition-all hover:scale-110 hover:shadow-[0_0_30px_rgba(88,101,242,0.6)]"
