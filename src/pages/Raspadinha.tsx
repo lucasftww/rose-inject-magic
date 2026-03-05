@@ -509,6 +509,7 @@ const Raspadinha = () => {
   const resetGame = () => {
     setPaymentPhase("idle");
     setPaymentId(null);
+    paymentIdRef.current = null;
     setChargeData(null);
     setScratching(false);
     setAllRevealed(false);
