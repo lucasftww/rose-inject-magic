@@ -307,6 +307,7 @@ const Raspadinha = () => {
       if (!res.ok || !data.success) throw new Error(data.error || "Erro ao criar cobrança");
 
       setPaymentId(data.payment_id);
+      paymentIdRef.current = data.payment_id;
       setChargeData(data.charge);
       setPaymentPhase("paying");
       setPlaying(false);
