@@ -1,0 +1,1 @@
+ALTER TABLE public.scratch_card_plays ADD COLUMN IF NOT EXISTS payment_id uuid REFERENCES public.payments(id);
