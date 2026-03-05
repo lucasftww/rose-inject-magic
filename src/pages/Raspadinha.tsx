@@ -104,6 +104,7 @@ const Raspadinha = () => {
   // Payment state
   const [paymentPhase, setPaymentPhase] = useState<PaymentPhase>("idle");
   const [paymentId, setPaymentId] = useState<string | null>(null);
+  const paymentIdRef = useRef<string | null>(null);
   const [chargeData, setChargeData] = useState<{ brCode: string; qrCodeImage: string; expiresAt: string } | null>(null);
   const [copied, setCopied] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
