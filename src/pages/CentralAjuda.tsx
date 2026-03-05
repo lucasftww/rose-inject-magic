@@ -107,7 +107,7 @@ const CentralAjuda = () => {
           <h3 className="text-foreground font-semibold mb-2">Não encontrou sua resposta?</h3>
           <p className="text-sm text-muted-foreground mb-4">Entre em contato com nosso suporte pelo Discord.</p>
           <a
-            href="https://discord.gg/FeJ5JAZFmU"
+            href="https://discord.gg/royalstorebr"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 rounded-lg bg-success px-5 py-2.5 text-sm font-semibold text-success-foreground hover:shadow-[0_0_20px_hsl(130,99%,41%,0.4)] transition-all"
