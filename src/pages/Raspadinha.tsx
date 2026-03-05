@@ -155,6 +155,46 @@ const Raspadinha = () => {
     }
   }, [user, result]);
 
+  // Check for paid-but-unplayed scratch card payments
+  useEffect(() => {
+    if (!user || paymentPhase !== "idle") return;
+    const checkPending = async () => {
+      // Find recent COMPLETED raspadinha payments
+      const { data: payments } = await supabase
+        .from("payments")
+        .select("id, cart_snapshot, created_at")
+        .eq("user_id", user.id)
+        .eq("status", "COMPLETED")
+        .order("created_at", { ascending: false })
+        .limit(10);
+      
+      if (!payments || payments.length === 0) return;
+      
+      for (const payment of payments) {
+        const cart = payment.cart_snapshot as any[];
+        if (!cart || !Array.isArray(cart)) continue;
+        const raspadinhaItem = cart.find((item: any) => item.type === "raspadinha");
+        if (!raspadinhaItem) continue;
+        
+        // Check if plays exist for this payment
+        const { data: plays } = await supabase
+          .from("scratch_card_plays")
+          .select("id")
+          .eq("payment_id", payment.id)
+          .limit(1);
+        
+        if (!plays || plays.length === 0) {
+          // Found an unplayed payment!
+          const paymentMode = raspadinhaItem.planId?.includes("contas") ? "contas" : "produtos";
+          const qty = parseInt(raspadinhaItem.planName?.match(/(\d+)x/)?.[1] || "1");
+          setPendingPayment({ id: payment.id, mode: paymentMode, quantity: qty });
+          return;
+        }
+      }
+    };
+    checkPending();
+  }, [user, paymentPhase]);
+
   useEffect(() => {
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
