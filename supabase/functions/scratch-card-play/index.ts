@@ -198,9 +198,15 @@ Deno.serve(async (req) => {
     const { data: existingPlays } = await supabaseAdmin
       .from("scratch_card_plays")
       .select("id")
-      .eq("user_id", user.id)
-      .gte("created_at", new Date(Date.now() - 60000).toISOString())
+      .eq("payment_id", payment_id)
       .limit(1);
+
+    if (existingPlays && existingPlays.length > 0) {
+      return new Response(JSON.stringify({ error: "This payment was already used" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Get prizes and config
     let prizesPool: Prize[];
@@ -231,6 +237,7 @@ Deno.serve(async (req) => {
     // SERVER-SIDE: Record plays
     const plays = Array.from({ length: qty }, (_, idx) => ({
       user_id: user.id,
+      payment_id: payment_id,
       prize_id: idx === 0 && wonPrize ? wonPrize.id : null,
       won: idx === 0 && !!wonPrize,
       amount_paid: unitPrice,
