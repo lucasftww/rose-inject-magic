@@ -716,6 +716,7 @@ export type Database = {
           created_at: string | null
           grid_data: Json | null
           id: string
+          payment_id: string | null
           prize_id: string | null
           user_id: string
           won: boolean | null
@@ -725,6 +726,7 @@ export type Database = {
           created_at?: string | null
           grid_data?: Json | null
           id?: string
+          payment_id?: string | null
           prize_id?: string | null
           user_id: string
           won?: boolean | null
@@ -734,11 +736,19 @@ export type Database = {
           created_at?: string | null
           grid_data?: Json | null
           id?: string
+          payment_id?: string | null
           prize_id?: string | null
           user_id?: string
           won?: boolean | null
         }
         Relationships: [
+          {
+            foreignKeyName: "scratch_card_plays_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "scratch_card_plays_prize_id_fkey"
             columns: ["prize_id"]

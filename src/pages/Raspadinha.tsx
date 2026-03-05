@@ -110,6 +110,7 @@ const Raspadinha = () => {
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pendingQuantityRef = useRef(1);
   const pendingModeRef = useRef<RaspadinhaMode>("produtos");
+  const [pendingPayment, setPendingPayment] = useState<{ id: string; mode: string; quantity: number } | null>(null);
 
   // Contas prizes pool (fixed)
   const contasPrizes: Prize[] = [
@@ -153,6 +154,46 @@ const Raspadinha = () => {
         });
     }
   }, [user, result]);
+
+  // Check for paid-but-unplayed scratch card payments
+  useEffect(() => {
+    if (!user || paymentPhase !== "idle") return;
+    const checkPending = async () => {
+      // Find recent COMPLETED raspadinha payments
+      const { data: payments } = await supabase
+        .from("payments")
+        .select("id, cart_snapshot, created_at")
+        .eq("user_id", user.id)
+        .eq("status", "COMPLETED")
+        .order("created_at", { ascending: false })
+        .limit(10);
+      
+      if (!payments || payments.length === 0) return;
+      
+      for (const payment of payments) {
+        const cart = payment.cart_snapshot as any[];
+        if (!cart || !Array.isArray(cart)) continue;
+        const raspadinhaItem = cart.find((item: any) => item.type === "raspadinha");
+        if (!raspadinhaItem) continue;
+        
+        // Check if plays exist for this payment
+        const { data: plays } = await supabase
+          .from("scratch_card_plays")
+          .select("id")
+          .eq("payment_id", payment.id)
+          .limit(1);
+        
+        if (!plays || plays.length === 0) {
+          // Found an unplayed payment!
+          const paymentMode = raspadinhaItem.planId?.includes("contas") ? "contas" : "produtos";
+          const qty = parseInt(raspadinhaItem.planName?.match(/(\d+)x/)?.[1] || "1");
+          setPendingPayment({ id: payment.id, mode: paymentMode, quantity: qty });
+          return;
+        }
+      }
+    };
+    checkPending();
+  }, [user, paymentPhase]);
 
   useEffect(() => {
     return () => {
@@ -519,6 +560,78 @@ const Raspadinha = () => {
     setRevealed(Array(9).fill(false));
   };
 
+  const handleReplay = async () => {
+    if (!pendingPayment) return;
+    setPaymentId(pendingPayment.id);
+    paymentIdRef.current = pendingPayment.id;
+    pendingQuantityRef.current = pendingPayment.quantity;
+    pendingModeRef.current = pendingPayment.mode as RaspadinhaMode;
+    setMode(pendingPayment.mode as RaspadinhaMode);
+    setQuantity(pendingPayment.quantity);
+    setPendingPayment(null);
+    
+    // Call directly onPaymentCompleted logic
+    setPaymentPhase("paid");
+    const qty = pendingPayment.quantity;
+    const currentMode = pendingPayment.mode;
+
+    toast({ title: "Carregando sua raspadinha! 🎉" });
+
+    try {
+      const session = (await supabase.auth.getSession()).data.session;
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/scratch-card-play`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session?.access_token}`,
+            "Content-Type": "application/json",
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: JSON.stringify({
+            payment_id: pendingPayment.id,
+            mode: currentMode,
+            quantity: qty,
+          }),
+        }
+      );
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Erro ao processar raspadinha");
+      }
+
+      const newGrid: GridCell[] = data.grid;
+      setGrid(newGrid);
+      setResult({ won: data.won, prize: data.prize || undefined });
+    } catch (err: any) {
+      console.error("scratch-card-play replay error:", err);
+      toast({ title: "Erro ao processar raspadinha", description: err.message, variant: "destructive" });
+      resetGame();
+      return;
+    }
+
+    setScratching(true);
+    setTimeout(() => {
+      canvasRefs.current.forEach((canvas, i) => {
+        if (canvas) {
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            ctx.fillStyle = "#1a1a2e";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.font = "bold 22px sans-serif";
+            ctx.fillStyle = "#9b87f5";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("?", canvas.width / 2, canvas.height / 2);
+          }
+        }
+      });
+    }, 100);
+  };
+
   const isContas = mode === "contas";
   const accentColor = isContas ? "hsl(220, 100%, 47%)" : "hsl(197, 100%, 50%)";
   const accentClass = isContas ? "text-blue-400" : "text-success";
@@ -542,6 +655,28 @@ const Raspadinha = () => {
       <AuthModal open={authOpen} onOpenChange={setAuthOpen} defaultTab="login" />
 
       <div className="mx-auto max-w-4xl px-6 pt-28 pb-20">
+        {/* Pending payment banner */}
+        {pendingPayment && paymentPhase === "idle" && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-4 flex items-center justify-between gap-4"
+          >
+            <div>
+              <p className="text-sm font-semibold text-yellow-300">🎰 Você tem uma raspadinha pendente!</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Pagamento confirmado mas o jogo não carregou. Clique para jogar agora.
+              </p>
+            </div>
+            <button
+              onClick={handleReplay}
+              className="shrink-0 rounded-lg bg-yellow-500 px-5 py-2.5 text-sm font-bold text-black hover:bg-yellow-400 transition-colors"
+            >
+              Jogar Agora
+            </button>
+          </motion.div>
+        )}
+
         {/* Title */}
         <div className="text-center mb-8">
           <motion.div
