@@ -110,6 +110,7 @@ const Raspadinha = () => {
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pendingQuantityRef = useRef(1);
   const pendingModeRef = useRef<RaspadinhaMode>("produtos");
+  const [pendingPayment, setPendingPayment] = useState<{ id: string; mode: string; quantity: number } | null>(null);
 
   // Contas prizes pool (fixed)
   const contasPrizes: Prize[] = [
