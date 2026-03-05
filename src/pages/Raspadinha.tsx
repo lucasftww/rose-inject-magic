@@ -375,7 +375,7 @@ const Raspadinha = () => {
             apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
           },
           body: JSON.stringify({
-            payment_id: paymentId,
+            payment_id: paymentIdRef.current,
             mode: currentMode,
             quantity: qty,
           }),
