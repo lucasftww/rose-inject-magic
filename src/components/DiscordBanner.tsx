@@ -19,12 +19,12 @@ const DiscordBanner = ({ dismissible = true }: { dismissible?: boolean }) => {
             <MessageCircle className="w-4 h-4 animate-pulse hidden sm:block" />
             <span className="text-xs sm:text-sm">⚠️ <span className="hidden sm:inline">Nosso antigo </span>Discord caiu! Entre no novo:</span>
             <a
-              href="https://discord.gg/FeJ5JAZFmU"
+              href="https://discord.gg/royalstorebr"
               target="_blank"
               rel="noopener noreferrer"
               className="underline font-bold hover:text-white/80 transition-colors text-xs sm:text-sm"
             >
-              discord.gg/FeJ5JAZFmU
+              discord.gg/royalstorebr
             </a>
           </div>
           {dismissible && (
