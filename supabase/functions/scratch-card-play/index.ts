@@ -198,8 +198,7 @@ Deno.serve(async (req) => {
     const { data: existingPlays } = await supabaseAdmin
       .from("scratch_card_plays")
       .select("id")
-      .eq("user_id", user.id)
-      .gte("created_at", new Date(Date.now() - 60000).toISOString())
+      .eq("payment_id", payment_id)
       .limit(1);
 
     // Get prizes and config
