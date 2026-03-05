@@ -210,7 +210,7 @@ const LztTab = () => {
                   <input type="number" step="10" min="1" value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)}
                     className="w-32 rounded-lg border border-border bg-secondary/50 px-4 py-2.5 text-sm text-foreground outline-none focus:border-success/50" />
                 </div>
-                <p className="mt-1 text-[10px] text-muted-foreground">Limite máximo de busca no LZT Market</p>
+                <p className="mt-1 text-[10px] text-muted-foreground">Preço máximo final (já com markup) exibido ao cliente</p>
               </div>
               <button onClick={handleSaveConfig} disabled={saving}
                 className="flex items-center gap-2 rounded-lg bg-success px-6 py-2.5 text-sm font-semibold text-success-foreground transition-all hover:shadow-[0_0_24px_hsl(130,99%,41%,0.45)] disabled:opacity-50">
