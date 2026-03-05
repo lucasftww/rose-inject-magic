@@ -176,13 +176,23 @@ Deno.serve(async (req) => {
       apiUrl = `https://api.lzt.market/${encodeURIComponent(itemId)}`;
     } else {
       // LIST: accounts with filters
-      // Read max_fetch_price from lzt_config to enforce price ceiling
+      // Read max_fetch_price and markup from lzt_config to enforce price ceiling
       const { data: lztConfig } = await supabaseAdmin
         .from("lzt_config")
-        .select("max_fetch_price, currency")
+        .select("max_fetch_price, currency, markup_multiplier, markup_valorant, markup_lol, markup_fortnite, markup_minecraft")
         .limit(1)
         .maybeSingle();
       const maxFetchPrice = lztConfig?.max_fetch_price || 500;
+
+      // Determine which markup applies based on game_type to calculate real pmax
+      const gameType = url.searchParams.get("game_type") || "riot";
+      let activeMarkup = lztConfig?.markup_multiplier || 1.5;
+      if (gameType === "riot") activeMarkup = lztConfig?.markup_valorant || activeMarkup;
+      else if (gameType === "fortnite") activeMarkup = lztConfig?.markup_fortnite || activeMarkup;
+      else if (gameType === "minecraft") activeMarkup = lztConfig?.markup_minecraft || activeMarkup;
+
+      // The admin sets the max FINAL price (after markup). Divide by markup to get LZT pmax.
+      const effectivePmax = Math.floor(maxFetchPrice / activeMarkup);
 
       const params = new URLSearchParams();
       const allowedParams = [
@@ -223,13 +233,13 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Enforce max_fetch_price as pmax ceiling if not already set or if higher
+      // Enforce effective pmax (max_fetch_price / markup) as ceiling
       const currentPmax = params.get("pmax");
-      if (!currentPmax || Number(currentPmax) > maxFetchPrice) {
-        params.set("pmax", String(maxFetchPrice));
+      if (!currentPmax || Number(currentPmax) > effectivePmax) {
+        params.set("pmax", String(effectivePmax));
       }
 
-      const gameType = url.searchParams.get("game_type") || "riot";
+      // gameType already determined above
       if (gameType === "fortnite") {
         // Fortnite-specific params
         const fortniteParams = ["vbmin", "vbmax", "smin", "smax", "eg"];
