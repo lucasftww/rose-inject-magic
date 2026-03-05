@@ -898,7 +898,7 @@ const Index = () => {
               <h4 className="text-sm font-bold uppercase tracking-wider text-foreground">Suporte</h4>
               <ul className="mt-4 space-y-2.5">
                 <li><a href="/ajuda" className="text-sm text-muted-foreground transition-colors hover:text-success">Central de Ajuda</a></li>
-                <li><a href="https://discord.gg/FeJ5JAZFmU" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground transition-colors hover:text-success">Discord</a></li>
+                <li><a href="https://discord.gg/royalstorebr" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground transition-colors hover:text-success">Discord</a></li>
                 <li><a href="/garantia" className="text-sm text-muted-foreground transition-colors hover:text-success">Garantia</a></li>
                 <li><a href="/status" className="text-sm text-muted-foreground transition-colors hover:text-success">Status do Serviço</a></li>
               </ul>
