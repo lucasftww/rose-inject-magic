@@ -723,6 +723,20 @@ const Raspadinha = () => {
           </motion.div>
         )}
 
+        {/* Manual verify button when no pending payment detected */}
+        {!pendingPayment && paymentPhase === "idle" && user && (
+          <div className="flex justify-end mb-4">
+            <button
+              onClick={() => checkPendingPayments(false)}
+              disabled={checkingPayments}
+              className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-success/30 transition-colors disabled:opacity-50"
+            >
+              <RefreshCw className={`h-3 w-3 ${checkingPayments ? "animate-spin" : ""}`} />
+              Verificar pagamento pendente
+            </button>
+          </div>
+        )}
+
         {/* Title */}
         <div className="text-center mb-8">
           <motion.div
