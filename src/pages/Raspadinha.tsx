@@ -3,7 +3,7 @@ import Header from "@/components/Header";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Gift, Trophy, Frown, Ticket, History, Star, X, Flower2, Copy, Check, Plus, Minus, Package, User } from "lucide-react";
+import { Loader2, Gift, Trophy, Frown, Ticket, History, Star, X, Flower2, Copy, Check, Plus, Minus, Package, User, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import AuthModal from "@/components/AuthModal";
 
@@ -155,20 +155,31 @@ const Raspadinha = () => {
     }
   }, [user, result]);
 
+  const [checkingPayments, setCheckingPayments] = useState(false);
+
   // Check for paid-but-unplayed scratch card payments AND active payments that may have been paid
-  useEffect(() => {
-    if (!user || paymentPhase !== "idle") return;
-    const checkPending = async () => {
-      // Find recent raspadinha payments (COMPLETED or ACTIVE)
+  const checkPendingPayments = async (silent = false) => {
+    if (!user) return;
+    if (!silent) setCheckingPayments(true);
+    try {
+      // Find recent raspadinha payments (COMPLETED or ACTIVE) from last 24h
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
       const { data: payments } = await supabase
         .from("payments")
         .select("id, cart_snapshot, created_at, status")
         .eq("user_id", user.id)
         .in("status", ["COMPLETED", "ACTIVE"])
+        .gte("created_at", oneDayAgo)
         .order("created_at", { ascending: false })
         .limit(10);
       
-      if (!payments || payments.length === 0) return;
+      if (!payments || payments.length === 0) {
+        if (!silent) {
+          toast({ title: "Nenhum pagamento pendente encontrado" });
+          setCheckingPayments(false);
+        }
+        return;
+      }
       
       for (const payment of payments) {
         const cart = payment.cart_snapshot as any[];
@@ -176,13 +187,8 @@ const Raspadinha = () => {
         const raspadinhaItem = cart.find((item: any) => item.type === "raspadinha");
         if (!raspadinhaItem) continue;
 
-        // If payment is still ACTIVE, re-check status with the server
+        // If payment is still ACTIVE, re-check status with the gateway
         if (payment.status === "ACTIVE") {
-          // Only re-check payments created in the last 30 minutes
-          const created = new Date(payment.created_at).getTime();
-          const thirtyMinAgo = Date.now() - 30 * 60 * 1000;
-          if (created < thirtyMinAgo) continue;
-
           try {
             const session = (await supabase.auth.getSession()).data.session;
             const res = await fetch(
@@ -196,13 +202,13 @@ const Raspadinha = () => {
             );
             const data = await res.json();
             if (data.status === "COMPLETED") {
-              // Payment was actually completed! Set as pending for replay
               const paymentMode = raspadinhaItem.planId?.includes("contas") ? "contas" : "produtos";
               const qty = parseInt(raspadinhaItem.planName?.match(/(\d+)x/)?.[1] || "1");
               setPendingPayment({ id: payment.id, mode: paymentMode, quantity: qty });
+              if (!silent) toast({ title: "Pagamento confirmado! Clique em Jogar Agora 🎉" });
+              setCheckingPayments(false);
               return;
             }
-            // If still ACTIVE, skip (user needs to finish paying)
           } catch { /* silent */ }
           continue;
         }
@@ -215,15 +221,24 @@ const Raspadinha = () => {
           .limit(1);
         
         if (!plays || plays.length === 0) {
-          // Found an unplayed payment!
           const paymentMode = raspadinhaItem.planId?.includes("contas") ? "contas" : "produtos";
           const qty = parseInt(raspadinhaItem.planName?.match(/(\d+)x/)?.[1] || "1");
           setPendingPayment({ id: payment.id, mode: paymentMode, quantity: qty });
+          if (!silent) toast({ title: "Raspadinha pendente encontrada! 🎉" });
+          setCheckingPayments(false);
           return;
         }
       }
-    };
-    checkPending();
+      if (!silent) {
+        toast({ title: "Nenhum pagamento pendente encontrado" });
+      }
+    } catch { /* silent */ }
+    setCheckingPayments(false);
+  };
+
+  useEffect(() => {
+    if (!user || paymentPhase !== "idle") return;
+    checkPendingPayments(true);
   }, [user, paymentPhase]);
 
   useEffect(() => {
@@ -706,6 +721,20 @@ const Raspadinha = () => {
               Jogar Agora
             </button>
           </motion.div>
+        )}
+
+        {/* Manual verify button when no pending payment detected */}
+        {!pendingPayment && paymentPhase === "idle" && user && (
+          <div className="flex justify-end mb-4">
+            <button
+              onClick={() => checkPendingPayments(false)}
+              disabled={checkingPayments}
+              className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-success/30 transition-colors disabled:opacity-50"
+            >
+              <RefreshCw className={`h-3 w-3 ${checkingPayments ? "animate-spin" : ""}`} />
+              Verificar pagamento pendente
+            </button>
+          </div>
         )}
 
         {/* Title */}
