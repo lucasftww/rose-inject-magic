@@ -3,7 +3,7 @@ import Header from "@/components/Header";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Gift, Trophy, Frown, Ticket, History, Star, X, Flower2, Copy, Check, Plus, Minus, Package, User } from "lucide-react";
+import { Loader2, Gift, Trophy, Frown, Ticket, History, Star, X, Flower2, Copy, Check, Plus, Minus, Package, User, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import AuthModal from "@/components/AuthModal";
 
