@@ -155,16 +155,16 @@ const Raspadinha = () => {
     }
   }, [user, result]);
 
-  // Check for paid-but-unplayed scratch card payments
+  // Check for paid-but-unplayed scratch card payments AND active payments that may have been paid
   useEffect(() => {
     if (!user || paymentPhase !== "idle") return;
     const checkPending = async () => {
-      // Find recent COMPLETED raspadinha payments
+      // Find recent raspadinha payments (COMPLETED or ACTIVE)
       const { data: payments } = await supabase
         .from("payments")
-        .select("id, cart_snapshot, created_at")
+        .select("id, cart_snapshot, created_at, status")
         .eq("user_id", user.id)
-        .eq("status", "COMPLETED")
+        .in("status", ["COMPLETED", "ACTIVE"])
         .order("created_at", { ascending: false })
         .limit(10);
       
@@ -175,8 +175,39 @@ const Raspadinha = () => {
         if (!cart || !Array.isArray(cart)) continue;
         const raspadinhaItem = cart.find((item: any) => item.type === "raspadinha");
         if (!raspadinhaItem) continue;
+
+        // If payment is still ACTIVE, re-check status with the server
+        if (payment.status === "ACTIVE") {
+          // Only re-check payments created in the last 30 minutes
+          const created = new Date(payment.created_at).getTime();
+          const thirtyMinAgo = Date.now() - 30 * 60 * 1000;
+          if (created < thirtyMinAgo) continue;
+
+          try {
+            const session = (await supabase.auth.getSession()).data.session;
+            const res = await fetch(
+              `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pix-payment?action=status&payment_id=${payment.id}`,
+              {
+                headers: {
+                  Authorization: `Bearer ${session?.access_token}`,
+                  apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+                },
+              }
+            );
+            const data = await res.json();
+            if (data.status === "COMPLETED") {
+              // Payment was actually completed! Set as pending for replay
+              const paymentMode = raspadinhaItem.planId?.includes("contas") ? "contas" : "produtos";
+              const qty = parseInt(raspadinhaItem.planName?.match(/(\d+)x/)?.[1] || "1");
+              setPendingPayment({ id: payment.id, mode: paymentMode, quantity: qty });
+              return;
+            }
+            // If still ACTIVE, skip (user needs to finish paying)
+          } catch { /* silent */ }
+          continue;
+        }
         
-        // Check if plays exist for this payment
+        // For COMPLETED payments, check if plays exist
         const { data: plays } = await supabase
           .from("scratch_card_plays")
           .select("id")
