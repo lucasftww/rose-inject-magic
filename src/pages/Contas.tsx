@@ -1385,7 +1385,7 @@ const Contas = () => {
                               title={rank.name}
                             >
                               <img src={rank.img} alt={rank.name} className="h-8 w-8 object-contain" />
-                              <span className={`text-[10px] font-medium leading-tight ${selectedRank === rank.id ? "text-success" : "text-muted-foreground"}`}>{rank.name}</span>
+                              <span className={`text-[10px] font-medium leading-tight text-center truncate w-full ${selectedRank === rank.id ? "text-success" : "text-muted-foreground"}`}>{rank.name}</span>
                             </button>
                           ))}
                         </div>
