@@ -411,9 +411,9 @@ const ProductsSection = () => {
                   onClick={() => navigate(`/produto/${product.id}`)}
                   className="group cursor-pointer overflow-hidden rounded-lg border border-border bg-card transition-all hover:border-success/40 hover:shadow-[0_0_20px_hsl(197,100%,50%,0.1)]"
                 >
-                  <div className="relative flex h-72 items-center justify-center overflow-hidden bg-secondary/50">
+                  <div className="relative flex h-72 items-center justify-center overflow-hidden bg-secondary/50 p-6">
                     {product.image_url ? (
-                      <img src={product.image_url} alt={product.name} className="h-full w-full object-contain p-4" />
+                      <img src={product.image_url} alt={product.name} className="max-h-full max-w-full object-contain" />
                     ) : (
                       <Package className="h-12 w-12 text-muted-foreground/20" />
                     )}
