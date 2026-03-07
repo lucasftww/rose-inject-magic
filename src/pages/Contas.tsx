@@ -403,13 +403,19 @@ const ValorantCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap
 
   const skinPreviews = useMemo(() => {
     const results: { name: string; image: string }[] = [];
-    // Try WeaponSkins first, then Agent, then Buddy UUIDs
+    // Extract UUIDs from array or object format (LZT API returns both)
+    const toUuids = (raw: unknown): string[] => {
+      if (Array.isArray(raw)) return raw;
+      if (raw && typeof raw === "object") return Object.values(raw as Record<string, string>);
+      return [];
+    };
     const allUuids = [
-      ...(Array.isArray(item.valorantInventory?.WeaponSkins) ? item.valorantInventory!.WeaponSkins! : []),
-      ...(Array.isArray(item.valorantInventory?.Agent) ? item.valorantInventory!.Agent! : []),
-      ...(Array.isArray(item.valorantInventory?.Buddy) ? item.valorantInventory!.Buddy! : []),
+      ...toUuids(item.valorantInventory?.WeaponSkins),
+      ...toUuids(item.valorantInventory?.Agent),
+      ...toUuids(item.valorantInventory?.Buddy),
     ];
     for (const uuid of allUuids) {
+      if (typeof uuid !== "string") continue;
       const entry = skinsMap.get(uuid.toLowerCase());
       if (entry) results.push(entry);
       if (results.length >= 6) break;
