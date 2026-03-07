@@ -65,6 +65,13 @@ interface LztItem {
     Agent?: string[];
     Buddy?: string[];
   };
+  imagePreviewLinks?: {
+    direct?: {
+      weapons?: string;
+      agents?: string;
+      buddies?: string;
+    };
+  };
 }
 
 const fetchAllValorantSkins = async (): Promise<Map<string, { name: string; image: string }>> => {
