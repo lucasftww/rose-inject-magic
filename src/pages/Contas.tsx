@@ -271,7 +271,17 @@ const fetchAllValorantSkins = async (): Promise<Map<string, { name: string; imag
   const map = new Map<string, { name: string; image: string }>();
   for (const s of (data.data || [])) {
     const image = s.levels?.[0]?.displayIcon || s.displayIcon || s.chromas?.[0]?.fullRender;
-    if (image && s.uuid) map.set(s.uuid.toLowerCase(), { name: s.displayName, image });
+    if (!image) continue;
+    const entry = { name: s.displayName, image };
+    // Index by skin UUID
+    if (s.uuid) map.set(s.uuid.toLowerCase(), entry);
+    // Also index by each level UUID and chroma UUID for broader matching
+    for (const level of (s.levels || [])) {
+      if (level.uuid) map.set(level.uuid.toLowerCase(), entry);
+    }
+    for (const chroma of (s.chromas || [])) {
+      if (chroma.uuid) map.set(chroma.uuid.toLowerCase(), entry);
+    }
   }
   return map;
 };
