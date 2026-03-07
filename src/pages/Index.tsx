@@ -413,7 +413,7 @@ const ProductsSection = () => {
                 >
                   <div className="relative flex h-72 items-center justify-center overflow-hidden bg-secondary/50">
                     {product.image_url ? (
-                      <img src={product.image_url} alt={product.name} className="h-full w-full object-cover" />
+                      <img src={product.image_url} alt={product.name} className="h-full w-full object-contain p-4" />
                     ) : (
                       <Package className="h-12 w-12 text-muted-foreground/20" />
                     )}
