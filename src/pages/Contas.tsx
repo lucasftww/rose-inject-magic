@@ -375,15 +375,7 @@ const ValorantCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap
             ))}
           </div>
         ) : item.imagePreviewLinks?.direct?.weapons ? (
-          <div className="relative z-[1] flex items-center justify-center w-full h-full p-3">
-            <img
-              src={item.imagePreviewLinks.direct.weapons}
-              alt="Skins preview"
-              className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-105"
-              loading="lazy"
-              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-            />
-          </div>
+          <LztPreviewImage url={item.imagePreviewLinks.direct.weapons} />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
             <Crosshair className="h-12 w-12 text-muted-foreground/20" />
