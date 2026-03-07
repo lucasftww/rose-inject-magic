@@ -328,7 +328,29 @@ const staggerContainer = {
   visible: { transition: { staggerChildren: 0.03, delayChildren: 0 } },
 };
 
-// ─── Valorant Card ───
+// Helper: LZT preview image with fallback to placeholder on error
+const LztPreviewImage = ({ url }: { url: string }) => {
+  const [failed, setFailed] = useState(false);
+  if (failed) {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <Crosshair className="h-12 w-12 text-muted-foreground/20" />
+      </div>
+    );
+  }
+  return (
+    <div className="relative z-[1] flex items-center justify-center w-full h-full p-3">
+      <img
+        src={url}
+        alt="Skins preview"
+        className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-105"
+        loading="lazy"
+        onError={() => setFailed(true)}
+      />
+    </div>
+  );
+};
+
 const ValorantCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap: Map<string, { name: string; image: string }>; formatPrice: (price: number, currency?: string) => string }) => {
   const navigate = useNavigate();
   const rank = item.riot_valorant_rank ? rankMap[item.riot_valorant_rank] : null;
