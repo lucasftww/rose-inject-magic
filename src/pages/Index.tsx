@@ -202,6 +202,19 @@ const FloatingWidgets = () => {
 };
 
 
+// Fallback: show LZT direct preview image, with placeholder on error
+const LztPreviewFallback = ({ url }: { url: string }) => {
+  const [failed, setFailed] = useState(false);
+  if (failed) {
+    return <div className="flex h-full w-full items-center justify-center"><Crosshair className="h-12 w-12 text-muted-foreground/20" /></div>;
+  }
+  return (
+    <div className="relative z-[1] flex items-center justify-center w-full h-full p-3">
+      <img src={url} alt="Skins preview" className="h-full w-full object-contain" loading="lazy" onError={() => setFailed(true)} />
+    </div>
+  );
+};
+
 
 const LztContaCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap: Map<string, { name: string; image: string }>; formatPrice: (price: number, currency?: string) => string }) => {
   const navigate = useNavigate();
