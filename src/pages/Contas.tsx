@@ -1045,7 +1045,8 @@ const Contas = () => {
     if (searchQuery) params.title = searchQuery;
 
     if (gameTab === "valorant") {
-      // Valorant-specific
+      // Valorant-specific — hide accounts with 0 skins
+      params.valorant_smin = "1";
       if (onlyKnife) params.knife = "true";
       if (lvlMin) params.valorant_level_min = lvlMin;
       if (lvlMax) params.valorant_level_max = lvlMax;
