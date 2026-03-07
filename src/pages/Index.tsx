@@ -75,22 +75,58 @@ interface LztItem {
 }
 
 const fetchAllValorantSkins = async (): Promise<Map<string, { name: string; image: string }>> => {
-  const res = await fetch("https://valorant-api.com/v1/weapons/skins?language=pt-BR");
-  if (!res.ok) return new Map();
-  const data = await res.json();
   const map = new Map<string, { name: string; image: string }>();
-  for (const s of (data.data || [])) {
-    const image = s.levels?.[0]?.displayIcon || s.displayIcon || s.chromas?.[0]?.fullRender;
-    if (!image) continue;
-    const entry = { name: s.displayName, image };
-    if (s.uuid) map.set(s.uuid.toLowerCase(), entry);
-    for (const level of (s.levels || [])) {
-      if (level.uuid) map.set(level.uuid.toLowerCase(), entry);
+
+  // Fetch weapon skins
+  try {
+    const res = await fetch("https://valorant-api.com/v1/weapons/skins?language=pt-BR");
+    if (res.ok) {
+      const data = await res.json();
+      for (const s of (data.data || [])) {
+        const image = s.levels?.[0]?.displayIcon || s.displayIcon || s.chromas?.[0]?.fullRender;
+        if (!image) continue;
+        const entry = { name: s.displayName, image };
+        if (s.uuid) map.set(s.uuid.toLowerCase(), entry);
+        for (const level of (s.levels || [])) {
+          if (level.uuid) map.set(level.uuid.toLowerCase(), entry);
+        }
+        for (const chroma of (s.chromas || [])) {
+          if (chroma.uuid) map.set(chroma.uuid.toLowerCase(), entry);
+        }
+      }
     }
-    for (const chroma of (s.chromas || [])) {
-      if (chroma.uuid) map.set(chroma.uuid.toLowerCase(), entry);
+  } catch { /* ignore */ }
+
+  // Fetch agents
+  try {
+    const res = await fetch("https://valorant-api.com/v1/agents?isPlayableCharacter=true&language=pt-BR");
+    if (res.ok) {
+      const data = await res.json();
+      for (const a of (data.data || [])) {
+        const image = a.displayIcon || a.fullPortrait || a.bustPortrait;
+        if (!image || !a.uuid) continue;
+        map.set(a.uuid.toLowerCase(), { name: a.displayName, image });
+      }
     }
-  }
+  } catch { /* ignore */ }
+
+  // Fetch buddies
+  try {
+    const res = await fetch("https://valorant-api.com/v1/buddies?language=pt-BR");
+    if (res.ok) {
+      const data = await res.json();
+      for (const b of (data.data || [])) {
+        const image = b.displayIcon;
+        if (!image || !b.uuid) continue;
+        const entry = { name: b.displayName, image };
+        if (b.uuid) map.set(b.uuid.toLowerCase(), entry);
+        for (const level of (b.levels || [])) {
+          if (level.uuid) map.set(level.uuid.toLowerCase(), entry);
+        }
+      }
+    }
+  } catch { /* ignore */ }
+
   return map;
 };
 
