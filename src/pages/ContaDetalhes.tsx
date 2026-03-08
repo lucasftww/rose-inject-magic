@@ -210,8 +210,9 @@ const ContaDetalhes = () => {
   // Use skin items as main gallery if no screenshots
   const mainGallery = gallery.length > 0 ? gallery : skinItems.slice(0, 5);
 
-  const handlePrev = () => setSelectedSkin((p) => (p > 0 ? p - 1 : mainGallery.length - 1));
-  const handleNext = () => setSelectedSkin((p) => (p < mainGallery.length - 1 ? p + 1 : 0));
+  const galleryLength = skinItems.length > 0 ? skinItems.length : mainGallery.length;
+  const handlePrev = () => setSelectedSkin((p) => (p > 0 ? p - 1 : galleryLength - 1));
+  const handleNext = () => setSelectedSkin((p) => (p < galleryLength - 1 ? p + 1 : 0));
 
   const skinCount = item?.riot_valorant_skin_count ?? 0;
   const dynamicTitle = rank
