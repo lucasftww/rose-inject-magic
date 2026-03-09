@@ -66,22 +66,26 @@ const Checkout = () => {
   }, []);
 
   const buildCartSnapshot = () =>
-    items.map((i) => ({
-      productId: i.productId,
-      productName: i.productName,
-      productImage: i.productImage,
-      planId: i.planId,
-      planName: i.planName,
-      price: i.price,
-      quantity: i.quantity,
-      ...(i.type === "lzt-account"
-        ? {
-            type: i.type,
-            lztItemId: i.lztItemId,
-            lztGame: (i as any).lztGame || (i as any).gameCategory || "",
-          }
-        : {}),
-    }));
+    items.map((i) => {
+      // For LZT accounts, don't send client-side price — server recalculates from LZT API
+      const base: Record<string, any> = {
+        productId: i.productId,
+        productName: i.productName,
+        productImage: i.productImage,
+        planId: i.planId,
+        planName: i.planName,
+        quantity: i.quantity,
+      };
+      if (i.type === "lzt-account") {
+        base.type = i.type;
+        base.lztItemId = i.lztItemId;
+        base.lztGame = (i as any).lztGame || (i as any).gameCategory || "";
+        // price intentionally omitted — server fetches real price
+      } else {
+        base.price = i.price;
+      }
+      return base;
+    });
 
   const getAuthHeaders = async () => {
     const session = (await supabase.auth.getSession()).data.session;
