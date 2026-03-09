@@ -1179,8 +1179,19 @@ const Contas = () => {
   const isLoading = streamedItems.length === 0 && !streamingDone;
   const isStreaming = streamedItems.length > 0 && !streamingDone;
   const allItems = (() => {
+    const sorted = [...streamedItems];
+
+    // If user explicitly chose a price sort, respect it across all games
+    if (sortBy === "price_asc") {
+      return sorted.sort((a, b) => a.price - b.price);
+    }
+    if (sortBy === "price_desc") {
+      return sorted.sort((a, b) => b.price - a.price);
+    }
+
+    // Default sort (pdate_desc): apply game-specific "best quality" sorting
     if (gameTab === "lol") {
-      return [...streamedItems].sort((a, b) => {
+      return sorted.sort((a, b) => {
         const scoreA = (a.riot_lol_level ?? 0) > 0 && (a.riot_lol_skin_count ?? 0) > 0 ? 2
           : (a.riot_lol_level ?? 0) > 0 || (a.riot_lol_skin_count ?? 0) > 0 ? 1 : 0;
         const scoreB = (b.riot_lol_level ?? 0) > 0 && (b.riot_lol_skin_count ?? 0) > 0 ? 2
@@ -1190,29 +1201,24 @@ const Contas = () => {
       });
     }
     if (gameTab === "fortnite") {
-      return [...streamedItems].sort((a, b) => {
+      return sorted.sort((a, b) => {
         const skinsA = (a as any).fortnite_skin_count ?? a.riot_valorant_skin_count ?? 0;
         const skinsB = (b as any).fortnite_skin_count ?? b.riot_valorant_skin_count ?? 0;
-        // Only consider accounts that actually have skins
         const hasSkinA = skinsA > 0;
         const hasSkinB = skinsB > 0;
         if (hasSkinA && !hasSkinB) return -1;
         if (!hasSkinA && hasSkinB) return 1;
         if (!hasSkinA && !hasSkinB) return a.price - b.price;
-        // Both have skins: best value = most skins per real spent (cheapest with most skins first)
-        // Score = skins / price (higher = better value)
         const valueA = skinsA / (a.price || 1);
         const valueB = skinsB / (b.price || 1);
         if (Math.abs(valueB - valueA) > 0.0001) return valueB - valueA;
-        // Tiebreak: fewer skins → cheaper → first
         return a.price - b.price;
       });
     }
     if (gameTab === "minecraft") {
-      // Sort: cheapest first (price ascending)
-      return [...streamedItems].sort((a, b) => a.price - b.price);
+      return sorted.sort((a, b) => a.price - b.price);
     }
-    return streamedItems;
+    return sorted;
   })();
   const totalDisplayPages = Math.ceil(allItems.length / ITEMS_PER_PAGE);
   const items = allItems.slice((displayPage - 1) * ITEMS_PER_PAGE, displayPage * ITEMS_PER_PAGE);
