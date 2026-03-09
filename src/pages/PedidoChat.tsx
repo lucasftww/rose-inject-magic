@@ -81,16 +81,19 @@ const PedidoChat = () => {
       if (!ticketData) { setLoading(false); return; }
       setTicket(ticketData as any);
 
-      const [prodRes, planRes, messagesRes] = await Promise.all([
-        supabase.from("products").select("name, tutorial_text, tutorial_file_url").eq("id", ticketData.product_id).single(),
+      const [prodRes, planRes, messagesRes, tutorialRes] = await Promise.all([
+        supabase.from("products").select("name").eq("id", ticketData.product_id).single(),
         supabase.from("product_plans").select("name, price").eq("id", ticketData.product_plan_id).single(),
         supabase.from("ticket_messages").select("*").eq("ticket_id", id).order("created_at", { ascending: true }),
+        supabase.from("product_tutorials").select("tutorial_text, tutorial_file_url").eq("product_id", ticketData.product_id).maybeSingle(),
       ]);
 
       if (prodRes.data) {
         setProductName((prodRes.data as any).name);
-        setTutorialText((prodRes.data as any).tutorial_text || null);
-        setTutorialFileUrl((prodRes.data as any).tutorial_file_url || null);
+      }
+      if (tutorialRes.data) {
+        setTutorialText((tutorialRes.data as any).tutorial_text || null);
+        setTutorialFileUrl((tutorialRes.data as any).tutorial_file_url || null);
       }
       if (planRes.data) {
         setPlanName((planRes.data as any).name);

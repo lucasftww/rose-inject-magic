@@ -188,10 +188,10 @@ async function fulfillOrder(supabaseAdmin: any, payment: any) {
         });
 
         const { data: productData } = await supabaseAdmin
-          .from("products")
+          .from("product_tutorials")
           .select("tutorial_text, tutorial_file_url")
-          .eq("id", item.productId)
-          .single();
+          .eq("product_id", item.productId)
+          .maybeSingle();
 
         if (productData?.tutorial_text) {
           const txtContent = productData.tutorial_text;

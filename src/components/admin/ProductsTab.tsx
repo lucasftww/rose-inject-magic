@@ -130,8 +130,11 @@ const ProductsTab = () => {
     setFormActive(product.active);
     setImagePreview(product.image_url || null);
     setImageMode("url");
-    setFormTutorialText(product.tutorial_text || "");
-    setFormTutorialFileUrl(product.tutorial_file_url || "");
+
+    // Fetch tutorial data from separate secure table
+    const { data: tutorialData } = await supabase.from("product_tutorials").select("tutorial_text, tutorial_file_url").eq("product_id", product.id).maybeSingle();
+    setFormTutorialText(tutorialData?.tutorial_text || "");
+    setFormTutorialFileUrl(tutorialData?.tutorial_file_url || "");
 
     // Fetch plans
     const [plansRes, mediaRes, featuresRes] = await Promise.all([
