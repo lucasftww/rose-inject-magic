@@ -78,8 +78,7 @@ const Checkout = () => {
         ? {
             type: i.type,
             lztItemId: i.lztItemId,
-            lztPrice: i.lztPrice,
-            lztCurrency: i.lztCurrency,
+            lztGame: (i as any).lztGame || (i as any).gameCategory || "",
           }
         : {}),
     }));
