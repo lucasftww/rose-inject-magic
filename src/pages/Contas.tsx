@@ -411,8 +411,8 @@ const ValorantCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap
     };
     const allUuids = [
       ...toUuids(item.valorantInventory?.WeaponSkins),
-      ...toUuids(item.valorantInventory?.Agent),
       ...toUuids(item.valorantInventory?.Buddy),
+      // Agent UUIDs are intentionally excluded from card preview
     ];
     for (const uuid of allUuids) {
       if (typeof uuid !== "string") continue;
