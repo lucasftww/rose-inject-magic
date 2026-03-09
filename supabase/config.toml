@@ -5,3 +5,15 @@ verify_jwt = false
 
 [functions.scratch-card-play]
 verify_jwt = false
+
+[functions.lzt-market]
+verify_jwt = false
+
+[functions.admin-users]
+verify_jwt = false
+
+[functions.generate-game-image]
+verify_jwt = false
+
+[functions.track-login]
+verify_jwt = false

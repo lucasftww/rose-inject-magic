@@ -130,8 +130,11 @@ const ProductsTab = () => {
     setFormActive(product.active);
     setImagePreview(product.image_url || null);
     setImageMode("url");
-    setFormTutorialText(product.tutorial_text || "");
-    setFormTutorialFileUrl(product.tutorial_file_url || "");
+
+    // Fetch tutorial data from separate secure table
+    const { data: tutorialData } = await supabase.from("product_tutorials").select("tutorial_text, tutorial_file_url").eq("product_id", product.id).maybeSingle();
+    setFormTutorialText(tutorialData?.tutorial_text || "");
+    setFormTutorialFileUrl(tutorialData?.tutorial_file_url || "");
 
     // Fetch plans
     const [plansRes, mediaRes, featuresRes] = await Promise.all([
@@ -222,10 +225,15 @@ const ProductsTab = () => {
           name: formName.trim(), description: formDescription.trim() || null,
           features_text: formFeaturesText.trim() || null,
           image_url: formImageUrl.trim() || null, game_id: formGameId, active: formActive,
-          tutorial_text: formTutorialText.trim() || null,
-          tutorial_file_url: formTutorialFileUrl.trim() || null,
         } as any).eq("id", editing.id);
         if (error) throw error;
+
+        // Save tutorial data to secure table
+        await supabase.from("product_tutorials" as any).upsert({
+          product_id: editing.id,
+          tutorial_text: formTutorialText.trim() || null,
+          tutorial_file_url: formTutorialFileUrl.trim() || null,
+        } as any, { onConflict: "product_id" });
 
         // Sync plans: update existing, insert new, delete removed
         const validPlans = formPlans.filter(p => p.name.trim());
@@ -279,10 +287,17 @@ const ProductsTab = () => {
           features_text: formFeaturesText.trim() || null,
           image_url: formImageUrl.trim() || null, game_id: formGameId, active: formActive,
           sort_order: products.length,
-          tutorial_text: formTutorialText.trim() || null,
-          tutorial_file_url: formTutorialFileUrl.trim() || null,
         }).select().single();
         if (error) throw error;
+
+        // Save tutorial data to secure table
+        if (formTutorialText.trim() || formTutorialFileUrl.trim()) {
+          await supabase.from("product_tutorials" as any).insert({
+            product_id: data.id,
+            tutorial_text: formTutorialText.trim() || null,
+            tutorial_file_url: formTutorialFileUrl.trim() || null,
+          } as any);
+        }
 
         const plansToInsert = formPlans.filter(p => p.name.trim()).map((p, i) => ({
           product_id: data.id, name: p.name.trim(), price: p.price, active: p.active, sort_order: i,

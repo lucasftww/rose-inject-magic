@@ -499,6 +499,38 @@ export type Database = {
           },
         ]
       }
+      product_tutorials: {
+        Row: {
+          created_at: string | null
+          id: string
+          product_id: string
+          tutorial_file_url: string | null
+          tutorial_text: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          product_id: string
+          tutorial_file_url?: string | null
+          tutorial_text?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          product_id?: string
+          tutorial_file_url?: string | null
+          tutorial_text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_tutorials_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: true
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           active: boolean | null
