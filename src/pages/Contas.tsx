@@ -1384,7 +1384,7 @@ const Contas = () => {
         <div className="mt-8 flex flex-col gap-8 lg:flex-row">
           {/* ─── Sidebar ─── */}
           <aside className="w-full shrink-0 lg:w-72">
-            <div className="sticky top-28 space-y-4">
+            <div className="sticky top-28 max-h-[calc(100vh-8rem)] overflow-y-auto space-y-4 scrollbar-hide">
               <div className="rounded-lg border bg-card p-5 transition-colors duration-300" style={{ borderColor: isValorant ? 'hsl(var(--border))' : `${accentColor}25` }}>
                 <div className="flex items-center justify-between">
                   <h3 className="flex items-center gap-2 text-base font-bold text-foreground">
