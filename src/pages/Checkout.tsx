@@ -135,11 +135,8 @@ const Checkout = () => {
           method: "POST",
           headers: await getAuthHeaders(),
           body: JSON.stringify({
-            amount: Math.round(finalPrice * 100),
-description: `Compra Royal Store - ${items.length} item(s)`,
             cart_snapshot: buildCartSnapshot(),
             coupon_id: couponId,
-            discount_amount: discountAmount,
           }),
         }
       );
