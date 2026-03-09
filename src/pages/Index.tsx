@@ -141,7 +141,7 @@ const fetchLztAccounts = async (): Promise<LztItem[]> => {
   const data = await res.json();
   // Sort by skin count descending to show best accounts first
   const items: LztItem[] = data.items || [];
-  items.sort((a, b) => (b.valorant_inventory_count || 0) - (a.valorant_inventory_count || 0));
+  items.sort((a, b) => (b.riot_valorant_skin_count || 0) - (a.riot_valorant_skin_count || 0));
   return items.slice(0, 6);
 };
 
