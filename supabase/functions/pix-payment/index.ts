@@ -545,6 +545,37 @@ async function validateAndCalculatePrice(
     }
 
     if (item.type === "lzt-account") {
+      const lztItemId = item.lztItemId;
+      if (!lztItemId) {
+        return { validatedAmount: 0, validatedDiscount: 0, validatedCart: [], error: "ID da conta LZT não informado" };
+      }
+
+      // Fetch LZT token
+      const { data: lztCredRow } = await supabaseAdmin
+        .from("system_credentials")
+        .select("value")
+        .eq("env_key", "LZT_API_TOKEN")
+        .maybeSingle();
+      const lztToken = lztCredRow?.value || Deno.env.get("LZT_MARKET_TOKEN");
+      if (!lztToken) {
+        return { validatedAmount: 0, validatedDiscount: 0, validatedCart: [], error: "LZT token não configurado" };
+      }
+
+      // Fetch REAL price from LZT API - never trust client price
+      const lztRes = await fetch(`https://api.lzt.market/${encodeURIComponent(lztItemId)}`, {
+        headers: { Authorization: `Bearer ${lztToken}`, Accept: "application/json" },
+      });
+      if (!lztRes.ok) {
+        console.error(`LZT API error for item ${lztItemId}:`, lztRes.status);
+        return { validatedAmount: 0, validatedDiscount: 0, validatedCart: [], error: `Erro ao verificar preço da conta LZT ${lztItemId}` };
+      }
+      const lztData = await lztRes.json();
+      const realLztPrice = Number(lztData?.item?.price) || 0;
+      const realLztCurrency = lztData?.item?.price_currency || "rub";
+      if (realLztPrice <= 0) {
+        return { validatedAmount: 0, validatedDiscount: 0, validatedCart: [], error: `Conta LZT ${lztItemId} não disponível ou sem preço` };
+      }
+
       const { data: lztConfig } = await supabaseAdmin
         .from("lzt_config")
         .select("markup_multiplier, markup_valorant, markup_lol, markup_fortnite, markup_minecraft")
@@ -558,16 +589,12 @@ async function validateAndCalculatePrice(
       else if (gameCategory === "fortnite" && lztConfig?.markup_fortnite) markup = lztConfig.markup_fortnite;
       else if (gameCategory === "minecraft" && lztConfig?.markup_minecraft) markup = lztConfig.markup_minecraft;
       
-      const lztPrice = Number(item.lztPrice) || 0;
-      if (lztPrice <= 0) {
-        return { validatedAmount: 0, validatedDiscount: 0, validatedCart: [], error: `Preço inválido para conta LZT ${item.lztItemId}` };
-      }
       const RUB_TO_BRL = 0.055;
-      let brlPrice = lztPrice * RUB_TO_BRL;
+      let brlPrice = realLztPrice * RUB_TO_BRL;
       const expectedPrice = Math.round(brlPrice * markup * 100) / 100;
       const MIN_PRICE = 20;
       const finalPrice = expectedPrice < MIN_PRICE ? MIN_PRICE : expectedPrice;
-      console.log(`LZT price: lztPrice=${lztPrice}, brl=${brlPrice.toFixed(2)}, markup=${markup}, serverPrice=${finalPrice}, clientPrice=${Math.round(Number(item.price) * 100) / 100}, game=${gameCategory}`);
+      console.log(`LZT VALIDATED price: itemId=${lztItemId}, apiPrice=${realLztPrice}, clientPrice=${item.lztPrice}, brl=${brlPrice.toFixed(2)}, markup=${markup}, finalPrice=${finalPrice}, game=${gameCategory}`);
       totalAmount += Math.round(finalPrice * 100);
       validatedCart.push({ ...item, price: finalPrice });
       continue;
