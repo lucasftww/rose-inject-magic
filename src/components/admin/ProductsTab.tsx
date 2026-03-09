@@ -225,10 +225,15 @@ const ProductsTab = () => {
           name: formName.trim(), description: formDescription.trim() || null,
           features_text: formFeaturesText.trim() || null,
           image_url: formImageUrl.trim() || null, game_id: formGameId, active: formActive,
-          tutorial_text: formTutorialText.trim() || null,
-          tutorial_file_url: formTutorialFileUrl.trim() || null,
         } as any).eq("id", editing.id);
         if (error) throw error;
+
+        // Save tutorial data to secure table
+        await supabase.from("product_tutorials" as any).upsert({
+          product_id: editing.id,
+          tutorial_text: formTutorialText.trim() || null,
+          tutorial_file_url: formTutorialFileUrl.trim() || null,
+        } as any, { onConflict: "product_id" });
 
         // Sync plans: update existing, insert new, delete removed
         const validPlans = formPlans.filter(p => p.name.trim());
