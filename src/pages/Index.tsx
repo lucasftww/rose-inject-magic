@@ -134,12 +134,15 @@ const fetchLztAccounts = async (): Promise<LztItem[]> => {
   const projectUrl = import.meta.env.VITE_SUPABASE_URL;
   const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
   const res = await fetch(
-    `${projectUrl}/functions/v1/lzt-market?order_by=pdate_desc&valorant_smin=15&valorant_region[]=br`,
+    `${projectUrl}/functions/v1/lzt-market?order_by=pdate_desc&valorant_smin=20&valorant_region[]=br`,
     { headers: { "Content-Type": "application/json", apikey: anonKey } }
   );
   if (!res.ok) return [];
   const data = await res.json();
-  return (data.items || []).slice(0, 6);
+  // Sort by skin count descending to show best accounts first
+  const items: LztItem[] = data.items || [];
+  items.sort((a, b) => (b.valorant_inventory_count || 0) - (a.valorant_inventory_count || 0));
+  return items.slice(0, 6);
 };
 
 interface ProductFromDB {
