@@ -287,10 +287,17 @@ const ProductsTab = () => {
           features_text: formFeaturesText.trim() || null,
           image_url: formImageUrl.trim() || null, game_id: formGameId, active: formActive,
           sort_order: products.length,
-          tutorial_text: formTutorialText.trim() || null,
-          tutorial_file_url: formTutorialFileUrl.trim() || null,
         }).select().single();
         if (error) throw error;
+
+        // Save tutorial data to secure table
+        if (formTutorialText.trim() || formTutorialFileUrl.trim()) {
+          await supabase.from("product_tutorials" as any).insert({
+            product_id: data.id,
+            tutorial_text: formTutorialText.trim() || null,
+            tutorial_file_url: formTutorialFileUrl.trim() || null,
+          } as any);
+        }
 
         const plansToInsert = formPlans.filter(p => p.name.trim()).map((p, i) => ({
           product_id: data.id, name: p.name.trim(), price: p.price, active: p.active, sort_order: i,
