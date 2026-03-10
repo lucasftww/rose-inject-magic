@@ -659,11 +659,12 @@ const Dashboard = () => {
                       <div className="space-y-1.5">
                         <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Nova Senha</label>
                         <div className="relative">
-                          <input
-                            type={showNewPass ? "text" : "password"}
-                            value={newPassword}
-                            onChange={(e) => setNewPassword(e.target.value)}
-                            placeholder="Mínimo 6 caracteres"
+                           <input
+                             type={showNewPass ? "text" : "password"}
+                             autoComplete="new-password"
+                             value={newPassword}
+                             onChange={(e) => setNewPassword(e.target.value)}
+                             placeholder="Mínimo 6 caracteres"
                             className="w-full rounded-lg border border-border bg-secondary/50 py-3 pl-4 pr-11 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none focus:border-success/50 transition-colors"
                           />
                           <button onClick={() => setShowNewPass(!showNewPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
@@ -673,12 +674,13 @@ const Dashboard = () => {
                       </div>
                       <div className="space-y-1.5">
                         <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Confirmar Nova Senha</label>
-                        <input
-                          type="password"
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          placeholder="Repita a nova senha"
-                          onKeyDown={(e) => e.key === "Enter" && handleChangePassword()}
+                         <input
+                           type="password"
+                           autoComplete="new-password"
+                           value={confirmPassword}
+                           onChange={(e) => setConfirmPassword(e.target.value)}
+                           placeholder="Repita a nova senha"
+                           onKeyDown={(e) => e.key === "Enter" && handleChangePassword()}
                           className="w-full rounded-lg border border-border bg-secondary/50 py-3 pl-4 pr-4 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none focus:border-success/50 transition-colors"
                         />
                       </div>
