@@ -727,18 +727,18 @@ const Index = () => {
             variants={staggerContainer}
           >
             {[
-              { name: "lucas", rank: "Imortal", text: "mano melhor loja que ja comprei, entrega na hora e suporte responde rapido demais. recomendo", rating: 5 },
-              { name: "breno", rank: "Radiante", text: "conta veio certinha com todas as skin, ja e minha terceira compra aqui e nunca deu problema", rating: 5 },
-              { name: "rafael", rank: "Ascendente", text: "tava com medo de ser scam mas entregaram tudo certinho, suporte me ajudou em tudo. confia!", rating: 5 },
-              { name: "kaua", rank: "Global Elite • CS2", text: "inject cs ta rodando liso demais, sem ban nenhum. atualizaram rapido depois do update da valve", rating: 5 },
-              { name: "gabriel", rank: "Imortal", text: "comprei a conta e recebi na hora pelo discord, preco justo e qualidade braba", rating: 5 },
-              { name: "enzo", rank: "Faceit Lvl 10 • CS2", text: "ja uso o inject faz 3 meses e zero problema. suporte respondeu em 5 min quando precisei, mt bom", rating: 5 },
-              { name: "thiago", rank: "Supreme • CS2", text: "mlk melhor cheat de cs2 do mercado, roda suave e indetectavel. virei cliente fiel da royal!", rating: 5 },
-              { name: "davi", rank: "LEM • CS2", text: "comprei pra testar e fiquei impressionado, aimbot muito smooth ninguem percebe kkkkk", rating: 4 },
-              { name: "juliana", rank: "Platina", text: "ja sou cliente faz tempo, nunca tive problema. confianca total nessa loja", rating: 5 },
-              { name: "felipe", rank: "Spoofer", text: "tomei hwid ban no valorant e o spoofer resolveu na hora, voltei a jogar no msm dia sem stress", rating: 5 },
-              { name: "vinicius", rank: "Spoofer", text: "spoofer top demais, funciona em qualquer anti-cheat. ja usei no cs2 e val, nunca falhou", rating: 5 },
-              { name: "amanda", rank: "Spoofer", text: "pensei q ia ter q trocar de pc dps do ban mas o spoofer salvou minha vida. recomendo 100%!", rating: 5 },
+              { name: "lucas", text: "mano melhor loja que ja comprei, entrega na hora e suporte responde rapido demais. recomendo", rating: 5 },
+              { name: "breno", text: "conta veio certinha com todas as skin, ja e minha terceira compra aqui e nunca deu problema", rating: 5 },
+              { name: "rafael", text: "tava com medo de ser scam mas entregaram tudo certinho, suporte me ajudou em tudo. confia!", rating: 5 },
+              { name: "kaua", text: "inject cs ta rodando liso demais, sem ban nenhum. atualizaram rapido depois do update da valve", rating: 5 },
+              { name: "gabriel", text: "comprei a conta e recebi na hora pelo discord, preco justo e qualidade braba", rating: 5 },
+              { name: "enzo", text: "ja uso o inject faz 3 meses e zero problema. suporte respondeu em 5 min quando precisei, mt bom", rating: 5 },
+              { name: "thiago", text: "mlk melhor cheat de cs2 do mercado, roda suave e indetectavel. virei cliente fiel da royal!", rating: 5 },
+              { name: "davi", text: "comprei pra testar e fiquei impressionado, aimbot muito smooth ninguem percebe kkkkk", rating: 4 },
+              { name: "juliana", text: "ja sou cliente faz tempo, nunca tive problema. confianca total nessa loja", rating: 5 },
+              { name: "felipe", text: "tomei hwid ban no valorant e o spoofer resolveu na hora, voltei a jogar no msm dia sem stress", rating: 5 },
+              { name: "vinicius", text: "spoofer top demais, funciona em qualquer anti-cheat. ja usei no cs2 e val, nunca falhou", rating: 5 },
+              { name: "amanda", text: "pensei q ia ter q trocar de pc dps do ban mas o spoofer salvou minha vida. recomendo 100%!", rating: 5 },
             ].map((review, idx) => (
               <motion.div
                 key={idx}
@@ -763,10 +763,7 @@ const Index = () => {
                   <div className="flex h-9 w-9 items-center justify-center rounded-full bg-success/20 text-sm font-bold text-success">
                     {review.name.charAt(0)}
                   </div>
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">{review.name}</p>
-                    <p className="text-xs text-muted-foreground">{review.rank}</p>
-                  </div>
+                  <p className="text-sm font-semibold text-foreground">{review.name}</p>
                 </div>
               </motion.div>
             ))}
