@@ -2,8 +2,13 @@ import { X, MessageCircle } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const DiscordBanner = ({ dismissible = true }: { dismissible?: boolean }) => {
+const DiscordBanner = ({ dismissible = true, onVisibilityChange }: { dismissible?: boolean; onVisibilityChange?: (visible: boolean) => void }) => {
   const [visible, setVisible] = useState(true);
+
+  const handleDismiss = () => {
+    setVisible(false);
+    onVisibilityChange?.(false);
+  };
 
   return (
     <AnimatePresence>
