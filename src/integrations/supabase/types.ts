@@ -988,6 +988,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      validate_coupon: {
+        Args: { _cart_product_ids?: string[]; _code: string; _user_id: string }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"

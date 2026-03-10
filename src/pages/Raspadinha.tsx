@@ -12,7 +12,7 @@ interface Prize {
   name: string;
   description: string | null;
   image_url: string | null;
-  win_percentage: number;
+  win_percentage?: number;
   prize_value: number;
 }
 
@@ -128,7 +128,7 @@ const Raspadinha = () => {
   useEffect(() => {
     const fetchData = async () => {
       const [{ data: prizesData }, { data: configData }] = await Promise.all([
-        supabase.from("scratch_card_prizes").select("*").eq("active", true).order("sort_order"),
+        supabase.from("scratch_card_prizes").select("id, name, description, image_url, prize_value, product_id, sort_order, active, created_at").eq("active", true).order("sort_order"),
         supabase.from("scratch_card_config").select("*").limit(1).single(),
       ]);
       if (prizesData) setPrizes(prizesData as Prize[]);

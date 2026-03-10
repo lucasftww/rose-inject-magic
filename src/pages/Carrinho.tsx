@@ -31,92 +31,34 @@ const Carrinho = () => {
     if (!user) { toast({ title: "Faça login para usar cupons", variant: "destructive" }); return; }
     setCouponLoading(true);
 
-    // Fetch coupon
-    const { data: coupon, error } = await supabase
-      .from("coupons")
-      .select("*")
-      .eq("code", code)
-      .eq("active", true)
-      .single();
+    const productIds = items.map(i => i.productId).filter(id => !id.startsWith("lzt-"));
+    const { data: rawResult, error } = await supabase.rpc("validate_coupon", {
+      _code: code,
+      _user_id: user.id,
+      _cart_product_ids: productIds,
+    });
+    const result = rawResult as any;
 
-    if (error || !coupon) {
-      toast({ title: "Cupom inválido", description: "Este cupom não existe ou está inativo.", variant: "destructive" });
+    if (error || !result || !result.valid) {
+      toast({ title: result?.error || "Cupom inválido", variant: "destructive" });
       setCouponLoading(false);
       return;
     }
 
-    // Check expiry
-    if (coupon.expires_at && new Date(coupon.expires_at) < new Date()) {
-      toast({ title: "Cupom expirado", variant: "destructive" });
-      setCouponLoading(false);
-      return;
-    }
-
-    // Check max uses
-    if (coupon.max_uses !== null && coupon.current_uses >= coupon.max_uses) {
-      toast({ title: "Cupom esgotado", variant: "destructive" });
-      setCouponLoading(false);
-      return;
-    }
-
-    // Check min order value
-    if (coupon.min_order_value && totalPrice < Number(coupon.min_order_value)) {
-      toast({ title: "Valor mínimo não atingido", description: `Pedido mínimo: R$ ${Number(coupon.min_order_value).toFixed(2)}`, variant: "destructive" });
-      setCouponLoading(false);
-      return;
-    }
-
-    // Check if user is allowed
-    const { data: allowedUsers } = await supabase
-      .from("coupon_users")
-      .select("id")
-      .eq("coupon_id", coupon.id);
-
-    if (allowedUsers && allowedUsers.length > 0) {
-      const isAllowed = allowedUsers.some((u: any) => u.user_id === user.id);
-      if (!isAllowed) {
-        toast({ title: "Cupom não disponível para você", variant: "destructive" });
-        setCouponLoading(false);
-        return;
-      }
-    }
-
-    // Check allowed products
-    const { data: allowedProducts } = await supabase
-      .from("coupon_products")
-      .select("product_id")
-      .eq("coupon_id", coupon.id);
-
-    if (allowedProducts && allowedProducts.length > 0) {
-      const allowedIds = allowedProducts.map((p: any) => p.product_id);
-      const hasValidItem = items.some(i => allowedIds.includes(i.productId));
-      if (!hasValidItem) {
-        toast({ title: "Cupom não aplicável", description: "Nenhum produto do carrinho é elegível.", variant: "destructive" });
-        setCouponLoading(false);
-        return;
-      }
-    }
-
-    // Check user usage
-    const { data: usage } = await supabase
-      .from("coupon_usage")
-      .select("id")
-      .eq("coupon_id", coupon.id)
-      .eq("user_id", user.id);
-
-    if (usage && usage.length > 0) {
-      toast({ title: "Cupom já utilizado", variant: "destructive" });
+    // Check min order value client-side for UX
+    if (result.min_order_value && totalPrice < Number(result.min_order_value)) {
+      toast({ title: "Valor mínimo não atingido", description: `Pedido mínimo: R$ ${Number(result.min_order_value).toFixed(2)}`, variant: "destructive" });
       setCouponLoading(false);
       return;
     }
 
     setAppliedCoupon({
-      id: coupon.id,
-      code: coupon.code,
-      discount_type: coupon.discount_type as "percentage" | "fixed",
-      discount_value: Number(coupon.discount_value),
+      id: result.id,
+      code: code,
+      discount_type: result.discount_type as "percentage" | "fixed",
+      discount_value: Number(result.discount_value),
     });
-    toast({ title: "Cupom aplicado!", description: `${coupon.code} - ${coupon.discount_type === "percentage" ? `${coupon.discount_value}% de desconto` : `R$ ${Number(coupon.discount_value).toFixed(2)} de desconto`}` });
+    toast({ title: "Cupom aplicado!", description: `${code} - ${result.discount_type === "percentage" ? `${result.discount_value}% de desconto` : `R$ ${Number(result.discount_value).toFixed(2)} de desconto`}` });
     setCouponLoading(false);
   };
 
