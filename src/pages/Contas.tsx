@@ -1046,8 +1046,8 @@ const Contas = () => {
     if (searchQuery) params.title = searchQuery;
 
     if (gameTab === "valorant") {
-      // Valorant-specific — hide accounts with 0 skins, min inventory 1000, min level 20
-      params.valorant_smin = "1";
+      // Valorant-specific — hide low-quality accounts
+      params.valorant_smin = "10";
       params.inv_min = "1000";
       params.valorant_level_min = "20";
       if (onlyKnife) params.knife = "true";
