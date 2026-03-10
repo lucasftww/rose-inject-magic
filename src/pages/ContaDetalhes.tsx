@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/Header";
 import { ArrowLeft, Shield, Loader2, ChevronRight, ChevronLeft, ChevronRight as ChevronRightIcon, CheckCircle2, Swords, Users, Star, X, ShoppingCart, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, forwardRef } from "react";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "@/hooks/use-toast";
 import { useLztMarkup } from "@/hooks/useLztMarkup";
@@ -35,6 +35,9 @@ const rarityMap: Record<string, { name: string; img: string; color: string }> = 
 };
 
 const rankMap: Record<number, { name: string; img: string }> = {
+  0: { name: "Unranked", img: rankUnranked },
+  1: { name: "Unranked", img: rankUnranked },
+  2: { name: "Unranked", img: rankUnranked },
   3: { name: "Ferro 1", img: rankFerro },
   4: { name: "Ferro 2", img: rankFerro },
   5: { name: "Ferro 3", img: rankFerro },
@@ -148,6 +151,13 @@ const ContaDetalhes = () => {
   const [selectedSkin, setSelectedSkin] = useState(0);
   const [activeTab, setActiveTab] = useState<"skins" | "agents" | "buddies">("skins");
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+
+  // Reset selectedSkin when account changes
+  useEffect(() => {
+    setSelectedSkin(0);
+    setLightboxIndex(null);
+    setActiveTab("skins");
+  }, [id]);
   const { addItem, items } = useCart();
   const [addedToCart, setAddedToCart] = useState(false);
 
@@ -247,6 +257,13 @@ const ContaDetalhes = () => {
   const mainGallery = gallery.length > 0 ? gallery : skinItems.slice(0, 5);
 
   const galleryLength = skinItems.length > 0 ? skinItems.length : mainGallery.length;
+  
+  // Clamp selectedSkin to valid range when data changes
+  const clampedSkin = galleryLength > 0 ? Math.min(selectedSkin, galleryLength - 1) : 0;
+  useEffect(() => {
+    if (selectedSkin !== clampedSkin) setSelectedSkin(clampedSkin);
+  }, [clampedSkin, selectedSkin]);
+  
   const handlePrev = () => setSelectedSkin((p) => (p > 0 ? p - 1 : galleryLength - 1));
   const handleNext = () => setSelectedSkin((p) => (p < galleryLength - 1 ? p + 1 : 0));
 
@@ -312,7 +329,7 @@ const ContaDetalhes = () => {
                       <motion.div
                         key={selectedSkin}
                         className="relative z-[1] flex items-center justify-center h-full w-full p-8 cursor-pointer"
-                        onClick={() => setLightboxIndex(selectedSkin)}
+                        onClick={() => { setActiveTab("skins"); setLightboxIndex(selectedSkin); }}
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
@@ -683,11 +700,12 @@ const StatCell = ({ label, value }: { label: string; value: string | number }) =
   </div>
 );
 
-const HighlightStat = ({ label, value }: { label: string; value: string | number }) => (
-  <div className="flex flex-col items-center py-3 px-1.5">
+const HighlightStat = forwardRef<HTMLDivElement, { label: string; value: string | number }>(({ label, value }, ref) => (
+  <div ref={ref} className="flex flex-col items-center py-3 px-1.5">
     <span className="text-[10px] text-muted-foreground mb-0.5">{label}</span>
     <span className="text-base font-bold text-success">{value}</span>
   </div>
-);
+));
+HighlightStat.displayName = "HighlightStat";
 
 export default ContaDetalhes;
