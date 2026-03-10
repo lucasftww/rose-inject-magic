@@ -110,7 +110,7 @@ const Header = () => {
           boxShadow: scrolled ? "0 4px 30px hsla(0,0%,0%,0.3)" : "none",
         }}
       >
-        <div className="mx-auto flex h-16 lg:h-[72px] max-w-7xl items-center justify-between px-4 lg:px-6">
+        <div className="mx-auto flex h-14 sm:h-16 lg:h-[72px] max-w-7xl items-center justify-between px-3 sm:px-4 lg:px-6">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 lg:gap-3 shrink-0 group">
             <motion.img
