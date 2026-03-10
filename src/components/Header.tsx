@@ -324,7 +324,7 @@ const Header = () => {
                 </motion.button>
                 <motion.button
                   onClick={() => { setAuthTab("register"); setAuthOpen(true); }}
-                  className="hidden sm:inline-flex px-5 lg:px-6 py-2 text-sm font-semibold tracking-wide whitespace-nowrap rounded-md transition-all duration-200 btn-shine"
+                  className="inline-flex px-4 sm:px-5 lg:px-6 py-2 text-xs sm:text-sm font-semibold tracking-wide whitespace-nowrap rounded-lg sm:rounded-md transition-all duration-200 btn-shine"
                   style={{
                     background: isLolContext ? LOL_BLUE : "hsl(var(--success))",
                     color: "white",
