@@ -188,26 +188,32 @@ const ContaDetalhes = () => {
   const agentUuids = inventory?.Agent || [];
   const buddyUuids = inventory?.Buddy || [];
 
-  const { data: skinItems = [] } = useQuery({
+  const { data: skinItems = [], isLoading: skinsLoading, isError: skinsError } = useQuery({
     queryKey: ["valorant-skins", skinUuids],
     queryFn: () => fetchValorantSkins(skinUuids),
     enabled: skinUuids.length > 0,
     staleTime: 1000 * 60 * 30,
+    retry: 2,
   });
 
-  const { data: agentItems = [] } = useQuery({
+  const { data: agentItems = [], isLoading: agentsLoading, isError: agentsError } = useQuery({
     queryKey: ["valorant-agents", agentUuids],
     queryFn: () => fetchValorantAgents(agentUuids),
     enabled: agentUuids.length > 0,
     staleTime: 1000 * 60 * 30,
+    retry: 2,
   });
 
-  const { data: buddyItems = [] } = useQuery({
+  const { data: buddyItems = [], isLoading: buddiesLoading, isError: buddiesError } = useQuery({
     queryKey: ["valorant-buddies", buddyUuids],
     queryFn: () => fetchValorantBuddies(buddyUuids),
     enabled: buddyUuids.length > 0,
     staleTime: 1000 * 60 * 30,
+    retry: 2,
   });
+
+  const activeLoading = activeTab === "skins" ? skinsLoading : activeTab === "agents" ? agentsLoading : buddiesLoading;
+  const activeError = activeTab === "skins" ? skinsError : activeTab === "agents" ? agentsError : buddiesError;
 
   // Use skin items as main gallery if no screenshots
   const mainGallery = gallery.length > 0 ? gallery : skinItems.slice(0, 5);
