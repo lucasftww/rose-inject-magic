@@ -324,14 +324,8 @@ Deno.serve(async (req) => {
     if (action === "detail" && data.item) {
       const RUB_TO_BRL = 0.055;
       const MIN_PRICE_BRL = 20;
-      // Need to fetch lzt_config for detail too
-      const { data: detailConfig } = await supabaseAdmin
-        .from("lzt_config")
-        .select("markup_multiplier, markup_valorant, markup_lol, markup_fortnite, markup_minecraft")
-        .limit(1)
-        .maybeSingle();
-      // Guess game from category or default to valorant markup
-      let detailMarkup = detailConfig?.markup_valorant || detailConfig?.markup_multiplier || 1.5;
+      // Use lztConfig already fetched above
+      let detailMarkup = lztConfig?.markup_valorant || lztConfig?.markup_multiplier || 1.5;
       const currency = data.item.price_currency || "rub";
       let brl = currency === "rub" ? data.item.price * RUB_TO_BRL : data.item.price;
       const final = brl * detailMarkup;
