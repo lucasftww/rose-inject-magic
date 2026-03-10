@@ -532,7 +532,7 @@ const Index = () => {
     <div className="relative min-h-screen bg-background overflow-x-hidden">
       <Header />
 
-      <main className="relative flex min-h-screen flex-col items-center justify-center px-4 sm:px-6 pt-28 pb-16 sm:pb-20 text-center">
+      <main className="relative flex min-h-screen flex-col items-center justify-center px-4 sm:px-6 pt-4 pb-16 sm:pb-20 text-center">
         {/* Grid pattern */}
         <div className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[550px] w-[900px] -translate-x-1/2 -translate-y-1/2"
           style={{
