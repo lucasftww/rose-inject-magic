@@ -470,7 +470,7 @@ const ProductsSection = () => {
           <div className="mt-14 text-center text-muted-foreground">Nenhum produto disponível no momento.</div>
         ) : (
           <motion.div
-            className="mt-14 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+            className="mt-8 sm:mt-14 grid grid-cols-2 gap-3 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-60px" }}
