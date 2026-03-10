@@ -935,7 +935,7 @@ const fetchAccountsRaw = async (params: Record<string, string | string[]>) => {
   const res = await fetch(`${projectUrl}/functions/v1/lzt-market?${queryParams.toString()}`, {
     headers: { "Content-Type": "application/json", apikey: anonKey },
   });
-  if (!res.ok) throw new Error(`API Error: ${res.status}`);
+  if (!res.ok) throwApiError(res.status);
   return res.json();
 };
 
