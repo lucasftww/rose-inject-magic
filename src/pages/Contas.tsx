@@ -1112,6 +1112,20 @@ const Contas = () => {
 
   const paramsKey = JSON.stringify(buildParams(1)) + gameTab;
 
+  const fetchWithRetry = useCallback(async (params: Record<string, string | string[]>, controller: AbortController, retries = 2): Promise<any> => {
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      if (controller.signal.aborted) throw new Error("aborted");
+      try {
+        return await fetchAccountsRaw(params);
+      } catch (err: any) {
+        if (attempt >= retries) throw err;
+        // Wait with exponential backoff before retrying (1s, 3s)
+        const delay = (attempt + 1) * 1500;
+        await new Promise((r) => setTimeout(r, delay));
+      }
+    }
+  }, []);
+
   const fetchMultiplePages = useCallback(async (controller: AbortController) => {
     setStreamedItems([]);
     setStreamingDone(false);
@@ -1127,7 +1141,7 @@ const Contas = () => {
 
       while (nextPage && pageNum <= MAX_PAGES) {
         if (controller.signal.aborted) return;
-        const data = await fetchAccountsRaw(buildParams(pageNum));
+        const data = await fetchWithRetry(buildParams(pageNum), controller);
         if (controller.signal.aborted) return;
 
         const pageItems: LztItem[] = data?.items ?? [];
@@ -1154,7 +1168,7 @@ const Contas = () => {
         setStreamingDone(true);
       }
     }
-  }, [buildParams]);
+  }, [buildParams, fetchWithRetry]);
 
   useEffect(() => {
     abortRef.current?.abort();
@@ -1369,7 +1383,7 @@ const Contas = () => {
               {isValorant ? "CONTAS VALORANT" : isFortnite ? "CONTAS FORTNITE" : isMinecraft ? "CONTAS MINECRAFT" : "CONTAS LOL"}
             </h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              {isLoading ? "Buscando contas..." : isStreaming ? `Carregando... ${allItems.length} contas (página ${currentPage})` : `${allItems.length} contas · Página ${displayPage} de ${totalDisplayPages}`}
+              {streamError ? "Erro ao buscar contas" : isLoading ? "Buscando contas..." : isStreaming ? `Carregando... ${allItems.length} contas (página ${currentPage})` : `${allItems.length} contas · Página ${displayPage} de ${totalDisplayPages}`}
             </p>
           </div>
           <div className="flex items-center gap-2">
