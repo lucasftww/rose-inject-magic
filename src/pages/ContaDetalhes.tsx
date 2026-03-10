@@ -693,11 +693,12 @@ const StatCell = ({ label, value }: { label: string; value: string | number }) =
   </div>
 );
 
-const HighlightStat = ({ label, value }: { label: string; value: string | number }) => (
-  <div className="flex flex-col items-center py-3 px-1.5">
+const HighlightStat = forwardRef<HTMLDivElement, { label: string; value: string | number }>(({ label, value }, ref) => (
+  <div ref={ref} className="flex flex-col items-center py-3 px-1.5">
     <span className="text-[10px] text-muted-foreground mb-0.5">{label}</span>
     <span className="text-base font-bold text-success">{value}</span>
   </div>
-);
+));
+HighlightStat.displayName = "HighlightStat";
 
 export default ContaDetalhes;
