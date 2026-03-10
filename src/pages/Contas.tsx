@@ -978,7 +978,7 @@ const Contas = () => {
   // ─── Shared filters ───
   const [priceMin, setPriceMin] = useState("");
   const [priceMax, setPriceMax] = useState("");
-  const [sortBy, setSortBy] = useState<string>("pdate_desc");
+  const [sortBy, setSortBy] = useState<string>("price_asc");
   const [searchQuery, setSearchQuery] = useState("");
   const [lvlMin, setLvlMin] = useState("");
   const [lvlMax, setLvlMax] = useState("");
