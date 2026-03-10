@@ -113,12 +113,16 @@ const OverviewTab = () => {
           prodsRes.data?.forEach((p: any) => { prodMap[p.id] = p.name; });
           plansRes.data?.forEach((p: any) => { planMap[p.id] = p.name; });
 
-          setRecentOrders((recentOrdersRes.data as any[]).map((t: any) => ({
-            ...t,
-            product_name: prodMap[t.product_id] || "Produto",
-            plan_name: planMap[t.product_plan_id] || "Plano",
-            username: usersMap[t.user_id] || "?",
-          })));
+          setRecentOrders((recentOrdersRes.data as any[]).map((t: any) => {
+            const meta = t.metadata as any;
+            const isLzt = meta?.type === "lzt-account";
+            return {
+              ...t,
+              product_name: isLzt ? (meta?.title || meta?.account_name || "Conta LZT") : (prodMap[t.product_id] || "Produto"),
+              plan_name: isLzt ? "Conta LZT" : (planMap[t.product_plan_id] || "Plano"),
+              username: usersMap[t.user_id] || "?",
+            };
+          }));
         }
       }
 

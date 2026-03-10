@@ -20,7 +20,8 @@ interface LztSale {
   buy_price: number;
   sell_price: number;
   profit: number;
-  account_title: string | null;
+  title: string | null;
+  game: string | null;
   buyer_user_id: string | null;
   created_at: string;
 }
@@ -125,7 +126,7 @@ const LztTab = () => {
     const q = salesSearch.toLowerCase();
     return (
       sale.lzt_item_id.toLowerCase().includes(q) ||
-      (sale.account_title || "").toLowerCase().includes(q) ||
+      (sale.title || "").toLowerCase().includes(q) ||
       (sale.buyer_user_id || "").toLowerCase().includes(q)
     );
   });
@@ -294,7 +295,7 @@ const LztTab = () => {
                       </button>
                     </td>
                     <td className="py-3 pr-3">
-                      <span className="text-sm text-foreground truncate block max-w-[200px]">{sale.account_title || "—"}</span>
+                      <span className="text-sm text-foreground truncate block max-w-[200px]">{sale.title || "—"}</span>
                     </td>
                     <td className="py-3 pr-3">
                       <span className="text-xs font-bold text-destructive">R${Number(sale.buy_price).toFixed(2)}</span>
@@ -373,7 +374,7 @@ const SaleRow = ({ sale, onCopy }: { sale: LztSale; onCopy: (t: string) => void 
   <div className="flex items-center gap-3 rounded-lg border border-border bg-secondary/30 p-3 group">
     <div className="flex-1 min-w-0">
       <p className="text-sm font-medium text-foreground truncate">
-        {sale.account_title || `Conta #${sale.lzt_item_id}`}
+        {sale.title || `Conta #${sale.lzt_item_id}`}
       </p>
       <div className="flex items-center gap-2 mt-0.5">
         <button onClick={() => onCopy(sale.lzt_item_id)}
