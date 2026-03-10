@@ -727,18 +727,18 @@ const Index = () => {
             variants={staggerContainer}
           >
             {[
-              { name: "luquinhas_", rank: "Imortal", text: "mano melhor loja que ja comprei, entrega na hora e suporte responde rapido demais. recomendo 🔥", rating: 5 },
-              { name: "breno.xd", rank: "Radiante", text: "conta veio certinha com todas as skin, ja é minha terceira compra aqui e nunca deu problema", rating: 5 },
-              { name: "rafaelzin", rank: "Ascendente", text: "tava com medo de ser scam mas entregaram tudo certinho, suporte me ajudou em tudo. confia!", rating: 5 },
-              { name: "kaua.fps", rank: "Global Elite • CS2", text: "inject cs ta rodando liso demais, sem ban nenhum. atualizaram rapido depois do update da valve 👌", rating: 5 },
-              { name: "gabriel_fps", rank: "Imortal", text: "comprei a conta e recebi na hora pelo discord, preço justo e qualidade braba", rating: 5 },
-              { name: "enzogamer77", rank: "Faceit Lvl 10 • CS2", text: "ja uso o inject faz 3 meses e zero problema. suporte respondeu em 5 min quando precisei, mt bom", rating: 5 },
-              { name: "thiagobrz", rank: "Supreme • CS2", text: "mlk melhor cheat de cs2 do mercado, roda suave e indetectável. virei cliente fiel da royal!", rating: 5 },
-              { name: "davi.santos", rank: "LEM • CS2", text: "comprei pra testar e fiquei impressionado, aimbot muito smooth ninguém percebe kkkkk", rating: 4 },
-              { name: "juliana_gamer", rank: "Platina", text: "ja sou cliente faz tempo, nunca tive problema. confiança total nessa loja 💯", rating: 5 },
-              { name: "felipao_sp", rank: "Spoofer", text: "tomei hwid ban no valorant e o spoofer resolveu na hora, voltei a jogar no msm dia sem stress", rating: 5 },
-              { name: "vinizin.tt", rank: "Spoofer", text: "spoofer top demais, funciona em qualquer anti-cheat. ja usei no cs2 e val, nunca falhou", rating: 5 },
-              { name: "amanda.silva", rank: "Spoofer", text: "pensei q ia ter q trocar de pc dps do ban mas o spoofer salvou minha vida. recomendo 100%!", rating: 5 },
+              { name: "Lucas Martins", rank: "Imortal", text: "mano melhor loja que ja comprei, entrega na hora e suporte responde rapido demais. recomendo", rating: 5 },
+              { name: "Breno Oliveira", rank: "Radiante", text: "conta veio certinha com todas as skin, ja e minha terceira compra aqui e nunca deu problema", rating: 5 },
+              { name: "Rafael Souza", rank: "Ascendente", text: "tava com medo de ser scam mas entregaram tudo certinho, suporte me ajudou em tudo. confia!", rating: 5 },
+              { name: "Kaua Lima", rank: "Global Elite • CS2", text: "inject cs ta rodando liso demais, sem ban nenhum. atualizaram rapido depois do update da valve", rating: 5 },
+              { name: "Gabriel Ferreira", rank: "Imortal", text: "comprei a conta e recebi na hora pelo discord, preco justo e qualidade braba", rating: 5 },
+              { name: "Enzo Moreira", rank: "Faceit Lvl 10 • CS2", text: "ja uso o inject faz 3 meses e zero problema. suporte respondeu em 5 min quando precisei, mt bom", rating: 5 },
+              { name: "Thiago Almeida", rank: "Supreme • CS2", text: "mlk melhor cheat de cs2 do mercado, roda suave e indetectavel. virei cliente fiel da royal!", rating: 5 },
+              { name: "Davi Santos", rank: "LEM • CS2", text: "comprei pra testar e fiquei impressionado, aimbot muito smooth ninguem percebe kkkkk", rating: 4 },
+              { name: "Juliana Mendes", rank: "Platina", text: "ja sou cliente faz tempo, nunca tive problema. confianca total nessa loja", rating: 5 },
+              { name: "Felipe Augusto", rank: "Spoofer", text: "tomei hwid ban no valorant e o spoofer resolveu na hora, voltei a jogar no msm dia sem stress", rating: 5 },
+              { name: "Vinicius Torres", rank: "Spoofer", text: "spoofer top demais, funciona em qualquer anti-cheat. ja usei no cs2 e val, nunca falhou", rating: 5 },
+              { name: "Amanda Silva", rank: "Spoofer", text: "pensei q ia ter q trocar de pc dps do ban mas o spoofer salvou minha vida. recomendo 100%!", rating: 5 },
             ].map((review, idx) => (
               <motion.div
                 key={idx}
