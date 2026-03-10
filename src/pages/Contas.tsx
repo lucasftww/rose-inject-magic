@@ -1,7 +1,8 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useLztMarkup } from "@/hooks/useLztMarkup";
 import Header from "@/components/Header";
-import { ChevronLeft, ChevronRight, ChevronDown, Search, SlidersHorizontal, DollarSign, Crosshair, Loader2, RefreshCw, Globe, TrendingUp, Star, Shield, Trophy } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronDown, Search, SlidersHorizontal, DollarSign, Crosshair, Loader2, RefreshCw, Globe, TrendingUp, Star, Shield, Trophy, AlertTriangle } from "lucide-react";
+import { throwApiError } from "@/lib/apiErrors";
 import { motion } from "framer-motion";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -935,7 +936,7 @@ const fetchAccountsRaw = async (params: Record<string, string | string[]>) => {
   const res = await fetch(`${projectUrl}/functions/v1/lzt-market?${queryParams.toString()}`, {
     headers: { "Content-Type": "application/json", apikey: anonKey },
   });
-  if (!res.ok) throw new Error(`API Error: ${res.status}`);
+  if (!res.ok) throwApiError(res.status);
   return res.json();
 };
 
@@ -1753,9 +1754,10 @@ const Contas = () => {
             )}
 
             {streamError && (
-              <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-                <p className="text-lg font-semibold text-destructive">Erro ao carregar contas</p>
-                <p className="mt-1 text-sm">{streamError.message}</p>
+              <div className="flex flex-col items-center justify-center py-20 text-muted-foreground gap-2">
+                <AlertTriangle className="h-10 w-10 text-yellow-500" />
+                <p className="text-lg font-semibold text-foreground">Ops! Algo deu errado</p>
+                <p className="mt-1 text-sm text-center max-w-md">{streamError.message}</p>
                 <button
                   onClick={() => refetch()}
                   className="mt-4 rounded border border-border px-4 py-2 text-xs font-medium transition-colors"
