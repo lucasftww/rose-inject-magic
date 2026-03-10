@@ -371,7 +371,7 @@ const ContasSection = () => {
   });
 
   return (
-    <section className="border-t border-border bg-background px-4 sm:px-6 py-16 sm:py-24">
+    <section className="border-t border-border bg-background px-4 sm:px-6 py-12 sm:py-24">
       <div className="mx-auto max-w-7xl">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-80px" }} variants={slideInLeft}>
           <p className="text-sm font-medium uppercase tracking-[0.3em] text-success">Selecao Accounts</p>
@@ -384,7 +384,7 @@ const ContasSection = () => {
           <div className="mt-14 text-center text-muted-foreground">Nenhuma conta disponível no momento.</div>
         ) : (
           <motion.div
-            className="mt-14 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+            className="mt-8 sm:mt-14 grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-40px" }}
@@ -457,7 +457,7 @@ const ProductsSection = () => {
   });
 
   return (
-    <section className="border-t border-border bg-background px-4 sm:px-6 py-16 sm:py-24">
+    <section className="border-t border-border bg-background px-4 sm:px-6 py-12 sm:py-24">
       <div className="mx-auto max-w-7xl">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-80px" }} variants={slideInLeft}>
           <p className="text-sm font-medium uppercase tracking-[0.3em] text-success">Selecao Premium</p>
@@ -470,7 +470,7 @@ const ProductsSection = () => {
           <div className="mt-14 text-center text-muted-foreground">Nenhum produto disponível no momento.</div>
         ) : (
           <motion.div
-            className="mt-14 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+            className="mt-8 sm:mt-14 grid grid-cols-2 gap-3 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-60px" }}
@@ -491,21 +491,23 @@ const ProductsSection = () => {
                     {product.image_url ? (
                       <img src={product.image_url} alt={product.name} className="absolute inset-0 h-full w-full object-cover" />
                     ) : (
-                      <Package className="h-12 w-12 text-muted-foreground/20" />
+                      <div className="flex h-full w-full items-center justify-center">
+                        <Package className="h-8 w-8 sm:h-12 sm:w-12 text-muted-foreground/20" />
+                      </div>
                     )}
                   </div>
-                  <div className="p-5">
-                    <h3 className="text-base font-bold text-foreground">{product.name}</h3>
+                  <div className="p-3 sm:p-5">
+                    <h3 className="text-xs sm:text-base font-bold text-foreground line-clamp-1">{product.name}</h3>
                     {product.description && (
-                      <p className="mt-1.5 text-xs text-muted-foreground line-clamp-2">{product.description}</p>
+                      <p className="mt-1 text-[10px] sm:text-xs text-muted-foreground line-clamp-2 hidden sm:block">{product.description}</p>
                     )}
                     {lowestPrice !== null && (
-                      <div className="mt-4 flex items-end justify-between">
+                      <div className="mt-2 sm:mt-4 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
                         <div>
-                          <p className="text-[10px] text-muted-foreground">A partir de</p>
-                          <p className="text-xl font-bold text-success">R$ {lowestPrice.toFixed(2)}</p>
+                          <p className="text-[9px] sm:text-[10px] text-muted-foreground">A partir de</p>
+                          <p className="text-base sm:text-xl font-bold text-success">R$ {lowestPrice.toFixed(2)}</p>
                         </div>
-                        <span className="flex items-center gap-1.5 rounded border border-border px-4 py-2 text-xs font-medium text-muted-foreground transition-colors group-hover:border-success group-hover:text-success">
+                        <span className="hidden sm:flex items-center gap-1.5 rounded border border-border px-4 py-2 text-xs font-medium text-muted-foreground transition-colors group-hover:border-success group-hover:text-success">
                           Ver produto
                         </span>
                       </div>
@@ -527,14 +529,38 @@ const ProductsSection = () => {
     </section>
   );
 };
+const StickyMobileCTA = () => (
+  <div className="fixed bottom-0 left-0 right-0 z-40 sm:hidden">
+    <div className="bg-card/95 backdrop-blur-xl border-t border-border px-4 py-3 safe-area-bottom">
+      <div className="flex gap-2.5">
+        <Link
+          to="/produtos"
+          className="btn-shine flex-1 flex items-center justify-center gap-2 bg-success py-3.5 text-sm font-bold tracking-wide text-success-foreground rounded-xl shadow-[0_0_25px_hsl(197,100%,50%,0.3)]"
+        >
+          <span className="relative flex items-center gap-2">
+            🛒 Ver Produtos
+          </span>
+        </Link>
+        <Link
+          to="/contas"
+          className="flex-1 flex items-center justify-center gap-2 border-2 border-success/50 py-3.5 text-sm font-bold tracking-wide text-success rounded-xl"
+        >
+          🎮 Ver Contas
+        </Link>
+      </div>
+    </div>
+  </div>
+);
+
 const Index = () => {
   return (
     <div className="relative min-h-screen bg-background overflow-x-hidden">
       <Header />
 
-      <main className="relative flex min-h-screen flex-col items-center justify-center px-4 sm:px-6 pt-4 pb-16 sm:pb-20 text-center">
+      {/* HERO - Mobile-first conversion optimized */}
+      <main className="relative flex min-h-[85vh] sm:min-h-screen flex-col items-center justify-center px-4 sm:px-6 pt-2 sm:pt-4 pb-8 sm:pb-20 text-center">
         {/* Grid pattern */}
-        <div className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[550px] w-[900px] -translate-x-1/2 -translate-y-1/2"
+        <div className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[400px] sm:h-[550px] w-[600px] sm:w-[900px] -translate-x-1/2 -translate-y-1/2"
           style={{
             backgroundImage:
               "linear-gradient(hsl(var(--border) / 0.8) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--border) / 0.8) 1px, transparent 1px)",
@@ -545,25 +571,25 @@ const Index = () => {
           }}
         />
         {/* Glow */}
-        <div className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[600px] w-[900px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,_hsl(197,100%,50%,0.15)_0%,_transparent_65%)]" />
+        <div className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[400px] sm:h-[600px] w-[600px] sm:w-[900px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,_hsl(197,100%,50%,0.15)_0%,_transparent_65%)]" />
 
         {/* Badge */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-          className="z-10 mb-12 flex items-center gap-2"
+          className="z-10 mb-6 sm:mb-12 flex items-center gap-2"
         >
-          <Star className="h-6 w-6 fill-success text-success" />
-          <span className="text-base font-semibold tracking-wide text-success">+20.000 Clientes Satisfeitos</span>
+          <Star className="h-5 w-5 sm:h-6 sm:w-6 fill-success text-success" />
+          <span className="text-sm sm:text-base font-semibold tracking-wide text-success">+20.000 Clientes Satisfeitos</span>
         </motion.div>
 
-        {/* Headline */}
+        {/* Headline - shorter on mobile */}
         <motion.h1
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
-          className="z-10 max-w-4xl text-3xl sm:text-5xl font-bold leading-tight tracking-tight text-foreground md:text-7xl lg:text-8xl"
+          className="z-10 max-w-4xl text-[2rem] leading-[1.1] sm:text-5xl font-bold tracking-tight text-foreground md:text-7xl lg:text-8xl"
         >
           Domine o Jogo com{" "}
           <span
@@ -574,46 +600,47 @@ const Index = () => {
           </span>
         </motion.h1>
 
-        {/* Subtitle */}
+        {/* Subtitle - shorter on mobile */}
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className="z-10 mt-6 sm:mt-8 max-w-2xl text-sm sm:text-lg leading-relaxed text-muted-foreground md:text-xl"
+          className="z-10 mt-4 sm:mt-8 max-w-2xl text-[13px] leading-relaxed sm:text-lg text-muted-foreground md:text-xl px-2 sm:px-0"
         >
-          Somos referência no mercado há mais de 5 anos, oferecendo softwares premium com{" "}
+          <span className="hidden sm:inline">Somos referência no mercado há mais de 5 anos, oferecendo softwares premium com{" "}
           <span className="text-foreground font-medium">tecnologia indetectável</span>,{" "}
           <span className="text-foreground font-medium">atualizações constantes</span> e{" "}
           <span className="text-foreground font-medium">suporte dedicado 24/7</span>.
           Mais de 20 mil clientes confiam na Royal Store para alcançar o próximo nível.
-          Entrega instantânea, pagamento seguro e garantia de satisfação em todos os produtos.
+          Entrega instantânea, pagamento seguro e garantia de satisfação em todos os produtos.</span>
+          <span className="sm:hidden">Softwares premium com <span className="text-foreground font-medium">entrega instantânea</span>, <span className="text-foreground font-medium">suporte 24/7</span> e <span className="text-foreground font-medium">garantia total</span>. +20 mil clientes confiam na Royal.</span>
         </motion.p>
 
-        {/* CTA Buttons */}
+        {/* CTA Buttons - bigger on mobile */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          className="z-10 mt-8 sm:mt-12 flex w-full sm:w-auto flex-col sm:flex-row items-center justify-center gap-3 sm:gap-5 px-4 sm:px-0"
+          className="z-10 mt-6 sm:mt-12 flex w-full sm:w-auto flex-col sm:flex-row items-center justify-center gap-3 sm:gap-5 px-2 sm:px-0"
         >
-          <Link to="/produtos" className="btn-shine group relative flex w-full sm:w-auto items-center justify-center gap-2 bg-success px-10 py-4 text-base font-semibold tracking-wide text-success-foreground transition-all hover:shadow-[0_0_30px_hsl(197,100%,50%,0.5)] rounded-lg sm:rounded-none">
+          <Link to="/produtos" className="btn-shine group relative flex w-full sm:w-auto items-center justify-center gap-2 bg-success px-10 py-4 sm:py-4 text-base font-semibold tracking-wide text-success-foreground transition-all hover:shadow-[0_0_30px_hsl(197,100%,50%,0.5)] rounded-xl sm:rounded-none shadow-[0_0_20px_hsl(197,100%,50%,0.25)]">
             <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,_hsl(197,100%,70%,0.3)_0%,_transparent_60%)]" />
             <span className="relative flex items-center gap-2">
               Ver Produtos
               <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
             </span>
           </Link>
-          <button className="w-full sm:w-auto border border-border px-10 py-4 text-base font-medium text-muted-foreground transition-colors hover:border-foreground hover:text-foreground rounded-lg sm:rounded-none">
-            Como Funciona
-          </button>
+          <Link to="/contas" className="w-full sm:w-auto border-2 border-success/40 px-10 py-4 text-base font-medium text-success transition-colors hover:border-foreground hover:text-foreground rounded-xl sm:rounded-none text-center">
+            Ver Contas
+          </Link>
         </motion.div>
 
-        {/* Trust badges */}
+        {/* Trust badges - horizontal scroll on mobile */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.8, delay: 1.0 }}
-          className="z-10 mt-12 sm:mt-20 flex flex-wrap items-center justify-center gap-6 sm:gap-8 md:gap-14"
+          className="z-10 mt-8 sm:mt-20 flex items-center justify-center gap-4 sm:gap-8 md:gap-14 w-full overflow-x-auto scrollbar-hide px-2 sm:px-0"
         >
           {trustBadges.map((item, idx) => (
             <motion.div
@@ -621,13 +648,13 @@ const Index = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 1.0 + idx * 0.15 }}
-              className="flex items-center gap-3"
+              className="flex items-center gap-2 sm:gap-3 shrink-0"
             >
-              <item.icon className="h-6 w-6 text-success" />
+              <item.icon className="h-5 w-5 sm:h-6 sm:w-6 text-success" />
               <div className="text-left">
-                <span className="text-sm text-muted-foreground">{item.label}</span>
+                <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">{item.label}</span>
                 <p
-                  className="text-base font-bold tracking-wide text-foreground"
+                  className="text-sm sm:text-base font-bold tracking-wide text-foreground whitespace-nowrap"
                   style={{ fontFamily: "'Valorant', sans-serif" }}
                 >
                   {item.highlight}
@@ -642,7 +669,7 @@ const Index = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 1.4 }}
-          className="z-10 mt-8 sm:mt-12 flex flex-col sm:flex-row items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground"
+          className="z-10 mt-6 sm:mt-12 flex flex-col sm:flex-row items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground"
         >
           <div className="flex">
             {[...Array(5)].map((_, i) => (
@@ -652,12 +679,12 @@ const Index = () => {
           <span className="text-center">Avaliação média 4.8/5 • +5000 avaliações</span>
         </motion.div>
 
-        {/* Scroll indicator */}
+        {/* Scroll indicator - hidden on mobile */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 1.6 }}
-          className="z-10 mt-16 flex animate-bounce flex-col items-center gap-1 text-muted-foreground"
+          className="z-10 mt-8 sm:mt-16 hidden sm:flex animate-bounce flex-col items-center gap-1 text-muted-foreground"
         >
           <span className="text-xs tracking-widest uppercase">Explorar</span>
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -672,7 +699,7 @@ const Index = () => {
           <img src={bannerInject} alt="" className="h-full w-full object-cover" />
           <div className="absolute inset-0 bg-background/60 backdrop-blur-sm" />
         </div>
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 py-14 sm:py-20 flex items-center justify-center">
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 py-10 sm:py-20 flex items-center justify-center">
           <motion.div
             className="text-center"
             initial={{ opacity: 0, y: 30 }}
@@ -680,15 +707,15 @@ const Index = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.7 }}
           >
-            <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-foreground md:text-6xl" style={{ fontFamily: "'Valorant', sans-serif" }}>
+            <h2 className="text-xl sm:text-4xl font-bold tracking-tight text-foreground md:text-6xl" style={{ fontFamily: "'Valorant', sans-serif" }}>
               CHEATS <span className="text-success">&</span> ACCOUNTS
             </h2>
-            <p className="mt-4 text-base text-muted-foreground max-w-xl mx-auto">
+            <p className="mt-3 sm:mt-4 text-sm sm:text-base text-muted-foreground max-w-xl mx-auto px-4 sm:px-0">
               Cheats seguros e otimizados com suporte contínuo e atualizações frequentes.
             </p>
             <Link
               to="/produtos"
-              className="mt-8 inline-flex items-center gap-2 bg-success px-10 py-3.5 text-sm font-bold uppercase tracking-[0.2em] text-success-foreground transition-all hover:shadow-[0_0_30px_hsl(197,100%,50%,0.4)]"
+              className="mt-6 sm:mt-8 inline-flex items-center gap-2 bg-success px-8 sm:px-10 py-3 sm:py-3.5 text-sm font-bold uppercase tracking-[0.2em] text-success-foreground transition-all hover:shadow-[0_0_30px_hsl(197,100%,50%,0.4)] rounded-xl sm:rounded-none"
               style={{ fontFamily: "'Valorant', sans-serif" }}
             >
               Ver Produtos
@@ -705,22 +732,60 @@ const Index = () => {
       <ContasSection />
 
       {/* Avaliações Section */}
-      <section className="border-t border-border bg-background px-4 sm:px-6 py-16 sm:py-24">
+      <section className="border-t border-border bg-background px-4 sm:px-6 py-12 sm:py-24">
         <div className="mx-auto max-w-7xl">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-80px" }} variants={slideInLeft}>
             <p className="text-sm font-medium uppercase tracking-[0.3em] text-success">
               Feedback
             </p>
             <h2
-              className="mt-3 text-3xl sm:text-5xl font-bold tracking-tight text-foreground md:text-7xl"
+              className="mt-2 sm:mt-3 text-2xl sm:text-5xl font-bold tracking-tight text-foreground md:text-7xl"
               style={{ fontFamily: "'Valorant', sans-serif" }}
             >
               AVALIACOES
             </h2>
           </motion.div>
 
+          {/* Mobile: horizontal scroll carousel / Desktop: grid */}
+          <div className="mt-8 sm:mt-14 sm:hidden">
+            <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 -mx-4 px-4 snap-x snap-mandatory">
+              {[
+                { name: "lucas", text: "mano melhor loja que ja comprei, entrega na hora e suporte responde rapido demais. recomendo", rating: 5 },
+                { name: "breno", text: "conta veio certinha com todas as skin, ja e minha terceira compra aqui e nunca deu problema", rating: 5 },
+                { name: "rafael", text: "tava com medo de ser scam mas entregaram tudo certinho, suporte me ajudou em tudo. confia!", rating: 5 },
+                { name: "kaua", text: "inject cs ta rodando liso demais, sem ban nenhum. atualizaram rapido depois do update da valve", rating: 5 },
+                { name: "gabriel", text: "comprei a conta e recebi na hora pelo discord, preco justo e qualidade braba", rating: 5 },
+                { name: "enzo", text: "ja uso o inject faz 3 meses e zero problema. suporte respondeu em 5 min quando precisei, mt bom", rating: 5 },
+              ].map((review, idx) => (
+                <div
+                  key={idx}
+                  className="flex flex-col justify-between rounded-xl border border-border bg-card p-5 min-w-[280px] max-w-[300px] shrink-0 snap-center"
+                >
+                  <div>
+                    <div className="flex gap-0.5">
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} className={`h-4 w-4 ${i < review.rating ? "fill-success text-success" : "text-muted-foreground/30"}`} />
+                      ))}
+                    </div>
+                    <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{review.text}</p>
+                  </div>
+                  <div className="mt-4 flex items-center gap-3 border-t border-border pt-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-success/20 text-xs font-bold text-success">
+                      {review.name.charAt(0)}
+                    </div>
+                    <p className="text-sm font-semibold text-foreground">{review.name}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-center mt-3">
+              <Link to="/avaliacoes" className="text-sm font-medium text-success">Ver todas avaliações →</Link>
+            </div>
+          </div>
+
+          {/* Desktop grid */}
           <motion.div
-            className="mt-14 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+            className="mt-14 hidden sm:grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-40px" }}
@@ -772,14 +837,14 @@ const Index = () => {
       </section>
 
       {/* Como Funciona Section */}
-      <section className="border-t border-border bg-background px-4 sm:px-6 py-16 sm:py-24">
+      <section className="border-t border-border bg-background px-4 sm:px-6 py-12 sm:py-24">
         <div className="mx-auto max-w-7xl">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-80px" }} variants={slideInLeft}>
             <p className="text-sm font-medium uppercase tracking-[0.3em] text-success">
               Passo a Passo
             </p>
             <h2
-              className="mt-3 text-3xl sm:text-5xl font-bold tracking-tight text-foreground md:text-7xl"
+              className="mt-2 sm:mt-3 text-2xl sm:text-5xl font-bold tracking-tight text-foreground md:text-7xl"
               style={{ fontFamily: "'Valorant', sans-serif" }}
             >
               COMO FUNCIONA
@@ -787,35 +852,32 @@ const Index = () => {
           </motion.div>
 
           <motion.div
-            className="mt-14 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4"
+            className="mt-8 sm:mt-14 grid grid-cols-2 gap-3 sm:gap-8 md:grid-cols-2 lg:grid-cols-4"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-40px" }}
             variants={staggerContainer}
           >
             {[
-              { step: "01", title: "Escolha o Produto", desc: "Navegue pela loja e selecione o software ou conta que deseja adquirir." },
-              { step: "02", title: "Realize o Pagamento", desc: "Pague de forma segura via Pix, cartão ou outros métodos disponíveis." },
-              { step: "03", title: "Receba Instantaneamente", desc: "Após a confirmação, receba os dados de acesso direto no seu e-mail ou Discord." },
-              { step: "04", title: "Aproveite e Domine", desc: "Acesse seu produto, configure e comece a dominar o jogo imediatamente." },
+              { step: "01", title: "Escolha", desc: "Selecione o produto desejado." },
+              { step: "02", title: "Pague", desc: "PIX, cartão ou cripto." },
+              { step: "03", title: "Receba", desc: "Entrega instantânea automática." },
+              { step: "04", title: "Jogue", desc: "Configure e domine o jogo." },
             ].map((item, idx) => (
               <motion.div
                 key={idx}
                 variants={fadeUp}
                 custom={idx}
-                className="group relative rounded-lg border border-border bg-card p-6 transition-all hover:border-success/40 hover:shadow-[0_0_20px_hsl(197,100%,50%,0.1)]"
+                className="group relative rounded-xl sm:rounded-lg border border-border bg-card p-4 sm:p-6 transition-all hover:border-success/40 hover:shadow-[0_0_20px_hsl(197,100%,50%,0.1)]"
               >
                 <span
-                  className="text-4xl font-bold text-success/20 transition-colors group-hover:text-success/40"
+                  className="text-2xl sm:text-4xl font-bold text-success/20 transition-colors group-hover:text-success/40"
                   style={{ fontFamily: "'Valorant', sans-serif" }}
                 >
                   {item.step}
                 </span>
-                <h3 className="mt-3 text-lg font-bold text-foreground">{item.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.desc}</p>
-                {idx < 3 && (
-                  <ArrowRight className="absolute -right-5 top-1/2 hidden h-5 w-5 -translate-y-1/2 text-success/30 lg:block" />
-                )}
+                <h3 className="mt-2 sm:mt-3 text-sm sm:text-lg font-bold text-foreground">{item.title}</h3>
+                <p className="mt-1 sm:mt-2 text-xs sm:text-sm leading-relaxed text-muted-foreground">{item.desc}</p>
               </motion.div>
             ))}
           </motion.div>
@@ -823,7 +885,7 @@ const Index = () => {
       </section>
 
       {/* CTA Final Section */}
-      <section className="border-t border-border bg-background px-4 sm:px-6 py-20 sm:py-32">
+      <section className="border-t border-border bg-background px-4 sm:px-6 py-14 sm:py-32">
         <motion.div
           className="mx-auto max-w-3xl text-center"
           initial="hidden"
@@ -831,24 +893,32 @@ const Index = () => {
           viewport={{ once: true, margin: "-80px" }}
           variants={staggerContainer}
         >
-          <motion.p variants={fadeUp} className="text-sm font-medium uppercase tracking-[0.3em] text-muted-foreground">
+          <motion.p variants={fadeUp} className="text-xs sm:text-sm font-medium uppercase tracking-[0.3em] text-muted-foreground">
             IAE? TA ESPERANDO OQUE?
           </motion.p>
           <motion.h2
             variants={fadeUp}
             custom={1}
-            className="mt-6 text-3xl sm:text-5xl font-bold leading-tight tracking-tight text-foreground md:text-7xl"
+            className="mt-4 sm:mt-6 text-2xl sm:text-5xl font-bold leading-tight tracking-tight text-foreground md:text-7xl"
             style={{ fontFamily: "'Valorant', sans-serif" }}
           >
-            PRONTO PARA O PROXIMO NIVEL
+            PROXIMO NIVEL
           </motion.h2>
-          <motion.p variants={fadeUp} custom={2} className="mt-6 text-base leading-relaxed text-muted-foreground">
+          <motion.p variants={fadeUp} custom={2} className="mt-4 sm:mt-6 text-sm sm:text-base leading-relaxed text-muted-foreground px-4 sm:px-0">
             Junte-se a centenas de jogadores que já garantiram a deles com total segurança.
           </motion.p>
-          <motion.div variants={fadeUp} custom={3} className="mt-10 flex justify-center">
+          <motion.div variants={fadeUp} custom={3} className="mt-8 sm:mt-10 flex flex-col sm:flex-row justify-center gap-3 px-4 sm:px-0">
+            <Link
+              to="/produtos"
+              className="flex items-center justify-center gap-2 bg-success px-10 py-4 text-sm font-bold uppercase tracking-[0.2em] text-success-foreground rounded-xl sm:rounded-none shadow-[0_0_20px_hsl(197,100%,50%,0.25)] sm:shadow-none"
+              style={{ fontFamily: "'Valorant', sans-serif" }}
+            >
+              Ver Produtos
+              <ArrowRight className="h-5 w-5" />
+            </Link>
             <Link
               to="/contas"
-              className="flex items-center gap-2 border-2 border-foreground/30 px-14 py-4 text-sm font-bold uppercase tracking-[0.25em] text-foreground transition-all hover:border-success hover:text-success hover:shadow-[0_0_30px_hsl(197,100%,50%,0.2)]"
+              className="flex items-center justify-center gap-2 border-2 border-foreground/30 px-10 py-4 text-sm font-bold uppercase tracking-[0.25em] text-foreground transition-all hover:border-success hover:text-success rounded-xl sm:rounded-none"
               style={{ fontFamily: "'Valorant', sans-serif" }}
             >
               Explorar Contas
@@ -859,7 +929,7 @@ const Index = () => {
       </section>
 
       {/* FAQ Section */}
-      <section id="faq" className="border-t border-border bg-background px-4 sm:px-6 py-16 sm:py-24">
+      <section id="faq" className="border-t border-border bg-background px-4 sm:px-6 py-12 sm:py-24">
         <div className="mx-auto max-w-3xl">
           <motion.div
             initial="hidden"
@@ -872,7 +942,7 @@ const Index = () => {
               Dúvidas Frequentes
             </p>
             <h2
-              className="mt-3 text-3xl sm:text-5xl font-bold tracking-tight text-foreground md:text-7xl"
+              className="mt-2 sm:mt-3 text-2xl sm:text-5xl font-bold tracking-tight text-foreground md:text-7xl"
               style={{ fontFamily: "'Valorant', sans-serif" }}
             >
               FAQ
@@ -880,7 +950,7 @@ const Index = () => {
           </motion.div>
 
           <motion.div
-            className="mt-14 space-y-4"
+            className="mt-8 sm:mt-14 space-y-3 sm:space-y-4"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-60px" }}
@@ -920,22 +990,22 @@ const Index = () => {
 
       {/* Footer */}
       <motion.footer
-        className="border-t border-border bg-background px-4 sm:px-6 py-12 sm:py-16"
+        className="border-t border-border bg-background px-4 sm:px-6 py-10 sm:py-16 pb-24 sm:pb-16"
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
         transition={{ duration: 0.8 }}
       >
         <div className="mx-auto max-w-7xl">
-          <div className="grid grid-cols-1 gap-12 md:grid-cols-4">
-            <div className="md:col-span-1">
+          <div className="grid grid-cols-2 gap-8 sm:gap-12 md:grid-cols-4">
+            <div className="col-span-2 sm:col-span-1 md:col-span-1">
               <h3
-                className="text-2xl font-bold text-foreground"
+                className="text-xl sm:text-2xl font-bold text-foreground"
                 style={{ fontFamily: "'Valorant', sans-serif" }}
               >
                 <span className="text-success">ROYAL</span> STORE
               </h3>
-              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+              <p className="mt-3 text-xs sm:text-sm leading-relaxed text-muted-foreground">
                 Referência no mercado há mais de 5 anos. Softwares premium, contas verificadas e suporte 24/7.
               </p>
               <div className="mt-4 flex gap-3">
@@ -958,56 +1028,39 @@ const Index = () => {
             </div>
 
             <div>
-              <h4 className="text-sm font-bold uppercase tracking-wider text-foreground">Produtos</h4>
-              <ul className="mt-4 space-y-2.5">
-                <li><a href="/produtos" className="text-sm text-muted-foreground transition-colors hover:text-success">Softwares</a></li>
-                <li><a href="/contas" className="text-sm text-muted-foreground transition-colors hover:text-success">Contas Valorant</a></li>
-                <li><a href="/produtos" className="text-sm text-muted-foreground transition-colors hover:text-success">Skins Premium</a></li>
-                <li><a href="/produtos" className="text-sm text-muted-foreground transition-colors hover:text-success">Pacotes Combo</a></li>
+              <h4 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-foreground">Produtos</h4>
+              <ul className="mt-3 sm:mt-4 space-y-2">
+                <li><a href="/produtos" className="text-xs sm:text-sm text-muted-foreground transition-colors hover:text-success">Softwares</a></li>
+                <li><a href="/contas" className="text-xs sm:text-sm text-muted-foreground transition-colors hover:text-success">Contas Valorant</a></li>
+                <li><a href="/produtos" className="text-xs sm:text-sm text-muted-foreground transition-colors hover:text-success">Skins Premium</a></li>
               </ul>
             </div>
 
             <div>
-              <h4 className="text-sm font-bold uppercase tracking-wider text-foreground">Suporte</h4>
-              <ul className="mt-4 space-y-2.5">
-                <li><a href="/ajuda" className="text-sm text-muted-foreground transition-colors hover:text-success">Central de Ajuda</a></li>
-                <li><a href="https://discord.gg/royalstorebr" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground transition-colors hover:text-success">Discord</a></li>
-                <li><a href="/garantia" className="text-sm text-muted-foreground transition-colors hover:text-success">Garantia</a></li>
-                <li><a href="/status" className="text-sm text-muted-foreground transition-colors hover:text-success">Status do Serviço</a></li>
+              <h4 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-foreground">Suporte</h4>
+              <ul className="mt-3 sm:mt-4 space-y-2">
+                <li><a href="/ajuda" className="text-xs sm:text-sm text-muted-foreground transition-colors hover:text-success">Central de Ajuda</a></li>
+                <li><a href="https://discord.gg/royalstorebr" target="_blank" rel="noopener noreferrer" className="text-xs sm:text-sm text-muted-foreground transition-colors hover:text-success">Discord</a></li>
+                <li><a href="/garantia" className="text-xs sm:text-sm text-muted-foreground transition-colors hover:text-success">Garantia</a></li>
+                <li><a href="/status" className="text-xs sm:text-sm text-muted-foreground transition-colors hover:text-success">Status</a></li>
               </ul>
             </div>
 
             <div>
-              <h4 className="text-sm font-bold uppercase tracking-wider text-foreground">Legal</h4>
-              <ul className="mt-4 space-y-2.5">
-                <li><a href="/termos" className="text-sm text-muted-foreground transition-colors hover:text-success">Termos de Uso</a></li>
-                <li><a href="/privacidade" className="text-sm text-muted-foreground transition-colors hover:text-success">Política de Privacidade</a></li>
-                <li><a href="/reembolso" className="text-sm text-muted-foreground transition-colors hover:text-success">Política de Reembolso</a></li>
+              <h4 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-foreground">Legal</h4>
+              <ul className="mt-3 sm:mt-4 space-y-2">
+                <li><a href="/termos" className="text-xs sm:text-sm text-muted-foreground transition-colors hover:text-success">Termos de Uso</a></li>
+                <li><a href="/privacidade" className="text-xs sm:text-sm text-muted-foreground transition-colors hover:text-success">Privacidade</a></li>
+                <li><a href="/reembolso" className="text-xs sm:text-sm text-muted-foreground transition-colors hover:text-success">Reembolso</a></li>
               </ul>
-              <div className="mt-6">
-                <form onSubmit={(e) => e.preventDefault()} className="mt-3 flex gap-2">
-                  <input
-                    type="email"
-                    placeholder="E-mail"
-                    className="w-40 rounded border border-border bg-secondary/50 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-success/50"
-                  />
-                  <button
-                    type="submit"
-                    className="btn-shine relative rounded bg-success px-4 py-2 text-sm font-semibold text-success-foreground transition-all hover:shadow-[0_0_20px_hsl(197,100%,50%,0.4)]"
-                  >
-                    <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,_hsl(197,100%,70%,0.3)_0%,_transparent_60%)]" />
-                    <span className="relative">Inscrever</span>
-                  </button>
-                </form>
-              </div>
             </div>
           </div>
 
-          <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-border pt-8 md:flex-row">
-            <p className="text-xs text-muted-foreground">
+          <div className="mt-10 sm:mt-14 flex flex-col items-center justify-between gap-3 border-t border-border pt-6 sm:pt-8 md:flex-row">
+            <p className="text-[10px] sm:text-xs text-muted-foreground">
               © 2026 Royal Store. Todos os direitos reservados.
             </p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[10px] sm:text-xs text-muted-foreground">
               Feito com 💖 para gamers
             </p>
           </div>
@@ -1016,6 +1069,9 @@ const Index = () => {
 
       {/* Floating widgets */}
       <FloatingWidgets />
+
+      {/* Sticky mobile CTA bar */}
+      <StickyMobileCTA />
     </div>
   );
 };
