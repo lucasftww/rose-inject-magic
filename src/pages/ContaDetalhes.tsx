@@ -188,26 +188,32 @@ const ContaDetalhes = () => {
   const agentUuids = inventory?.Agent || [];
   const buddyUuids = inventory?.Buddy || [];
 
-  const { data: skinItems = [] } = useQuery({
+  const { data: skinItems = [], isLoading: skinsLoading, isError: skinsError } = useQuery({
     queryKey: ["valorant-skins", skinUuids],
     queryFn: () => fetchValorantSkins(skinUuids),
     enabled: skinUuids.length > 0,
     staleTime: 1000 * 60 * 30,
+    retry: 2,
   });
 
-  const { data: agentItems = [] } = useQuery({
+  const { data: agentItems = [], isLoading: agentsLoading, isError: agentsError } = useQuery({
     queryKey: ["valorant-agents", agentUuids],
     queryFn: () => fetchValorantAgents(agentUuids),
     enabled: agentUuids.length > 0,
     staleTime: 1000 * 60 * 30,
+    retry: 2,
   });
 
-  const { data: buddyItems = [] } = useQuery({
+  const { data: buddyItems = [], isLoading: buddiesLoading, isError: buddiesError } = useQuery({
     queryKey: ["valorant-buddies", buddyUuids],
     queryFn: () => fetchValorantBuddies(buddyUuids),
     enabled: buddyUuids.length > 0,
     staleTime: 1000 * 60 * 30,
+    retry: 2,
   });
+
+  const activeLoading = activeTab === "skins" ? skinsLoading : activeTab === "agents" ? agentsLoading : buddiesLoading;
+  const activeError = activeTab === "skins" ? skinsError : activeTab === "agents" ? agentsError : buddiesError;
 
   // Use skin items as main gallery if no screenshots
   const mainGallery = gallery.length > 0 ? gallery : skinItems.slice(0, 5);
@@ -270,7 +276,7 @@ const ContaDetalhes = () => {
               {/* LEFT: Gallery only */}
               <div className="lg:col-span-3 space-y-4">
                 {/* Single skin carousel */}
-                {skinItems.length > 0 ? (
+                {skinItems.length > 0 && !skinsLoading ? (
                   <div className="rounded-lg border border-border bg-card overflow-hidden aspect-[16/10] relative group">
                     <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--secondary))] via-[hsl(var(--background))] to-[hsl(var(--secondary))]" />
                     <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--success)/0.08),transparent_70%)]" />
@@ -538,10 +544,18 @@ const ContaDetalhes = () => {
                       </motion.div>
                     ))}
                   </div>
-                ) : (
+                ) : activeLoading ? (
                   <div className="flex items-center justify-center py-12 rounded-lg border border-border bg-card">
                     <Loader2 className="h-5 w-5 animate-spin text-muted-foreground mr-2" />
                     <p className="text-sm text-muted-foreground">Carregando itens...</p>
+                  </div>
+                ) : activeError ? (
+                  <div className="flex items-center justify-center py-12 rounded-lg border border-border bg-card">
+                    <p className="text-sm text-muted-foreground">Erro ao carregar itens. Tente recarregar a página.</p>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center py-12 rounded-lg border border-border bg-card">
+                    <p className="text-sm text-muted-foreground">Nenhum item encontrado.</p>
                   </div>
                 )}
 
