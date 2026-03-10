@@ -31,6 +31,7 @@ const Header = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [bannerVisible, setBannerVisible] = useState(true);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { user, profile, isAdmin, signOut } = useAuth();
   const { totalItems, requiresAuth, clearRequiresAuth, cartOpen, setCartOpen } = useCart();
@@ -90,14 +91,14 @@ const Header = () => {
       <CartSheet open={cartOpen} onOpenChange={setCartOpen} />
 
       <div className="fixed top-0 left-0 right-0 z-50">
-        <DiscordBanner />
+        <DiscordBanner onVisibilityChange={setBannerVisible} />
       </div>
 
       <motion.header
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ type: "spring", damping: 20, stiffness: 200 }}
-        className="fixed top-0 left-0 right-0 z-50 transition-all duration-500 mt-[36px]"
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${bannerVisible ? 'mt-[36px]' : 'mt-0'}`}
         style={{
           borderBottom: `1px solid ${scrolled ? (isLolContext ? `${LOL_BLUE}20` : "hsl(var(--border))") : "transparent"}`,
           background: scrolled
@@ -496,6 +497,9 @@ const Header = () => {
           </>
         )}
       </AnimatePresence>
+
+      {/* Spacer to prevent content from being hidden behind fixed header */}
+      <div className={`${bannerVisible ? 'h-[108px] lg:h-[108px]' : 'h-16 lg:h-[72px]'} transition-all duration-300`} />
     </>
   );
 };

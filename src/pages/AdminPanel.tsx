@@ -766,7 +766,7 @@ const AdminPanel = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <div className="mx-auto max-w-7xl px-6 pt-28 pb-20">
+      <div className="mx-auto max-w-7xl px-6 pt-4 pb-20">
         <div className="flex items-center gap-2 mb-2">
           <ShieldAlert className="h-5 w-5 text-success" />
           <p className="text-sm font-medium uppercase tracking-[0.3em] text-success">Administração</p>

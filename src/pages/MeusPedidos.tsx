@@ -146,7 +146,7 @@ const MeusPedidos = () => {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <div className="flex items-center justify-center pt-40">
+        <div className="flex items-center justify-center pt-16">
           <Loader2 className="h-8 w-8 animate-spin text-success" />
         </div>
       </div>
@@ -156,7 +156,7 @@ const MeusPedidos = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <div className="mx-auto max-w-7xl px-6 pt-28 pb-20">
+      <div className="mx-auto max-w-7xl px-6 pt-4 pb-20">
 
         {/* Back */}
         <button
