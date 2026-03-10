@@ -295,12 +295,12 @@ Deno.serve(async (req) => {
 
     const data = await response.json();
 
-    // Filter out accounts with less than 10 days of inactivity
+    // Filter out accounts with less than 30 days of inactivity
     if (data.items && Array.isArray(data.items)) {
-      const tenDaysAgo = Math.floor(Date.now() / 1000) - (10 * 24 * 60 * 60);
+      const thirtyDaysAgo = Math.floor(Date.now() / 1000) - (30 * 24 * 60 * 60);
       data.items = data.items.filter((item: any) => {
         const lastActivity = item.riot_last_activity || item.account_last_activity || 0;
-        return lastActivity === 0 || lastActivity <= tenDaysAgo;
+        return lastActivity === 0 || lastActivity <= thirtyDaysAgo;
       });
 
       // Add price_brl (with markup) to each item so client doesn't need markup config
