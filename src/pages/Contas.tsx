@@ -1071,8 +1071,10 @@ const Contas = () => {
         params.title = selectedWeapon;
       }
     } else if (gameTab === "lol") {
-      // LoL-specific
+      // LoL-specific — hide empty accounts, require at least 1 skin and 10 champions
       params.game_type = "riot";
+      params.lol_smin = "1";
+      params.champion_min = "10";
       if (lvlMin) params.lol_level_min = lvlMin;
       if (lvlMax) params.lol_level_max = lvlMax;
       if (lolChampMin) params.champion_min = lolChampMin;
