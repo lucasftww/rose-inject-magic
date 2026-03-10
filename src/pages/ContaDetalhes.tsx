@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
+import { throwApiError } from "@/lib/apiErrors";
 import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/Header";
 import { ArrowLeft, Shield, Loader2, ChevronRight, ChevronLeft, ChevronRight as ChevronRightIcon, CheckCircle2, Swords, Users, Star, X, ShoppingCart, Check } from "lucide-react";
@@ -68,7 +69,7 @@ const fetchAccountDetail = async (itemId: string) => {
     `${projectUrl}/functions/v1/lzt-market?action=detail&item_id=${encodeURIComponent(itemId)}`,
     { headers: { "Content-Type": "application/json", apikey: anonKey } }
   );
-  if (!res.ok) throw new Error(`API Error: ${res.status}`);
+  if (!res.ok) throwApiError(res.status);
   return res.json();
 };
 
