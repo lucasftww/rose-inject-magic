@@ -151,6 +151,7 @@ const ContaDetalhes = () => {
       lztItemId: String(item.item_id),
       lztPrice: item.price,
       lztCurrency: item.price_currency || "rub",
+      lztGame: "valorant",
     });
     if (!added) return;
     setAddedToCart(true);
