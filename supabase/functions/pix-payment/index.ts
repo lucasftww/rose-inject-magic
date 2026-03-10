@@ -62,7 +62,7 @@ async function sendDiscordSaleNotification(supabaseAdmin: any, payment: any) {
         },
       ],
       footer: {
-        text: "Inject Store • Sistema de Vendas",
+        text: "Royal Store • Sistema de Vendas",
       },
       timestamp,
     };
