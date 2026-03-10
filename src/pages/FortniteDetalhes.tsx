@@ -161,6 +161,7 @@ const FortniteDetalhes = () => {
       lztItemId: String(item.item_id),
       lztPrice: item.price,
       lztCurrency: item.price_currency || "rub",
+      lztGame: "fortnite",
     });
     if (!added) return;
     setAddedToCart(true);
