@@ -901,7 +901,7 @@ const Index = () => {
               },
               {
                 q: "As contas Valorant possuem garantia?",
-                a: "Sim! Todas as contas possuem garantia de 30 dias. Caso ocorra qualquer problema com a conta adquirida dentro desse período, realizamos a troca ou reembolso integral.",
+                a: "Sim! Todas as contas possuem garantia de 7 dias. Caso ocorra qualquer problema com a conta adquirida dentro desse período, realizamos a troca ou reembolso integral.",
               },
               {
                 q: "Como entro em contato com o suporte?",
