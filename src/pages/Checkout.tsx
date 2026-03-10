@@ -355,7 +355,7 @@ const Checkout = () => {
       <div className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 h-[600px] w-[800px] bg-success/[0.03] blur-[120px] rounded-full" />
 
       <Header />
-      <div className="relative mx-auto max-w-3xl px-6 pt-28 pb-20">
+      <div className="relative mx-auto max-w-3xl px-6 pt-4 pb-20">
         <motion.button
           initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}

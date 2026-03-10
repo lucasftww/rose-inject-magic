@@ -111,7 +111,7 @@ const MinecraftDetalhes = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 pt-28 pb-20">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 pt-4 pb-20">
         <button
           onClick={() => navigate("/contas?game=minecraft")}
           className="mb-5 flex items-center gap-2 rounded-lg border border-border bg-card/50 px-4 py-2 text-sm text-muted-foreground transition-all hover:text-foreground"
