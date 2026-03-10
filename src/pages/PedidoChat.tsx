@@ -591,7 +591,7 @@ const PedidoChat = () => {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <div className="flex items-center justify-center pt-40">
+        <div className="flex items-center justify-center pt-16">
           <Loader2 className="h-8 w-8 animate-spin text-success" />
         </div>
       </div>
@@ -602,7 +602,7 @@ const PedidoChat = () => {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <div className="mx-auto max-w-3xl px-6 pt-28 text-center">
+        <div className="mx-auto max-w-3xl px-6 pt-4 text-center">
           <Package className="mx-auto h-16 w-16 text-muted-foreground/20" />
           <h1 className="mt-4 text-xl font-bold text-foreground">Pedido não encontrado</h1>
           <button onClick={() => navigate("/dashboard?tab=purchases")} className="mt-4 text-sm text-success hover:underline">
@@ -616,7 +616,7 @@ const PedidoChat = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <div className="mx-auto max-w-7xl px-3 pt-28 pb-8">
+      <div className="mx-auto max-w-7xl px-3 pt-4 pb-8">
         {/* Breadcrumb */}
         <div className="mb-6 flex items-center gap-2 text-sm">
           <button

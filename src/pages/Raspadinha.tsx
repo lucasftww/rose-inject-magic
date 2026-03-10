@@ -688,7 +688,7 @@ const Raspadinha = () => {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <div className="flex items-center justify-center pt-40">
+        <div className="flex items-center justify-center pt-16">
           <Loader2 className="h-8 w-8 animate-spin text-success" />
         </div>
       </div>
@@ -700,7 +700,7 @@ const Raspadinha = () => {
       <Header />
       <AuthModal open={authOpen} onOpenChange={setAuthOpen} defaultTab="login" />
 
-      <div className="mx-auto max-w-4xl px-6 pt-28 pb-20">
+      <div className="mx-auto max-w-4xl px-6 pt-4 pb-20">
         {/* Pending payment banner */}
         {pendingPayment && paymentPhase === "idle" && (
           <motion.div

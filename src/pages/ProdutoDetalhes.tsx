@@ -181,7 +181,7 @@ const ProdutoDetalhes = () => {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <div className="flex items-center justify-center pt-40">
+        <div className="flex items-center justify-center pt-16">
           <Loader2 className="h-8 w-8 animate-spin text-success" />
         </div>
       </div>
@@ -192,7 +192,7 @@ const ProdutoDetalhes = () => {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <div className="mx-auto max-w-5xl px-6 pt-28 text-center">
+        <div className="mx-auto max-w-5xl px-6 pt-4 text-center">
           <Package className="mx-auto h-16 w-16 text-muted-foreground/30" />
           <h1 className="mt-4 text-2xl font-bold text-foreground">Produto não encontrado</h1>
           <button onClick={() => navigate("/produtos")} className="mt-6 text-sm text-success hover:underline">
@@ -206,7 +206,7 @@ const ProdutoDetalhes = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <div className="mx-auto max-w-7xl px-6 pt-28 pb-20">
+      <div className="mx-auto max-w-7xl px-6 pt-4 pb-20">
         {/* Back button */}
         <button
           onClick={() => navigate(-1)}
