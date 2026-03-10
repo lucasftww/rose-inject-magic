@@ -788,21 +788,21 @@ const AdminPanel = () => {
         </div>
 
         <div className="mt-8">
-          <div className={activeTab === "overview" ? "" : "hidden"}><OverviewTab /></div>
-          <div className={activeTab === "jogos" ? "" : "hidden"}><GamesTab /></div>
-          <div className={activeTab === "produtos" ? "" : "hidden"}><ProductsTab /></div>
-          <div className={activeTab === "estoque" ? "" : "hidden"}><StockTab /></div>
-          <div className={activeTab === "revendedores" ? "" : "hidden"}><ResellersTab /></div>
-          <div className={activeTab === "tickets" ? "" : "hidden"}><TicketsTab /></div>
-          <div className={activeTab === "status" ? "" : "hidden"}><StatusTab /></div>
-          <div className={activeTab === "cupons" ? "" : "hidden"}><CouponsTab /></div>
-          <div className={activeTab === "usuarios" ? "" : "hidden"}><UsersTab /></div>
-          <div className={activeTab === "credenciais" ? "" : "hidden"}><CredentialsTab /></div>
-          <div className={activeTab === "lzt" ? "" : "hidden"}><LztTab /></div>
-          <div className={activeTab === "vendas" ? "" : "hidden"}><SalesTab /></div>
-          <div className={activeTab === "pagamentos" ? "" : "hidden"}><PaymentsTab /></div>
-          <div className={activeTab === "financeiro" ? "" : "hidden"}><FinanceTab /></div>
-          <div className={activeTab === "raspadinha" ? "" : "hidden"}><ScratchCardTab /></div>
+          {activeTab === "overview" && <OverviewTab />}
+          {activeTab === "jogos" && <GamesTab />}
+          {activeTab === "produtos" && <ProductsTab />}
+          {activeTab === "estoque" && <StockTab />}
+          {activeTab === "revendedores" && <ResellersTab />}
+          {activeTab === "tickets" && <TicketsTab />}
+          {activeTab === "status" && <StatusTab />}
+          {activeTab === "cupons" && <CouponsTab />}
+          {activeTab === "usuarios" && <UsersTab />}
+          {activeTab === "credenciais" && <CredentialsTab />}
+          {activeTab === "lzt" && <LztTab />}
+          {activeTab === "vendas" && <SalesTab />}
+          {activeTab === "pagamentos" && <PaymentsTab />}
+          {activeTab === "financeiro" && <FinanceTab />}
+          {activeTab === "raspadinha" && <ScratchCardTab />}
         </div>
       </div>
     </div>
