@@ -1383,7 +1383,7 @@ const Contas = () => {
               {isValorant ? "CONTAS VALORANT" : isFortnite ? "CONTAS FORTNITE" : isMinecraft ? "CONTAS MINECRAFT" : "CONTAS LOL"}
             </h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              {isLoading ? "Buscando contas..." : isStreaming ? `Carregando... ${allItems.length} contas (página ${currentPage})` : `${allItems.length} contas · Página ${displayPage} de ${totalDisplayPages}`}
+              {streamError ? "Erro ao buscar contas" : isLoading ? "Buscando contas..." : isStreaming ? `Carregando... ${allItems.length} contas (página ${currentPage})` : `${allItems.length} contas · Página ${displayPage} de ${totalDisplayPages}`}
             </p>
           </div>
           <div className="flex items-center gap-2">
