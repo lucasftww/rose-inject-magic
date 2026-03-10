@@ -1,0 +1,1 @@
+UPDATE order_tickets SET status = 'delivered', status_label = 'Entregue' WHERE id = '40f06ebf-f17e-41b0-843b-712cb9c0f29e';
