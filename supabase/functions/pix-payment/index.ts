@@ -457,14 +457,22 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
       .select("id")
       .single();
 
+    const gameLabels: Record<string, string> = {
+      valorant: "Valorant", lol: "LoL", fortnite: "Fortnite", minecraft: "Minecraft",
+    };
+    const gameLabel = gameLabels[lztGame] || "LZT";
+
     const lztMetadata = {
       type: "lzt-account",
       lzt_item_id: itemId,
-      account_name: item.productName || `Conta Valorant #${itemId}`,
+      account_name: item.productName || `Conta ${gameLabel} #${itemId}`,
+      title: item.productName || `Conta ${gameLabel} #${itemId}`,
       account_image: item.productImage || null,
       price_paid: item.price || price,
+      sell_price: item.price || 0,
       currency: currency,
       skins_count: item.skinsCount || null,
+      game: lztGame,
     };
 
     const { data: ticket } = await supabaseAdmin
