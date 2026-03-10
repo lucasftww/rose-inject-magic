@@ -20,7 +20,8 @@ interface LztSale {
   buy_price: number;
   sell_price: number;
   profit: number;
-  account_title: string | null;
+  title: string | null;
+  game: string | null;
   buyer_user_id: string | null;
   created_at: string;
 }
