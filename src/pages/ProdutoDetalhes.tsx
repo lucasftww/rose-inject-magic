@@ -192,7 +192,7 @@ const ProdutoDetalhes = () => {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <div className="mx-auto max-w-5xl px-6 pt-28 text-center">
+        <div className="mx-auto max-w-5xl px-6 pt-4 text-center">
           <Package className="mx-auto h-16 w-16 text-muted-foreground/30" />
           <h1 className="mt-4 text-2xl font-bold text-foreground">Produto não encontrado</h1>
           <button onClick={() => navigate("/produtos")} className="mt-6 text-sm text-success hover:underline">
