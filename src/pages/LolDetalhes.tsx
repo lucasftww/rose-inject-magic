@@ -219,6 +219,7 @@ const LolDetalhes = () => {
       lztItemId: String(item.item_id),
       lztPrice: item.price,
       lztCurrency: item.price_currency || "rub",
+      lztGame: "lol",
     });
     if (!added) return;
     setAddedToCart(true);

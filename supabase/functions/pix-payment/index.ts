@@ -590,7 +590,7 @@ async function validateAndCalculatePrice(
       else if (gameCategory === "minecraft" && lztConfig?.markup_minecraft) markup = lztConfig.markup_minecraft;
       
       const RUB_TO_BRL = 0.055;
-      let brlPrice = realLztPrice * RUB_TO_BRL;
+      let brlPrice = realLztCurrency === "rub" ? realLztPrice * RUB_TO_BRL : realLztPrice;
       const expectedPrice = Math.round(brlPrice * markup * 100) / 100;
       const MIN_PRICE = 20;
       const finalPrice = expectedPrice < MIN_PRICE ? MIN_PRICE : expectedPrice;
