@@ -170,18 +170,19 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Fetch lzt_config once for both list and detail actions
+    const { data: lztConfig } = await supabaseAdmin
+      .from("lzt_config")
+      .select("max_fetch_price, currency, markup_multiplier, markup_valorant, markup_lol, markup_fortnite, markup_minecraft")
+      .limit(1)
+      .maybeSingle();
+
     // DETAIL: Get single item
     let apiUrl: string;
     if (action === "detail" && itemId) {
       apiUrl = `https://api.lzt.market/${encodeURIComponent(itemId)}`;
     } else {
       // LIST: accounts with filters
-      // Read max_fetch_price and markup from lzt_config to enforce price ceiling
-      const { data: lztConfig } = await supabaseAdmin
-        .from("lzt_config")
-        .select("max_fetch_price, currency, markup_multiplier, markup_valorant, markup_lol, markup_fortnite, markup_minecraft")
-        .limit(1)
-        .maybeSingle();
       const maxFetchPrice = lztConfig?.max_fetch_price || 500;
 
       // Determine which markup applies based on game_type to calculate real pmax
