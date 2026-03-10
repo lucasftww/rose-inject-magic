@@ -673,12 +673,13 @@ const Dashboard = () => {
                       </div>
                       <div className="space-y-1.5">
                         <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Confirmar Nova Senha</label>
-                        <input
-                          type="password"
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          placeholder="Repita a nova senha"
-                          onKeyDown={(e) => e.key === "Enter" && handleChangePassword()}
+                         <input
+                           type="password"
+                           autoComplete="new-password"
+                           value={confirmPassword}
+                           onChange={(e) => setConfirmPassword(e.target.value)}
+                           placeholder="Repita a nova senha"
+                           onKeyDown={(e) => e.key === "Enter" && handleChangePassword()}
                           className="w-full rounded-lg border border-border bg-secondary/50 py-3 pl-4 pr-4 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none focus:border-success/50 transition-colors"
                         />
                       </div>
