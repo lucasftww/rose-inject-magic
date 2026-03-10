@@ -18,7 +18,7 @@ import rankPrata from "@/assets/rank-prata.png";
 import rankOuro from "@/assets/rank-ouro.png";
 import rankPlatina from "@/assets/rank-platina.png";
 import rankDiamante from "@/assets/rank-diamante.png";
-import rankImortal from "@/assets/rank-radiante.png";
+import rankImortal from "@/assets/rank-imortal.png";
 import rankRadiante from "@/assets/rank-radiante-new.png";
 import rankUnranked from "@/assets/rank-unranked.png";
 
@@ -41,9 +41,9 @@ const rankMap: Record<number, { name: string; img: string }> = {
   18: { name: "Diamante 1", img: rankDiamante },
   19: { name: "Diamante 2", img: rankDiamante },
   20: { name: "Diamante 3", img: rankDiamante },
-  21: { name: "Ascendente 1", img: rankImortal },
-  22: { name: "Ascendente 2", img: rankImortal },
-  23: { name: "Ascendente 3", img: rankImortal },
+  21: { name: "Ascendente 1", img: rankAscendente },
+  22: { name: "Ascendente 2", img: rankAscendente },
+  23: { name: "Ascendente 3", img: rankAscendente },
   24: { name: "Imortal 1", img: rankImortal },
   25: { name: "Imortal 2", img: rankImortal },
   26: { name: "Imortal 3", img: rankImortal },
