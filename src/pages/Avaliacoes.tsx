@@ -178,7 +178,7 @@ const Avaliacoes = () => {
             className="text-3xl font-bold tracking-wider text-foreground md:text-4xl"
             style={{ fontFamily: "'Valorant', sans-serif" }}
           >
-            <span className="text-success">AVALIAÇÕES</span> DOS CLIENTES
+            <span className="text-success">AVALIACOES</span> DOS CLIENTES
           </h1>
           <p className="mt-3 text-sm text-muted-foreground">
             Veja o que nossos clientes estão dizendo sobre nossos produtos
