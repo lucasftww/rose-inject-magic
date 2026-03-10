@@ -1095,7 +1095,6 @@ const Contas = () => {
       }
     } else if (gameTab === "minecraft") {
       params.game_type = "minecraft";
-      params["email_type[]"] = "auto";
       if (mcJava) params.java = "yes";
       if (mcBedrock) params.bedrock = "yes";
       if (mcHypixelLvlMin) params.level_hypixel_min = mcHypixelLvlMin;
