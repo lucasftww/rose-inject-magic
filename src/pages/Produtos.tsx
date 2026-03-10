@@ -119,7 +119,7 @@ const ProductCard = ({ product }: { product: ProductFromDB }) => {
 const GameSelectScreen = ({ onSelect, games, loading }: { onSelect: (gameId: string) => void; games: GameFromDB[]; loading: boolean }) => (
   <div className="min-h-screen bg-background">
     <Header />
-    <div className="mx-auto max-w-5xl px-6 pt-28 pb-20">
+    <div className="mx-auto max-w-5xl px-6 pt-4 pb-20">
       <motion.div
         className="text-center"
         initial={{ opacity: 0, y: 20 }}
