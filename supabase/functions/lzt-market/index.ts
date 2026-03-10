@@ -301,6 +301,40 @@ Deno.serve(async (req) => {
         const lastActivity = item.riot_last_activity || item.account_last_activity || 0;
         return lastActivity === 0 || lastActivity <= tenDaysAgo;
       });
+
+      // Add price_brl (with markup) to each item so client doesn't need markup config
+      const RUB_TO_BRL = 0.055;
+      const MIN_PRICE_BRL = 20;
+      const gameType = url.searchParams.get("game_type") || "riot";
+      let itemMarkup = lztConfig?.markup_multiplier || 1.5;
+      if (gameType === "riot") itemMarkup = lztConfig?.markup_valorant || itemMarkup;
+      else if (gameType === "fortnite") itemMarkup = lztConfig?.markup_fortnite || itemMarkup;
+      else if (gameType === "minecraft") itemMarkup = lztConfig?.markup_minecraft || itemMarkup;
+
+      for (const item of data.items) {
+        const currency = item.price_currency || "rub";
+        let brl = currency === "rub" ? item.price * RUB_TO_BRL : item.price;
+        const final = brl * itemMarkup;
+        item.price_brl = final < MIN_PRICE_BRL ? MIN_PRICE_BRL : Math.round(final * 100) / 100;
+      }
+    }
+
+    // For detail action, also add price_brl
+    if (action === "detail" && data.item) {
+      const RUB_TO_BRL = 0.055;
+      const MIN_PRICE_BRL = 20;
+      // Need to fetch lzt_config for detail too
+      const { data: detailConfig } = await supabaseAdmin
+        .from("lzt_config")
+        .select("markup_multiplier, markup_valorant, markup_lol, markup_fortnite, markup_minecraft")
+        .limit(1)
+        .maybeSingle();
+      // Guess game from category or default to valorant markup
+      let detailMarkup = detailConfig?.markup_valorant || detailConfig?.markup_multiplier || 1.5;
+      const currency = data.item.price_currency || "rub";
+      let brl = currency === "rub" ? data.item.price * RUB_TO_BRL : data.item.price;
+      const final = brl * detailMarkup;
+      data.item.price_brl = final < MIN_PRICE_BRL ? MIN_PRICE_BRL : Math.round(final * 100) / 100;
     }
 
     return new Response(JSON.stringify(data), {
