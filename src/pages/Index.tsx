@@ -727,18 +727,18 @@ const Index = () => {
             variants={staggerContainer}
           >
             {[
-              { name: "Lucas M.", rank: "Imortal", text: "Melhor loja que já comprei, entrega instantânea e suporte incrível. Recomendo demais!", rating: 5 },
-              { name: "Gabriel S.", rank: "Radiante", text: "Conta veio certinha, com todas as skins e acesso completo. Já é minha terceira compra!", rating: 5 },
-              { name: "Pedro H.", rank: "Ascendente", text: "Estava com medo de comprar online, mas o suporte me ajudou em tudo. 100% seguro.", rating: 5 },
-              { name: "Rafael T.", rank: "Global Elite • CS2", text: "Inject CS rodando liso, sem ban, atualização rápida após cada update da Valve. Perfeito!", rating: 5 },
-              { name: "João V.", rank: "Imortal", text: "Comprei a conta e recebi na hora pelo Discord. Preço justo e qualidade top.", rating: 5 },
-              { name: "Matheus R.", rank: "Faceit Lvl 10 • CS2", text: "Já uso o inject do CS há 3 meses, sem problema nenhum. Suporte respondeu em 5 minutos quando precisei.", rating: 5 },
-              { name: "Henrique L.", rank: "Supreme • CS2", text: "Melhor cheat de CS2 do mercado, roda suave e indetectável. Virei cliente fiel!", rating: 5 },
-              { name: "Thiago A.", rank: "LEM • CS2", text: "Comprei pra testar e fiquei impressionado. Aimbot muito smooth, ninguém percebe. Top demais!", rating: 4 },
-              { name: "Felipe C.", rank: "Platina", text: "Já sou cliente há 2 anos, nunca tive problema. Confiança total na Royal Store!", rating: 5 },
-              { name: "Caio D.", rank: "Spoofer", text: "Tomei HWID ban no Valorant e o spoofer resolveu na hora. Voltei a jogar no mesmo dia, sem stress!", rating: 5 },
-              { name: "Vinicius G.", rank: "Spoofer", text: "Spoofer top, funciona em qualquer anti-cheat. Já usei no CS2 e Valorant, nunca falhou.", rating: 5 },
-              { name: "Gustavo P.", rank: "Spoofer", text: "Pensei que ia ter que trocar de PC depois do ban, mas o spoofer salvou. Recomendo 100%!", rating: 5 },
+              { name: "luquinhas_", rank: "Imortal", text: "mano melhor loja que ja comprei, entrega na hora e suporte responde rapido demais. recomendo 🔥", rating: 5 },
+              { name: "breno.xd", rank: "Radiante", text: "conta veio certinha com todas as skin, ja é minha terceira compra aqui e nunca deu problema", rating: 5 },
+              { name: "rafaelzin", rank: "Ascendente", text: "tava com medo de ser scam mas entregaram tudo certinho, suporte me ajudou em tudo. confia!", rating: 5 },
+              { name: "kaua.fps", rank: "Global Elite • CS2", text: "inject cs ta rodando liso demais, sem ban nenhum. atualizaram rapido depois do update da valve 👌", rating: 5 },
+              { name: "gabriel_fps", rank: "Imortal", text: "comprei a conta e recebi na hora pelo discord, preço justo e qualidade braba", rating: 5 },
+              { name: "enzogamer77", rank: "Faceit Lvl 10 • CS2", text: "ja uso o inject faz 3 meses e zero problema. suporte respondeu em 5 min quando precisei, mt bom", rating: 5 },
+              { name: "thiagobrz", rank: "Supreme • CS2", text: "mlk melhor cheat de cs2 do mercado, roda suave e indetectável. virei cliente fiel da royal!", rating: 5 },
+              { name: "davi.santos", rank: "LEM • CS2", text: "comprei pra testar e fiquei impressionado, aimbot muito smooth ninguém percebe kkkkk", rating: 4 },
+              { name: "juliana_gamer", rank: "Platina", text: "ja sou cliente faz tempo, nunca tive problema. confiança total nessa loja 💯", rating: 5 },
+              { name: "felipao_sp", rank: "Spoofer", text: "tomei hwid ban no valorant e o spoofer resolveu na hora, voltei a jogar no msm dia sem stress", rating: 5 },
+              { name: "vinizin.tt", rank: "Spoofer", text: "spoofer top demais, funciona em qualquer anti-cheat. ja usei no cs2 e val, nunca falhou", rating: 5 },
+              { name: "amanda.silva", rank: "Spoofer", text: "pensei q ia ter q trocar de pc dps do ban mas o spoofer salvou minha vida. recomendo 100%!", rating: 5 },
             ].map((review, idx) => (
               <motion.div
                 key={idx}
