@@ -602,7 +602,7 @@ const PedidoChat = () => {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <div className="mx-auto max-w-3xl px-6 pt-28 text-center">
+        <div className="mx-auto max-w-3xl px-6 pt-4 text-center">
           <Package className="mx-auto h-16 w-16 text-muted-foreground/20" />
           <h1 className="mt-4 text-xl font-bold text-foreground">Pedido não encontrado</h1>
           <button onClick={() => navigate("/dashboard?tab=purchases")} className="mt-4 text-sm text-success hover:underline">
