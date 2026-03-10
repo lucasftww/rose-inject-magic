@@ -126,7 +126,7 @@ const LztTab = () => {
     const q = salesSearch.toLowerCase();
     return (
       sale.lzt_item_id.toLowerCase().includes(q) ||
-      (sale.account_title || "").toLowerCase().includes(q) ||
+      (sale.title || "").toLowerCase().includes(q) ||
       (sale.buyer_user_id || "").toLowerCase().includes(q)
     );
   });
