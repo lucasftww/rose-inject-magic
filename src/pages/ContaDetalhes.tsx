@@ -151,6 +151,13 @@ const ContaDetalhes = () => {
   const [selectedSkin, setSelectedSkin] = useState(0);
   const [activeTab, setActiveTab] = useState<"skins" | "agents" | "buddies">("skins");
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+
+  // Reset selectedSkin when account changes
+  useEffect(() => {
+    setSelectedSkin(0);
+    setLightboxIndex(null);
+    setActiveTab("skins");
+  }, [id]);
   const { addItem, items } = useCart();
   const [addedToCart, setAddedToCart] = useState(false);
 
