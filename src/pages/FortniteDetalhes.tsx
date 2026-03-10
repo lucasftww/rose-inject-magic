@@ -30,7 +30,7 @@ const fetchAccountDetail = async (itemId: string) => {
 const fetchFortniteCosmetics = async (): Promise<Map<string, { name: string; image: string; rarity: string }>> => {
   try {
     // Use /v2/cosmetics/br which covers ALL types: outfits, pickaxes, emotes, gliders, backpacks
-    const res = await fetch("https://fortnite-api.com/v2/cosmetics/br?language=pt");
+    const res = await fetch("https://fortnite-api.com/v2/cosmetics/br?language=pt-BR");
     if (!res.ok) throw new Error("Failed");
     const data = await res.json();
     const map = new Map<string, { name: string; image: string; rarity: string }>();
