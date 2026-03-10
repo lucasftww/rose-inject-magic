@@ -226,7 +226,7 @@ const AuthModal = ({ open, onOpenChange, defaultTab = "login" }: AuthModalProps)
 
                   <div>
                     <label className="text-sm text-muted-foreground mb-1.5 block">Senha</label>
-                    <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="bg-secondary border-border h-12" />
+                    <Input type="password" autoComplete={tab === "login" ? "current-password" : "new-password"} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="bg-secondary border-border h-12" />
                   </div>
 
                   {tab === "login" && (
