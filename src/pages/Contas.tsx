@@ -952,6 +952,11 @@ const Contas = () => {
     return "valorant";
   });
 
+  // Scroll to top on mount
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+  }, []);
+
   // ─── Valorant filters ───
   const [selectedRank, setSelectedRank] = useState("todos");
   const [selectedWeapon, setSelectedWeapon] = useState("todos");
