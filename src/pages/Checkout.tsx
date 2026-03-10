@@ -79,7 +79,7 @@ const Checkout = () => {
       if (i.type === "lzt-account") {
         base.type = i.type;
         base.lztItemId = i.lztItemId;
-        base.lztGame = (i as any).lztGame || (i as any).gameCategory || "";
+        base.lztGame = i.lztGame || (i as any).gameCategory || "";
         // price intentionally omitted — server fetches real price
       } else {
         base.price = i.price;
