@@ -79,11 +79,32 @@ const fetchValorantSkins = async (uuids: string[]) => {
   if (!res.ok) return [];
   const data = await res.json();
   const uuidSet = new Set(uuids.map(u => u.toLowerCase()));
-  return (data.data || []).filter((s: any) => uuidSet.has(s.uuid?.toLowerCase())).map((s: any) => ({
-    name: s.displayName,
-    image: s.levels?.[0]?.displayIcon || s.displayIcon || s.chromas?.[0]?.fullRender,
-    rarity: s.contentTierUuid ? rarityMap[s.contentTierUuid] : null,
-  })).filter((s: any) => s.image);
+  const matched: { name: string; image: string; rarity: any }[] = [];
+  
+  for (const s of (data.data || [])) {
+    const skinUuid = s.uuid?.toLowerCase();
+    // Check top-level UUID
+    let found = uuidSet.has(skinUuid);
+    // Also check chromas UUIDs
+    if (!found && s.chromas) {
+      found = s.chromas.some((c: any) => uuidSet.has(c.uuid?.toLowerCase()));
+    }
+    // Also check levels UUIDs
+    if (!found && s.levels) {
+      found = s.levels.some((l: any) => uuidSet.has(l.uuid?.toLowerCase()));
+    }
+    if (found) {
+      const image = s.levels?.[0]?.displayIcon || s.displayIcon || s.chromas?.[0]?.fullRender;
+      if (image) {
+        matched.push({
+          name: s.displayName,
+          image,
+          rarity: s.contentTierUuid ? rarityMap[s.contentTierUuid] : null,
+        });
+      }
+    }
+  }
+  return matched;
 };
 
 const fetchValorantAgents = async (uuids: string[]) => {
