@@ -616,7 +616,7 @@ const PedidoChat = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <div className="mx-auto max-w-7xl px-3 pt-28 pb-8">
+      <div className="mx-auto max-w-7xl px-3 pt-4 pb-8">
         {/* Breadcrumb */}
         <div className="mb-6 flex items-center gap-2 text-sm">
           <button

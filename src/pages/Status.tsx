@@ -71,7 +71,7 @@ const Status = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <div className="mx-auto max-w-5xl px-6 pt-28 pb-20">
+      <div className="mx-auto max-w-5xl px-6 pt-4 pb-20">
         <div className="mb-10 text-center">
           <h1
             className="text-3xl font-bold text-foreground"
