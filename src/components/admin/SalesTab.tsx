@@ -115,11 +115,11 @@ const SalesTab = () => {
       const meta = t.metadata as any;
       const isLzt = meta?.type === "lzt-account";
       const lztItemId = meta?.lzt_item_id;
-      const lztPrice = lztItemId ? (lztSalesMap.get(String(lztItemId)) || meta?.price || meta?.sell_price || 0) : 0;
+      const lztPrice = lztItemId ? (lztSalesMap.get(String(lztItemId)) || meta?.price_paid || meta?.price || meta?.sell_price || 0) : 0;
 
       return {
         ...t,
-        product_name: isLzt ? (meta?.title || "Conta LZT") : (product?.name || "—"),
+        product_name: isLzt ? (meta?.title || meta?.account_name || "Conta LZT") : (product?.name || "—"),
         product_image: isLzt ? null : (product?.image_url || null),
         plan_name: isLzt ? "Conta LZT" : (plan?.name || "—"),
         plan_price: isLzt ? lztPrice : (plan?.price || 0),
