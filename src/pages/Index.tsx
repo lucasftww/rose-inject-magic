@@ -18,7 +18,6 @@ import rankPrata from "@/assets/rank-prata.png";
 import rankOuro from "@/assets/rank-ouro.png";
 import rankPlatina from "@/assets/rank-platina.png";
 import rankDiamante from "@/assets/rank-diamante.png";
-import rankAscendente2 from "@/assets/rank-ascendente.png";
 import rankImortal from "@/assets/rank-imortal.png";
 import rankRadiante from "@/assets/rank-radiante-new.png";
 import rankUnranked from "@/assets/rank-unranked.png";
