@@ -847,7 +847,7 @@ const Index = () => {
           </motion.p>
           <motion.div variants={fadeUp} custom={3} className="mt-10 flex justify-center">
             <Link
-              to="/produtos"
+              to="/contas"
               className="flex items-center gap-2 border-2 border-foreground/30 px-14 py-4 text-sm font-bold uppercase tracking-[0.25em] text-foreground transition-all hover:border-success hover:text-success hover:shadow-[0_0_30px_hsl(197,100%,50%,0.2)]"
               style={{ fontFamily: "'Valorant', sans-serif" }}
             >
