@@ -388,10 +388,8 @@ const UsersTab = () => {
     } else {
       toast({ title: res.data.message });
       await fetchUsers();
-      // Update selected user if open
+      // Close selected user panel — data was refetched above
       if (selectedUser?.id === targetUserId) {
-        const updated = users.find(u => u.id === targetUserId);
-        // Refetch to get updated data
         setSelectedUser(null);
       }
     }

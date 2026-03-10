@@ -51,19 +51,22 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const clearRequiresAuth = useCallback(() => setRequiresAuth(false), []);
 
-  const addItem = (item: Omit<CartItem, "quantity">): boolean => {
-    // Check if user is logged in by looking for supabase session in storage
-    const sessionKey = Object.keys(localStorage).find(k => k.startsWith("sb-") && k.endsWith("-auth-token"));
-    const session = sessionKey ? localStorage.getItem(sessionKey) : null;
-    let isLoggedIn = false;
-    if (session) {
-      try {
-        const parsed = JSON.parse(session);
-        isLoggedIn = !!parsed?.access_token;
-      } catch {}
+  const addItem = (item: Omit<CartItem, "quantity">, isLoggedIn?: boolean): boolean => {
+    // If caller doesn't pass auth status, check localStorage as fallback
+    let loggedIn = isLoggedIn;
+    if (loggedIn === undefined) {
+      const sessionKey = Object.keys(localStorage).find(k => k.startsWith("sb-") && k.endsWith("-auth-token"));
+      const session = sessionKey ? localStorage.getItem(sessionKey) : null;
+      loggedIn = false;
+      if (session) {
+        try {
+          const parsed = JSON.parse(session);
+          loggedIn = !!parsed?.access_token;
+        } catch {}
+      }
     }
 
-    if (!isLoggedIn) {
+    if (!loggedIn) {
       setRequiresAuth(true);
       return false;
     }
