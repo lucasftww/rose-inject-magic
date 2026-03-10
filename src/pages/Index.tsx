@@ -756,7 +756,7 @@ const Index = () => {
                     ))}
                   </div>
                   <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-                    "{review.text}"
+                    {review.text}
                   </p>
                 </div>
                 <div className="mt-5 flex items-center gap-3 border-t border-border pt-4">
