@@ -497,6 +497,9 @@ const Header = () => {
           </>
         )}
       </AnimatePresence>
+
+      {/* Spacer to prevent content from being hidden behind fixed header */}
+      <div className={`${bannerVisible ? 'h-[108px] lg:h-[108px]' : 'h-16 lg:h-[72px]'} transition-all duration-300`} />
     </>
   );
 };
