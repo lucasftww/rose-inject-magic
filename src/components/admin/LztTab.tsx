@@ -374,7 +374,7 @@ const SaleRow = ({ sale, onCopy }: { sale: LztSale; onCopy: (t: string) => void 
   <div className="flex items-center gap-3 rounded-lg border border-border bg-secondary/30 p-3 group">
     <div className="flex-1 min-w-0">
       <p className="text-sm font-medium text-foreground truncate">
-        {sale.account_title || `Conta #${sale.lzt_item_id}`}
+        {sale.title || `Conta #${sale.lzt_item_id}`}
       </p>
       <div className="flex items-center gap-2 mt-0.5">
         <button onClick={() => onCopy(sale.lzt_item_id)}
