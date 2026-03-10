@@ -295,7 +295,7 @@ const LztTab = () => {
                       </button>
                     </td>
                     <td className="py-3 pr-3">
-                      <span className="text-sm text-foreground truncate block max-w-[200px]">{sale.account_title || "—"}</span>
+                      <span className="text-sm text-foreground truncate block max-w-[200px]">{sale.title || "—"}</span>
                     </td>
                     <td className="py-3 pr-3">
                       <span className="text-xs font-bold text-destructive">R${Number(sale.buy_price).toFixed(2)}</span>
