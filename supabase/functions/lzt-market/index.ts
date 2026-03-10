@@ -225,7 +225,6 @@ Deno.serve(async (req) => {
         "weaponSkin[]", "buddy[]", "agent[]", "valorant_region[]",
         "valorant_rank_type[]", "email_type[]", "country[]",
         "champion[]", "skin[]", "lol_rank[]", "lol_region[]",
-        "email_type[]",
       ];
       for (const p of arrayParams) {
         const vals = url.searchParams.getAll(p);
