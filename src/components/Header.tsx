@@ -110,7 +110,7 @@ const Header = () => {
           boxShadow: scrolled ? "0 4px 30px hsla(0,0%,0%,0.3)" : "none",
         }}
       >
-        <div className="mx-auto flex h-16 lg:h-[72px] max-w-7xl items-center justify-between px-4 lg:px-6">
+        <div className="mx-auto flex h-14 sm:h-16 lg:h-[72px] max-w-7xl items-center justify-between px-3 sm:px-4 lg:px-6">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 lg:gap-3 shrink-0 group">
             <motion.img
@@ -324,7 +324,7 @@ const Header = () => {
                 </motion.button>
                 <motion.button
                   onClick={() => { setAuthTab("register"); setAuthOpen(true); }}
-                  className="hidden sm:inline-flex px-5 lg:px-6 py-2 text-sm font-semibold tracking-wide whitespace-nowrap rounded-md transition-all duration-200 btn-shine"
+                  className="inline-flex px-4 sm:px-5 lg:px-6 py-2 text-xs sm:text-sm font-semibold tracking-wide whitespace-nowrap rounded-lg sm:rounded-md transition-all duration-200 btn-shine"
                   style={{
                     background: isLolContext ? LOL_BLUE : "hsl(var(--success))",
                     color: "white",
@@ -499,7 +499,7 @@ const Header = () => {
       </AnimatePresence>
 
       {/* Spacer to prevent content from being hidden behind fixed header */}
-      <div className={`${bannerVisible ? 'h-[108px] lg:h-[108px]' : 'h-16 lg:h-[72px]'} transition-all duration-300`} />
+      <div className={`${bannerVisible ? 'h-[92px] sm:h-[108px] lg:h-[108px]' : 'h-14 sm:h-16 lg:h-[72px]'} transition-all duration-300`} />
     </>
   );
 };
