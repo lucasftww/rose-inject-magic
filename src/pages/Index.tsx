@@ -496,18 +496,18 @@ const ProductsSection = () => {
                       </div>
                     )}
                   </div>
-                  <div className="p-5">
-                    <h3 className="text-base font-bold text-foreground">{product.name}</h3>
+                  <div className="p-3 sm:p-5">
+                    <h3 className="text-xs sm:text-base font-bold text-foreground line-clamp-1">{product.name}</h3>
                     {product.description && (
-                      <p className="mt-1.5 text-xs text-muted-foreground line-clamp-2">{product.description}</p>
+                      <p className="mt-1 text-[10px] sm:text-xs text-muted-foreground line-clamp-2 hidden sm:block">{product.description}</p>
                     )}
                     {lowestPrice !== null && (
-                      <div className="mt-4 flex items-end justify-between">
+                      <div className="mt-2 sm:mt-4 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
                         <div>
-                          <p className="text-[10px] text-muted-foreground">A partir de</p>
-                          <p className="text-xl font-bold text-success">R$ {lowestPrice.toFixed(2)}</p>
+                          <p className="text-[9px] sm:text-[10px] text-muted-foreground">A partir de</p>
+                          <p className="text-base sm:text-xl font-bold text-success">R$ {lowestPrice.toFixed(2)}</p>
                         </div>
-                        <span className="flex items-center gap-1.5 rounded border border-border px-4 py-2 text-xs font-medium text-muted-foreground transition-colors group-hover:border-success group-hover:text-success">
+                        <span className="hidden sm:flex items-center gap-1.5 rounded border border-border px-4 py-2 text-xs font-medium text-muted-foreground transition-colors group-hover:border-success group-hover:text-success">
                           Ver produto
                         </span>
                       </div>
