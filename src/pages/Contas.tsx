@@ -324,7 +324,7 @@ const fetchAllValorantSkins = async (): Promise<Map<string, { name: string; imag
 // Fortnite-API: fetch all BR cosmetics (smallIcon)
 const fetchFortniteSkins = async (): Promise<Map<string, { name: string; image: string }>> => {
   try {
-    const res = await fetch("https://fortnite-api.com/v2/cosmetics/br?language=pt");
+    const res = await fetch("https://fortnite-api.com/v2/cosmetics/br?language=pt-BR");
     if (!res.ok) throw new Error("Failed");
     const data = await res.json();
     const map = new Map<string, { name: string; image: string }>();
