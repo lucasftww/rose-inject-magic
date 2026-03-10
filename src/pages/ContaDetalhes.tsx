@@ -68,7 +68,7 @@ const fetchAccountDetail = async (itemId: string) => {
     `${projectUrl}/functions/v1/lzt-market?action=detail&item_id=${encodeURIComponent(itemId)}`,
     { headers: { "Content-Type": "application/json", apikey: anonKey } }
   );
-  if (!res.ok) throw new Error(`API Error: ${res.status}`);
+  if (!res.ok) throwApiError(res.status);
   return res.json();
 };
 
