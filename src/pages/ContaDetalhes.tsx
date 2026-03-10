@@ -35,6 +35,9 @@ const rarityMap: Record<string, { name: string; img: string; color: string }> = 
 };
 
 const rankMap: Record<number, { name: string; img: string }> = {
+  0: { name: "Unranked", img: rankUnranked },
+  1: { name: "Unranked", img: rankUnranked },
+  2: { name: "Unranked", img: rankUnranked },
   3: { name: "Ferro 1", img: rankFerro },
   4: { name: "Ferro 2", img: rankFerro },
   5: { name: "Ferro 3", img: rankFerro },
