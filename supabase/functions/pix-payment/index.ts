@@ -262,20 +262,45 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
   let price = item.lztPrice;
   let currency = item.lztCurrency || "rub";
 
+  const lztGame = item.lztGame || "valorant";
+
   const findProductAndPlan = async () => {
     let productId: string | null = null;
     let planId: string | null = null;
 
-    const { data: lztProduct } = await supabaseAdmin
-      .from("products")
-      .select("id")
-      .ilike("name", "%valorant%conta%")
-      .eq("active", true)
-      .limit(1)
-      .maybeSingle();
+    // Try game-specific product name first
+    const gameSearchPatterns: Record<string, string[]> = {
+      valorant: ["%valorant%conta%", "%conta%valorant%"],
+      lol: ["%lol%conta%", "%conta%lol%", "%league%"],
+      fortnite: ["%fortnite%conta%", "%conta%fortnite%"],
+      minecraft: ["%minecraft%conta%", "%conta%minecraft%"],
+    };
 
-    if (lztProduct) {
-      productId = lztProduct.id;
+    const patterns = gameSearchPatterns[lztGame] || gameSearchPatterns.valorant;
+    for (const pattern of patterns) {
+      if (productId) break;
+      const { data: found } = await supabaseAdmin
+        .from("products")
+        .select("id")
+        .ilike("name", pattern)
+        .eq("active", true)
+        .limit(1)
+        .maybeSingle();
+      if (found) productId = found.id;
+    }
+
+    // Fallback: any active product
+    if (!productId) {
+      const { data: fallback } = await supabaseAdmin
+        .from("products")
+        .select("id")
+        .eq("active", true)
+        .limit(1)
+        .single();
+      productId = fallback?.id || null;
+    }
+
+    if (productId) {
       const { data: plan } = await supabaseAdmin
         .from("product_plans")
         .select("id")
@@ -284,26 +309,6 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
         .limit(1)
         .maybeSingle();
       planId = plan?.id || null;
-    }
-
-    if (!productId) {
-      const { data: fallback } = await supabaseAdmin
-        .from("products")
-        .select("id")
-        .eq("active", true)
-        .limit(1)
-        .single();
-      productId = fallback?.id;
-      if (productId) {
-        const { data: plan } = await supabaseAdmin
-          .from("product_plans")
-          .select("id")
-          .eq("product_id", productId)
-          .eq("active", true)
-          .limit(1)
-          .maybeSingle();
-        planId = plan?.id || null;
-      }
     }
 
     return { productId, planId };
@@ -452,14 +457,22 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
       .select("id")
       .single();
 
+    const gameLabels: Record<string, string> = {
+      valorant: "Valorant", lol: "LoL", fortnite: "Fortnite", minecraft: "Minecraft",
+    };
+    const gameLabel = gameLabels[lztGame] || "LZT";
+
     const lztMetadata = {
       type: "lzt-account",
       lzt_item_id: itemId,
-      account_name: item.productName || `Conta Valorant #${itemId}`,
+      account_name: item.productName || `Conta ${gameLabel} #${itemId}`,
+      title: item.productName || `Conta ${gameLabel} #${itemId}`,
       account_image: item.productImage || null,
       price_paid: item.price || price,
+      sell_price: item.price || 0,
       currency: currency,
       skins_count: item.skinsCount || null,
+      game: lztGame,
     };
 
     const { data: ticket } = await supabaseAdmin
@@ -501,7 +514,8 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
       buy_price: buyPriceBrl,
       sell_price: sellPriceBrl,
       profit: sellPriceBrl - buyPriceBrl,
-      account_title: item.productName || `Conta #${itemId}`,
+      title: item.productName || `Conta ${gameLabel} #${itemId}`,
+      game: lztGame,
       buyer_user_id: payment.user_id,
     });
     if (saleErr) console.error("Failed to record lzt_sale:", saleErr);
