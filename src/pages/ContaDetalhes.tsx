@@ -544,10 +544,18 @@ const ContaDetalhes = () => {
                       </motion.div>
                     ))}
                   </div>
-                ) : (
+                ) : activeLoading ? (
                   <div className="flex items-center justify-center py-12 rounded-lg border border-border bg-card">
                     <Loader2 className="h-5 w-5 animate-spin text-muted-foreground mr-2" />
                     <p className="text-sm text-muted-foreground">Carregando itens...</p>
+                  </div>
+                ) : activeError ? (
+                  <div className="flex items-center justify-center py-12 rounded-lg border border-border bg-card">
+                    <p className="text-sm text-muted-foreground">Erro ao carregar itens. Tente recarregar a página.</p>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center py-12 rounded-lg border border-border bg-card">
+                    <p className="text-sm text-muted-foreground">Nenhum item encontrado.</p>
                   </div>
                 )}
 
