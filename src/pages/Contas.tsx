@@ -1753,9 +1753,10 @@ const Contas = () => {
             )}
 
             {streamError && (
-              <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-                <p className="text-lg font-semibold text-destructive">Erro ao carregar contas</p>
-                <p className="mt-1 text-sm">{streamError.message}</p>
+              <div className="flex flex-col items-center justify-center py-20 text-muted-foreground gap-2">
+                <AlertTriangle className="h-10 w-10 text-yellow-500" />
+                <p className="text-lg font-semibold text-foreground">Ops! Algo deu errado</p>
+                <p className="mt-1 text-sm text-center max-w-md">{streamError.message}</p>
                 <button
                   onClick={() => refetch()}
                   className="mt-4 rounded border border-border px-4 py-2 text-xs font-medium transition-colors"
