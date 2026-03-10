@@ -99,6 +99,7 @@ const MinecraftDetalhes = () => {
       lztItemId: String(item.item_id),
       lztPrice: item.price,
       lztCurrency: item.price_currency || "rub",
+      lztGame: "minecraft",
     });
     if (!added) return;
     setAddedToCart(true);

@@ -12,6 +12,7 @@ export interface CartItem {
   lztItemId?: string;
   lztPrice?: number;
   lztCurrency?: string;
+  lztGame?: string;
 }
 
 interface CartContextType {
