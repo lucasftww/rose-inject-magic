@@ -1046,8 +1046,8 @@ const Contas = () => {
     if (searchQuery) params.title = searchQuery;
 
     if (gameTab === "valorant") {
-      // Valorant-specific — hide low-quality accounts
-      params.valorant_smin = "10";
+      // Valorant-specific — require 10+ skins only when sorting by highest price
+      params.valorant_smin = sortBy === "price_desc" ? "10" : "1";
       params.inv_min = "1000";
       params.valorant_level_min = "20";
       if (onlyKnife) params.knife = "true";
