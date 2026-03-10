@@ -1112,16 +1112,14 @@ const Contas = () => {
 
   const paramsKey = JSON.stringify(buildParams(1)) + gameTab;
 
-  const fetchWithRetry = useCallback(async (params: Record<string, string | string[]>, controller: AbortController, retries = 2): Promise<any> => {
+  const fetchWithRetry = useCallback(async (params: Record<string, string | string[]>, controller: AbortController, retries = 1): Promise<any> => {
     for (let attempt = 0; attempt <= retries; attempt++) {
       if (controller.signal.aborted) throw new Error("aborted");
       try {
         return await fetchAccountsRaw(params);
       } catch (err: any) {
         if (attempt >= retries) throw err;
-        // Wait with exponential backoff before retrying (1s, 3s)
-        const delay = (attempt + 1) * 1500;
-        await new Promise((r) => setTimeout(r, delay));
+        await new Promise((r) => setTimeout(r, 800));
       }
     }
   }, []);
@@ -1135,30 +1133,37 @@ const Contas = () => {
     setDisplayPage(1);
 
     try {
-      let allItems: LztItem[] = [];
-      let nextPage = true;
-      let pageNum = 1;
+      // Fetch first page immediately
+      const data = await fetchWithRetry(buildParams(1), controller);
+      if (controller.signal.aborted) return;
 
-      while (nextPage && pageNum <= MAX_PAGES) {
-        if (controller.signal.aborted) return;
-        const data = await fetchWithRetry(buildParams(pageNum), controller);
-        if (controller.signal.aborted) return;
+      const firstPageItems: LztItem[] = data?.items ?? [];
+      setTotalItems(data?.totalItems ?? 0);
+      const hasMore = data?.hasNextPage ?? false;
+      setHasNextPage(hasMore);
+      setCurrentPage(1);
+      setStreamedItems(firstPageItems);
 
-        const pageItems: LztItem[] = data?.items ?? [];
-        setTotalItems(data?.totalItems ?? 0);
-        nextPage = data?.hasNextPage ?? false;
-        setHasNextPage(nextPage);
-        setCurrentPage(pageNum);
+      // Fetch remaining pages in background, batch by page
+      if (hasMore) {
+        let allItems = [...firstPageItems];
+        let nextPage = hasMore;
+        let pageNum = 2;
 
-        for (let i = 0; i < pageItems.length; i++) {
+        while (nextPage && pageNum <= MAX_PAGES) {
           if (controller.signal.aborted) return;
-          allItems.push(pageItems[i]);
-          setStreamedItems([...allItems]);
-          if (i < pageItems.length - 1) await new Promise((r) => setTimeout(r, 30));
-        }
+          await new Promise((r) => setTimeout(r, 100));
+          const pageData = await fetchWithRetry(buildParams(pageNum), controller);
+          if (controller.signal.aborted) return;
 
-        pageNum++;
-        if (nextPage && pageNum <= MAX_PAGES) await new Promise((r) => setTimeout(r, 300));
+          const pageItems: LztItem[] = pageData?.items ?? [];
+          allItems = [...allItems, ...pageItems];
+          setStreamedItems(allItems);
+          nextPage = pageData?.hasNextPage ?? false;
+          setHasNextPage(nextPage);
+          setCurrentPage(pageNum);
+          pageNum++;
+        }
       }
 
       if (!controller.signal.aborted) setStreamingDone(true);
