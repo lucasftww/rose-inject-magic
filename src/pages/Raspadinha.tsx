@@ -12,7 +12,7 @@ interface Prize {
   name: string;
   description: string | null;
   image_url: string | null;
-  win_percentage: number;
+  win_percentage?: number;
   prize_value: number;
 }
 

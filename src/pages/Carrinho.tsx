@@ -32,11 +32,12 @@ const Carrinho = () => {
     setCouponLoading(true);
 
     const productIds = items.map(i => i.productId).filter(id => !id.startsWith("lzt-"));
-    const { data: result, error } = await supabase.rpc("validate_coupon", {
+    const { data: rawResult, error } = await supabase.rpc("validate_coupon", {
       _code: code,
       _user_id: user.id,
       _cart_product_ids: productIds,
     });
+    const result = rawResult as any;
 
     if (error || !result || !result.valid) {
       toast({ title: result?.error || "Cupom inválido", variant: "destructive" });
