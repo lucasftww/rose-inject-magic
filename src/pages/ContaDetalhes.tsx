@@ -322,7 +322,7 @@ const ContaDetalhes = () => {
                       <motion.div
                         key={selectedSkin}
                         className="relative z-[1] flex items-center justify-center h-full w-full p-8 cursor-pointer"
-                        onClick={() => setLightboxIndex(selectedSkin)}
+                        onClick={() => { setActiveTab("skins"); setLightboxIndex(selectedSkin); }}
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
