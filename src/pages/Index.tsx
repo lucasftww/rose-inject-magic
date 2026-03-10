@@ -491,7 +491,9 @@ const ProductsSection = () => {
                     {product.image_url ? (
                       <img src={product.image_url} alt={product.name} className="absolute inset-0 h-full w-full object-cover" />
                     ) : (
-                      <Package className="h-12 w-12 text-muted-foreground/20" />
+                      <div className="flex h-full w-full items-center justify-center">
+                        <Package className="h-8 w-8 sm:h-12 sm:w-12 text-muted-foreground/20" />
+                      </div>
                     )}
                   </div>
                   <div className="p-5">
