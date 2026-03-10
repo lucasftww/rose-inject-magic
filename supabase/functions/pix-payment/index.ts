@@ -514,7 +514,8 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
       buy_price: buyPriceBrl,
       sell_price: sellPriceBrl,
       profit: sellPriceBrl - buyPriceBrl,
-      account_title: item.productName || `Conta #${itemId}`,
+      title: item.productName || `Conta ${gameLabel} #${itemId}`,
+      game: lztGame,
       buyer_user_id: payment.user_id,
     });
     if (saleErr) console.error("Failed to record lzt_sale:", saleErr);
