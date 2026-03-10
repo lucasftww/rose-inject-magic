@@ -371,7 +371,7 @@ const ContasSection = () => {
   });
 
   return (
-    <section className="border-t border-border bg-background px-4 sm:px-6 py-16 sm:py-24">
+    <section className="border-t border-border bg-background px-4 sm:px-6 py-12 sm:py-24">
       <div className="mx-auto max-w-7xl">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-80px" }} variants={slideInLeft}>
           <p className="text-sm font-medium uppercase tracking-[0.3em] text-success">Selecao Accounts</p>
