@@ -257,6 +257,13 @@ const ContaDetalhes = () => {
   const mainGallery = gallery.length > 0 ? gallery : skinItems.slice(0, 5);
 
   const galleryLength = skinItems.length > 0 ? skinItems.length : mainGallery.length;
+  
+  // Clamp selectedSkin to valid range when data changes
+  const clampedSkin = galleryLength > 0 ? Math.min(selectedSkin, galleryLength - 1) : 0;
+  useEffect(() => {
+    if (selectedSkin !== clampedSkin) setSelectedSkin(clampedSkin);
+  }, [clampedSkin, selectedSkin]);
+  
   const handlePrev = () => setSelectedSkin((p) => (p > 0 ? p - 1 : galleryLength - 1));
   const handleNext = () => setSelectedSkin((p) => (p < galleryLength - 1 ? p + 1 : 0));
 
