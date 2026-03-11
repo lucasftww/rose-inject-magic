@@ -32,8 +32,8 @@ interface Payment {
 
 const statusColors: Record<string, string> = {
   open: "bg-success/20 text-success",
-  delivered: "bg-blue-500/20 text-blue-400",
-  resolved: "bg-emerald-500/20 text-emerald-400",
+  delivered: "bg-info/20 text-info",
+  resolved: "bg-positive/20 text-positive",
   closed: "bg-muted text-muted-foreground",
   banned: "bg-destructive/20 text-destructive",
   finished: "bg-muted text-muted-foreground",

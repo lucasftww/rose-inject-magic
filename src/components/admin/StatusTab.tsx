@@ -15,7 +15,7 @@ interface ProductRow {
 const statusOptions = [
   { value: "undetected", label: "Indetectável", color: "text-success", icon: ShieldCheck },
   { value: "detected", label: "Detectável", color: "text-destructive", icon: ShieldAlert },
-  { value: "updating", label: "Atualizando", color: "text-yellow-400", icon: RefreshCw },
+  { value: "updating", label: "Atualizando", color: "text-warning", icon: RefreshCw },
   { value: "offline", label: "Offline", color: "text-muted-foreground", icon: Clock },
 ];
 

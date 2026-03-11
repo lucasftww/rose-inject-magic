@@ -547,7 +547,7 @@ const UsersTab = () => {
                         </div>
                         <div className="flex flex-col items-end shrink-0 ml-2">
                           <span className="text-xs font-bold text-foreground">R$ {(p.amount / 100).toFixed(2)}</span>
-                          <span className={`text-[10px] font-bold ${p.status === "COMPLETED" ? "text-success" : p.status === "ACTIVE" ? "text-amber-400" : "text-muted-foreground"}`}>
+                          <span className={`text-[10px] font-bold ${p.status === "COMPLETED" ? "text-success" : p.status === "ACTIVE" ? "text-warning" : "text-muted-foreground"}`}>
                             {p.status === "COMPLETED" ? "Pago" : p.status === "ACTIVE" ? "Pendente" : p.status}
                           </span>
                         </div>
@@ -617,7 +617,7 @@ const UsersTab = () => {
                       <button
                         onClick={() => { executeAction("remove_admin", selectedUser.id); setSelectedUser(null); }}
                         disabled={actionLoading !== null}
-                        className="flex items-center gap-1.5 rounded-lg border border-orange-500/30 bg-orange-500/10 px-4 py-2 text-xs font-medium text-orange-500 hover:bg-orange-500/20 disabled:opacity-50"
+                        className="flex items-center gap-1.5 rounded-lg border border-warning/30 bg-warning/10 px-4 py-2 text-xs font-medium text-warning hover:bg-warning/20 disabled:opacity-50"
                       >
                         <ShieldOff className="h-3.5 w-3.5" /> Remover Admin
                       </button>
@@ -696,9 +696,9 @@ const UsersTab = () => {
             ) : (
               <div className="space-y-3">
                 {showOrdersUser.orders.map((order) => {
-                  const statusColor = order.status === "delivered" ? "text-blue-400 bg-blue-500/20"
+                  const statusColor = order.status === "delivered" ? "text-info bg-info/20"
                     : order.status === "open" ? "text-success bg-success/20"
-                    : order.status === "resolved" ? "text-emerald-400 bg-emerald-500/20"
+                    : order.status === "resolved" ? "text-positive bg-positive/20"
                     : "text-muted-foreground bg-muted";
 
                   return (
