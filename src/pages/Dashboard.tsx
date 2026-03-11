@@ -75,9 +75,9 @@ const Dashboard = () => {
   const [loadingPayments, setLoadingPayments] = useState(false);
 
   const statusColors: Record<string, string> = {
-    open: "bg-amber-500/20 text-amber-400",
-    delivered: "bg-blue-500/20 text-blue-400",
-    resolved: "bg-emerald-500/20 text-emerald-400",
+    open: "bg-warning/20 text-warning",
+    delivered: "bg-success/20 text-success",
+    resolved: "bg-positive/20 text-positive",
     closed: "bg-muted text-muted-foreground",
     banned: "bg-destructive/20 text-destructive",
     finished: "bg-muted text-muted-foreground",
