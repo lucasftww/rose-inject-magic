@@ -1465,7 +1465,7 @@ const Contas = () => {
                               className={`flex flex-col items-center gap-1 rounded-lg border p-2 transition-all ${selectedRank === rank.id ? "border-success bg-success/10 shadow-[0_0_10px_hsl(130,99%,41%,0.15)]" : "border-border hover:border-foreground/30"}`}
                               title={rank.name}
                             >
-                              <img src={rank.img} alt={rank.name} className="h-8 w-8 object-contain" />
+                               <img src={rank.img} alt={rank.name} className="h-8 w-8 object-contain" loading="lazy" />
                               <span className={`text-[10px] font-medium leading-tight text-center ${selectedRank === rank.id ? "text-success" : "text-muted-foreground"}`}>{rank.name}</span>
                             </button>
                           ))}
