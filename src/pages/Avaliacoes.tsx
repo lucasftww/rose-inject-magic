@@ -231,7 +231,7 @@ const Avaliacoes = () => {
                       <Star
                         key={s}
                         className={`h-3.5 w-3.5 ${
-                          s <= review.rating ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground/30"
+                          s <= review.rating ? "fill-warning text-warning" : "text-muted-foreground/30"
                         }`}
                       />
                     ))}

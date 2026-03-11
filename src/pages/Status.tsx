@@ -18,7 +18,7 @@ interface ProductStatus {
 const statusConfig: Record<string, { color: string; bg: string; border: string; icon: typeof ShieldCheck }> = {
   undetected: { color: "text-success", bg: "bg-success/10", border: "border-success/30", icon: ShieldCheck },
   detected: { color: "text-destructive", bg: "bg-destructive/10", border: "border-destructive/30", icon: ShieldAlert },
-  updating: { color: "text-yellow-400", bg: "bg-yellow-400/10", border: "border-yellow-400/30", icon: RefreshCw },
+  updating: { color: "text-warning", bg: "bg-warning/10", border: "border-warning/30", icon: RefreshCw },
   offline: { color: "text-muted-foreground", bg: "bg-muted/10", border: "border-border", icon: Clock },
 };
 

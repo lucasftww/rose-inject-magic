@@ -31,8 +31,8 @@ const ITEMS_PER_PAGE = 15;
 
 const statusColors: Record<string, string> = {
   delivered: "bg-success/15 text-success border-success/30",
-  open: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30",
-  waiting_staff: "bg-blue-500/15 text-blue-400 border-blue-500/30",
+  open: "bg-warning/15 text-warning border-warning/30",
+  waiting_staff: "bg-info/15 text-info border-info/30",
   closed: "bg-muted text-muted-foreground border-border",
 };
 

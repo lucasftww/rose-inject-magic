@@ -504,7 +504,7 @@ const ProdutoDetalhes = () => {
                         <span className="text-xs font-bold text-foreground">{review.username}</span>
                         <div className="flex gap-0.5">
                           {Array.from({ length: 5 }).map((_, i) => (
-                            <span key={i} className={`text-[10px] ${i < review.rating ? "text-yellow-400" : "text-muted-foreground/30"}`}>★</span>
+                            <span key={i} className={`text-[10px] ${i < review.rating ? "text-warning" : "text-muted-foreground/30"}`}>★</span>
                           ))}
                         </div>
                       </div>
