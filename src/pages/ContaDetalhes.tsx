@@ -69,7 +69,7 @@ const fetchAccountDetail = async (itemId: string) => {
   const projectUrl = import.meta.env.VITE_SUPABASE_URL;
   const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
   const res = await fetch(
-    `${projectUrl}/functions/v1/lzt-market?action=detail&item_id=${encodeURIComponent(itemId)}`,
+    `${projectUrl}/functions/v1/lzt-market?action=detail&item_id=${encodeURIComponent(itemId)}&game_type=valorant`,
     { headers: { "Content-Type": "application/json", apikey: anonKey } }
   );
   if (!res.ok) throwApiError(res.status);
