@@ -148,7 +148,7 @@ const FortniteDetalhes = () => {
   const handleAddToCart = () => {
     if (!item || isInCart) return;
     const title = `Conta Fortnite${vbucks > 0 ? ` | ${vbucks} V-Bucks` : ""}${skinCount > 0 ? ` | ${skinCount} Skins` : ""}`;
-    const priceBRL = calcPrice(item.price, item.price_currency);
+    const priceBRL = getPrice(item, "fortnite");
     const added = addItem({
       productId: `lzt-fn-${item.item_id}`,
       productName: title,
