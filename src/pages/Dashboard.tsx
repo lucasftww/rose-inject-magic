@@ -515,7 +515,7 @@ const Dashboard = () => {
                         )}
                       </div>
                     </div>
-                    <ChevronRight className="h-5 w-5 text-muted-foreground/40 group-hover:text-blue-400 transition-colors mt-0.5 shrink-0" />
+                    <ChevronRight className="h-5 w-5 text-muted-foreground/40 group-hover:text-success transition-colors mt-0.5 shrink-0" />
                   </div>
 
                   <div className="border-t border-border px-6 py-3 bg-secondary/20">
