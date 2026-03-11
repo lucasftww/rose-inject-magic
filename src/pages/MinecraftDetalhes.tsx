@@ -8,7 +8,7 @@ import { useState, useEffect, useRef } from "react";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "@/hooks/use-toast";
 import { useLztMarkup } from "@/hooks/useLztMarkup";
-import { trackViewContent, trackInitiateCheckout } from "@/lib/metaPixel";
+import { trackViewContent, trackAddToCart, trackInitiateCheckout } from "@/lib/metaPixel";
 
 const MC_GREEN = "hsl(120,60%,45%)";
 
@@ -101,6 +101,12 @@ const MinecraftDetalhes = () => {
     const title = `Conta Minecraft${nickname ? ` · ${nickname}` : ""}${hasJava ? " · Java" : ""}${hasBedrock ? " · Bedrock" : ""}`;
     const priceBRL = getPrice(item, "minecraft");
 
+    trackAddToCart({
+      contentName: title,
+      contentCategory: "Minecraft",
+      contentIds: [`lzt-mc-${item.item_id}`],
+      value: priceBRL,
+    });
     trackInitiateCheckout({
       contentName: title,
       contentCategory: "Minecraft",
