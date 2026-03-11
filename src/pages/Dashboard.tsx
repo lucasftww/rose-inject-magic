@@ -505,7 +505,7 @@ const Dashboard = () => {
                       <h3 className="text-base font-bold text-foreground">Contas</h3>
                       <p className="mt-1 text-sm text-muted-foreground">Contas de jogos adquiridas</p>
                       <div className="mt-4 flex items-center gap-3">
-                        <span className="flex items-center gap-1.5 rounded-full bg-blue-500/10 px-3 py-1 text-xs font-semibold text-blue-400">
+                        <span className="flex items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-xs font-semibold text-success">
                           <Smartphone className="h-3 w-3" />{tickets.filter(t => t.metadata?.type === "lzt-account").length} conta(s)
                         </span>
                         {tickets.filter(t => t.metadata?.type === "lzt-account" && t.status === "delivered").length > 0 && (
