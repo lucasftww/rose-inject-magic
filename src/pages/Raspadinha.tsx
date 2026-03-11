@@ -709,7 +709,7 @@ const Raspadinha = () => {
             className="mb-6 rounded-xl border border-warning/30 bg-warning/10 p-4 flex items-center justify-between gap-4"
           >
             <div>
-              <p className="text-sm font-semibold text-yellow-300">🎰 Você tem uma raspadinha pendente!</p>
+              <p className="text-sm font-semibold text-warning">🎰 Você tem uma raspadinha pendente!</p>
               <p className="text-xs text-muted-foreground mt-1">
                 Pagamento confirmado mas o jogo não carregou. Clique para jogar agora.
               </p>
