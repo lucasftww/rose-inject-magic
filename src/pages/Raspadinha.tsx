@@ -874,7 +874,7 @@ const Raspadinha = () => {
                     />
                     <button
                       onClick={copyCode}
-                      className={`flex items-center gap-1.5 rounded-lg ${isContas ? "bg-blue-600" : "bg-success"} px-4 py-2.5 text-xs font-bold text-white transition-all`}
+                      className={`flex items-center gap-1.5 rounded-lg ${isContas ? "bg-info" : "bg-success"} px-4 py-2.5 text-xs font-bold text-white transition-all`}
                     >
                       {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                       {copied ? "Copiado" : "Copiar"}
