@@ -679,10 +679,10 @@ const Raspadinha = () => {
   };
 
   const isContas = mode === "contas";
-  const accentColor = isContas ? "hsl(220, 100%, 47%)" : "hsl(197, 100%, 50%)";
-  const accentClass = isContas ? "text-blue-400" : "text-success";
-  const borderAccent = isContas ? "border-blue-500/30" : "border-success/30";
-  const bgAccent = isContas ? "bg-blue-500/10" : "bg-success/10";
+  const accentColor = isContas ? "hsl(var(--info))" : "hsl(var(--success))";
+  const accentClass = isContas ? "text-info" : "text-success";
+  const borderAccent = isContas ? "border-info/30" : "border-success/30";
+  const bgAccent = isContas ? "bg-info/10" : "bg-success/10";
 
   if (loading) {
     return (
