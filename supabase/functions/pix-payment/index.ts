@@ -974,6 +974,7 @@ Deno.serve(async (req) => {
           console.log("Webhook: fulfilling order for payment:", payment.id);
           await fulfillOrder(supabaseAdmin, payment);
           await sendDiscordSaleNotification(supabaseAdmin, payment);
+          await sendServerPurchaseEvent(payment, req);
         }
       }
 
