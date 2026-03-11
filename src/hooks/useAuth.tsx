@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { setAdvancedMatching } from "@/lib/metaPixel";
 import type { User, Session } from "@supabase/supabase-js";
 
 interface AuthContextType {
@@ -94,6 +95,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             supabase.functions.invoke("track-login", {
               headers: { Authorization: `Bearer ${newSession.access_token}` },
             }).catch(() => {});
+
+            // Advanced Matching: envia dados hasheados para o Meta Pixel
+            setAdvancedMatching({
+              email: newSession.user.email,
+              externalId: newSession.user.id,
+            });
           }
         }
       }

@@ -42,6 +42,8 @@ const Checkout = () => {
   const [enabledMethods, setEnabledMethods] = useState<Record<string, boolean>>({ pix: true, card: true, crypto: true });
   const hasLztItems = items.some((i) => i.type === "lzt-account");
   const couponId = searchParams.get("coupon_id");
+  // Snapshot of cart items for Purchase tracking (survives clearCart)
+  const [cartSnapshot, setCartSnapshot] = useState<typeof items>([]);
   // Price is calculated from cart items — never trust URL params
   const cartTotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
   const discountAmount = parseFloat(searchParams.get("discount") || "0");
@@ -121,6 +123,7 @@ const Checkout = () => {
       const serverTotal = result.validated_amount ?? cartFinalPrice;
       const serverDiscount = result.validated_discount ?? discountAmount;
       setDisplayPrice({ total: serverTotal + serverDiscount, final: serverTotal, discount: serverDiscount });
+      setCartSnapshot([...items]);
       clearCart();
     } catch (err: any) {
       console.error(err);
@@ -152,6 +155,7 @@ const Checkout = () => {
       setPaymentId(result.payment_id);
       setCardPaymentUrl(result.paymentUrl);
       setDisplayPrice({ total: cartTotal, final: cartFinalPrice, discount: discountAmount });
+      setCartSnapshot([...items]);
       clearCart();
       // Open the checkout URL in a new tab
       window.open(result.paymentUrl, "_blank");
@@ -185,6 +189,7 @@ const Checkout = () => {
       setPaymentId(result.payment_id);
       setCryptoData(result.crypto);
       setDisplayPrice({ total: cartTotal, final: cartFinalPrice, discount: discountAmount });
+      setCartSnapshot([...items]);
       clearCart();
     } catch (err: any) {
       console.error(err);
@@ -224,8 +229,8 @@ const Checkout = () => {
           setPaymentStatus(data.status);
           if (data.status === "COMPLETED") {
             if (intervalRef.current) clearInterval(intervalRef.current);
-            // Fire Purchase event
-            const cartItem = items[0];
+            // Fire Purchase event using snapshot (items already cleared)
+            const cartItem = cartSnapshot[0];
             if (cartItem) {
               trackPurchase({
                 contentName: cartItem.productName,
