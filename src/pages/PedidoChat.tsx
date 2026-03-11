@@ -95,10 +95,10 @@ const PedidoChat = () => {
         const lztGameLabels: Record<string, string> = {
           valorant: "Conta Valorant", lol: "Conta LoL", fortnite: "Conta Fortnite", minecraft: "Conta Minecraft",
         };
-        const gameLabel = lztGameLabels[ticketData.metadata?.game] || "Conta LZT";
-        setProductName(ticketData.metadata?.account_name || ticketData.metadata?.title || gameLabel);
+        const gameLabel = lztGameLabels[meta?.game] || "Conta LZT";
+        setProductName(meta?.account_name || meta?.title || gameLabel);
         setPlanName(gameLabel);
-        setPlanPrice(ticketData.metadata?.price_paid || ticketData.metadata?.sell_price || 0);
+        setPlanPrice(meta?.price_paid || meta?.sell_price || 0);
       } else {
         if (prodRes.data) setProductName((prodRes.data as any).name);
         if (planRes.data) {
