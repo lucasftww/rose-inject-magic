@@ -941,8 +941,7 @@ const fetchAccountsRaw = async (params: Record<string, string | string[]>) => {
 };
 
 const Contas = () => {
-  const { formatPrice: rawFormatPrice } = useLztMarkup();
-  const formatPriceForGame = (game: string) => (price: number, currency?: string) => rawFormatPrice(price, currency, game as any);
+  const { getDisplayPrice } = useLztMarkup();
   const [searchParams, setSearchParams] = useSearchParams();
   const [gameTab, setGameTab] = useState<GameTab>(() => {
     const g = searchParams.get("game");
