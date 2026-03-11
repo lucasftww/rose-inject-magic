@@ -1827,13 +1827,13 @@ const Contas = () => {
                       transition={{ duration: 0.3, ease: "easeOut" }}
                     >
                       {isValorant ? (
-                        <ValorantCard item={item} skinsMap={skinsMap} formatPrice={formatPriceForGame("valorant")} />
+                        <ValorantCard item={item} skinsMap={skinsMap} formatPrice={(p, c) => getDisplayPrice({ price: p, price_currency: c, price_brl: item.price_brl }, "valorant")} />
                       ) : isFortnite ? (
-                        <FortniteCard item={item} skinsDb={fnSkinsDb} formatPrice={formatPriceForGame("fortnite")} />
+                        <FortniteCard item={item} skinsDb={fnSkinsDb} formatPrice={(p, c) => getDisplayPrice({ price: p, price_currency: c, price_brl: item.price_brl }, "fortnite")} />
                       ) : isMinecraft ? (
-                        <MinecraftCard item={item} formatPrice={formatPriceForGame("minecraft")} />
+                        <MinecraftCard item={item} formatPrice={(p, c) => getDisplayPrice({ price: p, price_currency: c, price_brl: item.price_brl }, "minecraft")} />
                       ) : (
-                        <LolCard item={item} champKeyMap={champKeyMap} formatPrice={formatPriceForGame("lol")} />
+                        <LolCard item={item} champKeyMap={champKeyMap} formatPrice={(p, c) => getDisplayPrice({ price: p, price_currency: c, price_brl: item.price_brl }, "lol")} />
                       )}
                     </motion.div>
                   ))}
