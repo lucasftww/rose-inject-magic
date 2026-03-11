@@ -81,6 +81,9 @@ const PedidoChat = () => {
       if (!ticketData) { setLoading(false); return; }
       setTicket(ticketData as any);
 
+      const meta = ticketData.metadata as any;
+      const isLzt = meta?.type === "lzt-account";
+
       const [prodRes, planRes, messagesRes, tutorialRes] = await Promise.all([
         supabase.from("products").select("name").eq("id", ticketData.product_id).single(),
         supabase.from("product_plans").select("name, price").eq("id", ticketData.product_plan_id).single(),
@@ -88,17 +91,26 @@ const PedidoChat = () => {
         supabase.from("product_tutorials").select("tutorial_text, tutorial_file_url").eq("product_id", ticketData.product_id).maybeSingle(),
       ]);
 
-      if (prodRes.data) {
-        setProductName((prodRes.data as any).name);
+      if (isLzt) {
+        const lztGameLabels: Record<string, string> = {
+          valorant: "Conta Valorant", lol: "Conta LoL", fortnite: "Conta Fortnite", minecraft: "Conta Minecraft",
+        };
+        const gameLabel = lztGameLabels[meta?.game] || "Conta LZT";
+        setProductName(meta?.account_name || meta?.title || gameLabel);
+        setPlanName(gameLabel);
+        setPlanPrice(meta?.price_paid || meta?.sell_price || 0);
+      } else {
+        if (prodRes.data) setProductName((prodRes.data as any).name);
+        if (planRes.data) {
+          setPlanName((planRes.data as any).name);
+          setPlanPrice((planRes.data as any).price);
+        }
       }
       if (tutorialRes.data) {
         setTutorialText((tutorialRes.data as any).tutorial_text || null);
         setTutorialFileUrl((tutorialRes.data as any).tutorial_file_url || null);
       }
-      if (planRes.data) {
-        setPlanName((planRes.data as any).name);
-        setPlanPrice((planRes.data as any).price);
-      }
+      if (messagesRes.data) setMessages(messagesRes.data as any[]);
       if (messagesRes.data) setMessages(messagesRes.data as any[]);
 
       if (ticketData.stock_item_id) {
@@ -396,7 +408,7 @@ const PedidoChat = () => {
               <div className="flex h-5 w-5 items-center justify-center rounded-full bg-success/20">
                 <ShieldCheck className="h-3 w-3 text-success" />
               </div>
-              <span className="text-xs font-bold text-foreground">Valorant and League Of Legends login data:</span>
+              <span className="text-xs font-bold text-foreground">Dados de acesso da conta:</span>
             </div>
             
             <CopyField label="Login" value={login} />
