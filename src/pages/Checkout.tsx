@@ -340,7 +340,7 @@ const Checkout = () => {
               {paymentStatus === "EXPIRED" ? "O tempo para pagamento expirou." : paymentStatus === "FAILED" ? "O cartão foi recusado ou houve um erro." : "O pagamento foi cancelado."}
             </p>
             <button
-              onClick={() => navigate("/carrinho")}
+              onClick={() => navigate("/produtos")}
               className="rounded-md bg-success px-8 py-3 text-sm font-bold text-success-foreground transition-all hover:shadow-[0_0_30px_hsl(var(--success)/0.4)]"
             >
               Voltar ao carrinho
