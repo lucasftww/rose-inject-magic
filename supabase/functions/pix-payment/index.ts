@@ -32,8 +32,9 @@ async function sendServerPurchaseEvent(payment: any, req: Request) {
     const firstItem = cartItems[0];
     const totalValue = (payment.amount || 0) / 100; // amount is in centavos
 
-    // Deterministic event_id — same as browser Pixel uses
-    const eventId = `purchase_${payment.id}`;
+    // Deterministic event_id with timestamp for webhook retry dedup
+    const ts = Math.floor(Date.now() / 1000);
+    const eventId = `purchase_${payment.id}_${ts}`;
 
     // Resolve category
     const gameName = firstItem.lztGame || firstItem.planName || "";
@@ -58,21 +59,23 @@ async function sendServerPurchaseEvent(payment: any, req: Request) {
     const ua = req.headers.get("user-agent");
     if (ua) userData.client_user_agent = ua;
 
+    const contentIds = cartItems.map((i) => i.productId);
+
     const eventData = {
       event_name: "Purchase",
       event_id: eventId,
-      event_time: Math.floor(Date.now() / 1000),
+      event_time: ts,
       action_source: "website",
       event_source_url: "https://rose-inject-magic.lovable.app/checkout",
       user_data: userData,
       custom_data: {
         content_name: firstItem.productName,
         content_category: category,
-        content_ids: cartItems.map((i) => i.productId),
+        content_ids: contentIds,
+        contents: contentIds.map((id: string) => ({ id, quantity: 1 })),
         content_type: "product",
         value: totalValue,
         currency: "BRL",
-        num_items: cartItems.length,
         transaction_id: payment.id,
       },
     };
