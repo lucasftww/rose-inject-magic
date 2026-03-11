@@ -899,10 +899,10 @@ const Raspadinha = () => {
             style={{ boxShadow: `0 0 60px ${accentColor}26` }}
           >
             {/* Decorative corners */}
-            <div className={`absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 ${isContas ? "border-blue-500" : "border-success"} rounded-tl-2xl`} />
-            <div className={`absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 ${isContas ? "border-blue-500" : "border-success"} rounded-tr-2xl`} />
-            <div className={`absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 ${isContas ? "border-blue-500" : "border-success"} rounded-bl-2xl`} />
-            <div className={`absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 ${isContas ? "border-blue-500" : "border-success"} rounded-br-2xl`} />
+            <div className={`absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 ${isContas ? "border-info" : "border-success"} rounded-tl-2xl`} />
+            <div className={`absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 ${isContas ? "border-info" : "border-success"} rounded-tr-2xl`} />
+            <div className={`absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 ${isContas ? "border-info" : "border-success"} rounded-bl-2xl`} />
+            <div className={`absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 ${isContas ? "border-info" : "border-success"} rounded-br-2xl`} />
 
             {/* 3x3 Grid */}
             <div className="grid grid-cols-3 gap-2 md:gap-3">
