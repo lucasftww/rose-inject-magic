@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { throwApiError } from "@/lib/apiErrors";
 import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/Header";
-import { ArrowLeft, Loader2, ChevronRight, CheckCircle2, Shield, ShoppingCart, Check } from "lucide-react";
+import { ArrowLeft, Loader2, ChevronRight, CheckCircle2, Shield, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useCart } from "@/hooks/useCart";
