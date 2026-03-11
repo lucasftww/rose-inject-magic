@@ -11,7 +11,7 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "@/hooks/use-toast";
 import { useLztMarkup } from "@/hooks/useLztMarkup";
-import { trackViewContent, trackAddToCart, trackInitiateCheckout } from "@/lib/metaPixel";
+import { trackViewContent, trackInitiateCheckout } from "@/lib/metaPixel";
 
 const FN_PURPLE = "hsl(265,80%,65%)";
 const FN_BLUE = "hsl(210,100%,56%)";
@@ -163,12 +163,6 @@ const FortniteDetalhes = () => {
     const title = `Conta Fortnite${vbucks > 0 ? ` | ${vbucks} V-Bucks` : ""}${skinCount > 0 ? ` | ${skinCount} Skins` : ""}`;
     const priceBRL = getPrice(item, "fortnite");
 
-    trackAddToCart({
-      contentName: title,
-      contentCategory: "Fortnite",
-      contentIds: [`lzt-fn-${item.item_id}`],
-      value: priceBRL,
-    });
     trackInitiateCheckout({
       contentName: title,
       contentCategory: "Fortnite",
