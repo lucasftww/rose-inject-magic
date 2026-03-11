@@ -154,6 +154,21 @@ const ProdutoDetalhes = () => {
     }
   }, [sortedPlans, selectedPlanId]);
 
+  // ViewContent tracking
+  const viewTracked = useRef(false);
+  useEffect(() => {
+    if (product && game && sortedPlans.length > 0 && !viewTracked.current) {
+      viewTracked.current = true;
+      const plan = sortedPlans[0];
+      trackViewContent({
+        contentName: product.name,
+        contentCategory: resolveCategory(game.name),
+        contentIds: [product.id],
+        value: Number(plan.price),
+      });
+    }
+  }, [product, game, sortedPlans]);
+
   const selectedPlan = sortedPlans.find(p => p.id === selectedPlanId);
 
   const buyNow = () => {
@@ -162,6 +177,15 @@ const ProdutoDetalhes = () => {
     const finalItemPrice = hasResellerDiscount
       ? Number(selectedPlan.price) * (1 - discountPercent / 100)
       : Number(selectedPlan.price);
+
+    // InitiateCheckout tracking
+    trackInitiateCheckout({
+      contentName: product.name,
+      contentCategory: resolveCategory(game?.name),
+      contentIds: [product.id],
+      value: finalItemPrice,
+    });
+
     const added = addItem({
       productId: product.id,
       productName: product.name,

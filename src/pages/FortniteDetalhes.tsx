@@ -143,10 +143,33 @@ const FortniteDetalhes = () => {
   // Gallery uses skins, fallback to pickaxes
   const galleryPreviews = skinPreviews.length > 0 ? skinPreviews : pickaxePreviews;
 
+  // ViewContent tracking
+  const viewTracked = useRef(false);
+  useEffect(() => {
+    if (item && !viewTracked.current) {
+      viewTracked.current = true;
+      const priceBRL = getPrice(item, "fortnite");
+      trackViewContent({
+        contentName: `Conta Fortnite #${item.item_id}`,
+        contentCategory: "Fortnite",
+        contentIds: [`lzt-fn-${item.item_id}`],
+        value: priceBRL,
+      });
+    }
+  }, [item]);
+
   const handleBuyNow = () => {
     if (!item) return;
     const title = `Conta Fortnite${vbucks > 0 ? ` | ${vbucks} V-Bucks` : ""}${skinCount > 0 ? ` | ${skinCount} Skins` : ""}`;
     const priceBRL = getPrice(item, "fortnite");
+
+    trackInitiateCheckout({
+      contentName: title,
+      contentCategory: "Fortnite",
+      contentIds: [`lzt-fn-${item.item_id}`],
+      value: priceBRL,
+    });
+
     const added = addItem({
       productId: `lzt-fn-${item.item_id}`,
       productName: title,
