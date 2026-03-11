@@ -4,10 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/Header";
 import { ArrowLeft, Loader2, ChevronRight, CheckCircle2, Shield, Zap } from "lucide-react";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "@/hooks/use-toast";
 import { useLztMarkup } from "@/hooks/useLztMarkup";
+import { trackViewContent, trackInitiateCheckout } from "@/lib/metaPixel";
 
 const MC_GREEN = "hsl(120,60%,45%)";
 
