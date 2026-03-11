@@ -155,8 +155,8 @@ const ProdutoDetalhes = () => {
 
   const selectedPlan = sortedPlans.find(p => p.id === selectedPlanId);
 
-  const addToCart = (): boolean => {
-    if (!product || !selectedPlan) return false;
+  const buyNow = () => {
+    if (!product || !selectedPlan) return;
     const hasResellerDiscount = isReseller && isResellerForProduct(product.id);
     const finalItemPrice = hasResellerDiscount
       ? Number(selectedPlan.price) * (1 - discountPercent / 100)
@@ -169,9 +169,7 @@ const ProdutoDetalhes = () => {
       planName: selectedPlan.name,
       price: finalItemPrice,
     });
-    if (!added) return false;
-    toast({ title: "Adicionado ao carrinho!", description: `${product.name} - ${selectedPlan.name}` });
-    return true;
+    if (added) navigate("/checkout");
   };
 
   const prevMedia = () => setSelectedMediaIndex(i => (i > 0 ? i - 1 : allMedia.length - 1));
