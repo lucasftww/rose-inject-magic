@@ -455,24 +455,13 @@ const ProdutoDetalhes = () => {
                         <span className="text-2xl font-bold text-success">R$ {Number(selectedPlan.price).toFixed(2)}</span>
                       )}
                     </div>
-                    <div className="flex gap-2.5">
-                      <button
-                        onClick={() => {
-                          const added = addToCart();
-                          if (added !== false) setCartOpen(true);
-                        }}
-                        className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-success py-3.5 text-sm font-bold uppercase tracking-wider text-success-foreground transition-all hover:shadow-[0_0_30px_hsl(130,99%,41%,0.4)]"
-                        style={{ fontFamily: "'Valorant', sans-serif" }}>
-                        <ShoppingCart className="h-4 w-4" />
-                        COMPRAR AGORA
-                      </button>
-                      <button
-                        onClick={addToCart}
-                        className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-border bg-card py-3.5 text-sm font-semibold text-foreground transition-all hover:border-success/50 hover:text-success">
-                        <ShoppingCart className="h-4 w-4" />
-                        Carrinho
-                      </button>
-                    </div>
+                    <button
+                      onClick={buyNow}
+                      className="flex w-full items-center justify-center gap-2 rounded-lg bg-success py-3.5 text-sm font-bold uppercase tracking-wider text-success-foreground transition-all hover:shadow-[0_0_30px_hsl(130,99%,41%,0.4)]"
+                      style={{ fontFamily: "'Valorant', sans-serif" }}>
+                      <Zap className="h-4 w-4" />
+                      COMPRAR AGORA
+                    </button>
                   </div>
                 )}
               </div>
