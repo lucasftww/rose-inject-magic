@@ -485,7 +485,7 @@ const ProductsSection = () => {
                   variants={scaleIn}
                   custom={idx}
                   onClick={() => navigate(`/produto/${product.id}`)}
-                  className="group cursor-pointer overflow-hidden rounded-lg border border-border bg-card transition-all hover:border-success/40 hover:shadow-[0_0_20px_hsl(197,100%,50%,0.1)]"
+                  className="group flex flex-col cursor-pointer overflow-hidden rounded-lg border border-border bg-card transition-all hover:border-success/40 hover:shadow-[0_0_20px_hsl(197,100%,50%,0.1)]"
                 >
                   <div className="relative aspect-square w-full overflow-hidden bg-secondary/50">
                     {product.image_url ? (
