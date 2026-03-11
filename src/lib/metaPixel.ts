@@ -6,7 +6,7 @@
  *   Browser → fbq events with Advanced Matching
  *   Server  → Edge Function meta-capi with event_id deduplication
  *
- * Events: PageView (auto), ViewContent, InitiateCheckout, Purchase
+ * Events: PageView (auto), ViewContent, AddToCart, InitiateCheckout, Purchase
  * Categories: Valorant, Fortnite, Roblox, Minecraft, LoL, CS2, GTA
  *
  * user_data sent to CAPI:
@@ -14,10 +14,10 @@
  *   client_user_agent      — from browser (server fallback)
  *   client_ip_address      — server-side only (x-forwarded-for)
  *   em                     — SHA-256 hashed email
- *   external_id            — SHA-256 hashed Supabase user ID
+ *   external_id            — SHA-256 hashed user ID (or hashed first-party tracking ID for anonymous)
  *
  * Deduplication:
- *   ViewContent/InitiateCheckout → random event_id shared by Pixel+CAPI
+ *   ViewContent/AddToCart/InitiateCheckout → random event_id shared by Pixel+CAPI
  *   Purchase → deterministic purchase_${transactionId} + sessionStorage guard
  */
 
@@ -123,33 +123,52 @@ export const clearAdvancedMatching = () => {
   } catch (_) {}
 };
 
-// ─── First-Party Session Cookie ─────────────────────────────────────────────
+// ─── First-Party Tracking ID ────────────────────────────────────────────────
+// Persistent first-party identifier (cookie + localStorage).
+// Used as external_id fallback for anonymous users — improves EMQ by ~20%.
 
-const SESSION_COOKIE = "_store_session_id";
-const SESSION_COOKIE_DAYS = 365;
+const TRACKING_ID_KEY = "_store_trk_id";
+const TRACKING_COOKIE_DAYS = 365;
 
-/**
- * Get or create a persistent first-party session ID cookie.
- * This gives Meta an extra stable identifier for cross-session matching,
- * improving Event Match Quality by ~20%.
- */
-const getOrCreateSessionId = (): string => {
+let _trackingIdHash: string | null = null;
+
+const getOrCreateTrackingId = (): string => {
   try {
-    const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${SESSION_COOKIE}=([^;]*)`));
-    if (match) return match[1];
+    // Check localStorage first (survives cookie clearing)
+    let id = localStorage.getItem(TRACKING_ID_KEY);
+    if (id) return id;
 
-    // Generate a stable UUID-like session ID
-    const id = `ss.${Date.now()}.${Math.random().toString(36).substring(2, 11)}${Math.random().toString(36).substring(2, 11)}`;
-    const expires = new Date(Date.now() + SESSION_COOKIE_DAYS * 86400000).toUTCString();
-    document.cookie = `${SESSION_COOKIE}=${id}; path=/; expires=${expires}; SameSite=Lax; Secure`;
+    // Check cookie
+    const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${TRACKING_ID_KEY}=([^;]*)`));
+    if (match) {
+      id = match[1];
+      localStorage.setItem(TRACKING_ID_KEY, id);
+      return id;
+    }
+
+    // Generate new tracking ID
+    id = `trk_${Date.now()}_${Math.random().toString(36).substring(2, 11)}${Math.random().toString(36).substring(2, 11)}`;
+    localStorage.setItem(TRACKING_ID_KEY, id);
+    const expires = new Date(Date.now() + TRACKING_COOKIE_DAYS * 86400000).toUTCString();
+    document.cookie = `${TRACKING_ID_KEY}=${id}; path=/; expires=${expires}; SameSite=Lax; Secure`;
     return id;
   } catch {
     return "";
   }
 };
 
-// Initialize on module load
-getOrCreateSessionId();
+/** Get hashed tracking ID (cached after first call) */
+const getHashedTrackingId = async (): Promise<string> => {
+  if (_trackingIdHash) return _trackingIdHash;
+  const id = getOrCreateTrackingId();
+  if (id) {
+    _trackingIdHash = await sha256(id);
+  }
+  return _trackingIdHash || "";
+};
+
+// Initialize tracking ID on module load
+getOrCreateTrackingId();
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -192,10 +211,19 @@ const getUserData = (): Record<string, string> => {
     // Hashed email + external_id (restored from localStorage if needed)
     if (!_cachedUserData.em && !_cachedUserData.external_id) restoreUserData();
     if (_cachedUserData.em) data.em = _cachedUserData.em;
-    if (_cachedUserData.external_id) data.external_id = _cachedUserData.external_id;
+
+    // external_id: prefer authenticated user ID, fallback to first-party tracking ID
+    if (_cachedUserData.external_id) {
+      data.external_id = _cachedUserData.external_id;
+    } else if (_trackingIdHash) {
+      data.external_id = _trackingIdHash;
+    }
   } catch (_) {}
   return data;
 };
+
+// Pre-hash the tracking ID on module load (async, non-blocking)
+getHashedTrackingId();
 
 /** Fire-and-forget server-side event via Edge Function */
 const sendCAPI = (
@@ -261,7 +289,32 @@ export const trackViewContent = (data: TrackingData) => {
 };
 
 /**
- * Track InitiateCheckout — fires when user clicks "Buy Now"
+ * Track AddToCart — fires when user adds a product to cart (clicks "Buy Now")
+ */
+export const trackAddToCart = (data: TrackingData) => {
+  if (typeof window === "undefined") return;
+
+  const eventId = generateEventId("atc");
+  const customData: Record<string, any> = {
+    content_name: data.contentName,
+    content_category: data.contentCategory,
+    content_ids: data.contentIds,
+    content_type: "product",
+    value: data.value,
+    currency: data.currency || "BRL",
+    num_items: data.numItems ?? data.contentIds.length,
+  };
+
+  if (window.fbq) {
+    window.fbq("track", "AddToCart", { ...customData, event_id: eventId });
+  }
+  sendCAPI("AddToCart", eventId, customData);
+
+  return eventId;
+};
+
+/**
+ * Track InitiateCheckout — fires when user enters checkout page
  */
 export const trackInitiateCheckout = (data: TrackingData) => {
   if (typeof window === "undefined") return;
