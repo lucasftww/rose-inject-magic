@@ -457,8 +457,8 @@ const Dashboard = () => {
                           <Package className="h-3 w-3" />{tickets.filter(t => !t.metadata?.type).length} pedido(s)
                         </span>
                         {tickets.filter(t => !t.metadata?.type && t.status === "open").length > 0 && (
-                          <span className="flex items-center gap-1.5 rounded-full bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-400">
-                            <Clock className="h-3 w-3" />{tickets.filter(t => !t.metadata?.type && t.status === "open").length} aberto(s)
+                           <span className="flex items-center gap-1.5 rounded-full bg-warning/10 px-3 py-1 text-xs font-semibold text-warning">
+                             <Clock className="h-3 w-3" />{tickets.filter(t => !t.metadata?.type && t.status === "open").length} aberto(s)
                           </span>
                         )}
                       </div>
