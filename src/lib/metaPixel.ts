@@ -299,14 +299,14 @@ export const trackAddToCart = (data: TrackingData) => {
     content_name: data.contentName,
     content_category: data.contentCategory,
     content_ids: data.contentIds,
+    contents: data.contentIds.map((id) => ({ id, quantity: 1 })),
     content_type: "product",
     value: data.value,
     currency: data.currency || "BRL",
-    num_items: data.numItems ?? data.contentIds.length,
   };
 
   if (window.fbq) {
-    window.fbq("track", "AddToCart", { ...customData, event_id: eventId });
+    window.fbq("track", "AddToCart", customData, { eventID: eventId });
   }
   sendCAPI("AddToCart", eventId, customData);
 
