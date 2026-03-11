@@ -987,6 +987,8 @@ Deno.serve(async (req) => {
         JSON.stringify({
           success: true,
           payment_id: payment.id,
+          validated_amount: amountReais,
+          validated_discount: validatedDiscount,
           charge: {
             id: misticPayTxId,
             brCode: chargeData.copyPaste,

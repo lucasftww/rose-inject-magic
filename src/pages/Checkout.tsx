@@ -116,7 +116,10 @@ const Checkout = () => {
       if (!res.ok || !result.success) throw new Error(result.error || "Erro ao criar cobrança");
       setPaymentId(result.payment_id);
       setChargeData(result.charge);
-      setDisplayPrice({ total: cartTotal, final: cartFinalPrice, discount: discountAmount });
+      // Use server-validated amount (real-time price) instead of stale cart price
+      const serverTotal = result.validated_amount ?? cartFinalPrice;
+      const serverDiscount = result.validated_discount ?? discountAmount;
+      setDisplayPrice({ total: serverTotal + serverDiscount, final: serverTotal, discount: serverDiscount });
       clearCart();
     } catch (err: any) {
       console.error(err);
