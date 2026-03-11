@@ -569,7 +569,7 @@ const PedidoChat = () => {
               rel="noopener noreferrer"
               className="flex items-center gap-3 rounded-xl border border-border bg-background/80 p-3 transition-all hover:border-success/40 hover:bg-success/5 group"
             >
-              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors ${isTutorial ? "bg-blue-500/10 text-blue-400 group-hover:bg-blue-500/20" : "bg-amber-500/10 text-amber-400 group-hover:bg-amber-500/20"}`}>
+              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors ${isTutorial ? "bg-info/10 text-info group-hover:bg-info/20" : "bg-warning/10 text-warning group-hover:bg-warning/20"}`}>
                 <IconComp className="h-5 w-5" />
               </div>
               <div className="flex-1 min-w-0">
