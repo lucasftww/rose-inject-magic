@@ -88,7 +88,6 @@ const Header = () => {
   return (
     <>
       <AuthModal open={authOpen} onOpenChange={setAuthOpen} defaultTab={authTab} />
-      <CartSheet open={cartOpen} onOpenChange={setCartOpen} />
 
       <div className="fixed top-0 left-0 right-0 z-50">
         <DiscordBanner onVisibilityChange={setBannerVisible} />
