@@ -366,6 +366,23 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
       });
     }
 
+    // Record sale even for manual delivery so admin can track revenue
+    const RUB_TO_BRL_MD = 0.055;
+    const buyPriceMd = currency === "rub" ? Number(price || 0) * RUB_TO_BRL_MD : Number(price || 0);
+    const sellPriceMd = Number(item.price) || 0;
+    await supabaseAdmin.from("lzt_sales").insert({
+      lzt_item_id: String(itemId),
+      buy_price: buyPriceMd,
+      sell_price: sellPriceMd,
+      profit: sellPriceMd - buyPriceMd,
+      title: item.productName || `Conta ${gameLabelManual} #${itemId}`,
+      game: lztGame,
+      buyer_user_id: payment.user_id,
+    }).then(({ error: saleErr }) => {
+      if (saleErr) console.error("Failed to record manual lzt_sale:", saleErr);
+      else console.log("Manual LZT sale recorded:", itemId);
+    });
+
     return ticket;
   };
 
