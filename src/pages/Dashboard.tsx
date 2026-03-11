@@ -509,7 +509,7 @@ const Dashboard = () => {
                           <Smartphone className="h-3 w-3" />{tickets.filter(t => t.metadata?.type === "lzt-account").length} conta(s)
                         </span>
                         {tickets.filter(t => t.metadata?.type === "lzt-account" && t.status === "delivered").length > 0 && (
-                          <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-400">
+                          <span className="flex items-center gap-1.5 rounded-full bg-positive/10 px-3 py-1 text-xs font-semibold text-positive">
                             <CheckCircle className="h-3 w-3" />{tickets.filter(t => t.metadata?.type === "lzt-account" && t.status === "delivered").length} entregue(s)
                           </span>
                         )}
