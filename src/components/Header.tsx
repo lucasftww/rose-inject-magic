@@ -34,7 +34,7 @@ const Header = () => {
   const [bannerVisible, setBannerVisible] = useState(true);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { user, profile, isAdmin, signOut } = useAuth();
-  const { totalItems, requiresAuth, clearRequiresAuth, cartOpen, setCartOpen } = useCart();
+  const { requiresAuth, clearRequiresAuth } = useCart();
   const navigate = useNavigate();
   const location = useLocation();
 
