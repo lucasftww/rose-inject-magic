@@ -791,7 +791,7 @@ const Raspadinha = () => {
               disabled={paymentPhase !== "idle" || scratching}
               className={`flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold transition-all ${
                 mode === "contas"
-                  ? "bg-blue-600 text-white shadow"
+                  ? "bg-info text-info-foreground shadow"
                   : "text-muted-foreground hover:text-foreground hover:bg-accent"
               }`}
             >
