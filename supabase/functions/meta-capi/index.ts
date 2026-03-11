@@ -87,28 +87,51 @@ serve(async (req) => {
     const payload = { data: [eventData] };
 
     const url = `https://graph.facebook.com/${GRAPH_API_VERSION}/${PIXEL_ID}/events?access_token=${ACCESS_TOKEN}`;
+    const bodyStr = JSON.stringify(payload);
 
-    const metaRes = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+    // Retry up to 3 times on transient failures
+    let lastError: any = null;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const metaRes = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: bodyStr,
+        });
 
-    const metaData = await metaRes.json();
+        const metaData = await metaRes.json();
 
-    if (!metaRes.ok) {
-      console.error("Meta CAPI error:", JSON.stringify(metaData));
-      return new Response(JSON.stringify({ error: "Meta API error", details: metaData }), {
-        status: metaRes.status,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+        if (metaRes.ok) {
+          return new Response(JSON.stringify({ success: true, ...metaData }), {
+            status: 200,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        // Non-retryable errors (bad params, auth) — return immediately
+        if (metaRes.status >= 400 && metaRes.status < 500) {
+          console.error("Meta CAPI error:", JSON.stringify(metaData));
+          return new Response(JSON.stringify({ error: "Meta API error", details: metaData }), {
+            status: metaRes.status,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        // Server error (5xx) — retry
+        lastError = metaData;
+        console.error(`Meta CAPI attempt ${attempt}/3 failed (${metaRes.status}):`, JSON.stringify(metaData));
+      } catch (fetchErr) {
+        lastError = fetchErr;
+        console.error(`Meta CAPI attempt ${attempt}/3 network error:`, fetchErr);
+      }
+      if (attempt < 3) await new Promise((r) => setTimeout(r, 1000 * attempt));
     }
 
-    return new Response(JSON.stringify({ success: true, ...metaData }), {
-      status: 200,
+    // All retries exhausted
+    return new Response(JSON.stringify({ error: "Meta API failed after 3 attempts", details: lastError }), {
+      status: 502,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (err) {
     console.error("CAPI function error:", err);
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
