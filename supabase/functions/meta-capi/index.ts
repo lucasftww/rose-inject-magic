@@ -132,6 +132,7 @@ serve(async (req) => {
       status: 502,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
+  } catch (err) {
     console.error("CAPI function error:", err);
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
