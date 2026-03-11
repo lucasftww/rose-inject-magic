@@ -158,21 +158,7 @@ const ContaDetalhes = () => {
     setActiveTab("skins");
   }, [id]);
   const { addItem } = useCart();
-
-  // ViewContent tracking
   const viewTracked = useRef(false);
-  useEffect(() => {
-    if (item && !viewTracked.current) {
-      viewTracked.current = true;
-      const priceBRL = getPrice(item, "valorant");
-      trackViewContent({
-        contentName: `Conta Valorant #${item.item_id}`,
-        contentCategory: "Valorant",
-        contentIds: [`lzt-${item.item_id}`],
-        value: priceBRL,
-      });
-    }
-  }, [item]);
 
   const handleBuyNow = () => {
     if (!item) return;
