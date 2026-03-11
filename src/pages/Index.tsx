@@ -803,9 +803,6 @@ const Index = () => {
               { name: "thiago", text: "mlk melhor cheat de cs2 do mercado, roda suave e indetectavel. virei cliente fiel da royal!", rating: 5 },
               { name: "davi", text: "comprei pra testar e fiquei impressionado, aimbot muito smooth ninguem percebe kkkkk", rating: 4 },
               { name: "juliana", text: "ja sou cliente faz tempo, nunca tive problema. confianca total nessa loja", rating: 5 },
-              { name: "felipe", text: "tomei hwid ban no valorant e o spoofer resolveu na hora, voltei a jogar no msm dia sem stress", rating: 5 },
-              { name: "vinicius", text: "spoofer top demais, funciona em qualquer anti-cheat. ja usei no cs2 e val, nunca falhou", rating: 5 },
-              { name: "amanda", text: "pensei q ia ter q trocar de pc dps do ban mas o spoofer salvou minha vida. recomendo 100%!", rating: 5 },
             ].map((review, idx) => (
               <motion.div
                 key={idx}
