@@ -40,9 +40,7 @@ const fetchAccountDetail = async (itemId: string) => {
 const MinecraftDetalhes = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { calcPrice: rawCalcPrice, formatPrice: rawFormatPrice } = useLztMarkup();
-  const calcPrice = (price: number, currency?: string) => rawCalcPrice(price, currency, "minecraft");
-  const formatPrice = (price: number, currency?: string) => rawFormatPrice(price, currency, "minecraft");
+  const { getPrice, getDisplayPrice } = useLztMarkup();
   const { addItem, items } = useCart();
   const [addedToCart, setAddedToCart] = useState(false);
 
