@@ -1180,6 +1180,7 @@ Deno.serve(async (req) => {
             if (newStatus === "COMPLETED" && updatedPayment) {
               await fulfillOrder(supabaseAdmin, payment);
               await sendDiscordSaleNotification(supabaseAdmin, payment);
+              await sendServerPurchaseEvent(payment, req);
             }
           }
 
