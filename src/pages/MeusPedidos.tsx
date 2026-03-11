@@ -26,9 +26,9 @@ interface Ticket {
 }
 
 const statusColors: Record<string, string> = {
-  open: "bg-amber-500/20 text-amber-400 border border-amber-500/20",
-  delivered: "bg-blue-500/20 text-blue-400 border border-blue-500/20",
-  resolved: "bg-emerald-500/20 text-emerald-400 border border-emerald-500/20",
+  open: "bg-warning/20 text-warning border border-warning/20",
+  delivered: "bg-info/20 text-info border border-info/20",
+  resolved: "bg-positive/20 text-positive border border-positive/20",
   closed: "bg-muted text-muted-foreground border border-border",
   banned: "bg-destructive/20 text-destructive border border-destructive/20",
   finished: "bg-muted text-muted-foreground border border-border",
