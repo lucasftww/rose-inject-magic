@@ -145,9 +145,7 @@ const fetchValorantBuddies = async (uuids: string[]) => {
 const ContaDetalhes = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { calcPrice: rawCalcPrice, formatPrice: rawFormatPrice } = useLztMarkup();
-  const calcPrice = (price: number, currency?: string) => rawCalcPrice(price, currency, "valorant");
-  const formatPrice = (price: number, currency?: string) => rawFormatPrice(price, currency, "valorant");
+  const { getPrice, getDisplayPrice } = useLztMarkup();
   const [selectedSkin, setSelectedSkin] = useState(0);
   const [activeTab, setActiveTab] = useState<"skins" | "agents" | "buddies">("skins");
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
