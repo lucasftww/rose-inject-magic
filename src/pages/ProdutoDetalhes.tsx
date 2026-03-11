@@ -8,7 +8,7 @@ import { getYouTubeId, getYouTubeEmbedUrl, getYouTubeThumbnail } from "@/lib/vid
 import { useCart } from "@/hooks/useCart";
 import { useReseller } from "@/hooks/useReseller";
 import { toast } from "@/hooks/use-toast";
-import { trackViewContent, trackAddToCart, trackInitiateCheckout, resolveCategory } from "@/lib/metaPixel";
+import { trackViewContent, trackInitiateCheckout, resolveCategory } from "@/lib/metaPixel";
 
 interface ProductPlan {
   id: string;
