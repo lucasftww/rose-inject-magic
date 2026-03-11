@@ -716,7 +716,7 @@ const Raspadinha = () => {
             </div>
             <button
               onClick={handleReplay}
-              className="shrink-0 rounded-lg bg-yellow-500 px-5 py-2.5 text-sm font-bold text-black hover:bg-yellow-400 transition-colors"
+              className="shrink-0 rounded-lg bg-warning px-5 py-2.5 text-sm font-bold text-warning-foreground hover:bg-warning/90 transition-colors"
             >
               Jogar Agora
             </button>
