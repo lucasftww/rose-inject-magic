@@ -706,7 +706,7 @@ const Raspadinha = () => {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-6 rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-4 flex items-center justify-between gap-4"
+            className="mb-6 rounded-xl border border-warning/30 bg-warning/10 p-4 flex items-center justify-between gap-4"
           >
             <div>
               <p className="text-sm font-semibold text-yellow-300">🎰 Você tem uma raspadinha pendente!</p>
