@@ -490,10 +490,10 @@ const Dashboard = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 }}
                   onClick={() => navigate("/meus-pedidos?tipo=contas")}
-                  className="group cursor-pointer relative overflow-hidden rounded-lg border border-border bg-card transition-all duration-300 hover:border-blue-500/50 hover:shadow-[0_0_40px_rgba(59,130,246,0.1)]"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-blue-500/5 -translate-y-1/2 translate-x-1/2" />
+                   className="group cursor-pointer relative overflow-hidden rounded-lg border border-border bg-card transition-all duration-300 hover:border-success/50 hover:shadow-[0_0_40px_hsl(var(--success)/0.1)]"
+                 >
+                   <div className="absolute inset-0 bg-gradient-to-br from-success/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                   <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-success/5 -translate-y-1/2 translate-x-1/2" />
 
                   <div className="relative p-6 flex gap-5 items-start">
                     <div className="flex h-14 w-14 shrink-0 items-center justify-center">
