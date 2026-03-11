@@ -182,7 +182,6 @@ export interface TrackingData {
   contentIds: string[];
   value: number;
   currency?: string;
-  numItems?: number;
   transactionId?: string;
 }
 
