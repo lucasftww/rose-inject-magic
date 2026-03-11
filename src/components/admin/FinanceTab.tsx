@@ -55,7 +55,8 @@ const FinanceTab = () => {
 
   useEffect(() => { fetchData(); }, [period]);
 
-  // Calculate totals
+  // Calculate totals — payments already filtered to COMPLETED
+  // Split revenue: products (non-LZT) vs accounts (LZT)
   const totalProducts = payments.reduce((sum, p) => {
     const cart = p.cart_snapshot as any[];
     if (!Array.isArray(cart)) return sum + p.amount / 100;
@@ -63,13 +64,14 @@ const FinanceTab = () => {
     return hasLzt ? sum : sum + p.amount / 100;
   }, 0);
 
-  const totalAccounts = lztSales.reduce((sum, s) => sum + Number(s.sell_price), 0)
-    + payments.reduce((sum, p) => {
-      const cart = p.cart_snapshot as any[];
-      if (!Array.isArray(cart)) return sum;
-      const hasLzt = cart.some((item: any) => item.type === "lzt-account");
-      return hasLzt ? sum + p.amount / 100 : sum;
-    }, 0);
+  // For LZT accounts, use the payment amount (which is what the customer paid)
+  // Don't add lzt_sales.sell_price to avoid double-counting
+  const totalAccounts = payments.reduce((sum, p) => {
+    const cart = p.cart_snapshot as any[];
+    if (!Array.isArray(cart)) return sum;
+    const hasLzt = cart.some((item: any) => item.type === "lzt-account");
+    return hasLzt ? sum + p.amount / 100 : sum;
+  }, 0);
 
   const totalGeneral = totalProducts + totalAccounts;
 
