@@ -492,7 +492,7 @@ const ValorantCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap
         )}
 
         <div className="mt-4 flex items-end justify-between">
-          <p className="text-xl font-bold text-success">{formatPrice(item.price, item.price_currency)}</p>
+          <p className="text-xl font-bold text-success">{getDisplayPrice(item, "valorant")}</p>
           <button className="flex items-center gap-1.5 rounded border border-border px-4 py-2 text-xs font-medium text-muted-foreground transition-colors hover:border-success hover:text-success">
             Ver produto
           </button>
