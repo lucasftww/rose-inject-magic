@@ -200,6 +200,20 @@ const ContaDetalhes = () => {
   const rank = item?.riot_valorant_rank ? rankMap[item.riot_valorant_rank] : null;
   const inventory = item?.valorantInventory;
 
+  // ViewContent tracking
+  useEffect(() => {
+    if (item && !viewTracked.current) {
+      viewTracked.current = true;
+      const priceBRL = getPrice(item, "valorant");
+      trackViewContent({
+        contentName: `Conta Valorant #${item.item_id}`,
+        contentCategory: "Valorant",
+        contentIds: [`lzt-${item.item_id}`],
+        value: priceBRL,
+      });
+    }
+  }, [item]);
+
   // Gallery from screenshots
   const gallery = useMemo(() => {
     if (!item) return [];
