@@ -221,6 +221,12 @@ const LolDetalhes = () => {
     const title = `Conta LoL ${rankText} Nv. ${level} | ${champCount} Campeões | ${skinCount} Skins`;
     const priceBRL = getPrice(item, "lol");
 
+    trackAddToCart({
+      contentName: title,
+      contentCategory: "League of Legends",
+      contentIds: [`lzt-lol-${item.item_id}`],
+      value: priceBRL,
+    });
     trackInitiateCheckout({
       contentName: title,
       contentCategory: "League of Legends",
