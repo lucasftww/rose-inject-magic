@@ -20,6 +20,7 @@
     <meta name="twitter:description" content="Royal Store - Cheats e Accounts para Valorant, CS2 e mais" />
     <meta name="twitter:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/oeM2gbS5ylVDvTCJxA4NT7qabBI2/social-images/social-1772483742847-Royal_Store_Banner.webp" />
 
+    <!-- UTMify: captura e preserva UTMs -->
     <script
       src="https://cdn.utmify.com.br/scripts/utms/latest.js"
       data-utmify-prevent-xcod-sck
@@ -27,9 +28,72 @@
       async
       defer
     ></script>
+
+    <!-- Meta Pixel -->
+    <script>
+      !function(f,b,e,v,n,t,s)
+      {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+      n.queue=[];t=b.createElement(e);t.async=!0;
+      t.src=v;s=b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t,s)}(window, document,'script',
+      'https://connect.facebook.net/en_US/fbevents.js');
+      fbq('init', '4378225905838577');
+      fbq('track', 'PageView');
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+      src="https://www.facebook.com/tr?id=4378225905838577&ev=PageView&noscript=1"
+    /></noscript>
+
+    <!-- Click ID Tracker: captura fbclid, gclid, etc -->
+    <script>
+      (function(){
+        try {
+          var params = new URLSearchParams(window.location.search);
+          var clickIds = ['fbclid','gclid','ttclid','sck','utm_source','utm_medium','utm_campaign','utm_content','utm_term'];
+          clickIds.forEach(function(key){
+            var val = params.get(key);
+            if(val) {
+              sessionStorage.setItem('_ck_'+key, val);
+              try { localStorage.setItem('_ck_'+key, val); } catch(e){}
+            }
+          });
+        } catch(e){}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+
+    <!-- UTM Keeper: preserva UTMs na navegação -->
+    <script>
+      (function(){
+        try {
+          var utmKeys = ['utm_source','utm_medium','utm_campaign','utm_content','utm_term','fbclid','sck'];
+          var stored = {};
+          utmKeys.forEach(function(key){
+            var val = sessionStorage.getItem('_ck_'+key);
+            if(val) stored[key] = val;
+          });
+          document.addEventListener('click', function(e){
+            var link = e.target.closest('a[href]');
+            if(!link || link.hostname !== window.location.hostname) return;
+            try {
+              var url = new URL(link.href);
+              var changed = false;
+              Object.keys(stored).forEach(function(key){
+                if(!url.searchParams.has(key)){
+                  url.searchParams.set(key, stored[key]);
+                  changed = true;
+                }
+              });
+              if(changed) link.href = url.toString();
+            } catch(e){}
+          });
+        } catch(e){}
+      })();
+    </script>
   </body>
 </html>
