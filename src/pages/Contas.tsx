@@ -463,7 +463,7 @@ const ValorantCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap
       <div className="p-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src={rank?.img || rankUnranked} alt={rank?.name || "Unranked"} className="h-6 w-6 object-contain" />
+            <img src={rank?.img || rankUnranked} alt={rank?.name || "Unranked"} className="h-6 w-6 object-contain" loading="lazy" />
             <span className="rounded bg-secondary px-2 py-0.5 text-xs font-medium text-muted-foreground">{rank?.name || "Unranked"}</span>
           </div>
           <span className="text-sm text-muted-foreground">{skinCount} skins</span>
