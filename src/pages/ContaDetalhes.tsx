@@ -167,8 +167,8 @@ const ContaDetalhes = () => {
     const skinCount = item.riot_valorant_skin_count ?? 0;
     const title = `Conta ${rankName} com ${skinCount} Skins`;
     
-    // Apply markup multiplier to price
-    const priceBRL = calcPrice(item.price, item.price_currency);
+    // Use server-calculated price_brl with correct markup
+    const priceBRL = getPrice(item, "valorant");
 
     const added = addItem({
       productId: `lzt-${item.item_id}`,
