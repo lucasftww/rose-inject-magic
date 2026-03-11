@@ -391,7 +391,7 @@ const ContasSection = () => {
           >
             {accounts.map((item, idx) => (
               <motion.div key={item.item_id} variants={fadeUp} custom={idx}>
-                <LztContaCard item={item} skinsMap={skinsMap} formatPrice={formatPrice} />
+                <LztContaCard item={item} skinsMap={skinsMap} formatPrice={(p, c) => getDisplayPrice({ price: p, price_currency: c, price_brl: item.price_brl }, "valorant")} />
               </motion.div>
             ))}
           </motion.div>
