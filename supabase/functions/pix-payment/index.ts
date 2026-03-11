@@ -576,12 +576,29 @@ async function validateAndCalculatePrice(
       }
 
       // Fetch REAL price from LZT API - never trust client price
-      const lztRes = await fetch(`https://api.lzt.market/${encodeURIComponent(lztItemId)}`, {
-        headers: { Authorization: `Bearer ${lztToken}`, Accept: "application/json" },
-      });
-      if (!lztRes.ok) {
-        console.error(`LZT API error for item ${lztItemId}:`, lztRes.status);
-        return { validatedAmount: 0, validatedDiscount: 0, validatedCart: [], error: `Erro ao verificar preço da conta LZT ${lztItemId}` };
+      // Retry up to 3 times for transient errors (429, 502, 503, 504)
+      let lztRes: Response | null = null;
+      const RETRYABLE = [429, 502, 503, 504];
+      for (let attempt = 0; attempt < 3; attempt++) {
+        if (attempt > 0) await new Promise(r => setTimeout(r, 1500 * attempt));
+        try {
+          lztRes = await fetch(`https://api.lzt.market/${encodeURIComponent(lztItemId)}`, {
+            headers: { Authorization: `Bearer ${lztToken}`, Accept: "application/json" },
+          });
+          if (lztRes.ok || !RETRYABLE.includes(lztRes.status)) break;
+          console.warn(`LZT API attempt ${attempt + 1} for item ${lztItemId}: ${lztRes.status}, retrying...`);
+        } catch (fetchErr) {
+          console.warn(`LZT API fetch attempt ${attempt + 1} failed:`, fetchErr);
+          lztRes = null;
+        }
+      }
+      if (!lztRes || !lztRes.ok) {
+        const status = lztRes?.status || "network error";
+        console.error(`LZT API error for item ${lztItemId}: ${status} (after retries)`);
+        const userMsg = status === 503 || status === "network error"
+          ? "O serviço de contas está temporariamente indisponível. Tente novamente em alguns minutos."
+          : `Erro ao verificar preço da conta LZT ${lztItemId}`;
+        return { validatedAmount: 0, validatedDiscount: 0, validatedCart: [], error: userMsg };
       }
       const lztData = await lztRes.json();
       const realLztPrice = Number(lztData?.item?.price) || 0;
