@@ -138,21 +138,23 @@ const Carrinho = () => {
                       <h3 className="text-sm font-bold text-foreground truncate">{item.productName}</h3>
                       <p className="text-xs text-muted-foreground mt-0.5">Plano: {item.planName}</p>
                     </div>
-                    <div className="flex items-center gap-2 mt-2">
-                      <button
-                        onClick={() => updateQuantity(item.productId, item.planId, item.quantity - 1)}
-                        className="flex h-7 w-7 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:border-success hover:text-success"
-                      >
-                        <Minus className="h-3 w-3" />
-                      </button>
-                      <span className="w-8 text-center text-sm font-bold text-foreground">{item.quantity}</span>
-                      <button
-                        onClick={() => updateQuantity(item.productId, item.planId, item.quantity + 1)}
-                        className="flex h-7 w-7 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:border-success hover:text-success"
-                      >
-                        <Plus className="h-3 w-3" />
-                      </button>
-                    </div>
+                    {item.type !== "lzt-account" && (
+                      <div className="flex items-center gap-2 mt-2">
+                        <button
+                          onClick={() => updateQuantity(item.productId, item.planId, item.quantity - 1)}
+                          className="flex h-7 w-7 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:border-success hover:text-success"
+                        >
+                          <Minus className="h-3 w-3" />
+                        </button>
+                        <span className="w-8 text-center text-sm font-bold text-foreground">{item.quantity}</span>
+                        <button
+                          onClick={() => updateQuantity(item.productId, item.planId, item.quantity + 1)}
+                          className="flex h-7 w-7 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:border-success hover:text-success"
+                        >
+                          <Plus className="h-3 w-3" />
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex flex-col items-end justify-between">
