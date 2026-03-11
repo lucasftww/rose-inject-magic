@@ -1,18 +1,24 @@
 /**
- * Meta Pixel + Conversions API (CAPI) tracking
+ * Meta Pixel + Conversions API (CAPI) — Enterprise-grade tracking
  * Pixel ID: 4378225905838577
  *
- * Browser: fbq events with Advanced Matching
- * Server: Edge Function meta-capi with event_id deduplication
+ * Architecture:
+ *   Browser → fbq events with Advanced Matching
+ *   Server  → Edge Function meta-capi with event_id deduplication
  *
- * Events: ViewContent, InitiateCheckout, Purchase
+ * Events: PageView (auto), ViewContent, InitiateCheckout, Purchase
  * Categories: Valorant, Fortnite, Roblox, Minecraft, LoL, CS2, GTA
  *
  * user_data sent to CAPI:
- *   fbp, fbc, client_user_agent (browser)
- *   client_ip_address (server-side)
- *   em (SHA-256 hashed email)
- *   external_id (Supabase user id)
+ *   fbp, fbc              — from cookies / reconstructed from fbclid
+ *   client_user_agent      — from browser (server fallback)
+ *   client_ip_address      — server-side only (x-forwarded-for)
+ *   em                     — SHA-256 hashed email
+ *   external_id            — SHA-256 hashed Supabase user ID
+ *
+ * Deduplication:
+ *   ViewContent/InitiateCheckout → random event_id shared by Pixel+CAPI
+ *   Purchase → deterministic purchase_${transactionId} + sessionStorage guard
  */
 
 declare global {
@@ -20,6 +26,12 @@ declare global {
     fbq: (...args: any[]) => void;
   }
 }
+
+// ─── Constants ──────────────────────────────────────────────────────────────
+
+const PIXEL_ID = "4378225905838577";
+const STORAGE_KEY_EM = "_meta_em";
+const STORAGE_KEY_EID = "_meta_eid";
 
 // ─── SHA-256 Hashing ────────────────────────────────────────────────────────
 
@@ -35,13 +47,36 @@ const sha256 = async (message: string): Promise<string> => {
   }
 };
 
-// ─── Cached user identity for CAPI ─────────────────────────────────────────
+// ─── Cached user identity ───────────────────────────────────────────────────
+// In-memory + localStorage so it survives page reloads during checkout
 
 let _cachedUserData: { em?: string; external_id?: string } = {};
 
+const persistUserData = () => {
+  try {
+    if (_cachedUserData.em) localStorage.setItem(STORAGE_KEY_EM, _cachedUserData.em);
+    if (_cachedUserData.external_id) localStorage.setItem(STORAGE_KEY_EID, _cachedUserData.external_id);
+  } catch (_) {}
+};
+
+const restoreUserData = () => {
+  try {
+    const em = localStorage.getItem(STORAGE_KEY_EM);
+    const eid = localStorage.getItem(STORAGE_KEY_EID);
+    if (em) _cachedUserData.em = em;
+    if (eid) _cachedUserData.external_id = eid;
+  } catch (_) {}
+};
+
+// Restore on module load
+restoreUserData();
+
+// ─── Advanced Matching ──────────────────────────────────────────────────────
+
 /**
- * Update pixel with Advanced Matching data when user logs in.
- * Also caches hashed email + external_id for CAPI calls.
+ * Update pixel with Advanced Matching data.
+ * Call after login AND on session restore.
+ * Caches hashed email + external_id for CAPI calls (persisted to localStorage).
  */
 export const setAdvancedMatching = async (userData: {
   email?: string | null;
@@ -63,13 +98,29 @@ export const setAdvancedMatching = async (userData: {
     if (hashed) matchData.ph = hashed;
   }
   if (userData.externalId) {
+    // Browser Advanced Matching: unhashed external_id (Meta hashes it)
     matchData.external_id = userData.externalId;
-    _cachedUserData.external_id = userData.externalId;
+    // CAPI: hash it ourselves (Meta requires pre-hashed for server events)
+    const hashed = await sha256(userData.externalId);
+    if (hashed) _cachedUserData.external_id = hashed;
   }
 
+  persistUserData();
+
   if (typeof window !== "undefined" && window.fbq && Object.keys(matchData).length > 0) {
-    window.fbq("init", "4378225905838577", matchData);
+    window.fbq("init", PIXEL_ID, matchData);
   }
+};
+
+/**
+ * Clear cached identity on sign-out.
+ */
+export const clearAdvancedMatching = () => {
+  _cachedUserData = {};
+  try {
+    localStorage.removeItem(STORAGE_KEY_EM);
+    localStorage.removeItem(STORAGE_KEY_EID);
+  } catch (_) {}
 };
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -84,6 +135,7 @@ export interface TrackingData {
   contentIds: string[];
   value: number;
   currency?: string;
+  numItems?: number;
   transactionId?: string;
 }
 
@@ -95,7 +147,7 @@ const getUserData = (): Record<string, string> => {
     const fbpMatch = document.cookie.match(/(?:^|;\s*)_fbp=([^;]*)/);
     if (fbpMatch) data.fbp = fbpMatch[1];
 
-    // _fbc cookie or reconstruct from stored fbclid
+    // _fbc: prefer cookie, reconstruct from fbclid if absent
     const fbcMatch = document.cookie.match(/(?:^|;\s*)_fbc=([^;]*)/);
     if (fbcMatch) {
       data.fbc = fbcMatch[1];
@@ -109,7 +161,8 @@ const getUserData = (): Record<string, string> => {
     // User agent
     data.client_user_agent = navigator.userAgent;
 
-    // Cached hashed email + external_id from Advanced Matching
+    // Hashed email + external_id (restored from localStorage if needed)
+    if (!_cachedUserData.em && !_cachedUserData.external_id) restoreUserData();
     if (_cachedUserData.em) data.em = _cachedUserData.em;
     if (_cachedUserData.external_id) data.external_id = _cachedUserData.external_id;
   } catch (_) {}
@@ -161,13 +214,14 @@ export const trackViewContent = (data: TrackingData) => {
   if (typeof window === "undefined") return;
 
   const eventId = generateEventId("vc");
-  const customData = {
+  const customData: Record<string, any> = {
     content_name: data.contentName,
     content_category: data.contentCategory,
     content_ids: data.contentIds,
     content_type: "product",
     value: data.value,
     currency: data.currency || "BRL",
+    num_items: data.numItems ?? data.contentIds.length,
   };
 
   if (window.fbq) {
@@ -185,13 +239,14 @@ export const trackInitiateCheckout = (data: TrackingData) => {
   if (typeof window === "undefined") return;
 
   const eventId = generateEventId("ic");
-  const customData = {
+  const customData: Record<string, any> = {
     content_name: data.contentName,
     content_category: data.contentCategory,
     content_ids: data.contentIds,
     content_type: "product",
     value: data.value,
     currency: data.currency || "BRL",
+    num_items: data.numItems ?? data.contentIds.length,
   };
 
   if (window.fbq) {
@@ -214,20 +269,21 @@ export const trackPurchase = (
   // Deterministic event_id: same transactionId = same event_id = Meta deduplicates
   const eventId = `purchase_${data.transactionId}`;
 
-  // Guard against double-firing (e.g. polling returns COMPLETED twice)
+  // Guard against double-firing (polling, re-renders, etc.)
   const storageKey = `_meta_purchase_${data.transactionId}`;
   try {
     if (sessionStorage.getItem(storageKey)) return eventId;
     sessionStorage.setItem(storageKey, "1");
   } catch (_) {}
 
-  const customData = {
+  const customData: Record<string, any> = {
     content_name: data.contentName,
     content_category: data.contentCategory,
     content_ids: data.contentIds,
     content_type: "product",
     value: data.value,
     currency: data.currency || "BRL",
+    num_items: data.numItems ?? data.contentIds.length,
     transaction_id: data.transactionId,
   };
 
