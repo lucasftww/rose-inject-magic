@@ -463,7 +463,7 @@ const ContaDetalhes = () => {
                     <div>
                       <p className="text-[10px] text-muted-foreground mb-0.5">Por</p>
                       <p className="text-2xl font-bold text-success">
-                        {formatPrice(item.price, item.price_currency)}
+                        {getDisplayPrice(item, "valorant")}
                       </p>
                     </div>
                     {item.rub_price && item.price_currency !== "rub" && (

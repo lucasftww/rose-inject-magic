@@ -86,7 +86,7 @@ const MinecraftDetalhes = () => {
   const handleAddToCart = () => {
     if (!item || isInCart) return;
     const title = `Conta Minecraft${nickname ? ` · ${nickname}` : ""}${hasJava ? " · Java" : ""}${hasBedrock ? " · Bedrock" : ""}`;
-    const priceBRL = calcPrice(item.price, item.price_currency);
+    const priceBRL = getPrice(item, "minecraft");
     const added = addItem({
       productId: `lzt-mc-${item.item_id}`,
       productName: title,
