@@ -34,8 +34,8 @@ interface Message {
 
 const statusOptions = [
   { value: "open", label: "Aberto", color: "bg-success/20 text-success border-success/30" },
-  { value: "delivered", label: "Entregue", color: "bg-blue-500/20 text-blue-400 border-blue-500/30" },
-  { value: "resolved", label: "Resolvido", color: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" },
+  { value: "delivered", label: "Entregue", color: "bg-info/20 text-info border-info/30" },
+  { value: "resolved", label: "Resolvido", color: "bg-positive/20 text-positive border-positive/30" },
   { value: "closed", label: "Encerrado", color: "bg-muted text-muted-foreground border-border" },
   { value: "banned", label: "Banido", color: "bg-destructive/20 text-destructive border-destructive/30" },
   { value: "finished", label: "Finalizado", color: "bg-muted text-muted-foreground border-border" },
