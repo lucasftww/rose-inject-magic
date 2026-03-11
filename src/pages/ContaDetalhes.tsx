@@ -471,7 +471,6 @@ const ContaDetalhes = () => {
                     <Zap className="h-4 w-4" />
                     COMPRAR AGORA
                   </button>
-                  </button>
 
                   {item.item_id && (
                     <p className="text-[10px] text-muted-foreground/50 text-center break-all">Código: {item.item_id}</p>
