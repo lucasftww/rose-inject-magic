@@ -344,7 +344,7 @@ const LztContaCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap
         )}
         <div className="mt-4 flex items-end justify-between">
           <p className="text-xl font-bold text-success">
-            {formatPrice(item.price, item.price_currency)}
+            {getDisplayPrice(item, "valorant")}
           </p>
           <span className="flex items-center gap-1.5 rounded border border-border px-4 py-2 text-xs font-medium text-muted-foreground transition-colors group-hover:border-success group-hover:text-success">
             Ver conta
