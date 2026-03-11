@@ -915,7 +915,7 @@ const Raspadinha = () => {
                     revealed[i] ? "scale-100 opacity-100" : "scale-75 opacity-30"
                   } ${
                     allRevealed && result?.won && checkWinCell(i)
-                      ? `${bgAccent} border-2 ${isContas ? "border-blue-500" : "border-success"}`
+                      ? `${bgAccent} border-2 ${isContas ? "border-info" : "border-success"}`
                       : "bg-secondary/80 border border-border"
                   } rounded-xl`}
                   style={
