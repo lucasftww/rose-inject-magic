@@ -42,6 +42,8 @@ const Checkout = () => {
   const [enabledMethods, setEnabledMethods] = useState<Record<string, boolean>>({ pix: true, card: true, crypto: true });
   const hasLztItems = items.some((i) => i.type === "lzt-account");
   const couponId = searchParams.get("coupon_id");
+  // Snapshot of cart items for Purchase tracking (survives clearCart)
+  const [cartSnapshot, setCartSnapshot] = useState<typeof items>([]);
   // Price is calculated from cart items — never trust URL params
   const cartTotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
   const discountAmount = parseFloat(searchParams.get("discount") || "0");
