@@ -464,26 +464,13 @@ const ContaDetalhes = () => {
                   </div>
 
                   <button
-                    onClick={handleAddToCart}
-                    disabled={isInCart}
-                    className={`btn-shine group relative flex w-full items-center justify-center gap-2 border-2 px-5 py-3 text-xs font-bold uppercase tracking-[0.25em] transition-all ${
-                      isInCart || addedToCart
-                        ? "border-success bg-success/10 text-success cursor-default"
-                        : "border-foreground/30 text-foreground hover:border-success hover:text-success hover:shadow-[0_0_30px_hsl(130,99%,41%,0.2)]"
-                    }`}
+                    onClick={handleBuyNow}
+                    className="btn-shine group relative flex w-full items-center justify-center gap-2 border-2 px-5 py-3 text-xs font-bold uppercase tracking-[0.25em] transition-all border-foreground/30 text-foreground hover:border-success hover:text-success hover:shadow-[0_0_30px_hsl(130,99%,41%,0.2)]"
                     style={{ fontFamily: "'Valorant', sans-serif" }}
                   >
-                    {isInCart || addedToCart ? (
-                      <>
-                        <Check className="h-4 w-4" />
-                        No Carrinho
-                      </>
-                    ) : (
-                      <>
-                        <ShoppingCart className="h-4 w-4" />
-                        Adicionar ao Carrinho
-                      </>
-                    )}
+                    <Zap className="h-4 w-4" />
+                    COMPRAR AGORA
+                  </button>
                   </button>
 
                   {item.item_id && (
