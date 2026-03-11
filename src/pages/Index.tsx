@@ -356,8 +356,7 @@ const LztContaCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap
 };
 
 const ContasSection = () => {
-  const { formatPrice: rawFormatPrice } = useLztMarkup();
-  const formatPrice = (price: number, currency?: string) => rawFormatPrice(price, currency, "valorant");
+  const { getDisplayPrice } = useLztMarkup();
   const { data: accounts = [], isLoading: loadingAccounts } = useQuery({
     queryKey: ["landing-lzt-accounts"],
     queryFn: fetchLztAccounts,
