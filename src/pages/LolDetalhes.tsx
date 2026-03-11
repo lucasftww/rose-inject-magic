@@ -11,7 +11,7 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "@/hooks/use-toast";
 import { useLztMarkup } from "@/hooks/useLztMarkup";
-import { trackViewContent, trackAddToCart, trackInitiateCheckout } from "@/lib/metaPixel";
+import { trackViewContent, trackInitiateCheckout } from "@/lib/metaPixel";
 
 import lolRankFerroImg from "@/assets/lol-rank-ferro.png";
 import lolRankBronzeImg from "@/assets/lol-rank-bronze.webp";
@@ -221,12 +221,6 @@ const LolDetalhes = () => {
     const title = `Conta LoL ${rankText} Nv. ${level} | ${champCount} Campeões | ${skinCount} Skins`;
     const priceBRL = getPrice(item, "lol");
 
-    trackAddToCart({
-      contentName: title,
-      contentCategory: "League of Legends",
-      contentIds: [`lzt-lol-${item.item_id}`],
-      value: priceBRL,
-    });
     trackInitiateCheckout({
       contentName: title,
       contentCategory: "League of Legends",

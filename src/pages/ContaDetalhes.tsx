@@ -8,7 +8,7 @@ import { useState, useMemo, useCallback, useEffect, useRef, forwardRef } from "r
 import { useCart } from "@/hooks/useCart";
 import { toast } from "@/hooks/use-toast";
 import { useLztMarkup } from "@/hooks/useLztMarkup";
-import { trackViewContent, trackAddToCart, trackInitiateCheckout } from "@/lib/metaPixel";
+import { trackViewContent, trackInitiateCheckout } from "@/lib/metaPixel";
 
 import rankFerro from "@/assets/rank-ferro.png";
 import rankBronze from "@/assets/rank-bronze.png";
@@ -167,12 +167,6 @@ const ContaDetalhes = () => {
     const title = `Conta ${rankName} com ${skinCount} Skins`;
     const priceBRL = getPrice(item, "valorant");
 
-    trackAddToCart({
-      contentName: title,
-      contentCategory: "Valorant",
-      contentIds: [`lzt-${item.item_id}`],
-      value: priceBRL,
-    });
     trackInitiateCheckout({
       contentName: title,
       contentCategory: "Valorant",
