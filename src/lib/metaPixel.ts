@@ -186,10 +186,6 @@ const getUserData = (): Record<string, string> => {
       if (fbclid) data.fbc = `fb.1.${Date.now()}.${fbclid}`;
     }
 
-    // First-party session cookie — stable cross-session identifier
-    const sessionId = getOrCreateSessionId();
-    if (sessionId) data.external_id_session = sessionId;
-
     // User agent
     data.client_user_agent = navigator.userAgent;
 
