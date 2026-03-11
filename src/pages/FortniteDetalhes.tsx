@@ -7,10 +7,11 @@ import {
   CheckCircle2, Shield, X, Zap, Gift,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "@/hooks/use-toast";
 import { useLztMarkup } from "@/hooks/useLztMarkup";
+import { trackViewContent, trackInitiateCheckout } from "@/lib/metaPixel";
 
 const FN_PURPLE = "hsl(265,80%,65%)";
 const FN_BLUE = "hsl(210,100%,56%)";
@@ -142,10 +143,33 @@ const FortniteDetalhes = () => {
   // Gallery uses skins, fallback to pickaxes
   const galleryPreviews = skinPreviews.length > 0 ? skinPreviews : pickaxePreviews;
 
+  // ViewContent tracking
+  const viewTracked = useRef(false);
+  useEffect(() => {
+    if (item && !viewTracked.current) {
+      viewTracked.current = true;
+      const priceBRL = getPrice(item, "fortnite");
+      trackViewContent({
+        contentName: `Conta Fortnite #${item.item_id}`,
+        contentCategory: "Fortnite",
+        contentIds: [`lzt-fn-${item.item_id}`],
+        value: priceBRL,
+      });
+    }
+  }, [item]);
+
   const handleBuyNow = () => {
     if (!item) return;
     const title = `Conta Fortnite${vbucks > 0 ? ` | ${vbucks} V-Bucks` : ""}${skinCount > 0 ? ` | ${skinCount} Skins` : ""}`;
     const priceBRL = getPrice(item, "fortnite");
+
+    trackInitiateCheckout({
+      contentName: title,
+      contentCategory: "Fortnite",
+      contentIds: [`lzt-fn-${item.item_id}`],
+      value: priceBRL,
+    });
+
     const added = addItem({
       productId: `lzt-fn-${item.item_id}`,
       productName: title,

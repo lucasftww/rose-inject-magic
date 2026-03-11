@@ -4,10 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/Header";
 import { ArrowLeft, Shield, Loader2, ChevronRight, ChevronLeft, ChevronRight as ChevronRightIcon, CheckCircle2, Swords, Users, Star, X, Zap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useMemo, useCallback, useEffect, forwardRef } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef, forwardRef } from "react";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "@/hooks/use-toast";
 import { useLztMarkup } from "@/hooks/useLztMarkup";
+import { trackViewContent, trackInitiateCheckout } from "@/lib/metaPixel";
 
 import rankFerro from "@/assets/rank-ferro.png";
 import rankBronze from "@/assets/rank-bronze.png";
@@ -157,6 +158,7 @@ const ContaDetalhes = () => {
     setActiveTab("skins");
   }, [id]);
   const { addItem } = useCart();
+  const viewTracked = useRef(false);
 
   const handleBuyNow = () => {
     if (!item) return;
@@ -164,6 +166,13 @@ const ContaDetalhes = () => {
     const skinCount = item.riot_valorant_skin_count ?? 0;
     const title = `Conta ${rankName} com ${skinCount} Skins`;
     const priceBRL = getPrice(item, "valorant");
+
+    trackInitiateCheckout({
+      contentName: title,
+      contentCategory: "Valorant",
+      contentIds: [`lzt-${item.item_id}`],
+      value: priceBRL,
+    });
 
     const added = addItem({
       productId: `lzt-${item.item_id}`,
@@ -190,6 +199,20 @@ const ContaDetalhes = () => {
   const item = data?.item;
   const rank = item?.riot_valorant_rank ? rankMap[item.riot_valorant_rank] : null;
   const inventory = item?.valorantInventory;
+
+  // ViewContent tracking
+  useEffect(() => {
+    if (item && !viewTracked.current) {
+      viewTracked.current = true;
+      const priceBRL = getPrice(item, "valorant");
+      trackViewContent({
+        contentName: `Conta Valorant #${item.item_id}`,
+        contentCategory: "Valorant",
+        contentIds: [`lzt-${item.item_id}`],
+        value: priceBRL,
+      });
+    }
+  }, [item]);
 
   // Gallery from screenshots
   const gallery = useMemo(() => {
