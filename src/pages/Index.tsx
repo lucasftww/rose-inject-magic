@@ -1,16 +1,12 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
-import { Star, ArrowRight, ChevronLeft, ChevronRight, Package, Loader2, Crosshair, Globe } from "lucide-react";
+import { Star, ArrowRight, Package, Loader2, Crosshair, Globe } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useLztMarkup } from "@/hooks/useLztMarkup";
 import bannerInject from "@/assets/banner-inject.png";
-import cardHilex from "@/assets/card-hilex.jpg";
-import cardShadow from "@/assets/card-shadow.jpg";
-import cardHilexSkin from "@/assets/card-hilex-skin.jpg";
-import contaKnife from "@/assets/conta-knife.png";
 import rankAscendente from "@/assets/rank-ascendente.png";
 import rankFerro from "@/assets/rank-ferro.png";
 import rankBronze from "@/assets/rank-bronze.png";
@@ -1029,28 +1025,28 @@ const Index = () => {
             <div>
               <h4 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-foreground">Produtos</h4>
               <ul className="mt-3 sm:mt-4 space-y-2">
-                <li><a href="/produtos" className="text-xs sm:text-sm text-muted-foreground transition-colors hover:text-success">Softwares</a></li>
-                <li><a href="/contas" className="text-xs sm:text-sm text-muted-foreground transition-colors hover:text-success">Contas Valorant</a></li>
-                <li><a href="/produtos" className="text-xs sm:text-sm text-muted-foreground transition-colors hover:text-success">Skins Premium</a></li>
+                <li><Link to="/produtos" className="text-xs sm:text-sm text-muted-foreground transition-colors hover:text-success">Softwares</Link></li>
+                <li><Link to="/contas" className="text-xs sm:text-sm text-muted-foreground transition-colors hover:text-success">Contas Valorant</Link></li>
+                <li><Link to="/produtos" className="text-xs sm:text-sm text-muted-foreground transition-colors hover:text-success">Skins Premium</Link></li>
               </ul>
             </div>
 
             <div>
               <h4 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-foreground">Suporte</h4>
               <ul className="mt-3 sm:mt-4 space-y-2">
-                <li><a href="/ajuda" className="text-xs sm:text-sm text-muted-foreground transition-colors hover:text-success">Central de Ajuda</a></li>
+                <li><Link to="/ajuda" className="text-xs sm:text-sm text-muted-foreground transition-colors hover:text-success">Central de Ajuda</Link></li>
                 <li><a href="https://discord.gg/royalstorebr" target="_blank" rel="noopener noreferrer" className="text-xs sm:text-sm text-muted-foreground transition-colors hover:text-success">Discord</a></li>
-                <li><a href="/garantia" className="text-xs sm:text-sm text-muted-foreground transition-colors hover:text-success">Garantia</a></li>
-                <li><a href="/status" className="text-xs sm:text-sm text-muted-foreground transition-colors hover:text-success">Status</a></li>
+                <li><Link to="/garantia" className="text-xs sm:text-sm text-muted-foreground transition-colors hover:text-success">Garantia</Link></li>
+                <li><Link to="/status" className="text-xs sm:text-sm text-muted-foreground transition-colors hover:text-success">Status</Link></li>
               </ul>
             </div>
 
             <div>
               <h4 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-foreground">Legal</h4>
               <ul className="mt-3 sm:mt-4 space-y-2">
-                <li><a href="/termos" className="text-xs sm:text-sm text-muted-foreground transition-colors hover:text-success">Termos de Uso</a></li>
-                <li><a href="/privacidade" className="text-xs sm:text-sm text-muted-foreground transition-colors hover:text-success">Privacidade</a></li>
-                <li><a href="/reembolso" className="text-xs sm:text-sm text-muted-foreground transition-colors hover:text-success">Reembolso</a></li>
+                <li><Link to="/termos" className="text-xs sm:text-sm text-muted-foreground transition-colors hover:text-success">Termos de Uso</Link></li>
+                <li><Link to="/privacidade" className="text-xs sm:text-sm text-muted-foreground transition-colors hover:text-success">Privacidade</Link></li>
+                <li><Link to="/reembolso" className="text-xs sm:text-sm text-muted-foreground transition-colors hover:text-success">Reembolso</Link></li>
               </ul>
             </div>
           </div>
