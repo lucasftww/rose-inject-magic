@@ -323,14 +323,22 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
       return;
     }
 
+    const gameLabelsManual: Record<string, string> = {
+      valorant: "Valorant", lol: "LoL", fortnite: "Fortnite", minecraft: "Minecraft",
+    };
+    const gameLabelManual = gameLabelsManual[lztGame] || "LZT";
+
     const lztMetadata = {
       type: "lzt-account",
       lzt_item_id: itemId,
-      account_name: item.productName || `Conta Valorant #${itemId}`,
+      account_name: item.productName || `Conta ${gameLabelManual} #${itemId}`,
+      title: item.productName || `Conta ${gameLabelManual} #${itemId}`,
       account_image: item.productImage || null,
       price_paid: item.price || price,
+      sell_price: item.price || 0,
       currency: currency,
       skins_count: item.skinsCount || null,
+      game: lztGame,
       manual_delivery: true,
       failure_reason: reason,
     };
@@ -357,6 +365,23 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
         message: `✅ Seu pagamento foi confirmado!\n\n⚠️ Houve um problema ao processar a entrega automática da conta. Nossa equipe irá entregar manualmente em breve.\n\nSe tiver dúvidas, envie uma mensagem aqui neste chat.`,
       });
     }
+
+    // Record sale even for manual delivery so admin can track revenue
+    const RUB_TO_BRL_MD = 0.055;
+    const buyPriceMd = currency === "rub" ? Number(price || 0) * RUB_TO_BRL_MD : Number(price || 0);
+    const sellPriceMd = Number(item.price) || 0;
+    await supabaseAdmin.from("lzt_sales").insert({
+      lzt_item_id: String(itemId),
+      buy_price: buyPriceMd,
+      sell_price: sellPriceMd,
+      profit: sellPriceMd - buyPriceMd,
+      title: item.productName || `Conta ${gameLabelManual} #${itemId}`,
+      game: lztGame,
+      buyer_user_id: payment.user_id,
+    }).then(({ error: saleErr }) => {
+      if (saleErr) console.error("Failed to record manual lzt_sale:", saleErr);
+      else console.log("Manual LZT sale recorded:", itemId);
+    });
 
     return ticket;
   };
