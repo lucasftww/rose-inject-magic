@@ -496,13 +496,15 @@ const ProductsSection = () => {
                       </div>
                     )}
                   </div>
-                  <div className="p-3 sm:p-5">
-                    <h3 className="text-xs sm:text-base font-bold text-foreground line-clamp-1">{product.name}</h3>
-                    {product.description && (
-                      <p className="mt-1 text-[10px] sm:text-xs text-muted-foreground line-clamp-2 hidden sm:block">{product.description}</p>
-                    )}
+                  <div className="flex flex-col justify-between p-3 sm:p-5 flex-1">
+                    <div>
+                      <h3 className="text-xs sm:text-base font-bold text-foreground line-clamp-1">{product.name}</h3>
+                      {product.description && (
+                        <p className="mt-1 text-[10px] sm:text-xs text-muted-foreground line-clamp-2 hidden sm:block">{product.description}</p>
+                      )}
+                    </div>
                     {lowestPrice !== null && (
-                      <div className="mt-2 sm:mt-4 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
+                      <div className="mt-2 sm:mt-4 flex items-end justify-between gap-2">
                         <div>
                           <p className="text-[9px] sm:text-[10px] text-muted-foreground">A partir de</p>
                           <p className="text-base sm:text-xl font-bold text-success">R$ {lowestPrice.toFixed(2)}</p>
