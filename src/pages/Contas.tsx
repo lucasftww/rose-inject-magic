@@ -1488,7 +1488,7 @@ const Contas = () => {
                               title={weapon.name}
                             >
                               {weapon.img ? (
-                                <img src={weapon.img} alt={weapon.name} className="h-6 w-12 object-contain" />
+                                <img src={weapon.img} alt={weapon.name} className="h-6 w-12 object-contain" loading="lazy" />
                               ) : (
                                 <span className="flex h-6 w-12 items-center justify-center text-[10px] font-bold text-muted-foreground">Todas</span>
                               )}
