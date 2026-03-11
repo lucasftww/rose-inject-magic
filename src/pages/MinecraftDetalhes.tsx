@@ -30,7 +30,7 @@ const fetchAccountDetail = async (itemId: string) => {
   const projectUrl = import.meta.env.VITE_SUPABASE_URL;
   const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
   const res = await fetch(
-    `${projectUrl}/functions/v1/lzt-market?action=detail&item_id=${encodeURIComponent(itemId)}`,
+    `${projectUrl}/functions/v1/lzt-market?action=detail&item_id=${encodeURIComponent(itemId)}&game_type=minecraft`,
     { headers: { "Content-Type": "application/json", apikey: anonKey } }
   );
   if (!res.ok) throwApiError(res.status);
@@ -40,9 +40,7 @@ const fetchAccountDetail = async (itemId: string) => {
 const MinecraftDetalhes = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { calcPrice: rawCalcPrice, formatPrice: rawFormatPrice } = useLztMarkup();
-  const calcPrice = (price: number, currency?: string) => rawCalcPrice(price, currency, "minecraft");
-  const formatPrice = (price: number, currency?: string) => rawFormatPrice(price, currency, "minecraft");
+  const { getPrice, getDisplayPrice } = useLztMarkup();
   const { addItem, items } = useCart();
   const [addedToCart, setAddedToCart] = useState(false);
 
@@ -88,7 +86,7 @@ const MinecraftDetalhes = () => {
   const handleAddToCart = () => {
     if (!item || isInCart) return;
     const title = `Conta Minecraft${nickname ? ` · ${nickname}` : ""}${hasJava ? " · Java" : ""}${hasBedrock ? " · Bedrock" : ""}`;
-    const priceBRL = calcPrice(item.price, item.price_currency);
+    const priceBRL = getPrice(item, "minecraft");
     const added = addItem({
       productId: `lzt-mc-${item.item_id}`,
       productName: title,
@@ -355,7 +353,7 @@ const MinecraftDetalhes = () => {
                   <div className="rounded-lg bg-card border border-border p-3 flex items-end justify-between">
                     <div>
                       <p className="text-[10px] text-muted-foreground mb-0.5">Por</p>
-                      <p className="text-2xl font-bold" style={{ color: MC_GREEN }}>{formatPrice(item.price, item.price_currency)}</p>
+                      <p className="text-2xl font-bold" style={{ color: MC_GREEN }}>{getDisplayPrice(item, "minecraft")}</p>
                     </div>
                   </div>
 

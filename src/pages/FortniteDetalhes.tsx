@@ -19,7 +19,7 @@ const fetchAccountDetail = async (itemId: string) => {
   const projectUrl = import.meta.env.VITE_SUPABASE_URL;
   const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
   const res = await fetch(
-    `${projectUrl}/functions/v1/lzt-market?action=detail&item_id=${encodeURIComponent(itemId)}`,
+    `${projectUrl}/functions/v1/lzt-market?action=detail&item_id=${encodeURIComponent(itemId)}&game_type=fortnite`,
     { headers: { "Content-Type": "application/json", apikey: anonKey } }
   );
   if (!res.ok) throwApiError(res.status);
@@ -84,9 +84,7 @@ type InventoryTab = "skins" | "pickaxes" | "dances" | "gliders";
 const FortniteDetalhes = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { calcPrice: rawCalcPrice, formatPrice: rawFormatPrice } = useLztMarkup();
-  const calcPrice = (price: number, currency?: string) => rawCalcPrice(price, currency, "fortnite");
-  const formatPrice = (price: number, currency?: string) => rawFormatPrice(price, currency, "fortnite");
+  const { getPrice, getDisplayPrice } = useLztMarkup();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<InventoryTab>("skins");
@@ -150,7 +148,7 @@ const FortniteDetalhes = () => {
   const handleAddToCart = () => {
     if (!item || isInCart) return;
     const title = `Conta Fortnite${vbucks > 0 ? ` | ${vbucks} V-Bucks` : ""}${skinCount > 0 ? ` | ${skinCount} Skins` : ""}`;
-    const priceBRL = calcPrice(item.price, item.price_currency);
+    const priceBRL = getPrice(item, "fortnite");
     const added = addItem({
       productId: `lzt-fn-${item.item_id}`,
       productName: title,
@@ -328,7 +326,7 @@ const FortniteDetalhes = () => {
                   <div className="rounded-lg bg-card border border-border p-3 flex items-end justify-between">
                     <div>
                       <p className="text-[10px] text-muted-foreground mb-0.5">Por</p>
-                      <p className="text-2xl font-bold" style={{ color: FN_PURPLE }}>{formatPrice(item.price, item.price_currency)}</p>
+                      <p className="text-2xl font-bold" style={{ color: FN_PURPLE }}>{getDisplayPrice(item, "fortnite")}</p>
                     </div>
                   </div>
 

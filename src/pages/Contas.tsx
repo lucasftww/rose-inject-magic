@@ -261,6 +261,8 @@ interface LztItem {
   imagePreviewLinks?: {
     direct?: { weapons?: string; agents?: string; buddies?: string };
   };
+  // Server-calculated BRL price (with correct markup)
+  price_brl?: number;
 }
 
 // ─── Data fetchers ───
@@ -941,8 +943,7 @@ const fetchAccountsRaw = async (params: Record<string, string | string[]>) => {
 };
 
 const Contas = () => {
-  const { formatPrice: rawFormatPrice } = useLztMarkup();
-  const formatPriceForGame = (game: string) => (price: number, currency?: string) => rawFormatPrice(price, currency, game as any);
+  const { getDisplayPrice } = useLztMarkup();
   const [searchParams, setSearchParams] = useSearchParams();
   const [gameTab, setGameTab] = useState<GameTab>(() => {
     const g = searchParams.get("game");
@@ -1828,13 +1829,13 @@ const Contas = () => {
                       transition={{ duration: 0.3, ease: "easeOut" }}
                     >
                       {isValorant ? (
-                        <ValorantCard item={item} skinsMap={skinsMap} formatPrice={formatPriceForGame("valorant")} />
+                        <ValorantCard item={item} skinsMap={skinsMap} formatPrice={(p, c) => getDisplayPrice({ price: p, price_currency: c, price_brl: item.price_brl }, "valorant")} />
                       ) : isFortnite ? (
-                        <FortniteCard item={item} skinsDb={fnSkinsDb} formatPrice={formatPriceForGame("fortnite")} />
+                        <FortniteCard item={item} skinsDb={fnSkinsDb} formatPrice={(p, c) => getDisplayPrice({ price: p, price_currency: c, price_brl: item.price_brl }, "fortnite")} />
                       ) : isMinecraft ? (
-                        <MinecraftCard item={item} formatPrice={formatPriceForGame("minecraft")} />
+                        <MinecraftCard item={item} formatPrice={(p, c) => getDisplayPrice({ price: p, price_currency: c, price_brl: item.price_brl }, "minecraft")} />
                       ) : (
-                        <LolCard item={item} champKeyMap={champKeyMap} formatPrice={formatPriceForGame("lol")} />
+                        <LolCard item={item} champKeyMap={champKeyMap} formatPrice={(p, c) => getDisplayPrice({ price: p, price_currency: c, price_brl: item.price_brl }, "lol")} />
                       )}
                     </motion.div>
                   ))}

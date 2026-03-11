@@ -323,8 +323,14 @@ Deno.serve(async (req) => {
     if (action === "detail" && data.item) {
       const RUB_TO_BRL = 0.055;
       const MIN_PRICE_BRL = 20;
-      // Use lztConfig already fetched above
-      let detailMarkup = lztConfig?.markup_valorant || lztConfig?.markup_multiplier || 1.5;
+      // Detect game type from the item's category or URL param
+      const detailGameType = url.searchParams.get("game_type") || "";
+      let detailMarkup = lztConfig?.markup_multiplier || 1.5;
+      if (detailGameType === "valorant" || detailGameType === "riot") detailMarkup = lztConfig?.markup_valorant || detailMarkup;
+      else if (detailGameType === "lol") detailMarkup = lztConfig?.markup_lol || detailMarkup;
+      else if (detailGameType === "fortnite") detailMarkup = lztConfig?.markup_fortnite || detailMarkup;
+      else if (detailGameType === "minecraft") detailMarkup = lztConfig?.markup_minecraft || detailMarkup;
+      else detailMarkup = lztConfig?.markup_valorant || detailMarkup; // fallback to valorant
       const currency = data.item.price_currency || "rub";
       let brl = currency === "rub" ? data.item.price * RUB_TO_BRL : data.item.price;
       const final = brl * detailMarkup;
