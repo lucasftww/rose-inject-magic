@@ -200,8 +200,8 @@ const LolDetalhes = () => {
           splashImage: `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${c.champName}_0.jpg`,
         }));
 
-  const handleAddToCart = () => {
-    if (!item || isInCart) return;
+  const handleBuyNow = () => {
+    if (!item) return;
     const title = `Conta LoL ${rankText} Nv. ${level} | ${champCount} Campeões | ${skinCount} Skins`;
     const priceBRL = getPrice(item, "lol");
     const added = addItem({
@@ -217,10 +217,7 @@ const LolDetalhes = () => {
       lztCurrency: item.price_currency || "rub",
       lztGame: "lol",
     });
-    if (!added) return;
-    setAddedToCart(true);
-    toast({ title: "Adicionado ao carrinho!", description: title });
-    setTimeout(() => setAddedToCart(false), 2000);
+    if (added) navigate("/checkout");
   };
 
   const LOL_BLUE = "hsl(198,100%,45%)";
