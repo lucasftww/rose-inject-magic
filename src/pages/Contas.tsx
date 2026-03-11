@@ -261,6 +261,8 @@ interface LztItem {
   imagePreviewLinks?: {
     direct?: { weapons?: string; agents?: string; buddies?: string };
   };
+  // Server-calculated BRL price (with correct markup)
+  price_brl?: number;
 }
 
 // ─── Data fetchers ───
