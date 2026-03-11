@@ -229,8 +229,8 @@ const Checkout = () => {
           setPaymentStatus(data.status);
           if (data.status === "COMPLETED") {
             if (intervalRef.current) clearInterval(intervalRef.current);
-            // Fire Purchase event
-            const cartItem = items[0];
+            // Fire Purchase event using snapshot (items already cleared)
+            const cartItem = cartSnapshot[0];
             if (cartItem) {
               trackPurchase({
                 contentName: cartItem.productName,
