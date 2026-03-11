@@ -81,10 +81,33 @@ const MinecraftDetalhes = () => {
   const bodyUrl = nickname ? `https://mineskin.eu/body/${encodeURIComponent(nickname)}/200.png` : null;
   const headUrl = nickname ? `https://mineskin.eu/helm/${encodeURIComponent(nickname)}/100.png` : null;
 
+  // ViewContent tracking
+  const viewTracked = useRef(false);
+  useEffect(() => {
+    if (item && !viewTracked.current) {
+      viewTracked.current = true;
+      const priceBRL = getPrice(item, "minecraft");
+      trackViewContent({
+        contentName: `Conta Minecraft${nickname ? ` · ${nickname}` : ""}`,
+        contentCategory: "Minecraft",
+        contentIds: [`lzt-mc-${item.item_id}`],
+        value: priceBRL,
+      });
+    }
+  }, [item]);
+
   const handleBuyNow = () => {
     if (!item) return;
     const title = `Conta Minecraft${nickname ? ` · ${nickname}` : ""}${hasJava ? " · Java" : ""}${hasBedrock ? " · Bedrock" : ""}`;
     const priceBRL = getPrice(item, "minecraft");
+
+    trackInitiateCheckout({
+      contentName: title,
+      contentCategory: "Minecraft",
+      contentIds: [`lzt-mc-${item.item_id}`],
+      value: priceBRL,
+    });
+
     const added = addItem({
       productId: `lzt-mc-${item.item_id}`,
       productName: title,

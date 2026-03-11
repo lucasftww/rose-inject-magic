@@ -201,10 +201,33 @@ const LolDetalhes = () => {
           splashImage: `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${c.champName}_0.jpg`,
         }));
 
+  // ViewContent tracking
+  const viewTracked = useRef(false);
+  useEffect(() => {
+    if (item && !viewTracked.current) {
+      viewTracked.current = true;
+      const priceBRL = getPrice(item, "lol");
+      trackViewContent({
+        contentName: `Conta LoL #${item.item_id}`,
+        contentCategory: "League of Legends",
+        contentIds: [`lzt-lol-${item.item_id}`],
+        value: priceBRL,
+      });
+    }
+  }, [item]);
+
   const handleBuyNow = () => {
     if (!item) return;
     const title = `Conta LoL ${rankText} Nv. ${level} | ${champCount} Campeões | ${skinCount} Skins`;
     const priceBRL = getPrice(item, "lol");
+
+    trackInitiateCheckout({
+      contentName: title,
+      contentCategory: "League of Legends",
+      contentIds: [`lzt-lol-${item.item_id}`],
+      value: priceBRL,
+    });
+
     const added = addItem({
       productId: `lzt-lol-${item.item_id}`,
       productName: title,

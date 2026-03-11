@@ -159,12 +159,34 @@ const ContaDetalhes = () => {
   }, [id]);
   const { addItem } = useCart();
 
+  // ViewContent tracking
+  const viewTracked = useRef(false);
+  useEffect(() => {
+    if (item && !viewTracked.current) {
+      viewTracked.current = true;
+      const priceBRL = getPrice(item, "valorant");
+      trackViewContent({
+        contentName: `Conta Valorant #${item.item_id}`,
+        contentCategory: "Valorant",
+        contentIds: [`lzt-${item.item_id}`],
+        value: priceBRL,
+      });
+    }
+  }, [item]);
+
   const handleBuyNow = () => {
     if (!item) return;
     const rankName = rank?.name || "Unranked";
     const skinCount = item.riot_valorant_skin_count ?? 0;
     const title = `Conta ${rankName} com ${skinCount} Skins`;
     const priceBRL = getPrice(item, "valorant");
+
+    trackInitiateCheckout({
+      contentName: title,
+      contentCategory: "Valorant",
+      contentIds: [`lzt-${item.item_id}`],
+      value: priceBRL,
+    });
 
     const added = addItem({
       productId: `lzt-${item.item_id}`,
