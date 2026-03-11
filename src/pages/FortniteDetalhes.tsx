@@ -88,10 +88,7 @@ const FortniteDetalhes = () => {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<InventoryTab>("skins");
-  const { addItem, items } = useCart();
-  const [addedToCart, setAddedToCart] = useState(false);
-
-  const isInCart = items.some((i) => i.type === "lzt-account" && i.lztItemId === id);
+  const { addItem } = useCart();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["lzt-account-detail", id],
