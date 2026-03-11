@@ -802,7 +802,7 @@ const PedidoChat = () => {
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                   <div className="flex items-center gap-0.5">
                     {[1, 2, 3, 4, 5].map((star) => (
-                      <Star key={star} className={`h-3.5 w-3.5 ${star <= existingReview.rating ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground/30"}`} />
+                      <Star key={star} className={`h-3.5 w-3.5 ${star <= existingReview.rating ? "fill-warning text-warning" : "text-muted-foreground/30"}`} />
                     ))}
                   </div>
                   <span className="text-muted-foreground/60">Avaliado</span>
