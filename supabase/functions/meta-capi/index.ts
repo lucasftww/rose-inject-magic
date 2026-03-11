@@ -33,23 +33,27 @@ serve(async (req) => {
       });
     }
 
+    // Extract client IP from request headers (set by CDN/proxy)
+    const clientIp =
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      req.headers.get("x-real-ip") ||
+      req.headers.get("cf-connecting-ip") ||
+      null;
+
+    const userData: Record<string, any> = { ...(user_data || {}) };
+    if (clientIp) {
+      userData.client_ip_address = clientIp;
+    }
+
     const eventData: Record<string, any> = {
       event_name,
       event_id,
       event_time: event_time || Math.floor(Date.now() / 1000),
       action_source: action_source || "website",
       event_source_url,
-      user_data: user_data || {},
+      user_data: userData,
       custom_data: custom_data || {},
     };
-
-    // Forward fbclid as fbc if present
-    if (user_data?.fbc) {
-      eventData.user_data.fbc = user_data.fbc;
-    }
-    if (user_data?.fbp) {
-      eventData.user_data.fbp = user_data.fbp;
-    }
 
     const payload = {
       data: [eventData],
