@@ -8,6 +8,101 @@ const corsHeaders = {
 
 const MISTICPAY_BASE_URL = "https://api.misticpay.com/api";
 
+// ─── Server-side CAPI Purchase (fires when payment is COMPLETED) ────────────
+// This guarantees Meta receives the Purchase event even if the user closes the browser.
+// Uses the same deterministic event_id as the browser Pixel for deduplication.
+const META_PIXEL_ID = "4378225905838577";
+const META_GRAPH_VERSION = "v21.0";
+
+async function sendServerPurchaseEvent(payment: any, req: Request) {
+  try {
+    const accessToken = Deno.env.get("META_ACCESS_TOKEN");
+    if (!accessToken) return;
+
+    const cartItems = (payment.cart_snapshot || []) as Array<{
+      productId: string;
+      productName: string;
+      planName?: string;
+      price: number;
+      quantity?: number;
+      lztGame?: string;
+    }>;
+    if (cartItems.length === 0) return;
+
+    const firstItem = cartItems[0];
+    const totalValue = (payment.amount || 0) / 100; // amount is in centavos
+
+    // Deterministic event_id — same as browser Pixel uses
+    const eventId = `purchase_${payment.id}`;
+
+    // Resolve category
+    const gameName = firstItem.lztGame || firstItem.planName || "";
+    const lower = gameName.toLowerCase();
+    let category = "Outros";
+    if (lower.includes("valorant")) category = "Valorant";
+    else if (lower.includes("fortnite")) category = "Fortnite";
+    else if (lower.includes("roblox")) category = "Roblox";
+    else if (lower.includes("minecraft")) category = "Minecraft";
+    else if (lower.includes("lol") || lower.includes("league")) category = "League of Legends";
+    else if (lower.includes("cs") || lower.includes("counter")) category = "CS2";
+    else if (lower.includes("gta")) category = "GTA";
+
+    // Server-side user_data
+    const clientIp =
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      req.headers.get("x-real-ip") ||
+      req.headers.get("cf-connecting-ip") || undefined;
+
+    const userData: Record<string, string> = {};
+    if (clientIp) userData.client_ip_address = clientIp;
+    const ua = req.headers.get("user-agent");
+    if (ua) userData.client_user_agent = ua;
+
+    const eventData = {
+      event_name: "Purchase",
+      event_id: eventId,
+      event_time: Math.floor(Date.now() / 1000),
+      action_source: "website",
+      event_source_url: "https://rose-inject-magic.lovable.app/checkout",
+      user_data: userData,
+      custom_data: {
+        content_name: firstItem.productName,
+        content_category: category,
+        content_ids: cartItems.map((i) => i.productId),
+        content_type: "product",
+        value: totalValue,
+        currency: "BRL",
+        num_items: cartItems.length,
+        transaction_id: payment.id,
+      },
+    };
+
+    const url = `https://graph.facebook.com/${META_GRAPH_VERSION}/${META_PIXEL_ID}/events?access_token=${accessToken}`;
+
+    // Retry up to 3 times
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ data: [eventData] }),
+        });
+        if (res.ok) {
+          console.log(`CAPI Purchase sent successfully (attempt ${attempt}):`, payment.id);
+          return;
+        }
+        const errBody = await res.text();
+        console.error(`CAPI Purchase attempt ${attempt} failed:`, res.status, errBody);
+      } catch (err) {
+        console.error(`CAPI Purchase attempt ${attempt} error:`, err);
+      }
+      if (attempt < 3) await new Promise((r) => setTimeout(r, 1000 * attempt));
+    }
+  } catch (err) {
+    console.error("sendServerPurchaseEvent error:", err);
+  }
+}
+
 // Helper: send Discord webhook notification on sale
 async function sendDiscordSaleNotification(supabaseAdmin: any, payment: any) {
   try {
