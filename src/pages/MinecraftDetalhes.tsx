@@ -80,8 +80,8 @@ const MinecraftDetalhes = () => {
   const bodyUrl = nickname ? `https://mineskin.eu/body/${encodeURIComponent(nickname)}/200.png` : null;
   const headUrl = nickname ? `https://mineskin.eu/helm/${encodeURIComponent(nickname)}/100.png` : null;
 
-  const handleAddToCart = () => {
-    if (!item || isInCart) return;
+  const handleBuyNow = () => {
+    if (!item) return;
     const title = `Conta Minecraft${nickname ? ` · ${nickname}` : ""}${hasJava ? " · Java" : ""}${hasBedrock ? " · Bedrock" : ""}`;
     const priceBRL = getPrice(item, "minecraft");
     const added = addItem({
@@ -97,10 +97,7 @@ const MinecraftDetalhes = () => {
       lztCurrency: item.price_currency || "rub",
       lztGame: "minecraft",
     });
-    if (!added) return;
-    setAddedToCart(true);
-    toast({ title: "Adicionado ao carrinho!", description: title });
-    setTimeout(() => setAddedToCart(false), 2000);
+    if (added) navigate("/checkout");
   };
 
   return (
