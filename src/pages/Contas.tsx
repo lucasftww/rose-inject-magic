@@ -1544,7 +1544,7 @@ const Contas = () => {
                             title={rank.name}
                           >
                             {rank.img ? (
-                              <img src={rank.img} alt={rank.name} className="h-8 w-8 object-contain" />
+                              <img src={rank.img} alt={rank.name} className="h-8 w-8 object-contain" loading="lazy" />
                             ) : (
                               <div className="h-8 w-8 rounded-full flex items-center justify-center" style={{ background: "hsl(var(--muted))" }}>
                                 <span className="text-[9px] font-bold text-muted-foreground">?</span>
