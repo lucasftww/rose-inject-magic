@@ -617,7 +617,7 @@ const UsersTab = () => {
                       <button
                         onClick={() => { executeAction("remove_admin", selectedUser.id); setSelectedUser(null); }}
                         disabled={actionLoading !== null}
-                        className="flex items-center gap-1.5 rounded-lg border border-orange-500/30 bg-orange-500/10 px-4 py-2 text-xs font-medium text-orange-500 hover:bg-orange-500/20 disabled:opacity-50"
+                        className="flex items-center gap-1.5 rounded-lg border border-warning/30 bg-warning/10 px-4 py-2 text-xs font-medium text-warning hover:bg-warning/20 disabled:opacity-50"
                       >
                         <ShieldOff className="h-3.5 w-3.5" /> Remover Admin
                       </button>
