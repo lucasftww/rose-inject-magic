@@ -81,6 +81,8 @@ const PedidoChat = () => {
       if (!ticketData) { setLoading(false); return; }
       setTicket(ticketData as any);
 
+      const isLzt = ticketData.metadata?.type === "lzt-account";
+
       const [prodRes, planRes, messagesRes, tutorialRes] = await Promise.all([
         supabase.from("products").select("name").eq("id", ticketData.product_id).single(),
         supabase.from("product_plans").select("name, price").eq("id", ticketData.product_plan_id).single(),
@@ -88,17 +90,26 @@ const PedidoChat = () => {
         supabase.from("product_tutorials").select("tutorial_text, tutorial_file_url").eq("product_id", ticketData.product_id).maybeSingle(),
       ]);
 
-      if (prodRes.data) {
-        setProductName((prodRes.data as any).name);
+      if (isLzt) {
+        const lztGameLabels: Record<string, string> = {
+          valorant: "Conta Valorant", lol: "Conta LoL", fortnite: "Conta Fortnite", minecraft: "Conta Minecraft",
+        };
+        const gameLabel = lztGameLabels[ticketData.metadata?.game] || "Conta LZT";
+        setProductName(ticketData.metadata?.account_name || ticketData.metadata?.title || gameLabel);
+        setPlanName(gameLabel);
+        setPlanPrice(ticketData.metadata?.price_paid || ticketData.metadata?.sell_price || 0);
+      } else {
+        if (prodRes.data) setProductName((prodRes.data as any).name);
+        if (planRes.data) {
+          setPlanName((planRes.data as any).name);
+          setPlanPrice((planRes.data as any).price);
+        }
       }
       if (tutorialRes.data) {
         setTutorialText((tutorialRes.data as any).tutorial_text || null);
         setTutorialFileUrl((tutorialRes.data as any).tutorial_file_url || null);
       }
-      if (planRes.data) {
-        setPlanName((planRes.data as any).name);
-        setPlanPrice((planRes.data as any).price);
-      }
+      if (messagesRes.data) setMessages(messagesRes.data as any[]);
       if (messagesRes.data) setMessages(messagesRes.data as any[]);
 
       if (ticketData.stock_item_id) {
