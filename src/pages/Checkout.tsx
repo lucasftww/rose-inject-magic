@@ -52,7 +52,7 @@ const Checkout = () => {
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/");
-    if (!authLoading && user && items.length === 0 && !paymentId) navigate("/carrinho");
+    if (!authLoading && user && items.length === 0 && !paymentId) navigate("/");
   }, [authLoading, user, items.length, navigate, paymentId]);
 
   useEffect(() => {
