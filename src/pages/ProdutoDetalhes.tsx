@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import { ArrowLeft, ChevronLeft, ChevronRight, Cpu, Fingerprint, Loader2, Monitor, Package, Play, Sparkles, Star, UserCheck, Zap } from "lucide-react";
@@ -8,6 +8,7 @@ import { getYouTubeId, getYouTubeEmbedUrl, getYouTubeThumbnail } from "@/lib/vid
 import { useCart } from "@/hooks/useCart";
 import { useReseller } from "@/hooks/useReseller";
 import { toast } from "@/hooks/use-toast";
+import { trackViewContent, trackInitiateCheckout, resolveCategory } from "@/lib/metaPixel";
 
 interface ProductPlan {
   id: string;
@@ -153,6 +154,21 @@ const ProdutoDetalhes = () => {
     }
   }, [sortedPlans, selectedPlanId]);
 
+  // ViewContent tracking
+  const viewTracked = useRef(false);
+  useEffect(() => {
+    if (product && game && sortedPlans.length > 0 && !viewTracked.current) {
+      viewTracked.current = true;
+      const plan = sortedPlans[0];
+      trackViewContent({
+        contentName: product.name,
+        contentCategory: resolveCategory(game.name),
+        contentIds: [product.id],
+        value: Number(plan.price),
+      });
+    }
+  }, [product, game, sortedPlans]);
+
   const selectedPlan = sortedPlans.find(p => p.id === selectedPlanId);
 
   const buyNow = () => {
@@ -161,6 +177,15 @@ const ProdutoDetalhes = () => {
     const finalItemPrice = hasResellerDiscount
       ? Number(selectedPlan.price) * (1 - discountPercent / 100)
       : Number(selectedPlan.price);
+
+    // InitiateCheckout tracking
+    trackInitiateCheckout({
+      contentName: product.name,
+      contentCategory: resolveCategory(game?.name),
+      contentIds: [product.id],
+      value: finalItemPrice,
+    });
+
     const added = addItem({
       productId: product.id,
       productName: product.name,
