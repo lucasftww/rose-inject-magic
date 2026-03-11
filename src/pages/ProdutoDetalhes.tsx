@@ -62,7 +62,7 @@ interface ReviewData {
 const ProdutoDetalhes = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { addItem, setCartOpen } = useCart();
+  const { addItem } = useCart();
   const { isReseller, isResellerForProduct, getDiscountedPrice, discountPercent } = useReseller();
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [game, setGame] = useState<GameInfo | null>(null);
