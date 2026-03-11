@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
 
 export interface CartItem {
   productId: string;
@@ -25,8 +26,6 @@ interface CartContextType {
   totalPrice: number;
   requiresAuth: boolean;
   clearRequiresAuth: () => void;
-  cartOpen: boolean;
-  setCartOpen: (open: boolean) => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -43,7 +42,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
   });
   const [requiresAuth, setRequiresAuth] = useState(false);
-  const [cartOpen, setCartOpen] = useState(false);
 
   useEffect(() => {
     localStorage.setItem(CART_KEY, JSON.stringify(items));
@@ -52,7 +50,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const clearRequiresAuth = useCallback(() => setRequiresAuth(false), []);
 
   const addItem = (item: Omit<CartItem, "quantity">, isLoggedIn?: boolean): boolean => {
-    // If caller doesn't pass auth status, check localStorage as fallback
     let loggedIn = isLoggedIn;
     if (loggedIn === undefined) {
       const sessionKey = Object.keys(localStorage).find(k => k.startsWith("sb-") && k.endsWith("-auth-token"));
@@ -71,27 +68,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       return false;
     }
 
-    setItems((prev) => {
-      if (item.type === "lzt-account") {
-        const existing = prev.find(
-          (i) => i.type === "lzt-account" && i.lztItemId === item.lztItemId
-        );
-        if (existing) return prev;
-        return [...prev, { ...item, quantity: 1 }];
-      }
-
-      const existing = prev.find(
-        (i) => i.productId === item.productId && i.planId === item.planId
-      );
-      if (existing) {
-        return prev.map((i) =>
-          i.productId === item.productId && i.planId === item.planId
-            ? { ...i, quantity: i.quantity + 1 }
-            : i
-        );
-      }
-      return [...prev, { ...item, quantity: 1 }];
-    });
+    // Direct checkout: replace cart with single item
+    setItems([{ ...item, quantity: 1 }]);
     return true;
   };
 
@@ -122,7 +100,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <CartContext.Provider
-      value={{ items, addItem, removeItem, updateQuantity, clearCart, totalItems, totalPrice, requiresAuth, clearRequiresAuth, cartOpen, setCartOpen }}
+      value={{ items, addItem, removeItem, updateQuantity, clearCart, totalItems, totalPrice, requiresAuth, clearRequiresAuth }}
     >
       {children}
     </CartContext.Provider>

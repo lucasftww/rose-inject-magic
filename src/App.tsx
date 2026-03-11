@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { CartProvider } from "@/hooks/useCart";
 import Index from "./pages/Index";
-import Carrinho from "./pages/Carrinho";
 import Produtos from "./pages/Produtos";
 import ProdutoDetalhes from "./pages/ProdutoDetalhes";
 import Contas from "./pages/Contas";
@@ -56,7 +55,7 @@ const App = () => (
               <Route path="/meus-pedidos" element={<MeusPedidos />} />
               <Route path="/pedido/:id" element={<PedidoChat />} />
               <Route path="/checkout" element={<Checkout />} />
-              <Route path="/carrinho" element={<Carrinho />} />
+              
               <Route path="/raspadinha" element={<Raspadinha />} />
               <Route path="/termos" element={<TermosDeUso />} />
               <Route path="/privacidade" element={<PoliticaPrivacidade />} />

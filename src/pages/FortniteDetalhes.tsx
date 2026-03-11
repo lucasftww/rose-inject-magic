@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/Header";
 import {
   ArrowLeft, Loader2, ChevronLeft, ChevronRight,
-  CheckCircle2, Shield, X, ShoppingCart, Check, Gift,
+  CheckCircle2, Shield, X, Zap, Gift,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useMemo } from "react";
@@ -88,10 +88,7 @@ const FortniteDetalhes = () => {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<InventoryTab>("skins");
-  const { addItem, items } = useCart();
-  const [addedToCart, setAddedToCart] = useState(false);
-
-  const isInCart = items.some((i) => i.type === "lzt-account" && i.lztItemId === id);
+  const { addItem } = useCart();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["lzt-account-detail", id],
@@ -145,8 +142,8 @@ const FortniteDetalhes = () => {
   // Gallery uses skins, fallback to pickaxes
   const galleryPreviews = skinPreviews.length > 0 ? skinPreviews : pickaxePreviews;
 
-  const handleAddToCart = () => {
-    if (!item || isInCart) return;
+  const handleBuyNow = () => {
+    if (!item) return;
     const title = `Conta Fortnite${vbucks > 0 ? ` | ${vbucks} V-Bucks` : ""}${skinCount > 0 ? ` | ${skinCount} Skins` : ""}`;
     const priceBRL = getPrice(item, "fortnite");
     const added = addItem({
@@ -162,10 +159,7 @@ const FortniteDetalhes = () => {
       lztCurrency: item.price_currency || "rub",
       lztGame: "fortnite",
     });
-    if (!added) return;
-    setAddedToCart(true);
-    toast({ title: "Adicionado ao carrinho!", description: title });
-    setTimeout(() => setAddedToCart(false), 2000);
+    if (added) navigate("/checkout");
   };
 
   const tabs: { id: InventoryTab; label: string; count: number }[] = [
@@ -331,20 +325,15 @@ const FortniteDetalhes = () => {
                   </div>
 
                   <button
-                    onClick={handleAddToCart}
-                    disabled={isInCart}
-                    className={`group relative flex w-full items-center justify-center gap-2 border-2 px-5 py-3 text-xs font-bold uppercase tracking-[0.25em] rounded-lg transition-all ${isInCart || addedToCart ? "cursor-default" : "hover:shadow-lg"}`}
+                    onClick={handleBuyNow}
+                    className="group relative flex w-full items-center justify-center gap-2 border-2 px-5 py-3 text-xs font-bold uppercase tracking-[0.25em] rounded-lg transition-all hover:shadow-lg"
                     style={{
-                      borderColor: isInCart || addedToCart ? FN_PURPLE : "rgba(255,255,255,0.2)",
-                      color: isInCart || addedToCart ? FN_PURPLE : "hsl(var(--foreground))",
-                      background: isInCart || addedToCart ? `${FN_PURPLE}15` : "transparent",
+                      borderColor: "rgba(255,255,255,0.2)",
+                      color: "hsl(var(--foreground))",
                     }}
                   >
-                    {isInCart || addedToCart ? (
-                      <><Check className="h-4 w-4" />No Carrinho</>
-                    ) : (
-                      <><ShoppingCart className="h-4 w-4" />Adicionar ao Carrinho</>
-                    )}
+                    <Zap className="h-4 w-4" />
+                    COMPRAR AGORA
                   </button>
 
                   {item.item_id && (
