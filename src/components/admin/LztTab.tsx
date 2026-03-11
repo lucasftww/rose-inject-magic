@@ -29,10 +29,10 @@ interface LztSale {
 const SALES_PER_PAGE = 15;
 
 const gameMarkupFields = [
-  { key: "markup_valorant" as const, label: "Valorant", color: "text-red-400" },
-  { key: "markup_lol" as const, label: "League of Legends", color: "text-amber-400" },
-  { key: "markup_fortnite" as const, label: "Fortnite", color: "text-blue-400" },
-  { key: "markup_minecraft" as const, label: "Minecraft", color: "text-emerald-400" },
+  { key: "markup_valorant" as const, label: "Valorant", color: "text-destructive" },
+  { key: "markup_lol" as const, label: "League of Legends", color: "text-warning" },
+  { key: "markup_fortnite" as const, label: "Fortnite", color: "text-info" },
+  { key: "markup_minecraft" as const, label: "Minecraft", color: "text-positive" },
 ];
 
 const LztTab = () => {

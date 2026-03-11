@@ -26,9 +26,9 @@ interface Ticket {
 }
 
 const statusColors: Record<string, string> = {
-  open: "bg-amber-500/20 text-amber-400 border border-amber-500/20",
-  delivered: "bg-blue-500/20 text-blue-400 border border-blue-500/20",
-  resolved: "bg-emerald-500/20 text-emerald-400 border border-emerald-500/20",
+  open: "bg-warning/20 text-warning border border-warning/20",
+  delivered: "bg-info/20 text-info border border-info/20",
+  resolved: "bg-positive/20 text-positive border border-positive/20",
   closed: "bg-muted text-muted-foreground border border-border",
   banned: "bg-destructive/20 text-destructive border border-destructive/20",
   finished: "bg-muted text-muted-foreground border border-border",
@@ -170,9 +170,9 @@ const MeusPedidos = () => {
         {/* Header */}
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between mb-8">
           <div className="flex items-center gap-4">
-            <div className={`flex h-14 w-14 items-center justify-center rounded-2xl border ${isContas ? "border-blue-500/20 bg-blue-500/10" : "border-success/20 bg-success/10"}`}>
+            <div className={`flex h-14 w-14 items-center justify-center rounded-2xl border ${isContas ? "border-info/20 bg-info/10" : "border-success/20 bg-success/10"}`}>
               {isContas ? (
-                <svg fill="currentColor" height="28" width="28" className="text-blue-400" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <svg fill="currentColor" height="28" width="28" className="text-info" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path d="M23.792 2.152a.252.252 0 0 0-.098.083c-3.384 4.23-6.769 8.46-10.15 12.69-.107.093-.025.288.119.265 2.439.003 4.877 0 7.316.001a.66.66 0 0 0 .552-.25c.774-.967 1.55-1.934 2.324-2.903a.72.72 0 0 0 .144-.49c-.002-3.077 0-6.153-.003-9.23.016-.11-.1-.206-.204-.167zM.077 2.166c-.077.038-.074.132-.076.205.002 3.074.001 6.15.001 9.225a.679.679 0 0 0 .158.463l7.64 9.55c.12.152.308.25.505.247 2.455 0 4.91.003 7.365 0 .142.02.222-.174.116-.265C10.661 15.176 5.526 8.766.4 2.35c-.08-.094-.174-.272-.322-.184z"/>
                 </svg>
               ) : (
@@ -215,8 +215,8 @@ const MeusPedidos = () => {
             </div>
           </div>
           <div className="rounded-xl border border-border bg-card px-4 py-3 flex items-center gap-3">
-            <div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
-              <CheckCircle className="h-4 w-4 text-blue-400" />
+            <div className="h-8 w-8 rounded-lg bg-info/10 flex items-center justify-center shrink-0">
+              <CheckCircle className="h-4 w-4 text-info" />
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Entregues</p>
@@ -224,8 +224,8 @@ const MeusPedidos = () => {
             </div>
           </div>
           <div className="rounded-xl border border-border bg-card px-4 py-3 flex items-center gap-3">
-            <div className="h-8 w-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
-              <Clock className="h-4 w-4 text-amber-400" />
+            <div className="h-8 w-8 rounded-lg bg-warning/10 flex items-center justify-center shrink-0">
+              <Clock className="h-4 w-4 text-warning" />
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Em aberto</p>

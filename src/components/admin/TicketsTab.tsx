@@ -34,8 +34,8 @@ interface Message {
 
 const statusOptions = [
   { value: "open", label: "Aberto", color: "bg-success/20 text-success border-success/30" },
-  { value: "delivered", label: "Entregue", color: "bg-blue-500/20 text-blue-400 border-blue-500/30" },
-  { value: "resolved", label: "Resolvido", color: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" },
+  { value: "delivered", label: "Entregue", color: "bg-info/20 text-info border-info/30" },
+  { value: "resolved", label: "Resolvido", color: "bg-positive/20 text-positive border-positive/30" },
   { value: "closed", label: "Encerrado", color: "bg-muted text-muted-foreground border-border" },
   { value: "banned", label: "Banido", color: "bg-destructive/20 text-destructive border-destructive/30" },
   { value: "finished", label: "Finalizado", color: "bg-muted text-muted-foreground border-border" },
@@ -594,7 +594,7 @@ const TicketsTab = () => {
               rel="noopener noreferrer"
               className="flex items-center gap-3 rounded-xl border border-border bg-background/80 p-3 transition-all hover:border-success/40 hover:bg-success/5 group"
             >
-              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors ${isTutorial ? "bg-blue-500/10 text-blue-400 group-hover:bg-blue-500/20" : "bg-amber-500/10 text-amber-400 group-hover:bg-amber-500/20"}`}>
+              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors ${isTutorial ? "bg-info/10 text-info group-hover:bg-info/20" : "bg-warning/10 text-warning group-hover:bg-warning/20"}`}>
                 <IconComp className="h-5 w-5" />
               </div>
               <div className="flex-1 min-w-0">

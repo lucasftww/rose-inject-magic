@@ -679,10 +679,10 @@ const Raspadinha = () => {
   };
 
   const isContas = mode === "contas";
-  const accentColor = isContas ? "hsl(220, 100%, 47%)" : "hsl(197, 100%, 50%)";
-  const accentClass = isContas ? "text-blue-400" : "text-success";
-  const borderAccent = isContas ? "border-blue-500/30" : "border-success/30";
-  const bgAccent = isContas ? "bg-blue-500/10" : "bg-success/10";
+  const accentColor = isContas ? "hsl(var(--info))" : "hsl(var(--success))";
+  const accentClass = isContas ? "text-info" : "text-success";
+  const borderAccent = isContas ? "border-info/30" : "border-success/30";
+  const bgAccent = isContas ? "bg-info/10" : "bg-success/10";
 
   if (loading) {
     return (
@@ -706,17 +706,17 @@ const Raspadinha = () => {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-6 rounded-xl border border-yellow-500/30 bg-yellow-500/10 p-4 flex items-center justify-between gap-4"
+            className="mb-6 rounded-xl border border-warning/30 bg-warning/10 p-4 flex items-center justify-between gap-4"
           >
             <div>
-              <p className="text-sm font-semibold text-yellow-300">🎰 Você tem uma raspadinha pendente!</p>
+              <p className="text-sm font-semibold text-warning">🎰 Você tem uma raspadinha pendente!</p>
               <p className="text-xs text-muted-foreground mt-1">
                 Pagamento confirmado mas o jogo não carregou. Clique para jogar agora.
               </p>
             </div>
             <button
               onClick={handleReplay}
-              className="shrink-0 rounded-lg bg-yellow-500 px-5 py-2.5 text-sm font-bold text-black hover:bg-yellow-400 transition-colors"
+              className="shrink-0 rounded-lg bg-warning px-5 py-2.5 text-sm font-bold text-warning-foreground hover:bg-warning/90 transition-colors"
             >
               Jogar Agora
             </button>
@@ -791,13 +791,13 @@ const Raspadinha = () => {
               disabled={paymentPhase !== "idle" || scratching}
               className={`flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold transition-all ${
                 mode === "contas"
-                  ? "bg-blue-600 text-white shadow"
+                  ? "bg-info text-info-foreground shadow"
                   : "text-muted-foreground hover:text-foreground hover:bg-accent"
               }`}
             >
               <User className="h-4 w-4" />
               Contas
-              <span className="rounded-full bg-blue-500/20 px-2 py-0.5 text-[10px] font-bold text-blue-400 border border-blue-500/30">
+              <span className="rounded-full bg-info/20 px-2 py-0.5 text-[10px] font-bold text-info border border-info/30">
                 R$ 5,50
               </span>
             </button>
@@ -847,7 +847,7 @@ const Raspadinha = () => {
 
                 <div className="text-center mb-6">
                   <div className={`inline-flex items-center gap-2 rounded-full ${bgAccent} border ${borderAccent} px-3 py-1 mb-3`}>
-                    <div className={`h-2 w-2 rounded-full ${isContas ? "bg-blue-500" : "bg-success"} animate-pulse`} />
+                    <div className={`h-2 w-2 rounded-full ${isContas ? "bg-info" : "bg-success"} animate-pulse`} />
                     <span className={`text-xs font-medium ${accentClass}`}>Aguardando pagamento</span>
                   </div>
                   <h2 className="text-xl font-bold text-foreground" style={{ fontFamily: "'Valorant', sans-serif" }}>
@@ -874,7 +874,7 @@ const Raspadinha = () => {
                     />
                     <button
                       onClick={copyCode}
-                      className={`flex items-center gap-1.5 rounded-lg ${isContas ? "bg-blue-600" : "bg-success"} px-4 py-2.5 text-xs font-bold text-white transition-all`}
+                      className={`flex items-center gap-1.5 rounded-lg ${isContas ? "bg-info" : "bg-success"} px-4 py-2.5 text-xs font-bold text-white transition-all`}
                     >
                       {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                       {copied ? "Copiado" : "Copiar"}
@@ -899,10 +899,10 @@ const Raspadinha = () => {
             style={{ boxShadow: `0 0 60px ${accentColor}26` }}
           >
             {/* Decorative corners */}
-            <div className={`absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 ${isContas ? "border-blue-500" : "border-success"} rounded-tl-2xl`} />
-            <div className={`absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 ${isContas ? "border-blue-500" : "border-success"} rounded-tr-2xl`} />
-            <div className={`absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 ${isContas ? "border-blue-500" : "border-success"} rounded-bl-2xl`} />
-            <div className={`absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 ${isContas ? "border-blue-500" : "border-success"} rounded-br-2xl`} />
+            <div className={`absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 ${isContas ? "border-info" : "border-success"} rounded-tl-2xl`} />
+            <div className={`absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 ${isContas ? "border-info" : "border-success"} rounded-tr-2xl`} />
+            <div className={`absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 ${isContas ? "border-info" : "border-success"} rounded-bl-2xl`} />
+            <div className={`absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 ${isContas ? "border-info" : "border-success"} rounded-br-2xl`} />
 
             {/* 3x3 Grid */}
             <div className="grid grid-cols-3 gap-2 md:gap-3">
@@ -915,7 +915,7 @@ const Raspadinha = () => {
                     revealed[i] ? "scale-100 opacity-100" : "scale-75 opacity-30"
                   } ${
                     allRevealed && result?.won && checkWinCell(i)
-                      ? `${bgAccent} border-2 ${isContas ? "border-blue-500" : "border-success"}`
+                      ? `${bgAccent} border-2 ${isContas ? "border-info" : "border-success"}`
                       : "bg-secondary/80 border border-border"
                   } rounded-xl`}
                   style={
@@ -1040,7 +1040,7 @@ const Raspadinha = () => {
                     className={`rounded-lg px-3 py-1 text-xs font-semibold border transition-colors ${
                       quantity === n
                         ? isContas
-                          ? "border-blue-500 bg-blue-500/10 text-blue-400"
+                          ? "border-info bg-info/10 text-info"
                           : "border-success bg-success/10 text-success"
                         : "border-border bg-card text-muted-foreground hover:text-foreground hover:border-muted-foreground/40"
                     }`}
@@ -1062,7 +1062,7 @@ const Raspadinha = () => {
             onClick={allRevealed || paymentPhase === "idle" ? (allRevealed ? resetGame : handlePlay) : undefined}
             disabled={playing || scratching || paymentPhase === "paying"}
             className={`mt-6 relative overflow-hidden rounded-xl px-10 py-4 text-lg font-bold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
-              isContas ? "bg-blue-600 hover:bg-blue-500" : "bg-success hover:bg-success/90"
+              isContas ? "bg-info hover:bg-info/90" : "bg-success hover:bg-success/90"
             }`}
             style={
               !playing && !scratching && paymentPhase !== "paying"

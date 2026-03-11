@@ -437,7 +437,7 @@ const PedidoChat = () => {
                   <p>5️⃣ Na seção <strong className="text-foreground">SENHA</strong>, clique em "Alterar senha"</p>
                   <p className="pl-4">• Coloque a senha atual (fornecida acima)</p>
                   <p className="pl-4">• Defina sua nova senha</p>
-                  <p className="mt-2 text-amber-400 font-medium">⚠️ Altere a senha IMEDIATAMENTE para garantir a segurança.</p>
+                  <p className="mt-2 text-warning font-medium">⚠️ Altere a senha IMEDIATAMENTE para garantir a segurança.</p>
                 </div>
               )}
             </div>
@@ -569,7 +569,7 @@ const PedidoChat = () => {
               rel="noopener noreferrer"
               className="flex items-center gap-3 rounded-xl border border-border bg-background/80 p-3 transition-all hover:border-success/40 hover:bg-success/5 group"
             >
-              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors ${isTutorial ? "bg-blue-500/10 text-blue-400 group-hover:bg-blue-500/20" : "bg-amber-500/10 text-amber-400 group-hover:bg-amber-500/20"}`}>
+              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors ${isTutorial ? "bg-info/10 text-info group-hover:bg-info/20" : "bg-warning/10 text-warning group-hover:bg-warning/20"}`}>
                 <IconComp className="h-5 w-5" />
               </div>
               <div className="flex-1 min-w-0">
@@ -768,7 +768,7 @@ const PedidoChat = () => {
                           rel="noopener noreferrer"
                           className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 transition-all hover:border-success/40 hover:bg-success/5 group"
                         >
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-400 group-hover:bg-amber-500/20">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-warning/10 text-warning group-hover:bg-warning/20">
                             <FolderDown className="h-5 w-5" />
                           </div>
                           <div className="flex-1 min-w-0">
@@ -802,7 +802,7 @@ const PedidoChat = () => {
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                   <div className="flex items-center gap-0.5">
                     {[1, 2, 3, 4, 5].map((star) => (
-                      <Star key={star} className={`h-3.5 w-3.5 ${star <= existingReview.rating ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground/30"}`} />
+                      <Star key={star} className={`h-3.5 w-3.5 ${star <= existingReview.rating ? "fill-warning text-warning" : "text-muted-foreground/30"}`} />
                     ))}
                   </div>
                   <span className="text-muted-foreground/60">Avaliado</span>
@@ -971,7 +971,7 @@ const PedidoChat = () => {
                     <Star
                       className={`h-8 w-8 ${
                         star <= (reviewHover || reviewRating)
-                          ? "fill-yellow-400 text-yellow-400"
+                          ? "fill-warning text-warning"
                           : "text-muted-foreground/30"
                       }`}
                     />
