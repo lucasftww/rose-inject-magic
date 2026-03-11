@@ -142,8 +142,8 @@ const FortniteDetalhes = () => {
   // Gallery uses skins, fallback to pickaxes
   const galleryPreviews = skinPreviews.length > 0 ? skinPreviews : pickaxePreviews;
 
-  const handleAddToCart = () => {
-    if (!item || isInCart) return;
+  const handleBuyNow = () => {
+    if (!item) return;
     const title = `Conta Fortnite${vbucks > 0 ? ` | ${vbucks} V-Bucks` : ""}${skinCount > 0 ? ` | ${skinCount} Skins` : ""}`;
     const priceBRL = getPrice(item, "fortnite");
     const added = addItem({
@@ -159,10 +159,7 @@ const FortniteDetalhes = () => {
       lztCurrency: item.price_currency || "rub",
       lztGame: "fortnite",
     });
-    if (!added) return;
-    setAddedToCart(true);
-    toast({ title: "Adicionado ao carrinho!", description: title });
-    setTimeout(() => setAddedToCart(false), 2000);
+    if (added) navigate("/checkout");
   };
 
   const tabs: { id: InventoryTab; label: string; count: number }[] = [
