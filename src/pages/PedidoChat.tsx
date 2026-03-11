@@ -81,7 +81,8 @@ const PedidoChat = () => {
       if (!ticketData) { setLoading(false); return; }
       setTicket(ticketData as any);
 
-      const isLzt = ticketData.metadata?.type === "lzt-account";
+      const meta = ticketData.metadata as any;
+      const isLzt = meta?.type === "lzt-account";
 
       const [prodRes, planRes, messagesRes, tutorialRes] = await Promise.all([
         supabase.from("products").select("name").eq("id", ticketData.product_id).single(),
