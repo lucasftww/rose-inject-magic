@@ -797,7 +797,7 @@ const Raspadinha = () => {
             >
               <User className="h-4 w-4" />
               Contas
-              <span className="rounded-full bg-blue-500/20 px-2 py-0.5 text-[10px] font-bold text-blue-400 border border-blue-500/30">
+              <span className="rounded-full bg-info/20 px-2 py-0.5 text-[10px] font-bold text-info border border-info/30">
                 R$ 5,50
               </span>
             </button>
