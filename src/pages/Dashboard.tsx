@@ -75,9 +75,9 @@ const Dashboard = () => {
   const [loadingPayments, setLoadingPayments] = useState(false);
 
   const statusColors: Record<string, string> = {
-    open: "bg-amber-500/20 text-amber-400",
-    delivered: "bg-blue-500/20 text-blue-400",
-    resolved: "bg-emerald-500/20 text-emerald-400",
+    open: "bg-warning/20 text-warning",
+    delivered: "bg-success/20 text-success",
+    resolved: "bg-positive/20 text-positive",
     closed: "bg-muted text-muted-foreground",
     banned: "bg-destructive/20 text-destructive",
     finished: "bg-muted text-muted-foreground",
@@ -411,8 +411,8 @@ const Dashboard = () => {
                   </div>
                 </div>
                 <div className="rounded-lg border border-border bg-card px-4 py-3 flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
-                    <CheckCircle className="h-4 w-4 text-blue-400" />
+                   <div className="h-8 w-8 rounded-lg bg-success/10 flex items-center justify-center shrink-0">
+                     <CheckCircle className="h-4 w-4 text-success" />
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Entregues</p>
@@ -420,8 +420,8 @@ const Dashboard = () => {
                   </div>
                 </div>
                 <div className="rounded-lg border border-border bg-card px-4 py-3 flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
-                    <Clock className="h-4 w-4 text-amber-400" />
+                   <div className="h-8 w-8 rounded-lg bg-warning/10 flex items-center justify-center shrink-0">
+                     <Clock className="h-4 w-4 text-warning" />
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Em aberto</p>
@@ -457,8 +457,8 @@ const Dashboard = () => {
                           <Package className="h-3 w-3" />{tickets.filter(t => !t.metadata?.type).length} pedido(s)
                         </span>
                         {tickets.filter(t => !t.metadata?.type && t.status === "open").length > 0 && (
-                          <span className="flex items-center gap-1.5 rounded-full bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-400">
-                            <Clock className="h-3 w-3" />{tickets.filter(t => !t.metadata?.type && t.status === "open").length} aberto(s)
+                           <span className="flex items-center gap-1.5 rounded-full bg-warning/10 px-3 py-1 text-xs font-semibold text-warning">
+                             <Clock className="h-3 w-3" />{tickets.filter(t => !t.metadata?.type && t.status === "open").length} aberto(s)
                           </span>
                         )}
                       </div>
@@ -490,14 +490,14 @@ const Dashboard = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 }}
                   onClick={() => navigate("/meus-pedidos?tipo=contas")}
-                  className="group cursor-pointer relative overflow-hidden rounded-lg border border-border bg-card transition-all duration-300 hover:border-blue-500/50 hover:shadow-[0_0_40px_rgba(59,130,246,0.1)]"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-blue-500/5 -translate-y-1/2 translate-x-1/2" />
+                   className="group cursor-pointer relative overflow-hidden rounded-lg border border-border bg-card transition-all duration-300 hover:border-success/50 hover:shadow-[0_0_40px_hsl(var(--success)/0.1)]"
+                 >
+                   <div className="absolute inset-0 bg-gradient-to-br from-success/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                   <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-success/5 -translate-y-1/2 translate-x-1/2" />
 
                   <div className="relative p-6 flex gap-5 items-start">
                     <div className="flex h-14 w-14 shrink-0 items-center justify-center">
-                      <svg fill="currentColor" height="38" width="38" className="text-blue-400" role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <svg fill="currentColor" height="38" width="38" className="text-success" role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path d="M23.792 2.152a.252.252 0 0 0-.098.083c-3.384 4.23-6.769 8.46-10.15 12.69-.107.093-.025.288.119.265 2.439.003 4.877 0 7.316.001a.66.66 0 0 0 .552-.25c.774-.967 1.55-1.934 2.324-2.903a.72.72 0 0 0 .144-.49c-.002-3.077 0-6.153-.003-9.23.016-.11-.1-.206-.204-.167zM.077 2.166c-.077.038-.074.132-.076.205.002 3.074.001 6.15.001 9.225a.679.679 0 0 0 .158.463l7.64 9.55c.12.152.308.25.505.247 2.455 0 4.91.003 7.365 0 .142.02.222-.174.116-.265C10.661 15.176 5.526 8.766.4 2.35c-.08-.094-.174-.272-.322-.184z"/>
                       </svg>
                     </div>
@@ -505,17 +505,17 @@ const Dashboard = () => {
                       <h3 className="text-base font-bold text-foreground">Contas</h3>
                       <p className="mt-1 text-sm text-muted-foreground">Contas de jogos adquiridas</p>
                       <div className="mt-4 flex items-center gap-3">
-                        <span className="flex items-center gap-1.5 rounded-full bg-blue-500/10 px-3 py-1 text-xs font-semibold text-blue-400">
+                        <span className="flex items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-xs font-semibold text-success">
                           <Smartphone className="h-3 w-3" />{tickets.filter(t => t.metadata?.type === "lzt-account").length} conta(s)
                         </span>
                         {tickets.filter(t => t.metadata?.type === "lzt-account" && t.status === "delivered").length > 0 && (
-                          <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-400">
+                          <span className="flex items-center gap-1.5 rounded-full bg-positive/10 px-3 py-1 text-xs font-semibold text-positive">
                             <CheckCircle className="h-3 w-3" />{tickets.filter(t => t.metadata?.type === "lzt-account" && t.status === "delivered").length} entregue(s)
                           </span>
                         )}
                       </div>
                     </div>
-                    <ChevronRight className="h-5 w-5 text-muted-foreground/40 group-hover:text-blue-400 transition-colors mt-0.5 shrink-0" />
+                    <ChevronRight className="h-5 w-5 text-muted-foreground/40 group-hover:text-success transition-colors mt-0.5 shrink-0" />
                   </div>
 
                   <div className="border-t border-border px-6 py-3 bg-secondary/20">
