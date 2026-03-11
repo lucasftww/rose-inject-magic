@@ -123,6 +123,7 @@ const Checkout = () => {
       const serverTotal = result.validated_amount ?? cartFinalPrice;
       const serverDiscount = result.validated_discount ?? discountAmount;
       setDisplayPrice({ total: serverTotal + serverDiscount, final: serverTotal, discount: serverDiscount });
+      setCartSnapshot([...items]);
       clearCart();
     } catch (err: any) {
       console.error(err);
