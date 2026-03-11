@@ -101,12 +101,6 @@ const MinecraftDetalhes = () => {
     const title = `Conta Minecraft${nickname ? ` · ${nickname}` : ""}${hasJava ? " · Java" : ""}${hasBedrock ? " · Bedrock" : ""}`;
     const priceBRL = getPrice(item, "minecraft");
 
-    trackAddToCart({
-      contentName: title,
-      contentCategory: "Minecraft",
-      contentIds: [`lzt-mc-${item.item_id}`],
-      value: priceBRL,
-    });
     trackInitiateCheckout({
       contentName: title,
       contentCategory: "Minecraft",
