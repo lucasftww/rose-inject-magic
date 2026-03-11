@@ -347,29 +347,30 @@ export const trackPurchase = (
 ) => {
   if (typeof window === "undefined") return;
 
-  // Deterministic event_id: same transactionId = same event_id = Meta deduplicates
-  const eventId = `purchase_${data.transactionId}`;
+  // Deterministic event_id with timestamp suffix for webhook retry dedup
+  const ts = Math.floor(Date.now() / 1000);
+  const eventId = `purchase_${data.transactionId}_${ts}`;
 
   // Guard against double-firing (polling, re-renders, etc.)
   const storageKey = `_meta_purchase_${data.transactionId}`;
   try {
-    if (sessionStorage.getItem(storageKey)) return eventId;
-    sessionStorage.setItem(storageKey, "1");
+    if (sessionStorage.getItem(storageKey)) return;
+    sessionStorage.setItem(storageKey, eventId);
   } catch (_) {}
 
   const customData: Record<string, any> = {
     content_name: data.contentName,
     content_category: data.contentCategory,
     content_ids: data.contentIds,
+    contents: data.contentIds.map((id) => ({ id, quantity: 1 })),
     content_type: "product",
     value: data.value,
     currency: data.currency || "BRL",
-    num_items: data.numItems ?? data.contentIds.length,
     transaction_id: data.transactionId,
   };
 
   if (window.fbq) {
-    window.fbq("track", "Purchase", { ...customData, event_id: eventId });
+    window.fbq("track", "Purchase", customData, { eventID: eventId });
   }
   sendCAPI("Purchase", eventId, customData);
 
