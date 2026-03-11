@@ -1,0 +1,87 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+const PIXEL_ID = "4378225905838577";
+const GRAPH_API_VERSION = "v21.0";
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
+  const ACCESS_TOKEN = Deno.env.get("META_ACCESS_TOKEN");
+  if (!ACCESS_TOKEN) {
+    return new Response(JSON.stringify({ error: "META_ACCESS_TOKEN not configured" }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  try {
+    const body = await req.json();
+    const { event_name, event_id, event_time, user_data, custom_data, event_source_url, action_source } = body;
+
+    if (!event_name || !event_id) {
+      return new Response(JSON.stringify({ error: "event_name and event_id are required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const eventData: Record<string, any> = {
+      event_name,
+      event_id,
+      event_time: event_time || Math.floor(Date.now() / 1000),
+      action_source: action_source || "website",
+      event_source_url,
+      user_data: user_data || {},
+      custom_data: custom_data || {},
+    };
+
+    // Forward fbclid as fbc if present
+    if (user_data?.fbc) {
+      eventData.user_data.fbc = user_data.fbc;
+    }
+    if (user_data?.fbp) {
+      eventData.user_data.fbp = user_data.fbp;
+    }
+
+    const payload = {
+      data: [eventData],
+    };
+
+    const url = `https://graph.facebook.com/${GRAPH_API_VERSION}/${PIXEL_ID}/events?access_token=${ACCESS_TOKEN}`;
+
+    const metaRes = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const metaData = await metaRes.json();
+
+    if (!metaRes.ok) {
+      console.error("Meta CAPI error:", JSON.stringify(metaData));
+      return new Response(JSON.stringify({ error: "Meta API error", details: metaData }), {
+        status: metaRes.status,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    return new Response(JSON.stringify({ success: true, ...metaData }), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (err) {
+    console.error("CAPI function error:", err);
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});
