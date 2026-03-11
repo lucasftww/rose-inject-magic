@@ -138,21 +138,23 @@ const Carrinho = () => {
                       <h3 className="text-sm font-bold text-foreground truncate">{item.productName}</h3>
                       <p className="text-xs text-muted-foreground mt-0.5">Plano: {item.planName}</p>
                     </div>
-                    <div className="flex items-center gap-2 mt-2">
-                      <button
-                        onClick={() => updateQuantity(item.productId, item.planId, item.quantity - 1)}
-                        className="flex h-7 w-7 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:border-success hover:text-success"
-                      >
-                        <Minus className="h-3 w-3" />
-                      </button>
-                      <span className="w-8 text-center text-sm font-bold text-foreground">{item.quantity}</span>
-                      <button
-                        onClick={() => updateQuantity(item.productId, item.planId, item.quantity + 1)}
-                        className="flex h-7 w-7 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:border-success hover:text-success"
-                      >
-                        <Plus className="h-3 w-3" />
-                      </button>
-                    </div>
+                    {item.type !== "lzt-account" && (
+                      <div className="flex items-center gap-2 mt-2">
+                        <button
+                          onClick={() => updateQuantity(item.productId, item.planId, item.quantity - 1)}
+                          className="flex h-7 w-7 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:border-success hover:text-success"
+                        >
+                          <Minus className="h-3 w-3" />
+                        </button>
+                        <span className="w-8 text-center text-sm font-bold text-foreground">{item.quantity}</span>
+                        <button
+                          onClick={() => updateQuantity(item.productId, item.planId, item.quantity + 1)}
+                          className="flex h-7 w-7 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:border-success hover:text-success"
+                        >
+                          <Plus className="h-3 w-3" />
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex flex-col items-end justify-between">
@@ -280,7 +282,7 @@ const Carrinho = () => {
                 className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-success py-3.5 text-sm font-bold uppercase tracking-wider text-success-foreground transition-all hover:shadow-[0_0_30px_hsl(130,99%,41%,0.4)]"
                 style={{ fontFamily: "'Valorant', sans-serif" }}
               >
-                <svg height="20" width="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg>
+                <Zap className="h-4 w-4" />
                 FINALIZAR COMPRA
               </button>
             </motion.div>
