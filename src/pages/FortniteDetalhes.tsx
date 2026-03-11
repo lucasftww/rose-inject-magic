@@ -163,12 +163,6 @@ const FortniteDetalhes = () => {
     const title = `Conta Fortnite${vbucks > 0 ? ` | ${vbucks} V-Bucks` : ""}${skinCount > 0 ? ` | ${skinCount} Skins` : ""}`;
     const priceBRL = getPrice(item, "fortnite");
 
-    trackAddToCart({
-      contentName: title,
-      contentCategory: "Fortnite",
-      contentIds: [`lzt-fn-${item.item_id}`],
-      value: priceBRL,
-    });
     trackInitiateCheckout({
       contentName: title,
       contentCategory: "Fortnite",

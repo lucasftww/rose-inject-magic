@@ -167,12 +167,6 @@ const ContaDetalhes = () => {
     const title = `Conta ${rankName} com ${skinCount} Skins`;
     const priceBRL = getPrice(item, "valorant");
 
-    trackAddToCart({
-      contentName: title,
-      contentCategory: "Valorant",
-      contentIds: [`lzt-${item.item_id}`],
-      value: priceBRL,
-    });
     trackInitiateCheckout({
       contentName: title,
       contentCategory: "Valorant",
