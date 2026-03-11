@@ -156,18 +156,13 @@ const ContaDetalhes = () => {
     setLightboxIndex(null);
     setActiveTab("skins");
   }, [id]);
-  const { addItem, items } = useCart();
-  const [addedToCart, setAddedToCart] = useState(false);
+  const { addItem } = useCart();
 
-  const isInCart = items.some((i) => i.type === "lzt-account" && i.lztItemId === id);
-
-  const handleAddToCart = () => {
-    if (!item || isInCart) return;
+  const handleBuyNow = () => {
+    if (!item) return;
     const rankName = rank?.name || "Unranked";
     const skinCount = item.riot_valorant_skin_count ?? 0;
     const title = `Conta ${rankName} com ${skinCount} Skins`;
-    
-    // Use server-calculated price_brl with correct markup
     const priceBRL = getPrice(item, "valorant");
 
     const added = addItem({
@@ -183,10 +178,7 @@ const ContaDetalhes = () => {
       lztCurrency: item.price_currency || "rub",
       lztGame: "valorant",
     });
-    if (!added) return;
-    setAddedToCart(true);
-    toast({ title: "Adicionado ao carrinho!", description: title });
-    setTimeout(() => setAddedToCart(false), 2000);
+    if (added) navigate("/checkout");
   };
 
   const { data, isLoading, error } = useQuery({
