@@ -188,7 +188,7 @@ const Avaliacoes = () => {
           {reviews.length > 0 && (
             <div className="mt-6 inline-flex items-center gap-4 rounded-xl border border-border bg-card px-6 py-3">
               <div className="flex items-center gap-1.5">
-                <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+                <Star className="h-5 w-5 fill-warning text-warning" />
                 <span className="text-xl font-bold text-foreground">{avgRating}</span>
               </div>
               <div className="h-6 w-px bg-border" />
