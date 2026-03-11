@@ -43,7 +43,7 @@
       fbq('track', 'PageView');
     </script>
 
-    <!-- Click ID Tracker: captura fbclid, gclid, etc -->
+    <!-- Click ID Tracker: captura fbclid, gclid, ttclid e UTMs -->
     <script>
       (function(){
         try {
@@ -52,8 +52,8 @@
           clickIds.forEach(function(key){
             var val = params.get(key);
             if(val) {
-              sessionStorage.setItem('_ck_'+key, val);
-              try { localStorage.setItem('_ck_'+key, val); } catch(e){}
+              try { localStorage.setItem(key, val); } catch(e){}
+              try { sessionStorage.setItem('_ck_'+key, val); } catch(e){}
             }
           });
         } catch(e){}
@@ -72,7 +72,7 @@
           var utmKeys = ['utm_source','utm_medium','utm_campaign','utm_content','utm_term','fbclid','sck'];
           var stored = {};
           utmKeys.forEach(function(key){
-            var val = sessionStorage.getItem('_ck_'+key);
+            var val = sessionStorage.getItem('_ck_'+key) || localStorage.getItem(key);
             if(val) stored[key] = val;
           });
           document.addEventListener('click', function(e){
