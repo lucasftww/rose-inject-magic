@@ -399,7 +399,7 @@ const LolDetalhes = () => {
                     <div>
                       <p className="text-[10px] text-muted-foreground mb-0.5">Por</p>
                       <p className="text-2xl font-bold" style={{ color: LOL_BLUE }}>
-                        {formatPrice(item.price, item.price_currency)}
+                        {getDisplayPrice(item, "lol")}
                       </p>
                     </div>
                   </div>
