@@ -792,7 +792,7 @@ const FortniteCard = ({ item, skinsDb, formatPrice }: { item: LztItem; skinsDb: 
         </div>
 
         <div className="mt-4 flex items-end justify-between">
-          <p className="text-xl font-bold" style={{ color: FN_PURPLE }}>{formatPrice(item.price, item.price_currency)}</p>
+          <p className="text-xl font-bold" style={{ color: FN_PURPLE }}>{getDisplayPrice(item, "fortnite")}</p>
           <button className="flex items-center gap-1.5 rounded border border-border px-4 py-2 text-xs font-medium text-muted-foreground transition-colors hover:border-[hsl(265,80%,65%)] hover:text-[hsl(265,80%,65%)]">
             Ver produto
           </button>
