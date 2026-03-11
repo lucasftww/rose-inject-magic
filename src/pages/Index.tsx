@@ -72,6 +72,7 @@ interface LztItem {
       buddies?: string;
     };
   };
+  price_brl?: number;
 }
 
 const fetchAllValorantSkins = async (): Promise<Map<string, { name: string; image: string }>> => {
