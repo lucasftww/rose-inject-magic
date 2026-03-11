@@ -4,7 +4,7 @@ import { LogOut, User, ChevronDown, Settings, ShieldAlert, Package, Menu, X } fr
 import { useCart } from "@/hooks/useCart";
 import logoRoyal from "@/assets/logo-royal.png";
 import AuthModal from "@/components/AuthModal";
-import CartSheet from "@/components/CartSheet";
+
 import { useAuth } from "@/hooks/useAuth";
 import { AnimatePresence, motion } from "framer-motion";
 import DiscordBanner from "@/components/DiscordBanner";
