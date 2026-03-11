@@ -408,7 +408,7 @@ const PedidoChat = () => {
               <div className="flex h-5 w-5 items-center justify-center rounded-full bg-success/20">
                 <ShieldCheck className="h-3 w-3 text-success" />
               </div>
-              <span className="text-xs font-bold text-foreground">Valorant and League Of Legends login data:</span>
+              <span className="text-xs font-bold text-foreground">Dados de acesso da conta:</span>
             </div>
             
             <CopyField label="Login" value={login} />
