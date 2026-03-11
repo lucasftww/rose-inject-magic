@@ -352,20 +352,15 @@ const MinecraftDetalhes = () => {
                   </div>
 
                   <button
-                    onClick={handleAddToCart}
-                    disabled={isInCart}
-                    className={`group relative flex w-full items-center justify-center gap-2 border-2 px-5 py-3 text-xs font-bold uppercase tracking-[0.25em] rounded-lg transition-all ${isInCart || addedToCart ? "cursor-default" : "hover:shadow-lg"}`}
+                    onClick={handleBuyNow}
+                    className="group relative flex w-full items-center justify-center gap-2 border-2 px-5 py-3 text-xs font-bold uppercase tracking-[0.25em] rounded-lg transition-all hover:shadow-lg"
                     style={{
-                      borderColor: isInCart || addedToCart ? MC_GREEN : "rgba(255,255,255,0.2)",
-                      color: isInCart || addedToCart ? MC_GREEN : "hsl(var(--foreground))",
-                      background: isInCart || addedToCart ? `${MC_GREEN}15` : "transparent",
+                      borderColor: "rgba(255,255,255,0.2)",
+                      color: "hsl(var(--foreground))",
                     }}
                   >
-                    {isInCart || addedToCart ? (
-                      <><Check className="h-4 w-4" />No Carrinho</>
-                    ) : (
-                      <><ShoppingCart className="h-4 w-4" />Adicionar ao Carrinho</>
-                    )}
+                    <Zap className="h-4 w-4" />
+                    COMPRAR AGORA
                   </button>
 
                   {item.item_id && (
