@@ -94,9 +94,7 @@ interface ChampPreview {
 const LolDetalhes = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { calcPrice: rawCalcPrice, formatPrice: rawFormatPrice } = useLztMarkup();
-  const calcPrice = (price: number, currency?: string) => rawCalcPrice(price, currency, "lol");
-  const formatPrice = (price: number, currency?: string) => rawFormatPrice(price, currency, "lol");
+  const { getPrice, getDisplayPrice } = useLztMarkup();
   const [activeTab, setActiveTab] = useState<"skins" | "champions">("skins");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
