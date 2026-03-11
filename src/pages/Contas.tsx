@@ -610,7 +610,7 @@ const LolCard = ({ item, champKeyMap, formatPrice }: { item: LztItem; champKeyMa
         {/* Rank + WR */}
         <div className="flex items-center gap-2">
           {rankFilterData?.img ? (
-            <img src={rankFilterData.img} alt={rankText} className="h-7 w-7 object-contain flex-shrink-0" />
+            <img src={rankFilterData.img} alt={rankText} className="h-7 w-7 object-contain flex-shrink-0" loading="lazy" />
           ) : (
             <div className="h-4 w-4 rounded-full flex-shrink-0" style={{ background: rankColor }} />
           )}
