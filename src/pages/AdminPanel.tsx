@@ -547,7 +547,7 @@ const UsersTab = () => {
                         </div>
                         <div className="flex flex-col items-end shrink-0 ml-2">
                           <span className="text-xs font-bold text-foreground">R$ {(p.amount / 100).toFixed(2)}</span>
-                          <span className={`text-[10px] font-bold ${p.status === "COMPLETED" ? "text-success" : p.status === "ACTIVE" ? "text-amber-400" : "text-muted-foreground"}`}>
+                          <span className={`text-[10px] font-bold ${p.status === "COMPLETED" ? "text-success" : p.status === "ACTIVE" ? "text-warning" : "text-muted-foreground"}`}>
                             {p.status === "COMPLETED" ? "Pago" : p.status === "ACTIVE" ? "Pendente" : p.status}
                           </span>
                         </div>

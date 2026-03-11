@@ -1062,7 +1062,7 @@ const Raspadinha = () => {
             onClick={allRevealed || paymentPhase === "idle" ? (allRevealed ? resetGame : handlePlay) : undefined}
             disabled={playing || scratching || paymentPhase === "paying"}
             className={`mt-6 relative overflow-hidden rounded-xl px-10 py-4 text-lg font-bold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
-              isContas ? "bg-blue-600 hover:bg-blue-500" : "bg-success hover:bg-success/90"
+              isContas ? "bg-info hover:bg-info/90" : "bg-success hover:bg-success/90"
             }`}
             style={
               !playing && !scratching && paymentPhase !== "paying"

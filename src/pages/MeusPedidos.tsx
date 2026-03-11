@@ -224,8 +224,8 @@ const MeusPedidos = () => {
             </div>
           </div>
           <div className="rounded-xl border border-border bg-card px-4 py-3 flex items-center gap-3">
-            <div className="h-8 w-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
-              <Clock className="h-4 w-4 text-amber-400" />
+            <div className="h-8 w-8 rounded-lg bg-warning/10 flex items-center justify-center shrink-0">
+              <Clock className="h-4 w-4 text-warning" />
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Em aberto</p>
