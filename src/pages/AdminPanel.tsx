@@ -696,9 +696,9 @@ const UsersTab = () => {
             ) : (
               <div className="space-y-3">
                 {showOrdersUser.orders.map((order) => {
-                  const statusColor = order.status === "delivered" ? "text-blue-400 bg-blue-500/20"
+                  const statusColor = order.status === "delivered" ? "text-info bg-info/20"
                     : order.status === "open" ? "text-success bg-success/20"
-                    : order.status === "resolved" ? "text-emerald-400 bg-emerald-500/20"
+                    : order.status === "resolved" ? "text-positive bg-positive/20"
                     : "text-muted-foreground bg-muted";
 
                   return (

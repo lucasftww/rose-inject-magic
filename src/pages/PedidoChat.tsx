@@ -971,7 +971,7 @@ const PedidoChat = () => {
                     <Star
                       className={`h-8 w-8 ${
                         star <= (reviewHover || reviewRating)
-                          ? "fill-yellow-400 text-yellow-400"
+                          ? "fill-warning text-warning"
                           : "text-muted-foreground/30"
                       }`}
                     />

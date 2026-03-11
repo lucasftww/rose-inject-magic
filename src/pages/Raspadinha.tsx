@@ -1040,7 +1040,7 @@ const Raspadinha = () => {
                     className={`rounded-lg px-3 py-1 text-xs font-semibold border transition-colors ${
                       quantity === n
                         ? isContas
-                          ? "border-blue-500 bg-blue-500/10 text-blue-400"
+                          ? "border-info bg-info/10 text-info"
                           : "border-success bg-success/10 text-success"
                         : "border-border bg-card text-muted-foreground hover:text-foreground hover:border-muted-foreground/40"
                     }`}
