@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/Header";
 import {
   ArrowLeft, Shield, Loader2, ChevronLeft, ChevronRight,
-  CheckCircle2, Swords, Star, X, ShoppingCart, Check, Trophy, Globe, TrendingUp,
+  CheckCircle2, Swords, Star, X, Zap, Trophy, Globe, TrendingUp,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useMemo, useEffect } from "react";
@@ -98,10 +98,7 @@ const LolDetalhes = () => {
   const [activeTab, setActiveTab] = useState<"skins" | "champions">("skins");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-  const { addItem, items } = useCart();
-  const [addedToCart, setAddedToCart] = useState(false);
-
-  const isInCart = items.some((i) => i.type === "lzt-account" && i.lztItemId === id);
+  const { addItem } = useCart();
 
   // Fetch account detail
   const { data, isLoading, error } = useQuery({
@@ -203,8 +200,8 @@ const LolDetalhes = () => {
           splashImage: `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${c.champName}_0.jpg`,
         }));
 
-  const handleAddToCart = () => {
-    if (!item || isInCart) return;
+  const handleBuyNow = () => {
+    if (!item) return;
     const title = `Conta LoL ${rankText} Nv. ${level} | ${champCount} Campeões | ${skinCount} Skins`;
     const priceBRL = getPrice(item, "lol");
     const added = addItem({
@@ -220,10 +217,7 @@ const LolDetalhes = () => {
       lztCurrency: item.price_currency || "rub",
       lztGame: "lol",
     });
-    if (!added) return;
-    setAddedToCart(true);
-    toast({ title: "Adicionado ao carrinho!", description: title });
-    setTimeout(() => setAddedToCart(false), 2000);
+    if (added) navigate("/checkout");
   };
 
   const LOL_BLUE = "hsl(198,100%,45%)";
@@ -405,30 +399,15 @@ const LolDetalhes = () => {
                   </div>
 
                   <button
-                    onClick={handleAddToCart}
-                    disabled={isInCart}
-                    className={`group relative flex w-full items-center justify-center gap-2 border-2 px-5 py-3 text-xs font-bold uppercase tracking-[0.25em] rounded-lg transition-all ${
-                      isInCart || addedToCart
-                        ? "cursor-default"
-                        : "hover:shadow-lg"
-                    }`}
+                    onClick={handleBuyNow}
+                    className="group relative flex w-full items-center justify-center gap-2 border-2 px-5 py-3 text-xs font-bold uppercase tracking-[0.25em] rounded-lg transition-all hover:shadow-lg"
                     style={{
-                      borderColor: isInCart || addedToCart ? LOL_BLUE : "rgba(255,255,255,0.2)",
-                      color: isInCart || addedToCart ? LOL_BLUE : "hsl(var(--foreground))",
-                      background: isInCart || addedToCart ? `${LOL_BLUE}15` : "transparent",
+                      borderColor: "rgba(255,255,255,0.2)",
+                      color: "hsl(var(--foreground))",
                     }}
                   >
-                    {isInCart || addedToCart ? (
-                      <>
-                        <Check className="h-4 w-4" />
-                        No Carrinho
-                      </>
-                    ) : (
-                      <>
-                        <ShoppingCart className="h-4 w-4" />
-                        Adicionar ao Carrinho
-                      </>
-                    )}
+                    <Zap className="h-4 w-4" />
+                    COMPRAR AGORA
                   </button>
 
                   {item.item_id && (

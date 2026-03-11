@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
-import { ArrowLeft, ChevronLeft, ChevronRight, Cpu, Fingerprint, Loader2, Monitor, Package, Play, ShoppingCart, Sparkles, Star, UserCheck, Zap } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, Cpu, Fingerprint, Loader2, Monitor, Package, Play, Sparkles, Star, UserCheck, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { getYouTubeId, getYouTubeEmbedUrl, getYouTubeThumbnail } from "@/lib/videoUtils";
@@ -62,7 +62,7 @@ interface ReviewData {
 const ProdutoDetalhes = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { addItem, setCartOpen } = useCart();
+  const { addItem } = useCart();
   const { isReseller, isResellerForProduct, getDiscountedPrice, discountPercent } = useReseller();
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [game, setGame] = useState<GameInfo | null>(null);
@@ -155,8 +155,8 @@ const ProdutoDetalhes = () => {
 
   const selectedPlan = sortedPlans.find(p => p.id === selectedPlanId);
 
-  const addToCart = (): boolean => {
-    if (!product || !selectedPlan) return false;
+  const buyNow = () => {
+    if (!product || !selectedPlan) return;
     const hasResellerDiscount = isReseller && isResellerForProduct(product.id);
     const finalItemPrice = hasResellerDiscount
       ? Number(selectedPlan.price) * (1 - discountPercent / 100)
@@ -169,9 +169,7 @@ const ProdutoDetalhes = () => {
       planName: selectedPlan.name,
       price: finalItemPrice,
     });
-    if (!added) return false;
-    toast({ title: "Adicionado ao carrinho!", description: `${product.name} - ${selectedPlan.name}` });
-    return true;
+    if (added) navigate("/checkout");
   };
 
   const prevMedia = () => setSelectedMediaIndex(i => (i > 0 ? i - 1 : allMedia.length - 1));
@@ -457,24 +455,13 @@ const ProdutoDetalhes = () => {
                         <span className="text-2xl font-bold text-success">R$ {Number(selectedPlan.price).toFixed(2)}</span>
                       )}
                     </div>
-                    <div className="flex gap-2.5">
-                      <button
-                        onClick={() => {
-                          const added = addToCart();
-                          if (added !== false) setCartOpen(true);
-                        }}
-                        className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-success py-3.5 text-sm font-bold uppercase tracking-wider text-success-foreground transition-all hover:shadow-[0_0_30px_hsl(130,99%,41%,0.4)]"
-                        style={{ fontFamily: "'Valorant', sans-serif" }}>
-                        <ShoppingCart className="h-4 w-4" />
-                        COMPRAR AGORA
-                      </button>
-                      <button
-                        onClick={addToCart}
-                        className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-border bg-card py-3.5 text-sm font-semibold text-foreground transition-all hover:border-success/50 hover:text-success">
-                        <ShoppingCart className="h-4 w-4" />
-                        Carrinho
-                      </button>
-                    </div>
+                    <button
+                      onClick={buyNow}
+                      className="flex w-full items-center justify-center gap-2 rounded-lg bg-success py-3.5 text-sm font-bold uppercase tracking-wider text-success-foreground transition-all hover:shadow-[0_0_30px_hsl(130,99%,41%,0.4)]"
+                      style={{ fontFamily: "'Valorant', sans-serif" }}>
+                      <Zap className="h-4 w-4" />
+                      COMPRAR AGORA
+                    </button>
                   </div>
                 )}
               </div>

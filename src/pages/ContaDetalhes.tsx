@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { throwApiError } from "@/lib/apiErrors";
 import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/Header";
-import { ArrowLeft, Shield, Loader2, ChevronRight, ChevronLeft, ChevronRight as ChevronRightIcon, CheckCircle2, Swords, Users, Star, X, ShoppingCart, Check } from "lucide-react";
+import { ArrowLeft, Shield, Loader2, ChevronRight, ChevronLeft, ChevronRight as ChevronRightIcon, CheckCircle2, Swords, Users, Star, X, Zap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useMemo, useCallback, useEffect, forwardRef } from "react";
 import { useCart } from "@/hooks/useCart";
@@ -156,18 +156,13 @@ const ContaDetalhes = () => {
     setLightboxIndex(null);
     setActiveTab("skins");
   }, [id]);
-  const { addItem, items } = useCart();
-  const [addedToCart, setAddedToCart] = useState(false);
+  const { addItem } = useCart();
 
-  const isInCart = items.some((i) => i.type === "lzt-account" && i.lztItemId === id);
-
-  const handleAddToCart = () => {
-    if (!item || isInCart) return;
+  const handleBuyNow = () => {
+    if (!item) return;
     const rankName = rank?.name || "Unranked";
     const skinCount = item.riot_valorant_skin_count ?? 0;
     const title = `Conta ${rankName} com ${skinCount} Skins`;
-    
-    // Use server-calculated price_brl with correct markup
     const priceBRL = getPrice(item, "valorant");
 
     const added = addItem({
@@ -183,10 +178,7 @@ const ContaDetalhes = () => {
       lztCurrency: item.price_currency || "rub",
       lztGame: "valorant",
     });
-    if (!added) return;
-    setAddedToCart(true);
-    toast({ title: "Adicionado ao carrinho!", description: title });
-    setTimeout(() => setAddedToCart(false), 2000);
+    if (added) navigate("/checkout");
   };
 
   const { data, isLoading, error } = useQuery({
@@ -472,26 +464,12 @@ const ContaDetalhes = () => {
                   </div>
 
                   <button
-                    onClick={handleAddToCart}
-                    disabled={isInCart}
-                    className={`btn-shine group relative flex w-full items-center justify-center gap-2 border-2 px-5 py-3 text-xs font-bold uppercase tracking-[0.25em] transition-all ${
-                      isInCart || addedToCart
-                        ? "border-success bg-success/10 text-success cursor-default"
-                        : "border-foreground/30 text-foreground hover:border-success hover:text-success hover:shadow-[0_0_30px_hsl(130,99%,41%,0.2)]"
-                    }`}
+                    onClick={handleBuyNow}
+                    className="btn-shine group relative flex w-full items-center justify-center gap-2 border-2 px-5 py-3 text-xs font-bold uppercase tracking-[0.25em] transition-all border-foreground/30 text-foreground hover:border-success hover:text-success hover:shadow-[0_0_30px_hsl(130,99%,41%,0.2)]"
                     style={{ fontFamily: "'Valorant', sans-serif" }}
                   >
-                    {isInCart || addedToCart ? (
-                      <>
-                        <Check className="h-4 w-4" />
-                        No Carrinho
-                      </>
-                    ) : (
-                      <>
-                        <ShoppingCart className="h-4 w-4" />
-                        Adicionar ao Carrinho
-                      </>
-                    )}
+                    <Zap className="h-4 w-4" />
+                    COMPRAR AGORA
                   </button>
 
                   {item.item_id && (
