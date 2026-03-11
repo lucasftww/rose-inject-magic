@@ -1,12 +1,18 @@
 /**
  * Meta Pixel + Conversions API (CAPI) tracking
  * Pixel ID: 4378225905838577
- * 
+ *
  * Browser: fbq events with Advanced Matching
  * Server: Edge Function meta-capi with event_id deduplication
- * 
+ *
  * Events: ViewContent, InitiateCheckout, Purchase
  * Categories: Valorant, Fortnite, Roblox, Minecraft, LoL, CS2, GTA
+ *
+ * user_data sent to CAPI:
+ *   fbp, fbc, client_user_agent (browser)
+ *   client_ip_address (server-side)
+ *   em (SHA-256 hashed email)
+ *   external_id (Supabase user id)
  */
 
 declare global {
@@ -29,34 +35,39 @@ const sha256 = async (message: string): Promise<string> => {
   }
 };
 
-// ─── Advanced Matching ──────────────────────────────────────────────────────
+// ─── Cached user identity for CAPI ─────────────────────────────────────────
+
+let _cachedUserData: { em?: string; external_id?: string } = {};
 
 /**
  * Update pixel with Advanced Matching data when user logs in.
- * Call this after authentication to improve Event Match Quality.
+ * Also caches hashed email + external_id for CAPI calls.
  */
 export const setAdvancedMatching = async (userData: {
   email?: string | null;
   phone?: string | null;
   externalId?: string | null;
 }) => {
-  if (typeof window === "undefined" || !window.fbq) return;
-
   const matchData: Record<string, string> = {};
 
   if (userData.email) {
-    matchData.em = await sha256(userData.email);
+    const hashed = await sha256(userData.email);
+    if (hashed) {
+      matchData.em = hashed;
+      _cachedUserData.em = hashed;
+    }
   }
   if (userData.phone) {
-    // Remove non-digits, ensure country code
     const cleaned = userData.phone.replace(/\D/g, "");
-    matchData.ph = await sha256(cleaned);
+    const hashed = await sha256(cleaned);
+    if (hashed) matchData.ph = hashed;
   }
   if (userData.externalId) {
     matchData.external_id = userData.externalId;
+    _cachedUserData.external_id = userData.externalId;
   }
 
-  if (Object.keys(matchData).length > 0) {
+  if (typeof window !== "undefined" && window.fbq && Object.keys(matchData).length > 0) {
     window.fbq("init", "4378225905838577", matchData);
   }
 };
@@ -67,7 +78,7 @@ const generateEventId = (prefix: string): string => {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 };
 
-interface TrackingData {
+export interface TrackingData {
   contentName: string;
   contentCategory: string;
   contentIds: string[];
@@ -76,7 +87,7 @@ interface TrackingData {
   transactionId?: string;
 }
 
-/** Collect user_data for CAPI from cookies/storage */
+/** Collect user_data for CAPI from cookies/storage + cached identity */
 const getUserData = (): Record<string, string> => {
   const data: Record<string, string> = {};
   try {
@@ -98,8 +109,9 @@ const getUserData = (): Record<string, string> => {
     // User agent
     data.client_user_agent = navigator.userAgent;
 
-    // Client IP hint (if available)
-    // Note: actual IP is resolved server-side
+    // Cached hashed email + external_id from Advanced Matching
+    if (_cachedUserData.em) data.em = _cachedUserData.em;
+    if (_cachedUserData.external_id) data.external_id = _cachedUserData.external_id;
   } catch (_) {}
   return data;
 };
@@ -158,11 +170,9 @@ export const trackViewContent = (data: TrackingData) => {
     currency: data.currency || "BRL",
   };
 
-  // Browser Pixel
   if (window.fbq) {
     window.fbq("track", "ViewContent", { ...customData, event_id: eventId });
   }
-  // Server CAPI
   sendCAPI("ViewContent", eventId, customData);
 
   return eventId;
@@ -193,16 +203,24 @@ export const trackInitiateCheckout = (data: TrackingData) => {
 };
 
 /**
- * Track Purchase — fires ONLY on confirmed payment
- * Never on page load, only after payment status = COMPLETED
+ * Track Purchase — fires ONLY on confirmed payment (COMPLETED status)
+ * Never on page load. Deterministic event_id for deduplication.
  */
 export const trackPurchase = (
   data: TrackingData & { transactionId: string }
 ) => {
   if (typeof window === "undefined") return;
 
-  // Deterministic event_id based on transaction for deduplication
+  // Deterministic event_id: same transactionId = same event_id = Meta deduplicates
   const eventId = `purchase_${data.transactionId}`;
+
+  // Guard against double-firing (e.g. polling returns COMPLETED twice)
+  const storageKey = `_meta_purchase_${data.transactionId}`;
+  try {
+    if (sessionStorage.getItem(storageKey)) return eventId;
+    sessionStorage.setItem(storageKey, "1");
+  } catch (_) {}
+
   const customData = {
     content_name: data.contentName,
     content_category: data.contentCategory,
@@ -225,7 +243,7 @@ export const trackPurchase = (
 
 /**
  * Resolve game category from game name or slug.
- * Used for content_category in all events — enables remarketing by game.
+ * Used for content_category — enables remarketing audiences by game.
  */
 export const resolveCategory = (gameName?: string | null): string => {
   if (!gameName) return "Outros";
