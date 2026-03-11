@@ -35,7 +35,22 @@ serve(async (req) => {
 
     // ─── Build user_data with server-side enrichment ───
 
-    const userData: Record<string, any> = { ...(user_data || {}) };
+    // Only allow Meta-accepted user_data fields (reject unknown fields)
+    const ALLOWED_USER_DATA = new Set([
+      "em", "ph", "fn", "ln", "ge", "db", "ct", "st", "zp", "country",
+      "external_id", "client_ip_address", "client_user_agent",
+      "fbp", "fbc", "fb_login_id", "lead_id",
+    ]);
+
+    const rawUserData = user_data || {};
+    const userData: Record<string, any> = {};
+
+    // Filter to only Meta-accepted fields
+    for (const key of Object.keys(rawUserData)) {
+      if (ALLOWED_USER_DATA.has(key) && rawUserData[key]) {
+        userData[key] = rawUserData[key];
+      }
+    }
 
     // 1. Client IP — extracted server-side (most reliable)
     const clientIp =
@@ -52,7 +67,7 @@ serve(async (req) => {
       userData.client_user_agent = req.headers.get("user-agent") || undefined;
     }
 
-    // 3. Remove empty/undefined values to avoid Meta API errors
+    // 3. Remove empty/undefined values
     for (const key of Object.keys(userData)) {
       if (userData[key] === undefined || userData[key] === null || userData[key] === "") {
         delete userData[key];
