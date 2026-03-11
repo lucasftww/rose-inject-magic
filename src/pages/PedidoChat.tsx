@@ -437,7 +437,7 @@ const PedidoChat = () => {
                   <p>5️⃣ Na seção <strong className="text-foreground">SENHA</strong>, clique em "Alterar senha"</p>
                   <p className="pl-4">• Coloque a senha atual (fornecida acima)</p>
                   <p className="pl-4">• Defina sua nova senha</p>
-                  <p className="mt-2 text-amber-400 font-medium">⚠️ Altere a senha IMEDIATAMENTE para garantir a segurança.</p>
+                  <p className="mt-2 text-warning font-medium">⚠️ Altere a senha IMEDIATAMENTE para garantir a segurança.</p>
                 </div>
               )}
             </div>
