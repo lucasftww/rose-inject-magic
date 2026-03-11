@@ -189,6 +189,7 @@ const Checkout = () => {
       setPaymentId(result.payment_id);
       setCryptoData(result.crypto);
       setDisplayPrice({ total: cartTotal, final: cartFinalPrice, discount: discountAmount });
+      setCartSnapshot([...items]);
       clearCart();
     } catch (err: any) {
       console.error(err);
