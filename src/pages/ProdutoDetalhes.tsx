@@ -178,6 +178,13 @@ const ProdutoDetalhes = () => {
       ? Number(selectedPlan.price) * (1 - discountPercent / 100)
       : Number(selectedPlan.price);
 
+    // AddToCart tracking
+    trackAddToCart({
+      contentName: product.name,
+      contentCategory: resolveCategory(game?.name),
+      contentIds: [product.id],
+      value: finalItemPrice,
+    });
     // InitiateCheckout tracking
     trackInitiateCheckout({
       contentName: product.name,
