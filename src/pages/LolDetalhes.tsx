@@ -206,7 +206,7 @@ const LolDetalhes = () => {
   const handleAddToCart = () => {
     if (!item || isInCart) return;
     const title = `Conta LoL ${rankText} Nv. ${level} | ${champCount} Campeões | ${skinCount} Skins`;
-    const priceBRL = calcPrice(item.price, item.price_currency);
+    const priceBRL = getPrice(item, "lol");
     const added = addItem({
       productId: `lzt-lol-${item.item_id}`,
       productName: title,
