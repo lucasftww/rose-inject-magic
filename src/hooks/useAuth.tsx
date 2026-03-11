@@ -95,6 +95,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             supabase.functions.invoke("track-login", {
               headers: { Authorization: `Bearer ${newSession.access_token}` },
             }).catch(() => {});
+
+            // Advanced Matching: envia dados hasheados para o Meta Pixel
+            setAdvancedMatching({
+              email: newSession.user.email,
+              externalId: newSession.user.id,
+            });
           }
         }
       }
