@@ -99,12 +99,16 @@ const MeusPedidos = () => {
 
         setTickets(data.map((t: any) => {
           const isLzt = t.metadata?.type === "lzt-account";
+          const lztGameLabels: Record<string, string> = {
+            valorant: "Conta Valorant", lol: "Conta LoL", fortnite: "Conta Fortnite", minecraft: "Conta Minecraft",
+          };
+          const lztGameLabel = isLzt ? (lztGameLabels[t.metadata?.game] || "Conta LZT") : "";
           return {
             ...t,
-            product_name: isLzt ? (t.metadata.account_name || "Conta Valorant") : (productMap[t.product_id]?.name || "Produto"),
-            plan_name: isLzt ? "Conta Valorant" : (planMap[t.product_plan_id]?.name || "Plano"),
+            product_name: isLzt ? (t.metadata.account_name || t.metadata.title || lztGameLabel) : (productMap[t.product_id]?.name || "Produto"),
+            plan_name: isLzt ? lztGameLabel : (planMap[t.product_plan_id]?.name || "Plano"),
             image_url: isLzt ? (t.metadata.account_image || null) : (productMap[t.product_id]?.image_url || null),
-            plan_price: isLzt ? (t.metadata.price_paid || 0) : (planMap[t.product_plan_id]?.price || 0),
+            plan_price: isLzt ? (t.metadata.price_paid || t.metadata.sell_price || 0) : (planMap[t.product_plan_id]?.price || 0),
           };
         }));
       }
