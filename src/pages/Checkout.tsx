@@ -155,6 +155,7 @@ const Checkout = () => {
       setPaymentId(result.payment_id);
       setCardPaymentUrl(result.paymentUrl);
       setDisplayPrice({ total: cartTotal, final: cartFinalPrice, discount: discountAmount });
+      setCartSnapshot([...items]);
       clearCart();
       // Open the checkout URL in a new tab
       window.open(result.paymentUrl, "_blank");
