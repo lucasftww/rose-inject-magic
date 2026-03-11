@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { setAdvancedMatching } from "@/lib/metaPixel";
+import { setAdvancedMatching, clearAdvancedMatching } from "@/lib/metaPixel";
 import type { User, Session } from "@supabase/supabase-js";
 
 interface AuthContextType {
@@ -41,14 +41,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const checkAdmin = async (userId: string) => {
     try {
-      // Use the SECURITY DEFINER function for tamper-proof admin check
       const { data, error } = await supabase.rpc("has_role", {
         _user_id: userId,
         _role: "admin",
       });
       if (!isMountedRef.current) return;
-      // Only update isAdmin on successful response; ignore network errors
-      // to prevent kicking admin out on transient failures
       if (!error) {
         setIsAdmin(!!data);
       }
@@ -57,10 +54,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  /** Send Advanced Matching data to Meta Pixel + cache for CAPI */
+  const syncAdvancedMatching = (u: User) => {
+    setAdvancedMatching({
+      email: u.email,
+      externalId: u.id,
+    });
+  };
+
   useEffect(() => {
     isMountedRef.current = true;
 
-    // Listener para mudanças CONTÍNUAS de auth (NÃO controla isLoading)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
         if (!isMountedRef.current) return;
@@ -71,23 +75,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setProfile(null);
           setIsAdmin(false);
           trackedSessionRef.current = null;
+          clearAdvancedMatching();
           return;
         }
 
-        // Ignora eventos sem sessão que não são sign out
         if (!newSession) return;
 
         setSession(newSession);
         setUser(newSession.user);
 
-        // Usa setTimeout para evitar deadlock no callback do Supabase
         setTimeout(() => {
           if (!isMountedRef.current) return;
           fetchProfile(newSession.user.id);
           checkAdmin(newSession.user.id);
         }, 0);
 
-        // Track login IP apenas uma vez por sessão
+        // Track login IP + Advanced Matching — once per session
         if (event === "SIGNED_IN" && newSession.access_token) {
           const sessionId = newSession.access_token.slice(-20);
           if (trackedSessionRef.current !== sessionId) {
@@ -96,17 +99,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               headers: { Authorization: `Bearer ${newSession.access_token}` },
             }).catch(() => {});
 
-            // Advanced Matching: envia dados hasheados para o Meta Pixel
-            setAdvancedMatching({
-              email: newSession.user.email,
-              externalId: newSession.user.id,
-            });
+            syncAdvancedMatching(newSession.user);
           }
         }
       }
     );
 
-    // Carga INICIAL — esta é a única que controla isLoading
+    // Initial session restore
     const initializeAuth = async () => {
       try {
         const { data: { session: initialSession } } = await supabase.auth.getSession();
@@ -115,11 +114,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (initialSession) {
           setSession(initialSession);
           setUser(initialSession.user);
-          // Aguarda buscar perfil e role ANTES de setar loading false
           await Promise.all([
             fetchProfile(initialSession.user.id),
             checkAdmin(initialSession.user.id),
           ]);
+          // Advanced Matching on session restore (not just SIGNED_IN)
+          syncAdvancedMatching(initialSession.user);
         }
       } finally {
         if (isMountedRef.current) setLoading(false);
