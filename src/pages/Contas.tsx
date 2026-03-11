@@ -463,7 +463,7 @@ const ValorantCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap
       <div className="p-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src={rank?.img || rankUnranked} alt={rank?.name || "Unranked"} className="h-6 w-6 object-contain" />
+            <img src={rank?.img || rankUnranked} alt={rank?.name || "Unranked"} className="h-6 w-6 object-contain" loading="lazy" />
             <span className="rounded bg-secondary px-2 py-0.5 text-xs font-medium text-muted-foreground">{rank?.name || "Unranked"}</span>
           </div>
           <span className="text-sm text-muted-foreground">{skinCount} skins</span>
@@ -610,7 +610,7 @@ const LolCard = ({ item, champKeyMap, formatPrice }: { item: LztItem; champKeyMa
         {/* Rank + WR */}
         <div className="flex items-center gap-2">
           {rankFilterData?.img ? (
-            <img src={rankFilterData.img} alt={rankText} className="h-7 w-7 object-contain flex-shrink-0" />
+            <img src={rankFilterData.img} alt={rankText} className="h-7 w-7 object-contain flex-shrink-0" loading="lazy" />
           ) : (
             <div className="h-4 w-4 rounded-full flex-shrink-0" style={{ background: rankColor }} />
           )}
@@ -1465,7 +1465,7 @@ const Contas = () => {
                               className={`flex flex-col items-center gap-1 rounded-lg border p-2 transition-all ${selectedRank === rank.id ? "border-success bg-success/10 shadow-[0_0_10px_hsl(130,99%,41%,0.15)]" : "border-border hover:border-foreground/30"}`}
                               title={rank.name}
                             >
-                              <img src={rank.img} alt={rank.name} className="h-8 w-8 object-contain" />
+                               <img src={rank.img} alt={rank.name} className="h-8 w-8 object-contain" loading="lazy" />
                               <span className={`text-[10px] font-medium leading-tight text-center ${selectedRank === rank.id ? "text-success" : "text-muted-foreground"}`}>{rank.name}</span>
                             </button>
                           ))}
@@ -1488,7 +1488,7 @@ const Contas = () => {
                               title={weapon.name}
                             >
                               {weapon.img ? (
-                                <img src={weapon.img} alt={weapon.name} className="h-6 w-12 object-contain" />
+                                <img src={weapon.img} alt={weapon.name} className="h-6 w-12 object-contain" loading="lazy" />
                               ) : (
                                 <span className="flex h-6 w-12 items-center justify-center text-[10px] font-bold text-muted-foreground">Todas</span>
                               )}
@@ -1544,7 +1544,7 @@ const Contas = () => {
                             title={rank.name}
                           >
                             {rank.img ? (
-                              <img src={rank.img} alt={rank.name} className="h-8 w-8 object-contain" />
+                              <img src={rank.img} alt={rank.name} className="h-8 w-8 object-contain" loading="lazy" />
                             ) : (
                               <div className="h-8 w-8 rounded-full flex items-center justify-center" style={{ background: "hsl(var(--muted))" }}>
                                 <span className="text-[9px] font-bold text-muted-foreground">?</span>
