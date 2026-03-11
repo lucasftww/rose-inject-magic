@@ -208,6 +208,14 @@ const Checkout = () => {
     if (method === "crypto") createCryptoCharge();
   };
 
+  // Refs for polling closure — avoids stale state in setInterval callback
+  const cartSnapshotRef = useRef(cartSnapshot);
+  const finalPriceRef = useRef(finalPrice);
+  const paymentIdRef = useRef(paymentId);
+  useEffect(() => { cartSnapshotRef.current = cartSnapshot; }, [cartSnapshot]);
+  useEffect(() => { finalPriceRef.current = finalPrice; }, [finalPrice]);
+  useEffect(() => { paymentIdRef.current = paymentId; }, [paymentId]);
+
   // Poll status (works for PIX, card, and crypto)
   useEffect(() => {
     if (!paymentId || paymentStatus !== "ACTIVE") return;
@@ -229,15 +237,16 @@ const Checkout = () => {
           setPaymentStatus(data.status);
           if (data.status === "COMPLETED") {
             if (intervalRef.current) clearInterval(intervalRef.current);
-            // Fire Purchase event using snapshot (items already cleared)
-            const cartItem = cartSnapshot[0];
+            // Fire Purchase event using refs (not stale closure values)
+            const cartItem = cartSnapshotRef.current[0];
             if (cartItem) {
               trackPurchase({
                 contentName: cartItem.productName,
                 contentCategory: resolveCategory(cartItem.lztGame || cartItem.planName),
                 contentIds: [cartItem.productId],
-                value: finalPrice,
-                transactionId: paymentId || "unknown",
+                value: finalPriceRef.current,
+                numItems: 1,
+                transactionId: paymentIdRef.current || "unknown",
               });
             }
           }
