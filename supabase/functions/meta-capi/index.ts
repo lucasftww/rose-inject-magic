@@ -33,16 +33,30 @@ serve(async (req) => {
       });
     }
 
-    // Extract client IP from request headers (set by CDN/proxy)
+    // ─── Build user_data with server-side enrichment ───
+
+    const userData: Record<string, any> = { ...(user_data || {}) };
+
+    // 1. Client IP — extracted server-side (most reliable)
     const clientIp =
       req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
       req.headers.get("x-real-ip") ||
       req.headers.get("cf-connecting-ip") ||
       null;
-
-    const userData: Record<string, any> = { ...(user_data || {}) };
     if (clientIp) {
       userData.client_ip_address = clientIp;
+    }
+
+    // 2. User Agent — prefer client-sent, fallback to request header
+    if (!userData.client_user_agent) {
+      userData.client_user_agent = req.headers.get("user-agent") || undefined;
+    }
+
+    // 3. Remove empty/undefined values to avoid Meta API errors
+    for (const key of Object.keys(userData)) {
+      if (userData[key] === undefined || userData[key] === null || userData[key] === "") {
+        delete userData[key];
+      }
     }
 
     const eventData: Record<string, any> = {
@@ -55,9 +69,7 @@ serve(async (req) => {
       custom_data: custom_data || {},
     };
 
-    const payload = {
-      data: [eventData],
-    };
+    const payload = { data: [eventData] };
 
     const url = `https://graph.facebook.com/${GRAPH_API_VERSION}/${PIXEL_ID}/events?access_token=${ACCESS_TOKEN}`;
 
