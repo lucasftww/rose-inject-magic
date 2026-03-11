@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.track-login]
 verify_jwt = false
+
+[functions.meta-capi]
+verify_jwt = false
