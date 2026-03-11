@@ -84,9 +84,7 @@ type InventoryTab = "skins" | "pickaxes" | "dances" | "gliders";
 const FortniteDetalhes = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { calcPrice: rawCalcPrice, formatPrice: rawFormatPrice } = useLztMarkup();
-  const calcPrice = (price: number, currency?: string) => rawCalcPrice(price, currency, "fortnite");
-  const formatPrice = (price: number, currency?: string) => rawFormatPrice(price, currency, "fortnite");
+  const { getPrice, getDisplayPrice } = useLztMarkup();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<InventoryTab>("skins");
