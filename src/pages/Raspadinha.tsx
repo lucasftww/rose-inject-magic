@@ -847,7 +847,7 @@ const Raspadinha = () => {
 
                 <div className="text-center mb-6">
                   <div className={`inline-flex items-center gap-2 rounded-full ${bgAccent} border ${borderAccent} px-3 py-1 mb-3`}>
-                    <div className={`h-2 w-2 rounded-full ${isContas ? "bg-blue-500" : "bg-success"} animate-pulse`} />
+                    <div className={`h-2 w-2 rounded-full ${isContas ? "bg-info" : "bg-success"} animate-pulse`} />
                     <span className={`text-xs font-medium ${accentClass}`}>Aguardando pagamento</span>
                   </div>
                   <h2 className="text-xl font-bold text-foreground" style={{ fontFamily: "'Valorant', sans-serif" }}>
