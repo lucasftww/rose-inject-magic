@@ -41,10 +41,7 @@ const MinecraftDetalhes = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { getPrice, getDisplayPrice } = useLztMarkup();
-  const { addItem, items } = useCart();
-  const [addedToCart, setAddedToCart] = useState(false);
-
-  const isInCart = items.some((i) => i.type === "lzt-account" && i.lztItemId === id);
+  const { addItem } = useCart();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["lzt-account-detail", id],
