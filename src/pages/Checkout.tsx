@@ -245,7 +245,6 @@ const Checkout = () => {
                 contentCategory: resolveCategory(cartItem.lztGame || cartItem.planName),
                 contentIds: [cartItem.productId],
                 value: finalPriceRef.current,
-                numItems: 1,
                 transactionId: paymentIdRef.current || "unknown",
               });
             }
