@@ -98,10 +98,7 @@ const LolDetalhes = () => {
   const [activeTab, setActiveTab] = useState<"skins" | "champions">("skins");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-  const { addItem, items } = useCart();
-  const [addedToCart, setAddedToCart] = useState(false);
-
-  const isInCart = items.some((i) => i.type === "lzt-account" && i.lztItemId === id);
+  const { addItem } = useCart();
 
   // Fetch account detail
   const { data, isLoading, error } = useQuery({
