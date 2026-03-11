@@ -72,6 +72,7 @@ interface LztItem {
       buddies?: string;
     };
   };
+  price_brl?: number;
 }
 
 const fetchAllValorantSkins = async (): Promise<Map<string, { name: string; image: string }>> => {
@@ -356,8 +357,7 @@ const LztContaCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap
 };
 
 const ContasSection = () => {
-  const { formatPrice: rawFormatPrice } = useLztMarkup();
-  const formatPrice = (price: number, currency?: string) => rawFormatPrice(price, currency, "valorant");
+  const { getDisplayPrice } = useLztMarkup();
   const { data: accounts = [], isLoading: loadingAccounts } = useQuery({
     queryKey: ["landing-lzt-accounts"],
     queryFn: fetchLztAccounts,
@@ -392,7 +392,7 @@ const ContasSection = () => {
           >
             {accounts.map((item, idx) => (
               <motion.div key={item.item_id} variants={fadeUp} custom={idx}>
-                <LztContaCard item={item} skinsMap={skinsMap} formatPrice={formatPrice} />
+                <LztContaCard item={item} skinsMap={skinsMap} formatPrice={(p, c) => getDisplayPrice({ price: p, price_currency: c, price_brl: item.price_brl }, "valorant")} />
               </motion.div>
             ))}
           </motion.div>

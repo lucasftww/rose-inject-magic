@@ -4,17 +4,15 @@ const MIN_PRICE_BRL = 20;
 
 export const useLztMarkup = () => {
   /**
-   * If the item has price_brl from the API, use it directly.
-   * Otherwise fall back to a basic calculation (for display only).
+   * Fallback only — prefer using item.price_brl from the API.
    */
   const calcPrice = (price: number, currency?: string, _game?: GameCategory): number => {
-    // This is a fallback only — the edge function now returns price_brl
     const RUB_TO_BRL = 0.055;
     let brl = price;
     if (currency === "rub" || !currency) {
       brl = price * RUB_TO_BRL;
     }
-    // Use a generic 1.5x fallback markup for display if API didn't provide price_brl
+    // Generic 1.5x fallback — should rarely be used since API provides price_brl
     const final = brl * 1.5;
     return final < MIN_PRICE_BRL ? MIN_PRICE_BRL : final;
   };
@@ -24,11 +22,32 @@ export const useLztMarkup = () => {
   };
 
   /**
-   * Format a pre-calculated BRL price (from API's price_brl field)
+   * Format a pre-calculated BRL price (from API's price_brl field).
+   * This is the PREFERRED method — uses server-side markup.
    */
   const formatPriceBrl = (priceBrl: number): string => {
     return `R$ ${priceBrl.toFixed(2)}`;
   };
 
-  return { calcPrice, formatPrice, formatPriceBrl, getMarkupForGame: () => 1.5, config: null, markup: 1.5 };
+  /**
+   * Smart price formatter: uses price_brl if available, falls back to calcPrice.
+   */
+  const getDisplayPrice = (item: { price: number; price_currency?: string; price_brl?: number }, game?: GameCategory): string => {
+    if (item.price_brl && item.price_brl > 0) {
+      return formatPriceBrl(item.price_brl);
+    }
+    return formatPrice(item.price, item.price_currency, game);
+  };
+
+  /**
+   * Smart price calculator: uses price_brl if available, falls back to calcPrice.
+   */
+  const getPrice = (item: { price: number; price_currency?: string; price_brl?: number }, game?: GameCategory): number => {
+    if (item.price_brl && item.price_brl > 0) {
+      return item.price_brl;
+    }
+    return calcPrice(item.price, item.price_currency, game);
+  };
+
+  return { calcPrice, formatPrice, formatPriceBrl, getDisplayPrice, getPrice, getMarkupForGame: () => 1.5, config: null, markup: 1.5 };
 };

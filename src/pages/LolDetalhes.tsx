@@ -71,7 +71,7 @@ const fetchAccountDetail = async (itemId: string) => {
   const projectUrl = import.meta.env.VITE_SUPABASE_URL;
   const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
   const res = await fetch(
-    `${projectUrl}/functions/v1/lzt-market?action=detail&item_id=${encodeURIComponent(itemId)}`,
+    `${projectUrl}/functions/v1/lzt-market?action=detail&item_id=${encodeURIComponent(itemId)}&game_type=lol`,
     { headers: { "Content-Type": "application/json", apikey: anonKey } }
   );
   if (!res.ok) throwApiError(res.status);
@@ -94,9 +94,7 @@ interface ChampPreview {
 const LolDetalhes = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { calcPrice: rawCalcPrice, formatPrice: rawFormatPrice } = useLztMarkup();
-  const calcPrice = (price: number, currency?: string) => rawCalcPrice(price, currency, "lol");
-  const formatPrice = (price: number, currency?: string) => rawFormatPrice(price, currency, "lol");
+  const { getPrice, getDisplayPrice } = useLztMarkup();
   const [activeTab, setActiveTab] = useState<"skins" | "champions">("skins");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
@@ -208,7 +206,7 @@ const LolDetalhes = () => {
   const handleAddToCart = () => {
     if (!item || isInCart) return;
     const title = `Conta LoL ${rankText} Nv. ${level} | ${champCount} Campeões | ${skinCount} Skins`;
-    const priceBRL = calcPrice(item.price, item.price_currency);
+    const priceBRL = getPrice(item, "lol");
     const added = addItem({
       productId: `lzt-lol-${item.item_id}`,
       productName: title,
@@ -401,7 +399,7 @@ const LolDetalhes = () => {
                     <div>
                       <p className="text-[10px] text-muted-foreground mb-0.5">Por</p>
                       <p className="text-2xl font-bold" style={{ color: LOL_BLUE }}>
-                        {formatPrice(item.price, item.price_currency)}
+                        {getDisplayPrice(item, "lol")}
                       </p>
                     </div>
                   </div>

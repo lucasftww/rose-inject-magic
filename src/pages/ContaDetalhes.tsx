@@ -69,7 +69,7 @@ const fetchAccountDetail = async (itemId: string) => {
   const projectUrl = import.meta.env.VITE_SUPABASE_URL;
   const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
   const res = await fetch(
-    `${projectUrl}/functions/v1/lzt-market?action=detail&item_id=${encodeURIComponent(itemId)}`,
+    `${projectUrl}/functions/v1/lzt-market?action=detail&item_id=${encodeURIComponent(itemId)}&game_type=valorant`,
     { headers: { "Content-Type": "application/json", apikey: anonKey } }
   );
   if (!res.ok) throwApiError(res.status);
@@ -145,9 +145,7 @@ const fetchValorantBuddies = async (uuids: string[]) => {
 const ContaDetalhes = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { calcPrice: rawCalcPrice, formatPrice: rawFormatPrice } = useLztMarkup();
-  const calcPrice = (price: number, currency?: string) => rawCalcPrice(price, currency, "valorant");
-  const formatPrice = (price: number, currency?: string) => rawFormatPrice(price, currency, "valorant");
+  const { getPrice, getDisplayPrice } = useLztMarkup();
   const [selectedSkin, setSelectedSkin] = useState(0);
   const [activeTab, setActiveTab] = useState<"skins" | "agents" | "buddies">("skins");
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
@@ -169,8 +167,8 @@ const ContaDetalhes = () => {
     const skinCount = item.riot_valorant_skin_count ?? 0;
     const title = `Conta ${rankName} com ${skinCount} Skins`;
     
-    // Apply markup multiplier to price
-    const priceBRL = calcPrice(item.price, item.price_currency);
+    // Use server-calculated price_brl with correct markup
+    const priceBRL = getPrice(item, "valorant");
 
     const added = addItem({
       productId: `lzt-${item.item_id}`,
@@ -465,7 +463,7 @@ const ContaDetalhes = () => {
                     <div>
                       <p className="text-[10px] text-muted-foreground mb-0.5">Por</p>
                       <p className="text-2xl font-bold text-success">
-                        {formatPrice(item.price, item.price_currency)}
+                        {getDisplayPrice(item, "valorant")}
                       </p>
                     </div>
                     {item.rub_price && item.price_currency !== "rub" && (
