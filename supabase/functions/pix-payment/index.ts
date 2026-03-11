@@ -323,14 +323,22 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
       return;
     }
 
+    const gameLabelsManual: Record<string, string> = {
+      valorant: "Valorant", lol: "LoL", fortnite: "Fortnite", minecraft: "Minecraft",
+    };
+    const gameLabelManual = gameLabelsManual[lztGame] || "LZT";
+
     const lztMetadata = {
       type: "lzt-account",
       lzt_item_id: itemId,
-      account_name: item.productName || `Conta Valorant #${itemId}`,
+      account_name: item.productName || `Conta ${gameLabelManual} #${itemId}`,
+      title: item.productName || `Conta ${gameLabelManual} #${itemId}`,
       account_image: item.productImage || null,
       price_paid: item.price || price,
+      sell_price: item.price || 0,
       currency: currency,
       skins_count: item.skinsCount || null,
+      game: lztGame,
       manual_delivery: true,
       failure_reason: reason,
     };
