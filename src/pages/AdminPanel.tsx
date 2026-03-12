@@ -22,6 +22,7 @@ import FinanceTab from "@/components/admin/FinanceTab";
 import ScratchCardTab from "@/components/admin/ScratchCardTab";
 import SalesTab from "@/components/admin/SalesTab";
 import GamesTab from "@/components/admin/GamesTab";
+import RobotProjectTab from "@/components/admin/RobotProjectTab";
 import { toast } from "@/hooks/use-toast";
 
 // ─── Types ───
