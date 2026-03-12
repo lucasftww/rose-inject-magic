@@ -703,13 +703,17 @@ const ProductsTab = () => {
                           if (!rg) return null;
                           return (
                             <div className="mt-2 text-[10px] text-muted-foreground space-y-0.5">
-                              <p>Versão: {rg.version} · Status: <span className={rg.status === "on" ? "text-success" : "text-destructive"}>{rg.status}</span></p>
+                              <p>Versão: {rg.version} · Status: <span className={rg.status === "on" ? "text-success" : "text-destructive"}>{rg.status}</span> · Câmbio: R${robotUsdToBrl.toFixed(2)}/USD</p>
                               {Object.keys(rg.prices).length > 0 && (
-                                <p>Preços Robot: {Object.entries(rg.prices).map(([d, p]) => {
-                                  const fullBrl = Number(p) * robotUsdToBrl;
-                                  const costBrl = fullBrl * 0.6;
-                                  return `${d}d = $${Number(p).toFixed(2)} (cheio ≈ R$${fullBrl.toFixed(2)} | revenda -40% ≈ R$${costBrl.toFixed(2)})`;
-                                }).join(" · ")}</p>
+                                <div className="mt-1 space-y-0.5">
+                                  <p className="font-medium text-foreground/80">Seu custo (revenda -40%):</p>
+                                  <p>{Object.entries(rg.prices).map(([d, p]) => {
+                                    const resellerUsd = Number(p) * 0.6;
+                                    const resellerBrl = resellerUsd * robotUsdToBrl;
+                                    return `${d}d = $${resellerUsd.toFixed(2)} (R$${resellerBrl.toFixed(2)})`;
+                                  }).join(" · ")}</p>
+                                  <p className="text-muted-foreground/50">Preço cheio API: {Object.entries(rg.prices).map(([d, p]) => `${d}d = $${Number(p).toFixed(2)}`).join(" · ")}</p>
+                                </div>
                               )}
                               {rg.maxKeys && <p>Slots: {rg.soldKeys}/{rg.maxKeys}</p>}
                             </div>
@@ -721,7 +725,7 @@ const ProductsTab = () => {
                         <input type="number" value={formRobotMarkup || ""} onChange={(e) => setFormRobotMarkup(Number(e.target.value) || null)}
                           min="0" max="500" step="1" placeholder="Ex: 30 (30% de lucro)"
                           className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-accent/50" />
-                        <p className="text-[10px] text-muted-foreground/60 mt-1">Se definido, calcula preço automático: preço Robot em USD × câmbio ({robotUsdToBrl.toFixed(2)}) × (1 + markup/100). Preço manual no plano tem prioridade.</p>
+                        <p className="text-[10px] text-muted-foreground/60 mt-1">Se definido, calcula preço automático: custo revenda (API × 0.6) × câmbio (R${robotUsdToBrl.toFixed(2)}) × (1 + markup/100). Preço manual no plano tem prioridade.</p>
                       </div>
                     </div>
                     <p className="text-[10px] text-muted-foreground/60">
