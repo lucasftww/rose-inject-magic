@@ -515,7 +515,7 @@ const ProdutoDetalhes = () => {
                           <span className="text-xl sm:text-2xl font-bold text-success">R$ {(Number(selectedPlan.price) * (1 - discountPercent / 100)).toFixed(2)}</span>
                         </div>
                       ) : (
-                        <span className="text-2xl font-bold text-success">R$ {Number(selectedPlan.price).toFixed(2)}</span>
+                        <span className="text-xl sm:text-2xl font-bold text-success">R$ {Number(selectedPlan.price).toFixed(2)}</span>
                       )}
                     </div>
                     <button
