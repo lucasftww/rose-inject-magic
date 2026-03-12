@@ -43,19 +43,20 @@ Deno.serve(async (req) => {
       });
     }
 
+    // SECURITY: Require authentication for ALL actions
+    const user = await getAuthUser();
+    if (!user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const url = new URL(req.url);
     const action = url.searchParams.get("action") || "list";
     const itemId = url.searchParams.get("item_id");
 
     // IMAGE PROXY: Proxy image requests to bypass CORS
     if (action === "image-proxy") {
-      // SECURITY: Require auth for image proxy
-      const user = await getAuthUser();
-      if (!user) {
-        return new Response(JSON.stringify({ error: "Unauthorized" }), {
-          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
       const imageUrl = url.searchParams.get("url");
       if (!imageUrl) {
         return new Response(JSON.stringify({ error: "url parameter required" }), {
@@ -109,14 +110,7 @@ Deno.serve(async (req) => {
 
     // FAST-BUY: Purchase an account - ADMIN ONLY
     if (action === "fast-buy" && req.method === "POST") {
-      // SECURITY: Require auth + admin only
-      const user = await getAuthUser();
-      if (!user) {
-        return new Response(JSON.stringify({ error: "Unauthorized" }), {
-          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      // supabaseAdmin already created above
+      // SECURITY: admin only
       const { data: adminRole } = await supabaseAdmin
         .from("user_roles")
         .select("role")
@@ -342,7 +336,7 @@ Deno.serve(async (req) => {
     });
   } catch (error: any) {
     console.error("Edge function error:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: "An internal error occurred" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
