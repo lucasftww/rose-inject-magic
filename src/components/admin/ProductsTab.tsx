@@ -712,7 +712,7 @@ const ProductsTab = () => {
                                     const resellerBrl = resellerUsd * robotUsdToBrl;
                                     return `${d}d = $${resellerUsd.toFixed(2)} (R$${resellerBrl.toFixed(2)})`;
                                   }).join(" · ")}</p>
-                                  <p className="text-muted-foreground/50">Preço cheio API: {Object.entries(rg.prices).map(([d, p]) => `${d}d = $${Number(p).toFixed(2)}`).join(" · ")}</p>
+                                  
                                 </div>
                               )}
                               {rg.maxKeys && <p>Slots: {rg.soldKeys}/{rg.maxKeys}</p>}
