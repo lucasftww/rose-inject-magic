@@ -313,15 +313,21 @@ const RobotProjectTab = () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    {product.hasStock ? (
-                      <span className="flex items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-xs font-bold text-success">
-                        <CheckCircle className="h-3.5 w-3.5" />
-                        {product.stockCount} em estoque
-                      </span>
+                    {linkedGame ? (
+                      linkedGame.status === "on" && (linkedGame.maxKeys === null || (linkedGame.maxKeys - linkedGame.soldKeys) > 0 || linkedGame.is_free) ? (
+                        <span className="flex items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-xs font-bold text-success">
+                          <CheckCircle className="h-3.5 w-3.5" />
+                          {linkedGame.is_free ? "Grátis" : linkedGame.maxKeys !== null ? `${linkedGame.maxKeys - linkedGame.soldKeys}/${linkedGame.maxKeys} slots` : "Disponível"}
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1.5 rounded-full bg-warning/10 px-3 py-1 text-xs font-bold text-warning">
+                          <AlertTriangle className="h-3.5 w-3.5" />
+                          {linkedGame.status !== "on" ? "Offline" : "Sem slots"}
+                        </span>
+                      )
                     ) : (
-                      <span className="flex items-center gap-1.5 rounded-full bg-warning/10 px-3 py-1 text-xs font-bold text-warning">
-                        <AlertTriangle className="h-3.5 w-3.5" />
-                        Sem estoque
+                      <span className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs font-bold text-muted-foreground">
+                        ID não encontrado
                       </span>
                     )}
                   </div>
