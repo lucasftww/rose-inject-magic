@@ -228,8 +228,8 @@ const LztContaCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap
       if (entry) results.push(entry);
     }
     results.sort((a, b) => b.rarity - a.rarity);
-    const filtered = results.filter(s => s.rarity > 0);
-    return (filtered.length >= 4 ? filtered : results).slice(0, 6);
+    const premium = results.filter(s => s.rarity >= 2);
+    return (premium.length >= 4 ? premium : results.filter(s => s.rarity > 0).length >= 4 ? results.filter(s => s.rarity > 0) : results).slice(0, 6);
   }, [item.valorantInventory, skinsMap]);
 
   return (
