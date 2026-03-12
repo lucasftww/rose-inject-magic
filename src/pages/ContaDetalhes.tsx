@@ -112,7 +112,7 @@ const fetchValorantSkins = async (uuids: string[]) => {
         matched.push({
           name: s.displayName,
           image,
-          rarity: s.contentTierUuid ? rarityMap[s.contentTierUuid] : null,
+          rarity: rawTier ? rarityMap[rawTier] : null,
           rarityPriority: priority,
         });
       }
