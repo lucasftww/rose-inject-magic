@@ -76,6 +76,7 @@ const defaultFeatures: FeatureItem[] = [
 ];
 
 const ITEMS_PER_PAGE = 10;
+const ROBOT_USD_TO_BRL = 5.25;
 
 const ProductsTab = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -517,9 +518,10 @@ const ProductsTab = () => {
                       if (!rg || !rg.prices) return;
                       const updated = formPlans.map(p => {
                         if (!p.robot_duration_days) return p;
-                        const robotPrice = rg.prices[String(p.robot_duration_days)];
-                        if (robotPrice === undefined) return p;
-                        const calc = Number((robotPrice * (1 + (formRobotMarkup || 0) / 100)).toFixed(2));
+                        const robotPriceUsd = rg.prices[String(p.robot_duration_days)];
+                        if (robotPriceUsd === undefined) return p;
+                        const robotPriceBrl = Number(robotPriceUsd) * ROBOT_USD_TO_BRL;
+                        const calc = Number((robotPriceBrl * (1 + (formRobotMarkup || 0) / 100)).toFixed(2));
                         return { ...p, price: calc };
                       });
                       setFormPlans(updated);
@@ -539,10 +541,11 @@ const ProductsTab = () => {
                 {formPlans.map((plan, index) => {
                   // Calculate suggested price from Robot markup
                   const selectedRobotGame = robotEnabled && formRobotGameId ? robotGames.find(g => g.id === formRobotGameId) : null;
-                  const robotBasePrice = selectedRobotGame && plan.robot_duration_days
+                  const robotBasePriceUsd = selectedRobotGame && plan.robot_duration_days
                     ? selectedRobotGame.prices?.[String(plan.robot_duration_days)] : undefined;
-                  const suggestedPrice = robotBasePrice !== undefined && formRobotMarkup
-                    ? Number((robotBasePrice * (1 + formRobotMarkup / 100)).toFixed(2)) : null;
+                  const robotBasePriceBrl = robotBasePriceUsd !== undefined ? Number(robotBasePriceUsd) * ROBOT_USD_TO_BRL : undefined;
+                  const suggestedPrice = robotBasePriceBrl !== undefined && formRobotMarkup
+                    ? Number((robotBasePriceBrl * (1 + formRobotMarkup / 100)).toFixed(2)) : null;
 
                   return (
                     <div key={index} className="rounded-lg border border-border bg-secondary/30 p-3">
@@ -580,7 +583,7 @@ const ProductsTab = () => {
                       {/* Show markup calculation hint */}
                       {robotEnabled && suggestedPrice !== null && (
                         <div className="mt-1.5 flex items-center gap-2 text-[10px] text-muted-foreground">
-                          <span>Robot: R${robotBasePrice?.toFixed(2)} × {formRobotMarkup}% = <span className="font-bold text-accent-foreground">R${suggestedPrice.toFixed(2)}</span></span>
+                          <span>Robot: ${robotBasePriceUsd?.toFixed(2)} USD (≈ R${robotBasePriceBrl?.toFixed(2)}) × {formRobotMarkup}% = <span className="font-bold text-accent-foreground">R${suggestedPrice.toFixed(2)}</span></span>
                           {plan.price !== suggestedPrice && plan.price > 0 && (
                             <span className="text-warning">(manual: R${plan.price.toFixed(2)})</span>
                           )}
@@ -645,7 +648,7 @@ const ProductsTab = () => {
                             <div className="mt-2 text-[10px] text-muted-foreground space-y-0.5">
                               <p>Versão: {rg.version} · Status: <span className={rg.status === "on" ? "text-success" : "text-destructive"}>{rg.status}</span></p>
                               {Object.keys(rg.prices).length > 0 && (
-                                <p>Preços Robot: {Object.entries(rg.prices).map(([d, p]) => `${d}d = R$${p}`).join(" · ")}</p>
+                                <p>Preços Robot: {Object.entries(rg.prices).map(([d, p]) => `${d}d = $${Number(p).toFixed(2)} (≈ R$${(Number(p) * ROBOT_USD_TO_BRL).toFixed(2)})`).join(" · ")}</p>
                               )}
                               {rg.maxKeys && <p>Slots: {rg.soldKeys}/{rg.maxKeys}</p>}
                             </div>
@@ -657,7 +660,7 @@ const ProductsTab = () => {
                         <input type="number" value={formRobotMarkup || ""} onChange={(e) => setFormRobotMarkup(Number(e.target.value) || null)}
                           min="0" max="500" step="1" placeholder="Ex: 30 (30% de lucro)"
                           className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-accent/50" />
-                        <p className="text-[10px] text-muted-foreground/60 mt-1">Se definido, calcula preço automático: preço Robot × (1 + markup/100). Preço manual no plano tem prioridade.</p>
+                        <p className="text-[10px] text-muted-foreground/60 mt-1">Se definido, calcula preço automático: preço Robot em USD × câmbio ({ROBOT_USD_TO_BRL}) × (1 + markup/100). Preço manual no plano tem prioridade.</p>
                       </div>
                     </div>
                     <p className="text-[10px] text-muted-foreground/60">
