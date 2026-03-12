@@ -561,9 +561,9 @@ const ProductsTab = () => {
               <div className="rounded-lg border border-border bg-secondary/20 p-4 space-y-3">
                 <div className="flex items-center gap-3">
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={!!formRobotGameId} onChange={(e) => {
-                      if (!e.target.checked) { setFormRobotGameId(null); setFormRobotMarkup(null); }
-                      else { setFormRobotGameId(0); fetchRobotGames(); }
+                    <input type="checkbox" checked={robotEnabled} onChange={(e) => {
+                      if (!e.target.checked) { setRobotEnabled(false); setFormRobotGameId(null); setFormRobotMarkup(null); }
+                      else { setRobotEnabled(true); fetchRobotGames(); }
                     }} className="sr-only peer" />
                     <div className="h-4 w-7 rounded-full border border-border bg-secondary transition-colors peer-checked:border-accent peer-checked:bg-accent relative">
                       <div className="absolute left-0.5 top-0.5 h-3 w-3 rounded-full bg-foreground/60 transition-all peer-checked:left-[12px] peer-checked:bg-accent-foreground" />
@@ -572,7 +572,7 @@ const ProductsTab = () => {
                   </label>
                 </div>
 
-                {formRobotGameId !== null && (
+                {robotEnabled && (
                   <>
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div>
