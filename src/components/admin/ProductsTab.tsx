@@ -120,6 +120,27 @@ const ProductsTab = () => {
   const [robotGames, setRobotGames] = useState<RobotGame[]>([]);
   const [loadingRobotGames, setLoadingRobotGames] = useState(false);
 
+  const fetchRobotGames = async () => {
+    setLoadingRobotGames(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const res = await supabase.functions.invoke("robot-project", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body: null,
+      });
+      if (res.error) {
+        toast({ title: "Erro ao carregar jogos Robot", description: String(res.error), variant: "destructive" });
+      } else {
+        const games = Array.isArray(res.data) ? res.data : [];
+        setRobotGames(games);
+      }
+    } catch (err: any) {
+      toast({ title: "Erro Robot", description: err.message, variant: "destructive" });
+    }
+    setLoadingRobotGames(false);
+  };
+
   const fetchData = async () => {
     const [gamesRes, productsRes] = await Promise.all([
       supabase.from("games").select("id, name").order("sort_order"),
