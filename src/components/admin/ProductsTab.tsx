@@ -527,7 +527,7 @@ const ProductsTab = () => {
                         min="0" step="0.01" placeholder="0.00"
                         className="w-28 rounded-lg border border-border bg-background pl-9 pr-3 py-2 text-sm text-foreground outline-none focus:border-success/50" />
                     </div>
-                    {formRobotGameId && (
+                    {robotEnabled && (
                       <div className="relative">
                         <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">dias</span>
                         <input type="number" value={plan.robot_duration_days || ""} onChange={(e) => updatePlan(index, "robot_duration_days", Number(e.target.value) || null)}
