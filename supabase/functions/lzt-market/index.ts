@@ -110,14 +110,7 @@ Deno.serve(async (req) => {
 
     // FAST-BUY: Purchase an account - ADMIN ONLY
     if (action === "fast-buy" && req.method === "POST") {
-      // SECURITY: Require auth + admin only
-      const user = await getAuthUser();
-      if (!user) {
-        return new Response(JSON.stringify({ error: "Unauthorized" }), {
-          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      // supabaseAdmin already created above
+      // SECURITY: admin only
       const { data: adminRole } = await supabaseAdmin
         .from("user_roles")
         .select("role")
