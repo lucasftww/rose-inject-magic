@@ -317,7 +317,7 @@ const Header = () => {
             {/* Mobile hamburger */}
             <motion.button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
+              className="lg:hidden relative p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors flex items-center justify-center"
               whileTap={{ scale: 0.9 }}
             >
               <AnimatePresence mode="wait">
