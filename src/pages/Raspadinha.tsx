@@ -700,7 +700,7 @@ const Raspadinha = () => {
       <Header />
       <AuthModal open={authOpen} onOpenChange={setAuthOpen} defaultTab="login" />
 
-      <div className="mx-auto max-w-4xl px-6 pt-4 pb-20">
+      <div className="mx-auto max-w-4xl px-4 sm:px-6 pt-4 pb-20">
         {/* Pending payment banner */}
         {pendingPayment && paymentPhase === "idle" && (
           <motion.div
