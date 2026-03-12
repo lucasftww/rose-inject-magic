@@ -668,7 +668,6 @@ const ProductsTab = () => {
               </div>
             </div>
 
-
             <div className="sm:col-span-2">
               <div className="flex items-center justify-between mb-3">
                 <label className="text-xs font-medium text-muted-foreground flex items-center gap-2">
@@ -789,7 +788,8 @@ const ProductsTab = () => {
               </div>
             </div>
 
-            {/* Tutorial */}
+            {/* Tutorial - hidden when Robot is enabled (Robot delivers everything automatically) */}
+            {!robotEnabled && (
             <div className="sm:col-span-2">
               <label className="text-xs font-medium text-muted-foreground flex items-center gap-2 mb-3">
                 <FileText className="h-3.5 w-3.5 text-success" />
@@ -842,8 +842,9 @@ const ProductsTab = () => {
                 <p className="text-[10px] text-muted-foreground/60 mt-1">O texto e/ou arquivo serão enviados automaticamente no chat do ticket quando o cliente comprar.</p>
               </div>
             </div>
+            )}
 
-            {/* Active toggle */}
+
             <label className="flex cursor-pointer items-center gap-3">
               <div className="relative">
                 <input type="checkbox" checked={formActive} onChange={(e) => setFormActive(e.target.checked)} className="peer sr-only" />
