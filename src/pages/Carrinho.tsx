@@ -73,18 +73,18 @@ const Carrinho = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <div className="mx-auto max-w-5xl px-6 pt-4 pb-20">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 pt-4 pb-20">
         <button
           onClick={() => navigate(-1)}
-          className="mb-6 flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-success hover:text-success"
+          className="mb-4 sm:mb-6 flex items-center gap-2 rounded-lg border border-border px-3 sm:px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-success hover:text-success"
         >
           <ArrowLeft className="h-4 w-4" />
           Voltar
         </button>
 
-        <div className="mb-8 flex items-center gap-3">
-          <ShoppingCart className="h-6 w-6 text-success" />
-          <h1 className="text-2xl font-bold text-foreground" style={{ fontFamily: "'Valorant', sans-serif" }}>
+        <div className="mb-6 sm:mb-8 flex items-center gap-2.5 sm:gap-3">
+          <ShoppingCart className="h-5 w-5 sm:h-6 sm:w-6 text-success" />
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground" style={{ fontFamily: "'Valorant', sans-serif" }}>
             MEU CARRINHO
           </h1>
           {totalItems > 0 && (

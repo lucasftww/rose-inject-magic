@@ -245,14 +245,14 @@ const Dashboard = () => {
 
         {/* Tabs */}
         <div className="mt-8 relative">
-          <div className="flex gap-0 overflow-x-auto border-b border-border">
+          <div className="flex gap-0 overflow-x-auto border-b border-border scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
             {tabs.map((tab) => {
               const isActive = activeTab === tab.id;
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`relative flex items-center gap-2.5 whitespace-nowrap px-5 py-3.5 text-sm font-medium transition-all duration-200 ${
+                  className={`relative flex items-center gap-1.5 sm:gap-2.5 whitespace-nowrap px-3 sm:px-5 py-3 sm:py-3.5 text-xs sm:text-sm font-medium transition-all duration-200 ${
                     isActive
                       ? "text-success"
                       : "text-muted-foreground hover:text-foreground"
