@@ -544,7 +544,7 @@ const ProdutoDetalhes = () => {
                   <p className="text-sm text-muted-foreground">Nenhuma avaliação ainda.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {reviews.map((review) => (
                     <div
                       key={review.id}
