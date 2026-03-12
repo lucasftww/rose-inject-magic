@@ -631,13 +631,11 @@ const ProductsTab = () => {
                       {robotEnabled && suggestedPrice !== null && (
                         <div className="mt-1.5 flex items-center gap-2 text-[10px] text-muted-foreground">
                           <span>
-                            Custo revenda: ${robotCostUsd?.toFixed(2)} USD (cheio: ${robotFullPriceUsd?.toFixed(2)}) ≈ R${robotCostBrl?.toFixed(2)} × {(1 + (formRobotMarkup || 0) / 100).toFixed(2)} = <span className="font-bold text-accent-foreground">R${suggestedPrice.toFixed(2)}</span>
+                            Preço API: ${Number(robotPriceUsd).toFixed(2)} USD ≈ R${robotPriceBrl?.toFixed(2)} × {(1 + (formRobotMarkup || 0) / 100).toFixed(2)} = <span className="font-bold text-accent-foreground">R${suggestedPrice.toFixed(2)}</span>
+                            <span className="text-success ml-1">(40% volta como cashback)</span>
                           </span>
                           {plan.price !== suggestedPrice && plan.price > 0 && (
                             <span className="text-warning">(manual: R${plan.price.toFixed(2)})</span>
-                          )}
-                          {sellingBelowFullApiPrice && (
-                            <span className="text-destructive">⚠️ abaixo do preço cheio da API (R${robotFullPriceBrl?.toFixed(2)})</span>
                           )}
                           {plan.price === 0 && (
                             <button type="button" onClick={() => updatePlan(index, "price", suggestedPrice)}
