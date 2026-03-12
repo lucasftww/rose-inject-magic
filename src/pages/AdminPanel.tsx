@@ -514,6 +514,7 @@ const AdminPanel = () => {
           {activeTab === "jogos" && <GamesTab />}
           {activeTab === "produtos" && <ProductsTab />}
           {activeTab === "estoque" && <StockTab />}
+          {activeTab === "robot" && <RobotProjectTab />}
           {activeTab === "revendedores" && <ResellersTab />}
           {activeTab === "tickets" && <TicketsTab />}
           {activeTab === "status" && <StatusTab />}
