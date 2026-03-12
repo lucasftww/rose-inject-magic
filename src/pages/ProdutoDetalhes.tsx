@@ -512,7 +512,7 @@ const ProdutoDetalhes = () => {
                       {isReseller && isResellerForProduct(product.id) ? (
                         <div className="text-right">
                           <span className="text-sm text-muted-foreground line-through mr-2">R$ {Number(selectedPlan.price).toFixed(2)}</span>
-                          <span className="text-2xl font-bold text-success">R$ {(Number(selectedPlan.price) * (1 - discountPercent / 100)).toFixed(2)}</span>
+                          <span className="text-xl sm:text-2xl font-bold text-success">R$ {(Number(selectedPlan.price) * (1 - discountPercent / 100)).toFixed(2)}</span>
                         </div>
                       ) : (
                         <span className="text-2xl font-bold text-success">R$ {Number(selectedPlan.price).toFixed(2)}</span>
