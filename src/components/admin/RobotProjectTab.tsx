@@ -34,6 +34,7 @@ const RobotProjectTab = () => {
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
   const [robotBalance, setRobotBalance] = useState<number | null>(null);
   const [freeGamesCount, setFreeGamesCount] = useState(0);
+  const [usdToBrl, setUsdToBrl] = useState(5.25);
 
   const checkPing = async () => {
     setPingStatus("loading");
