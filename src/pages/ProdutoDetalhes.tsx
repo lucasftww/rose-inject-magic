@@ -490,7 +490,7 @@ const ProdutoDetalhes = () => {
                         {isReseller && isResellerForProduct(product.id) ? (
                           <>
                             <span className="text-xs text-muted-foreground line-through mr-2">R$ {Number(plan.price).toFixed(2)}</span>
-                            <span className={`text-lg font-bold ${selectedPlanId === plan.id ? "text-success" : "text-foreground"}`}>
+                            <span className={`text-base sm:text-lg font-bold ${selectedPlanId === plan.id ? "text-success" : "text-foreground"}`}>
                               R$ {(Number(plan.price) * (1 - discountPercent / 100)).toFixed(2)}
                             </span>
                           </>
