@@ -267,27 +267,27 @@ const ProdutoDetalhes = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <div className="mx-auto max-w-7xl px-6 pt-4 pb-20">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 pt-4 pb-20">
         {/* Back button */}
         <button
           onClick={() => navigate(-1)}
-          className="mb-6 flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-success hover:text-success"
+          className="mb-4 sm:mb-6 flex items-center gap-2 rounded-lg border border-border px-3 sm:px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-success hover:text-success"
         >
           <ArrowLeft className="h-4 w-4" />
           Voltar
         </button>
 
         {/* Breadcrumb */}
-        <div className="mb-8 flex items-center gap-2 text-sm text-muted-foreground">
-          <button onClick={() => navigate("/")} className="hover:text-foreground transition-colors">Início</button>
-          <span>›</span>
+        <div className="mb-6 sm:mb-8 flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground overflow-x-auto scrollbar-hide">
+          <button onClick={() => navigate("/")} className="hover:text-foreground transition-colors shrink-0">Início</button>
+          <span className="shrink-0">›</span>
           {game && (
             <>
-              <button onClick={() => navigate("/produtos")} className="hover:text-foreground transition-colors">{game.name}</button>
-              <span>›</span>
+              <button onClick={() => navigate("/produtos")} className="hover:text-foreground transition-colors shrink-0">{game.name}</button>
+              <span className="shrink-0">›</span>
             </>
           )}
-          <span className="text-foreground">{product.name}</span>
+          <span className="text-foreground truncate">{product.name}</span>
         </div>
 
         <div className="grid gap-10 lg:grid-cols-2">
