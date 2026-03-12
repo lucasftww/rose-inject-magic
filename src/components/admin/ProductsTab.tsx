@@ -567,11 +567,9 @@ const ProductsTab = () => {
                               className="w-20 rounded-lg border border-accent/30 bg-accent/5 pl-9 pr-2 py-2 text-sm text-foreground outline-none focus:border-accent/50" />
                           </div>
                         )}
-                        <label className="flex items-center gap-1.5 cursor-pointer">
-                          <input type="checkbox" checked={plan.active} onChange={(e) => updatePlan(index, "active", e.target.checked)}
-                            className="sr-only peer" />
-                          <div className="h-4 w-7 rounded-full border border-border bg-secondary transition-colors peer-checked:border-success peer-checked:bg-success relative">
-                            <div className="absolute left-0.5 top-0.5 h-3 w-3 rounded-full bg-foreground/60 transition-all peer-checked:left-[12px] peer-checked:bg-success-foreground" />
+                        <label className="flex items-center gap-1.5 cursor-pointer" onClick={() => updatePlan(index, "active", !plan.active)}>
+                          <div className={`h-4 w-7 rounded-full border transition-colors relative ${plan.active ? "border-success bg-success" : "border-border bg-secondary"}`}>
+                            <div className={`absolute top-0.5 h-3 w-3 rounded-full transition-all ${plan.active ? "left-[12px] bg-white" : "left-0.5 bg-foreground/60"}`} />
                           </div>
                         </label>
                         <button type="button" onClick={() => removePlan(index)}
