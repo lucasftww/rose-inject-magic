@@ -128,7 +128,7 @@ const Raspadinha = () => {
   useEffect(() => {
     const fetchData = async () => {
       const [{ data: prizesData }, { data: configData }] = await Promise.all([
-        supabase.from("scratch_card_prizes").select("id, name, description, image_url, prize_value, product_id, sort_order, active, created_at").eq("active", true).order("sort_order"),
+        supabase.from("scratch_card_prizes").select("id, name, description, image_url, prize_value").eq("active", true).order("sort_order"),
         supabase.from("scratch_card_config").select("*").limit(1).single(),
       ]);
       if (prizesData) setPrizes(prizesData as Prize[]);
