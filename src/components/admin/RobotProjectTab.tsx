@@ -25,6 +25,18 @@ interface ProductWithRobot {
   stockCount: number;
 }
 
+interface RobotSale {
+  id: string;
+  created_at: string;
+  product_name: string;
+  plan_name: string;
+  revenue: number; // what customer paid (BRL)
+  cost: number; // estimated cost (BRL)
+  profit: number;
+  status: string;
+  duration: number | null;
+}
+
 const RobotProjectTab = () => {
   const [loading, setLoading] = useState(true);
   const [pingStatus, setPingStatus] = useState<"online" | "offline" | "loading">("loading");
@@ -35,6 +47,9 @@ const RobotProjectTab = () => {
   const [robotBalance, setRobotBalance] = useState<number | null>(null);
   const [freeGamesCount, setFreeGamesCount] = useState(0);
   const [usdToBrl, setUsdToBrl] = useState(5.25);
+  const [robotSales, setRobotSales] = useState<RobotSale[]>([]);
+  const [salesLoading, setSalesLoading] = useState(false);
+  const [salesPeriod, setSalesPeriod] = useState<"7d" | "30d" | "all">("30d");
 
   const checkPing = async () => {
     setPingStatus("loading");
