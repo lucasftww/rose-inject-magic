@@ -536,7 +536,9 @@ const ProductsTab = () => {
                         if (!p.robot_duration_days) return p;
                         const robotPriceUsd = rg.prices[String(p.robot_duration_days)];
                         if (robotPriceUsd === undefined) return p;
-                        const robotPriceBrl = Number(robotPriceUsd) * robotUsdToBrl;
+                        // API retorna preço cheio — aplicar desconto de revendedor (-40%) antes do markup
+                        const robotCostUsd = Number(robotPriceUsd) * 0.6;
+                        const robotPriceBrl = robotCostUsd * robotUsdToBrl;
                         const calc = Number((robotPriceBrl * (1 + (formRobotMarkup || 0) / 100)).toFixed(2));
                         return { ...p, price: calc };
                       });
