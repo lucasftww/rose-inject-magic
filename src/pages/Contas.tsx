@@ -267,8 +267,19 @@ interface LztItem {
 
 // ─── Data fetchers ───
 
-const fetchAllValorantSkins = async (): Promise<Map<string, { name: string; image: string }>> => {
-  const map = new Map<string, { name: string; image: string }>();
+// Rarity priority: higher = rarer/better
+const RARITY_PRIORITY: Record<string, number> = {
+  "411e4a55-4e59-7757-41f0-86a53f101bb5": 5, // Exclusive
+  "e046854e-406c-37f4-6571-7a8baeeb93ab": 4, // Ultra
+  "60bca009-4182-7998-dee7-b8a2558dc369": 3, // Premium
+  "12683d76-48d7-84a3-4e09-6985794f0445": 2, // Deluxe
+  "0cebb8be-46d7-c12a-d306-e9907bfc5a25": 1, // Select
+};
+
+type SkinEntry = { name: string; image: string; rarity: number };
+
+const fetchAllValorantSkins = async (): Promise<Map<string, SkinEntry>> => {
+  const map = new Map<string, SkinEntry>();
 
   // Fetch weapon skins
   try {
@@ -278,7 +289,8 @@ const fetchAllValorantSkins = async (): Promise<Map<string, { name: string; imag
       for (const s of (data.data || [])) {
         const image = s.levels?.[0]?.displayIcon || s.displayIcon || s.chromas?.[0]?.fullRender;
         if (!image) continue;
-        const entry = { name: s.displayName, image };
+        const rarity = RARITY_PRIORITY[s.contentTierUuid?.toLowerCase()] || 0;
+        const entry: SkinEntry = { name: s.displayName, image, rarity };
         if (s.uuid) map.set(s.uuid.toLowerCase(), entry);
         for (const level of (s.levels || [])) {
           if (level.uuid) map.set(level.uuid.toLowerCase(), entry);
@@ -298,7 +310,7 @@ const fetchAllValorantSkins = async (): Promise<Map<string, { name: string; imag
       for (const a of (data.data || [])) {
         const image = a.displayIcon || a.fullPortrait || a.bustPortrait;
         if (!image || !a.uuid) continue;
-        map.set(a.uuid.toLowerCase(), { name: a.displayName, image });
+        map.set(a.uuid.toLowerCase(), { name: a.displayName, image, rarity: 0 });
       }
     }
   } catch { /* ignore */ }
@@ -311,7 +323,7 @@ const fetchAllValorantSkins = async (): Promise<Map<string, { name: string; imag
       for (const b of (data.data || [])) {
         const image = b.displayIcon;
         if (!image || !b.uuid) continue;
-        const entry = { name: b.displayName, image };
+        const entry: SkinEntry = { name: b.displayName, image, rarity: 0 };
         if (b.uuid) map.set(b.uuid.toLowerCase(), entry);
         for (const level of (b.levels || [])) {
           if (level.uuid) map.set(level.uuid.toLowerCase(), entry);
@@ -398,32 +410,30 @@ const LztPreviewImage = ({ url }: { url: string }) => {
   );
 };
 
-const ValorantCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap: Map<string, { name: string; image: string }>; formatPrice: (price: number, currency?: string) => string }) => {
+const ValorantCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap: Map<string, SkinEntry>; formatPrice: (price: number, currency?: string) => string }) => {
   const navigate = useNavigate();
   const rank = item.riot_valorant_rank ? rankMap[item.riot_valorant_rank] : null;
   const hasKnife = (item.riot_valorant_knife ?? 0) > 0;
   const skinCount = item.riot_valorant_skin_count ?? 0;
 
   const skinPreviews = useMemo(() => {
-    const results: { name: string; image: string }[] = [];
+    const results: SkinEntry[] = [];
     // Extract UUIDs from array or object format (LZT API returns both)
     const toUuids = (raw: unknown): string[] => {
       if (Array.isArray(raw)) return raw;
       if (raw && typeof raw === "object") return Object.values(raw as Record<string, string>);
       return [];
     };
-    const allUuids = [
-      ...toUuids(item.valorantInventory?.WeaponSkins),
-      ...toUuids(item.valorantInventory?.Buddy),
-      // Agent UUIDs are intentionally excluded from card preview
-    ];
+    // Only weapon skins for card preview (no buddies/agents)
+    const allUuids = toUuids(item.valorantInventory?.WeaponSkins);
     for (const uuid of allUuids) {
       if (typeof uuid !== "string") continue;
       const entry = skinsMap.get(uuid.toLowerCase());
-      if (entry) results.push(entry);
-      if (results.length >= 6) break;
+      if (entry && entry.rarity > 0) results.push(entry);
     }
-    return results;
+    // Sort by rarity descending (best skins first)
+    results.sort((a, b) => b.rarity - a.rarity);
+    return results.slice(0, 6);
   }, [item.valorantInventory, skinsMap]);
 
   return (
