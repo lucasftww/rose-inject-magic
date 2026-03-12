@@ -31,7 +31,9 @@ interface ProductFromDB {
   image_url: string | null;
   active: boolean;
   sort_order: number;
+  robot_game_id: number | null;
   product_plans: ProductPlan[];
+  _stockCount?: number;
 }
 
 const fadeUp = {
