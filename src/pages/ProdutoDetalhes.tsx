@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
-import { ArrowLeft, ChevronLeft, ChevronRight, Cpu, Fingerprint, Loader2, Monitor, Package, Play, ShoppingCart, Sparkles, Star, UserCheck, Zap } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ChevronLeft, ChevronRight, Cpu, Fingerprint, Loader2, Monitor, Package, Play, ShoppingCart, Sparkles, Star, UserCheck, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { getYouTubeId, getYouTubeEmbedUrl, getYouTubeThumbnail } from "@/lib/videoUtils";
@@ -40,6 +40,7 @@ interface ProductDetail {
   features_text: string | null;
   image_url: string | null;
   active: boolean;
+  robot_game_id: number | null;
   product_plans: ProductPlan[];
   product_media: MediaItem[];
   product_features: FeatureItem[];
@@ -71,6 +72,7 @@ const ProdutoDetalhes = () => {
   const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
   const [reviews, setReviews] = useState<ReviewData[]>([]);
+  const [robotNoStock, setRobotNoStock] = useState(false);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -109,6 +111,24 @@ const ProdutoDetalhes = () => {
           ...r,
           username: r.username || "Usuário",
         })));
+      }
+
+      // Check stock for robot products
+      if (data.robot_game_id) {
+        const activePlanIds = ((data as any).product_plans || [])
+          .filter((p: any) => p.active)
+          .map((p: any) => p.id);
+        if (activePlanIds.length > 0) {
+          const { data: stockData } = await supabase
+            .from("stock_items")
+            .select("id")
+            .in("product_plan_id", activePlanIds)
+            .eq("used", false)
+            .limit(1);
+          setRobotNoStock(!stockData || stockData.length === 0);
+        } else {
+          setRobotNoStock(true);
+        }
       }
 
       setLoading(false);
@@ -268,6 +288,17 @@ const ProdutoDetalhes = () => {
           <ArrowLeft className="h-4 w-4" />
           Voltar
         </button>
+
+        {/* Robot product no stock warning */}
+        {robotNoStock && (
+          <div className="mb-4 flex items-center gap-3 rounded-lg border border-warning/30 bg-warning/5 px-4 py-3">
+            <AlertTriangle className="h-5 w-5 text-warning shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-warning">Produto temporariamente sem estoque</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Este produto será reabastecido em breve. Tente novamente mais tarde.</p>
+            </div>
+          </div>
+        )}
 
         {/* Breadcrumb */}
         <div className="mb-6 sm:mb-8 flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground overflow-x-auto scrollbar-hide">
