@@ -762,7 +762,7 @@ const Raspadinha = () => {
               RASPADINHA
             </span>
           </h1>
-          <p className="text-muted-foreground max-w-md mx-auto">
+          <p className="text-sm text-muted-foreground max-w-md mx-auto">
             Apenas{" "}
             <span className={`font-bold ${accentClass}`}>
               R$ {unitPrice.toFixed(2)}
