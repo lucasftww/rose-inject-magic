@@ -1023,6 +1023,21 @@ Deno.serve(async (req) => {
   // url and action already declared above
 
   try {
+    // ==================== BAN CHECK ====================
+    {
+      const { data: banProfile } = await supabaseAdmin
+        .from("profiles")
+        .select("banned")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (banProfile?.banned) {
+        return new Response(JSON.stringify({ error: "Sua conta está suspensa. Entre em contato com o suporte." }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     // ==================== CREATE PIX CHARGE (MisticPay) ====================
     if (action === "create" && req.method === "POST") {
       const body = await req.json();
