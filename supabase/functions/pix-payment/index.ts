@@ -1085,7 +1085,9 @@ async function validateAndCalculatePrice(
               if (robotGame?.prices) {
                 const basePriceUsd = robotGame.prices[String(plan.robot_duration_days)];
                 if (basePriceUsd !== undefined && basePriceUsd > 0) {
-                  // Robot API returns prices in USD — fetch live exchange rate
+                  // Robot API returns full price — apply reseller discount (-40%) first
+                  const costPriceUsd = basePriceUsd * 0.6;
+                  // Fetch live exchange rate
                   let usdToBrl = 5.25; // fallback
                   try {
                     const fxRes = await fetch("https://economia.awesomeapi.com.br/json/last/USD-BRL");
@@ -1095,9 +1097,9 @@ async function validateAndCalculatePrice(
                       if (bid > 0) usdToBrl = bid;
                     }
                   } catch (_) { /* use fallback */ }
-                  const basePriceBrl = basePriceUsd * usdToBrl;
+                  const basePriceBrl = costPriceUsd * usdToBrl;
                   realPrice = Number((basePriceBrl * (1 + productData.robot_markup_percent / 100)).toFixed(2));
-                  console.log(`Robot markup price: baseUSD=${basePriceUsd}, rate=${usdToBrl}, baseBRL=${basePriceBrl.toFixed(2)}, markup=${productData.robot_markup_percent}%, final=${realPrice}`);
+                  console.log(`Robot markup price: fullUSD=${basePriceUsd}, costUSD=${costPriceUsd} (-40%), rate=${usdToBrl}, baseBRL=${basePriceBrl.toFixed(2)}, markup=${productData.robot_markup_percent}%, final=${realPrice}`);
                 }
               }
             }
