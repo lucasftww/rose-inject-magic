@@ -1085,11 +1085,19 @@ async function validateAndCalculatePrice(
               if (robotGame?.prices) {
                 const basePriceUsd = robotGame.prices[String(plan.robot_duration_days)];
                 if (basePriceUsd !== undefined && basePriceUsd > 0) {
-                  // Robot API returns prices in USD — convert to BRL
-                  const USD_TO_BRL = 5.25;
-                  const basePriceBrl = basePriceUsd * USD_TO_BRL;
+                  // Robot API returns prices in USD — fetch live exchange rate
+                  let usdToBrl = 5.25; // fallback
+                  try {
+                    const fxRes = await fetch("https://economia.awesomeapi.com.br/json/last/USD-BRL");
+                    if (fxRes.ok) {
+                      const fxData = await fxRes.json();
+                      const bid = Number(fxData?.USDBRL?.bid);
+                      if (bid > 0) usdToBrl = bid;
+                    }
+                  } catch (_) { /* use fallback */ }
+                  const basePriceBrl = basePriceUsd * usdToBrl;
                   realPrice = Number((basePriceBrl * (1 + productData.robot_markup_percent / 100)).toFixed(2));
-                  console.log(`Robot markup price calculated: baseUSD=${basePriceUsd}, baseBRL=${basePriceBrl.toFixed(2)}, markup=${productData.robot_markup_percent}%, final=${realPrice}`);
+                  console.log(`Robot markup price: baseUSD=${basePriceUsd}, rate=${usdToBrl}, baseBRL=${basePriceBrl.toFixed(2)}, markup=${productData.robot_markup_percent}%, final=${realPrice}`);
                 }
               }
             }

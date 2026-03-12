@@ -121,6 +121,18 @@ const ProductsTab = () => {
   const [formRobotMarkup, setFormRobotMarkup] = useState<number | null>(null);
   const [robotGames, setRobotGames] = useState<RobotGame[]>([]);
   const [loadingRobotGames, setLoadingRobotGames] = useState(false);
+  const [robotUsdToBrl, setRobotUsdToBrl] = useState(ROBOT_USD_TO_BRL);
+
+  const fetchExchangeRate = async () => {
+    try {
+      const res = await fetch("https://economia.awesomeapi.com.br/json/last/USD-BRL");
+      if (res.ok) {
+        const data = await res.json();
+        const bid = Number(data?.USDBRL?.bid);
+        if (bid > 0) setRobotUsdToBrl(bid);
+      }
+    } catch (_) { /* use fallback */ }
+  };
 
   const fetchRobotGames = async () => {
     setLoadingRobotGames(true);
@@ -128,13 +140,16 @@ const ProductsTab = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
       const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-      const res = await fetch(`https://${projectId}.supabase.co/functions/v1/robot-project?action=list-games`, {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-          "Content-Type": "application/json",
-          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-        },
-      });
+      const [res] = await Promise.all([
+        fetch(`https://${projectId}.supabase.co/functions/v1/robot-project?action=list-games`, {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+        }),
+        fetchExchangeRate(),
+      ]);
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         toast({ title: "Erro ao carregar jogos Robot", description: err.error || `HTTP ${res.status}`, variant: "destructive" });
@@ -520,7 +535,7 @@ const ProductsTab = () => {
                         if (!p.robot_duration_days) return p;
                         const robotPriceUsd = rg.prices[String(p.robot_duration_days)];
                         if (robotPriceUsd === undefined) return p;
-                        const robotPriceBrl = Number(robotPriceUsd) * ROBOT_USD_TO_BRL;
+                        const robotPriceBrl = Number(robotPriceUsd) * robotUsdToBrl;
                         const calc = Number((robotPriceBrl * (1 + (formRobotMarkup || 0) / 100)).toFixed(2));
                         return { ...p, price: calc };
                       });
@@ -543,7 +558,7 @@ const ProductsTab = () => {
                   const selectedRobotGame = robotEnabled && formRobotGameId ? robotGames.find(g => g.id === formRobotGameId) : null;
                   const robotBasePriceUsd = selectedRobotGame && plan.robot_duration_days
                     ? selectedRobotGame.prices?.[String(plan.robot_duration_days)] : undefined;
-                  const robotBasePriceBrl = robotBasePriceUsd !== undefined ? Number(robotBasePriceUsd) * ROBOT_USD_TO_BRL : undefined;
+                  const robotBasePriceBrl = robotBasePriceUsd !== undefined ? Number(robotBasePriceUsd) * robotUsdToBrl : undefined;
                   const suggestedPrice = robotBasePriceBrl !== undefined && formRobotMarkup
                     ? Number((robotBasePriceBrl * (1 + formRobotMarkup / 100)).toFixed(2)) : null;
 
@@ -648,7 +663,7 @@ const ProductsTab = () => {
                             <div className="mt-2 text-[10px] text-muted-foreground space-y-0.5">
                               <p>Versão: {rg.version} · Status: <span className={rg.status === "on" ? "text-success" : "text-destructive"}>{rg.status}</span></p>
                               {Object.keys(rg.prices).length > 0 && (
-                                <p>Preços Robot: {Object.entries(rg.prices).map(([d, p]) => `${d}d = $${Number(p).toFixed(2)} (≈ R$${(Number(p) * ROBOT_USD_TO_BRL).toFixed(2)})`).join(" · ")}</p>
+                                <p>Preços Robot: {Object.entries(rg.prices).map(([d, p]) => `${d}d = $${Number(p).toFixed(2)} (≈ R$${(Number(p) * robotUsdToBrl).toFixed(2)})`).join(" · ")}</p>
                               )}
                               {rg.maxKeys && <p>Slots: {rg.soldKeys}/{rg.maxKeys}</p>}
                             </div>
@@ -660,7 +675,7 @@ const ProductsTab = () => {
                         <input type="number" value={formRobotMarkup || ""} onChange={(e) => setFormRobotMarkup(Number(e.target.value) || null)}
                           min="0" max="500" step="1" placeholder="Ex: 30 (30% de lucro)"
                           className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-accent/50" />
-                        <p className="text-[10px] text-muted-foreground/60 mt-1">Se definido, calcula preço automático: preço Robot em USD × câmbio ({ROBOT_USD_TO_BRL}) × (1 + markup/100). Preço manual no plano tem prioridade.</p>
+                        <p className="text-[10px] text-muted-foreground/60 mt-1">Se definido, calcula preço automático: preço Robot em USD × câmbio ({robotUsdToBrl.toFixed(2)}) × (1 + markup/100). Preço manual no plano tem prioridade.</p>
                       </div>
                     </div>
                     <p className="text-[10px] text-muted-foreground/60">
