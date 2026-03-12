@@ -397,14 +397,13 @@ const RobotProjectTab = () => {
                       <div className="flex flex-wrap gap-1.5">
                         {priceEntries.map(([days, price]) => {
                           const usdPrice = Number(price);
-                          const costUsd = usdPrice * 0.6; // desconto revendedor -40%
-                          const brlPrice = costUsd * usdToBrl;
+                          const brlPrice = usdPrice * usdToBrl;
                           return (
                             <span key={days} className="inline-flex items-center gap-1 rounded-md bg-secondary/60 border border-border px-2 py-0.5 text-[11px]">
                               <Clock className="h-2.5 w-2.5 text-muted-foreground" />
                               <span className="text-muted-foreground">{days}d</span>
                               <span className="font-bold text-foreground">R${brlPrice.toFixed(2)}</span>
-                              <span className="text-[9px] text-muted-foreground">(${costUsd.toFixed(2)} custo)</span>
+                              <span className="text-[9px] text-muted-foreground">(${usdPrice.toFixed(2)})</span>
                             </span>
                           );
                         })}
@@ -412,8 +411,7 @@ const RobotProjectTab = () => {
                       {linkedProduct?.robot_markup_percent && (
                         <div className="flex flex-wrap gap-1.5 mt-1">
                           {priceEntries.map(([days, price]) => {
-                            const costUsd = Number(price) * 0.6; // desconto revendedor -40%
-                            const brlPrice = costUsd * usdToBrl;
+                            const brlPrice = Number(price) * usdToBrl;
                             const withMarkup = brlPrice * (1 + (linkedProduct.robot_markup_percent || 0) / 100);
                             return (
                               <span key={`mk-${days}`} className="inline-flex items-center gap-1 rounded-md bg-accent/10 border border-accent/20 px-2 py-0.5 text-[11px]">
