@@ -340,11 +340,19 @@ const fetchValorantSkins = async (uuids: string[]) => {
 
   const matched: ValorantSkinItem[] = [];
   const missing: string[] = [];
+  const firstSeenOrder = new Map<string, number>();
+  const uuidOrder = new Map(normalizedUuids.map((uuid, index) => [uuid, index]));
 
-  for (const uuid of normalizedUuids) {
+  for (const [index, uuid] of normalizedUuids.entries()) {
     const entry = skinLookup.get(uuid);
-    if (entry) matched.push(entry);
-    else missing.push(uuid);
+    if (entry) {
+      matched.push(entry);
+      if (!firstSeenOrder.has(entry.name)) {
+        firstSeenOrder.set(entry.name, index);
+      }
+    } else {
+      missing.push(uuid);
+    }
   }
 
   // Fallback for edge cases where UUID exists only in flat endpoints
@@ -407,7 +415,12 @@ const fetchValorantSkins = async (uuids: string[]) => {
 
       for (const uuid of missing) {
         const fallback = fallbackByUuid.get(uuid);
-        if (fallback) matched.push(fallback);
+        if (fallback) {
+          matched.push(fallback);
+          if (!firstSeenOrder.has(fallback.name)) {
+            firstSeenOrder.set(fallback.name, uuidOrder.get(uuid) ?? Number.MAX_SAFE_INTEGER);
+          }
+        }
       }
     } catch {
       // ignore fallback failures
@@ -426,9 +439,12 @@ const fetchValorantSkins = async (uuids: string[]) => {
 
   const final = Array.from(deduped.values());
 
-  // Ordenação apenas por linhagem
+  // Ordem LZT: linhagem no topo e, dentro da mesma linhagem, ordem original postada no anúncio
   final.sort((a, b) => {
     if (a.lineageRank !== b.lineageRank) return b.lineageRank - a.lineageRank;
+    const orderA = firstSeenOrder.get(a.name) ?? Number.MAX_SAFE_INTEGER;
+    const orderB = firstSeenOrder.get(b.name) ?? Number.MAX_SAFE_INTEGER;
+    if (orderA !== orderB) return orderA - orderB;
     return a.name.localeCompare(b.name, "pt-BR");
   });
 
