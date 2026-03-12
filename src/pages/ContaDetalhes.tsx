@@ -628,7 +628,7 @@ const ContaDetalhes = () => {
                     )}
                   </div>
                 ) : mainGallery.length > 0 ? (
-                  <div className="relative group rounded-lg border border-border bg-card overflow-hidden aspect-[16/10]">
+                  <div className="relative group rounded-lg border border-border bg-card overflow-hidden aspect-[4/3] sm:aspect-[16/10]">
                     <AnimatePresence mode="wait">
                       <motion.img
                         key={selectedSkin}
