@@ -825,7 +825,7 @@ const ContaDetalhes = () => {
                             <img src={invItem.rarity.img} alt={invItem.rarity.name} className="h-5 w-5 object-contain drop-shadow-md" title={invItem.rarity.name} />
                           </div>
                         )}
-                        <div className="aspect-square bg-secondary/20 flex items-center justify-center p-3">
+                        <div className="aspect-square bg-secondary/20 flex items-center justify-center p-2 sm:p-3">
                           <img
                             src={invItem.image}
                             alt={invItem.name}
