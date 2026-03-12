@@ -552,7 +552,7 @@ const ContaDetalhes = () => {
       <div className="mx-auto max-w-6xl px-4 sm:px-6 pt-4 pb-28 sm:pb-20">
         <button
           onClick={() => navigate("/contas")}
-          className="mb-5 flex items-center gap-2 rounded-lg border border-border bg-card/50 px-4 py-2 text-sm text-muted-foreground transition-all hover:border-success/40 hover:text-success"
+          className="mb-4 sm:mb-5 flex items-center gap-2 rounded-lg border border-border bg-card/50 px-3 sm:px-4 py-2 text-sm text-muted-foreground transition-all hover:border-success/40 hover:text-success"
         >
           <ArrowLeft className="h-4 w-4" />
           Voltar
