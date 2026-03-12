@@ -350,27 +350,59 @@ const fetchValorantSkins = async (uuids: string[]) => {
     }
   }
 
-  // Deduplicate (same skin can appear via base uuid + level + chroma)
+  // Deduplicate by skin name (same skin via base uuid + level + chroma)
   const deduped = new Map<string, ValorantSkinItem>();
   for (const skin of matched) {
-    const key = `${skin.name}|${skin.image}`;
+    const key = skin.name;
     const existing = deduped.get(key);
-    if (!existing || skin.displayScore > existing.displayScore || skin.rarityPriority > existing.rarityPriority) {
+    if (!existing || skin.rarityPriority > existing.rarityPriority) {
       deduped.set(key, skin);
     }
   }
 
   const final = Array.from(deduped.values());
-  final.sort((a, b) => {
-    const bucketA = a.rarityPriority >= 2 || a.isPremiumHint ? 0 : a.rarityPriority === 1 ? 1 : 2;
-    const bucketB = b.rarityPriority >= 2 || b.isPremiumHint ? 0 : b.rarityPriority === 1 ? 1 : 2;
 
-    return (
-      bucketA - bucketB ||
-      b.displayScore - a.displayScore ||
-      b.rarityPriority - a.rarityPriority ||
-      a.name.localeCompare(b.name, "pt-BR")
-    );
+  // LZT-style sort: strict tier hierarchy, then weapon popularity within tier
+  // Exclusive(5) → Ultra(4) → Premium(3) → Deluxe(2) → Select(1) → Default(0)
+  // Within same tier: Vandal > Phantom > Operator > Melee > Sheriff > etc.
+  final.sort((a, b) => {
+    // 1) Tier first (strict descending)
+    if (a.rarityPriority !== b.rarityPriority) {
+      return b.rarityPriority - a.rarityPriority;
+    }
+
+    // 2) Within same tier, sort by weapon popularity
+    const weaponOrder = (name: string): number => {
+      const n = name.toLowerCase();
+      // Check melee keywords
+      if (["karambit", "knife", "faca", "blade", "dagger", "hammer", "katana", "espada", "kunitsuna", "yaiba", "xenocaçador", "xenohunter"].some(k => n.includes(k))) return 25;
+      // Check weapon types
+      if (n.includes("vandal")) return 30;
+      if (n.includes("phantom")) return 28;
+      if (n.includes("operator")) return 26;
+      if (n.includes("sheriff")) return 22;
+      if (n.includes("spectre")) return 20;
+      if (n.includes("outlaw")) return 19;
+      if (n.includes("marshal")) return 18;
+      if (n.includes("odin")) return 16;
+      if (n.includes("guardian")) return 15;
+      if (n.includes("classic")) return 14;
+      if (n.includes("ghost")) return 13;
+      if (n.includes("ares")) return 12;
+      if (n.includes("judge")) return 11;
+      if (n.includes("bulldog")) return 10;
+      if (n.includes("stinger")) return 9;
+      if (n.includes("bucky")) return 8;
+      if (n.includes("frenzy")) return 7;
+      if (n.includes("shorty")) return 6;
+      return 5;
+    };
+
+    const wA = weaponOrder(a.name);
+    const wB = weaponOrder(b.name);
+    if (wA !== wB) return wB - wA;
+
+    return a.name.localeCompare(b.name, "pt-BR");
   });
   return final;
 };
