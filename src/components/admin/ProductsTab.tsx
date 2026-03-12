@@ -522,7 +522,77 @@ const ProductsTab = () => {
               </div>
             </div>
 
-            {/* Media Gallery */}
+            {/* Robot Project Integration */}
+            <div className="sm:col-span-2">
+              <label className="text-xs font-medium text-muted-foreground flex items-center gap-2 mb-3">
+                <Globe className="h-3.5 w-3.5 text-accent" />
+                Robot Project (Revenda)
+              </label>
+              <div className="rounded-lg border border-border bg-secondary/20 p-4 space-y-3">
+                <div className="flex items-center gap-3">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={!!formRobotGameId} onChange={(e) => {
+                      if (!e.target.checked) { setFormRobotGameId(null); setFormRobotMarkup(null); }
+                      else { setFormRobotGameId(0); fetchRobotGames(); }
+                    }} className="sr-only peer" />
+                    <div className="h-4 w-7 rounded-full border border-border bg-secondary transition-colors peer-checked:border-accent peer-checked:bg-accent relative">
+                      <div className="absolute left-0.5 top-0.5 h-3 w-3 rounded-full bg-foreground/60 transition-all peer-checked:left-[12px] peer-checked:bg-accent-foreground" />
+                    </div>
+                    <span className="text-xs text-muted-foreground">Produto fornecido via Robot Project</span>
+                  </label>
+                </div>
+
+                {formRobotGameId !== null && (
+                  <>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div>
+                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Jogo Robot</label>
+                        <div className="flex gap-2 mt-1">
+                          <select value={formRobotGameId || ""} onChange={(e) => setFormRobotGameId(Number(e.target.value) || null)}
+                            className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-accent/50">
+                            <option value="">Selecione o jogo...</option>
+                            {robotGames.map(g => (
+                              <option key={g.id} value={g.id}>
+                                {g.name} {g.status === "off" ? "(OFF)" : ""} {g.is_free ? "(FREE)" : ""}
+                              </option>
+                            ))}
+                          </select>
+                          <button type="button" onClick={fetchRobotGames} disabled={loadingRobotGames}
+                            className="flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-xs text-muted-foreground hover:text-foreground">
+                            {loadingRobotGames ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+                          </button>
+                        </div>
+                        {formRobotGameId && formRobotGameId > 0 && robotGames.length > 0 && (() => {
+                          const rg = robotGames.find(g => g.id === formRobotGameId);
+                          if (!rg) return null;
+                          return (
+                            <div className="mt-2 text-[10px] text-muted-foreground space-y-0.5">
+                              <p>Versão: {rg.version} · Status: <span className={rg.status === "on" ? "text-success" : "text-destructive"}>{rg.status}</span></p>
+                              {Object.keys(rg.prices).length > 0 && (
+                                <p>Preços Robot: {Object.entries(rg.prices).map(([d, p]) => `${d}d = R$${p}`).join(" · ")}</p>
+                              )}
+                              {rg.maxKeys && <p>Slots: {rg.soldKeys}/{rg.maxKeys}</p>}
+                            </div>
+                          );
+                        })()}
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Markup % (opcional)</label>
+                        <input type="number" value={formRobotMarkup || ""} onChange={(e) => setFormRobotMarkup(Number(e.target.value) || null)}
+                          min="0" max="500" step="1" placeholder="Ex: 30 (30% de lucro)"
+                          className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-accent/50" />
+                        <p className="text-[10px] text-muted-foreground/60 mt-1">Se definido, calcula preço automático: preço Robot × (1 + markup/100). Preço manual no plano tem prioridade.</p>
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground/60">
+                      💡 Configure a duração em dias em cada plano acima (campo "dias" aparece quando Robot está ativado). Quando o cliente comprar, a key será gerada automaticamente via API Robot.
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
+
+
             <div className="sm:col-span-2">
               <div className="flex items-center justify-between mb-3">
                 <label className="text-xs font-medium text-muted-foreground flex items-center gap-2">
