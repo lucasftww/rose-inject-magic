@@ -9,7 +9,7 @@ interface Review {
   rating: number;
   comment: string | null;
   created_at: string;
-  user_id: string;
+  user_id?: string;
   username: string;
   product_name: string;
 }

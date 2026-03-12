@@ -131,7 +131,7 @@ const Raspadinha = () => {
         supabase.from("public_scratch_card_prizes" as any).select("id, name, description, image_url, prize_value").eq("active", true).order("sort_order"),
         supabase.from("scratch_card_config").select("price, active").limit(1).single(),
       ]);
-      if (prizesData) setPrizes(prizesData as Prize[]);
+      if (prizesData) setPrizes(prizesData as unknown as Prize[]);
       if (configData) setConfig(configData as any);
       setLoading(false);
     };
