@@ -510,45 +510,94 @@ const ProductsTab = () => {
             <div className="sm:col-span-2">
               <div className="flex items-center justify-between mb-3">
                 <label className="text-xs font-medium text-muted-foreground">Planos / Sub-produtos</label>
-                <button type="button" onClick={addPlan}
-                  className="flex items-center gap-1 rounded-lg bg-secondary/50 border border-border px-3 py-1 text-xs font-medium text-muted-foreground hover:text-foreground">
-                  <Plus className="h-3 w-3" /> Adicionar
-                </button>
+                <div className="flex items-center gap-2">
+                  {robotEnabled && formRobotMarkup && formRobotGameId && robotGames.length > 0 && (
+                    <button type="button" onClick={() => {
+                      const rg = robotGames.find(g => g.id === formRobotGameId);
+                      if (!rg || !rg.prices) return;
+                      const updated = formPlans.map(p => {
+                        if (!p.robot_duration_days) return p;
+                        const robotPrice = rg.prices[String(p.robot_duration_days)];
+                        if (robotPrice === undefined) return p;
+                        const calc = Number((robotPrice * (1 + (formRobotMarkup || 0) / 100)).toFixed(2));
+                        return { ...p, price: calc };
+                      });
+                      setFormPlans(updated);
+                      toast({ title: "Preços preenchidos com markup!" });
+                    }}
+                      className="flex items-center gap-1 rounded-lg bg-accent/10 border border-accent/30 px-3 py-1 text-xs font-medium text-accent-foreground hover:bg-accent/20">
+                      <DollarSign className="h-3 w-3" /> Auto-preencher preços
+                    </button>
+                  )}
+                  <button type="button" onClick={addPlan}
+                    className="flex items-center gap-1 rounded-lg bg-secondary/50 border border-border px-3 py-1 text-xs font-medium text-muted-foreground hover:text-foreground">
+                    <Plus className="h-3 w-3" /> Adicionar
+                  </button>
+                </div>
               </div>
               <div className="space-y-2">
-                {formPlans.map((plan, index) => (
-                  <div key={index} className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-secondary/30 p-3">
-                    <input type="text" value={plan.name} onChange={(e) => updatePlan(index, "name", e.target.value.slice(0, 50))}
-                      placeholder="Nome (ex: Diário)"
-                      className="flex-1 min-w-[120px] rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-success/50" />
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">R$</span>
-                      <input type="number" value={plan.price} onChange={(e) => updatePlan(index, "price", Number(e.target.value))}
-                        min="0" step="0.01" placeholder="0.00"
-                        className="w-28 rounded-lg border border-border bg-background pl-9 pr-3 py-2 text-sm text-foreground outline-none focus:border-success/50" />
+                {formPlans.map((plan, index) => {
+                  // Calculate suggested price from Robot markup
+                  const selectedRobotGame = robotEnabled && formRobotGameId ? robotGames.find(g => g.id === formRobotGameId) : null;
+                  const robotBasePrice = selectedRobotGame && plan.robot_duration_days
+                    ? selectedRobotGame.prices?.[String(plan.robot_duration_days)] : undefined;
+                  const suggestedPrice = robotBasePrice !== undefined && formRobotMarkup
+                    ? Number((robotBasePrice * (1 + formRobotMarkup / 100)).toFixed(2)) : null;
+
+                  return (
+                    <div key={index} className="rounded-lg border border-border bg-secondary/30 p-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <input type="text" value={plan.name} onChange={(e) => updatePlan(index, "name", e.target.value.slice(0, 50))}
+                          placeholder="Nome (ex: Diário)"
+                          className="flex-1 min-w-[120px] rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-success/50" />
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">R$</span>
+                          <input type="number" value={plan.price} onChange={(e) => updatePlan(index, "price", Number(e.target.value))}
+                            min="0" step="0.01" placeholder="0.00"
+                            className={`w-28 rounded-lg border bg-background pl-9 pr-3 py-2 text-sm text-foreground outline-none focus:border-success/50 ${
+                              plan.price === 0 && robotEnabled ? "border-warning/50" : "border-border"
+                            }`} />
+                        </div>
+                        {robotEnabled && (
+                          <div className="relative">
+                            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">dias</span>
+                            <input type="number" value={plan.robot_duration_days || ""} onChange={(e) => updatePlan(index, "robot_duration_days", Number(e.target.value) || null)}
+                              min="1" step="1" placeholder="30"
+                              title="Duração Robot (dias)"
+                              className="w-20 rounded-lg border border-accent/30 bg-accent/5 pl-9 pr-2 py-2 text-sm text-foreground outline-none focus:border-accent/50" />
+                          </div>
+                        )}
+                        <label className="flex items-center gap-1.5 cursor-pointer">
+                          <input type="checkbox" checked={plan.active} onChange={(e) => updatePlan(index, "active", e.target.checked)}
+                            className="sr-only peer" />
+                          <div className="h-4 w-7 rounded-full border border-border bg-secondary transition-colors peer-checked:border-success peer-checked:bg-success relative">
+                            <div className="absolute left-0.5 top-0.5 h-3 w-3 rounded-full bg-foreground/60 transition-all peer-checked:left-[12px] peer-checked:bg-success-foreground" />
+                          </div>
+                        </label>
+                        <button type="button" onClick={() => removePlan(index)}
+                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive">
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                      {/* Show markup calculation hint */}
+                      {robotEnabled && suggestedPrice !== null && (
+                        <div className="mt-1.5 flex items-center gap-2 text-[10px] text-muted-foreground">
+                          <span>Robot: R${robotBasePrice?.toFixed(2)} × {formRobotMarkup}% = <span className="font-bold text-accent-foreground">R${suggestedPrice.toFixed(2)}</span></span>
+                          {plan.price !== suggestedPrice && plan.price > 0 && (
+                            <span className="text-warning">(manual: R${plan.price.toFixed(2)})</span>
+                          )}
+                          {plan.price === 0 && (
+                            <button type="button" onClick={() => updatePlan(index, "price", suggestedPrice)}
+                              className="text-accent-foreground hover:underline font-medium">Usar este valor</button>
+                          )}
+                        </div>
+                      )}
+                      {robotEnabled && plan.price === 0 && !suggestedPrice && (
+                        <p className="mt-1 text-[10px] text-warning">⚠️ Preço R$ 0 — defina um preço ou configure dias + markup</p>
+                      )}
                     </div>
-                    {robotEnabled && (
-                      <div className="relative">
-                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">dias</span>
-                        <input type="number" value={plan.robot_duration_days || ""} onChange={(e) => updatePlan(index, "robot_duration_days", Number(e.target.value) || null)}
-                          min="1" step="1" placeholder="30"
-                          title="Duração Robot (dias)"
-                          className="w-20 rounded-lg border border-accent/30 bg-accent/5 pl-9 pr-2 py-2 text-sm text-foreground outline-none focus:border-accent/50" />
-                      </div>
-                    )}
-                    <label className="flex items-center gap-1.5 cursor-pointer">
-                      <input type="checkbox" checked={plan.active} onChange={(e) => updatePlan(index, "active", e.target.checked)}
-                        className="sr-only peer" />
-                      <div className="h-4 w-7 rounded-full border border-border bg-secondary transition-colors peer-checked:border-success peer-checked:bg-success relative">
-                        <div className="absolute left-0.5 top-0.5 h-3 w-3 rounded-full bg-foreground/60 transition-all peer-checked:left-[12px] peer-checked:bg-success-foreground" />
-                      </div>
-                    </label>
-                    <button type="button" onClick={() => removePlan(index)}
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive">
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
