@@ -113,9 +113,10 @@ const Avaliacoes = () => {
 
   useEffect(() => {
     const fetchReviews = async () => {
+      // Use secure view (no user_id exposed)
       const { data } = await supabase
-        .from("product_reviews")
-        .select("id, rating, comment, created_at, user_id, product_id")
+        .from("public_product_reviews" as any)
+        .select("id, rating, comment, created_at, product_id, username")
         .order("created_at", { ascending: false });
 
       if (!data || data.length === 0) {
@@ -123,14 +124,6 @@ const Avaliacoes = () => {
         setLoading(false);
         return;
       }
-
-      // Fetch usernames
-      const userIds = [...new Set(data.map((r: any) => r.user_id))];
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("user_id, username")
-        .in("user_id", userIds);
-      const usernameMap = new Map((profiles || []).map((p: any) => [p.user_id, p.username]));
 
       // Fetch product names
       const productIds = [...new Set(data.map((r: any) => r.product_id))];
@@ -145,8 +138,7 @@ const Avaliacoes = () => {
         rating: r.rating,
         comment: r.comment,
         created_at: r.created_at,
-        user_id: r.user_id,
-        username: usernameMap.get(r.user_id) || "Usuário",
+        username: r.username || "Usuário",
         product_name: productMap.get(r.product_id) || "Produto",
       }));
 
