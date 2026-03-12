@@ -69,7 +69,13 @@ const RobotProjectTab = () => {
       );
       if (response.ok) {
         const data = await response.json();
-        setRobotGames(Array.isArray(data) ? data : data.games || []);
+        const games = Array.isArray(data) ? data : data.games || [];
+        setRobotGames(games);
+        setFreeGamesCount(games.filter((g: RobotGame) => g.is_free).length);
+        // Check if API returns balance info
+        if (data.balance !== undefined && data.balance !== null) {
+          setRobotBalance(data.balance);
+        }
       } else {
         toast({ title: "Erro ao carregar jogos Robot", variant: "destructive" });
       }
