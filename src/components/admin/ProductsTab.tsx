@@ -667,6 +667,7 @@ const ProductsTab = () => {
                 )}
               </div>
             </div>
+            )}
 
 
             <div className="sm:col-span-2">
