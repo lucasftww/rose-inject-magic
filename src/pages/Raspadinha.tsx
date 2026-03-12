@@ -895,7 +895,7 @@ const Raspadinha = () => {
         <div className="flex flex-col items-center">
           <motion.div
             layout
-            className={`relative w-full max-w-xs sm:max-w-sm md:max-w-md rounded-2xl border-2 ${borderAccent} bg-gradient-to-br from-card via-secondary/50 to-card p-4 sm:p-6 md:p-8`}
+            className={`relative w-full max-w-[22rem] sm:max-w-sm md:max-w-md mx-auto rounded-2xl border-2 ${borderAccent} bg-gradient-to-br from-card via-secondary/50 to-card p-4 sm:p-6 md:p-8`}
             style={{ boxShadow: `0 0 60px ${accentColor}26` }}
           >
             {/* Decorative corners */}
@@ -1056,12 +1056,13 @@ const Raspadinha = () => {
 
 
           {/* Play button */}
+          <div className="flex justify-center w-full">
           <motion.button
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
             onClick={allRevealed || paymentPhase === "idle" ? (allRevealed ? resetGame : handlePlay) : undefined}
             disabled={playing || scratching || paymentPhase === "paying"}
-            className={`mt-6 w-full sm:w-auto relative overflow-hidden rounded-xl px-8 sm:px-10 py-3.5 sm:py-4 text-base sm:text-lg font-bold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+            className={`mt-6 w-full max-w-[22rem] sm:w-auto relative overflow-hidden rounded-xl px-8 sm:px-10 py-3.5 sm:py-4 text-base sm:text-lg font-bold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
               isContas ? "bg-info hover:bg-info/90" : "bg-success hover:bg-success/90"
             }`}
             style={
@@ -1090,6 +1091,7 @@ const Raspadinha = () => {
                 : `Jogar — R$ ${unitPrice.toFixed(2)}`}
             </span>
           </motion.button>
+          </div>
         </div>
 
         {/* History */}
