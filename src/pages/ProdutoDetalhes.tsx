@@ -363,7 +363,7 @@ const ProdutoDetalhes = () => {
                   <button
                     key={media.id}
                     onClick={() => setSelectedMediaIndex(idx)}
-                    className={`relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border-2 transition-all ${
+                    className={`relative h-14 w-14 sm:h-16 sm:w-16 shrink-0 overflow-hidden rounded-lg border-2 transition-all ${
                       idx === selectedMediaIndex
                         ? "border-success shadow-[0_0_10px_hsl(130,99%,41%,0.3)]"
                         : "border-border hover:border-foreground/40"
