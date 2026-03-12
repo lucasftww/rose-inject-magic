@@ -167,7 +167,7 @@ const ProductsTab = () => {
       supabase.from("product_features").select("*").eq("product_id", product.id).order("sort_order"),
     ]);
     if (plansRes.data && plansRes.data.length > 0) {
-      setFormPlans(plansRes.data.map(p => ({ id: p.id, name: p.name, price: Number(p.price), active: p.active, sort_order: p.sort_order })));
+      setFormPlans(plansRes.data.map((p: any) => ({ id: p.id, name: p.name, price: Number(p.price), active: p.active, sort_order: p.sort_order, robot_duration_days: p.robot_duration_days || null })));
     } else {
       setFormPlans([...defaultPlans]);
     }
