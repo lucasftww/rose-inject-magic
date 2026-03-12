@@ -119,27 +119,27 @@ const ProductCard = ({ product }: { product: ProductFromDB }) => {
 const GameSelectScreen = ({ onSelect, games, loading }: { onSelect: (gameId: string) => void; games: GameFromDB[]; loading: boolean }) => (
   <div className="min-h-screen bg-background">
     <Header />
-    <div className="mx-auto max-w-5xl px-6 pt-4 pb-20">
+    <div className="mx-auto max-w-5xl px-4 sm:px-6 pt-4 pb-20">
       <motion.div
         className="text-center"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
-        <p className="text-sm font-medium uppercase tracking-[0.3em] text-success">Selecione o Jogo</p>
-        <h1 className="mt-3 text-4xl font-bold tracking-tight text-foreground md:text-6xl" style={{ fontFamily: "'Valorant', sans-serif" }}>
+        <p className="text-xs sm:text-sm font-medium uppercase tracking-[0.3em] text-success">Selecione o Jogo</p>
+        <h1 className="mt-2 sm:mt-3 text-2xl sm:text-4xl font-bold tracking-tight text-foreground md:text-6xl" style={{ fontFamily: "'Valorant', sans-serif" }}>
           ESCOLHA SEU JOGO
         </h1>
-        <p className="mt-4 text-base text-muted-foreground">Selecione o jogo para ver os produtos disponíveis</p>
+        <p className="mt-2 sm:mt-4 text-sm sm:text-base text-muted-foreground">Selecione o jogo para ver os produtos disponíveis</p>
       </motion.div>
 
       {loading ? (
-        <div className="mt-20 flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-success" /></div>
+        <div className="mt-14 sm:mt-20 flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-success" /></div>
       ) : games.length === 0 ? (
-        <div className="mt-20 text-center text-muted-foreground">Nenhum jogo disponível no momento.</div>
+        <div className="mt-14 sm:mt-20 text-center text-muted-foreground">Nenhum jogo disponível no momento.</div>
       ) : (
         <motion.div
-          className="mt-14 grid grid-cols-2 gap-6 sm:grid-cols-3"
+          className="mt-8 sm:mt-14 grid grid-cols-2 gap-3 sm:gap-6 sm:grid-cols-3"
           initial="hidden"
           animate="visible"
           variants={staggerContainer}
