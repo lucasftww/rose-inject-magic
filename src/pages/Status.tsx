@@ -85,7 +85,7 @@ const Status = () => {
         </div>
 
         {/* Legend */}
-        <div className="mb-8 flex flex-wrap justify-center gap-4">
+        <div className="mb-8 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-center sm:gap-4">
           {[
             { key: "undetected", label: "Indetectável" },
             { key: "updating", label: "Atualizando" },
