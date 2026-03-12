@@ -331,6 +331,7 @@ const ProductsTab = () => {
 
         const plansToInsert = formPlans.filter(p => p.name.trim()).map((p, i) => ({
           product_id: data.id, name: p.name.trim(), price: p.price, active: p.active, sort_order: i,
+          robot_duration_days: p.robot_duration_days || null,
         }));
         if (plansToInsert.length > 0) {
           const { error: planErr } = await supabase.from("product_plans").insert(plansToInsert);
