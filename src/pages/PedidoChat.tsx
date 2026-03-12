@@ -83,6 +83,7 @@ const PedidoChat = () => {
 
       const meta = ticketData.metadata as any;
       const isLzt = meta?.type === "lzt-account";
+      const isRobot = meta?.type === "robot-project";
 
       const [prodRes, planRes, messagesRes, tutorialRes] = await Promise.all([
         supabase.from("products").select("name").eq("id", ticketData.product_id).single(),
@@ -99,6 +100,17 @@ const PedidoChat = () => {
         setProductName(meta?.account_name || meta?.title || gameLabel);
         setPlanName(gameLabel);
         setPlanPrice(meta?.price_paid || meta?.sell_price || 0);
+      } else if (isRobot) {
+        if (prodRes.data) setProductName((prodRes.data as any).name);
+        if (planRes.data) {
+          const duration = meta?.duration;
+          setPlanName(duration ? `${(planRes.data as any).name} (${duration} dias)` : (planRes.data as any).name);
+          setPlanPrice((planRes.data as any).price);
+        }
+        // If key is in metadata, use it directly as stock content
+        if (meta?.key && !ticketData.stock_item_id) {
+          setStockContent(`Key: ${meta.key}`);
+        }
       } else {
         if (prodRes.data) setProductName((prodRes.data as any).name);
         if (planRes.data) {
