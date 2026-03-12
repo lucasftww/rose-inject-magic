@@ -154,7 +154,9 @@ const Checkout = () => {
       if (!res.ok || !result.success) throw new Error(result.error || "Erro ao criar cobrança");
       setPaymentId(result.payment_id);
       setCardPaymentUrl(result.paymentUrl);
-      setDisplayPrice({ total: cartTotal, final: cartFinalPrice, discount: discountAmount });
+      const serverTotal = result.validated_amount ?? cartFinalPrice;
+      const serverDiscount = result.validated_discount ?? discountAmount;
+      setDisplayPrice({ total: serverTotal + serverDiscount, final: serverTotal, discount: serverDiscount });
       setCartSnapshot([...items]);
       clearCart();
       // Open the checkout URL in a new tab
@@ -188,7 +190,9 @@ const Checkout = () => {
       if (!res.ok || !result.success) throw new Error(result.error || "Erro ao criar cobrança");
       setPaymentId(result.payment_id);
       setCryptoData(result.crypto);
-      setDisplayPrice({ total: cartTotal, final: cartFinalPrice, discount: discountAmount });
+      const serverTotal = result.validated_amount ?? cartFinalPrice;
+      const serverDiscount = result.validated_discount ?? discountAmount;
+      setDisplayPrice({ total: serverTotal + serverDiscount, final: serverTotal, discount: serverDiscount });
       setCartSnapshot([...items]);
       clearCart();
     } catch (err: any) {
