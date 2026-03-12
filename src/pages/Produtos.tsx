@@ -186,7 +186,7 @@ const GameSelectScreen = ({ onSelect, games, loading }: { onSelect: (gameId: str
                       {game.product_count} {game.product_count === 1 ? "produto" : "produtos"}
                     </p>
                   </div>
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/40 backdrop-blur-sm transition-all duration-300 group-hover:border-success/40 group-hover:bg-success/20 group-hover:text-success md:h-10 md:w-10">
+                  <div className="hidden md:flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/40 backdrop-blur-sm transition-all duration-300 group-hover:border-success/40 group-hover:bg-success/20 group-hover:text-success md:h-10 md:w-10">
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                     </svg>
