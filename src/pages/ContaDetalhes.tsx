@@ -588,7 +588,7 @@ const ContaDetalhes = () => {
               <div className="lg:col-span-3 space-y-3 sm:space-y-4">
                 {/* Single skin carousel */}
                 {skinItems.length > 0 && !skinsLoading ? (
-                  <div className="rounded-lg border border-border bg-card overflow-hidden aspect-[16/10] relative group">
+                  <div className="rounded-lg border border-border bg-card overflow-hidden aspect-[4/3] sm:aspect-[16/10] relative group">
                     <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--secondary))] via-[hsl(var(--background))] to-[hsl(var(--secondary))]" />
                     <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--success)/0.08),transparent_70%)]" />
                     <AnimatePresence mode="wait">
