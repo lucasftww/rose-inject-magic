@@ -306,11 +306,15 @@ const fetchValorantSkins = async (uuids: string[]) => {
           if (!id || !UUID_REGEX.test(id)) continue;
           const image = lvl.displayIcon || null;
           if (!image) continue;
+          const fallbackName = lvl.displayName;
+          const { displayScore, isPremiumHint } = getSkinRankMeta(fallbackName, 0);
           fallbackByUuid.set(id, {
-            name: lvl.displayName,
+            name: fallbackName,
             image,
             rarity: null,
             rarityPriority: 0,
+            displayScore,
+            isPremiumHint,
           });
         }
       }
@@ -323,11 +327,15 @@ const fetchValorantSkins = async (uuids: string[]) => {
           const image = c.fullRender || c.displayIcon || c.swatch || null;
           if (!image) continue;
           if (!fallbackByUuid.has(id)) {
+            const fallbackName = c.displayName;
+            const { displayScore, isPremiumHint } = getSkinRankMeta(fallbackName, 0);
             fallbackByUuid.set(id, {
-              name: c.displayName,
+              name: fallbackName,
               image,
               rarity: null,
               rarityPriority: 0,
+              displayScore,
+              isPremiumHint,
             });
           }
         }
