@@ -909,7 +909,7 @@ const Raspadinha = () => {
               {(grid.length === 9 ? grid : Array(9).fill(null)).map((cell, i) => (
                 <div
                   key={i}
-                  className="relative aspect-square w-full rounded-xl overflow-hidden select-none">
+                  className="relative aspect-square w-full rounded-xl overflow-hidden select-none"
                 >
                   <div className={`absolute inset-0 flex items-center justify-center transition-all duration-500 ${
                     revealed[i] ? "scale-100 opacity-100" : "scale-75 opacity-30"
