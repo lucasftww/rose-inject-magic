@@ -772,12 +772,12 @@ const Raspadinha = () => {
         </div>
 
         {/* Mode Tabs */}
-        <div className="flex justify-center mb-8">
-          <div className="flex rounded-xl border border-border bg-card p-1 gap-1 w-full sm:w-auto">
+        <div className="flex justify-center mb-6 sm:mb-8">
+          <div className="grid grid-cols-2 rounded-xl border border-border bg-card p-1 gap-1 w-full max-w-xs sm:max-w-sm">
             <button
               onClick={() => handleModeChange("produtos")}
               disabled={paymentPhase !== "idle" || scratching}
-              className={`flex flex-1 sm:flex-initial items-center justify-center gap-2 rounded-lg px-4 sm:px-5 py-2.5 text-sm font-semibold transition-all ${
+              className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all ${
                 mode === "produtos"
                   ? "bg-success text-success-foreground shadow"
                   : "text-muted-foreground hover:text-foreground hover:bg-accent"
@@ -789,7 +789,7 @@ const Raspadinha = () => {
             <button
               onClick={() => handleModeChange("contas")}
               disabled={paymentPhase !== "idle" || scratching}
-              className={`flex flex-1 sm:flex-initial items-center justify-center gap-2 rounded-lg px-4 sm:px-5 py-2.5 text-sm font-semibold transition-all ${
+              className={`flex items-center justify-center gap-1.5 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all ${
                 mode === "contas"
                   ? "bg-info text-info-foreground shadow"
                   : "text-muted-foreground hover:text-foreground hover:bg-accent"
@@ -797,7 +797,7 @@ const Raspadinha = () => {
             >
               <User className="h-4 w-4" />
               Contas
-              <span className="rounded-full bg-info/20 px-2 py-0.5 text-[10px] font-bold text-info border border-info/30">
+              <span className="rounded-full bg-info/20 px-1.5 py-0.5 text-[9px] font-bold text-info border border-info/30">
                 R$ 5,50
               </span>
             </button>
