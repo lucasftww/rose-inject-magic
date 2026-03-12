@@ -284,7 +284,7 @@ const Checkout = () => {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <div className="mx-auto max-w-3xl px-6 pt-4 pb-20">
+        <div className="mx-auto max-w-3xl px-4 sm:px-6 pt-4 pb-20">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -355,7 +355,7 @@ const Checkout = () => {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <div className="mx-auto max-w-2xl px-6 pt-4 pb-20 text-center">
+        <div className="mx-auto max-w-2xl px-4 sm:px-6 pt-4 pb-20 text-center">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
             <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full border border-destructive/30 bg-destructive/10">
               <Clock className="h-10 w-10 text-destructive" />
@@ -385,7 +385,7 @@ const Checkout = () => {
       <div className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 h-[600px] w-[800px] bg-success/[0.03] blur-[120px] rounded-full" />
 
       <Header />
-      <div className="relative mx-auto max-w-3xl px-6 pt-4 pb-20">
+      <div className="relative mx-auto max-w-3xl px-4 sm:px-6 pt-4 pb-20">
         <motion.button
           initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}
