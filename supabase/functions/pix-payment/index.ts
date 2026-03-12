@@ -1083,10 +1083,13 @@ async function validateAndCalculatePrice(
               const games = await gamesRes.json();
               const robotGame = Array.isArray(games) ? games.find((g: any) => g.id === productData.robot_game_id) : null;
               if (robotGame?.prices) {
-                const basePrice = robotGame.prices[String(plan.robot_duration_days)];
-                if (basePrice !== undefined && basePrice > 0) {
-                  realPrice = Number((basePrice * (1 + productData.robot_markup_percent / 100)).toFixed(2));
-                  console.log(`Robot markup price calculated: base=${basePrice}, markup=${productData.robot_markup_percent}%, final=${realPrice}`);
+                const basePriceUsd = robotGame.prices[String(plan.robot_duration_days)];
+                if (basePriceUsd !== undefined && basePriceUsd > 0) {
+                  // Robot API returns prices in USD — convert to BRL
+                  const USD_TO_BRL = 5.25;
+                  const basePriceBrl = basePriceUsd * USD_TO_BRL;
+                  realPrice = Number((basePriceBrl * (1 + productData.robot_markup_percent / 100)).toFixed(2));
+                  console.log(`Robot markup price calculated: baseUSD=${basePriceUsd}, baseBRL=${basePriceBrl.toFixed(2)}, markup=${productData.robot_markup_percent}%, final=${realPrice}`);
                 }
               }
             }
