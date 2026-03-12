@@ -21,6 +21,7 @@ import PaymentsTab from "@/components/admin/PaymentsTab";
 import FinanceTab from "@/components/admin/FinanceTab";
 import ScratchCardTab from "@/components/admin/ScratchCardTab";
 import SalesTab from "@/components/admin/SalesTab";
+import GamesTab from "@/components/admin/GamesTab";
 import { toast } from "@/hooks/use-toast";
 
 // ─── Types ───
