@@ -360,9 +360,8 @@ const fetchValorantSkins = async (uuids: string[]) => {
 
   const final = Array.from(deduped.values());
 
-  // Ordem LZT: linhagem no topo e, dentro da mesma linhagem, ordem original postada no anúncio
+  // Ordem exatamente como postada no LZT (primeiro UUID visto no inventário)
   final.sort((a, b) => {
-    if (a.lineageRank !== b.lineageRank) return b.lineageRank - a.lineageRank;
     const orderA = firstSeenOrder.get(a.name) ?? Number.MAX_SAFE_INTEGER;
     const orderB = firstSeenOrder.get(b.name) ?? Number.MAX_SAFE_INTEGER;
     if (orderA !== orderB) return orderA - orderB;
