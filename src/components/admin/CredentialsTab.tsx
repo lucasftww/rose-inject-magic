@@ -125,7 +125,7 @@ const CredentialsTab = () => {
             <h3 className="text-lg font-bold text-foreground">{editing ? "Editar Credencial" : "Nova Credencial"}</h3>
             <button onClick={resetForm} className="text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <form onSubmit={(e) => { e.preventDefault(); handleSave(); }} className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="text-xs font-medium text-muted-foreground">Nome</label>
               <input type="text" value={formName} onChange={(e) => setFormName(e.target.value.slice(0, 100))} placeholder="Ex: Stripe API Key"
@@ -138,7 +138,7 @@ const CredentialsTab = () => {
             </div>
             <div className="sm:col-span-2">
               <label className="text-xs font-medium text-muted-foreground">Valor</label>
-              <input type="password" value={formValue} onChange={(e) => setFormValue(e.target.value.slice(0, 500))} placeholder="Cole o valor da credencial aqui"
+              <input type="password" autoComplete="off" value={formValue} onChange={(e) => setFormValue(e.target.value.slice(0, 500))} placeholder="Cole o valor da credencial aqui"
                 className="mt-1 w-full rounded-lg border border-border bg-secondary/50 px-4 py-2.5 text-sm font-mono text-foreground placeholder:text-muted-foreground outline-none focus:border-success/50" />
             </div>
             <div className="sm:col-span-2">
@@ -151,7 +151,7 @@ const CredentialsTab = () => {
               <input type="text" value={formHelpUrl} onChange={(e) => setFormHelpUrl(e.target.value.slice(0, 300))} placeholder="https://..."
                 className="mt-1 w-full rounded-lg border border-border bg-secondary/50 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-success/50" />
             </div>
-          </div>
+          </form>
           <div className="mt-6 flex gap-3">
             <button onClick={handleSave} disabled={saving}
               className="flex items-center gap-2 rounded-lg bg-success px-6 py-2.5 text-sm font-semibold text-success-foreground hover:shadow-[0_0_24px_hsl(130,99%,41%,0.45)] disabled:opacity-50">
