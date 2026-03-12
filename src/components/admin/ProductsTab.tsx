@@ -789,7 +789,8 @@ const ProductsTab = () => {
               </div>
             </div>
 
-            {/* Tutorial */}
+            {/* Tutorial - hidden when Robot is enabled (Robot delivers everything automatically) */}
+            {!robotEnabled && (
             <div className="sm:col-span-2">
               <label className="text-xs font-medium text-muted-foreground flex items-center gap-2 mb-3">
                 <FileText className="h-3.5 w-3.5 text-success" />
