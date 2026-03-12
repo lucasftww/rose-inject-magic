@@ -588,15 +588,11 @@ const ProductsTab = () => {
                 {formPlans.map((plan, index) => {
                   // Calculate suggested price from Robot markup
                   const selectedRobotGame = robotEnabled && formRobotGameId ? robotGames.find(g => Number(g.id) === Number(formRobotGameId)) : null;
-                  const robotFullPriceUsd = selectedRobotGame && plan.robot_duration_days
+                  const robotPriceUsd = selectedRobotGame && plan.robot_duration_days
                     ? selectedRobotGame.prices?.[String(plan.robot_duration_days)] : undefined;
-                  const robotFullPriceBrl = robotFullPriceUsd !== undefined ? Number(robotFullPriceUsd) * robotUsdToBrl : undefined;
-                  // Aplicar desconto revendedor (-40%) no preço base
-                  const robotCostUsd = robotFullPriceUsd !== undefined ? Number(robotFullPriceUsd) * 0.6 : undefined;
-                  const robotCostBrl = robotCostUsd !== undefined ? robotCostUsd * robotUsdToBrl : undefined;
-                  const suggestedPrice = robotCostBrl !== undefined && formRobotMarkup !== null
-                    ? Number((robotCostBrl * (1 + formRobotMarkup / 100)).toFixed(2)) : null;
-                  const sellingBelowFullApiPrice = suggestedPrice !== null && robotFullPriceBrl !== undefined && suggestedPrice < robotFullPriceBrl;
+                  const robotPriceBrl = robotPriceUsd !== undefined ? Number(robotPriceUsd) * robotUsdToBrl : undefined;
+                  const suggestedPrice = robotPriceBrl !== undefined && formRobotMarkup !== null
+                    ? Number((robotPriceBrl * (1 + formRobotMarkup / 100)).toFixed(2)) : null;
 
                   return (
                     <div key={index} className="rounded-lg border border-border bg-secondary/30 p-3">
