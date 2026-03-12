@@ -552,7 +552,7 @@ const ContaDetalhes = () => {
       <div className="mx-auto max-w-6xl px-4 sm:px-6 pt-4 pb-28 sm:pb-20">
         <button
           onClick={() => navigate("/contas")}
-          className="mb-5 flex items-center gap-2 rounded-lg border border-border bg-card/50 px-4 py-2 text-sm text-muted-foreground transition-all hover:border-success/40 hover:text-success"
+          className="mb-4 sm:mb-5 flex items-center gap-2 rounded-lg border border-border bg-card/50 px-3 sm:px-4 py-2 text-sm text-muted-foreground transition-all hover:border-success/40 hover:text-success"
         >
           <ArrowLeft className="h-4 w-4" />
           Voltar
@@ -575,26 +575,26 @@ const ContaDetalhes = () => {
         {item && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
             {/* Breadcrumb */}
-            <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
-              <button onClick={() => navigate("/")} className="hover:text-success transition-colors">Início</button>
-              <ChevronRight className="h-3 w-3" />
-              <button onClick={() => navigate("/contas")} className="hover:text-success transition-colors">Valorant</button>
-              <ChevronRight className="h-3 w-3" />
-              <span className="text-foreground font-medium">{rank?.name || "Unranked"}</span>
+            <div className="mb-4 sm:mb-6 flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground overflow-x-auto scrollbar-hide">
+              <button onClick={() => navigate("/")} className="hover:text-success transition-colors shrink-0">Início</button>
+              <ChevronRight className="h-3 w-3 shrink-0" />
+              <button onClick={() => navigate("/contas")} className="hover:text-success transition-colors shrink-0">Valorant</button>
+              <ChevronRight className="h-3 w-3 shrink-0" />
+              <span className="text-foreground font-medium truncate">{rank?.name || "Unranked"}</span>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-6">
               {/* LEFT: Gallery only */}
-              <div className="lg:col-span-3 space-y-4">
+              <div className="lg:col-span-3 space-y-3 sm:space-y-4">
                 {/* Single skin carousel */}
                 {skinItems.length > 0 && !skinsLoading ? (
-                  <div className="rounded-lg border border-border bg-card overflow-hidden aspect-[16/10] relative group">
+                  <div className="rounded-lg border border-border bg-card overflow-hidden aspect-[4/3] sm:aspect-[16/10] relative group">
                     <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--secondary))] via-[hsl(var(--background))] to-[hsl(var(--secondary))]" />
                     <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--success)/0.08),transparent_70%)]" />
                     <AnimatePresence mode="wait">
                       <motion.div
                         key={selectedSkin}
-                        className="relative z-[1] flex items-center justify-center h-full w-full p-8 cursor-pointer"
+                        className="relative z-[1] flex items-center justify-center h-full w-full p-4 sm:p-8 cursor-pointer"
                         onClick={() => { setActiveTab("skins"); setLightboxIndex(selectedSkin); }}
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
@@ -610,11 +610,11 @@ const ContaDetalhes = () => {
                     </AnimatePresence>
                     {skinItems.length > 1 && (
                       <>
-                        <button onClick={handlePrev} className="absolute left-3 top-1/2 -translate-y-1/2 z-[2] flex h-10 w-10 items-center justify-center rounded-full bg-background/80 border border-border text-muted-foreground opacity-0 group-hover:opacity-100 transition-all hover:text-success hover:border-success/40">
-                          <ChevronLeft className="h-5 w-5" />
+                        <button onClick={handlePrev} className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 z-[2] flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-background/80 border border-border text-muted-foreground sm:opacity-0 sm:group-hover:opacity-100 transition-all hover:text-success hover:border-success/40">
+                          <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
                         </button>
-                        <button onClick={handleNext} className="absolute right-3 top-1/2 -translate-y-1/2 z-[2] flex h-10 w-10 items-center justify-center rounded-full bg-background/80 border border-border text-muted-foreground opacity-0 group-hover:opacity-100 transition-all hover:text-success hover:border-success/40">
-                          <ChevronRightIcon className="h-5 w-5" />
+                        <button onClick={handleNext} className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 z-[2] flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-background/80 border border-border text-muted-foreground sm:opacity-0 sm:group-hover:opacity-100 transition-all hover:text-success hover:border-success/40">
+                          <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5 rotate-180" />
                         </button>
                       </>
                     )}
@@ -628,7 +628,7 @@ const ContaDetalhes = () => {
                     )}
                   </div>
                 ) : mainGallery.length > 0 ? (
-                  <div className="relative group rounded-lg border border-border bg-card overflow-hidden aspect-[16/10]">
+                  <div className="relative group rounded-lg border border-border bg-card overflow-hidden aspect-[4/3] sm:aspect-[16/10]">
                     <AnimatePresence mode="wait">
                       <motion.img
                         key={selectedSkin}
@@ -653,7 +653,7 @@ const ContaDetalhes = () => {
                     )}
                   </div>
                 ) : (
-                  <div className="rounded-lg border border-border bg-card flex items-center justify-center aspect-[16/10]">
+                  <div className="rounded-lg border border-border bg-card flex items-center justify-center aspect-[4/3] sm:aspect-[16/10]">
                     <div className="flex flex-col items-center gap-4">
                       <img src={rank?.img || rankUnranked} alt={rank?.name || "Unranked"} className="h-28 w-28 object-contain drop-shadow-xl" />
                       <p className="text-2xl font-bold text-foreground">{rank?.name || "Unranked"}</p>
@@ -662,15 +662,15 @@ const ContaDetalhes = () => {
                 )}
 
                 {/* Rank + Stats */}
-                <div className="rounded-lg border border-border bg-card p-5 space-y-4">
+                <div className="rounded-lg border border-border bg-card p-4 sm:p-5 space-y-3 sm:space-y-4">
                   <div className="flex items-center justify-between">
                     {/* Último rank (esquerda) */}
                     {item.riot_valorant_previous_rank && rankMap[item.riot_valorant_previous_rank] ? (
-                      <div className="flex flex-col items-center gap-1.5">
-                        <img src={rankMap[item.riot_valorant_previous_rank].img} alt="" className="h-16 w-16 object-contain opacity-50" />
+                      <div className="flex flex-col items-center gap-1">
+                        <img src={rankMap[item.riot_valorant_previous_rank].img} alt="" className="h-12 w-12 sm:h-16 sm:w-16 object-contain opacity-50" />
                         <div className="text-center">
                           <p className="text-[9px] text-muted-foreground uppercase tracking-wider">Último rank</p>
-                          <p className="text-sm font-bold text-muted-foreground">{rankMap[item.riot_valorant_previous_rank].name}</p>
+                          <p className="text-xs sm:text-sm font-bold text-muted-foreground">{rankMap[item.riot_valorant_previous_rank].name}</p>
                         </div>
                       </div>
                     ) : (
@@ -683,17 +683,17 @@ const ContaDetalhes = () => {
                     </div>
 
                     {/* Rank atual (direita) */}
-                    <div className="flex flex-col items-center gap-1.5">
-                      <img src={rank?.img || rankUnranked} alt={rank?.name || "Unranked"} className="h-16 w-16 object-contain" />
+                    <div className="flex flex-col items-center gap-1">
+                      <img src={rank?.img || rankUnranked} alt={rank?.name || "Unranked"} className="h-12 w-12 sm:h-16 sm:w-16 object-contain" />
                       <div className="text-center">
                         <p className="text-[9px] text-muted-foreground uppercase tracking-wider">Rank atual</p>
-                        <p className="text-sm font-bold text-foreground">{rank?.name || "Unranked"}</p>
+                        <p className="text-xs sm:text-sm font-bold text-foreground">{rank?.name || "Unranked"}</p>
                       </div>
                     </div>
                   </div>
-                  <div className="border-t border-border pt-4">
-                    <h3 className="text-sm font-bold text-foreground mb-3">Informações da Conta</h3>
-                    <div className="grid grid-cols-2 gap-2">
+                  <div className="border-t border-border pt-3 sm:pt-4">
+                    <h3 className="text-xs sm:text-sm font-bold text-foreground mb-2 sm:mb-3">Informações da Conta</h3>
+                    <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
                       {item.valorantRegionPhrase && <StatCell label="Região" value={item.valorantRegionPhrase} />}
                       {item.riot_valorant_wallet_vp != null && <StatCell label="VP na conta" value={item.riot_valorant_wallet_vp} />}
                       {item.riot_valorant_wallet_rp != null && item.riot_valorant_wallet_rp > 0 && <StatCell label="RP na conta" value={item.riot_valorant_wallet_rp} />}
@@ -706,10 +706,10 @@ const ContaDetalhes = () => {
               </div>
 
               {/* RIGHT: Purchase + Rank + Stats + Full Acesso */}
-              <div className="lg:col-span-2 space-y-4">
+              <div className="lg:col-span-2 space-y-3 sm:space-y-4">
                 {/* Title + Purchase */}
-                <div className="rounded-lg border border-border bg-card p-5 space-y-3.5">
-                  <h1 className="text-lg font-bold text-foreground leading-snug">{dynamicTitle}</h1>
+                <div className="rounded-lg border border-border bg-card p-4 sm:p-5 space-y-3">
+                  <h1 className="text-base sm:text-lg font-bold text-foreground leading-snug">{dynamicTitle}</h1>
 
                   <div className="flex flex-wrap gap-1.5">
                     <span className="inline-flex items-center gap-1 rounded-full bg-success/10 border border-success/30 px-2.5 py-0.5 text-[11px] font-semibold text-success">
@@ -730,7 +730,7 @@ const ContaDetalhes = () => {
                   <div className="rounded-lg bg-card border border-border p-3 flex items-end justify-between">
                     <div>
                       <p className="text-[10px] text-muted-foreground mb-0.5">Por</p>
-                      <p className="text-2xl font-bold text-success">
+                      <p className="text-xl sm:text-2xl font-bold text-success">
                         {getDisplayPrice(item, "valorant")}
                       </p>
                     </div>
@@ -762,15 +762,15 @@ const ContaDetalhes = () => {
 
 
                 {/* Full Acesso */}
-                <div className="rounded-lg border border-border bg-card p-6 pb-14">
-                  <div className="flex items-center gap-3 mb-4">
-                    <CheckCircle2 className="h-8 w-8 text-success" />
-                    <h3 className="text-xl font-bold text-foreground">Conta FULL ACESSO</h3>
+                <div className="rounded-lg border border-border bg-card p-4 sm:p-6 pb-10 sm:pb-14">
+                  <div className="flex items-center gap-2.5 sm:gap-3 mb-3 sm:mb-4">
+                    <CheckCircle2 className="h-6 w-6 sm:h-8 sm:w-8 text-success" />
+                    <h3 className="text-lg sm:text-xl font-bold text-foreground">Conta FULL ACESSO</h3>
                   </div>
-                  <p className="text-base text-muted-foreground mb-5">
+                  <p className="text-sm sm:text-base text-muted-foreground mb-4 sm:mb-5">
                     Acesso total: email original, alteração de senha e dados, sem enrolação.
                   </p>
-                  <ul className="space-y-3.5 text-base text-muted-foreground">
+                  <ul className="space-y-2.5 sm:space-y-3.5 text-sm sm:text-base text-muted-foreground">
                     <li className="flex items-center gap-2.5"><span className="text-success text-lg">•</span> Email e senha inclusos</li>
                     <li className="flex items-center gap-2.5"><span className="text-success text-lg">•</span> Senha alterável</li>
                     <li className="flex items-center gap-2.5"><span className="text-success text-lg">•</span> Conta verificável</li>
@@ -781,9 +781,9 @@ const ContaDetalhes = () => {
 
             {/* Inventory Tabs - Full width below */}
             {(skinUuids.length > 0 || agentUuids.length > 0 || buddyUuids.length > 0) && (
-              <div className="mt-5">
+              <div className="mt-4 sm:mt-5">
                 {/* Tab buttons */}
-                <div className="flex w-full gap-1.5 sm:gap-2 mb-5">
+                <div className="flex w-full gap-1 sm:gap-2 mb-4 sm:mb-5">
                   {tabs.map((tab) => (
                     <button
                       key={tab.key}
@@ -810,7 +810,7 @@ const ContaDetalhes = () => {
 
                 {/* Items grid */}
                 {activeItems.length > 0 ? (
-                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3">
                     {activeItems.map((invItem: any, i: number) => (
                       <motion.div
                         key={`${activeTab}-${i}`}
@@ -825,7 +825,7 @@ const ContaDetalhes = () => {
                             <img src={invItem.rarity.img} alt={invItem.rarity.name} className="h-5 w-5 object-contain drop-shadow-md" title={invItem.rarity.name} />
                           </div>
                         )}
-                        <div className="aspect-square bg-secondary/20 flex items-center justify-center p-3">
+                        <div className="aspect-square bg-secondary/20 flex items-center justify-center p-2 sm:p-3">
                           <img
                             src={invItem.image}
                             alt={invItem.name}
@@ -833,7 +833,7 @@ const ContaDetalhes = () => {
                             loading="lazy"
                           />
                         </div>
-                        <div className="p-2 border-t border-border flex items-center gap-1.5">
+                        <div className="p-1.5 sm:p-2 border-t border-border flex items-center gap-1 sm:gap-1.5">
                           {invItem.rarity && (
                             <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: invItem.rarity.color }} />
                           )}
@@ -934,9 +934,9 @@ const ContaDetalhes = () => {
 
             {/* Description */}
             {item.description && (
-              <div className="mt-6 rounded-lg border border-border bg-card p-5">
-                <h3 className="text-sm font-bold text-foreground mb-2">Descrição</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{item.description}</p>
+              <div className="mt-4 sm:mt-6 rounded-lg border border-border bg-card p-4 sm:p-5">
+                <h3 className="text-xs sm:text-sm font-bold text-foreground mb-2">Descrição</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{item.description}</p>
               </div>
             )}
           </motion.div>
