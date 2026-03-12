@@ -449,7 +449,7 @@ const Index = () => {
       <Header />
 
       {/* HERO */}
-      <main className="relative flex min-h-[85vh] sm:min-h-screen flex-col items-center justify-center px-4 sm:px-6 pt-2 sm:pt-4 pb-8 sm:pb-20 text-center">
+      <main className="relative flex min-h-[85vh] sm:min-h-screen flex-col items-center justify-center px-3 sm:px-6 pt-2 sm:pt-4 pb-8 sm:pb-20 text-center overflow-hidden">
         <div className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[400px] sm:h-[550px] w-[600px] sm:w-[900px] -translate-x-1/2 -translate-y-1/2"
           style={{
             backgroundImage: "linear-gradient(hsl(var(--border) / 0.8) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--border) / 0.8) 1px, transparent 1px)",
