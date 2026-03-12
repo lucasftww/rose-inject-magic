@@ -123,19 +123,33 @@ const ProductsTab = () => {
   const [loadingRobotGames, setLoadingRobotGames] = useState(false);
   const [robotUsdToBrl, setRobotUsdToBrl] = useState(ROBOT_USD_TO_BRL);
 
+  const fetchExchangeRate = async () => {
+    try {
+      const res = await fetch("https://economia.awesomeapi.com.br/json/last/USD-BRL");
+      if (res.ok) {
+        const data = await res.json();
+        const bid = Number(data?.USDBRL?.bid);
+        if (bid > 0) setRobotUsdToBrl(bid);
+      }
+    } catch (_) { /* use fallback */ }
+  };
+
   const fetchRobotGames = async () => {
     setLoadingRobotGames(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
       const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-      const res = await fetch(`https://${projectId}.supabase.co/functions/v1/robot-project?action=list-games`, {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-          "Content-Type": "application/json",
-          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-        },
-      });
+      const [res] = await Promise.all([
+        fetch(`https://${projectId}.supabase.co/functions/v1/robot-project?action=list-games`, {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+        }),
+        fetchExchangeRate(),
+      ]);
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         toast({ title: "Erro ao carregar jogos Robot", description: err.error || `HTTP ${res.status}`, variant: "destructive" });
