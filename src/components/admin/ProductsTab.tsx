@@ -76,6 +76,7 @@ const defaultFeatures: FeatureItem[] = [
 ];
 
 const ITEMS_PER_PAGE = 10;
+const ROBOT_USD_TO_BRL = 5.25;
 
 const ProductsTab = () => {
   const [products, setProducts] = useState<Product[]>([]);
