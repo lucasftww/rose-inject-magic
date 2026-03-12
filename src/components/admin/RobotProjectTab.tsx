@@ -397,13 +397,16 @@ const RobotProjectTab = () => {
                       <div className="flex flex-wrap gap-1.5">
                         {priceEntries.map(([days, price]) => {
                           const usdPrice = Number(price);
-                          const brlPrice = usdPrice * usdToBrl;
+                          const costUsd = usdPrice * 0.6; // desconto revendedor -40%
+                          const brlPrice = costUsd * usdToBrl;
                           return (
                             <span key={days} className="inline-flex items-center gap-1 rounded-md bg-secondary/60 border border-border px-2 py-0.5 text-[11px]">
                               <Clock className="h-2.5 w-2.5 text-muted-foreground" />
                               <span className="text-muted-foreground">{days}d</span>
                               <span className="font-bold text-foreground">R${brlPrice.toFixed(2)}</span>
-                              <span className="text-[9px] text-muted-foreground">(${usdPrice.toFixed(2)})</span>
+                              <span className="text-[9px] text-muted-foreground">(${costUsd.toFixed(2)} custo)</span>
+                            </span>
+                          );
                             </span>
                           );
                         })}
