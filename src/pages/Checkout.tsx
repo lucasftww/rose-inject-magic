@@ -355,7 +355,7 @@ const Checkout = () => {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <div className="mx-auto max-w-2xl px-6 pt-4 pb-20 text-center">
+        <div className="mx-auto max-w-2xl px-4 sm:px-6 pt-4 pb-20 text-center">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
             <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full border border-destructive/30 bg-destructive/10">
               <Clock className="h-10 w-10 text-destructive" />
