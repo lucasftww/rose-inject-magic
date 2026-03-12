@@ -429,11 +429,11 @@ const ValorantCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap
       const entry = skinsMap.get(uuid.toLowerCase());
       if (entry) results.push(entry);
     }
-    // Sort by rarity descending (best skins first), filter out rarity 0 (default/free skins)
+    // Sort by rarity descending (best skins first)
     results.sort((a, b) => b.rarity - a.rarity);
-    const filtered = results.filter(s => s.rarity > 0);
-    // If not enough rare skins, fill with whatever we have
-    return (filtered.length >= 4 ? filtered : results).slice(0, 6);
+    // Prefer Deluxe+ (rarity >= 2), exclude Select/battle pass skins
+    const premium = results.filter(s => s.rarity >= 2);
+    return (premium.length >= 4 ? premium : results.filter(s => s.rarity > 0).length >= 4 ? results.filter(s => s.rarity > 0) : results).slice(0, 6);
   }, [item.valorantInventory, skinsMap]);
 
   return (
