@@ -84,8 +84,9 @@ const MeusPedidos = () => {
         .order("created_at", { ascending: false });
 
       if (data) {
-        const productIds = [...new Set(data.filter((t: any) => !t.metadata?.type).map((t: any) => t.product_id))];
-        const planIds = [...new Set(data.filter((t: any) => !t.metadata?.type).map((t: any) => t.product_plan_id))];
+        const regularTickets = data.filter((t: any) => !t.metadata?.type || t.metadata?.type === "robot-project");
+        const productIds = [...new Set(regularTickets.map((t: any) => t.product_id))];
+        const planIds = [...new Set(regularTickets.map((t: any) => t.product_plan_id))];
 
         const [productsRes, plansRes] = await Promise.all([
           productIds.length > 0 ? supabase.from("products").select("id, name, image_url").in("id", productIds) : { data: [] },
@@ -99,16 +100,27 @@ const MeusPedidos = () => {
 
         setTickets(data.map((t: any) => {
           const isLzt = t.metadata?.type === "lzt-account";
-          const lztGameLabels: Record<string, string> = {
-            valorant: "Conta Valorant", lol: "Conta LoL", fortnite: "Conta Fortnite", minecraft: "Conta Minecraft",
-          };
-          const lztGameLabel = isLzt ? (lztGameLabels[t.metadata?.game] || "Conta LZT") : "";
+          const isRobot = t.metadata?.type === "robot-project";
+          if (isLzt) {
+            const lztGameLabels: Record<string, string> = {
+              valorant: "Conta Valorant", lol: "Conta LoL", fortnite: "Conta Fortnite", minecraft: "Conta Minecraft",
+            };
+            const lztGameLabel = lztGameLabels[t.metadata?.game] || "Conta LZT";
+            return {
+              ...t,
+              product_name: t.metadata.account_name || t.metadata.title || lztGameLabel,
+              plan_name: lztGameLabel,
+              image_url: t.metadata.account_image || null,
+              plan_price: t.metadata.price_paid || t.metadata.sell_price || 0,
+            };
+          }
+          const duration = isRobot && t.metadata?.duration ? ` (${t.metadata.duration} dias)` : "";
           return {
             ...t,
-            product_name: isLzt ? (t.metadata.account_name || t.metadata.title || lztGameLabel) : (productMap[t.product_id]?.name || "Produto"),
-            plan_name: isLzt ? lztGameLabel : (planMap[t.product_plan_id]?.name || "Plano"),
-            image_url: isLzt ? (t.metadata.account_image || null) : (productMap[t.product_id]?.image_url || null),
-            plan_price: isLzt ? (t.metadata.price_paid || t.metadata.sell_price || 0) : (planMap[t.product_plan_id]?.price || 0),
+            product_name: productMap[t.product_id]?.name || (isRobot ? t.metadata?.game_name || "Produto Robot" : "Produto"),
+            plan_name: (planMap[t.product_plan_id]?.name || "Plano") + duration,
+            image_url: productMap[t.product_id]?.image_url || null,
+            plan_price: planMap[t.product_plan_id]?.price || 0,
           };
         }));
       }
