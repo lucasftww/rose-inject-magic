@@ -397,7 +397,7 @@ const RobotProjectTab = () => {
                       <div className="flex flex-wrap gap-1.5">
                         {priceEntries.map(([days, price]) => {
                           const usdPrice = Number(price);
-                          const brlPrice = usdPrice * 5.25;
+                          const brlPrice = usdPrice * usdToBrl;
                           return (
                             <span key={days} className="inline-flex items-center gap-1 rounded-md bg-secondary/60 border border-border px-2 py-0.5 text-[11px]">
                               <Clock className="h-2.5 w-2.5 text-muted-foreground" />
