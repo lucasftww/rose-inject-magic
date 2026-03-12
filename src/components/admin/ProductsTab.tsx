@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Plus, Pencil, Trash2, Loader2, ImageIcon, Upload, Link, X,
-  Package, ChevronDown, ChevronUp, DollarSign, GripVertical, Film, Image, Sparkles, FileText
+  Package, ChevronDown, ChevronUp, DollarSign, GripVertical, Film, Image, Sparkles, FileText, Globe, RefreshCw
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { getYouTubeId, getYouTubeThumbnail, detectMediaType } from "@/lib/videoUtils";
@@ -17,6 +17,7 @@ interface ProductPlan {
   price: number;
   active: boolean;
   sort_order: number;
+  robot_duration_days?: number | null;
 }
 
 interface MediaItem {
@@ -44,7 +45,21 @@ interface Product {
   sort_order: number;
   tutorial_text: string | null;
   tutorial_file_url: string | null;
+  robot_game_id: number | null;
+  robot_markup_percent: number | null;
   product_plans?: ProductPlan[];
+}
+
+interface RobotGame {
+  id: number;
+  name: string;
+  version: string;
+  status: string;
+  icon: string;
+  is_free: boolean;
+  prices: Record<string, number>;
+  maxKeys: number | null;
+  soldKeys: number;
 }
 
 const defaultPlans: ProductPlan[] = [
@@ -99,6 +114,38 @@ const ProductsTab = () => {
   const [uploadingTutorial, setUploadingTutorial] = useState(false);
   const tutorialFileInputRef = useRef<HTMLInputElement>(null);
 
+  // Robot Project state
+  const [formRobotGameId, setFormRobotGameId] = useState<number | null>(null);
+  const [formRobotMarkup, setFormRobotMarkup] = useState<number | null>(null);
+  const [robotGames, setRobotGames] = useState<RobotGame[]>([]);
+  const [loadingRobotGames, setLoadingRobotGames] = useState(false);
+
+  const fetchRobotGames = async () => {
+    setLoadingRobotGames(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const res = await fetch(`https://${projectId}.supabase.co/functions/v1/robot-project?action=list-games`, {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        toast({ title: "Erro ao carregar jogos Robot", description: err.error || `HTTP ${res.status}`, variant: "destructive" });
+      } else {
+        const data = await res.json();
+        setRobotGames(Array.isArray(data) ? data : []);
+      }
+    } catch (err: any) {
+      toast({ title: "Erro Robot", description: err.message, variant: "destructive" });
+    }
+    setLoadingRobotGames(false);
+  };
+
   const fetchData = async () => {
     const [gamesRes, productsRes] = await Promise.all([
       supabase.from("games").select("id, name").order("sort_order"),
@@ -118,6 +165,7 @@ const ProductsTab = () => {
     setFormMedia([]); setMediaUrlInput(""); setMediaTypeInput("image");
     setFormFeatures([...defaultFeatures]);
     setFormTutorialText(""); setFormTutorialFileUrl("");
+    setFormRobotGameId(null); setFormRobotMarkup(null);
   };
 
   const openEdit = async (product: Product) => {
@@ -130,6 +178,8 @@ const ProductsTab = () => {
     setFormActive(product.active);
     setImagePreview(product.image_url || null);
     setImageMode("url");
+    setFormRobotGameId(product.robot_game_id || null);
+    setFormRobotMarkup(product.robot_markup_percent || null);
 
     // Fetch tutorial data from separate secure table
     const { data: tutorialData } = await supabase.from("product_tutorials").select("tutorial_text, tutorial_file_url").eq("product_id", product.id).maybeSingle();
@@ -143,7 +193,7 @@ const ProductsTab = () => {
       supabase.from("product_features").select("*").eq("product_id", product.id).order("sort_order"),
     ]);
     if (plansRes.data && plansRes.data.length > 0) {
-      setFormPlans(plansRes.data.map(p => ({ id: p.id, name: p.name, price: Number(p.price), active: p.active, sort_order: p.sort_order })));
+      setFormPlans(plansRes.data.map((p: any) => ({ id: p.id, name: p.name, price: Number(p.price), active: p.active, sort_order: p.sort_order, robot_duration_days: p.robot_duration_days || null })));
     } else {
       setFormPlans([...defaultPlans]);
     }
@@ -225,6 +275,8 @@ const ProductsTab = () => {
           name: formName.trim(), description: formDescription.trim() || null,
           features_text: formFeaturesText.trim() || null,
           image_url: formImageUrl.trim() || null, game_id: formGameId, active: formActive,
+          robot_game_id: formRobotGameId || null,
+          robot_markup_percent: formRobotMarkup || null,
         } as any).eq("id", editing.id);
         if (error) throw error;
 
@@ -254,12 +306,14 @@ const ProductsTab = () => {
           if (p.id) {
             await supabase.from("product_plans").update({
               name: p.name.trim(), price: p.price, active: p.active, sort_order: i,
-            }).eq("id", p.id);
+              robot_duration_days: p.robot_duration_days || null,
+            } as any).eq("id", p.id);
           } else {
             // Insert new plans
             await supabase.from("product_plans").insert({
               product_id: editing.id, name: p.name.trim(), price: p.price, active: p.active, sort_order: i,
-            });
+              robot_duration_days: p.robot_duration_days || null,
+            } as any);
           }
         }
         // Save media
@@ -287,7 +341,9 @@ const ProductsTab = () => {
           features_text: formFeaturesText.trim() || null,
           image_url: formImageUrl.trim() || null, game_id: formGameId, active: formActive,
           sort_order: products.length,
-        }).select().single();
+          robot_game_id: formRobotGameId || null,
+          robot_markup_percent: formRobotMarkup || null,
+        } as any).select().single();
         if (error) throw error;
 
         // Save tutorial data to secure table
@@ -301,6 +357,7 @@ const ProductsTab = () => {
 
         const plansToInsert = formPlans.filter(p => p.name.trim()).map((p, i) => ({
           product_id: data.id, name: p.name.trim(), price: p.price, active: p.active, sort_order: i,
+          robot_duration_days: p.robot_duration_days || null,
         }));
         if (plansToInsert.length > 0) {
           const { error: planErr } = await supabase.from("product_plans").insert(plansToInsert);
@@ -456,16 +513,25 @@ const ProductsTab = () => {
               </div>
               <div className="space-y-2">
                 {formPlans.map((plan, index) => (
-                  <div key={index} className="flex items-center gap-2 rounded-lg border border-border bg-secondary/30 p-3">
+                  <div key={index} className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-secondary/30 p-3">
                     <input type="text" value={plan.name} onChange={(e) => updatePlan(index, "name", e.target.value.slice(0, 50))}
                       placeholder="Nome (ex: Diário)"
-                      className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-success/50" />
+                      className="flex-1 min-w-[120px] rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-success/50" />
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">R$</span>
                       <input type="number" value={plan.price} onChange={(e) => updatePlan(index, "price", Number(e.target.value))}
                         min="0" step="0.01" placeholder="0.00"
                         className="w-28 rounded-lg border border-border bg-background pl-9 pr-3 py-2 text-sm text-foreground outline-none focus:border-success/50" />
                     </div>
+                    {formRobotGameId && (
+                      <div className="relative">
+                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">dias</span>
+                        <input type="number" value={plan.robot_duration_days || ""} onChange={(e) => updatePlan(index, "robot_duration_days", Number(e.target.value) || null)}
+                          min="1" step="1" placeholder="30"
+                          title="Duração Robot (dias)"
+                          className="w-20 rounded-lg border border-accent/30 bg-accent/5 pl-9 pr-2 py-2 text-sm text-foreground outline-none focus:border-accent/50" />
+                      </div>
+                    )}
                     <label className="flex items-center gap-1.5 cursor-pointer">
                       <input type="checkbox" checked={plan.active} onChange={(e) => updatePlan(index, "active", e.target.checked)}
                         className="sr-only peer" />
@@ -482,7 +548,77 @@ const ProductsTab = () => {
               </div>
             </div>
 
-            {/* Media Gallery */}
+            {/* Robot Project Integration */}
+            <div className="sm:col-span-2">
+              <label className="text-xs font-medium text-muted-foreground flex items-center gap-2 mb-3">
+                <Globe className="h-3.5 w-3.5 text-accent" />
+                Robot Project (Revenda)
+              </label>
+              <div className="rounded-lg border border-border bg-secondary/20 p-4 space-y-3">
+                <div className="flex items-center gap-3">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={!!formRobotGameId} onChange={(e) => {
+                      if (!e.target.checked) { setFormRobotGameId(null); setFormRobotMarkup(null); }
+                      else { setFormRobotGameId(0); fetchRobotGames(); }
+                    }} className="sr-only peer" />
+                    <div className="h-4 w-7 rounded-full border border-border bg-secondary transition-colors peer-checked:border-accent peer-checked:bg-accent relative">
+                      <div className="absolute left-0.5 top-0.5 h-3 w-3 rounded-full bg-foreground/60 transition-all peer-checked:left-[12px] peer-checked:bg-accent-foreground" />
+                    </div>
+                    <span className="text-xs text-muted-foreground">Produto fornecido via Robot Project</span>
+                  </label>
+                </div>
+
+                {formRobotGameId !== null && (
+                  <>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div>
+                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Jogo Robot</label>
+                        <div className="flex gap-2 mt-1">
+                          <select value={formRobotGameId || ""} onChange={(e) => setFormRobotGameId(Number(e.target.value) || null)}
+                            className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-accent/50">
+                            <option value="">Selecione o jogo...</option>
+                            {robotGames.map(g => (
+                              <option key={g.id} value={g.id}>
+                                {g.name} {g.status === "off" ? "(OFF)" : ""} {g.is_free ? "(FREE)" : ""}
+                              </option>
+                            ))}
+                          </select>
+                          <button type="button" onClick={fetchRobotGames} disabled={loadingRobotGames}
+                            className="flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-xs text-muted-foreground hover:text-foreground">
+                            {loadingRobotGames ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+                          </button>
+                        </div>
+                        {formRobotGameId && formRobotGameId > 0 && robotGames.length > 0 && (() => {
+                          const rg = robotGames.find(g => g.id === formRobotGameId);
+                          if (!rg) return null;
+                          return (
+                            <div className="mt-2 text-[10px] text-muted-foreground space-y-0.5">
+                              <p>Versão: {rg.version} · Status: <span className={rg.status === "on" ? "text-success" : "text-destructive"}>{rg.status}</span></p>
+                              {Object.keys(rg.prices).length > 0 && (
+                                <p>Preços Robot: {Object.entries(rg.prices).map(([d, p]) => `${d}d = R$${p}`).join(" · ")}</p>
+                              )}
+                              {rg.maxKeys && <p>Slots: {rg.soldKeys}/{rg.maxKeys}</p>}
+                            </div>
+                          );
+                        })()}
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Markup % (opcional)</label>
+                        <input type="number" value={formRobotMarkup || ""} onChange={(e) => setFormRobotMarkup(Number(e.target.value) || null)}
+                          min="0" max="500" step="1" placeholder="Ex: 30 (30% de lucro)"
+                          className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-accent/50" />
+                        <p className="text-[10px] text-muted-foreground/60 mt-1">Se definido, calcula preço automático: preço Robot × (1 + markup/100). Preço manual no plano tem prioridade.</p>
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground/60">
+                      💡 Configure a duração em dias em cada plano acima (campo "dias" aparece quando Robot está ativado). Quando o cliente comprar, a key será gerada automaticamente via API Robot.
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
+
+
             <div className="sm:col-span-2">
               <div className="flex items-center justify-between mb-3">
                 <label className="text-xs font-medium text-muted-foreground flex items-center gap-2">
