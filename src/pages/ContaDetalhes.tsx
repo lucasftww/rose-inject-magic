@@ -138,28 +138,76 @@ const resolveSkinImage = (s: any): string | null => {
   return null;
 };
 
-const PREMIUM_COLLECTION_HINTS = [
-  "rgx",
-  "kuronami",
-  "champions",
-  "reaver",
-  "araxys",
-  "imperium",
-  "prelude",
-  "chaos",
-  "singularity",
-  "sentinels of light",
-  "chronovoid",
-  "xenohunter",
-  "sovereign",
-  "prime",
-  "oni",
-  "evori",
-  "radiant entertainment system",
-  "neo frontier",
-  "gaia",
-  "overdrive",
-  "vct",
+const LINEAGE_TIERS: Array<{ rank: number; hints: string[] }> = [
+  {
+    rank: 6,
+    hints: [
+      "radiant entertainment system",
+      "sistema de entretenimento radiante",
+      "evori dreamwings",
+      "asas oniricas",
+      "kuronami",
+      "prelude to chaos",
+      "caos prelude",
+      "imperium",
+      "araxys",
+      "champions 2024",
+      "champions",
+      "rgx 11z pro",
+      "rgx",
+      "onimaru",
+      "xenohunter",
+      "xenocacador",
+      "xenocaçador",
+    ],
+  },
+  {
+    rank: 5,
+    hints: [
+      "reaver",
+      "saqueador",
+      "chronovoid",
+      "cronovoid",
+      "neo frontier",
+      "sentinels of light",
+      "sentinelas da luz",
+      "singularity",
+      "prime",
+      "sublime",
+      "gaia",
+      "vinganca de gaia",
+      "vingança de gaia",
+      "sovereign",
+      "soberania",
+    ],
+  },
+  {
+    rank: 4,
+    hints: [
+      "oni",
+      "origin",
+      "origem",
+      "overdrive",
+      "vct",
+      "guardrail",
+      "sandswept",
+      "transition",
+      "ion",
+      "spectrum",
+      "glitchpop",
+    ],
+  },
+  {
+    rank: 3,
+    hints: [
+      "recon",
+      "reconhecimento",
+      "magepunk",
+      "protocol",
+      "forsaken",
+      "gaia",
+    ],
+  },
 ];
 
 const MELEE_HINTS = [
@@ -175,55 +223,67 @@ const MELEE_HINTS = [
   "espada",
   "adaga",
   "xenohunter",
+  "xenocacador",
+  "xenocaçador",
 ];
 
-const WEAPON_SCORE_HINTS: Array<[string, number]> = [
-  ["vandal", 24],
-  ["phantom", 22],
-  ["operator", 18],
-  ["sheriff", 16],
-  ["spectre", 14],
-  ["outlaw", 13],
-  ["marshal", 12],
-  ["classic", 9],
-  ["ghost", 8],
-  ["odin", 8],
-  ["ares", 7],
-  ["guardian", 10],
-  ["judge", 8],
-  ["bucky", 7],
-  ["stinger", 7],
-  ["bulldog", 8],
+const WEAPON_ORDER_HINTS: Array<[string, number]> = [
+  ["vandal", 30],
+  ["phantom", 28],
+  ["operator", 27],
+  ["sheriff", 22],
+  ["spectre", 20],
+  ["outlaw", 19],
+  ["marshal", 18],
+  ["guardian", 16],
+  ["odin", 15],
+  ["classic", 14],
+  ["ghost", 13],
+  ["ares", 12],
+  ["judge", 11],
+  ["bulldog", 10],
+  ["stinger", 9],
+  ["bucky", 8],
   ["frenzy", 7],
   ["shorty", 6],
 ];
 
+const normalizeSkinName = (name: string) =>
+  name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+
 type SkinRankMeta = {
   displayScore: number;
   isPremiumHint: boolean;
+  lineageRank: number;
+  weaponRank: number;
+  effectiveRarity: number;
 };
 
 const getSkinRankMeta = (name: string, rarityPriority: number): SkinRankMeta => {
-  const normalized = name.toLowerCase();
+  const normalized = normalizeSkinName(name);
 
-  let displayScore = rarityPriority * 100;
+  const lineageRank =
+    LINEAGE_TIERS.find((tier) => tier.hints.some((hint) => normalized.includes(hint)))?.rank || 0;
+
   const isMelee = MELEE_HINTS.some((hint) => normalized.includes(hint));
-  const isPremiumCollection = PREMIUM_COLLECTION_HINTS.some((hint) => normalized.includes(hint));
+  const weaponRank =
+    (isMelee ? 24 : 0) ||
+    WEAPON_ORDER_HINTS.find(([weaponName]) => normalized.includes(weaponName))?.[1] ||
+    5;
 
-  if (isMelee) displayScore += 34;
-  if (isPremiumCollection) displayScore += 24;
+  // fallback de tier quando API não traz contentTierUuid para uma skin boa
+  const effectiveRarity = rarityPriority > 0 ? rarityPriority : lineageRank >= 5 ? 3 : lineageRank >= 3 ? 2 : 0;
 
-  for (const [weaponName, bonus] of WEAPON_SCORE_HINTS) {
-    if (normalized.includes(weaponName)) {
-      displayScore += bonus;
-      break;
-    }
-  }
+  const isPremiumHint = effectiveRarity >= 2 || lineageRank >= 3 || isMelee;
 
-  // Rare-but-unknown tiers still surface high if they are known premium collections
-  const isPremiumHint = rarityPriority >= 2 || isPremiumCollection || isMelee;
+  // Hierarquia estilo LZT: linhagem primeiro, depois tier, depois arma
+  const displayScore = lineageRank * 10000 + effectiveRarity * 1000 + weaponRank * 20 + (isMelee ? 100 : 0);
 
-  return { displayScore, isPremiumHint };
+  return { displayScore, isPremiumHint, lineageRank, weaponRank, effectiveRarity };
 };
 
 type ValorantSkinItem = {
@@ -231,6 +291,9 @@ type ValorantSkinItem = {
   image: string;
   rarity: (typeof rarityMap)[string] | null;
   rarityPriority: number;
+  effectiveRarity: number;
+  lineageRank: number;
+  weaponRank: number;
   displayScore: number;
   isPremiumHint: boolean;
 };
