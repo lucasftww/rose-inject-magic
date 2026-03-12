@@ -139,6 +139,7 @@ const ProductsTab = () => {
     setFormMedia([]); setMediaUrlInput(""); setMediaTypeInput("image");
     setFormFeatures([...defaultFeatures]);
     setFormTutorialText(""); setFormTutorialFileUrl("");
+    setFormRobotGameId(null); setFormRobotMarkup(null);
   };
 
   const openEdit = async (product: Product) => {
