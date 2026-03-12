@@ -68,6 +68,13 @@
     --sidebar-border: 0 0% 16%;
     --sidebar-ring: 0 0% 40%;
   }
+
+  /* Slightly soften the vibrant blue on small screens */
+  @media (max-width: 639px) {
+    :root {
+      --success: 197 85% 44%;
+    }
+  }
 }
 
 @layer utilities {
