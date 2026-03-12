@@ -738,17 +738,17 @@ const Raspadinha = () => {
         )}
 
         {/* Title */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-6 sm:mb-8">
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className={`inline-flex items-center gap-2 rounded-full border ${borderAccent} ${bgAccent} px-4 py-1.5 mb-4`}
+            className={`inline-flex items-center gap-2 rounded-full border ${borderAccent} ${bgAccent} px-4 py-1.5 mb-3`}
           >
             <Ticket className={`h-4 w-4 ${accentClass}`} />
-            <span className={`text-sm font-medium ${accentClass}`}>Raspadinha da Sorte</span>
+            <span className={`text-xs sm:text-sm font-medium ${accentClass}`}>Raspadinha da Sorte</span>
           </motion.div>
           <h1
-            className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-2 sm:mb-3"
+            className="text-2xl sm:text-4xl md:text-5xl font-bold text-foreground mb-1.5 sm:mb-3"
             style={{ fontFamily: "'Valorant', sans-serif" }}
           >
             <span
@@ -762,7 +762,7 @@ const Raspadinha = () => {
               RASPADINHA
             </span>
           </h1>
-          <p className="text-sm text-muted-foreground max-w-md mx-auto">
+          <p className="text-xs sm:text-sm text-muted-foreground max-w-sm mx-auto px-2">
             Apenas{" "}
             <span className={`font-bold ${accentClass}`}>
               R$ {unitPrice.toFixed(2)}
@@ -772,12 +772,12 @@ const Raspadinha = () => {
         </div>
 
         {/* Mode Tabs */}
-        <div className="flex justify-center mb-8">
-          <div className="flex rounded-xl border border-border bg-card p-1 gap-1 w-full sm:w-auto">
+        <div className="flex justify-center mb-6 sm:mb-8">
+          <div className="grid grid-cols-2 rounded-xl border border-border bg-card p-1 gap-1 w-full max-w-xs sm:max-w-sm">
             <button
               onClick={() => handleModeChange("produtos")}
               disabled={paymentPhase !== "idle" || scratching}
-              className={`flex flex-1 sm:flex-initial items-center justify-center gap-2 rounded-lg px-4 sm:px-5 py-2.5 text-sm font-semibold transition-all ${
+              className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all ${
                 mode === "produtos"
                   ? "bg-success text-success-foreground shadow"
                   : "text-muted-foreground hover:text-foreground hover:bg-accent"
@@ -789,7 +789,7 @@ const Raspadinha = () => {
             <button
               onClick={() => handleModeChange("contas")}
               disabled={paymentPhase !== "idle" || scratching}
-              className={`flex flex-1 sm:flex-initial items-center justify-center gap-2 rounded-lg px-4 sm:px-5 py-2.5 text-sm font-semibold transition-all ${
+              className={`flex items-center justify-center gap-1.5 rounded-lg px-3 py-2.5 text-sm font-semibold transition-all ${
                 mode === "contas"
                   ? "bg-info text-info-foreground shadow"
                   : "text-muted-foreground hover:text-foreground hover:bg-accent"
@@ -797,7 +797,7 @@ const Raspadinha = () => {
             >
               <User className="h-4 w-4" />
               Contas
-              <span className="rounded-full bg-info/20 px-2 py-0.5 text-[10px] font-bold text-info border border-info/30">
+              <span className="rounded-full bg-info/20 px-1.5 py-0.5 text-[9px] font-bold text-info border border-info/30">
                 R$ 5,50
               </span>
             </button>
@@ -811,7 +811,7 @@ const Raspadinha = () => {
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="text-center text-xs text-muted-foreground mb-8"
+            className="text-center text-xs text-muted-foreground mb-6 sm:mb-8 px-4"
           >
             {mode === "produtos"
               ? "🎁 Ganhe produtos do nosso catálogo — hacks, cheats e ferramentas exclusivas."
@@ -895,7 +895,7 @@ const Raspadinha = () => {
         <div className="flex flex-col items-center">
           <motion.div
             layout
-            className={`relative rounded-2xl border-2 ${borderAccent} bg-gradient-to-br from-card via-secondary/50 to-card p-3 sm:p-6 md:p-8`}
+            className={`relative w-full max-w-xs sm:max-w-sm md:max-w-md rounded-2xl border-2 ${borderAccent} bg-gradient-to-br from-card via-secondary/50 to-card p-4 sm:p-6 md:p-8`}
             style={{ boxShadow: `0 0 60px ${accentColor}26` }}
           >
             {/* Decorative corners */}
@@ -905,11 +905,11 @@ const Raspadinha = () => {
             <div className={`absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 ${isContas ? "border-info" : "border-success"} rounded-br-2xl`} />
 
             {/* 3x3 Grid */}
-            <div className="grid grid-cols-3 gap-1.5 sm:gap-2 md:gap-3">
+            <div className="grid grid-cols-3 gap-2 sm:gap-3">
               {(grid.length === 9 ? grid : Array(9).fill(null)).map((cell, i) => (
                 <div
                   key={i}
-                  className="relative w-[5.5rem] h-[5.5rem] sm:w-28 sm:h-28 md:w-36 md:h-36 rounded-xl overflow-hidden select-none"
+                  className="relative aspect-square rounded-xl overflow-hidden select-none"
                 >
                   <div className={`absolute inset-0 flex items-center justify-center transition-all duration-500 ${
                     revealed[i] ? "scale-100 opacity-100" : "scale-75 opacity-30"
