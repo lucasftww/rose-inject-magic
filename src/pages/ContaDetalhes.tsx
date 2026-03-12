@@ -138,11 +138,101 @@ const resolveSkinImage = (s: any): string | null => {
   return null;
 };
 
+const PREMIUM_COLLECTION_HINTS = [
+  "rgx",
+  "kuronami",
+  "champions",
+  "reaver",
+  "araxys",
+  "imperium",
+  "prelude",
+  "chaos",
+  "singularity",
+  "sentinels of light",
+  "chronovoid",
+  "xenohunter",
+  "sovereign",
+  "prime",
+  "oni",
+  "evori",
+  "radiant entertainment system",
+  "neo frontier",
+  "gaia",
+  "overdrive",
+  "vct",
+];
+
+const MELEE_HINTS = [
+  "karambit",
+  "knife",
+  "faca",
+  "kunitsuna",
+  "yaiba",
+  "blade",
+  "dagger",
+  "hammer",
+  "katana",
+  "espada",
+  "adaga",
+  "xenohunter",
+];
+
+const WEAPON_SCORE_HINTS: Array<[string, number]> = [
+  ["vandal", 24],
+  ["phantom", 22],
+  ["operator", 18],
+  ["sheriff", 16],
+  ["spectre", 14],
+  ["outlaw", 13],
+  ["marshal", 12],
+  ["classic", 9],
+  ["ghost", 8],
+  ["odin", 8],
+  ["ares", 7],
+  ["guardian", 10],
+  ["judge", 8],
+  ["bucky", 7],
+  ["stinger", 7],
+  ["bulldog", 8],
+  ["frenzy", 7],
+  ["shorty", 6],
+];
+
+type SkinRankMeta = {
+  displayScore: number;
+  isPremiumHint: boolean;
+};
+
+const getSkinRankMeta = (name: string, rarityPriority: number): SkinRankMeta => {
+  const normalized = name.toLowerCase();
+
+  let displayScore = rarityPriority * 100;
+  const isMelee = MELEE_HINTS.some((hint) => normalized.includes(hint));
+  const isPremiumCollection = PREMIUM_COLLECTION_HINTS.some((hint) => normalized.includes(hint));
+
+  if (isMelee) displayScore += 34;
+  if (isPremiumCollection) displayScore += 24;
+
+  for (const [weaponName, bonus] of WEAPON_SCORE_HINTS) {
+    if (normalized.includes(weaponName)) {
+      displayScore += bonus;
+      break;
+    }
+  }
+
+  // Rare-but-unknown tiers still surface high if they are known premium collections
+  const isPremiumHint = rarityPriority >= 2 || isPremiumCollection || isMelee;
+
+  return { displayScore, isPremiumHint };
+};
+
 type ValorantSkinItem = {
   name: string;
   image: string;
   rarity: (typeof rarityMap)[string] | null;
   rarityPriority: number;
+  displayScore: number;
+  isPremiumHint: boolean;
 };
 
 const buildSkinLookup = (skins: any[]): Map<string, ValorantSkinItem> => {
