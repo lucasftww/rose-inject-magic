@@ -1056,6 +1056,7 @@ const Raspadinha = () => {
 
 
           {/* Play button */}
+          <div className="flex justify-center w-full">
           <motion.button
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
