@@ -64,17 +64,17 @@ const valorantRegions = [
 
 const lolRegions = [
   { id: "all", label: "Todas as regiões" },
-  { id: "br", label: "Brasil" },
-  { id: "euw", label: "Europa Oeste" },
-  { id: "eune", label: "Europa Norte/Leste" },
-  { id: "na", label: "América do Norte" },
-  { id: "las", label: "LAS" },
-  { id: "lan", label: "LAN" },
-  { id: "oce", label: "Oceania" },
-  { id: "tr", label: "Turquia" },
-  { id: "ru", label: "Rússia" },
-  { id: "jp", label: "Japão" },
-  { id: "kr", label: "Coréia" },
+  { id: "BR1", label: "Brasil" },
+  { id: "EUW1", label: "Europa Oeste" },
+  { id: "EUN1", label: "Europa Norte/Leste" },
+  { id: "NA1", label: "América do Norte" },
+  { id: "LA2", label: "LAS" },
+  { id: "LA1", label: "LAN" },
+  { id: "OC1", label: "Oceania" },
+  { id: "TR1", label: "Turquia" },
+  { id: "RU", label: "Rússia" },
+  { id: "JP1", label: "Japão" },
+  { id: "KR", label: "Coréia" },
 ];
 
 // ─── Valorant rank map ───
