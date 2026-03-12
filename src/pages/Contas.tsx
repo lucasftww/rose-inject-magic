@@ -310,7 +310,7 @@ const fetchAllValorantSkins = async (): Promise<Map<string, SkinEntry>> => {
       for (const a of (data.data || [])) {
         const image = a.displayIcon || a.fullPortrait || a.bustPortrait;
         if (!image || !a.uuid) continue;
-        map.set(a.uuid.toLowerCase(), { name: a.displayName, image });
+        map.set(a.uuid.toLowerCase(), { name: a.displayName, image, rarity: 0 });
       }
     }
   } catch { /* ignore */ }
@@ -323,7 +323,7 @@ const fetchAllValorantSkins = async (): Promise<Map<string, SkinEntry>> => {
       for (const b of (data.data || [])) {
         const image = b.displayIcon;
         if (!image || !b.uuid) continue;
-        const entry = { name: b.displayName, image };
+        const entry: SkinEntry = { name: b.displayName, image, rarity: 0 };
         if (b.uuid) map.set(b.uuid.toLowerCase(), entry);
         for (const level of (b.levels || [])) {
           if (level.uuid) map.set(level.uuid.toLowerCase(), entry);
