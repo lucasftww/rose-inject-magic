@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
-import { Search, SlidersHorizontal, DollarSign, ArrowLeft, Loader2, Package, Tag, ArrowUpDown, UserCheck, X } from "lucide-react";
+import { Search, SlidersHorizontal, DollarSign, ArrowLeft, Loader2, Package, Tag, ArrowUpDown, UserCheck, X, AlertTriangle } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useReseller } from "@/hooks/useReseller";
@@ -31,7 +31,9 @@ interface ProductFromDB {
   image_url: string | null;
   active: boolean;
   sort_order: number;
+  robot_game_id: number | null;
   product_plans: ProductPlan[];
+  _stockCount?: number;
 }
 
 const fadeUp = {
@@ -67,6 +69,9 @@ const ProductCard = ({ product }: { product: ProductFromDB }) => {
     return Math.min(...paidPlans.map(p => Number(p.price)));
   }, [product.product_plans]);
 
+  const isRobot = !!product.robot_game_id;
+  const noStock = isRobot && (product._stockCount === 0 || product._stockCount === undefined);
+
   const isResellerProduct = isReseller && isResellerForProduct(product.id);
   const discountedPrice = lowestPrice !== null && isResellerProduct ? getDiscountedPrice(product.id, lowestPrice) : null;
 
@@ -84,6 +89,11 @@ const ProductCard = ({ product }: { product: ProductFromDB }) => {
         {isResellerProduct && (
           <span className="absolute top-3 left-3 flex items-center gap-1 rounded-full bg-accent px-2.5 py-1 text-[10px] font-bold text-accent-foreground shadow-lg">
             <UserCheck className="h-3 w-3" /> Revendedor
+          </span>
+        )}
+        {noStock && (
+          <span className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-warning/90 px-2.5 py-1 text-[10px] font-bold text-warning-foreground shadow-lg">
+            <AlertTriangle className="h-3 w-3" /> Sem Estoque
           </span>
         )}
       </div>
@@ -245,7 +255,36 @@ const Produtos = () => {
         .eq("game_id", selectedGame)
         .eq("active", true)
         .order("sort_order", { ascending: true });
-      if (data) setProducts(data as any);
+      if (data) {
+        // Check stock for robot products
+        const robotProducts = (data as any[]).filter(p => p.robot_game_id);
+        if (robotProducts.length > 0) {
+          const allPlanIds = robotProducts.flatMap(p => (p.product_plans || []).filter((pl: any) => pl.active).map((pl: any) => pl.id));
+          const planToProduct: Record<string, string> = {};
+          robotProducts.forEach(p => (p.product_plans || []).forEach((pl: any) => { planToProduct[pl.id] = p.id; }));
+
+          if (allPlanIds.length > 0) {
+            const { data: stockData } = await supabase
+              .from("stock_items")
+              .select("product_plan_id")
+              .in("product_plan_id", allPlanIds)
+              .eq("used", false);
+
+            const stockCounts: Record<string, number> = {};
+            (stockData || []).forEach(s => {
+              const pid = planToProduct[s.product_plan_id];
+              if (pid) stockCounts[pid] = (stockCounts[pid] || 0) + 1;
+            });
+
+            data.forEach((p: any) => {
+              if (p.robot_game_id) p._stockCount = stockCounts[p.id] || 0;
+            });
+          } else {
+            robotProducts.forEach(p => (p as any)._stockCount = 0);
+          }
+        }
+        setProducts(data as any);
+      }
       setLoadingProducts(false);
     };
     fetchProducts();

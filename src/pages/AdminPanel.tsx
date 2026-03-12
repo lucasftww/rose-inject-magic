@@ -22,6 +22,7 @@ import FinanceTab from "@/components/admin/FinanceTab";
 import ScratchCardTab from "@/components/admin/ScratchCardTab";
 import SalesTab from "@/components/admin/SalesTab";
 import GamesTab from "@/components/admin/GamesTab";
+import RobotProjectTab from "@/components/admin/RobotProjectTab";
 import { toast } from "@/hooks/use-toast";
 
 // ─── Types ───
@@ -54,6 +55,7 @@ const tabs = [
   { id: "jogos", label: "Jogos", icon: Gamepad2 },
   { id: "produtos", label: "Produtos", icon: Package },
   { id: "lzt", label: "LZT Market", icon: Globe },
+  { id: "robot", label: "Robot Project", icon: Key },
   { id: "estoque", label: "Estoque", icon: Package },
   { id: "revendedores", label: "Revendedores", icon: UserCheck },
   { id: "tickets", label: "Tickets", icon: Mail },
@@ -512,6 +514,7 @@ const AdminPanel = () => {
           {activeTab === "jogos" && <GamesTab />}
           {activeTab === "produtos" && <ProductsTab />}
           {activeTab === "estoque" && <StockTab />}
+          {activeTab === "robot" && <RobotProjectTab />}
           {activeTab === "revendedores" && <ResellersTab />}
           {activeTab === "tickets" && <TicketsTab />}
           {activeTab === "status" && <StatusTab />}
