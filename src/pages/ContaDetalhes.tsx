@@ -307,13 +307,16 @@ const buildSkinLookup = (skins: any[]): Map<string, ValorantSkinItem> => {
 
     const rawTier = (s.contentTierUuid || "").toLowerCase();
     const rarityPriority = RARITY_PRIORITY[rawTier] || 0;
-    const { displayScore, isPremiumHint } = getSkinRankMeta(s.displayName, rarityPriority);
+    const { displayScore, isPremiumHint, lineageRank, weaponRank, effectiveRarity } = getSkinRankMeta(s.displayName, rarityPriority);
 
     const entry: ValorantSkinItem = {
       name: s.displayName,
       image,
       rarity: rawTier ? rarityMap[rawTier] || null : null,
       rarityPriority,
+      effectiveRarity,
+      lineageRank,
+      weaponRank,
       displayScore,
       isPremiumHint,
     };
@@ -370,12 +373,15 @@ const fetchValorantSkins = async (uuids: string[]) => {
           const image = lvl.displayIcon || null;
           if (!image) continue;
           const fallbackName = lvl.displayName;
-          const { displayScore, isPremiumHint } = getSkinRankMeta(fallbackName, 0);
+          const { displayScore, isPremiumHint, lineageRank, weaponRank, effectiveRarity } = getSkinRankMeta(fallbackName, 0);
           fallbackByUuid.set(id, {
             name: fallbackName,
             image,
             rarity: null,
             rarityPriority: 0,
+            effectiveRarity,
+            lineageRank,
+            weaponRank,
             displayScore,
             isPremiumHint,
           });
@@ -391,12 +397,15 @@ const fetchValorantSkins = async (uuids: string[]) => {
           if (!image) continue;
           if (!fallbackByUuid.has(id)) {
             const fallbackName = c.displayName;
-            const { displayScore, isPremiumHint } = getSkinRankMeta(fallbackName, 0);
+            const { displayScore, isPremiumHint, lineageRank, weaponRank, effectiveRarity } = getSkinRankMeta(fallbackName, 0);
             fallbackByUuid.set(id, {
               name: fallbackName,
               image,
               rarity: null,
               rarityPriority: 0,
+              effectiveRarity,
+              lineageRank,
+              weaponRank,
               displayScore,
               isPremiumHint,
             });
@@ -418,55 +427,22 @@ const fetchValorantSkins = async (uuids: string[]) => {
   for (const skin of matched) {
     const key = skin.name;
     const existing = deduped.get(key);
-    if (!existing || skin.rarityPriority > existing.rarityPriority) {
+    if (!existing || skin.displayScore > existing.displayScore) {
       deduped.set(key, skin);
     }
   }
 
   const final = Array.from(deduped.values());
 
-  // LZT-style sort: strict tier hierarchy, then weapon popularity within tier
-  // Exclusive(5) → Ultra(4) → Premium(3) → Deluxe(2) → Select(1) → Default(0)
-  // Within same tier: Vandal > Phantom > Operator > Melee > Sheriff > etc.
+  // LZT-style sort: linhagem (coleção desejada) -> tier -> arma -> score
   final.sort((a, b) => {
-    // 1) Tier first (strict descending)
-    if (a.rarityPriority !== b.rarityPriority) {
-      return b.rarityPriority - a.rarityPriority;
-    }
-
-    // 2) Within same tier, sort by weapon popularity
-    const weaponOrder = (name: string): number => {
-      const n = name.toLowerCase();
-      // Check melee keywords
-      if (["karambit", "knife", "faca", "blade", "dagger", "hammer", "katana", "espada", "kunitsuna", "yaiba", "xenocaçador", "xenohunter"].some(k => n.includes(k))) return 25;
-      // Check weapon types
-      if (n.includes("vandal")) return 30;
-      if (n.includes("phantom")) return 28;
-      if (n.includes("operator")) return 26;
-      if (n.includes("sheriff")) return 22;
-      if (n.includes("spectre")) return 20;
-      if (n.includes("outlaw")) return 19;
-      if (n.includes("marshal")) return 18;
-      if (n.includes("odin")) return 16;
-      if (n.includes("guardian")) return 15;
-      if (n.includes("classic")) return 14;
-      if (n.includes("ghost")) return 13;
-      if (n.includes("ares")) return 12;
-      if (n.includes("judge")) return 11;
-      if (n.includes("bulldog")) return 10;
-      if (n.includes("stinger")) return 9;
-      if (n.includes("bucky")) return 8;
-      if (n.includes("frenzy")) return 7;
-      if (n.includes("shorty")) return 6;
-      return 5;
-    };
-
-    const wA = weaponOrder(a.name);
-    const wB = weaponOrder(b.name);
-    if (wA !== wB) return wB - wA;
-
+    if (a.lineageRank !== b.lineageRank) return b.lineageRank - a.lineageRank;
+    if (a.effectiveRarity !== b.effectiveRarity) return b.effectiveRarity - a.effectiveRarity;
+    if (a.weaponRank !== b.weaponRank) return b.weaponRank - a.weaponRank;
+    if (a.displayScore !== b.displayScore) return b.displayScore - a.displayScore;
     return a.name.localeCompare(b.name, "pt-BR");
   });
+
   return final;
 };
 
