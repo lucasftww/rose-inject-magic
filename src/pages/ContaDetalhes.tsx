@@ -706,10 +706,10 @@ const ContaDetalhes = () => {
               </div>
 
               {/* RIGHT: Purchase + Rank + Stats + Full Acesso */}
-              <div className="lg:col-span-2 space-y-4">
+              <div className="lg:col-span-2 space-y-3 sm:space-y-4">
                 {/* Title + Purchase */}
-                <div className="rounded-lg border border-border bg-card p-5 space-y-3.5">
-                  <h1 className="text-lg font-bold text-foreground leading-snug">{dynamicTitle}</h1>
+                <div className="rounded-lg border border-border bg-card p-4 sm:p-5 space-y-3">
+                  <h1 className="text-base sm:text-lg font-bold text-foreground leading-snug">{dynamicTitle}</h1>
 
                   <div className="flex flex-wrap gap-1.5">
                     <span className="inline-flex items-center gap-1 rounded-full bg-success/10 border border-success/30 px-2.5 py-0.5 text-[11px] font-semibold text-success">
