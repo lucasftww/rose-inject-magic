@@ -351,44 +351,39 @@ const Header = () => {
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="fixed top-0 right-0 bottom-0 z-50 w-[280px] bg-card/95 backdrop-blur-xl border-l border-border/50 shadow-[−20px_0_60px_hsla(0,0%,0%,0.5)] lg:hidden overflow-y-auto"
+              transition={{ type: "spring", damping: 28, stiffness: 320 }}
+              className="fixed top-0 right-0 bottom-0 z-50 w-[260px] bg-background border-l border-border/40 lg:hidden overflow-y-auto flex flex-col"
             >
-              <div className="flex items-center justify-between p-4 border-b border-border/50">
-                <span
-                  className="text-lg tracking-[0.2em]"
-                  style={{ fontFamily: "'Valorant', sans-serif" }}
-                >
-                  <span className="text-success">MENU</span>
-                </span>
-                <motion.button
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 py-3.5 border-b border-border/30">
+                <span className="text-xs font-bold uppercase tracking-[0.25em] text-muted-foreground">Menu</span>
+                <button
                   onClick={() => setMobileMenuOpen(false)}
-                  className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
-                  whileTap={{ scale: 0.9 }}
+                  className="p-1.5 rounded-md text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  <X className="h-5 w-5" />
-                </motion.button>
+                  <X className="h-4 w-4" />
+                </button>
               </div>
 
-              {/* User info (mobile) */}
+              {/* User info */}
               {user && (
-                <div className="px-4 py-4 border-b border-border/50">
-                  <div className="flex items-center gap-3">
+                <div className="px-5 py-3.5 border-b border-border/30">
+                  <div className="flex items-center gap-2.5">
                     {profile?.avatar_url ? (
-                      <img src={profile.avatar_url} alt="Avatar" className="w-10 h-10 rounded-md object-cover ring-1 ring-border" />
+                      <img src={profile.avatar_url} alt="Avatar" className="w-8 h-8 rounded-full object-cover ring-1 ring-border/50" />
                     ) : (
                       <div
-                        className="w-10 h-10 rounded-md flex items-center justify-center font-bold"
-                        style={{ background: `${accentColor}20`, color: accentColor }}
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
+                        style={{ background: `${accentColor}15`, color: accentColor }}
                       >
                         {(profile?.username || user.email?.split("@")[0] || "U").charAt(0).toUpperCase()}
                       </div>
                     )}
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">
+                    <div className="min-w-0">
+                      <p className="text-[13px] font-medium text-foreground truncate">
                         {profile?.username || user.email?.split("@")[0]}
                       </p>
-                      <p className="text-[11px] text-muted-foreground">
+                      <p className="text-[10px] text-muted-foreground truncate">
                         {user.email ? maskEmail(user.email) : ""}
                       </p>
                     </div>
@@ -396,22 +391,22 @@ const Header = () => {
                 </div>
               )}
 
-              {/* Navigation links */}
-              <nav className="px-2 py-3">
+              {/* Navigation */}
+              <nav className="flex-1 px-3 py-2">
                 {NAV_ITEMS.map((item, i) => (
                   <motion.div
                     key={item.label}
-                    initial={{ opacity: 0, x: 20 }}
+                    initial={{ opacity: 0, x: 12 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.05 }}
+                    transition={{ delay: i * 0.03 }}
                   >
                     <Link
                       to={item.href}
                       onClick={() => setMobileMenuOpen(false)}
-                      className={`flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                      className={`flex items-center px-3 py-2.5 rounded-md text-[13px] font-medium transition-colors ${
                         isActive(item.href)
-                          ? "text-success bg-success/10"
-                          : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                          ? "text-success bg-success/8"
+                          : "text-muted-foreground hover:text-foreground hover:bg-accent/40"
                       }`}
                     >
                       {item.label}
@@ -420,50 +415,50 @@ const Header = () => {
                 ))}
               </nav>
 
-              {/* User actions (mobile) */}
+              {/* Bottom actions */}
               {user ? (
-                <div className="px-2 py-2 border-t border-border/50">
-                  <button onClick={() => { navigate("/dashboard"); setMobileMenuOpen(false); }} className="flex w-full items-center gap-3 px-4 py-3 rounded-lg text-sm text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors">
-                    <User className="w-4 h-4" />
+                <div className="px-3 py-2 border-t border-border/30 space-y-0.5">
+                  <button onClick={() => { navigate("/dashboard"); setMobileMenuOpen(false); }} className="flex w-full items-center gap-2.5 px-3 py-2.5 rounded-md text-[13px] text-muted-foreground hover:bg-accent/40 hover:text-foreground transition-colors">
+                    <User className="w-3.5 h-3.5" />
                     Meu Perfil
                   </button>
-                  <button onClick={() => { navigate("/dashboard?tab=purchases"); setMobileMenuOpen(false); }} className="flex w-full items-center gap-3 px-4 py-3 rounded-lg text-sm text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors">
-                    <Package className="w-4 h-4" />
+                  <button onClick={() => { navigate("/dashboard?tab=purchases"); setMobileMenuOpen(false); }} className="flex w-full items-center gap-2.5 px-3 py-2.5 rounded-md text-[13px] text-muted-foreground hover:bg-accent/40 hover:text-foreground transition-colors">
+                    <Package className="w-3.5 h-3.5" />
                     Meus Pedidos
                   </button>
-                  <button onClick={() => { navigate("/dashboard?tab=settings"); setMobileMenuOpen(false); }} className="flex w-full items-center gap-3 px-4 py-3 rounded-lg text-sm text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-colors">
-                    <Settings className="w-4 h-4" />
+                  <button onClick={() => { navigate("/dashboard?tab=settings"); setMobileMenuOpen(false); }} className="flex w-full items-center gap-2.5 px-3 py-2.5 rounded-md text-[13px] text-muted-foreground hover:bg-accent/40 hover:text-foreground transition-colors">
+                    <Settings className="w-3.5 h-3.5" />
                     Configurações
                   </button>
                   {isAdmin && (
                     <Link
                       to="/admin"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="flex w-full items-center gap-3 px-4 py-3 rounded-lg text-sm text-success hover:bg-success/10 transition-colors"
+                      className="flex w-full items-center gap-2.5 px-3 py-2.5 rounded-md text-[13px] text-success hover:bg-success/8 transition-colors"
                     >
-                      <ShieldAlert className="w-4 h-4" />
+                      <ShieldAlert className="w-3.5 h-3.5" />
                       Painel Admin
                     </Link>
                   )}
                   <button
                     onClick={() => { signOut(); setMobileMenuOpen(false); }}
-                    className="flex w-full items-center gap-3 px-4 py-3 rounded-lg text-sm text-destructive hover:bg-destructive/10 transition-colors"
+                    className="flex w-full items-center gap-2.5 px-3 py-2.5 rounded-md text-[13px] text-destructive hover:bg-destructive/8 transition-colors"
                   >
-                    <LogOut className="w-4 h-4" />
+                    <LogOut className="w-3.5 h-3.5" />
                     Sair
                   </button>
                 </div>
               ) : (
-                <div className="px-4 py-4 border-t border-border/50 flex flex-col gap-3">
+                <div className="px-4 py-4 border-t border-border/30 space-y-2">
                   <button
                     onClick={() => { setAuthTab("login"); setAuthOpen(true); setMobileMenuOpen(false); }}
-                    className="w-full border border-border/60 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:border-success/50 hover:text-success rounded-md"
+                    className="w-full border border-border/50 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground rounded-md"
                   >
                     Entrar
                   </button>
                   <button
                     onClick={() => { setAuthTab("register"); setAuthOpen(true); setMobileMenuOpen(false); }}
-                    className="w-full bg-success py-2.5 text-sm font-semibold text-success-foreground rounded-md transition-all hover:shadow-[0_0_24px_hsl(197,100%,50%,0.45)] btn-shine"
+                    className="w-full bg-success py-2 text-[13px] font-semibold text-success-foreground rounded-md transition-all btn-shine"
                   >
                     Criar Conta
                   </button>
