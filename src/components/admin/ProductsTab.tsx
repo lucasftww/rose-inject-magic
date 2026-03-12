@@ -280,7 +280,8 @@ const ProductsTab = () => {
           if (p.id) {
             await supabase.from("product_plans").update({
               name: p.name.trim(), price: p.price, active: p.active, sort_order: i,
-            }).eq("id", p.id);
+              robot_duration_days: p.robot_duration_days || null,
+            } as any).eq("id", p.id);
           } else {
             // Insert new plans
             await supabase.from("product_plans").insert({
