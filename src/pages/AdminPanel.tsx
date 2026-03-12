@@ -346,7 +346,6 @@ type TabId = typeof tabs[number]["id"];
   );
 };
 
-// ─── Users Tab ───
 const UsersTab = () => {
   const { user: currentUser } = useAuth();
   const navigate = useNavigate();
