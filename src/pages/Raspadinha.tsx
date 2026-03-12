@@ -1061,7 +1061,7 @@ const Raspadinha = () => {
             whileTap={{ scale: 0.97 }}
             onClick={allRevealed || paymentPhase === "idle" ? (allRevealed ? resetGame : handlePlay) : undefined}
             disabled={playing || scratching || paymentPhase === "paying"}
-            className={`mt-6 w-full sm:w-auto relative overflow-hidden rounded-xl px-8 sm:px-10 py-3.5 sm:py-4 text-base sm:text-lg font-bold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+            className={`mt-6 w-full max-w-[22rem] sm:w-auto relative overflow-hidden rounded-xl px-8 sm:px-10 py-3.5 sm:py-4 text-base sm:text-lg font-bold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
               isContas ? "bg-info hover:bg-info/90" : "bg-success hover:bg-success/90"
             }`}
             style={
