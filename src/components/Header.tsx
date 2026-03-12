@@ -15,12 +15,12 @@ const maskEmail = (email: string) => {
 };
 
 const NAV_ITEMS = [
-  { label: "Início", href: "/" },
-  { label: "Produtos", href: "/produtos" },
-  { label: "Contas", href: "/contas" },
-  { label: "Status", href: "/status" },
-  { label: "Avaliações", href: "/avaliacoes" },
-  { label: "Raspadinha", href: "/raspadinha" },
+  { label: "Início", href: "/", icon: Home },
+  { label: "Produtos", href: "/produtos", icon: ShoppingBag },
+  { label: "Contas", href: "/contas", icon: Gamepad2 },
+  { label: "Status", href: "/status", icon: Activity },
+  { label: "Avaliações", href: "/avaliacoes", icon: Star },
+  { label: "Raspadinha", href: "/raspadinha", icon: Ticket },
 ];
 
 const LOL_BLUE = "hsl(198,100%,45%)";
