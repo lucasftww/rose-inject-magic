@@ -255,7 +255,36 @@ const Produtos = () => {
         .eq("game_id", selectedGame)
         .eq("active", true)
         .order("sort_order", { ascending: true });
-      if (data) setProducts(data as any);
+      if (data) {
+        // Check stock for robot products
+        const robotProducts = (data as any[]).filter(p => p.robot_game_id);
+        if (robotProducts.length > 0) {
+          const allPlanIds = robotProducts.flatMap(p => (p.product_plans || []).filter((pl: any) => pl.active).map((pl: any) => pl.id));
+          const planToProduct: Record<string, string> = {};
+          robotProducts.forEach(p => (p.product_plans || []).forEach((pl: any) => { planToProduct[pl.id] = p.id; }));
+
+          if (allPlanIds.length > 0) {
+            const { data: stockData } = await supabase
+              .from("stock_items")
+              .select("product_plan_id")
+              .in("product_plan_id", allPlanIds)
+              .eq("used", false);
+
+            const stockCounts: Record<string, number> = {};
+            (stockData || []).forEach(s => {
+              const pid = planToProduct[s.product_plan_id];
+              if (pid) stockCounts[pid] = (stockCounts[pid] || 0) + 1;
+            });
+
+            data.forEach((p: any) => {
+              if (p.robot_game_id) p._stockCount = stockCounts[p.id] || 0;
+            });
+          } else {
+            robotProducts.forEach(p => (p as any)._stockCount = 0);
+          }
+        }
+        setProducts(data as any);
+      }
       setLoadingProducts(false);
     };
     fetchProducts();
