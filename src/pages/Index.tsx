@@ -449,7 +449,7 @@ const Index = () => {
       <Header />
 
       {/* HERO */}
-      <main className="relative flex min-h-[85vh] sm:min-h-screen flex-col items-center justify-center px-4 sm:px-6 pt-2 sm:pt-4 pb-8 sm:pb-20 text-center">
+      <main className="relative flex min-h-[85vh] sm:min-h-screen flex-col items-center justify-center px-3 sm:px-6 pt-2 sm:pt-4 pb-8 sm:pb-20 text-center overflow-hidden">
         <div className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[400px] sm:h-[550px] w-[600px] sm:w-[900px] -translate-x-1/2 -translate-y-1/2"
           style={{
             backgroundImage: "linear-gradient(hsl(var(--border) / 0.8) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--border) / 0.8) 1px, transparent 1px)",
@@ -496,13 +496,13 @@ const Index = () => {
           </Link>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8, delay: 1.0 }} className="z-10 mt-8 sm:mt-20 flex items-center justify-center gap-4 sm:gap-8 md:gap-14 w-full overflow-x-auto scrollbar-hide px-2 sm:px-0">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8, delay: 1.0 }} className="z-10 mt-8 sm:mt-20 grid grid-cols-3 sm:flex items-center justify-center gap-3 sm:gap-8 md:gap-14 w-full max-w-full px-1 sm:px-0">
           {trustBadges.map((item, idx) => (
-            <motion.div key={item.highlight} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 1.0 + idx * 0.15 }} className="flex items-center gap-2 sm:gap-3 shrink-0">
+            <motion.div key={item.highlight} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 1.0 + idx * 0.15 }} className="flex flex-col sm:flex-row items-center gap-1 sm:gap-3">
               <item.icon className="h-5 w-5 sm:h-6 sm:w-6 text-success" />
-              <div className="text-left">
-                <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">{item.label}</span>
-                <p className="text-sm sm:text-base font-bold tracking-wide text-foreground whitespace-nowrap" style={{ fontFamily: "'Valorant', sans-serif" }}>{item.highlight}</p>
+              <div className="text-center sm:text-left">
+                <span className="text-[10px] sm:text-sm text-muted-foreground whitespace-nowrap">{item.label}</span>
+                <p className="text-xs sm:text-base font-bold tracking-wide text-foreground whitespace-nowrap" style={{ fontFamily: "'Valorant', sans-serif" }}>{item.highlight}</p>
               </div>
             </motion.div>
           ))}
