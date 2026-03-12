@@ -700,7 +700,7 @@ const Raspadinha = () => {
       <Header />
       <AuthModal open={authOpen} onOpenChange={setAuthOpen} defaultTab="login" />
 
-      <div className="mx-auto max-w-4xl px-6 pt-4 pb-20">
+      <div className="mx-auto max-w-4xl px-4 sm:px-6 pt-4 pb-20">
         {/* Pending payment banner */}
         {pendingPayment && paymentPhase === "idle" && (
           <motion.div
@@ -748,7 +748,7 @@ const Raspadinha = () => {
             <span className={`text-sm font-medium ${accentClass}`}>Raspadinha da Sorte</span>
           </motion.div>
           <h1
-            className="text-4xl md:text-5xl font-bold text-foreground mb-3"
+            className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-2 sm:mb-3"
             style={{ fontFamily: "'Valorant', sans-serif" }}
           >
             <span
@@ -762,7 +762,7 @@ const Raspadinha = () => {
               RASPADINHA
             </span>
           </h1>
-          <p className="text-muted-foreground max-w-md mx-auto">
+          <p className="text-sm text-muted-foreground max-w-md mx-auto">
             Apenas{" "}
             <span className={`font-bold ${accentClass}`}>
               R$ {unitPrice.toFixed(2)}
@@ -773,11 +773,11 @@ const Raspadinha = () => {
 
         {/* Mode Tabs */}
         <div className="flex justify-center mb-8">
-          <div className="flex rounded-xl border border-border bg-card p-1 gap-1">
+          <div className="flex rounded-xl border border-border bg-card p-1 gap-1 w-full sm:w-auto">
             <button
               onClick={() => handleModeChange("produtos")}
               disabled={paymentPhase !== "idle" || scratching}
-              className={`flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold transition-all ${
+              className={`flex flex-1 sm:flex-initial items-center justify-center gap-2 rounded-lg px-4 sm:px-5 py-2.5 text-sm font-semibold transition-all ${
                 mode === "produtos"
                   ? "bg-success text-success-foreground shadow"
                   : "text-muted-foreground hover:text-foreground hover:bg-accent"
@@ -789,7 +789,7 @@ const Raspadinha = () => {
             <button
               onClick={() => handleModeChange("contas")}
               disabled={paymentPhase !== "idle" || scratching}
-              className={`flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold transition-all ${
+              className={`flex flex-1 sm:flex-initial items-center justify-center gap-2 rounded-lg px-4 sm:px-5 py-2.5 text-sm font-semibold transition-all ${
                 mode === "contas"
                   ? "bg-info text-info-foreground shadow"
                   : "text-muted-foreground hover:text-foreground hover:bg-accent"
@@ -895,7 +895,7 @@ const Raspadinha = () => {
         <div className="flex flex-col items-center">
           <motion.div
             layout
-            className={`relative rounded-2xl border-2 ${borderAccent} bg-gradient-to-br from-card via-secondary/50 to-card p-6 md:p-8`}
+            className={`relative rounded-2xl border-2 ${borderAccent} bg-gradient-to-br from-card via-secondary/50 to-card p-3 sm:p-6 md:p-8`}
             style={{ boxShadow: `0 0 60px ${accentColor}26` }}
           >
             {/* Decorative corners */}
@@ -905,11 +905,11 @@ const Raspadinha = () => {
             <div className={`absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 ${isContas ? "border-info" : "border-success"} rounded-br-2xl`} />
 
             {/* 3x3 Grid */}
-            <div className="grid grid-cols-3 gap-2 md:gap-3">
+            <div className="grid grid-cols-3 gap-1.5 sm:gap-2 md:gap-3">
               {(grid.length === 9 ? grid : Array(9).fill(null)).map((cell, i) => (
                 <div
                   key={i}
-                  className="relative w-28 h-28 md:w-36 md:h-36 rounded-xl overflow-hidden select-none"
+                  className="relative aspect-square w-full rounded-xl overflow-hidden select-none"
                 >
                   <div className={`absolute inset-0 flex items-center justify-center transition-all duration-500 ${
                     revealed[i] ? "scale-100 opacity-100" : "scale-75 opacity-30"
@@ -1061,7 +1061,7 @@ const Raspadinha = () => {
             whileTap={{ scale: 0.97 }}
             onClick={allRevealed || paymentPhase === "idle" ? (allRevealed ? resetGame : handlePlay) : undefined}
             disabled={playing || scratching || paymentPhase === "paying"}
-            className={`mt-6 relative overflow-hidden rounded-xl px-10 py-4 text-lg font-bold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+            className={`mt-6 w-full sm:w-auto relative overflow-hidden rounded-xl px-8 sm:px-10 py-3.5 sm:py-4 text-base sm:text-lg font-bold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
               isContas ? "bg-info hover:bg-info/90" : "bg-success hover:bg-success/90"
             }`}
             style={
