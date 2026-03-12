@@ -1091,6 +1091,7 @@ const Raspadinha = () => {
                 : `Jogar — R$ ${unitPrice.toFixed(2)}`}
             </span>
           </motion.button>
+          </div>
         </div>
 
         {/* History */}
