@@ -683,11 +683,11 @@ const ContaDetalhes = () => {
                     </div>
 
                     {/* Rank atual (direita) */}
-                    <div className="flex flex-col items-center gap-1.5">
-                      <img src={rank?.img || rankUnranked} alt={rank?.name || "Unranked"} className="h-16 w-16 object-contain" />
+                    <div className="flex flex-col items-center gap-1">
+                      <img src={rank?.img || rankUnranked} alt={rank?.name || "Unranked"} className="h-12 w-12 sm:h-16 sm:w-16 object-contain" />
                       <div className="text-center">
                         <p className="text-[9px] text-muted-foreground uppercase tracking-wider">Rank atual</p>
-                        <p className="text-sm font-bold text-foreground">{rank?.name || "Unranked"}</p>
+                        <p className="text-xs sm:text-sm font-bold text-foreground">{rank?.name || "Unranked"}</p>
                       </div>
                     </div>
                   </div>
