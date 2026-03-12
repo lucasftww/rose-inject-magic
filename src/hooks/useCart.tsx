@@ -52,15 +52,25 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const addItem = (item: Omit<CartItem, "quantity">, isLoggedIn?: boolean): boolean => {
     let loggedIn = isLoggedIn;
     if (loggedIn === undefined) {
-      const sessionKey = Object.keys(localStorage).find(k => k.startsWith("sb-") && k.endsWith("-auth-token"));
-      const session = sessionKey ? localStorage.getItem(sessionKey) : null;
-      loggedIn = false;
-      if (session) {
-        try {
-          const parsed = JSON.parse(session);
-          loggedIn = !!parsed?.access_token;
-        } catch {}
+      // Check all possible Supabase session keys in localStorage
+      try {
+        const sessionKey = Object.keys(localStorage).find(
+          (k) => k.startsWith("sb-") && k.endsWith("-auth-token")
+        );
+        if (sessionKey) {
+          const raw = localStorage.getItem(sessionKey);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            // Validate token exists and hasn't expired
+            const expiresAt = parsed?.expires_at;
+            const hasToken = !!parsed?.access_token;
+            loggedIn = hasToken && (!expiresAt || expiresAt * 1000 > Date.now());
+          }
+        }
+      } catch {
+        loggedIn = false;
       }
+      loggedIn = loggedIn ?? false;
     }
 
     if (!loggedIn) {

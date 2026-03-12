@@ -169,6 +169,44 @@ const ProdutoDetalhes = () => {
     }
   }, [product, game, sortedPlans]);
 
+  // JSON-LD Structured Data for SEO
+  useEffect(() => {
+    if (!product || sortedPlans.length === 0) return;
+    const lowestPrice = Math.min(...sortedPlans.map(p => Number(p.price)));
+    const highestPrice = Math.max(...sortedPlans.map(p => Number(p.price)));
+    const jsonLd = {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      name: product.name,
+      description: product.description || product.name,
+      image: product.image_url || undefined,
+      brand: { "@type": "Brand", name: "Royal Store" },
+      offers: {
+        "@type": sortedPlans.length > 1 ? "AggregateOffer" : "Offer",
+        priceCurrency: "BRL",
+        ...(sortedPlans.length > 1
+          ? { lowPrice: lowestPrice.toFixed(2), highPrice: highestPrice.toFixed(2), offerCount: sortedPlans.length }
+          : { price: lowestPrice.toFixed(2) }),
+        availability: "https://schema.org/InStock",
+        url: window.location.href,
+      },
+      ...(reviews.length > 0 && {
+        aggregateRating: {
+          "@type": "AggregateRating",
+          ratingValue: (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1),
+          reviewCount: reviews.length,
+        },
+      }),
+    };
+    const script = document.createElement("script");
+    script.type = "application/ld+json";
+    script.textContent = JSON.stringify(jsonLd);
+    script.id = "product-jsonld";
+    document.head.querySelector("#product-jsonld")?.remove();
+    document.head.appendChild(script);
+    return () => { document.head.querySelector("#product-jsonld")?.remove(); };
+  }, [product, sortedPlans, reviews]);
+
   const selectedPlan = sortedPlans.find(p => p.id === selectedPlanId);
 
   const buyNow = () => {
