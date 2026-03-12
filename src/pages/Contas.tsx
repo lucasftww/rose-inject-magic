@@ -267,8 +267,19 @@ interface LztItem {
 
 // ─── Data fetchers ───
 
-const fetchAllValorantSkins = async (): Promise<Map<string, { name: string; image: string }>> => {
-  const map = new Map<string, { name: string; image: string }>();
+// Rarity priority: higher = rarer/better
+const RARITY_PRIORITY: Record<string, number> = {
+  "411e4a55-4e59-7757-41f0-86a53f101bb5": 5, // Exclusive
+  "e046854e-406c-37f4-6571-7a8baeeb93ab": 4, // Ultra
+  "60bca009-4182-7998-dee7-b8a2558dc369": 3, // Premium
+  "12683d76-48d7-84a3-4e09-6985794f0445": 2, // Deluxe
+  "0cebb8be-46d7-c12a-d306-e9907bfc5a25": 1, // Select
+};
+
+type SkinEntry = { name: string; image: string; rarity: number };
+
+const fetchAllValorantSkins = async (): Promise<Map<string, SkinEntry>> => {
+  const map = new Map<string, SkinEntry>();
 
   // Fetch weapon skins
   try {
@@ -278,7 +289,8 @@ const fetchAllValorantSkins = async (): Promise<Map<string, { name: string; imag
       for (const s of (data.data || [])) {
         const image = s.levels?.[0]?.displayIcon || s.displayIcon || s.chromas?.[0]?.fullRender;
         if (!image) continue;
-        const entry = { name: s.displayName, image };
+        const rarity = RARITY_PRIORITY[s.contentTierUuid?.toLowerCase()] || 0;
+        const entry: SkinEntry = { name: s.displayName, image, rarity };
         if (s.uuid) map.set(s.uuid.toLowerCase(), entry);
         for (const level of (s.levels || [])) {
           if (level.uuid) map.set(level.uuid.toLowerCase(), entry);
