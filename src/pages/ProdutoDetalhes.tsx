@@ -72,6 +72,7 @@ const ProdutoDetalhes = () => {
   const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
   const [reviews, setReviews] = useState<ReviewData[]>([]);
+  const [robotNoStock, setRobotNoStock] = useState(false);
 
   useEffect(() => {
     const fetchProduct = async () => {
