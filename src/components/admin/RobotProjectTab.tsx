@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, RefreshCw, Wifi, WifiOff, Gamepad2, AlertTriangle, CheckCircle, Package, DollarSign, Clock, Zap } from "lucide-react";
+import { Loader2, RefreshCw, Wifi, WifiOff, Gamepad2, AlertTriangle, CheckCircle, Package, DollarSign, Clock, Zap, Wallet, Gift } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface RobotGame {
@@ -32,6 +32,8 @@ const RobotProjectTab = () => {
   const [productsWithRobot, setProductsWithRobot] = useState<ProductWithRobot[]>([]);
   const [loadingGames, setLoadingGames] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
+  const [robotBalance, setRobotBalance] = useState<number | null>(null);
+  const [freeGamesCount, setFreeGamesCount] = useState(0);
 
   const checkPing = async () => {
     setPingStatus("loading");
@@ -67,7 +69,13 @@ const RobotProjectTab = () => {
       );
       if (response.ok) {
         const data = await response.json();
-        setRobotGames(Array.isArray(data) ? data : data.games || []);
+        const games = Array.isArray(data) ? data : data.games || [];
+        setRobotGames(games);
+        setFreeGamesCount(games.filter((g: RobotGame) => g.is_free).length);
+        // Check if API returns balance info
+        if (data.balance !== undefined && data.balance !== null) {
+          setRobotBalance(data.balance);
+        }
       } else {
         toast({ title: "Erro ao carregar jogos Robot", variant: "destructive" });
       }
@@ -152,7 +160,7 @@ const RobotProjectTab = () => {
       )}
 
       {/* Status Cards */}
-      <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {/* API Status */}
         <div className="rounded-lg border border-border bg-card p-5">
           <div className="flex items-center gap-3">
@@ -178,6 +186,21 @@ const RobotProjectTab = () => {
           </div>
         </div>
 
+        {/* Robot Balance */}
+        <div className="rounded-lg border border-border bg-card p-5">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10">
+              <Wallet className="h-5 w-5 text-accent-foreground" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Saldo Robot</p>
+              <p className="text-sm font-bold text-foreground">
+                {robotBalance !== null ? `R$${robotBalance.toFixed(2)}` : "—"}
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Games Available */}
         <div className="rounded-lg border border-border bg-card p-5">
           <div className="flex items-center gap-3">
@@ -188,6 +211,21 @@ const RobotProjectTab = () => {
               <p className="text-xs text-muted-foreground">Jogos Disponíveis</p>
               <p className="text-sm font-bold text-foreground">
                 {loadingGames ? "..." : robotGames.length}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Free Games */}
+        <div className="rounded-lg border border-border bg-card p-5">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-success/10">
+              <Gift className="h-5 w-5 text-success" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Jogos Grátis</p>
+              <p className="text-sm font-bold text-foreground">
+                {loadingGames ? "..." : freeGamesCount}
               </p>
             </div>
           </div>
