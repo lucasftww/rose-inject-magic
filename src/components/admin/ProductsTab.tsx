@@ -63,9 +63,9 @@ interface RobotGame {
 }
 
 const defaultPlans: ProductPlan[] = [
-  { name: "Diário", price: 0, active: true, sort_order: 0 },
-  { name: "Semanal", price: 0, active: true, sort_order: 1 },
-  { name: "Mensal", price: 0, active: true, sort_order: 2 },
+  { name: "Diário", price: 0, active: true, sort_order: 0, robot_duration_days: 1 },
+  { name: "Semanal", price: 0, active: true, sort_order: 1, robot_duration_days: 7 },
+  { name: "Mensal", price: 0, active: true, sort_order: 2, robot_duration_days: 30 },
 ];
 
 const defaultFeatures: FeatureItem[] = [
