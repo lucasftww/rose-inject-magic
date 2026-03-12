@@ -978,7 +978,7 @@ const Contas = () => {
   const [lolRank, setLolRank] = useState("todos");
   const [lolChampMin, setLolChampMin] = useState("");
   const [lolSkinsMin, setLolSkinsMin] = useState("");
-  const [lolRegion, setLolRegion] = useState("all");
+  const [lolRegion, setLolRegion] = useState("br");
 
   // ─── Fortnite filters ───
   const [fnVbMin, setFnVbMin] = useState("");
@@ -1285,7 +1285,7 @@ const Contas = () => {
     setMcCapesMin("");
     setMcNoBan(false);
     setValRegion("br");
-    setLolRegion("all");
+    setLolRegion("br");
     setPriceMin(""); setPriceMax("");
     setSearchQuery(""); setOnlyKnife(false);
     setInvMin(""); setInvMax("");
@@ -1311,7 +1311,7 @@ const Contas = () => {
     gameTab === "lol" && lolRank !== "todos",
     gameTab === "lol" && lolChampMin !== "",
     gameTab === "lol" && lolSkinsMin !== "",
-    gameTab === "lol" && lolRegion !== "all",
+    gameTab === "lol" && lolRegion !== "br",
     gameTab === "fortnite" && fnVbMin !== "",
     gameTab === "fortnite" && fnSkinsMin !== "",
     isMinecraft && mcJava,
