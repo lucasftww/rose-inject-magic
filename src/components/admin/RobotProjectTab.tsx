@@ -34,6 +34,7 @@ const RobotProjectTab = () => {
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
   const [robotBalance, setRobotBalance] = useState<number | null>(null);
   const [freeGamesCount, setFreeGamesCount] = useState(0);
+  const [usdToBrl, setUsdToBrl] = useState(5.25);
 
   const checkPing = async () => {
     setPingStatus("loading");
@@ -131,9 +132,20 @@ const RobotProjectTab = () => {
     })));
   };
 
+  const fetchExchangeRate = async () => {
+    try {
+      const res = await fetch("https://economia.awesomeapi.com.br/json/last/USD-BRL");
+      if (res.ok) {
+        const data = await res.json();
+        const bid = Number(data?.USDBRL?.bid);
+        if (bid > 0) setUsdToBrl(bid);
+      }
+    } catch (_) { /* use fallback */ }
+  };
+
   const refreshAll = async () => {
     setLoading(true);
-    await Promise.all([checkPing(), fetchRobotGames(), fetchProductsWithRobot()]);
+    await Promise.all([checkPing(), fetchRobotGames(), fetchProductsWithRobot(), fetchExchangeRate()]);
     setLastRefresh(new Date());
     setLoading(false);
   };
@@ -380,12 +392,12 @@ const RobotProjectTab = () => {
                   {priceEntries.length > 0 && (
                     <div className="mt-3 space-y-1">
                       <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1">
-                        <DollarSign className="h-3 w-3" /> Preços por duração
+                        <DollarSign className="h-3 w-3" /> Preços por duração <span className="text-[9px] font-normal">(USD→BRL: {usdToBrl.toFixed(2)})</span>
                       </p>
                       <div className="flex flex-wrap gap-1.5">
                         {priceEntries.map(([days, price]) => {
                           const usdPrice = Number(price);
-                          const brlPrice = usdPrice * 5.25;
+                          const brlPrice = usdPrice * usdToBrl;
                           return (
                             <span key={days} className="inline-flex items-center gap-1 rounded-md bg-secondary/60 border border-border px-2 py-0.5 text-[11px]">
                               <Clock className="h-2.5 w-2.5 text-muted-foreground" />
@@ -399,7 +411,7 @@ const RobotProjectTab = () => {
                       {linkedProduct?.robot_markup_percent && (
                         <div className="flex flex-wrap gap-1.5 mt-1">
                           {priceEntries.map(([days, price]) => {
-                            const brlPrice = Number(price) * 5.25;
+                            const brlPrice = Number(price) * usdToBrl;
                             const withMarkup = brlPrice * (1 + (linkedProduct.robot_markup_percent || 0) / 100);
                             return (
                               <span key={`mk-${days}`} className="inline-flex items-center gap-1 rounded-md bg-accent/10 border border-accent/20 px-2 py-0.5 text-[11px]">
