@@ -215,24 +215,22 @@ const LztContaCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap
   const skinCount = item.riot_valorant_skin_count ?? 0;
 
   const skinPreviews = useMemo(() => {
-    const results: { name: string; image: string }[] = [];
+    const results: SkinEntry[] = [];
     const toUuids = (raw: unknown): string[] => {
       if (Array.isArray(raw)) return raw;
       if (raw && typeof raw === "object") return Object.values(raw as Record<string, string>);
       return [];
     };
-    const allUuids = [
-      ...toUuids(item.valorantInventory?.WeaponSkins),
-      ...toUuids(item.valorantInventory?.Agent),
-      ...toUuids(item.valorantInventory?.Buddy),
-    ];
+    // Only weapon skins for preview (no buddies/agents clutter)
+    const allUuids = toUuids(item.valorantInventory?.WeaponSkins);
     for (const uuid of allUuids) {
       if (typeof uuid !== "string") continue;
       const entry = skinsMap.get(uuid.toLowerCase());
-      if (entry) results.push(entry);
-      if (results.length >= 6) break;
+      if (entry && entry.rarity > 0) results.push(entry);
     }
-    return results;
+    // Sort by rarity descending (best skins first)
+    results.sort((a, b) => b.rarity - a.rarity);
+    return results.slice(0, 6);
   }, [item.valorantInventory, skinsMap]);
 
   return (
