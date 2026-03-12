@@ -183,6 +183,63 @@ async function sendDiscordSaleNotification(supabaseAdmin: any, payment: any) {
     console.error("Discord webhook error:", err);
   }
 }
+// Helper: assign Discord "Cliente" role to buyer after purchase
+async function assignDiscordClientRole(supabaseAdmin: any, userId: string) {
+  try {
+    const botToken = Deno.env.get("DISCORD_BOT_TOKEN");
+    if (!botToken) {
+      console.log("DISCORD_BOT_TOKEN not configured, skipping role assignment");
+      return;
+    }
+
+    // Get guild and role IDs from system_credentials
+    const { data: creds } = await supabaseAdmin
+      .from("system_credentials")
+      .select("env_key, value")
+      .in("env_key", ["DISCORD_GUILD_ID", "DISCORD_CLIENT_ROLE_ID"]);
+
+    const guildId = creds?.find((c: any) => c.env_key === "DISCORD_GUILD_ID")?.value;
+    const roleId = creds?.find((c: any) => c.env_key === "DISCORD_CLIENT_ROLE_ID")?.value;
+
+    if (!guildId || !roleId) {
+      console.log("Discord Guild/Role IDs not configured, skipping role assignment");
+      return;
+    }
+
+    // Get user's Discord identity from auth
+    const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(userId);
+    const identities = authUser?.user?.identities || [];
+    const discordIdentity = identities.find((i: any) => i.provider === "discord");
+
+    if (!discordIdentity) {
+      console.log("User has no Discord identity, skipping role assignment");
+      return;
+    }
+
+    const discordUserId = discordIdentity.provider_id;
+
+    // Add role via Discord API
+    const res = await fetch(
+      `https://discord.com/api/v10/guilds/${guildId}/members/${discordUserId}/roles/${roleId}`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bot ${botToken}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (res.ok || res.status === 204) {
+      console.log(`Discord role assigned to user ${discordUserId}`);
+    } else {
+      const errBody = await res.text();
+      console.error(`Discord role assignment failed [${res.status}]:`, errBody);
+    }
+  } catch (err) {
+    console.error("assignDiscordClientRole error:", err);
+  }
+}
 
 // Helper: fulfill order (deliver stock, create tickets, record coupon)
 async function fulfillOrder(supabaseAdmin: any, payment: any) {
