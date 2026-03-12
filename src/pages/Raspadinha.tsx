@@ -905,11 +905,11 @@ const Raspadinha = () => {
             <div className={`absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 ${isContas ? "border-info" : "border-success"} rounded-br-2xl`} />
 
             {/* 3x3 Grid */}
-            <div className="grid grid-cols-3 gap-2 md:gap-3">
+            <div className="grid grid-cols-3 gap-1.5 sm:gap-2 md:gap-3">
               {(grid.length === 9 ? grid : Array(9).fill(null)).map((cell, i) => (
                 <div
                   key={i}
-                  className="relative w-28 h-28 md:w-36 md:h-36 rounded-xl overflow-hidden select-none"
+                  className="relative aspect-square w-full rounded-xl overflow-hidden select-none">
                 >
                   <div className={`absolute inset-0 flex items-center justify-center transition-all duration-500 ${
                     revealed[i] ? "scale-100 opacity-100" : "scale-75 opacity-30"
