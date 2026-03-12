@@ -55,6 +55,7 @@ const tabs = [
   { id: "jogos", label: "Jogos", icon: Gamepad2 },
   { id: "produtos", label: "Produtos", icon: Package },
   { id: "lzt", label: "LZT Market", icon: Globe },
+  { id: "robot", label: "Robot Project", icon: Key },
   { id: "estoque", label: "Estoque", icon: Package },
   { id: "revendedores", label: "Revendedores", icon: UserCheck },
   { id: "tickets", label: "Tickets", icon: Mail },
