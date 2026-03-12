@@ -895,7 +895,7 @@ const Raspadinha = () => {
         <div className="flex flex-col items-center">
           <motion.div
             layout
-            className={`relative rounded-2xl border-2 ${borderAccent} bg-gradient-to-br from-card via-secondary/50 to-card p-6 md:p-8`}
+            className={`relative rounded-2xl border-2 ${borderAccent} bg-gradient-to-br from-card via-secondary/50 to-card p-3 sm:p-6 md:p-8`}
             style={{ boxShadow: `0 0 60px ${accentColor}26` }}
           >
             {/* Decorative corners */}
