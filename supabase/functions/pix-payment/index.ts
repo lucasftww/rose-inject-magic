@@ -1026,7 +1026,7 @@ async function validateAndCalculatePrice(
 
     const { data: plan } = await supabaseAdmin
       .from("product_plans")
-      .select("id, price, active, product_id")
+      .select("id, price, active, product_id, robot_duration_days")
       .eq("id", planId)
       .single();
 
@@ -1036,6 +1036,50 @@ async function validateAndCalculatePrice(
 
     const qty = Math.max(1, Math.floor(Number(item.quantity) || 1));
     let realPrice = Number(plan.price);
+
+    // If price is 0 and product has robot markup, calculate from Robot API prices
+    if (realPrice <= 0) {
+      const { data: productData } = await supabaseAdmin
+        .from("products")
+        .select("robot_game_id, robot_markup_percent")
+        .eq("id", plan.product_id)
+        .maybeSingle();
+
+      if (productData?.robot_game_id && productData.robot_markup_percent && plan.robot_duration_days) {
+        // Fetch robot game prices to calculate
+        const [uRes, pRes] = await Promise.all([
+          supabaseAdmin.from("system_credentials").select("value").eq("env_key", "ROBOT_API_USERNAME").maybeSingle(),
+          supabaseAdmin.from("system_credentials").select("value").eq("env_key", "ROBOT_API_PASSWORD").maybeSingle(),
+        ]);
+        const robotUsername = uRes.data?.value;
+        const robotPassword = pRes.data?.value;
+        if (robotUsername && robotPassword) {
+          try {
+            const auth = btoa(`${robotUsername}:${robotPassword}`);
+            const gamesRes = await fetch("https://api.robotproject.com.br/games", {
+              headers: { Authorization: `Basic ${auth}`, "Content-Type": "application/json" },
+            });
+            if (gamesRes.ok) {
+              const games = await gamesRes.json();
+              const robotGame = Array.isArray(games) ? games.find((g: any) => g.id === productData.robot_game_id) : null;
+              if (robotGame?.prices) {
+                const basePrice = robotGame.prices[String(plan.robot_duration_days)];
+                if (basePrice !== undefined && basePrice > 0) {
+                  realPrice = Number((basePrice * (1 + productData.robot_markup_percent / 100)).toFixed(2));
+                  console.log(`Robot markup price calculated: base=${basePrice}, markup=${productData.robot_markup_percent}%, final=${realPrice}`);
+                }
+              }
+            }
+          } catch (err) {
+            console.error("Failed to fetch robot prices for validation:", err);
+          }
+        }
+      }
+
+      if (realPrice <= 0) {
+        return { validatedAmount: 0, validatedDiscount: 0, validatedCart: [], error: `Plano "${plan.id}" tem preço R$ 0. Configure o preço no painel admin.` };
+      }
+    }
 
     const { data: resellerData } = await supabaseAdmin
       .from("resellers")
