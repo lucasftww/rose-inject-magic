@@ -785,6 +785,13 @@ export type Database = {
             foreignKeyName: "scratch_card_plays_prize_id_fkey"
             columns: ["prize_id"]
             isOneToOne: false
+            referencedRelation: "public_scratch_card_prizes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scratch_card_plays_prize_id_fkey"
+            columns: ["prize_id"]
+            isOneToOne: false
             referencedRelation: "scratch_card_prizes"
             referencedColumns: ["id"]
           },
@@ -978,7 +985,69 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_product_reviews: {
+        Row: {
+          comment: string | null
+          created_at: string | null
+          id: string | null
+          product_id: string | null
+          rating: number | null
+          username: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      public_scratch_card_prizes: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          description: string | null
+          id: string | null
+          image_url: string | null
+          name: string | null
+          prize_value: number | null
+          product_id: string | null
+          sort_order: number | null
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          image_url?: string | null
+          name?: string | null
+          prize_value?: number | null
+          product_id?: string | null
+          sort_order?: number | null
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          image_url?: string | null
+          name?: string | null
+          prize_value?: number | null
+          product_id?: string | null
+          sort_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scratch_card_prizes_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       has_role: {
