@@ -718,7 +718,7 @@ const ProductsTab = () => {
                         <input type="number" value={formRobotMarkup || ""} onChange={(e) => setFormRobotMarkup(Number(e.target.value) || null)}
                           min="0" max="500" step="1" placeholder="Ex: 30 (30% de lucro)"
                           className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-accent/50" />
-                        <p className="text-[10px] text-muted-foreground/60 mt-1">Se definido, calcula preço automático: custo revenda (API × 0.6) × câmbio (R${robotUsdToBrl.toFixed(2)}) × (1 + markup/100). Preço manual no plano tem prioridade.</p>
+                        <p className="text-[10px] text-muted-foreground/60 mt-1">Se definido, calcula preço automático: preço API × câmbio (R${robotUsdToBrl.toFixed(2)}) × (1 + markup/100). 40% volta como cashback. Preço manual no plano tem prioridade.</p>
                       </div>
                     </div>
                     <p className="text-[10px] text-muted-foreground/60">
