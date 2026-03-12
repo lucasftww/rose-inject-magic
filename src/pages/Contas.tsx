@@ -1447,17 +1447,46 @@ const Contas = () => {
                     )}
                   </h3>
                   <div className="flex items-center gap-3">
-                    <button onClick={clearFilters} className="text-xs text-muted-foreground transition-colors" onMouseEnter={e => (e.currentTarget.style.color = accentColor)} onMouseLeave={e => (e.currentTarget.style.color = '')}>Limpar</button>
+                    <button onClick={() => { clearFilters(); }} className="text-xs text-muted-foreground transition-colors" onMouseEnter={e => (e.currentTarget.style.color = accentColor)} onMouseLeave={e => (e.currentTarget.style.color = '')}>Limpar</button>
                     <button onClick={() => setMobileFiltersOpen(false)} className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary transition-colors">
                       <X className="h-5 w-5" />
                     </button>
                   </div>
                 </div>
-                <div className="px-5 py-4 space-y-0">
+                <div className="p-5">
+                  {renderFilterContent()}
+                </div>
+                <div className="sticky bottom-0 border-t border-border bg-card p-4">
+                  <button
+                    onClick={() => setMobileFiltersOpen(false)}
+                    className="w-full rounded-xl py-3 text-sm font-bold text-white transition-all active:scale-[0.98]"
+                    style={{ background: accentColor }}
+                  >
+                    Ver resultados
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* ─── Desktop Sidebar ─── */}
           <aside className="hidden shrink-0 lg:block lg:w-72">
             <div className="sticky top-28 max-h-[calc(100vh-8rem)] overflow-y-auto space-y-4 scrollbar-hide">
+              <div className="rounded-lg border bg-card p-5 transition-colors duration-300" style={{ borderColor: isValorant ? 'hsl(var(--border))' : `${accentColor}25` }}>
+                <div className="flex items-center justify-between">
+                  <h3 className="flex items-center gap-2 text-base font-bold text-foreground">
+                    <SlidersHorizontal className="h-4 w-4" style={{ color: accentColor }} />
+                    Filtros
+                    {activeFiltersCount > 0 && (
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-white" style={{ background: accentColor }}>{activeFiltersCount}</span>
+                    )}
+                  </h3>
+                  <button onClick={clearFilters} className="text-xs text-muted-foreground transition-colors" style={{}} onMouseEnter={e => (e.currentTarget.style.color = accentColor)} onMouseLeave={e => (e.currentTarget.style.color = '')}>Limpar</button>
+                </div>
+                {renderFilterContent()}
+              </div>
+            </div>
+          </aside>
               <div className="rounded-lg border bg-card p-5 transition-colors duration-300" style={{ borderColor: isValorant ? 'hsl(var(--border))' : `${accentColor}25` }}>
                 <div className="flex items-center justify-between">
                   <h3 className="flex items-center gap-2 text-base font-bold text-foreground">
