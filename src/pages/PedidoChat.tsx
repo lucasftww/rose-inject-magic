@@ -248,7 +248,7 @@ const PedidoChat = () => {
         ticket_id: ticket.id,
         sender_id: user.id,
         sender_role: "user",
-        message: `[AUDIO]${urlData.publicUrl}`,
+        message: `[AUDIO]${urlData?.signedUrl || ""}`,
       }).select().single();
       if (error) {
         toast({ title: "Erro ao enviar", description: error.message, variant: "destructive" });

@@ -263,7 +263,7 @@ const TicketsTab = () => {
         ticket_id: selectedTicket.id,
         sender_id: user.id,
         sender_role: "staff",
-        message: `[AUDIO]${urlData.publicUrl}`,
+        message: `[AUDIO]${urlData?.signedUrl || ""}`,
       }).select().single();
       if (error) {
         toast({ title: "Erro", description: error.message, variant: "destructive" });
