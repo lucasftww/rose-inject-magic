@@ -653,7 +653,7 @@ const ContaDetalhes = () => {
                     )}
                   </div>
                 ) : (
-                  <div className="rounded-lg border border-border bg-card flex items-center justify-center aspect-[16/10]">
+                  <div className="rounded-lg border border-border bg-card flex items-center justify-center aspect-[4/3] sm:aspect-[16/10]">
                     <div className="flex flex-col items-center gap-4">
                       <img src={rank?.img || rankUnranked} alt={rank?.name || "Unranked"} className="h-28 w-28 object-contain drop-shadow-xl" />
                       <p className="text-2xl font-bold text-foreground">{rank?.name || "Unranked"}</p>
