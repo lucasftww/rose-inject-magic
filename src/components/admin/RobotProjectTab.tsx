@@ -158,9 +158,106 @@ const RobotProjectTab = () => {
     } catch (_) { /* use fallback */ }
   };
 
+  const fetchRobotSales = async (period: "7d" | "30d" | "all" = salesPeriod) => {
+    setSalesLoading(true);
+    try {
+      // Get all products with robot_game_id
+      const { data: robotProducts } = await supabase
+        .from("products")
+        .select("id, name, robot_game_id, robot_markup_percent")
+        .not("robot_game_id", "is", null);
+
+      if (!robotProducts || robotProducts.length === 0) {
+        setRobotSales([]);
+        setSalesLoading(false);
+        return;
+      }
+
+      const productIds = robotProducts.map(p => p.id);
+      const productMap = Object.fromEntries(robotProducts.map(p => [p.id, p]));
+
+      // Build date filter
+      let dateFilter: string | null = null;
+      if (period === "7d") {
+        dateFilter = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      } else if (period === "30d") {
+        dateFilter = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      }
+
+      // Get tickets for robot products
+      let query = supabase
+        .from("order_tickets")
+        .select("id, created_at, product_id, product_plan_id, status, metadata")
+        .in("product_id", productIds)
+        .eq("status", "delivered")
+        .order("created_at", { ascending: false });
+
+      if (dateFilter) {
+        query = query.gte("created_at", dateFilter);
+      }
+
+      const { data: tickets } = await query;
+      if (!tickets || tickets.length === 0) {
+        setRobotSales([]);
+        setSalesLoading(false);
+        return;
+      }
+
+      // Get plan names & prices
+      const planIds = [...new Set(tickets.map(t => t.product_plan_id))];
+      const { data: plans } = await supabase
+        .from("product_plans")
+        .select("id, name, price, robot_duration_days")
+        .in("id", planIds);
+      const planMap = Object.fromEntries((plans || []).map(p => [p.id, p]));
+
+      // Get payment amounts from cart_snapshot
+      const userIds = [...new Set(tickets.map(t => (t as any).user_id || ""))].filter(Boolean);
+      
+      const sales: RobotSale[] = tickets.map(t => {
+        const product = productMap[t.product_id];
+        const plan = planMap[t.product_plan_id];
+        const meta = (t.metadata || {}) as Record<string, any>;
+        
+        // Revenue = plan price (what customer paid)
+        const revenue = plan?.price || 0;
+        
+        // Cost estimation: if metadata has amount_spent use it, otherwise estimate from markup
+        let cost = 0;
+        if (meta.amount_spent && Number(meta.amount_spent) > 0) {
+          // amount_spent is in USD from Robot API
+          cost = Number(meta.amount_spent) * usdToBrl;
+        } else if (meta.is_free) {
+          cost = 0;
+        } else if (product?.robot_markup_percent) {
+          // Estimate: revenue / (1 + markup/100) = base cost
+          cost = revenue / (1 + (product.robot_markup_percent || 50) / 100);
+        }
+
+        return {
+          id: t.id,
+          created_at: t.created_at || "",
+          product_name: product?.name || "Desconhecido",
+          plan_name: plan?.name || "—",
+          revenue,
+          cost: Math.round(cost * 100) / 100,
+          profit: Math.round((revenue - cost) * 100) / 100,
+          status: t.status || "unknown",
+          duration: plan?.robot_duration_days || meta.duration || null,
+        };
+      });
+
+      setRobotSales(sales);
+    } catch (err) {
+      console.error("Error fetching robot sales:", err);
+    }
+    setSalesLoading(false);
+  };
+
   const refreshAll = async () => {
     setLoading(true);
     await Promise.all([checkPing(), fetchRobotGames(), fetchProductsWithRobot(), fetchExchangeRate()]);
+    await fetchRobotSales();
     setLastRefresh(new Date());
     setLoading(false);
   };
