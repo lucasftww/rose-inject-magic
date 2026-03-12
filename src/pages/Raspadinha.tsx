@@ -738,17 +738,17 @@ const Raspadinha = () => {
         )}
 
         {/* Title */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-6 sm:mb-8">
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className={`inline-flex items-center gap-2 rounded-full border ${borderAccent} ${bgAccent} px-4 py-1.5 mb-4`}
+            className={`inline-flex items-center gap-2 rounded-full border ${borderAccent} ${bgAccent} px-4 py-1.5 mb-3`}
           >
             <Ticket className={`h-4 w-4 ${accentClass}`} />
-            <span className={`text-sm font-medium ${accentClass}`}>Raspadinha da Sorte</span>
+            <span className={`text-xs sm:text-sm font-medium ${accentClass}`}>Raspadinha da Sorte</span>
           </motion.div>
           <h1
-            className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-2 sm:mb-3"
+            className="text-2xl sm:text-4xl md:text-5xl font-bold text-foreground mb-1.5 sm:mb-3"
             style={{ fontFamily: "'Valorant', sans-serif" }}
           >
             <span
@@ -762,7 +762,7 @@ const Raspadinha = () => {
               RASPADINHA
             </span>
           </h1>
-          <p className="text-sm text-muted-foreground max-w-md mx-auto">
+          <p className="text-xs sm:text-sm text-muted-foreground max-w-sm mx-auto px-2">
             Apenas{" "}
             <span className={`font-bold ${accentClass}`}>
               R$ {unitPrice.toFixed(2)}
