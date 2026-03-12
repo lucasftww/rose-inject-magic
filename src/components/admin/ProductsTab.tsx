@@ -288,6 +288,28 @@ const ProductsTab = () => {
   const handleSave = async () => {
     if (!formName.trim()) { toast({ title: "Preencha o nome", variant: "destructive" }); return; }
     if (!formGameId) { toast({ title: "Selecione o jogo", variant: "destructive" }); return; }
+
+    // Trava anti-prejuízo: impedir salvar plano com preço abaixo do preço cheio da API Robot
+    if (robotEnabled && formRobotGameId && robotGames.length > 0) {
+      const rg = robotGames.find(g => Number(g.id) === Number(formRobotGameId));
+      if (rg?.prices) {
+        for (const plan of formPlans) {
+          if (!plan.active || !plan.robot_duration_days) continue;
+          const fullPriceUsd = rg.prices[String(plan.robot_duration_days)];
+          if (fullPriceUsd === undefined) continue;
+          const fullPriceBrl = Number(fullPriceUsd) * robotUsdToBrl;
+          if (plan.price > 0 && plan.price < fullPriceBrl) {
+            toast({
+              title: `⚠️ Preço do plano "${plan.name}" abaixo do custo!`,
+              description: `R$${plan.price.toFixed(2)} é menor que o preço cheio da API (R$${fullPriceBrl.toFixed(2)}). Aumente o preço ou o markup para não ter prejuízo.`,
+              variant: "destructive",
+            });
+            return;
+          }
+        }
+      }
+    }
+
     setSaving(true);
 
     try {
