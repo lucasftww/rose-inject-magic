@@ -244,8 +244,6 @@ const RobotProjectTab = () => {
           </div>
         </div>
       </div>
-        </div>
-      </div>
 
       {/* Products with Robot - Stock Status */}
       <div className="mt-8">
