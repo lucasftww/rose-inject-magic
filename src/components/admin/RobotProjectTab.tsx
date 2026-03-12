@@ -411,7 +411,7 @@ const RobotProjectTab = () => {
                       {linkedProduct?.robot_markup_percent && (
                         <div className="flex flex-wrap gap-1.5 mt-1">
                           {priceEntries.map(([days, price]) => {
-                            const brlPrice = Number(price) * 5.25;
+                            const brlPrice = Number(price) * usdToBrl;
                             const withMarkup = brlPrice * (1 + (linkedProduct.robot_markup_percent || 0) / 100);
                             return (
                               <span key={`mk-${days}`} className="inline-flex items-center gap-1 rounded-md bg-accent/10 border border-accent/20 px-2 py-0.5 text-[11px]">
