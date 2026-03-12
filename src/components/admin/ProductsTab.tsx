@@ -286,7 +286,8 @@ const ProductsTab = () => {
             // Insert new plans
             await supabase.from("product_plans").insert({
               product_id: editing.id, name: p.name.trim(), price: p.price, active: p.active, sort_order: i,
-            });
+              robot_duration_days: p.robot_duration_days || null,
+            } as any);
           }
         }
         // Save media
