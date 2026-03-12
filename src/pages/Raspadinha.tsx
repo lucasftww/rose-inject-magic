@@ -773,7 +773,7 @@ const Raspadinha = () => {
 
         {/* Mode Tabs */}
         <div className="flex justify-center mb-8">
-          <div className="flex rounded-xl border border-border bg-card p-1 gap-1">
+          <div className="flex rounded-xl border border-border bg-card p-1 gap-1 w-full sm:w-auto">
             <button
               onClick={() => handleModeChange("produtos")}
               disabled={paymentPhase !== "idle" || scratching}
