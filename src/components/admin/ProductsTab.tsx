@@ -115,6 +115,7 @@ const ProductsTab = () => {
   const tutorialFileInputRef = useRef<HTMLInputElement>(null);
 
   // Robot Project state
+  const [robotEnabled, setRobotEnabled] = useState(false);
   const [formRobotGameId, setFormRobotGameId] = useState<number | null>(null);
   const [formRobotMarkup, setFormRobotMarkup] = useState<number | null>(null);
   const [robotGames, setRobotGames] = useState<RobotGame[]>([]);
