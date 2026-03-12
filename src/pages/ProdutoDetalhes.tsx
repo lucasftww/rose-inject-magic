@@ -403,7 +403,7 @@ const ProdutoDetalhes = () => {
 
             {/* Features cards */}
             {sortedFeatures.length > 0 && (
-              <div className="mt-6 grid grid-cols-2 gap-3">
+              <div className="mt-5 sm:mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {sortedFeatures.map((feat) => {
                   const iconMap: Record<string, React.ReactNode> = {
                     "GPU": <Sparkles className="h-5 w-5" />,
