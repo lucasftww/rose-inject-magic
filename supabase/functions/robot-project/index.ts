@@ -171,6 +171,54 @@ Deno.serve(async (req) => {
       });
     }
 
+    // GET BALANCE - Admin only (buy a free game to check balance without spending)
+    if (action === "balance") {
+      const admin = await requireAdmin();
+      if (!admin) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const creds = await getRobotCredentials(supabaseAdmin);
+      if (!creds) {
+        return new Response(JSON.stringify({ error: "Robot credentials not configured" }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Fetch games to find a free one, or just use /games response which may include balance info
+      const response = await fetch(`${ROBOT_API_URL}/games`, {
+        headers: {
+          Authorization: robotAuthHeader(creds),
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        return new Response(JSON.stringify({ error: "Failed to fetch balance info" }), {
+          status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const data = await response.json();
+      // The /games endpoint may return balance info - pass it through
+      // Also return total games count for context
+      const games = Array.isArray(data) ? data : data.games || [];
+      const freeGames = games.filter((g: any) => g.is_free);
+      const onlineGames = games.filter((g: any) => g.status === "on");
+
+      return new Response(JSON.stringify({
+        balance: data.balance ?? null,
+        totalGames: games.length,
+        freeGames: freeGames.length,
+        onlineGames: onlineGames.length,
+        raw: data,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     return new Response(JSON.stringify({ error: "Unknown action" }), {
       status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
