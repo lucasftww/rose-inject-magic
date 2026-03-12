@@ -138,114 +138,33 @@ const resolveSkinImage = (s: any): string | null => {
   return null;
 };
 
-const LINEAGE_TIERS: Array<{ rank: number; hints: string[] }> = [
-  {
-    rank: 6,
-    hints: [
-      "radiant entertainment system",
-      "sistema de entretenimento radiante",
-      "evori dreamwings",
-      "asas oniricas",
-      "kuronami",
-      "prelude to chaos",
-      "caos prelude",
-      "imperium",
-      "araxys",
-      "champions 2024",
-      "champions",
-      "rgx 11z pro",
-      "rgx",
-      "onimaru",
-      "xenohunter",
-      "xenocacador",
-      "xenocaçador",
-    ],
-  },
-  {
-    rank: 5,
-    hints: [
-      "reaver",
-      "saqueador",
-      "chronovoid",
-      "cronovoid",
-      "neo frontier",
-      "sentinels of light",
-      "sentinelas da luz",
-      "singularity",
-      "prime",
-      "sublime",
-      "gaia",
-      "vinganca de gaia",
-      "vingança de gaia",
-      "sovereign",
-      "soberania",
-    ],
-  },
-  {
-    rank: 4,
-    hints: [
-      "oni",
-      "origin",
-      "origem",
-      "overdrive",
-      "vct",
-      "guardrail",
-      "sandswept",
-      "transition",
-      "ion",
-      "spectrum",
-      "glitchpop",
-    ],
-  },
-  {
-    rank: 3,
-    hints: [
-      "recon",
-      "reconhecimento",
-      "magepunk",
-      "protocol",
-      "forsaken",
-      "gaia",
-    ],
-  },
-];
-
-const MELEE_HINTS = [
-  "karambit",
-  "knife",
-  "faca",
-  "kunitsuna",
-  "yaiba",
-  "blade",
-  "dagger",
-  "hammer",
-  "katana",
-  "espada",
-  "adaga",
-  "xenohunter",
-  "xenocacador",
-  "xenocaçador",
-];
-
-const WEAPON_ORDER_HINTS: Array<[string, number]> = [
-  ["vandal", 30],
-  ["phantom", 28],
-  ["operator", 27],
-  ["sheriff", 22],
-  ["spectre", 20],
-  ["outlaw", 19],
-  ["marshal", 18],
-  ["guardian", 16],
-  ["odin", 15],
-  ["classic", 14],
-  ["ghost", 13],
-  ["ares", 12],
-  ["judge", 11],
-  ["bulldog", 10],
-  ["stinger", 9],
-  ["bucky", 8],
-  ["frenzy", 7],
-  ["shorty", 6],
+const LINEAGE_ORDER_HINTS: string[][] = [
+  ["radiant entertainment system", "sistema de entretenimento radiante"],
+  ["evori dreamwings", "asas oniricas"],
+  ["kuronami"],
+  ["prelude to chaos", "caos prelude"],
+  ["imperium"],
+  ["onimaru"],
+  ["rgx 11z pro", "rgx"],
+  ["araxys"],
+  ["xenohunter", "xenocacador", "xenocaçador"],
+  ["champions 2024", "champions"],
+  ["sentinels of light", "sentinelas da luz"],
+  ["chronovoid", "cronovoid"],
+  ["reaver", "saqueador"],
+  ["prime", "sublime"],
+  ["gaia", "vinganca de gaia", "vingança de gaia"],
+  ["sovereign", "soberania"],
+  ["oni"],
+  ["origin", "origem"],
+  ["overdrive"],
+  ["neo frontier"],
+  ["singularity"],
+  ["vct"],
+  ["guardrail"],
+  ["sandswept"],
+  ["transition"],
+  ["recon", "reconhecimento"],
 ];
 
 const normalizeSkinName = (name: string) =>
@@ -266,8 +185,10 @@ type SkinRankMeta = {
 const getSkinRankMeta = (name: string, _rarityPriority: number): SkinRankMeta => {
   const normalized = normalizeSkinName(name);
 
-  const lineageRank =
-    LINEAGE_TIERS.find((tier) => tier.hints.some((hint) => normalized.includes(hint)))?.rank || 0;
+  const lineageIndex = LINEAGE_ORDER_HINTS.findIndex((hints) =>
+    hints.some((hint) => normalized.includes(hint)),
+  );
+  const lineageRank = lineageIndex === -1 ? 0 : LINEAGE_ORDER_HINTS.length - lineageIndex;
 
   // Pedido do usuário: ordenar APENAS por linhagem
   const weaponRank = 0;
@@ -340,11 +261,19 @@ const fetchValorantSkins = async (uuids: string[]) => {
 
   const matched: ValorantSkinItem[] = [];
   const missing: string[] = [];
+  const firstSeenOrder = new Map<string, number>();
+  const uuidOrder = new Map(normalizedUuids.map((uuid, index) => [uuid, index]));
 
-  for (const uuid of normalizedUuids) {
+  for (const [index, uuid] of normalizedUuids.entries()) {
     const entry = skinLookup.get(uuid);
-    if (entry) matched.push(entry);
-    else missing.push(uuid);
+    if (entry) {
+      matched.push(entry);
+      if (!firstSeenOrder.has(entry.name)) {
+        firstSeenOrder.set(entry.name, index);
+      }
+    } else {
+      missing.push(uuid);
+    }
   }
 
   // Fallback for edge cases where UUID exists only in flat endpoints
@@ -407,7 +336,12 @@ const fetchValorantSkins = async (uuids: string[]) => {
 
       for (const uuid of missing) {
         const fallback = fallbackByUuid.get(uuid);
-        if (fallback) matched.push(fallback);
+        if (fallback) {
+          matched.push(fallback);
+          if (!firstSeenOrder.has(fallback.name)) {
+            firstSeenOrder.set(fallback.name, uuidOrder.get(uuid) ?? Number.MAX_SAFE_INTEGER);
+          }
+        }
       }
     } catch {
       // ignore fallback failures
@@ -426,9 +360,11 @@ const fetchValorantSkins = async (uuids: string[]) => {
 
   const final = Array.from(deduped.values());
 
-  // Ordenação apenas por linhagem
+  // Ordem exatamente como postada no LZT (primeiro UUID visto no inventário)
   final.sort((a, b) => {
-    if (a.lineageRank !== b.lineageRank) return b.lineageRank - a.lineageRank;
+    const orderA = firstSeenOrder.get(a.name) ?? Number.MAX_SAFE_INTEGER;
+    const orderB = firstSeenOrder.get(b.name) ?? Number.MAX_SAFE_INTEGER;
+    if (orderA !== orderB) return orderA - orderB;
     return a.name.localeCompare(b.name, "pt-BR");
   });
 
@@ -557,7 +493,7 @@ const ContaDetalhes = () => {
   const buddyUuids = collectUuidStrings(inventory?.Buddy);
 
   const { data: skinItems = [], isLoading: skinsLoading, isError: skinsError } = useQuery({
-    queryKey: ["valorant-skins", "rarity-v10", skinUuids],
+    queryKey: ["valorant-skins", "rarity-v13", skinUuids],
     queryFn: () => fetchValorantSkins(skinUuids),
     enabled: skinUuids.length > 0,
     staleTime: 1000 * 60 * 30,
