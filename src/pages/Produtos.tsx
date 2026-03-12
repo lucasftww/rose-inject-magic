@@ -212,6 +212,7 @@ const Produtos = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPlanType, setSelectedPlanType] = useState("Todos");
   const [onlyWithPlans, setOnlyWithPlans] = useState(false);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   // Fetch games with real product counts
   useEffect(() => {
