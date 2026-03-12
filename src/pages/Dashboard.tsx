@@ -212,7 +212,7 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <div className="mx-auto max-w-7xl px-6 pt-4 pb-20">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 pt-4 pb-20">
         {/* Profile Header */}
         <motion.div
           initial="hidden"
@@ -245,14 +245,14 @@ const Dashboard = () => {
 
         {/* Tabs */}
         <div className="mt-8 relative">
-          <div className="flex gap-0 overflow-x-auto border-b border-border">
+          <div className="flex gap-0 overflow-x-auto border-b border-border scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
             {tabs.map((tab) => {
               const isActive = activeTab === tab.id;
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`relative flex items-center gap-2.5 whitespace-nowrap px-5 py-3.5 text-sm font-medium transition-all duration-200 ${
+                  className={`relative flex items-center gap-1.5 sm:gap-2.5 whitespace-nowrap px-3 sm:px-5 py-3 sm:py-3.5 text-xs sm:text-sm font-medium transition-all duration-200 ${
                     isActive
                       ? "text-success"
                       : "text-muted-foreground hover:text-foreground"
@@ -400,7 +400,7 @@ const Dashboard = () => {
               </div>
 
               {/* Summary strip */}
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="rounded-lg border border-border bg-card px-4 py-3 flex items-center gap-3">
                   <div className="h-8 w-8 rounded-lg bg-success/10 flex items-center justify-center shrink-0">
                     <Package className="h-4 w-4 text-success" />
