@@ -528,29 +528,30 @@ const ProductsTab = () => {
               <div className="flex items-center justify-between mb-3">
                 <label className="text-xs font-medium text-muted-foreground">Planos / Sub-produtos</label>
                 <div className="flex items-center gap-2">
-                  {robotEnabled && formRobotMarkup && formRobotGameId && robotGames.length > 0 && (
+                  {robotEnabled && formRobotMarkup !== null && formRobotGameId && robotGames.length > 0 && (
                     <button type="button" onClick={() => {
-                      const rg = robotGames.find(g => g.id === formRobotGameId);
-                      console.log("Auto-fill debug:", { formRobotGameId, formRobotMarkup, robotGamesCount: robotGames.length, foundGame: !!rg, gameId: rg?.id, prices: rg?.prices });
+                      const rg = robotGames.find(g => Number(g.id) === Number(formRobotGameId));
                       if (!rg || !rg.prices) {
                         toast({ title: "Jogo Robot não encontrado ou sem preços", variant: "destructive" });
                         return;
                       }
-                      const updated = formPlans.map(p => {
-                        console.log("Plan:", p.name, "duration_days:", p.robot_duration_days, "type:", typeof p.robot_duration_days);
+                      let filledCount = 0;
+                      const updated = formPlans.map((p) => {
                         if (!p.robot_duration_days) return p;
                         const robotPriceUsd = rg.prices[String(p.robot_duration_days)];
-                        console.log("Looking for price key:", String(p.robot_duration_days), "found:", robotPriceUsd, "available keys:", Object.keys(rg.prices));
                         if (robotPriceUsd === undefined) return p;
-                        // API retorna preço cheio — aplicar desconto de revendedor (-40%) antes do markup
                         const robotCostUsd = Number(robotPriceUsd) * 0.6;
                         const robotPriceBrl = robotCostUsd * robotUsdToBrl;
                         const calc = Number((robotPriceBrl * (1 + (formRobotMarkup || 0) / 100)).toFixed(2));
-                        console.log("Calculated price:", calc);
+                        filledCount += 1;
                         return { ...p, price: calc };
                       });
                       setFormPlans(updated);
-                      toast({ title: "Preços preenchidos com markup!" });
+                      toast({
+                        title: filledCount > 0 ? "Preços preenchidos com markup!" : "Nenhum plano foi atualizado",
+                        description: filledCount > 0 ? undefined : "Verifique se os dias dos planos batem com a API (ex: 1, 7, 30).",
+                        variant: filledCount > 0 ? undefined : "destructive",
+                      });
                     }}
                       className="flex items-center gap-1 rounded-lg bg-accent/10 border border-accent/30 px-3 py-1 text-xs font-medium text-accent-foreground hover:bg-accent/20">
                       <DollarSign className="h-3 w-3" /> Auto-preencher preços
@@ -565,14 +566,16 @@ const ProductsTab = () => {
               <div className="space-y-2">
                 {formPlans.map((plan, index) => {
                   // Calculate suggested price from Robot markup
-                  const selectedRobotGame = robotEnabled && formRobotGameId ? robotGames.find(g => g.id === formRobotGameId) : null;
-                  const robotBasePriceUsd = selectedRobotGame && plan.robot_duration_days
+                  const selectedRobotGame = robotEnabled && formRobotGameId ? robotGames.find(g => Number(g.id) === Number(formRobotGameId)) : null;
+                  const robotFullPriceUsd = selectedRobotGame && plan.robot_duration_days
                     ? selectedRobotGame.prices?.[String(plan.robot_duration_days)] : undefined;
+                  const robotFullPriceBrl = robotFullPriceUsd !== undefined ? Number(robotFullPriceUsd) * robotUsdToBrl : undefined;
                   // Aplicar desconto revendedor (-40%) no preço base
-                  const robotCostUsd = robotBasePriceUsd !== undefined ? Number(robotBasePriceUsd) * 0.6 : undefined;
-                  const robotBasePriceBrl = robotCostUsd !== undefined ? robotCostUsd * robotUsdToBrl : undefined;
-                  const suggestedPrice = robotBasePriceBrl !== undefined && formRobotMarkup
-                    ? Number((robotBasePriceBrl * (1 + formRobotMarkup / 100)).toFixed(2)) : null;
+                  const robotCostUsd = robotFullPriceUsd !== undefined ? Number(robotFullPriceUsd) * 0.6 : undefined;
+                  const robotCostBrl = robotCostUsd !== undefined ? robotCostUsd * robotUsdToBrl : undefined;
+                  const suggestedPrice = robotCostBrl !== undefined && formRobotMarkup !== null
+                    ? Number((robotCostBrl * (1 + formRobotMarkup / 100)).toFixed(2)) : null;
+                  const sellingBelowFullApiPrice = suggestedPrice !== null && robotFullPriceBrl !== undefined && suggestedPrice < robotFullPriceBrl;
 
                   return (
                     <div key={index} className="rounded-lg border border-border bg-secondary/30 p-3">
@@ -610,9 +613,14 @@ const ProductsTab = () => {
                       {/* Show markup calculation hint */}
                       {robotEnabled && suggestedPrice !== null && (
                         <div className="mt-1.5 flex items-center gap-2 text-[10px] text-muted-foreground">
-                          <span>Robot: ${robotBasePriceUsd?.toFixed(2)} USD (≈ R${robotBasePriceBrl?.toFixed(2)}) × {formRobotMarkup}% = <span className="font-bold text-accent-foreground">R${suggestedPrice.toFixed(2)}</span></span>
+                          <span>
+                            Custo revenda: ${robotCostUsd?.toFixed(2)} USD (cheio: ${robotFullPriceUsd?.toFixed(2)}) ≈ R${robotCostBrl?.toFixed(2)} × {(1 + (formRobotMarkup || 0) / 100).toFixed(2)} = <span className="font-bold text-accent-foreground">R${suggestedPrice.toFixed(2)}</span>
+                          </span>
                           {plan.price !== suggestedPrice && plan.price > 0 && (
                             <span className="text-warning">(manual: R${plan.price.toFixed(2)})</span>
+                          )}
+                          {sellingBelowFullApiPrice && (
+                            <span className="text-destructive">⚠️ abaixo do preço cheio da API (R${robotFullPriceBrl?.toFixed(2)})</span>
                           )}
                           {plan.price === 0 && (
                             <button type="button" onClick={() => updatePlan(index, "price", suggestedPrice)}
@@ -669,13 +677,17 @@ const ProductsTab = () => {
                           </button>
                         </div>
                         {formRobotGameId && formRobotGameId > 0 && robotGames.length > 0 && (() => {
-                          const rg = robotGames.find(g => g.id === formRobotGameId);
+                          const rg = robotGames.find(g => Number(g.id) === Number(formRobotGameId));
                           if (!rg) return null;
                           return (
                             <div className="mt-2 text-[10px] text-muted-foreground space-y-0.5">
                               <p>Versão: {rg.version} · Status: <span className={rg.status === "on" ? "text-success" : "text-destructive"}>{rg.status}</span></p>
                               {Object.keys(rg.prices).length > 0 && (
-                                <p>Preços Robot: {Object.entries(rg.prices).map(([d, p]) => `${d}d = $${Number(p).toFixed(2)} (≈ R$${(Number(p) * robotUsdToBrl).toFixed(2)})`).join(" · ")}</p>
+                                <p>Preços Robot: {Object.entries(rg.prices).map(([d, p]) => {
+                                  const fullBrl = Number(p) * robotUsdToBrl;
+                                  const costBrl = fullBrl * 0.6;
+                                  return `${d}d = $${Number(p).toFixed(2)} (cheio ≈ R$${fullBrl.toFixed(2)} | revenda -40% ≈ R$${costBrl.toFixed(2)})`;
+                                }).join(" · ")}</p>
                               )}
                               {rg.maxKeys && <p>Slots: {rg.soldKeys}/{rg.maxKeys}</p>}
                             </div>
