@@ -69,6 +69,9 @@ const ProductCard = ({ product }: { product: ProductFromDB }) => {
     return Math.min(...paidPlans.map(p => Number(p.price)));
   }, [product.product_plans]);
 
+  const isRobot = !!product.robot_game_id;
+  const noStock = isRobot && (product._stockCount === 0 || product._stockCount === undefined);
+
   const isResellerProduct = isReseller && isResellerForProduct(product.id);
   const discountedPrice = lowestPrice !== null && isResellerProduct ? getDiscountedPrice(product.id, lowestPrice) : null;
 
