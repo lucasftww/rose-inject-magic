@@ -120,7 +120,10 @@ const fetchValorantSkins = async (uuids: string[]) => {
   }
   // Sort: Exclusive(5) → Ultra(4) → Premium(3) → Deluxe(2) → Select(1) → Default(0)
   matched.sort((a, b) => b.rarityPriority - a.rarityPriority);
-  return matched;
+  // Keep paid tiers first in details (Deluxe+), then lower tiers
+  const premiumFirst = matched.filter((s) => s.rarityPriority >= 2);
+  const lowerTiers = matched.filter((s) => s.rarityPriority < 2);
+  return premiumFirst.length > 0 ? [...premiumFirst, ...lowerTiers] : matched;
 };
 
 const fetchValorantAgents = async (uuids: string[]) => {
