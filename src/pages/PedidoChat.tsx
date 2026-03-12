@@ -219,12 +219,13 @@ const PedidoChat = () => {
   };
 
   const uploadFileToStorage = async (file: File): Promise<string | null> => {
+    if (!user) return null;
     const ext = file.name.split(".").pop() || "bin";
-    const path = `ticket-files/${ticket!.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-    const { error } = await supabase.storage.from("game-images").upload(path, file, { upsert: false });
+    const path = `${user.id}/${ticket!.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const { error } = await supabase.storage.from("ticket-files").upload(path, file, { upsert: false });
     if (error) { console.error("Upload error:", error); return null; }
-    const { data: urlData } = supabase.storage.from("game-images").getPublicUrl(path);
-    return urlData.publicUrl;
+    const { data: urlData } = await supabase.storage.from("ticket-files").createSignedUrl(path, 7 * 24 * 3600);
+    return urlData?.signedUrl || null;
   };
 
   const handleSendAudio = async () => {
