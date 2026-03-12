@@ -250,15 +250,15 @@ const TicketsTab = () => {
       const blob = await stopRecording();
       if (!blob) { setSending(false); return; }
       setUploadingFile(true);
-      const path = `ticket-files/${selectedTicket.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.webm`;
-      const { error: uploadError } = await supabase.storage.from("game-images").upload(path, blob, { upsert: false, contentType: blob.type });
+      const path = `${selectedTicket.user_id}/${selectedTicket.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.webm`;
+      const { error: uploadError } = await supabase.storage.from("ticket-files").upload(path, blob, { upsert: false, contentType: blob.type });
       if (uploadError) {
         toast({ title: "Erro no upload do áudio", description: uploadError.message, variant: "destructive" });
         setUploadingFile(false);
         setSending(false);
         return;
       }
-      const { data: urlData } = supabase.storage.from("game-images").getPublicUrl(path);
+      const { data: urlData } = await supabase.storage.from("ticket-files").createSignedUrl(path, 7 * 24 * 3600);
       const { data: insertedMsg, error } = await supabase.from("ticket_messages").insert({
         ticket_id: selectedTicket.id,
         sender_id: user.id,
