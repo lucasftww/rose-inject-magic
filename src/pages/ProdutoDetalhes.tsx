@@ -267,30 +267,30 @@ const ProdutoDetalhes = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <div className="mx-auto max-w-7xl px-6 pt-4 pb-20">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 pt-4 pb-20">
         {/* Back button */}
         <button
           onClick={() => navigate(-1)}
-          className="mb-6 flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-success hover:text-success"
+          className="mb-4 sm:mb-6 flex items-center gap-2 rounded-lg border border-border px-3 sm:px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-success hover:text-success"
         >
           <ArrowLeft className="h-4 w-4" />
           Voltar
         </button>
 
         {/* Breadcrumb */}
-        <div className="mb-8 flex items-center gap-2 text-sm text-muted-foreground">
-          <button onClick={() => navigate("/")} className="hover:text-foreground transition-colors">Início</button>
-          <span>›</span>
+        <div className="mb-6 sm:mb-8 flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground overflow-x-auto scrollbar-hide">
+          <button onClick={() => navigate("/")} className="hover:text-foreground transition-colors shrink-0">Início</button>
+          <span className="shrink-0">›</span>
           {game && (
             <>
-              <button onClick={() => navigate("/produtos")} className="hover:text-foreground transition-colors">{game.name}</button>
-              <span>›</span>
+              <button onClick={() => navigate("/produtos")} className="hover:text-foreground transition-colors shrink-0">{game.name}</button>
+              <span className="shrink-0">›</span>
             </>
           )}
-          <span className="text-foreground">{product.name}</span>
+          <span className="text-foreground truncate">{product.name}</span>
         </div>
 
-        <div className="grid gap-10 lg:grid-cols-2">
+        <div className="grid gap-6 sm:gap-10 lg:grid-cols-2">
           {/* Left: Media Gallery */}
           <motion.div
             initial={{ opacity: 0, x: -15 }}
@@ -342,13 +342,13 @@ const ProdutoDetalhes = () => {
                 <>
                   <button
                     onClick={prevMedia}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-background/80 border border-border text-foreground backdrop-blur-sm transition-colors hover:border-success hover:text-success"
+                    className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-background/80 border border-border text-foreground backdrop-blur-sm transition-colors hover:border-success hover:text-success"
                   >
                     <ChevronLeft className="h-5 w-5" />
                   </button>
                   <button
                     onClick={nextMedia}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-background/80 border border-border text-foreground backdrop-blur-sm transition-colors hover:border-success hover:text-success"
+                    className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-background/80 border border-border text-foreground backdrop-blur-sm transition-colors hover:border-success hover:text-success"
                   >
                     <ChevronRight className="h-5 w-5" />
                   </button>
@@ -358,12 +358,12 @@ const ProdutoDetalhes = () => {
 
             {/* Thumbnails */}
             {allMedia.length > 1 && (
-              <div className="mt-4 flex gap-2 overflow-x-auto pb-2">
+              <div className="mt-3 sm:mt-4 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
                 {allMedia.map((media, idx) => (
                   <button
                     key={media.id}
                     onClick={() => setSelectedMediaIndex(idx)}
-                    className={`relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border-2 transition-all ${
+                    className={`relative h-14 w-14 sm:h-16 sm:w-16 shrink-0 overflow-hidden rounded-lg border-2 transition-all ${
                       idx === selectedMediaIndex
                         ? "border-success shadow-[0_0_10px_hsl(130,99%,41%,0.3)]"
                         : "border-border hover:border-foreground/40"
@@ -391,7 +391,7 @@ const ProdutoDetalhes = () => {
 
             {/* Features text */}
             {product.features_text && (
-              <div className="mt-6 rounded-xl border border-border bg-card p-5">
+              <div className="mt-5 sm:mt-6 rounded-xl border border-border bg-card p-4 sm:p-5">
                 <div className="mb-3 flex items-center gap-2">
                   <div className="h-px flex-1 bg-gradient-to-r from-success/50 to-transparent" />
                   <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-success">Detalhes</span>
@@ -403,7 +403,7 @@ const ProdutoDetalhes = () => {
 
             {/* Features cards */}
             {sortedFeatures.length > 0 && (
-              <div className="mt-6 grid grid-cols-2 gap-3">
+              <div className="mt-5 sm:mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {sortedFeatures.map((feat) => {
                   const iconMap: Record<string, React.ReactNode> = {
                     "GPU": <Sparkles className="h-5 w-5" />,
@@ -416,7 +416,7 @@ const ProdutoDetalhes = () => {
                   return (
                     <div
                       key={feat.id}
-                      className="group flex items-start gap-3 rounded-xl border border-border bg-card p-4 transition-all hover:border-success/40 hover:shadow-[0_0_15px_hsl(130,99%,41%,0.08)]"
+                      className="group flex items-start gap-3 rounded-xl border border-border bg-card p-3 sm:p-4 transition-all hover:border-success/40 hover:shadow-[0_0_15px_hsl(130,99%,41%,0.08)]"
                     >
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-success/10 text-success transition-colors group-hover:bg-success/20">
                         {icon}
@@ -443,7 +443,7 @@ const ProdutoDetalhes = () => {
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-success">{game.name}</p>
             )}
 
-            <h1 className="mt-2 text-2xl font-bold text-foreground md:text-3xl">{product.name}</h1>
+            <h1 className="mt-2 text-xl font-bold text-foreground sm:text-2xl md:text-3xl">{product.name}</h1>
 
             {product.description && (
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{product.description}</p>
@@ -460,7 +460,7 @@ const ProdutoDetalhes = () => {
 
             {/* Plans selection */}
             {sortedPlans.length > 0 && (
-              <div className="mt-8 rounded-xl border border-border bg-card p-6">
+               <div className="mt-6 sm:mt-8 rounded-xl border border-border bg-card p-4 sm:p-6">
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">Escolha seu plano</p>
 
                 <div className="space-y-2">
@@ -468,7 +468,7 @@ const ProdutoDetalhes = () => {
                     <button
                       key={plan.id}
                       onClick={() => setSelectedPlanId(plan.id)}
-                      className={`flex w-full items-center justify-between rounded-lg border p-4 text-left transition-all ${
+                      className={`flex w-full items-center justify-between rounded-lg border p-3 sm:p-4 text-left transition-all ${
                         selectedPlanId === plan.id
                           ? "border-success bg-success/10 shadow-[0_0_15px_hsl(130,99%,41%,0.15)]"
                           : "border-border hover:border-foreground/30"
@@ -490,12 +490,12 @@ const ProdutoDetalhes = () => {
                         {isReseller && isResellerForProduct(product.id) ? (
                           <>
                             <span className="text-xs text-muted-foreground line-through mr-2">R$ {Number(plan.price).toFixed(2)}</span>
-                            <span className={`text-lg font-bold ${selectedPlanId === plan.id ? "text-success" : "text-foreground"}`}>
+                            <span className={`text-base sm:text-lg font-bold ${selectedPlanId === plan.id ? "text-success" : "text-foreground"}`}>
                               R$ {(Number(plan.price) * (1 - discountPercent / 100)).toFixed(2)}
                             </span>
                           </>
                         ) : (
-                          <span className={`text-lg font-bold ${selectedPlanId === plan.id ? "text-success" : "text-foreground"}`}>
+                          <span className={`text-base sm:text-lg font-bold ${selectedPlanId === plan.id ? "text-success" : "text-foreground"}`}>
                             R$ {Number(plan.price).toFixed(2)}
                           </span>
                         )}
@@ -512,10 +512,10 @@ const ProdutoDetalhes = () => {
                       {isReseller && isResellerForProduct(product.id) ? (
                         <div className="text-right">
                           <span className="text-sm text-muted-foreground line-through mr-2">R$ {Number(selectedPlan.price).toFixed(2)}</span>
-                          <span className="text-2xl font-bold text-success">R$ {(Number(selectedPlan.price) * (1 - discountPercent / 100)).toFixed(2)}</span>
+                          <span className="text-xl sm:text-2xl font-bold text-success">R$ {(Number(selectedPlan.price) * (1 - discountPercent / 100)).toFixed(2)}</span>
                         </div>
                       ) : (
-                        <span className="text-2xl font-bold text-success">R$ {Number(selectedPlan.price).toFixed(2)}</span>
+                        <span className="text-xl sm:text-2xl font-bold text-success">R$ {Number(selectedPlan.price).toFixed(2)}</span>
                       )}
                     </div>
                     <button
@@ -531,7 +531,7 @@ const ProdutoDetalhes = () => {
             )}
 
             {/* Customer Reviews */}
-            <div className="mt-8 rounded-xl border border-border bg-card p-6">
+            <div className="mt-6 sm:mt-8 rounded-xl border border-border bg-card p-4 sm:p-6">
               <div className="mb-4 flex items-center gap-2">
                 <div className="h-px flex-1 bg-gradient-to-r from-success/50 to-transparent" />
                 <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-success">Avaliações ({reviews.length})</span>
@@ -544,7 +544,7 @@ const ProdutoDetalhes = () => {
                   <p className="text-sm text-muted-foreground">Nenhuma avaliação ainda.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {reviews.map((review) => (
                     <div
                       key={review.id}
