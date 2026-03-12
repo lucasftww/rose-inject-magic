@@ -383,18 +383,24 @@ const RobotProjectTab = () => {
                         <DollarSign className="h-3 w-3" /> Preços por duração
                       </p>
                       <div className="flex flex-wrap gap-1.5">
-                        {priceEntries.map(([days, price]) => (
-                          <span key={days} className="inline-flex items-center gap-1 rounded-md bg-secondary/60 border border-border px-2 py-0.5 text-[11px]">
-                            <Clock className="h-2.5 w-2.5 text-muted-foreground" />
-                            <span className="text-muted-foreground">{days}d</span>
-                            <span className="font-bold text-foreground">R${Number(price).toFixed(2)}</span>
-                          </span>
-                        ))}
+                        {priceEntries.map(([days, price]) => {
+                          const usdPrice = Number(price);
+                          const brlPrice = usdPrice * 5.25;
+                          return (
+                            <span key={days} className="inline-flex items-center gap-1 rounded-md bg-secondary/60 border border-border px-2 py-0.5 text-[11px]">
+                              <Clock className="h-2.5 w-2.5 text-muted-foreground" />
+                              <span className="text-muted-foreground">{days}d</span>
+                              <span className="font-bold text-foreground">R${brlPrice.toFixed(2)}</span>
+                              <span className="text-[9px] text-muted-foreground">(${usdPrice.toFixed(2)})</span>
+                            </span>
+                          );
+                        })}
                       </div>
                       {linkedProduct?.robot_markup_percent && (
                         <div className="flex flex-wrap gap-1.5 mt-1">
                           {priceEntries.map(([days, price]) => {
-                            const withMarkup = Number(price) * (1 + (linkedProduct.robot_markup_percent || 0) / 100);
+                            const brlPrice = Number(price) * 5.25;
+                            const withMarkup = brlPrice * (1 + (linkedProduct.robot_markup_percent || 0) / 100);
                             return (
                               <span key={`mk-${days}`} className="inline-flex items-center gap-1 rounded-md bg-accent/10 border border-accent/20 px-2 py-0.5 text-[11px]">
                                 <Zap className="h-2.5 w-2.5 text-accent-foreground" />
