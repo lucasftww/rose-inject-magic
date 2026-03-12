@@ -562,8 +562,7 @@ const ProductsTab = () => {
                         if (!p.robot_duration_days) return p;
                         const robotPriceUsd = rg.prices[String(p.robot_duration_days)];
                         if (robotPriceUsd === undefined) return p;
-                        const robotCostUsd = Number(robotPriceUsd) * 0.6;
-                        const robotPriceBrl = robotCostUsd * robotUsdToBrl;
+                        const robotPriceBrl = Number(robotPriceUsd) * robotUsdToBrl;
                         const calc = Number((robotPriceBrl * (1 + (formRobotMarkup || 0) / 100)).toFixed(2));
                         filledCount += 1;
                         return { ...p, price: calc };
@@ -589,15 +588,11 @@ const ProductsTab = () => {
                 {formPlans.map((plan, index) => {
                   // Calculate suggested price from Robot markup
                   const selectedRobotGame = robotEnabled && formRobotGameId ? robotGames.find(g => Number(g.id) === Number(formRobotGameId)) : null;
-                  const robotFullPriceUsd = selectedRobotGame && plan.robot_duration_days
+                  const robotPriceUsd = selectedRobotGame && plan.robot_duration_days
                     ? selectedRobotGame.prices?.[String(plan.robot_duration_days)] : undefined;
-                  const robotFullPriceBrl = robotFullPriceUsd !== undefined ? Number(robotFullPriceUsd) * robotUsdToBrl : undefined;
-                  // Aplicar desconto revendedor (-40%) no preço base
-                  const robotCostUsd = robotFullPriceUsd !== undefined ? Number(robotFullPriceUsd) * 0.6 : undefined;
-                  const robotCostBrl = robotCostUsd !== undefined ? robotCostUsd * robotUsdToBrl : undefined;
-                  const suggestedPrice = robotCostBrl !== undefined && formRobotMarkup !== null
-                    ? Number((robotCostBrl * (1 + formRobotMarkup / 100)).toFixed(2)) : null;
-                  const sellingBelowFullApiPrice = suggestedPrice !== null && robotFullPriceBrl !== undefined && suggestedPrice < robotFullPriceBrl;
+                  const robotPriceBrl = robotPriceUsd !== undefined ? Number(robotPriceUsd) * robotUsdToBrl : undefined;
+                  const suggestedPrice = robotPriceBrl !== undefined && formRobotMarkup !== null
+                    ? Number((robotPriceBrl * (1 + formRobotMarkup / 100)).toFixed(2)) : null;
 
                   return (
                     <div key={index} className="rounded-lg border border-border bg-secondary/30 p-3">
@@ -636,13 +631,11 @@ const ProductsTab = () => {
                       {robotEnabled && suggestedPrice !== null && (
                         <div className="mt-1.5 flex items-center gap-2 text-[10px] text-muted-foreground">
                           <span>
-                            Custo revenda: ${robotCostUsd?.toFixed(2)} USD (cheio: ${robotFullPriceUsd?.toFixed(2)}) ≈ R${robotCostBrl?.toFixed(2)} × {(1 + (formRobotMarkup || 0) / 100).toFixed(2)} = <span className="font-bold text-accent-foreground">R${suggestedPrice.toFixed(2)}</span>
+                            Preço API: ${Number(robotPriceUsd).toFixed(2)} USD ≈ R${robotPriceBrl?.toFixed(2)} × {(1 + (formRobotMarkup || 0) / 100).toFixed(2)} = <span className="font-bold text-accent-foreground">R${suggestedPrice.toFixed(2)}</span>
+                            <span className="text-success ml-1">(40% volta como cashback)</span>
                           </span>
                           {plan.price !== suggestedPrice && plan.price > 0 && (
                             <span className="text-warning">(manual: R${plan.price.toFixed(2)})</span>
-                          )}
-                          {sellingBelowFullApiPrice && (
-                            <span className="text-destructive">⚠️ abaixo do preço cheio da API (R${robotFullPriceBrl?.toFixed(2)})</span>
                           )}
                           {plan.price === 0 && (
                             <button type="button" onClick={() => updatePlan(index, "price", suggestedPrice)}
@@ -705,14 +698,14 @@ const ProductsTab = () => {
                             <div className="mt-2 text-[10px] text-muted-foreground space-y-0.5">
                               <p>Versão: {rg.version} · Status: <span className={rg.status === "on" ? "text-success" : "text-destructive"}>{rg.status}</span> · Câmbio: R${robotUsdToBrl.toFixed(2)}/USD</p>
                               {Object.keys(rg.prices).length > 0 && (
-                                <div className="mt-1 space-y-0.5">
-                                  <p className="font-medium text-foreground/80">Seu custo (revenda -40%):</p>
+                                 <div className="mt-1 space-y-0.5">
+                                  <p className="font-medium text-foreground/80">Preços API (40% volta como cashback):</p>
                                   <p>{Object.entries(rg.prices).map(([d, p]) => {
-                                    const resellerUsd = Number(p) * 0.6;
-                                    const resellerBrl = resellerUsd * robotUsdToBrl;
-                                    return `${d}d = $${resellerUsd.toFixed(2)} (R$${resellerBrl.toFixed(2)})`;
+                                    const usd = Number(p);
+                                    const brl = usd * robotUsdToBrl;
+                                    return `${d}d = $${usd.toFixed(2)} (R$${brl.toFixed(2)})`;
                                   }).join(" · ")}</p>
-                                  
+                                   
                                 </div>
                               )}
                               {rg.maxKeys && <p>Slots: {rg.soldKeys}/{rg.maxKeys}</p>}
@@ -725,7 +718,7 @@ const ProductsTab = () => {
                         <input type="number" value={formRobotMarkup || ""} onChange={(e) => setFormRobotMarkup(Number(e.target.value) || null)}
                           min="0" max="500" step="1" placeholder="Ex: 30 (30% de lucro)"
                           className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-accent/50" />
-                        <p className="text-[10px] text-muted-foreground/60 mt-1">Se definido, calcula preço automático: custo revenda (API × 0.6) × câmbio (R${robotUsdToBrl.toFixed(2)}) × (1 + markup/100). Preço manual no plano tem prioridade.</p>
+                        <p className="text-[10px] text-muted-foreground/60 mt-1">Se definido, calcula preço automático: preço API × câmbio (R${robotUsdToBrl.toFixed(2)}) × (1 + markup/100). 40% volta como cashback. Preço manual no plano tem prioridade.</p>
                       </div>
                     </div>
                     <p className="text-[10px] text-muted-foreground/60">
