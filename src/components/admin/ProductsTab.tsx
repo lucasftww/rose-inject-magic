@@ -487,16 +487,25 @@ const ProductsTab = () => {
               </div>
               <div className="space-y-2">
                 {formPlans.map((plan, index) => (
-                  <div key={index} className="flex items-center gap-2 rounded-lg border border-border bg-secondary/30 p-3">
+                  <div key={index} className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-secondary/30 p-3">
                     <input type="text" value={plan.name} onChange={(e) => updatePlan(index, "name", e.target.value.slice(0, 50))}
                       placeholder="Nome (ex: Diário)"
-                      className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-success/50" />
+                      className="flex-1 min-w-[120px] rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-success/50" />
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">R$</span>
                       <input type="number" value={plan.price} onChange={(e) => updatePlan(index, "price", Number(e.target.value))}
                         min="0" step="0.01" placeholder="0.00"
                         className="w-28 rounded-lg border border-border bg-background pl-9 pr-3 py-2 text-sm text-foreground outline-none focus:border-success/50" />
                     </div>
+                    {formRobotGameId && (
+                      <div className="relative">
+                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">dias</span>
+                        <input type="number" value={plan.robot_duration_days || ""} onChange={(e) => updatePlan(index, "robot_duration_days", Number(e.target.value) || null)}
+                          min="1" step="1" placeholder="30"
+                          title="Duração Robot (dias)"
+                          className="w-20 rounded-lg border border-accent/30 bg-accent/5 pl-9 pr-2 py-2 text-sm text-foreground outline-none focus:border-accent/50" />
+                      </div>
+                    )}
                     <label className="flex items-center gap-1.5 cursor-pointer">
                       <input type="checkbox" checked={plan.active} onChange={(e) => updatePlan(index, "active", e.target.checked)}
                         className="sr-only peer" />
