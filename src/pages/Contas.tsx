@@ -1326,6 +1326,285 @@ const Contas = () => {
     ? "text-[hsl(120,60%,45%)] border-[hsl(120,60%,45%)] bg-[hsl(120,60%,45%,0.1)]"
     : "text-[hsl(198,100%,45%)] border-[hsl(198,100%,45%)] bg-[hsl(198,100%,45%,0.1)]";
 
+  const renderFilterContent = () => (
+    <>
+      {/* Search */}
+      <div className="relative mt-5">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <input
+          type="text"
+          placeholder="Buscar contas..."
+          value={searchQuery}
+          onChange={(e) => { setSearchQuery(e.target.value.slice(0, 100)); setPage(1); }}
+          className="w-full rounded-lg border border-border bg-secondary/50 py-2.5 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors"
+          onFocus={e => (e.currentTarget.style.borderColor = `${accentColor}80`)}
+          onBlur={e => (e.currentTarget.style.borderColor = '')}
+        />
+      </div>
+
+      {/* Valorant filters */}
+      {isValorant && (
+        <>
+          <div className="mt-6">
+            <button onClick={() => setRankOpen(!rankOpen)} className="flex w-full items-center justify-between text-sm font-semibold text-foreground">
+              Elo / Rank
+              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${rankOpen ? "rotate-180" : ""}`} />
+            </button>
+            {rankOpen && (
+              <div className="mt-3 grid grid-cols-4 gap-2">
+                {valorantRankFilters.map((rank) => (
+                  <button key={rank.id} onClick={() => { setSelectedRank(rank.id); setPage(1); }}
+                    className={`flex flex-col items-center gap-1 rounded-lg border p-2 transition-all ${selectedRank === rank.id ? "border-success bg-success/10 shadow-[0_0_10px_hsl(130,99%,41%,0.15)]" : "border-border hover:border-foreground/30"}`}
+                    title={rank.name}>
+                    <img src={rank.img} alt={rank.name} className="h-8 w-8 object-contain" loading="lazy" />
+                    <span className={`text-[10px] font-medium leading-tight text-center ${selectedRank === rank.id ? "text-success" : "text-muted-foreground"}`}>{rank.name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="mt-6">
+            <button onClick={() => setSkinsOpen(!skinsOpen)} className="flex w-full items-center justify-between text-sm font-semibold text-foreground">
+              <span className="flex items-center gap-2"><Crosshair className="h-4 w-4 text-success" />Skins de Arma</span>
+              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${skinsOpen ? "rotate-180" : ""}`} />
+            </button>
+            {skinsOpen && (
+              <div className="mt-3 grid grid-cols-4 gap-2">
+                {weapons.map((weapon) => (
+                  <button key={weapon.id} onClick={() => { setSelectedWeapon(weapon.id); setPage(1); }}
+                    className={`flex flex-col items-center gap-1 rounded-lg border p-1.5 transition-all ${selectedWeapon === weapon.id ? "border-success bg-success/10 shadow-[0_0_10px_hsl(130,99%,41%,0.15)]" : "border-border hover:border-foreground/30"}`}
+                    title={weapon.name}>
+                    {weapon.img ? (
+                      <img src={weapon.img} alt={weapon.name} className="h-6 w-12 object-contain" loading="lazy" />
+                    ) : (
+                      <span className="flex h-6 w-12 items-center justify-center text-[10px] font-bold text-muted-foreground">Todas</span>
+                    )}
+                    <span className={`text-[9px] font-medium leading-tight ${selectedWeapon === weapon.id ? "text-success" : "text-muted-foreground"}`}>{weapon.name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Knife toggle */}
+          <div className="mt-6">
+            <label className="flex cursor-pointer items-center gap-3">
+              <div className="relative">
+                <input type="checkbox" checked={onlyKnife} onChange={(e) => { setOnlyKnife(e.target.checked); setPage(1); }} className="peer sr-only" />
+                <div className="h-5 w-9 rounded-full border border-border bg-secondary transition-colors peer-checked:border-success peer-checked:bg-success" />
+                <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-foreground/60 transition-all peer-checked:left-[18px] peer-checked:bg-success-foreground" />
+              </div>
+              <span className="text-xs font-medium text-muted-foreground">🔪 Apenas com Knife</span>
+            </label>
+          </div>
+
+          {/* Region */}
+          <div className="mt-6">
+            <p className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+              <Globe className="h-4 w-4 text-success" />
+              Região
+            </p>
+            <select value={valRegion} onChange={(e) => { setValRegion(e.target.value); setPage(1); }}
+              className="w-full rounded-lg border border-border bg-secondary/50 py-2 px-3 text-sm text-foreground outline-none transition-colors focus:border-success/50 appearance-none cursor-pointer">
+              {valorantRegions.map((region) => (
+                <option key={region.id} value={region.id}>{region.label}</option>
+              ))}
+            </select>
+          </div>
+        </>
+      )}
+
+      {/* LoL filters */}
+      {gameTab === "lol" && (
+        <>
+          <div className="mt-6">
+            <p className="text-sm font-semibold text-foreground mb-3">Elo / Rank</p>
+            <div className="grid grid-cols-3 gap-2">
+              {lolRankFilters.map((rank) => (
+                <button key={rank.id} onClick={() => { setLolRank(rank.id); setPage(1); }}
+                  className={`flex flex-col items-center gap-1 rounded-lg border p-2 transition-all ${lolRank === rank.id ? "border-[hsl(198,100%,45%)] bg-[hsl(198,100%,45%,0.1)]" : "border-border hover:border-foreground/30"}`}
+                  title={rank.name}>
+                  {rank.img ? (
+                    <img src={rank.img} alt={rank.name} className="h-8 w-8 object-contain" loading="lazy" />
+                  ) : (
+                    <div className="h-8 w-8 rounded-full flex items-center justify-center" style={{ background: "hsl(var(--muted))" }}>
+                      <span className="text-[9px] font-bold text-muted-foreground">?</span>
+                    </div>
+                  )}
+                  <span className={`text-[10px] font-medium leading-tight ${lolRank === rank.id ? "text-[hsl(198,100%,45%)]" : "text-muted-foreground"}`}>{rank.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="mt-6">
+            <p className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+              <Trophy className="h-4 w-4 text-[hsl(198,100%,45%)]" />Mín. Campeões
+            </p>
+            <input type="number" placeholder="Ex: 50" value={lolChampMin} onChange={(e) => { setLolChampMin(e.target.value); setPage(1); }}
+              className="w-full rounded-lg border border-border bg-secondary/50 py-2 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-[hsl(198,100%,45%,0.5)] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none" />
+          </div>
+          <div className="mt-4">
+            <p className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+              <Star className="h-4 w-4 text-[hsl(198,100%,45%)]" />Mín. Skins LoL
+            </p>
+            <input type="number" placeholder="Ex: 10" value={lolSkinsMin} onChange={(e) => { setLolSkinsMin(e.target.value); setPage(1); }}
+              className="w-full rounded-lg border border-border bg-secondary/50 py-2 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-[hsl(198,100%,45%,0.5)] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none" />
+          </div>
+          <div className="mt-6">
+            <p className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+              <Globe className="h-4 w-4 text-[hsl(198,100%,45%)]" />Região
+            </p>
+            <select value={lolRegion} onChange={(e) => { setLolRegion(e.target.value); setPage(1); }}
+              className="w-full rounded-lg border border-border bg-secondary/50 py-2 px-3 text-sm text-foreground outline-none transition-colors focus:border-[hsl(198,100%,45%,0.5)] appearance-none cursor-pointer">
+              {lolRegions.map((region) => (
+                <option key={region.id} value={region.id}>{region.label}</option>
+              ))}
+            </select>
+          </div>
+        </>
+      )}
+
+      {/* Fortnite filters */}
+      {isFortnite && (
+        <>
+          <div className="mt-6">
+            <p className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+              <svg className="h-4 w-4 flex-shrink-0" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ color: FN_BLUE }}>
+                <circle cx="256" cy="256" r="256" fill={FN_BLUE} />
+                <path d="M152 160 L256 352 L360 160" stroke="white" strokeWidth="52" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                <path d="M200 240 L256 352 L312 240" stroke="white" strokeWidth="28" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+              </svg>
+              Mín. V-Bucks
+            </p>
+            <input type="number" placeholder="Ex: 1000" value={fnVbMin} onChange={(e) => { setFnVbMin(e.target.value); setPage(1); }}
+              className="w-full rounded-lg border border-border bg-secondary/50 py-2 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
+              onFocus={e => (e.currentTarget.style.borderColor = `${FN_PURPLE}80`)} onBlur={e => (e.currentTarget.style.borderColor = '')} />
+          </div>
+          <div className="mt-4">
+            <p className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+              <Star className="h-4 w-4" style={{ color: FN_PURPLE }} />Mín. Skins
+            </p>
+            <input type="number" placeholder="Ex: 10" value={fnSkinsMin} onChange={(e) => { setFnSkinsMin(e.target.value); setPage(1); }}
+              className="w-full rounded-lg border border-border bg-secondary/50 py-2 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
+              onFocus={e => (e.currentTarget.style.borderColor = `${FN_PURPLE}80`)} onBlur={e => (e.currentTarget.style.borderColor = '')} />
+          </div>
+        </>
+      )}
+
+      {/* Minecraft filters */}
+      {isMinecraft && (
+        <>
+          <div className="mt-6">
+            <p className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill={MC_GREEN}><path d="M4,2H20A2,2 0 0,1 22,4V20A2,2 0 0,1 20,22H4A2,2 0 0,1 2,20V4A2,2 0 0,1 4,2M6,6V10H10V12H8V18H10V16H14V18H16V12H14V10H18V6H14V10H10V6H6Z" /></svg>
+              Edição
+            </p>
+            <div className="flex gap-2">
+              <label className="flex flex-1 cursor-pointer items-center gap-2 rounded-lg border border-border p-2.5 transition-all"
+                style={mcJava ? { borderColor: MC_GREEN, background: `${MC_GREEN}10` } : {}}>
+                <input type="checkbox" checked={mcJava} onChange={(e) => { setMcJava(e.target.checked); setPage(1); }} className="sr-only" />
+                <div className="h-3.5 w-3.5 rounded-sm border-2 flex items-center justify-center flex-shrink-0" style={{ borderColor: mcJava ? MC_GREEN : undefined, background: mcJava ? MC_GREEN : "transparent" }}>
+                  {mcJava && <span className="text-[8px] font-bold text-white">✓</span>}
+                </div>
+                <span className="text-xs font-medium" style={{ color: mcJava ? MC_GREEN : undefined }}>Java</span>
+              </label>
+              <label className="flex flex-1 cursor-pointer items-center gap-2 rounded-lg border border-border p-2.5 transition-all"
+                style={mcBedrock ? { borderColor: MC_GREEN, background: `${MC_GREEN}10` } : {}}>
+                <input type="checkbox" checked={mcBedrock} onChange={(e) => { setMcBedrock(e.target.checked); setPage(1); }} className="sr-only" />
+                <div className="h-3.5 w-3.5 rounded-sm border-2 flex items-center justify-center flex-shrink-0" style={{ borderColor: mcBedrock ? MC_GREEN : undefined, background: mcBedrock ? MC_GREEN : "transparent" }}>
+                  {mcBedrock && <span className="text-[8px] font-bold text-white">✓</span>}
+                </div>
+                <span className="text-xs font-medium" style={{ color: mcBedrock ? MC_GREEN : undefined }}>Bedrock</span>
+              </label>
+            </div>
+          </div>
+          <div className="mt-4">
+            <p className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+              <Trophy className="h-4 w-4" style={{ color: MC_GREEN }} />Mín. Nível Hypixel
+            </p>
+            <input type="number" placeholder="Ex: 50" value={mcHypixelLvlMin} onChange={(e) => { setMcHypixelLvlMin(e.target.value); setPage(1); }}
+              className="w-full rounded-lg border border-border bg-secondary/50 py-2 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
+              onFocus={e => (e.currentTarget.style.borderColor = `${MC_GREEN}80`)} onBlur={e => (e.currentTarget.style.borderColor = '')} />
+          </div>
+          <div className="mt-4">
+            <p className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+              <Star className="h-4 w-4" style={{ color: MC_GREEN }} />Mín. Capes
+            </p>
+            <input type="number" placeholder="Ex: 1" value={mcCapesMin} onChange={(e) => { setMcCapesMin(e.target.value); setPage(1); }}
+              className="w-full rounded-lg border border-border bg-secondary/50 py-2 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
+              onFocus={e => (e.currentTarget.style.borderColor = `${MC_GREEN}80`)} onBlur={e => (e.currentTarget.style.borderColor = '')} />
+          </div>
+          <div className="mt-4">
+            <label className="flex cursor-pointer items-center gap-3">
+              <div className="relative">
+                <input type="checkbox" checked={mcNoBan} onChange={(e) => { setMcNoBan(e.target.checked); setPage(1); }} className="peer sr-only" />
+                <div className="h-5 w-9 rounded-full border border-border bg-secondary transition-colors peer-checked:border-[hsl(120,60%,45%)] peer-checked:bg-[hsl(120,60%,45%)]" />
+                <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-foreground/60 transition-all peer-checked:left-[18px] peer-checked:bg-white" />
+              </div>
+              <span className="text-xs font-medium text-muted-foreground">🚫 Sem Ban Hypixel</span>
+            </label>
+          </div>
+        </>
+      )}
+
+      {/* Price (shared) */}
+      <div className="mt-6">
+        <button onClick={() => setPriceOpen(!priceOpen)} className="flex w-full items-center justify-between text-sm font-semibold text-foreground">
+          <span className="flex items-center gap-2"><DollarSign className="h-4 w-4" style={{ color: accentColor }} />Faixa de Preço</span>
+          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${priceOpen ? "rotate-180" : ""}`} />
+        </button>
+        {priceOpen && (
+          <div className="mt-3 flex items-center gap-2">
+            <div className="relative flex-1">
+              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">R$</span>
+              <input type="number" placeholder="Mín" value={priceMin} onChange={(e) => { setPriceMin(e.target.value.slice(0, 7)); setPage(1); }} onFocus={e => (e.currentTarget.style.borderColor = `${accentColor}80`)} onBlur={e => (e.currentTarget.style.borderColor = '')} className="w-full rounded-lg border border-border bg-secondary/50 py-2 pl-8 pr-2 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none" />
+            </div>
+            <span className="text-xs text-muted-foreground">—</span>
+            <div className="relative flex-1">
+              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">R$</span>
+              <input type="number" placeholder="Máx" value={priceMax} onChange={(e) => { setPriceMax(e.target.value.slice(0, 7)); setPage(1); }} onFocus={e => (e.currentTarget.style.borderColor = `${accentColor}80`)} onBlur={e => (e.currentTarget.style.borderColor = '')} className="w-full rounded-lg border border-border bg-secondary/50 py-2 pl-8 pr-2 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none" />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Inventory Value (Valorant only) */}
+      {isValorant && (
+        <div className="mt-6">
+          <button onClick={() => setInvOpen(!invOpen)} className="flex w-full items-center justify-between text-sm font-semibold text-foreground">
+            <span className="flex items-center gap-2"><TrendingUp className="h-4 w-4" style={{ color: accentColor }} />Valor do Inventário</span>
+            <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${invOpen ? "rotate-180" : ""}`} />
+          </button>
+          {invOpen && (
+            <div className="mt-3 flex items-center gap-2">
+              <input type="number" placeholder="Mín" value={invMin} onChange={(e) => { setInvMin(e.target.value.slice(0, 7)); setPage(1); }} onFocus={e => (e.currentTarget.style.borderColor = `${accentColor}80`)} onBlur={e => (e.currentTarget.style.borderColor = '')} className="w-full flex-1 rounded-lg border border-border bg-secondary/50 py-2 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none" />
+              <span className="text-xs text-muted-foreground">—</span>
+              <input type="number" placeholder="Máx" value={invMax} onChange={(e) => { setInvMax(e.target.value.slice(0, 7)); setPage(1); }} onFocus={e => (e.currentTarget.style.borderColor = `${accentColor}80`)} onBlur={e => (e.currentTarget.style.borderColor = '')} className="w-full flex-1 rounded-lg border border-border bg-secondary/50 py-2 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none" />
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Level (Valorant and LoL only) */}
+      {(isValorant || gameTab === "lol") && (
+        <div className="mt-6">
+          <button onClick={() => setLvlOpen(!lvlOpen)} className="flex w-full items-center justify-between text-sm font-semibold text-foreground">
+            <span className="flex items-center gap-2"><Star className="h-4 w-4" style={{ color: accentColor }} />Nível da Conta</span>
+            <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${lvlOpen ? "rotate-180" : ""}`} />
+          </button>
+          {lvlOpen && (
+            <div className="mt-3 flex items-center gap-2">
+              <input type="number" placeholder="Mín" value={lvlMin} onChange={(e) => { setLvlMin(e.target.value.slice(0, 4)); setPage(1); }} onFocus={e => (e.currentTarget.style.borderColor = `${accentColor}80`)} onBlur={e => (e.currentTarget.style.borderColor = '')} className="w-full flex-1 rounded-lg border border-border bg-secondary/50 py-2 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none" />
+              <span className="text-xs text-muted-foreground">—</span>
+              <input type="number" placeholder="Máx" value={lvlMax} onChange={(e) => { setLvlMax(e.target.value.slice(0, 4)); setPage(1); }} onFocus={e => (e.currentTarget.style.borderColor = `${accentColor}80`)} onBlur={e => (e.currentTarget.style.borderColor = '')} className="w-full flex-1 rounded-lg border border-border bg-secondary/50 py-2 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none" />
+            </div>
+          )}
+        </div>
+      )}
+    </>
+  );
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
