@@ -45,7 +45,21 @@ interface Product {
   sort_order: number;
   tutorial_text: string | null;
   tutorial_file_url: string | null;
+  robot_game_id: number | null;
+  robot_markup_percent: number | null;
   product_plans?: ProductPlan[];
+}
+
+interface RobotGame {
+  id: number;
+  name: string;
+  version: string;
+  status: string;
+  icon: string;
+  is_free: boolean;
+  prices: Record<string, number>;
+  maxKeys: number | null;
+  soldKeys: number;
 }
 
 const defaultPlans: ProductPlan[] = [
