@@ -666,11 +666,11 @@ const ContaDetalhes = () => {
                   <div className="flex items-center justify-between">
                     {/* Último rank (esquerda) */}
                     {item.riot_valorant_previous_rank && rankMap[item.riot_valorant_previous_rank] ? (
-                      <div className="flex flex-col items-center gap-1.5">
-                        <img src={rankMap[item.riot_valorant_previous_rank].img} alt="" className="h-16 w-16 object-contain opacity-50" />
+                      <div className="flex flex-col items-center gap-1">
+                        <img src={rankMap[item.riot_valorant_previous_rank].img} alt="" className="h-12 w-12 sm:h-16 sm:w-16 object-contain opacity-50" />
                         <div className="text-center">
                           <p className="text-[9px] text-muted-foreground uppercase tracking-wider">Último rank</p>
-                          <p className="text-sm font-bold text-muted-foreground">{rankMap[item.riot_valorant_previous_rank].name}</p>
+                          <p className="text-xs sm:text-sm font-bold text-muted-foreground">{rankMap[item.riot_valorant_previous_rank].name}</p>
                         </div>
                       </div>
                     ) : (
