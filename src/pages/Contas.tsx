@@ -410,32 +410,30 @@ const LztPreviewImage = ({ url }: { url: string }) => {
   );
 };
 
-const ValorantCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap: Map<string, { name: string; image: string }>; formatPrice: (price: number, currency?: string) => string }) => {
+const ValorantCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap: Map<string, SkinEntry>; formatPrice: (price: number, currency?: string) => string }) => {
   const navigate = useNavigate();
   const rank = item.riot_valorant_rank ? rankMap[item.riot_valorant_rank] : null;
   const hasKnife = (item.riot_valorant_knife ?? 0) > 0;
   const skinCount = item.riot_valorant_skin_count ?? 0;
 
   const skinPreviews = useMemo(() => {
-    const results: { name: string; image: string }[] = [];
+    const results: SkinEntry[] = [];
     // Extract UUIDs from array or object format (LZT API returns both)
     const toUuids = (raw: unknown): string[] => {
       if (Array.isArray(raw)) return raw;
       if (raw && typeof raw === "object") return Object.values(raw as Record<string, string>);
       return [];
     };
-    const allUuids = [
-      ...toUuids(item.valorantInventory?.WeaponSkins),
-      ...toUuids(item.valorantInventory?.Buddy),
-      // Agent UUIDs are intentionally excluded from card preview
-    ];
+    // Only weapon skins for card preview (no buddies/agents)
+    const allUuids = toUuids(item.valorantInventory?.WeaponSkins);
     for (const uuid of allUuids) {
       if (typeof uuid !== "string") continue;
       const entry = skinsMap.get(uuid.toLowerCase());
-      if (entry) results.push(entry);
-      if (results.length >= 6) break;
+      if (entry && entry.rarity > 0) results.push(entry);
     }
-    return results;
+    // Sort by rarity descending (best skins first)
+    results.sort((a, b) => b.rarity - a.rarity);
+    return results.slice(0, 6);
   }, [item.valorantInventory, skinsMap]);
 
   return (
