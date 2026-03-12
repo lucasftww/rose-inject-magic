@@ -355,13 +355,23 @@ const fetchValorantSkins = async (uuids: string[]) => {
   for (const skin of matched) {
     const key = `${skin.name}|${skin.image}`;
     const existing = deduped.get(key);
-    if (!existing || skin.rarityPriority > existing.rarityPriority) {
+    if (!existing || skin.displayScore > existing.displayScore || skin.rarityPriority > existing.rarityPriority) {
       deduped.set(key, skin);
     }
   }
 
   const final = Array.from(deduped.values());
-  final.sort((a, b) => b.rarityPriority - a.rarityPriority || a.name.localeCompare(b.name, "pt-BR"));
+  final.sort((a, b) => {
+    const bucketA = a.rarityPriority >= 2 || a.isPremiumHint ? 0 : a.rarityPriority === 1 ? 1 : 2;
+    const bucketB = b.rarityPriority >= 2 || b.isPremiumHint ? 0 : b.rarityPriority === 1 ? 1 : 2;
+
+    return (
+      bucketA - bucketB ||
+      b.displayScore - a.displayScore ||
+      b.rarityPriority - a.rarityPriority ||
+      a.name.localeCompare(b.name, "pt-BR")
+    );
+  });
   return final;
 };
 
