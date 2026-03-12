@@ -243,11 +243,16 @@ const buildSkinLookup = (skins: any[]): Map<string, ValorantSkinItem> => {
     if (!image) continue;
 
     const rawTier = (s.contentTierUuid || "").toLowerCase();
+    const rarityPriority = RARITY_PRIORITY[rawTier] || 0;
+    const { displayScore, isPremiumHint } = getSkinRankMeta(s.displayName, rarityPriority);
+
     const entry: ValorantSkinItem = {
       name: s.displayName,
       image,
       rarity: rawTier ? rarityMap[rawTier] || null : null,
-      rarityPriority: RARITY_PRIORITY[rawTier] || 0,
+      rarityPriority,
+      displayScore,
+      isPremiumHint,
     };
 
     if (s.uuid) lookup.set(String(s.uuid).toLowerCase(), entry);
