@@ -531,7 +531,7 @@ const ProdutoDetalhes = () => {
             )}
 
             {/* Customer Reviews */}
-            <div className="mt-8 rounded-xl border border-border bg-card p-6">
+            <div className="mt-6 sm:mt-8 rounded-xl border border-border bg-card p-4 sm:p-6">
               <div className="mb-4 flex items-center gap-2">
                 <div className="h-px flex-1 bg-gradient-to-r from-success/50 to-transparent" />
                 <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-success">Avaliações ({reviews.length})</span>
