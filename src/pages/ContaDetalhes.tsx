@@ -86,16 +86,46 @@ const RARITY_PRIORITY: Record<string, number> = {
   "0cebb8be-46d7-c12a-d306-e9907bfc5a25": 1, // Select / Battle Pass
 };
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+const collectUuidStrings = (raw: unknown): string[] => {
+  const out: string[] = [];
+
+  const walk = (value: unknown) => {
+    if (!value) return;
+
+    if (typeof value === "string") {
+      const normalized = value.trim().toLowerCase();
+      if (UUID_REGEX.test(normalized)) out.push(normalized);
+      return;
+    }
+
+    if (Array.isArray(value)) {
+      for (const item of value) walk(item);
+      return;
+    }
+
+    if (typeof value === "object") {
+      for (const item of Object.values(value as Record<string, unknown>)) {
+        walk(item);
+      }
+    }
+  };
+
+  walk(raw);
+  return Array.from(new Set(out));
+};
+
 // Resolve the best image from a skin object
 const resolveSkinImage = (s: any): string | null => {
-  // Try all levels for displayIcon (some skins only have it on higher levels)
+  if (s.displayIcon) return s.displayIcon;
+
   if (s.levels) {
     for (const lvl of s.levels) {
       if (lvl.displayIcon) return lvl.displayIcon;
     }
   }
-  if (s.displayIcon) return s.displayIcon;
-  // Try chromas
+
   if (s.chromas) {
     for (const c of s.chromas) {
       if (c.fullRender) return c.fullRender;
@@ -103,154 +133,131 @@ const resolveSkinImage = (s: any): string | null => {
       if (c.swatch) return c.swatch;
     }
   }
+
   return null;
+};
+
+type ValorantSkinItem = {
+  name: string;
+  image: string;
+  rarity: (typeof rarityMap)[string] | null;
+  rarityPriority: number;
+};
+
+const buildSkinLookup = (skins: any[]): Map<string, ValorantSkinItem> => {
+  const lookup = new Map<string, ValorantSkinItem>();
+
+  for (const s of skins || []) {
+    const image = resolveSkinImage(s);
+    if (!image) continue;
+
+    const rawTier = (s.contentTierUuid || "").toLowerCase();
+    const entry: ValorantSkinItem = {
+      name: s.displayName,
+      image,
+      rarity: rawTier ? rarityMap[rawTier] || null : null,
+      rarityPriority: RARITY_PRIORITY[rawTier] || 0,
+    };
+
+    if (s.uuid) lookup.set(String(s.uuid).toLowerCase(), entry);
+
+    for (const level of s.levels || []) {
+      if (level?.uuid) lookup.set(String(level.uuid).toLowerCase(), entry);
+    }
+
+    for (const chroma of s.chromas || []) {
+      if (chroma?.uuid) lookup.set(String(chroma.uuid).toLowerCase(), entry);
+    }
+  }
+
+  return lookup;
 };
 
 // Fetch skin details from valorant-api.com
 const fetchValorantSkins = async (uuids: string[]) => {
-  const res = await fetch("https://valorant-api.com/v1/weapons/skins?language=pt-BR");
-  if (!res.ok) return [];
-  const data = await res.json();
-  const uuidSet = new Set(uuids.map(u => u.toLowerCase()));
-  const matchedUuids = new Set<string>();
-  const matched: { name: string; image: string; rarity: any; rarityPriority: number }[] = [];
+  const normalizedUuids = Array.from(new Set((uuids || []).map((u) => String(u).toLowerCase()).filter((u) => UUID_REGEX.test(u))));
+  if (normalizedUuids.length === 0) return [];
 
-  for (const s of (data.data || [])) {
-    const skinUuid = s.uuid?.toLowerCase();
-    let found = uuidSet.has(skinUuid);
-    if (found) matchedUuids.add(skinUuid);
+  const skinsRes = await fetch("https://valorant-api.com/v1/weapons/skins?language=pt-BR");
+  if (!skinsRes.ok) return [];
 
-    if (!found && s.chromas) {
-      for (const c of s.chromas) {
-        const cId = c.uuid?.toLowerCase();
-        if (uuidSet.has(cId)) { found = true; matchedUuids.add(cId); break; }
-      }
-    }
-    if (!found && s.levels) {
-      for (const l of s.levels) {
-        const lId = l.uuid?.toLowerCase();
-        if (uuidSet.has(lId)) { found = true; matchedUuids.add(lId); break; }
-      }
-    }
-    if (found) {
-      const image = resolveSkinImage(s);
-      if (image) {
-        const rawTier = (s.contentTierUuid || "").toLowerCase();
-        const priority = RARITY_PRIORITY[rawTier] || 0;
-        matched.push({
-          name: s.displayName,
-          image,
-          rarity: rawTier ? rarityMap[rawTier] : null,
-          rarityPriority: priority,
-        });
-      }
-    }
+  const skinsData = await skinsRes.json();
+  const skinLookup = buildSkinLookup(skinsData.data || []);
+
+  const matched: ValorantSkinItem[] = [];
+  const missing: string[] = [];
+
+  for (const uuid of normalizedUuids) {
+    const entry = skinLookup.get(uuid);
+    if (entry) matched.push(entry);
+    else missing.push(uuid);
   }
 
-  // For any unmatched UUIDs, try the skinlevels endpoint (flat list)
-  const unmatchedUuids = uuids.filter(u => !matchedUuids.has(u.toLowerCase()));
-  if (unmatchedUuids.length > 0) {
+  // Fallback for edge cases where UUID exists only in flat endpoints
+  if (missing.length > 0) {
     try {
-      const levelsRes = await fetch("https://valorant-api.com/v1/weapons/skinlevels?language=pt-BR");
+      const [levelsRes, chromasRes] = await Promise.all([
+        fetch("https://valorant-api.com/v1/weapons/skinlevels?language=pt-BR"),
+        fetch("https://valorant-api.com/v1/weapons/skinchromas?language=pt-BR"),
+      ]);
+
+      const fallbackByUuid = new Map<string, ValorantSkinItem>();
+
       if (levelsRes.ok) {
         const levelsData = await levelsRes.json();
-        const unmatchedSet = new Set(unmatchedUuids.map(u => u.toLowerCase()));
-        const levelMap = new Map<string, any>();
-        for (const lvl of (levelsData.data || [])) {
-          if (unmatchedSet.has(lvl.uuid?.toLowerCase())) {
-            levelMap.set(lvl.uuid.toLowerCase(), lvl);
-          }
-        }
-        // Now find parent skins for these levels to get rarity info
-        if (levelMap.size > 0) {
-          for (const s of (data.data || [])) {
-            if (!s.levels) continue;
-            for (const l of s.levels) {
-              const lId = l.uuid?.toLowerCase();
-              if (levelMap.has(lId)) {
-                const image = resolveSkinImage(s);
-                if (image) {
-                  const rawTier = (s.contentTierUuid || "").toLowerCase();
-                  const priority = RARITY_PRIORITY[rawTier] || 0;
-                  // Avoid duplicates
-                  if (!matched.some(m => m.name === s.displayName)) {
-                    matched.push({
-                      name: s.displayName,
-                      image,
-                      rarity: rawTier ? rarityMap[rawTier] : null,
-                      rarityPriority: priority,
-                    });
-                  }
-                }
-                levelMap.delete(lId);
-              }
-            }
-          }
-          // Any still unmatched levels - add them directly with their own image
-          for (const [, lvl] of levelMap) {
-            if (lvl.displayIcon) {
-              matched.push({
-                name: lvl.displayName,
-                image: lvl.displayIcon,
-                rarity: null,
-                rarityPriority: 0,
-              });
-            }
-          }
+        for (const lvl of levelsData.data || []) {
+          const id = String(lvl?.uuid || "").toLowerCase();
+          if (!id || !UUID_REGEX.test(id)) continue;
+          const image = lvl.displayIcon || null;
+          if (!image) continue;
+          fallbackByUuid.set(id, {
+            name: lvl.displayName,
+            image,
+            rarity: null,
+            rarityPriority: 0,
+          });
         }
       }
-    } catch (e) {
-      console.warn("Failed to fetch skinlevels fallback:", e);
-    }
-  }
 
-  // Also check skinChromas endpoint for any remaining unmatched
-  const stillUnmatched = uuids.filter(u => !matchedUuids.has(u.toLowerCase()) && !matched.some(m => m.name));
-  if (stillUnmatched.length > 5) {
-    try {
-      const chromasRes = await fetch("https://valorant-api.com/v1/weapons/skinchromas?language=pt-BR");
       if (chromasRes.ok) {
         const chromasData = await chromasRes.json();
-        const unmatchedSet2 = new Set(stillUnmatched.map(u => u.toLowerCase()));
-        for (const c of (chromasData.data || [])) {
-          if (unmatchedSet2.has(c.uuid?.toLowerCase())) {
-            const img = c.fullRender || c.displayIcon;
-            if (img && !matched.some(m => m.name === c.displayName)) {
-              // Find parent skin for rarity
-              for (const s of (data.data || [])) {
-                if (s.chromas?.some((sc: any) => sc.uuid?.toLowerCase() === c.uuid?.toLowerCase())) {
-                  const rawTier = (s.contentTierUuid || "").toLowerCase();
-                  const priority = RARITY_PRIORITY[rawTier] || 0;
-                  matched.push({
-                    name: s.displayName,
-                    image: resolveSkinImage(s) || img,
-                    rarity: rawTier ? rarityMap[rawTier] : null,
-                    rarityPriority: priority,
-                  });
-                  break;
-                }
-              }
-            }
+        for (const c of chromasData.data || []) {
+          const id = String(c?.uuid || "").toLowerCase();
+          if (!id || !UUID_REGEX.test(id)) continue;
+          const image = c.fullRender || c.displayIcon || c.swatch || null;
+          if (!image) continue;
+          if (!fallbackByUuid.has(id)) {
+            fallbackByUuid.set(id, {
+              name: c.displayName,
+              image,
+              rarity: null,
+              rarityPriority: 0,
+            });
           }
         }
       }
-    } catch (e) {
-      console.warn("Failed to fetch skinchromas fallback:", e);
+
+      for (const uuid of missing) {
+        const fallback = fallbackByUuid.get(uuid);
+        if (fallback) matched.push(fallback);
+      }
+    } catch {
+      // ignore fallback failures
     }
   }
 
-  // Deduplicate by name (keep highest priority version)
-  const deduped = new Map<string, typeof matched[0]>();
+  // Deduplicate (same skin can appear via base uuid + level + chroma)
+  const deduped = new Map<string, ValorantSkinItem>();
   for (const skin of matched) {
-    const existing = deduped.get(skin.name);
+    const key = `${skin.name}|${skin.image}`;
+    const existing = deduped.get(key);
     if (!existing || skin.rarityPriority > existing.rarityPriority) {
-      deduped.set(skin.name, skin);
+      deduped.set(key, skin);
     }
   }
-  const final = Array.from(deduped.values());
 
-  // Sort: Exclusive(5) → Ultra(4) → Premium(3) → Deluxe(2) → Select(1) → Default(0)
-  final.sort((a, b) => b.rarityPriority - a.rarityPriority);
+  const final = Array.from(deduped.values());
+  final.sort((a, b) => b.rarityPriority - a.rarityPriority || a.name.localeCompare(b.name, "pt-BR"));
   return final;
 };
 
