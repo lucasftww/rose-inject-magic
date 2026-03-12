@@ -115,6 +115,7 @@ const ProductsTab = () => {
   const tutorialFileInputRef = useRef<HTMLInputElement>(null);
 
   // Robot Project state
+  const [robotEnabled, setRobotEnabled] = useState(false);
   const [formRobotGameId, setFormRobotGameId] = useState<number | null>(null);
   const [formRobotMarkup, setFormRobotMarkup] = useState<number | null>(null);
   const [robotGames, setRobotGames] = useState<RobotGame[]>([]);
@@ -165,7 +166,7 @@ const ProductsTab = () => {
     setFormMedia([]); setMediaUrlInput(""); setMediaTypeInput("image");
     setFormFeatures([...defaultFeatures]);
     setFormTutorialText(""); setFormTutorialFileUrl("");
-    setFormRobotGameId(null); setFormRobotMarkup(null);
+    setRobotEnabled(false); setFormRobotGameId(null); setFormRobotMarkup(null);
   };
 
   const openEdit = async (product: Product) => {
@@ -178,8 +179,11 @@ const ProductsTab = () => {
     setFormActive(product.active);
     setImagePreview(product.image_url || null);
     setImageMode("url");
+    const hasRobot = !!product.robot_game_id && product.robot_game_id > 0;
+    setRobotEnabled(hasRobot);
     setFormRobotGameId(product.robot_game_id || null);
     setFormRobotMarkup(product.robot_markup_percent || null);
+    if (hasRobot) fetchRobotGames();
 
     // Fetch tutorial data from separate secure table
     const { data: tutorialData } = await supabase.from("product_tutorials").select("tutorial_text, tutorial_file_url").eq("product_id", product.id).maybeSingle();
@@ -275,8 +279,8 @@ const ProductsTab = () => {
           name: formName.trim(), description: formDescription.trim() || null,
           features_text: formFeaturesText.trim() || null,
           image_url: formImageUrl.trim() || null, game_id: formGameId, active: formActive,
-          robot_game_id: formRobotGameId || null,
-          robot_markup_percent: formRobotMarkup || null,
+          robot_game_id: robotEnabled && formRobotGameId ? formRobotGameId : null,
+          robot_markup_percent: robotEnabled && formRobotMarkup ? formRobotMarkup : null,
         } as any).eq("id", editing.id);
         if (error) throw error;
 
@@ -341,8 +345,8 @@ const ProductsTab = () => {
           features_text: formFeaturesText.trim() || null,
           image_url: formImageUrl.trim() || null, game_id: formGameId, active: formActive,
           sort_order: products.length,
-          robot_game_id: formRobotGameId || null,
-          robot_markup_percent: formRobotMarkup || null,
+          robot_game_id: robotEnabled && formRobotGameId ? formRobotGameId : null,
+          robot_markup_percent: robotEnabled && formRobotMarkup ? formRobotMarkup : null,
         } as any).select().single();
         if (error) throw error;
 
@@ -523,7 +527,7 @@ const ProductsTab = () => {
                         min="0" step="0.01" placeholder="0.00"
                         className="w-28 rounded-lg border border-border bg-background pl-9 pr-3 py-2 text-sm text-foreground outline-none focus:border-success/50" />
                     </div>
-                    {formRobotGameId && (
+                    {robotEnabled && (
                       <div className="relative">
                         <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">dias</span>
                         <input type="number" value={plan.robot_duration_days || ""} onChange={(e) => updatePlan(index, "robot_duration_days", Number(e.target.value) || null)}
@@ -557,9 +561,9 @@ const ProductsTab = () => {
               <div className="rounded-lg border border-border bg-secondary/20 p-4 space-y-3">
                 <div className="flex items-center gap-3">
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={!!formRobotGameId} onChange={(e) => {
-                      if (!e.target.checked) { setFormRobotGameId(null); setFormRobotMarkup(null); }
-                      else { setFormRobotGameId(0); fetchRobotGames(); }
+                    <input type="checkbox" checked={robotEnabled} onChange={(e) => {
+                      if (!e.target.checked) { setRobotEnabled(false); setFormRobotGameId(null); setFormRobotMarkup(null); }
+                      else { setRobotEnabled(true); fetchRobotGames(); }
                     }} className="sr-only peer" />
                     <div className="h-4 w-7 rounded-full border border-border bg-secondary transition-colors peer-checked:border-accent peer-checked:bg-accent relative">
                       <div className="absolute left-0.5 top-0.5 h-3 w-3 rounded-full bg-foreground/60 transition-all peer-checked:left-[12px] peer-checked:bg-accent-foreground" />
@@ -568,7 +572,7 @@ const ProductsTab = () => {
                   </label>
                 </div>
 
-                {formRobotGameId !== null && (
+                {robotEnabled && (
                   <>
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div>
