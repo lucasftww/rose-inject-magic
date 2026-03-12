@@ -17,6 +17,7 @@ interface ProductPlan {
   price: number;
   active: boolean;
   sort_order: number;
+  robot_duration_days?: number | null;
 }
 
 interface MediaItem {
