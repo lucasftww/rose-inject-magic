@@ -722,6 +722,199 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
   }
 }
 
+// Robot Project purchase and delivery
+async function fulfillRobotProduct(supabaseAdmin: any, payment: any, item: any, productData: any, planData: any) {
+  const robotGameId = productData.robot_game_id;
+  const duration = planData?.robot_duration_days || 30;
+
+  console.log(`Robot fulfillment: gameId=${robotGameId}, duration=${duration}, product=${item.productName}`);
+
+  // Get Robot credentials
+  const [uRes, pRes] = await Promise.all([
+    supabaseAdmin.from("system_credentials").select("value").eq("env_key", "ROBOT_API_USERNAME").maybeSingle(),
+    supabaseAdmin.from("system_credentials").select("value").eq("env_key", "ROBOT_API_PASSWORD").maybeSingle(),
+  ]);
+  const robotUsername = uRes.data?.value;
+  const robotPassword = pRes.data?.value;
+
+  if (!robotUsername || !robotPassword) {
+    console.error("Robot Project credentials not configured");
+    // Create manual delivery ticket
+    const { data: ticket } = await supabaseAdmin
+      .from("order_tickets")
+      .insert({
+        user_id: payment.user_id,
+        product_id: item.productId,
+        product_plan_id: item.planId,
+        stock_item_id: null,
+        status: "open",
+        status_label: "Entrega Manual",
+        metadata: { type: "robot-project", robot_game_id: robotGameId, duration, error: "Credentials not configured" },
+      })
+      .select("id")
+      .single();
+    if (ticket) {
+      await supabaseAdmin.from("ticket_messages").insert({
+        ticket_id: ticket.id,
+        sender_id: payment.user_id,
+        sender_role: "staff",
+        message: "✅ Pagamento confirmado! ⚠️ Houve um problema técnico. Nossa equipe irá entregar manualmente em breve.",
+      });
+    }
+    return;
+  }
+
+  const auth = btoa(`${robotUsername}:${robotPassword}`);
+
+  try {
+    const buyRes = await fetch(`https://api.robotproject.com.br/buy/${encodeURIComponent(robotGameId)}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${auth}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ duration: Number(duration) }),
+    });
+
+    const buyData = await buyRes.json();
+    console.log("Robot buy response:", buyRes.status, JSON.stringify(buyData).substring(0, 500));
+
+    if (!buyRes.ok || !buyData.success) {
+      const reason = buyData.message || `HTTP ${buyRes.status}`;
+      console.error("Robot buy failed:", reason);
+
+      const { data: ticket } = await supabaseAdmin
+        .from("order_tickets")
+        .insert({
+          user_id: payment.user_id,
+          product_id: item.productId,
+          product_plan_id: item.planId,
+          stock_item_id: null,
+          status: "open",
+          status_label: "Entrega Manual",
+          metadata: { type: "robot-project", robot_game_id: robotGameId, duration, error: reason },
+        })
+        .select("id")
+        .single();
+      if (ticket) {
+        await supabaseAdmin.from("ticket_messages").insert({
+          ticket_id: ticket.id,
+          sender_id: payment.user_id,
+          sender_role: "staff",
+          message: `✅ Pagamento confirmado! ⚠️ Houve um erro ao gerar sua key automaticamente. Nossa equipe irá entregar em breve.`,
+        });
+      }
+      return;
+    }
+
+    // Success! Deliver the key
+    const key = buyData.data?.key || "";
+    const gameName = buyData.data?.gameName || item.productName || "";
+    const amountSpent = buyData.data?.amountSpent || 0;
+
+    // Store key as stock item
+    const { data: stockItem } = await supabaseAdmin
+      .from("stock_items")
+      .insert({
+        product_plan_id: item.planId,
+        content: `Key: ${key}`,
+        used: true,
+        used_at: new Date().toISOString(),
+      })
+      .select("id")
+      .single();
+
+    // Create delivered ticket
+    const { data: ticket } = await supabaseAdmin
+      .from("order_tickets")
+      .insert({
+        user_id: payment.user_id,
+        product_id: item.productId,
+        product_plan_id: item.planId,
+        stock_item_id: stockItem?.id || null,
+        status: "delivered",
+        status_label: "Entregue",
+        metadata: {
+          type: "robot-project",
+          robot_game_id: robotGameId,
+          duration,
+          key,
+          amount_spent: amountSpent,
+          game_name: gameName,
+        },
+      })
+      .select("id")
+      .single();
+
+    if (ticket) {
+      await supabaseAdmin.from("ticket_messages").insert({
+        ticket_id: ticket.id,
+        sender_id: payment.user_id,
+        sender_role: "staff",
+        message: `✅ Seu produto foi entregue automaticamente!\n\n🔑 **Key:** \`${key}\`\n⏱️ Duração: ${duration} dias\n\nVeja a chave acima para ativar.`,
+      });
+
+      // Send tutorial if exists
+      const { data: tutorialData } = await supabaseAdmin
+        .from("product_tutorials")
+        .select("tutorial_text, tutorial_file_url")
+        .eq("product_id", item.productId)
+        .maybeSingle();
+
+      if (tutorialData?.tutorial_text) {
+        const txtBlob = new Blob([tutorialData.tutorial_text], { type: "text/plain" });
+        const txtPath = `tutorials/${crypto.randomUUID()}.txt`;
+        const { error: uploadErr } = await supabaseAdmin.storage
+          .from("game-images")
+          .upload(txtPath, txtBlob, { contentType: "text/plain" });
+        if (!uploadErr) {
+          const { data: urlData } = supabaseAdmin.storage.from("game-images").getPublicUrl(txtPath);
+          await supabaseAdmin.from("ticket_messages").insert({
+            ticket_id: ticket.id,
+            sender_id: payment.user_id,
+            sender_role: "staff",
+            message: `📖 **Tutorial:** ${urlData.publicUrl}`,
+          });
+        }
+      }
+      if (tutorialData?.tutorial_file_url) {
+        await supabaseAdmin.from("ticket_messages").insert({
+          ticket_id: ticket.id,
+          sender_id: payment.user_id,
+          sender_role: "staff",
+          message: `📎 **Arquivo:** ${tutorialData.tutorial_file_url}`,
+        });
+      }
+    }
+
+    console.log(`Robot fulfillment success: key=${key}, game=${gameName}, spent=${amountSpent}`);
+
+  } catch (err: any) {
+    console.error("Robot fulfillment error:", err);
+    const { data: ticket } = await supabaseAdmin
+      .from("order_tickets")
+      .insert({
+        user_id: payment.user_id,
+        product_id: item.productId,
+        product_plan_id: item.planId,
+        stock_item_id: null,
+        status: "open",
+        status_label: "Entrega Manual",
+        metadata: { type: "robot-project", robot_game_id: robotGameId, duration, error: err?.message || String(err) },
+      })
+      .select("id")
+      .single();
+    if (ticket) {
+      await supabaseAdmin.from("ticket_messages").insert({
+        ticket_id: ticket.id,
+        sender_id: payment.user_id,
+        sender_role: "staff",
+        message: "✅ Pagamento confirmado! ⚠️ Erro ao gerar key. Equipe irá entregar manualmente.",
+      });
+    }
+  }
+}
+
 // ========== SERVER-SIDE PRICE VALIDATION ==========
 async function validateAndCalculatePrice(
   supabaseAdmin: any,
