@@ -71,8 +71,7 @@ const tabs = [
 ] as const;
 type TabId = typeof tabs[number]["id"];
 
-// ─── Games Tab ───
-const GamesTab = () => {
+// ─── Users Tab ───
   const [games, setGames] = useState<Game[]>([]);
   const [loadingGames, setLoadingGames] = useState(true);
   const [showForm, setShowForm] = useState(false);
