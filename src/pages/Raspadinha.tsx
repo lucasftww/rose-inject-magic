@@ -748,7 +748,7 @@ const Raspadinha = () => {
             <span className={`text-sm font-medium ${accentClass}`}>Raspadinha da Sorte</span>
           </motion.div>
           <h1
-            className="text-4xl md:text-5xl font-bold text-foreground mb-3"
+            className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground mb-2 sm:mb-3"
             style={{ fontFamily: "'Valorant', sans-serif" }}
           >
             <span
