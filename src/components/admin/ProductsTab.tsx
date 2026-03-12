@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Plus, Pencil, Trash2, Loader2, ImageIcon, Upload, Link, X,
-  Package, ChevronDown, ChevronUp, DollarSign, GripVertical, Film, Image, Sparkles, FileText
+  Package, ChevronDown, ChevronUp, DollarSign, GripVertical, Film, Image, Sparkles, FileText, Globe, RefreshCw
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { getYouTubeId, getYouTubeThumbnail, detectMediaType } from "@/lib/videoUtils";
