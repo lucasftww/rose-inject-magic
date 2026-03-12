@@ -416,7 +416,7 @@ const ProdutoDetalhes = () => {
                   return (
                     <div
                       key={feat.id}
-                      className="group flex items-start gap-3 rounded-xl border border-border bg-card p-4 transition-all hover:border-success/40 hover:shadow-[0_0_15px_hsl(130,99%,41%,0.08)]"
+                      className="group flex items-start gap-3 rounded-xl border border-border bg-card p-3 sm:p-4 transition-all hover:border-success/40 hover:shadow-[0_0_15px_hsl(130,99%,41%,0.08)]"
                     >
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-success/10 text-success transition-colors group-hover:bg-success/20">
                         {icon}
