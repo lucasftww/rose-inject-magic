@@ -289,6 +289,17 @@ const ProdutoDetalhes = () => {
           Voltar
         </button>
 
+        {/* Robot product no stock warning */}
+        {robotNoStock && (
+          <div className="mb-4 flex items-center gap-3 rounded-lg border border-warning/30 bg-warning/5 px-4 py-3">
+            <AlertTriangle className="h-5 w-5 text-warning shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-warning">Produto temporariamente sem estoque</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Este produto será reabastecido em breve. Tente novamente mais tarde.</p>
+            </div>
+          </div>
+        )}
+
         {/* Breadcrumb */}
         <div className="mb-6 sm:mb-8 flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground overflow-x-auto scrollbar-hide">
           <button onClick={() => navigate("/")} className="hover:text-foreground transition-colors shrink-0">Início</button>
