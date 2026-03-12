@@ -25,10 +25,6 @@ import GamesTab from "@/components/admin/GamesTab";
 import { toast } from "@/hooks/use-toast";
 
 // ─── Types ───
-interface Game {
-  id: string; name: string; slug: string | null; image_url: string | null;
-  active: boolean; sort_order: number;
-}
 
 interface RecentPayment {
   amount: number; status: string; created_at: string;
