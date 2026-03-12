@@ -833,7 +833,7 @@ const ContaDetalhes = () => {
                             loading="lazy"
                           />
                         </div>
-                        <div className="p-2 border-t border-border flex items-center gap-1.5">
+                        <div className="p-1.5 sm:p-2 border-t border-border flex items-center gap-1 sm:gap-1.5">
                           {invItem.rarity && (
                             <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: invItem.rarity.color }} />
                           )}
