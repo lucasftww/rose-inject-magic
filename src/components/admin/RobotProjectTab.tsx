@@ -406,8 +406,8 @@ const RobotProjectTab = () => {
                               <span className="font-bold text-foreground">R${brlPrice.toFixed(2)}</span>
                               <span className="text-[9px] text-muted-foreground">(${costUsd.toFixed(2)} custo)</span>
                             </span>
+                          );
                         })}
-                      </div>
                       </div>
                       {linkedProduct?.robot_markup_percent && (
                         <div className="flex flex-wrap gap-1.5 mt-1">
