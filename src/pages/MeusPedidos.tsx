@@ -130,7 +130,7 @@ const MeusPedidos = () => {
   }, [user]);
 
   const byType = useMemo(() =>
-    isContas ? tickets.filter(t => t.metadata?.type === "lzt-account") : tickets.filter(t => !t.metadata?.type),
+    isContas ? tickets.filter(t => t.metadata?.type === "lzt-account") : tickets.filter(t => !t.metadata?.type || t.metadata?.type === "robot-project"),
     [tickets, isContas]
   );
 
