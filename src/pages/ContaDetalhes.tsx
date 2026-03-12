@@ -934,9 +934,9 @@ const ContaDetalhes = () => {
 
             {/* Description */}
             {item.description && (
-              <div className="mt-6 rounded-lg border border-border bg-card p-5">
-                <h3 className="text-sm font-bold text-foreground mb-2">Descrição</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{item.description}</p>
+              <div className="mt-4 sm:mt-6 rounded-lg border border-border bg-card p-4 sm:p-5">
+                <h3 className="text-xs sm:text-sm font-bold text-foreground mb-2">Descrição</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{item.description}</p>
               </div>
             )}
           </motion.div>
