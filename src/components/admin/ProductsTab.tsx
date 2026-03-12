@@ -114,6 +114,12 @@ const ProductsTab = () => {
   const [uploadingTutorial, setUploadingTutorial] = useState(false);
   const tutorialFileInputRef = useRef<HTMLInputElement>(null);
 
+  // Robot Project state
+  const [formRobotGameId, setFormRobotGameId] = useState<number | null>(null);
+  const [formRobotMarkup, setFormRobotMarkup] = useState<number | null>(null);
+  const [robotGames, setRobotGames] = useState<RobotGame[]>([]);
+  const [loadingRobotGames, setLoadingRobotGames] = useState(false);
+
   const fetchData = async () => {
     const [gamesRes, productsRes] = await Promise.all([
       supabase.from("games").select("id, name").order("sort_order"),
