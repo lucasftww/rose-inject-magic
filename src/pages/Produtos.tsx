@@ -314,6 +314,110 @@ const Produtos = () => {
 
   const currentGame = games.find((g) => g.id === selectedGame);
 
+  const renderFilterContent = () => (
+    <>
+      {/* Search */}
+      <div className="relative mt-5">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <input
+          type="text"
+          placeholder="Buscar produtos..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full rounded-lg border border-border bg-secondary/50 py-2.5 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-success/50"
+        />
+      </div>
+
+      {/* Price range filter */}
+      <div className="mt-6">
+        <h4 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+          <DollarSign className="h-4 w-4 text-success" />
+          Faixa de Preço
+        </h4>
+        <div className="mt-3 flex flex-col gap-1.5">
+          {priceRanges.map((range, idx) => (
+            <button
+              key={range.label}
+              onClick={() => setSelectedPriceRange(idx)}
+              className={`rounded-lg border px-3 py-2 text-left text-xs font-medium transition-colors ${
+                selectedPriceRange === idx
+                  ? "border-success bg-success/10 text-success"
+                  : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
+              }`}
+            >
+              {range.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Plan type filter */}
+      {availablePlanTypes.length > 1 && (
+        <div className="mt-6">
+          <h4 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+            <Tag className="h-4 w-4 text-success" />
+            Tipo de Plano
+          </h4>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {availablePlanTypes.map((type) => (
+              <button
+                key={type}
+                onClick={() => setSelectedPlanType(type)}
+                className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+                  selectedPlanType === type
+                    ? "border-success bg-success/10 text-success"
+                    : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
+                }`}
+              >
+                {type}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Sort inside sidebar */}
+      <div className="mt-6">
+        <h4 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+          <ArrowUpDown className="h-4 w-4 text-success" />
+          Ordenar por
+        </h4>
+        <div className="mt-3 flex flex-col gap-1.5">
+          {sortOptions.map((opt) => (
+            <button
+              key={opt}
+              onClick={() => setSortBy(opt)}
+              className={`rounded-lg border px-3 py-2 text-left text-xs font-medium transition-colors ${
+                sortBy === opt
+                  ? "border-success bg-success/10 text-success"
+                  : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
+              }`}
+            >
+              {opt}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Only with plans toggle */}
+      <div className="mt-6">
+        <label className="flex cursor-pointer items-center gap-3">
+          <div className="relative">
+            <input
+              type="checkbox"
+              checked={onlyWithPlans}
+              onChange={(e) => setOnlyWithPlans(e.target.checked)}
+              className="peer sr-only"
+            />
+            <div className="h-5 w-9 rounded-full border border-border bg-secondary transition-colors peer-checked:border-success peer-checked:bg-success" />
+            <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-foreground/60 transition-all peer-checked:left-[18px] peer-checked:bg-success-foreground" />
+          </div>
+          <span className="text-xs font-medium text-muted-foreground">Apenas com planos</span>
+        </label>
+      </div>
+    </>
+  );
+
   if (!selectedGame) {
     return <GameSelectScreen onSelect={setSelectedGame} games={games} loading={loadingGames} />;
   }
