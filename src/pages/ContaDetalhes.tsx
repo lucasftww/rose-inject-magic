@@ -263,25 +263,17 @@ type SkinRankMeta = {
   effectiveRarity: number;
 };
 
-const getSkinRankMeta = (name: string, rarityPriority: number): SkinRankMeta => {
+const getSkinRankMeta = (name: string, _rarityPriority: number): SkinRankMeta => {
   const normalized = normalizeSkinName(name);
 
   const lineageRank =
     LINEAGE_TIERS.find((tier) => tier.hints.some((hint) => normalized.includes(hint)))?.rank || 0;
 
-  const isMelee = MELEE_HINTS.some((hint) => normalized.includes(hint));
-  const weaponRank =
-    (isMelee ? 24 : 0) ||
-    WEAPON_ORDER_HINTS.find(([weaponName]) => normalized.includes(weaponName))?.[1] ||
-    5;
-
-  // fallback de tier quando API não traz contentTierUuid para uma skin boa
-  const effectiveRarity = rarityPriority > 0 ? rarityPriority : lineageRank >= 5 ? 3 : lineageRank >= 3 ? 2 : 0;
-
-  const isPremiumHint = effectiveRarity >= 2 || lineageRank >= 3 || isMelee;
-
-  // Hierarquia estilo LZT: linhagem primeiro, depois tier, depois arma
-  const displayScore = lineageRank * 10000 + effectiveRarity * 1000 + weaponRank * 20 + (isMelee ? 100 : 0);
+  // Pedido do usuário: ordenar APENAS por linhagem
+  const weaponRank = 0;
+  const effectiveRarity = 0;
+  const isPremiumHint = lineageRank > 0;
+  const displayScore = lineageRank * 1000;
 
   return { displayScore, isPremiumHint, lineageRank, weaponRank, effectiveRarity };
 };
