@@ -43,6 +43,14 @@ Deno.serve(async (req) => {
       });
     }
 
+    // SECURITY: Require authentication for ALL actions
+    const user = await getAuthUser();
+    if (!user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const url = new URL(req.url);
     const action = url.searchParams.get("action") || "list";
     const itemId = url.searchParams.get("item_id");
