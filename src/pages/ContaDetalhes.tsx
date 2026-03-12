@@ -610,11 +610,11 @@ const ContaDetalhes = () => {
                     </AnimatePresence>
                     {skinItems.length > 1 && (
                       <>
-                        <button onClick={handlePrev} className="absolute left-3 top-1/2 -translate-y-1/2 z-[2] flex h-10 w-10 items-center justify-center rounded-full bg-background/80 border border-border text-muted-foreground opacity-0 group-hover:opacity-100 transition-all hover:text-success hover:border-success/40">
-                          <ChevronLeft className="h-5 w-5" />
+                        <button onClick={handlePrev} className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 z-[2] flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-background/80 border border-border text-muted-foreground sm:opacity-0 sm:group-hover:opacity-100 transition-all hover:text-success hover:border-success/40">
+                          <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
                         </button>
-                        <button onClick={handleNext} className="absolute right-3 top-1/2 -translate-y-1/2 z-[2] flex h-10 w-10 items-center justify-center rounded-full bg-background/80 border border-border text-muted-foreground opacity-0 group-hover:opacity-100 transition-all hover:text-success hover:border-success/40">
-                          <ChevronRightIcon className="h-5 w-5" />
+                        <button onClick={handleNext} className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 z-[2] flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-background/80 border border-border text-muted-foreground sm:opacity-0 sm:group-hover:opacity-100 transition-all hover:text-success hover:border-success/40">
+                          <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5 rotate-180" />
                         </button>
                       </>
                     )}
