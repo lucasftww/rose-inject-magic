@@ -434,6 +434,7 @@ export type Database = {
           name: string
           price: number | null
           product_id: string
+          robot_duration_days: number | null
           sort_order: number | null
         }
         Insert: {
@@ -443,6 +444,7 @@ export type Database = {
           name: string
           price?: number | null
           product_id: string
+          robot_duration_days?: number | null
           sort_order?: number | null
         }
         Update: {
@@ -452,6 +454,7 @@ export type Database = {
           name?: string
           price?: number | null
           product_id?: string
+          robot_duration_days?: number | null
           sort_order?: number | null
         }
         Relationships: [
@@ -541,6 +544,8 @@ export type Database = {
           id: string
           image_url: string | null
           name: string
+          robot_game_id: number | null
+          robot_markup_percent: number | null
           sort_order: number | null
           status: string | null
           status_label: string | null
@@ -557,6 +562,8 @@ export type Database = {
           id?: string
           image_url?: string | null
           name: string
+          robot_game_id?: number | null
+          robot_markup_percent?: number | null
           sort_order?: number | null
           status?: string | null
           status_label?: string | null
@@ -573,6 +580,8 @@ export type Database = {
           id?: string
           image_url?: string | null
           name?: string
+          robot_game_id?: number | null
+          robot_markup_percent?: number | null
           sort_order?: number | null
           status?: string | null
           status_label?: string | null
