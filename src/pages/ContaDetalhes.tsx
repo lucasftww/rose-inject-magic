@@ -383,7 +383,7 @@ const ContaDetalhes = () => {
   const buddyUuids = toArray(inventory?.Buddy);
 
   const { data: skinItems = [], isLoading: skinsLoading, isError: skinsError } = useQuery({
-    queryKey: ["valorant-skins", "rarity-v3", skinUuids],
+    queryKey: ["valorant-skins", "rarity-v4", skinUuids],
     queryFn: () => fetchValorantSkins(skinUuids),
     enabled: skinUuids.length > 0,
     staleTime: 1000 * 60 * 30,
