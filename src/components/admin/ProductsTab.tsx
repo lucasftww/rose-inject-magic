@@ -683,7 +683,11 @@ const ProductsTab = () => {
                             <div className="mt-2 text-[10px] text-muted-foreground space-y-0.5">
                               <p>Versão: {rg.version} · Status: <span className={rg.status === "on" ? "text-success" : "text-destructive"}>{rg.status}</span></p>
                               {Object.keys(rg.prices).length > 0 && (
-                                <p>Preços Robot: {Object.entries(rg.prices).map(([d, p]) => `${d}d = $${Number(p).toFixed(2)} (≈ R$${(Number(p) * robotUsdToBrl).toFixed(2)})`).join(" · ")}</p>
+                                <p>Preços Robot: {Object.entries(rg.prices).map(([d, p]) => {
+                                  const fullBrl = Number(p) * robotUsdToBrl;
+                                  const costBrl = fullBrl * 0.6;
+                                  return `${d}d = $${Number(p).toFixed(2)} (cheio ≈ R$${fullBrl.toFixed(2)} | revenda -40% ≈ R$${costBrl.toFixed(2)})`;
+                                }).join(" · ")}</p>
                               )}
                               {rg.maxKeys && <p>Slots: {rg.soldKeys}/{rg.maxKeys}</p>}
                             </div>
