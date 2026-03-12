@@ -460,7 +460,7 @@ const ProdutoDetalhes = () => {
 
             {/* Plans selection */}
             {sortedPlans.length > 0 && (
-              <div className="mt-8 rounded-xl border border-border bg-card p-6">
+               <div className="mt-6 sm:mt-8 rounded-xl border border-border bg-card p-4 sm:p-6">
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">Escolha seu plano</p>
 
                 <div className="space-y-2">
