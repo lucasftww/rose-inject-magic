@@ -1035,6 +1035,7 @@ Deno.serve(async (req) => {
           await fulfillOrder(supabaseAdmin, payment);
           await sendDiscordSaleNotification(supabaseAdmin, payment);
           await sendServerPurchaseEvent(payment, req);
+          await assignDiscordClientRole(supabaseAdmin, payment.user_id);
         }
       }
 
