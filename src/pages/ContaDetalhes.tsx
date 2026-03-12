@@ -86,7 +86,8 @@ const RARITY_PRIORITY: Record<string, number> = {
   "0cebb8be-46d7-c12a-d306-e9907bfc5a25": 1, // Select / Battle Pass
 };
 
-const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+// Permissive UUID pattern (Valorant UUIDs don't strictly follow RFC 4122)
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const collectUuidStrings = (raw: unknown): string[] => {
   const out: string[] = [];
@@ -383,7 +384,7 @@ const ContaDetalhes = () => {
   const buddyUuids = collectUuidStrings(inventory?.Buddy);
 
   const { data: skinItems = [], isLoading: skinsLoading, isError: skinsError } = useQuery({
-    queryKey: ["valorant-skins", "rarity-v5", skinUuids],
+    queryKey: ["valorant-skins", "rarity-v6", skinUuids],
     queryFn: () => fetchValorantSkins(skinUuids),
     enabled: skinUuids.length > 0,
     staleTime: 1000 * 60 * 30,
