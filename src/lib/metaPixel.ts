@@ -245,18 +245,17 @@ const sendCAPI = (
       custom_data: customData,
     });
 
-    // sendBeacon for reliability (survives page unload), fallback to fetch
-    if (navigator.sendBeacon) {
-      const blob = new Blob([body], { type: "application/json" });
-      navigator.sendBeacon(url, blob);
-    } else {
-      fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body,
-        keepalive: true,
-      });
-    }
+    // Use fetch with credentials:'omit' to avoid CORS issues with sendBeacon
+    fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || "",
+      },
+      body,
+      keepalive: true,
+      credentials: "omit",
+    }).catch(() => {});
   } catch (_) {}
 };
 
