@@ -389,10 +389,6 @@ const ContaDetalhes = () => {
     staleTime: 1000 * 60 * 30,
     retry: 2,
   });
-    enabled: skinUuids.length > 0,
-    staleTime: 1000 * 60 * 30,
-    retry: 2,
-  });
 
   const { data: agentItems = [], isLoading: agentsLoading, isError: agentsError } = useQuery({
     queryKey: ["valorant-agents", agentUuids],
