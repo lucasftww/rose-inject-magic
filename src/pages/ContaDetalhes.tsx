@@ -86,27 +86,55 @@ const RARITY_PRIORITY: Record<string, number> = {
   "0cebb8be-46d7-c12a-d306-e9907bfc5a25": 1, // Select / Battle Pass
 };
 
+// Resolve the best image from a skin object
+const resolveSkinImage = (s: any): string | null => {
+  // Try all levels for displayIcon (some skins only have it on higher levels)
+  if (s.levels) {
+    for (const lvl of s.levels) {
+      if (lvl.displayIcon) return lvl.displayIcon;
+    }
+  }
+  if (s.displayIcon) return s.displayIcon;
+  // Try chromas
+  if (s.chromas) {
+    for (const c of s.chromas) {
+      if (c.fullRender) return c.fullRender;
+      if (c.displayIcon) return c.displayIcon;
+      if (c.swatch) return c.swatch;
+    }
+  }
+  return null;
+};
+
 // Fetch skin details from valorant-api.com
 const fetchValorantSkins = async (uuids: string[]) => {
   const res = await fetch("https://valorant-api.com/v1/weapons/skins?language=pt-BR");
   if (!res.ok) return [];
   const data = await res.json();
   const uuidSet = new Set(uuids.map(u => u.toLowerCase()));
+  const matchedUuids = new Set<string>();
   const matched: { name: string; image: string; rarity: any; rarityPriority: number }[] = [];
-  
+
   for (const s of (data.data || [])) {
     const skinUuid = s.uuid?.toLowerCase();
     let found = uuidSet.has(skinUuid);
+    if (found) matchedUuids.add(skinUuid);
+
     if (!found && s.chromas) {
-      found = s.chromas.some((c: any) => uuidSet.has(c.uuid?.toLowerCase()));
+      for (const c of s.chromas) {
+        const cId = c.uuid?.toLowerCase();
+        if (uuidSet.has(cId)) { found = true; matchedUuids.add(cId); break; }
+      }
     }
     if (!found && s.levels) {
-      found = s.levels.some((l: any) => uuidSet.has(l.uuid?.toLowerCase()));
+      for (const l of s.levels) {
+        const lId = l.uuid?.toLowerCase();
+        if (uuidSet.has(lId)) { found = true; matchedUuids.add(lId); break; }
+      }
     }
     if (found) {
-      const image = s.levels?.[0]?.displayIcon || s.displayIcon || s.chromas?.[0]?.fullRender;
+      const image = resolveSkinImage(s);
       if (image) {
-        // contentTierUuid from API is mixed case, normalize
         const rawTier = (s.contentTierUuid || "").toLowerCase();
         const priority = RARITY_PRIORITY[rawTier] || 0;
         matched.push({
@@ -118,12 +146,112 @@ const fetchValorantSkins = async (uuids: string[]) => {
       }
     }
   }
+
+  // For any unmatched UUIDs, try the skinlevels endpoint (flat list)
+  const unmatchedUuids = uuids.filter(u => !matchedUuids.has(u.toLowerCase()));
+  if (unmatchedUuids.length > 0) {
+    try {
+      const levelsRes = await fetch("https://valorant-api.com/v1/weapons/skinlevels?language=pt-BR");
+      if (levelsRes.ok) {
+        const levelsData = await levelsRes.json();
+        const unmatchedSet = new Set(unmatchedUuids.map(u => u.toLowerCase()));
+        const levelMap = new Map<string, any>();
+        for (const lvl of (levelsData.data || [])) {
+          if (unmatchedSet.has(lvl.uuid?.toLowerCase())) {
+            levelMap.set(lvl.uuid.toLowerCase(), lvl);
+          }
+        }
+        // Now find parent skins for these levels to get rarity info
+        if (levelMap.size > 0) {
+          for (const s of (data.data || [])) {
+            if (!s.levels) continue;
+            for (const l of s.levels) {
+              const lId = l.uuid?.toLowerCase();
+              if (levelMap.has(lId)) {
+                const image = resolveSkinImage(s);
+                if (image) {
+                  const rawTier = (s.contentTierUuid || "").toLowerCase();
+                  const priority = RARITY_PRIORITY[rawTier] || 0;
+                  // Avoid duplicates
+                  if (!matched.some(m => m.name === s.displayName)) {
+                    matched.push({
+                      name: s.displayName,
+                      image,
+                      rarity: rawTier ? rarityMap[rawTier] : null,
+                      rarityPriority: priority,
+                    });
+                  }
+                }
+                levelMap.delete(lId);
+              }
+            }
+          }
+          // Any still unmatched levels - add them directly with their own image
+          for (const [, lvl] of levelMap) {
+            if (lvl.displayIcon) {
+              matched.push({
+                name: lvl.displayName,
+                image: lvl.displayIcon,
+                rarity: null,
+                rarityPriority: 0,
+              });
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to fetch skinlevels fallback:", e);
+    }
+  }
+
+  // Also check skinChromas endpoint for any remaining unmatched
+  const stillUnmatched = uuids.filter(u => !matchedUuids.has(u.toLowerCase()) && !matched.some(m => m.name));
+  if (stillUnmatched.length > 5) {
+    try {
+      const chromasRes = await fetch("https://valorant-api.com/v1/weapons/skinchromas?language=pt-BR");
+      if (chromasRes.ok) {
+        const chromasData = await chromasRes.json();
+        const unmatchedSet2 = new Set(stillUnmatched.map(u => u.toLowerCase()));
+        for (const c of (chromasData.data || [])) {
+          if (unmatchedSet2.has(c.uuid?.toLowerCase())) {
+            const img = c.fullRender || c.displayIcon;
+            if (img && !matched.some(m => m.name === c.displayName)) {
+              // Find parent skin for rarity
+              for (const s of (data.data || [])) {
+                if (s.chromas?.some((sc: any) => sc.uuid?.toLowerCase() === c.uuid?.toLowerCase())) {
+                  const rawTier = (s.contentTierUuid || "").toLowerCase();
+                  const priority = RARITY_PRIORITY[rawTier] || 0;
+                  matched.push({
+                    name: s.displayName,
+                    image: resolveSkinImage(s) || img,
+                    rarity: rawTier ? rarityMap[rawTier] : null,
+                    rarityPriority: priority,
+                  });
+                  break;
+                }
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to fetch skinchromas fallback:", e);
+    }
+  }
+
+  // Deduplicate by name (keep highest priority version)
+  const deduped = new Map<string, typeof matched[0]>();
+  for (const skin of matched) {
+    const existing = deduped.get(skin.name);
+    if (!existing || skin.rarityPriority > existing.rarityPriority) {
+      deduped.set(skin.name, skin);
+    }
+  }
+  const final = Array.from(deduped.values());
+
   // Sort: Exclusive(5) → Ultra(4) → Premium(3) → Deluxe(2) → Select(1) → Default(0)
-  matched.sort((a, b) => b.rarityPriority - a.rarityPriority);
-  // Keep paid tiers first in details (Deluxe+), then lower tiers
-  const premiumFirst = matched.filter((s) => s.rarityPriority >= 2);
-  const lowerTiers = matched.filter((s) => s.rarityPriority < 2);
-  return premiumFirst.length > 0 ? [...premiumFirst, ...lowerTiers] : matched;
+  final.sort((a, b) => b.rarityPriority - a.rarityPriority);
+  return final;
 };
 
 const fetchValorantAgents = async (uuids: string[]) => {
