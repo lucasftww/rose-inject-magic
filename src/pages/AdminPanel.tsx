@@ -4,9 +4,9 @@ import Header from "@/components/Header";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  Plus, Pencil, Trash2, GripVertical, ImageIcon, Loader2, ShieldAlert,
+  Loader2, ShieldAlert,
   Gamepad2, Users, Mail, Calendar, Clock, Search, Shield, Ban, ShieldCheck,
-  ShieldOff, Globe, RefreshCw, Upload, Link, Sparkles, X, Package, Tag, UserCheck, TrendingUp, Key, CreditCard, BarChart3, ShoppingBag
+  ShieldOff, Globe, RefreshCw, X, Package, Tag, UserCheck, TrendingUp, Key, CreditCard, BarChart3, ShoppingBag
 } from "lucide-react";
 import ProductsTab from "@/components/admin/ProductsTab";
 import CouponsTab from "@/components/admin/CouponsTab";
