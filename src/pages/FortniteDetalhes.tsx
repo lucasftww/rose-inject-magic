@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/Header";
 import {
   ArrowLeft, Loader2, ChevronLeft, ChevronRight,
-  CheckCircle2, Shield, X, Zap, Gift,
+  CheckCircle2, Shield, ShoppingCart, X, Zap, Gift,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useMemo, useEffect, useRef } from "react";
