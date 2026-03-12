@@ -125,12 +125,21 @@ const ProductsTab = () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
-      const res = await supabase.functions.invoke("robot-project", {
-        headers: { Authorization: `Bearer ${session.access_token}` },
-        body: null,
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const res = await fetch(`https://${projectId}.supabase.co/functions/v1/robot-project?action=list-games`, {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
       });
-      if (res.error) {
-        toast({ title: "Erro ao carregar jogos Robot", description: String(res.error), variant: "destructive" });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        toast({ title: "Erro ao carregar jogos Robot", description: err.error || `HTTP ${res.status}`, variant: "destructive" });
+      } else {
+        const games = await res.json();
+        setRobotGames(Array.isArray(games) ? games : []);
+      }
       } else {
         const games = Array.isArray(res.data) ? res.data : [];
         setRobotGames(games);
