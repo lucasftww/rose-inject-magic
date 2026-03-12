@@ -284,7 +284,7 @@ const Checkout = () => {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <div className="mx-auto max-w-3xl px-6 pt-4 pb-20">
+        <div className="mx-auto max-w-3xl px-4 sm:px-6 pt-4 pb-20">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
