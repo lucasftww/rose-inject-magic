@@ -1285,7 +1285,7 @@ const Contas = () => {
     setMcCapesMin("");
     setMcNoBan(false);
     setValRegion("br");
-    setLolRegion("all");
+    setLolRegion("br");
     setPriceMin(""); setPriceMax("");
     setSearchQuery(""); setOnlyKnife(false);
     setInvMin(""); setInvMax("");
