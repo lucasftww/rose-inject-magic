@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.meta-capi]
 verify_jwt = false
+
+[functions.robot-project]
+verify_jwt = false
