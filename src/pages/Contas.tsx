@@ -1311,7 +1311,7 @@ const Contas = () => {
     gameTab === "lol" && lolRank !== "todos",
     gameTab === "lol" && lolChampMin !== "",
     gameTab === "lol" && lolSkinsMin !== "",
-    gameTab === "lol" && lolRegion !== "br",
+    gameTab === "lol" && lolRegion !== "BR1",
     gameTab === "fortnite" && fnVbMin !== "",
     gameTab === "fortnite" && fnSkinsMin !== "",
     isMinecraft && mcJava,
