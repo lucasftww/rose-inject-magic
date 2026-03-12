@@ -106,8 +106,14 @@ Deno.serve(async (req) => {
       });
     }
 
-    // FAST-BUY: Purchase an account - ADMIN ONLY
+    // FAST-BUY: Purchase an account - ADMIN ONLY (requires auth)
     if (action === "fast-buy" && req.method === "POST") {
+      const user = await getAuthUser();
+      if (!user) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       // SECURITY: admin only
       const { data: adminRole } = await supabaseAdmin
         .from("user_roles")
