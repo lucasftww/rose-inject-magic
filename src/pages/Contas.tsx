@@ -1487,21 +1487,6 @@ const Contas = () => {
               </div>
             </div>
           </aside>
-              <div className="rounded-lg border bg-card p-5 transition-colors duration-300" style={{ borderColor: isValorant ? 'hsl(var(--border))' : `${accentColor}25` }}>
-                <div className="flex items-center justify-between">
-                  <h3 className="flex items-center gap-2 text-base font-bold text-foreground">
-                    <SlidersHorizontal className="h-4 w-4" style={{ color: accentColor }} />
-                    Filtros
-                    {activeFiltersCount > 0 && (
-                      <span className="flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-white" style={{ background: accentColor }}>{activeFiltersCount}</span>
-                    )}
-                  </h3>
-                  <button onClick={clearFilters} className="text-xs text-muted-foreground transition-colors" onMouseEnter={e => (e.currentTarget.style.color = accentColor)} onMouseLeave={e => (e.currentTarget.style.color = '')}>Limpar</button>
-                </div>
-                {renderFilterContent()}
-              </div>
-            </div>
-          </aside>
 
           {/* ─── Grid ─── */}
           <div className="flex-1">
