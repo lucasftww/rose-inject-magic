@@ -569,6 +569,38 @@ const ProdutoDetalhes = () => {
           </motion.div>
         </div>
       </div>
+
+      {/* Sticky mobile bottom bar */}
+      {selectedPlan && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 sm:hidden">
+          <div className="border-t border-border bg-card/95 backdrop-blur-xl px-4 py-3 safe-area-bottom">
+            <div className="flex items-center gap-3">
+              <div className="flex flex-col min-w-0">
+                {isReseller && isResellerForProduct(product.id) ? (
+                  <>
+                    <span className="text-[10px] text-muted-foreground line-through leading-none">R$ {Number(selectedPlan.price).toFixed(2)}</span>
+                    <span className="text-lg font-bold text-success leading-tight">
+                      R$ {(Number(selectedPlan.price) * (1 - discountPercent / 100)).toFixed(2)}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-lg font-bold text-success leading-tight">
+                    R$ {Number(selectedPlan.price).toFixed(2)}
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={buyNow}
+                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-success py-3 text-sm font-bold uppercase tracking-wider text-success-foreground transition-all active:scale-[0.98]"
+                style={{ fontFamily: "'Valorant', sans-serif" }}
+              >
+                <ShoppingCart className="h-4 w-4" />
+                Comprar Agora
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
