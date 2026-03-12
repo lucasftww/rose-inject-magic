@@ -160,6 +160,19 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Ban check
+    const { data: banProfile } = await supabaseAdmin
+      .from("profiles")
+      .select("banned")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (banProfile?.banned) {
+      return new Response(JSON.stringify({ error: "Sua conta está suspensa." }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { payment_id, mode, quantity } = await req.json();
 
     // Validate inputs
