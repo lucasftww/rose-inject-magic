@@ -468,7 +468,7 @@ const ProdutoDetalhes = () => {
                     <button
                       key={plan.id}
                       onClick={() => setSelectedPlanId(plan.id)}
-                      className={`flex w-full items-center justify-between rounded-lg border p-4 text-left transition-all ${
+                      className={`flex w-full items-center justify-between rounded-lg border p-3 sm:p-4 text-left transition-all ${
                         selectedPlanId === plan.id
                           ? "border-success bg-success/10 shadow-[0_0_15px_hsl(130,99%,41%,0.15)]"
                           : "border-border hover:border-foreground/30"
