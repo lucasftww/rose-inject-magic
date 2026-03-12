@@ -40,6 +40,7 @@ interface ProductDetail {
   features_text: string | null;
   image_url: string | null;
   active: boolean;
+  robot_game_id: number | null;
   product_plans: ProductPlan[];
   product_media: MediaItem[];
   product_features: FeatureItem[];
