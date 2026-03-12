@@ -535,7 +535,7 @@ const ProductsTab = () => {
                         if (!p.robot_duration_days) return p;
                         const robotPriceUsd = rg.prices[String(p.robot_duration_days)];
                         if (robotPriceUsd === undefined) return p;
-                        const robotPriceBrl = Number(robotPriceUsd) * ROBOT_USD_TO_BRL;
+                        const robotPriceBrl = Number(robotPriceUsd) * robotUsdToBrl;
                         const calc = Number((robotPriceBrl * (1 + (formRobotMarkup || 0) / 100)).toFixed(2));
                         return { ...p, price: calc };
                       });
