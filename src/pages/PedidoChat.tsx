@@ -111,7 +111,6 @@ const PedidoChat = () => {
         setTutorialFileUrl((tutorialRes.data as any).tutorial_file_url || null);
       }
       if (messagesRes.data) setMessages(messagesRes.data as any[]);
-      if (messagesRes.data) setMessages(messagesRes.data as any[]);
 
       if (ticketData.stock_item_id) {
         const { data: stockData } = await supabase
