@@ -978,7 +978,7 @@ const Contas = () => {
   const [lolRank, setLolRank] = useState("todos");
   const [lolChampMin, setLolChampMin] = useState("");
   const [lolSkinsMin, setLolSkinsMin] = useState("");
-  const [lolRegion, setLolRegion] = useState("all");
+  const [lolRegion, setLolRegion] = useState("br");
 
   // ─── Fortnite filters ───
   const [fnVbMin, setFnVbMin] = useState("");
