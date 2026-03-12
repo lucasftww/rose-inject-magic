@@ -789,7 +789,7 @@ const Raspadinha = () => {
             <button
               onClick={() => handleModeChange("contas")}
               disabled={paymentPhase !== "idle" || scratching}
-              className={`flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold transition-all ${
+              className={`flex flex-1 sm:flex-initial items-center justify-center gap-2 rounded-lg px-4 sm:px-5 py-2.5 text-sm font-semibold transition-all ${
                 mode === "contas"
                   ? "bg-info text-info-foreground shadow"
                   : "text-muted-foreground hover:text-foreground hover:bg-accent"
