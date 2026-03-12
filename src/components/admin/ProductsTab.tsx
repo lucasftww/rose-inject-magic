@@ -137,12 +137,8 @@ const ProductsTab = () => {
         const err = await res.json().catch(() => ({}));
         toast({ title: "Erro ao carregar jogos Robot", description: err.error || `HTTP ${res.status}`, variant: "destructive" });
       } else {
-        const games = await res.json();
-        setRobotGames(Array.isArray(games) ? games : []);
-      }
-      } else {
-        const games = Array.isArray(res.data) ? res.data : [];
-        setRobotGames(games);
+        const data = await res.json();
+        setRobotGames(Array.isArray(data) ? data : []);
       }
     } catch (err: any) {
       toast({ title: "Erro Robot", description: err.message, variant: "destructive" });
