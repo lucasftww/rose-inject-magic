@@ -392,7 +392,7 @@ const RobotProjectTab = () => {
                   {priceEntries.length > 0 && (
                     <div className="mt-3 space-y-1">
                       <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1">
-                        <DollarSign className="h-3 w-3" /> Preços por duração
+                        <DollarSign className="h-3 w-3" /> Preços por duração <span className="text-[9px] font-normal">(USD→BRL: {usdToBrl.toFixed(2)})</span>
                       </p>
                       <div className="flex flex-wrap gap-1.5">
                         {priceEntries.map(([days, price]) => {
