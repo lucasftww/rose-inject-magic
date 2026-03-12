@@ -132,9 +132,20 @@ const RobotProjectTab = () => {
     })));
   };
 
+  const fetchExchangeRate = async () => {
+    try {
+      const res = await fetch("https://economia.awesomeapi.com.br/json/last/USD-BRL");
+      if (res.ok) {
+        const data = await res.json();
+        const bid = Number(data?.USDBRL?.bid);
+        if (bid > 0) setUsdToBrl(bid);
+      }
+    } catch (_) { /* use fallback */ }
+  };
+
   const refreshAll = async () => {
     setLoading(true);
-    await Promise.all([checkPing(), fetchRobotGames(), fetchProductsWithRobot()]);
+    await Promise.all([checkPing(), fetchRobotGames(), fetchProductsWithRobot(), fetchExchangeRate()]);
     setLastRefresh(new Date());
     setLoading(false);
   };
