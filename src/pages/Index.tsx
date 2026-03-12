@@ -208,7 +208,7 @@ const LztPreviewFallback = ({ url }: { url: string }) => {
   );
 };
 
-const LztContaCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap: Map<string, { name: string; image: string }>; formatPrice: (price: number, currency?: string) => string }) => {
+const LztContaCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap: Map<string, SkinEntry>; formatPrice: (price: number, currency?: string) => string }) => {
   const navigate = useNavigate();
   const rank = item.riot_valorant_rank ? rankMap[item.riot_valorant_rank] : null;
   const hasKnife = (item.riot_valorant_knife ?? 0) > 0;
