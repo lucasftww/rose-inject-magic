@@ -1420,8 +1420,43 @@ const Contas = () => {
         </div>
 
         <div className="mt-8 flex flex-col gap-8 lg:flex-row">
-          {/* ─── Sidebar ─── */}
-          <aside className="w-full shrink-0 lg:w-72">
+          {/* ─── Mobile Filter Button ─── */}
+          <button
+            onClick={() => setMobileFiltersOpen(true)}
+            className="flex lg:hidden items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition-all active:scale-[0.98]"
+            style={{ borderColor: activeFiltersCount > 0 ? `${accentColor}60` : undefined }}
+          >
+            <SlidersHorizontal className="h-4 w-4" style={{ color: accentColor }} />
+            Filtros
+            {activeFiltersCount > 0 && (
+              <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full px-1 text-[10px] font-bold text-white" style={{ background: accentColor }}>{activeFiltersCount}</span>
+            )}
+          </button>
+
+          {/* ─── Mobile Filter Bottom Sheet ─── */}
+          {mobileFiltersOpen && (
+            <div className="fixed inset-0 z-50 lg:hidden">
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileFiltersOpen(false)} />
+              <div className="absolute bottom-0 left-0 right-0 max-h-[85vh] overflow-y-auto rounded-t-2xl bg-card border-t border-border animate-in slide-in-from-bottom duration-300">
+                <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card px-5 py-4 rounded-t-2xl">
+                  <h3 className="flex items-center gap-2 text-base font-bold text-foreground">
+                    <SlidersHorizontal className="h-4 w-4" style={{ color: accentColor }} />
+                    Filtros
+                    {activeFiltersCount > 0 && (
+                      <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full px-1 text-[10px] font-bold text-white" style={{ background: accentColor }}>{activeFiltersCount}</span>
+                    )}
+                  </h3>
+                  <div className="flex items-center gap-3">
+                    <button onClick={clearFilters} className="text-xs text-muted-foreground transition-colors" onMouseEnter={e => (e.currentTarget.style.color = accentColor)} onMouseLeave={e => (e.currentTarget.style.color = '')}>Limpar</button>
+                    <button onClick={() => setMobileFiltersOpen(false)} className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary transition-colors">
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+                </div>
+                <div className="px-5 py-4 space-y-0">
+
+          {/* ─── Desktop Sidebar ─── */}
+          <aside className="hidden shrink-0 lg:block lg:w-72">
             <div className="sticky top-28 max-h-[calc(100vh-8rem)] overflow-y-auto space-y-4 scrollbar-hide">
               <div className="rounded-lg border bg-card p-5 transition-colors duration-300" style={{ borderColor: isValorant ? 'hsl(var(--border))' : `${accentColor}25` }}>
                 <div className="flex items-center justify-between">
