@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { LogOut, User, ChevronDown, Settings, ShieldAlert, Package, Menu, X } from "lucide-react";
+import { LogOut, User, ChevronDown, Settings, ShieldAlert, Package, Menu, X, Home, ShoppingBag, Gamepad2, Activity, Star, Ticket } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import logoRoyal from "@/assets/logo-royal.png";
 import AuthModal from "@/components/AuthModal";
@@ -15,12 +15,12 @@ const maskEmail = (email: string) => {
 };
 
 const NAV_ITEMS = [
-  { label: "Início", href: "/" },
-  { label: "Produtos", href: "/produtos" },
-  { label: "Contas", href: "/contas" },
-  { label: "Status", href: "/status" },
-  { label: "Avaliações", href: "/avaliacoes" },
-  { label: "Raspadinha", href: "/raspadinha" },
+  { label: "Início", href: "/", icon: Home },
+  { label: "Produtos", href: "/produtos", icon: ShoppingBag },
+  { label: "Contas", href: "/contas", icon: Gamepad2 },
+  { label: "Status", href: "/status", icon: Activity },
+  { label: "Avaliações", href: "/avaliacoes", icon: Star },
+  { label: "Raspadinha", href: "/raspadinha", icon: Ticket },
 ];
 
 const LOL_BLUE = "hsl(198,100%,45%)";
@@ -336,136 +336,169 @@ const Header = () => {
         </div>
       </motion.header>
 
-      {/* Mobile menu overlay */}
+      {/* Mobile menu — fullscreen overlay */}
       <AnimatePresence>
         {mobileMenuOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-40 bg-background/70 backdrop-blur-md lg:hidden"
-              onClick={() => setMobileMenuOpen(false)}
-            />
-            <motion.div
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
-              transition={{ type: "spring", damping: 28, stiffness: 320 }}
-              className="fixed top-0 right-0 bottom-0 z-50 w-[260px] bg-background border-l border-border/40 lg:hidden overflow-y-auto flex flex-col"
-            >
-              {/* Header */}
-              <div className="flex items-center justify-between px-5 py-3.5 border-b border-border/30">
-                <span className="text-xs font-bold uppercase tracking-[0.25em] text-muted-foreground">Menu</span>
-                <button
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="p-1.5 rounded-md text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[60] lg:hidden"
+            style={{ background: "hsla(0,0%,5%,0.97)", backdropFilter: "blur(24px)" }}
+          >
+            {/* Close button */}
+            <div className="flex items-center justify-between px-5 pt-5 pb-2">
+              <Link to="/" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2">
+                <img src={logoRoyal} alt="Royal Store" className="h-8 w-8 object-contain" />
+                <span className="text-lg tracking-[0.15em]" style={{ fontFamily: "'Valorant', sans-serif" }}>
+                  <span className="bg-gradient-to-r from-success via-[hsl(197,100%,70%)] to-success bg-[length:200%_100%] bg-clip-text text-transparent">ROYAL</span>
+                  <span className="text-foreground/80"> STORE</span>
+                </span>
+              </Link>
+              <motion.button
+                onClick={() => setMobileMenuOpen(false)}
+                className="p-2 rounded-full bg-secondary/80 text-muted-foreground hover:text-foreground transition-colors"
+                whileTap={{ scale: 0.9 }}
+              >
+                <X className="h-5 w-5" />
+              </motion.button>
+            </div>
 
-              {/* User info */}
-              {user && (
-                <div className="px-5 py-3.5 border-b border-border/30">
-                  <div className="flex items-center gap-2.5">
-                    {profile?.avatar_url ? (
-                      <img src={profile.avatar_url} alt="Avatar" className="w-8 h-8 rounded-full object-cover ring-1 ring-border/50" />
-                    ) : (
-                      <div
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
-                        style={{ background: `${accentColor}15`, color: accentColor }}
-                      >
-                        {(profile?.username || user.email?.split("@")[0] || "U").charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                    <div className="min-w-0">
-                      <p className="text-[13px] font-medium text-foreground truncate">
-                        {profile?.username || user.email?.split("@")[0]}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground truncate">
-                        {user.email ? maskEmail(user.email) : ""}
-                      </p>
-                    </div>
+            {/* User card */}
+            {user && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.05 }}
+                className="mx-5 mt-4 flex items-center gap-3 rounded-xl p-3"
+                style={{ background: "hsla(0,0%,100%,0.04)", border: "1px solid hsla(0,0%,100%,0.06)" }}
+              >
+                {profile?.avatar_url ? (
+                  <img src={profile.avatar_url} alt="Avatar" className="w-10 h-10 rounded-full object-cover ring-2 ring-border/30" />
+                ) : (
+                  <div
+                    className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0"
+                    style={{ background: `${accentColor}15`, color: accentColor }}
+                  >
+                    {(profile?.username || user.email?.split("@")[0] || "U").charAt(0).toUpperCase()}
                   </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-foreground truncate">
+                    {profile?.username || user.email?.split("@")[0]}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground truncate">
+                    {user.email ? maskEmail(user.email) : ""}
+                  </p>
                 </div>
-              )}
+              </motion.div>
+            )}
 
-              {/* Navigation */}
-              <nav className="flex-1 px-3 py-2">
-                {NAV_ITEMS.map((item, i) => (
+            {/* Nav links */}
+            <nav className="mt-6 px-5 space-y-1">
+              {NAV_ITEMS.map((item, i) => {
+                const active = isActive(item.href);
+                const Icon = item.icon;
+                return (
                   <motion.div
                     key={item.label}
-                    initial={{ opacity: 0, x: 12 }}
+                    initial={{ opacity: 0, x: -16 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.03 }}
+                    transition={{ delay: 0.06 + i * 0.04 }}
                   >
                     <Link
                       to={item.href}
                       onClick={() => setMobileMenuOpen(false)}
-                      className={`flex items-center px-3 py-2.5 rounded-md text-[13px] font-medium transition-colors ${
-                        isActive(item.href)
-                          ? "text-success bg-success/8"
-                          : "text-muted-foreground hover:text-foreground hover:bg-accent/40"
+                      className={`flex items-center gap-3.5 px-4 py-3 rounded-xl text-[15px] font-medium transition-all ${
+                        active
+                          ? "text-success bg-success/10"
+                          : "text-foreground/70 hover:text-foreground hover:bg-secondary/60"
                       }`}
                     >
+                      <Icon className={`w-[18px] h-[18px] ${active ? "text-success" : "text-muted-foreground"}`} />
                       {item.label}
+                      {active && (
+                        <div className="ml-auto w-1.5 h-1.5 rounded-full bg-success" />
+                      )}
                     </Link>
                   </motion.div>
-                ))}
-              </nav>
+                );
+              })}
+            </nav>
 
-              {/* Bottom actions */}
-              {user ? (
-                <div className="px-3 py-2 border-t border-border/30 space-y-0.5">
-                  <button onClick={() => { navigate("/dashboard"); setMobileMenuOpen(false); }} className="flex w-full items-center gap-2.5 px-3 py-2.5 rounded-md text-[13px] text-muted-foreground hover:bg-accent/40 hover:text-foreground transition-colors">
-                    <User className="w-3.5 h-3.5" />
-                    Meu Perfil
-                  </button>
-                  <button onClick={() => { navigate("/dashboard?tab=purchases"); setMobileMenuOpen(false); }} className="flex w-full items-center gap-2.5 px-3 py-2.5 rounded-md text-[13px] text-muted-foreground hover:bg-accent/40 hover:text-foreground transition-colors">
-                    <Package className="w-3.5 h-3.5" />
-                    Meus Pedidos
-                  </button>
-                  <button onClick={() => { navigate("/dashboard?tab=settings"); setMobileMenuOpen(false); }} className="flex w-full items-center gap-2.5 px-3 py-2.5 rounded-md text-[13px] text-muted-foreground hover:bg-accent/40 hover:text-foreground transition-colors">
-                    <Settings className="w-3.5 h-3.5" />
-                    Configurações
-                  </button>
-                  {isAdmin && (
+            {/* Divider + account actions */}
+            <div className="mx-5 mt-4 border-t border-border/20" />
+
+            {user ? (
+              <div className="px-5 mt-3 space-y-1">
+                {[
+                  { icon: User, label: "Meu Perfil", action: () => navigate("/dashboard") },
+                  { icon: Package, label: "Meus Pedidos", action: () => navigate("/dashboard?tab=purchases") },
+                  { icon: Settings, label: "Configurações", action: () => navigate("/dashboard?tab=settings") },
+                ].map(({ icon: Icon, label, action }, i) => (
+                  <motion.button
+                    key={label}
+                    initial={{ opacity: 0, x: -16 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.25 + i * 0.04 }}
+                    onClick={() => { action(); setMobileMenuOpen(false); }}
+                    className="flex w-full items-center gap-3.5 px-4 py-3 rounded-xl text-[15px] text-foreground/60 hover:text-foreground hover:bg-secondary/60 transition-all"
+                  >
+                    <Icon className="w-[18px] h-[18px] text-muted-foreground" />
+                    {label}
+                  </motion.button>
+                ))}
+                {isAdmin && (
+                  <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.37 }}>
                     <Link
                       to="/admin"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="flex w-full items-center gap-2.5 px-3 py-2.5 rounded-md text-[13px] text-success hover:bg-success/8 transition-colors"
+                      className="flex w-full items-center gap-3.5 px-4 py-3 rounded-xl text-[15px] font-medium text-success hover:bg-success/10 transition-all"
                     >
-                      <ShieldAlert className="w-3.5 h-3.5" />
+                      <ShieldAlert className="w-[18px] h-[18px]" />
                       Painel Admin
                     </Link>
-                  )}
+                  </motion.div>
+                )}
+
+                <div className="pt-2">
                   <button
                     onClick={() => { signOut(); setMobileMenuOpen(false); }}
-                    className="flex w-full items-center gap-2.5 px-3 py-2.5 rounded-md text-[13px] text-destructive hover:bg-destructive/8 transition-colors"
+                    className="flex w-full items-center gap-3.5 px-4 py-3 rounded-xl text-[15px] text-destructive/80 hover:bg-destructive/10 transition-all"
                   >
-                    <LogOut className="w-3.5 h-3.5" />
+                    <LogOut className="w-[18px] h-[18px]" />
                     Sair
                   </button>
                 </div>
-              ) : (
-                <div className="px-4 py-4 border-t border-border/30 space-y-2">
-                  <button
-                    onClick={() => { setAuthTab("login"); setAuthOpen(true); setMobileMenuOpen(false); }}
-                    className="w-full border border-border/50 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground rounded-md"
-                  >
-                    Entrar
-                  </button>
-                  <button
-                    onClick={() => { setAuthTab("register"); setAuthOpen(true); setMobileMenuOpen(false); }}
-                    className="w-full bg-success py-2 text-[13px] font-semibold text-success-foreground rounded-md transition-all btn-shine"
-                  >
-                    Criar Conta
-                  </button>
-                </div>
-              )}
-            </motion.div>
-          </>
+              </div>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="px-5 mt-5 space-y-2.5"
+              >
+                <button
+                  onClick={() => { setAuthTab("register"); setAuthOpen(true); setMobileMenuOpen(false); }}
+                  className="w-full py-3 text-[15px] font-semibold text-success-foreground rounded-xl transition-all btn-shine"
+                  style={{
+                    background: isLolContext ? LOL_BLUE : "hsl(var(--success))",
+                    boxShadow: `0 0 24px ${isLolContext ? LOL_BLUE : "hsl(var(--success))"}25`,
+                  }}
+                >
+                  Criar Conta
+                </button>
+                <button
+                  onClick={() => { setAuthTab("login"); setAuthOpen(true); setMobileMenuOpen(false); }}
+                  className="w-full py-3 text-[15px] font-medium text-muted-foreground rounded-xl transition-colors"
+                  style={{ background: "hsla(0,0%,100%,0.04)", border: "1px solid hsla(0,0%,100%,0.08)" }}
+                >
+                  Já tenho conta
+                </button>
+              </motion.div>
+            )}
+          </motion.div>
         )}
       </AnimatePresence>
 
