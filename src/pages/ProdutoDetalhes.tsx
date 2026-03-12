@@ -348,7 +348,7 @@ const ProdutoDetalhes = () => {
                   </button>
                   <button
                     onClick={nextMedia}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-background/80 border border-border text-foreground backdrop-blur-sm transition-colors hover:border-success hover:text-success"
+                    className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-background/80 border border-border text-foreground backdrop-blur-sm transition-colors hover:border-success hover:text-success"
                   >
                     <ChevronRight className="h-5 w-5" />
                   </button>
