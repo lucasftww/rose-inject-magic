@@ -293,18 +293,18 @@ const Header = () => {
               <>
                 <motion.button
                   onClick={() => { setAuthTab("login"); setAuthOpen(true); }}
-                  className="hidden sm:inline-flex border border-border/60 px-5 lg:px-6 py-2 text-sm font-medium tracking-wide text-muted-foreground rounded-md transition-all duration-200 hover:border-success/40 hover:text-foreground"
+                  className="hidden sm:inline-flex border border-border/60 px-4 lg:px-5 py-1.5 text-[13px] font-medium tracking-wide text-muted-foreground rounded-md transition-all duration-200 hover:border-success/40 hover:text-foreground"
                   whileTap={{ scale: 0.97 }}
                 >
                   Entrar
                 </motion.button>
                 <motion.button
                   onClick={() => { setAuthTab("register"); setAuthOpen(true); }}
-                  className="inline-flex px-4 sm:px-5 lg:px-6 py-2 text-xs sm:text-sm font-semibold tracking-wide whitespace-nowrap rounded-lg sm:rounded-md transition-all duration-200 btn-shine"
+                  className="inline-flex px-3.5 sm:px-4 lg:px-5 py-1.5 text-[11px] sm:text-[13px] font-semibold tracking-wide whitespace-nowrap rounded-md transition-all duration-200 btn-shine"
                   style={{
                     background: isLolContext ? LOL_BLUE : "hsl(var(--success))",
                     color: "white",
-                    boxShadow: `0 0 20px ${isLolContext ? LOL_BLUE : "hsl(var(--success))"}30`,
+                    boxShadow: `0 0 16px ${isLolContext ? LOL_BLUE : "hsl(var(--success))"}20`,
                   }}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.97 }}
