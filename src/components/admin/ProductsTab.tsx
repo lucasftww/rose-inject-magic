@@ -583,7 +583,7 @@ const ProductsTab = () => {
                       {/* Show markup calculation hint */}
                       {robotEnabled && suggestedPrice !== null && (
                         <div className="mt-1.5 flex items-center gap-2 text-[10px] text-muted-foreground">
-                          <span>Robot: R${robotBasePrice?.toFixed(2)} × {formRobotMarkup}% = <span className="font-bold text-accent-foreground">R${suggestedPrice.toFixed(2)}</span></span>
+                          <span>Robot: ${robotBasePriceUsd?.toFixed(2)} USD (≈ R${robotBasePriceBrl?.toFixed(2)}) × {formRobotMarkup}% = <span className="font-bold text-accent-foreground">R${suggestedPrice.toFixed(2)}</span></span>
                           {plan.price !== suggestedPrice && plan.price > 0 && (
                             <span className="text-warning">(manual: R${plan.price.toFixed(2)})</span>
                           )}
