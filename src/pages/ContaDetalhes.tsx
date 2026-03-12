@@ -594,7 +594,7 @@ const ContaDetalhes = () => {
                     <AnimatePresence mode="wait">
                       <motion.div
                         key={selectedSkin}
-                        className="relative z-[1] flex items-center justify-center h-full w-full p-8 cursor-pointer"
+                        className="relative z-[1] flex items-center justify-center h-full w-full p-4 sm:p-8 cursor-pointer"
                         onClick={() => { setActiveTab("skins"); setLightboxIndex(selectedSkin); }}
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
