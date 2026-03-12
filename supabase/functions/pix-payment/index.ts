@@ -809,6 +809,10 @@ async function fulfillRobotProduct(supabaseAdmin: any, payment: any, item: any, 
     const key = buyData.data?.key || "";
     const gameName = buyData.data?.gameName || item.productName || "";
     const amountSpent = buyData.data?.amountSpent || 0;
+    const robotBalance = buyData.data?.balance ?? null;
+    const isFreeGame = buyData.data?.game?.free === true || buyData.data?.finalAmount === 0;
+    const downloadUrl = buyData.data?.game?.downloadUrl || buyData.data?.downloadUrl || null;
+    const fileName = buyData.data?.game?.fileName || buyData.data?.fileName || null;
 
     // Store key as stock item
     const { data: stockItem } = await supabaseAdmin
@@ -839,20 +843,38 @@ async function fulfillRobotProduct(supabaseAdmin: any, payment: any, item: any, 
           key,
           amount_spent: amountSpent,
           game_name: gameName,
+          robot_balance: robotBalance,
+          is_free: isFreeGame,
+          download_url: downloadUrl,
+          file_name: fileName,
         },
       })
       .select("id")
       .single();
 
     if (ticket) {
+      // Build delivery message
+      let deliveryMsg = `✅ Seu produto foi entregue automaticamente!\n\n🔑 **Key:** \`${key}\`\n⏱️ Duração: ${duration} dias`;
+      if (isFreeGame) {
+        deliveryMsg = `✅ Produto gratuito ativado automaticamente!\n\n🔑 **Key:** \`${key}\``;
+      }
+      if (downloadUrl) {
+        deliveryMsg += `\n\n📥 **Download:** ${downloadUrl}`;
+        if (fileName) {
+          deliveryMsg += `\n📄 Arquivo: ${fileName}`;
+        }
+      }
+      deliveryMsg += `\n\nVeja a chave acima para ativar.`;
+
       await supabaseAdmin.from("ticket_messages").insert({
         ticket_id: ticket.id,
         sender_id: payment.user_id,
         sender_role: "staff",
-        message: `✅ Seu produto foi entregue automaticamente!\n\n🔑 **Key:** \`${key}\`\n⏱️ Duração: ${duration} dias\n\nVeja a chave acima para ativar.`,
+        message: deliveryMsg,
       });
 
-      // Send tutorial if exists
+      // Send tutorial if exists (skip for robot products since robot handles everything)
+      // But still send if configured manually
       const { data: tutorialData } = await supabaseAdmin
         .from("product_tutorials")
         .select("tutorial_text, tutorial_file_url")
@@ -885,7 +907,7 @@ async function fulfillRobotProduct(supabaseAdmin: any, payment: any, item: any, 
       }
     }
 
-    console.log(`Robot fulfillment success: key=${key}, game=${gameName}, spent=${amountSpent}`);
+    console.log(`Robot fulfillment success: key=${key}, game=${gameName}, spent=${amountSpent}, balance=${robotBalance}, free=${isFreeGame}`);
 
   } catch (err: any) {
     console.error("Robot fulfillment error:", err);
