@@ -77,13 +77,13 @@ const fetchAccountDetail = async (itemId: string) => {
   return res.json();
 };
 
-// Rarity priority for sorting
+// Rarity priority for sorting (keys must be lowercase for comparison)
 const RARITY_PRIORITY: Record<string, number> = {
   "411e4a55-4e59-7757-41f0-86a53f101bb5": 5, // Exclusive
   "e046854e-406c-37f4-6571-7a8baeeb93ab": 4, // Ultra
   "60bca009-4182-7998-dee7-b8a2558dc369": 3, // Premium
   "12683d76-48d7-84a3-4e09-6985794f0445": 2, // Deluxe
-  "0cebb8be-46d7-c12a-d306-e9907bfc5a25": 1, // Select
+  "0cebb8be-46d7-c12a-d306-e9907bfc5a25": 1, // Select / Battle Pass
 };
 
 // Fetch skin details from valorant-api.com
@@ -106,17 +106,19 @@ const fetchValorantSkins = async (uuids: string[]) => {
     if (found) {
       const image = s.levels?.[0]?.displayIcon || s.displayIcon || s.chromas?.[0]?.fullRender;
       if (image) {
-        const tierUuid = s.contentTierUuid?.toLowerCase() || "";
+        // contentTierUuid from API is mixed case, normalize
+        const rawTier = (s.contentTierUuid || "").toLowerCase();
+        const priority = RARITY_PRIORITY[rawTier] || 0;
         matched.push({
           name: s.displayName,
           image,
-          rarity: s.contentTierUuid ? rarityMap[s.contentTierUuid] : null,
-          rarityPriority: RARITY_PRIORITY[tierUuid] || 0,
+          rarity: rawTier ? rarityMap[rawTier] : null,
+          rarityPriority: priority,
         });
       }
     }
   }
-  // Sort by rarity: best skins first
+  // Sort: Exclusive(5) → Ultra(4) → Premium(3) → Deluxe(2) → Select(1) → Default(0)
   matched.sort((a, b) => b.rarityPriority - a.rarityPriority);
   return matched;
 };
