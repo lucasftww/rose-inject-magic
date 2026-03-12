@@ -315,7 +315,9 @@ const ProductsTab = () => {
           features_text: formFeaturesText.trim() || null,
           image_url: formImageUrl.trim() || null, game_id: formGameId, active: formActive,
           sort_order: products.length,
-        }).select().single();
+          robot_game_id: formRobotGameId || null,
+          robot_markup_percent: formRobotMarkup || null,
+        } as any).select().single();
         if (error) throw error;
 
         // Save tutorial data to secure table
