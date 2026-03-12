@@ -691,9 +691,9 @@ const ContaDetalhes = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="border-t border-border pt-4">
-                    <h3 className="text-sm font-bold text-foreground mb-3">Informações da Conta</h3>
-                    <div className="grid grid-cols-2 gap-2">
+                  <div className="border-t border-border pt-3 sm:pt-4">
+                    <h3 className="text-xs sm:text-sm font-bold text-foreground mb-2 sm:mb-3">Informações da Conta</h3>
+                    <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
                       {item.valorantRegionPhrase && <StatCell label="Região" value={item.valorantRegionPhrase} />}
                       {item.riot_valorant_wallet_vp != null && <StatCell label="VP na conta" value={item.riot_valorant_wallet_vp} />}
                       {item.riot_valorant_wallet_rp != null && item.riot_valorant_wallet_rp > 0 && <StatCell label="RP na conta" value={item.riot_valorant_wallet_rp} />}
