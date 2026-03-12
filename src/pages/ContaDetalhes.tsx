@@ -426,12 +426,9 @@ const fetchValorantSkins = async (uuids: string[]) => {
 
   const final = Array.from(deduped.values());
 
-  // LZT-style sort: linhagem (coleção desejada) -> tier -> arma -> score
+  // Ordenação apenas por linhagem
   final.sort((a, b) => {
     if (a.lineageRank !== b.lineageRank) return b.lineageRank - a.lineageRank;
-    if (a.effectiveRarity !== b.effectiveRarity) return b.effectiveRarity - a.effectiveRarity;
-    if (a.weaponRank !== b.weaponRank) return b.weaponRank - a.weaponRank;
-    if (a.displayScore !== b.displayScore) return b.displayScore - a.displayScore;
     return a.name.localeCompare(b.name, "pt-BR");
   });
 
