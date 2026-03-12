@@ -541,10 +541,11 @@ const ProductsTab = () => {
                 {formPlans.map((plan, index) => {
                   // Calculate suggested price from Robot markup
                   const selectedRobotGame = robotEnabled && formRobotGameId ? robotGames.find(g => g.id === formRobotGameId) : null;
-                  const robotBasePrice = selectedRobotGame && plan.robot_duration_days
+                  const robotBasePriceUsd = selectedRobotGame && plan.robot_duration_days
                     ? selectedRobotGame.prices?.[String(plan.robot_duration_days)] : undefined;
-                  const suggestedPrice = robotBasePrice !== undefined && formRobotMarkup
-                    ? Number((robotBasePrice * (1 + formRobotMarkup / 100)).toFixed(2)) : null;
+                  const robotBasePriceBrl = robotBasePriceUsd !== undefined ? Number(robotBasePriceUsd) * ROBOT_USD_TO_BRL : undefined;
+                  const suggestedPrice = robotBasePriceBrl !== undefined && formRobotMarkup
+                    ? Number((robotBasePriceBrl * (1 + formRobotMarkup / 100)).toFixed(2)) : null;
 
                   return (
                     <div key={index} className="rounded-lg border border-border bg-secondary/30 p-3">
