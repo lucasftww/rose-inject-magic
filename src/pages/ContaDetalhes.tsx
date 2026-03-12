@@ -377,21 +377,18 @@ const ContaDetalhes = () => {
     return list;
   }, [item]);
 
-  // Fetch inventory items from valorant-api.com
-  // WeaponSkins/Agent/Buddy can be array OR object with numeric keys
-  const toArray = (val: any): string[] => {
-    if (!val) return [];
-    if (Array.isArray(val)) return val;
-    if (typeof val === "object") return Object.values(val);
-    return [];
-  };
-  const skinUuids = toArray(inventory?.WeaponSkins);
-  const agentUuids = toArray(inventory?.Agent);
-  const buddyUuids = toArray(inventory?.Buddy);
+  // Fetch inventory UUIDs with robust normalization (array/object/nested)
+  const skinUuids = collectUuidStrings(inventory?.WeaponSkins);
+  const agentUuids = collectUuidStrings(inventory?.Agent);
+  const buddyUuids = collectUuidStrings(inventory?.Buddy);
 
   const { data: skinItems = [], isLoading: skinsLoading, isError: skinsError } = useQuery({
-    queryKey: ["valorant-skins", "rarity-v4", skinUuids],
+    queryKey: ["valorant-skins", "rarity-v5", skinUuids],
     queryFn: () => fetchValorantSkins(skinUuids),
+    enabled: skinUuids.length > 0,
+    staleTime: 1000 * 60 * 30,
+    retry: 2,
+  });
     enabled: skinUuids.length > 0,
     staleTime: 1000 * 60 * 30,
     retry: 2,
