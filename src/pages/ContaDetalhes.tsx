@@ -583,9 +583,9 @@ const ContaDetalhes = () => {
               <span className="text-foreground font-medium truncate">{rank?.name || "Unranked"}</span>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-6">
               {/* LEFT: Gallery only */}
-              <div className="lg:col-span-3 space-y-4">
+              <div className="lg:col-span-3 space-y-3 sm:space-y-4">
                 {/* Single skin carousel */}
                 {skinItems.length > 0 && !skinsLoading ? (
                   <div className="rounded-lg border border-border bg-card overflow-hidden aspect-[16/10] relative group">
