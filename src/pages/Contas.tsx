@@ -1328,7 +1328,7 @@ const Contas = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <div className="mx-auto max-w-7xl px-6 pt-4 pb-20">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 pt-4 pb-20">
 
         {/* ─── Game Tab Switcher ─── */}
         <div className="flex items-center gap-3 mb-8">
