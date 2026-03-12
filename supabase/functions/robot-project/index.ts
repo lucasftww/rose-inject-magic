@@ -1,0 +1,184 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+const ROBOT_API_URL = "https://api.robotproject.com.br";
+
+async function getRobotCredentials(supabaseAdmin: any): Promise<{ username: string; password: string } | null> {
+  const [uRes, pRes] = await Promise.all([
+    supabaseAdmin.from("system_credentials").select("value").eq("env_key", "ROBOT_API_USERNAME").maybeSingle(),
+    supabaseAdmin.from("system_credentials").select("value").eq("env_key", "ROBOT_API_PASSWORD").maybeSingle(),
+  ]);
+  const username = uRes.data?.value;
+  const password = pRes.data?.value;
+  if (!username || !password) return null;
+  return { username, password };
+}
+
+function robotAuthHeader(creds: { username: string; password: string }): string {
+  // Deno supports btoa for Base64 encoding
+  return "Basic " + btoa(`${creds.username}:${creds.password}`);
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_PUBLISHABLE_KEY")!;
+    const authHeader = req.headers.get("Authorization");
+
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
+
+    // Authenticate user
+    const getAuthUser = async () => {
+      if (!authHeader?.startsWith("Bearer ")) return null;
+      const supabaseUser = createClient(supabaseUrl, anonKey, {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const { data: { user }, error } = await supabaseUser.auth.getUser();
+      return error ? null : user;
+    };
+
+    // Check admin
+    const requireAdmin = async () => {
+      const user = await getAuthUser();
+      if (!user) return null;
+      const { data: adminRole } = await supabaseAdmin
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "admin")
+        .maybeSingle();
+      return adminRole ? user : null;
+    };
+
+    const url = new URL(req.url);
+    const action = url.searchParams.get("action") || "list-games";
+
+    // LIST GAMES - Admin only
+    if (action === "list-games") {
+      const admin = await requireAdmin();
+      if (!admin) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const creds = await getRobotCredentials(supabaseAdmin);
+      if (!creds) {
+        return new Response(JSON.stringify({ error: "Robot Project credentials not configured. Add ROBOT_API_USERNAME and ROBOT_API_PASSWORD in Credentials." }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const response = await fetch(`${ROBOT_API_URL}/games`, {
+        headers: {
+          Authorization: robotAuthHeader(creds),
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        console.error("Robot API error:", response.status, errText);
+        return new Response(JSON.stringify({ error: "Robot API error", status: response.status }), {
+          status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const data = await response.json();
+      return new Response(JSON.stringify(data), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // BUY - Server-side only (called from fulfillment, requires admin or service context)
+    if (action === "buy" && req.method === "POST") {
+      // This endpoint is called internally from pix-payment fulfillment
+      // Validate it's either admin or has a special internal header
+      const admin = await requireAdmin();
+      if (!admin) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const creds = await getRobotCredentials(supabaseAdmin);
+      if (!creds) {
+        return new Response(JSON.stringify({ error: "Robot credentials not configured" }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const body = await req.json();
+      const { game_id, duration } = body;
+
+      if (!game_id || !duration) {
+        return new Response(JSON.stringify({ error: "game_id and duration required" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      console.log(`Robot buy: gameId=${game_id}, duration=${duration}`);
+
+      const response = await fetch(`${ROBOT_API_URL}/buy/${encodeURIComponent(game_id)}`, {
+        method: "POST",
+        headers: {
+          Authorization: robotAuthHeader(creds),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ duration: Number(duration) }),
+      });
+
+      const data = await response.json();
+      console.log("Robot buy response:", response.status, JSON.stringify(data).substring(0, 500));
+
+      if (!response.ok) {
+        return new Response(JSON.stringify({ error: "Robot buy failed", status: response.status, detail: data }), {
+          status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      return new Response(JSON.stringify(data), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // CHECK BALANCE / PING
+    if (action === "ping") {
+      const creds = await getRobotCredentials(supabaseAdmin);
+      if (!creds) {
+        return new Response(JSON.stringify({ error: "Robot credentials not configured" }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const response = await fetch(`${ROBOT_API_URL}/ping`, {
+        headers: { "Content-Type": "application/json" },
+      });
+
+      const data = await response.json();
+      return new Response(JSON.stringify(data), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    return new Response(JSON.stringify({ error: "Unknown action" }), {
+      status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+
+  } catch (error: any) {
+    console.error("Robot Project edge function error:", error);
+    return new Response(JSON.stringify({ error: "Internal error" }), {
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});
