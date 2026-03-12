@@ -290,7 +290,7 @@ const ProdutoDetalhes = () => {
           <span className="text-foreground truncate">{product.name}</span>
         </div>
 
-        <div className="grid gap-10 lg:grid-cols-2">
+        <div className="grid gap-6 sm:gap-10 lg:grid-cols-2">
           {/* Left: Media Gallery */}
           <motion.div
             initial={{ opacity: 0, x: -15 }}
