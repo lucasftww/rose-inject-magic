@@ -40,20 +40,20 @@ const AuthModal = ({ open, onOpenChange, defaultTab = "login" }: AuthModalProps)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl w-[95vw] p-0 border-border overflow-hidden gap-0 rounded-2xl [&>button:last-child]:hidden">
+      <DialogContent className="max-w-5xl w-[95vw] max-h-[95vh] sm:max-h-[90vh] p-0 border-border overflow-hidden gap-0 rounded-2xl [&>button:last-child]:hidden">
         <DialogTitle className="sr-only">Autenticação</DialogTitle>
         <DialogDescription className="sr-only">Faça login ou crie sua conta</DialogDescription>
         <DiscordBanner dismissible={false} />
         {/* Close button */}
         <button
           onClick={() => onOpenChange(false)}
-          className="absolute right-4 top-4 z-10 rounded-full w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+          className="absolute right-3 top-3 sm:right-4 sm:top-4 z-10 rounded-full w-8 h-8 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
         >
           <X className="h-4 w-4" />
         </button>
 
-        <div className="flex">
-          {/* Left side - Info */}
+        <div className="flex max-h-[calc(95vh-40px)] sm:max-h-[calc(90vh-40px)] overflow-y-auto sm:overflow-hidden">
+          {/* Left side - Info (hidden on mobile) */}
           <div className="hidden md:flex flex-col w-[45%] bg-card relative overflow-hidden">
             <div className="relative z-10 flex flex-col h-full p-10 pt-10">
               <div className="flex items-center gap-3 mb-8">
@@ -103,9 +103,18 @@ const AuthModal = ({ open, onOpenChange, defaultTab = "login" }: AuthModalProps)
           </div>
 
           {/* Right side - Form */}
-          <div className="flex-1 flex flex-col justify-center px-10 md:px-14 py-12">
+          <div className="flex-1 flex flex-col justify-center px-5 sm:px-10 md:px-14 py-8 sm:py-12">
+            {/* Mobile branding */}
+            <div className="md:hidden flex items-center gap-2.5 mb-6">
+              <img src={logoRoyal} alt="Royal Store" className="w-8 h-8 object-contain" />
+              <span className="text-lg font-bold tracking-widest" style={{ fontFamily: "'Valorant', sans-serif" }}>
+                <span className="text-success">ROYAL</span>
+                <span className="text-foreground"> STORE</span>
+              </span>
+            </div>
+
             {showForgot ? (
-              <div className="flex flex-col gap-5">
+              <div className="flex flex-col gap-4 sm:gap-5">
                 <button
                   type="button"
                   onClick={() => { setShowForgot(false); setForgotSent(false); }}
@@ -116,7 +125,7 @@ const AuthModal = ({ open, onOpenChange, defaultTab = "login" }: AuthModalProps)
                 </button>
 
                 <div>
-                  <h2 className="text-xl font-bold text-foreground mb-1">Recuperar senha</h2>
+                  <h2 className="text-lg sm:text-xl font-bold text-foreground mb-1">Recuperar senha</h2>
                   <p className="text-sm text-muted-foreground">
                     {forgotSent
                       ? "Verifique sua caixa de entrada para redefinir sua senha."
@@ -136,7 +145,7 @@ const AuthModal = ({ open, onOpenChange, defaultTab = "login" }: AuthModalProps)
                       toast.success("Email de recuperação enviado!");
                     }
                     setForgotLoading(false);
-                  }} className="flex flex-col gap-5">
+                  }} className="flex flex-col gap-4 sm:gap-5">
                     <div>
                       <label className="text-sm text-muted-foreground mb-1.5 block">Email</label>
                       <Input
@@ -173,10 +182,10 @@ const AuthModal = ({ open, onOpenChange, defaultTab = "login" }: AuthModalProps)
               </div>
             ) : (
               <>
-                <div className="flex gap-6 mb-8">
+                <div className="flex gap-5 sm:gap-6 mb-6 sm:mb-8">
                   <button
                     onClick={() => setTab("login")}
-                    className={`text-lg font-semibold pb-2 border-b-2 transition-colors ${
+                    className={`text-base sm:text-lg font-semibold pb-2 border-b-2 transition-colors ${
                       tab === "login" ? "border-success text-success" : "border-transparent text-muted-foreground hover:text-foreground"
                     }`}
                   >
@@ -184,7 +193,7 @@ const AuthModal = ({ open, onOpenChange, defaultTab = "login" }: AuthModalProps)
                   </button>
                   <button
                     onClick={() => setTab("register")}
-                    className={`text-lg font-semibold pb-2 border-b-2 transition-colors ${
+                    className={`text-base sm:text-lg font-semibold pb-2 border-b-2 transition-colors ${
                       tab === "register" ? "border-success text-success" : "border-transparent text-muted-foreground hover:text-foreground"
                     }`}
                   >
@@ -211,35 +220,35 @@ const AuthModal = ({ open, onOpenChange, defaultTab = "login" }: AuthModalProps)
                   setCaptchaToken(undefined);
                   captchaRef.current?.reset();
                   setIsLoading(false);
-                }} className="flex flex-col gap-5">
+                }} className="flex flex-col gap-4 sm:gap-5">
                   {tab === "register" && (
                     <div>
                       <label className="text-sm text-muted-foreground mb-1.5 block">Nome de usuário</label>
-                      <Input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Seu nome de usuário" className="bg-secondary border-border h-12" />
+                      <Input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Seu nome de usuário" className="bg-secondary border-border h-11 sm:h-12" />
                     </div>
                   )}
 
                   <div>
                     <label className="text-sm text-muted-foreground mb-1.5 block">Email</label>
-                    <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seu@email.com" className="bg-secondary border-border h-12" />
+                    <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seu@email.com" className="bg-secondary border-border h-11 sm:h-12" />
                   </div>
 
                   <div>
                     <label className="text-sm text-muted-foreground mb-1.5 block">Senha</label>
-                    <Input type="password" autoComplete={tab === "login" ? "current-password" : "new-password"} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="bg-secondary border-border h-12" />
+                    <Input type="password" autoComplete={tab === "login" ? "current-password" : "new-password"} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="bg-secondary border-border h-11 sm:h-12" />
                   </div>
 
                   {tab === "login" && (
-                    <div className="flex items-center justify-between -mt-2">
+                    <div className="flex items-center justify-between -mt-1 sm:-mt-2">
                       <label className="flex items-center gap-2 cursor-pointer group">
                         <div className="relative h-4 w-4">
                           <input type="checkbox" className="peer sr-only" />
                           <div className="h-4 w-4 rounded border border-muted-foreground/40 bg-secondary transition-colors peer-checked:border-success peer-checked:bg-success" />
                           <svg className="absolute inset-0 h-4 w-4 text-success-foreground opacity-0 peer-checked:opacity-100 pointer-events-none" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8.5L6.5 11L12 5" /></svg>
                         </div>
-                        <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">Lembrar-me</span>
+                        <span className="text-xs sm:text-sm text-muted-foreground group-hover:text-foreground transition-colors">Lembrar-me</span>
                       </label>
-                      <button type="button" onClick={() => { setShowForgot(true); setForgotEmail(email); }} className="text-sm text-success hover:underline">Esqueceu a senha?</button>
+                      <button type="button" onClick={() => { setShowForgot(true); setForgotEmail(email); }} className="text-xs sm:text-sm text-success hover:underline">Esqueceu a senha?</button>
                     </div>
                   )}
 
@@ -253,11 +262,11 @@ const AuthModal = ({ open, onOpenChange, defaultTab = "login" }: AuthModalProps)
                     />
                   </div>
 
-                  <Button type="submit" disabled={isLoading || !captchaToken} className="w-full h-12 bg-success text-success-foreground font-semibold text-base hover:bg-success/90 mt-1">
+                  <Button type="submit" disabled={isLoading || !captchaToken} className="w-full h-11 sm:h-12 bg-success text-success-foreground font-semibold text-sm sm:text-base hover:bg-success/90 mt-1">
                     {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : tab === "login" ? "Entrar" : "Criar Conta"}
                   </Button>
 
-                  <div className="flex items-center gap-3 my-1">
+                  <div className="flex items-center gap-3 my-0 sm:my-1">
                     <div className="flex-1 h-px bg-border" />
                     <span className="text-xs text-muted-foreground">ou continue com</span>
                     <div className="flex-1 h-px bg-border" />
@@ -272,7 +281,7 @@ const AuthModal = ({ open, onOpenChange, defaultTab = "login" }: AuthModalProps)
                       });
                       if (error) toast.error(error.message);
                     }}
-                    className="w-full flex items-center justify-center gap-2 h-12 rounded-md border border-border bg-secondary text-foreground font-medium hover:border-[#5865F2]/50 transition-colors"
+                    className="w-full flex items-center justify-center gap-2 h-11 sm:h-12 rounded-md border border-border bg-secondary text-foreground font-medium hover:border-[#5865F2]/50 transition-colors"
                   >
                     <svg className="w-5 h-5" viewBox="0 0 16 16" fill="currentColor">
                       <path d="M13.545 2.907a13.2 13.2 0 0 0-3.257-1.011.05.05 0 0 0-.052.025c-.141.25-.297.577-.406.833a12.2 12.2 0 0 0-3.658 0 8 8 0 0 0-.412-.833.05.05 0 0 0-.052-.025c-1.125.194-2.22.534-3.257 1.011a.04.04 0 0 0-.021.018C.356 6.024-.213 9.047.066 12.032q.003.022.021.037a13.3 13.3 0 0 0 3.995 2.02.05.05 0 0 0 .056-.019q.463-.63.818-1.329a.05.05 0 0 0-.01-.059l-.018-.011a9 9 0 0 1-1.248-.595.05.05 0 0 1-.02-.066l.015-.019q.127-.095.248-.195a.05.05 0 0 1 .051-.007c2.619 1.196 5.454 1.196 8.041 0a.05.05 0 0 1 .053.007q.121.1.248.195a.05.05 0 0 1-.004.085 8 8 0 0 1-1.249.594.05.05 0 0 0-.03.03.05.05 0 0 0 .003.041c.24.465.515.909.817 1.329a.05.05 0 0 0 .056.019 13.2 13.2 0 0 0 4.001-2.02.05.05 0 0 0 .021-.037c.334-3.451-.559-6.449-2.366-9.106a.03.03 0 0 0-.02-.019m-8.198 7.307c-.789 0-1.438-.724-1.438-1.612s.637-1.613 1.438-1.613c.807 0 1.45.73 1.438 1.613 0 .888-.637 1.612-1.438 1.612m5.316 0c-.788 0-1.438-.724-1.438-1.612s.637-1.613 1.438-1.613c.807 0 1.451.73 1.438 1.613 0 .888-.631 1.612-1.438 1.612"/>
