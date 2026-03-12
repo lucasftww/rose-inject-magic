@@ -231,15 +231,16 @@ const TicketsTab = () => {
   };
 
   const uploadFileToStorage = async (file: File): Promise<string | null> => {
+    if (!user || !selectedTicket) return null;
     const ext = file.name.split(".").pop() || "bin";
-    const path = `ticket-files/${selectedTicket!.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-    const { error } = await supabase.storage.from("game-images").upload(path, file, { upsert: false });
+    const path = `${selectedTicket.user_id}/${selectedTicket.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const { error } = await supabase.storage.from("ticket-files").upload(path, file, { upsert: false });
     if (error) {
       console.error("Upload error:", error);
       return null;
     }
-    const { data: urlData } = supabase.storage.from("game-images").getPublicUrl(path);
-    return urlData.publicUrl;
+    const { data: urlData } = await supabase.storage.from("ticket-files").createSignedUrl(path, 7 * 24 * 3600);
+    return urlData?.signedUrl || null;
   };
 
   const handleSendAudio = async () => {
@@ -249,20 +250,20 @@ const TicketsTab = () => {
       const blob = await stopRecording();
       if (!blob) { setSending(false); return; }
       setUploadingFile(true);
-      const path = `ticket-files/${selectedTicket.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.webm`;
-      const { error: uploadError } = await supabase.storage.from("game-images").upload(path, blob, { upsert: false, contentType: blob.type });
+      const path = `${selectedTicket.user_id}/${selectedTicket.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.webm`;
+      const { error: uploadError } = await supabase.storage.from("ticket-files").upload(path, blob, { upsert: false, contentType: blob.type });
       if (uploadError) {
         toast({ title: "Erro no upload do áudio", description: uploadError.message, variant: "destructive" });
         setUploadingFile(false);
         setSending(false);
         return;
       }
-      const { data: urlData } = supabase.storage.from("game-images").getPublicUrl(path);
+      const { data: urlData } = await supabase.storage.from("ticket-files").createSignedUrl(path, 7 * 24 * 3600);
       const { data: insertedMsg, error } = await supabase.from("ticket_messages").insert({
         ticket_id: selectedTicket.id,
         sender_id: user.id,
         sender_role: "staff",
-        message: `[AUDIO]${urlData.publicUrl}`,
+        message: `[AUDIO]${urlData?.signedUrl || ""}`,
       }).select().single();
       if (error) {
         toast({ title: "Erro", description: error.message, variant: "destructive" });
