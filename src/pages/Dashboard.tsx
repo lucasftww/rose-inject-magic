@@ -400,7 +400,7 @@ const Dashboard = () => {
               </div>
 
               {/* Summary strip */}
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="rounded-lg border border-border bg-card px-4 py-3 flex items-center gap-3">
                   <div className="h-8 w-8 rounded-lg bg-success/10 flex items-center justify-center shrink-0">
                     <Package className="h-4 w-4 text-success" />
