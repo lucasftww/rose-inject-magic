@@ -698,14 +698,14 @@ const ProductsTab = () => {
                             <div className="mt-2 text-[10px] text-muted-foreground space-y-0.5">
                               <p>Versão: {rg.version} · Status: <span className={rg.status === "on" ? "text-success" : "text-destructive"}>{rg.status}</span> · Câmbio: R${robotUsdToBrl.toFixed(2)}/USD</p>
                               {Object.keys(rg.prices).length > 0 && (
-                                <div className="mt-1 space-y-0.5">
-                                  <p className="font-medium text-foreground/80">Seu custo (revenda -40%):</p>
+                                 <div className="mt-1 space-y-0.5">
+                                  <p className="font-medium text-foreground/80">Preços API (40% volta como cashback):</p>
                                   <p>{Object.entries(rg.prices).map(([d, p]) => {
-                                    const resellerUsd = Number(p) * 0.6;
-                                    const resellerBrl = resellerUsd * robotUsdToBrl;
-                                    return `${d}d = $${resellerUsd.toFixed(2)} (R$${resellerBrl.toFixed(2)})`;
+                                    const usd = Number(p);
+                                    const brl = usd * robotUsdToBrl;
+                                    return `${d}d = $${usd.toFixed(2)} (R$${brl.toFixed(2)})`;
                                   }).join(" · ")}</p>
-                                  
+                                   
                                 </div>
                               )}
                               {rg.maxKeys && <p>Slots: {rg.soldKeys}/{rg.maxKeys}</p>}
