@@ -345,8 +345,8 @@ const ProductsTab = () => {
           features_text: formFeaturesText.trim() || null,
           image_url: formImageUrl.trim() || null, game_id: formGameId, active: formActive,
           sort_order: products.length,
-          robot_game_id: formRobotGameId || null,
-          robot_markup_percent: formRobotMarkup || null,
+          robot_game_id: robotEnabled && formRobotGameId ? formRobotGameId : null,
+          robot_markup_percent: robotEnabled && formRobotMarkup ? formRobotMarkup : null,
         } as any).select().single();
         if (error) throw error;
 
