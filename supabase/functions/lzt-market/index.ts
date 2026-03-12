@@ -292,15 +292,30 @@ Deno.serve(async (req) => {
 
     const data = await response.json();
 
-    // Filter out accounts with less than 30 days of inactivity
-    if (data.items && Array.isArray(data.items)) {
+    // For LIST responses, strip heavy fields to reduce egress (~80% reduction per item)
+    if (action !== "detail" && data.items && Array.isArray(data.items)) {
+      const STRIP_FIELDS = [
+        "description", "description_en", "title_en",
+        "copyFormatData", "feedback_data", "category",
+        "canViewLoginData", "canViewTempEmail", "canUpdateItemStats",
+        "canReportItem", "canViewItemViews", "canManagePublicTag",
+        "canViewEmailLoginData", "showGetEmailCodeButton", "canOpenItem",
+        "canCloseItem", "canEditItem", "canDeleteItem", "canStickItem",
+        "canUnstickItem", "canBumpItem", "canNotBumpItemReason",
+        "canValidateAccount", "canResellItem", "canBuyItem",
+        "buyer", "isPersonalAccount", "guarantee", "extended_guarantee",
+        "isSmallExf", "auto_bump_period",
+        "pending_deletion_date", "update_stat_date",
+      ];
+
+      // Filter out accounts with less than 30 days of inactivity
       const thirtyDaysAgo = Math.floor(Date.now() / 1000) - (30 * 24 * 60 * 60);
       data.items = data.items.filter((item: any) => {
         const lastActivity = item.riot_last_activity || item.account_last_activity || 0;
         return lastActivity === 0 || lastActivity <= thirtyDaysAgo;
       });
 
-      // Add price_brl (with markup) to each item so client doesn't need markup config
+      // Add price_brl and strip heavy fields
       const RUB_TO_BRL = 0.055;
       const MIN_PRICE_BRL = 20;
       const gameType = url.searchParams.get("game_type") || "riot";
@@ -310,33 +325,64 @@ Deno.serve(async (req) => {
       else if (gameType === "minecraft") itemMarkup = lztConfig?.markup_minecraft || itemMarkup;
 
       for (const item of data.items) {
+        // Calculate price
         const currency = item.price_currency || "rub";
         let brl = currency === "rub" ? item.price * RUB_TO_BRL : item.price;
         const final = brl * itemMarkup;
         item.price_brl = final < MIN_PRICE_BRL ? MIN_PRICE_BRL : Math.round(final * 100) / 100;
+
+        // Strip heavy fields
+        for (const field of STRIP_FIELDS) delete item[field];
+
+        // Trim valorantInventory to max 12 items per category (enough for preview)
+        if (item.valorantInventory) {
+          const inv = item.valorantInventory;
+          const trimmed: Record<string, any> = {};
+          for (const [key, val] of Object.entries(inv)) {
+            if (val && typeof val === "object") {
+              const entries = Object.entries(val);
+              if (entries.length > 12) {
+                trimmed[key] = Object.fromEntries(entries.slice(0, 12));
+              } else {
+                trimmed[key] = val;
+              }
+            } else {
+              trimmed[key] = val;
+            }
+          }
+          item.valorantInventory = trimmed;
+        }
       }
+    } else if (data.items && Array.isArray(data.items)) {
+      // Non-detail but no special processing needed
     }
 
-    // For detail action, also add price_brl
+    // For detail action, also add price_brl (keep full data)
     if (action === "detail" && data.item) {
       const RUB_TO_BRL = 0.055;
       const MIN_PRICE_BRL = 20;
-      // Detect game type from the item's category or URL param
       const detailGameType = url.searchParams.get("game_type") || "";
       let detailMarkup = lztConfig?.markup_multiplier || 1.5;
       if (detailGameType === "valorant" || detailGameType === "riot") detailMarkup = lztConfig?.markup_valorant || detailMarkup;
       else if (detailGameType === "lol") detailMarkup = lztConfig?.markup_lol || detailMarkup;
       else if (detailGameType === "fortnite") detailMarkup = lztConfig?.markup_fortnite || detailMarkup;
       else if (detailGameType === "minecraft") detailMarkup = lztConfig?.markup_minecraft || detailMarkup;
-      else detailMarkup = lztConfig?.markup_valorant || detailMarkup; // fallback to valorant
+      else detailMarkup = lztConfig?.markup_valorant || detailMarkup;
       const currency = data.item.price_currency || "rub";
       let brl = currency === "rub" ? data.item.price * RUB_TO_BRL : data.item.price;
       const final = brl * detailMarkup;
       data.item.price_brl = final < MIN_PRICE_BRL ? MIN_PRICE_BRL : Math.round(final * 100) / 100;
     }
 
+    // Add cache headers: list responses cached 2 min, detail cached 30s
+    const cacheMaxAge = action === "detail" ? 30 : 120;
+
     return new Response(JSON.stringify(data), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/json",
+        "Cache-Control": `public, max-age=${cacheMaxAge}, s-maxage=${cacheMaxAge}`,
+      },
     });
   } catch (error: any) {
     console.error("Edge function error:", error);
