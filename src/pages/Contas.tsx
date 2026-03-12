@@ -1331,7 +1331,7 @@ const Contas = () => {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 pt-4 pb-20">
 
         {/* ─── Game Tab Switcher ─── */}
-        <div className="flex items-center gap-3 mb-8">
+        <div className="flex items-center gap-2 sm:gap-3 mb-6 sm:mb-8 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0 pb-1">
           <button
             onClick={() => switchTab("valorant")}
             className={`flex items-center gap-2.5 rounded-lg border px-5 py-3 text-sm font-bold transition-all ${
