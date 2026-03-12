@@ -677,7 +677,7 @@ const ProductsTab = () => {
                           </button>
                         </div>
                         {formRobotGameId && formRobotGameId > 0 && robotGames.length > 0 && (() => {
-                          const rg = robotGames.find(g => g.id === formRobotGameId);
+                          const rg = robotGames.find(g => Number(g.id) === Number(formRobotGameId));
                           if (!rg) return null;
                           return (
                             <div className="mt-2 text-[10px] text-muted-foreground space-y-0.5">
