@@ -109,7 +109,7 @@ const Header = () => {
           boxShadow: scrolled ? "0 4px 30px hsla(0,0%,0%,0.3)" : "none",
         }}
       >
-        <div className="mx-auto flex h-14 sm:h-16 lg:h-[72px] max-w-7xl items-center justify-between px-3 sm:px-4 lg:px-6">
+        <div className="mx-auto flex h-14 sm:h-16 lg:h-[72px] max-w-7xl items-center justify-between px-3 sm:px-4 lg:px-6 pl-3 sm:pl-4 lg:pl-6 pr-12 sm:pr-4 lg:pr-6">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 lg:gap-3 shrink-0 group">
             <motion.img
@@ -317,7 +317,7 @@ const Header = () => {
             {/* Mobile hamburger */}
             <motion.button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 mr-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
+              className="lg:hidden absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
               whileTap={{ scale: 0.9 }}
             >
               <AnimatePresence mode="wait">
