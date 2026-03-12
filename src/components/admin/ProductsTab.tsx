@@ -558,7 +558,7 @@ const ProductsTab = () => {
                   const selectedRobotGame = robotEnabled && formRobotGameId ? robotGames.find(g => g.id === formRobotGameId) : null;
                   const robotBasePriceUsd = selectedRobotGame && plan.robot_duration_days
                     ? selectedRobotGame.prices?.[String(plan.robot_duration_days)] : undefined;
-                  const robotBasePriceBrl = robotBasePriceUsd !== undefined ? Number(robotBasePriceUsd) * ROBOT_USD_TO_BRL : undefined;
+                  const robotBasePriceBrl = robotBasePriceUsd !== undefined ? Number(robotBasePriceUsd) * robotUsdToBrl : undefined;
                   const suggestedPrice = robotBasePriceBrl !== undefined && formRobotMarkup
                     ? Number((robotBasePriceBrl * (1 + formRobotMarkup / 100)).toFixed(2)) : null;
 
