@@ -121,6 +121,7 @@ const ProductsTab = () => {
   const [formRobotMarkup, setFormRobotMarkup] = useState<number | null>(null);
   const [robotGames, setRobotGames] = useState<RobotGame[]>([]);
   const [loadingRobotGames, setLoadingRobotGames] = useState(false);
+  const [robotUsdToBrl, setRobotUsdToBrl] = useState(ROBOT_USD_TO_BRL);
 
   const fetchRobotGames = async () => {
     setLoadingRobotGames(true);
