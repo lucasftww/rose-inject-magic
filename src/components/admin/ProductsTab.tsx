@@ -518,9 +518,10 @@ const ProductsTab = () => {
                       if (!rg || !rg.prices) return;
                       const updated = formPlans.map(p => {
                         if (!p.robot_duration_days) return p;
-                        const robotPrice = rg.prices[String(p.robot_duration_days)];
-                        if (robotPrice === undefined) return p;
-                        const calc = Number((robotPrice * (1 + (formRobotMarkup || 0) / 100)).toFixed(2));
+                        const robotPriceUsd = rg.prices[String(p.robot_duration_days)];
+                        if (robotPriceUsd === undefined) return p;
+                        const robotPriceBrl = Number(robotPriceUsd) * ROBOT_USD_TO_BRL;
+                        const calc = Number((robotPriceBrl * (1 + (formRobotMarkup || 0) / 100)).toFixed(2));
                         return { ...p, price: calc };
                       });
                       setFormPlans(updated);
