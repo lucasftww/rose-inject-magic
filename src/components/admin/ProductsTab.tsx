@@ -179,8 +179,11 @@ const ProductsTab = () => {
     setFormActive(product.active);
     setImagePreview(product.image_url || null);
     setImageMode("url");
+    const hasRobot = !!product.robot_game_id && product.robot_game_id > 0;
+    setRobotEnabled(hasRobot);
     setFormRobotGameId(product.robot_game_id || null);
     setFormRobotMarkup(product.robot_markup_percent || null);
+    if (hasRobot) fetchRobotGames();
 
     // Fetch tutorial data from separate secure table
     const { data: tutorialData } = await supabase.from("product_tutorials").select("tutorial_text, tutorial_file_url").eq("product_id", product.id).maybeSingle();
