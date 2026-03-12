@@ -781,9 +781,9 @@ const ContaDetalhes = () => {
 
             {/* Inventory Tabs - Full width below */}
             {(skinUuids.length > 0 || agentUuids.length > 0 || buddyUuids.length > 0) && (
-              <div className="mt-5">
+              <div className="mt-4 sm:mt-5">
                 {/* Tab buttons */}
-                <div className="flex w-full gap-1.5 sm:gap-2 mb-5">
+                <div className="flex w-full gap-1 sm:gap-2 mb-4 sm:mb-5">
                   {tabs.map((tab) => (
                     <button
                       key={tab.key}
