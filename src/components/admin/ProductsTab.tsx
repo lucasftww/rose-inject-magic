@@ -842,8 +842,9 @@ const ProductsTab = () => {
                 <p className="text-[10px] text-muted-foreground/60 mt-1">O texto e/ou arquivo serão enviados automaticamente no chat do ticket quando o cliente comprar.</p>
               </div>
             </div>
+            )}
 
-            {/* Active toggle */}
+
             <label className="flex cursor-pointer items-center gap-3">
               <div className="relative">
                 <input type="checkbox" checked={formActive} onChange={(e) => setFormActive(e.target.checked)} className="peer sr-only" />
