@@ -811,7 +811,7 @@ const Raspadinha = () => {
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="text-center text-xs text-muted-foreground mb-8"
+            className="text-center text-xs text-muted-foreground mb-6 sm:mb-8 px-4"
           >
             {mode === "produtos"
               ? "🎁 Ganhe produtos do nosso catálogo — hacks, cheats e ferramentas exclusivas."
