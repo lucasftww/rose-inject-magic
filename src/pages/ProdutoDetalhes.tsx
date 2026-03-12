@@ -358,7 +358,7 @@ const ProdutoDetalhes = () => {
 
             {/* Thumbnails */}
             {allMedia.length > 1 && (
-              <div className="mt-4 flex gap-2 overflow-x-auto pb-2">
+              <div className="mt-3 sm:mt-4 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
                 {allMedia.map((media, idx) => (
                   <button
                     key={media.id}
