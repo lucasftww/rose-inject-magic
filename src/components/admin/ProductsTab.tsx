@@ -528,29 +528,30 @@ const ProductsTab = () => {
               <div className="flex items-center justify-between mb-3">
                 <label className="text-xs font-medium text-muted-foreground">Planos / Sub-produtos</label>
                 <div className="flex items-center gap-2">
-                  {robotEnabled && formRobotMarkup && formRobotGameId && robotGames.length > 0 && (
+                  {robotEnabled && formRobotMarkup !== null && formRobotGameId && robotGames.length > 0 && (
                     <button type="button" onClick={() => {
-                      const rg = robotGames.find(g => g.id === formRobotGameId);
-                      console.log("Auto-fill debug:", { formRobotGameId, formRobotMarkup, robotGamesCount: robotGames.length, foundGame: !!rg, gameId: rg?.id, prices: rg?.prices });
+                      const rg = robotGames.find(g => Number(g.id) === Number(formRobotGameId));
                       if (!rg || !rg.prices) {
                         toast({ title: "Jogo Robot não encontrado ou sem preços", variant: "destructive" });
                         return;
                       }
-                      const updated = formPlans.map(p => {
-                        console.log("Plan:", p.name, "duration_days:", p.robot_duration_days, "type:", typeof p.robot_duration_days);
+                      let filledCount = 0;
+                      const updated = formPlans.map((p) => {
                         if (!p.robot_duration_days) return p;
                         const robotPriceUsd = rg.prices[String(p.robot_duration_days)];
-                        console.log("Looking for price key:", String(p.robot_duration_days), "found:", robotPriceUsd, "available keys:", Object.keys(rg.prices));
                         if (robotPriceUsd === undefined) return p;
-                        // API retorna preço cheio — aplicar desconto de revendedor (-40%) antes do markup
                         const robotCostUsd = Number(robotPriceUsd) * 0.6;
                         const robotPriceBrl = robotCostUsd * robotUsdToBrl;
                         const calc = Number((robotPriceBrl * (1 + (formRobotMarkup || 0) / 100)).toFixed(2));
-                        console.log("Calculated price:", calc);
+                        filledCount += 1;
                         return { ...p, price: calc };
                       });
                       setFormPlans(updated);
-                      toast({ title: "Preços preenchidos com markup!" });
+                      toast({
+                        title: filledCount > 0 ? "Preços preenchidos com markup!" : "Nenhum plano foi atualizado",
+                        description: filledCount > 0 ? undefined : "Verifique se os dias dos planos batem com a API (ex: 1, 7, 30).",
+                        variant: filledCount > 0 ? undefined : "destructive",
+                      });
                     }}
                       className="flex items-center gap-1 rounded-lg bg-accent/10 border border-accent/30 px-3 py-1 text-xs font-medium text-accent-foreground hover:bg-accent/20">
                       <DollarSign className="h-3 w-3" /> Auto-preencher preços
