@@ -185,8 +185,10 @@ type SkinRankMeta = {
 const getSkinRankMeta = (name: string, _rarityPriority: number): SkinRankMeta => {
   const normalized = normalizeSkinName(name);
 
-  const lineageRank =
-    LINEAGE_TIERS.find((tier) => tier.hints.some((hint) => normalized.includes(hint)))?.rank || 0;
+  const lineageIndex = LINEAGE_ORDER_HINTS.findIndex((hints) =>
+    hints.some((hint) => normalized.includes(hint)),
+  );
+  const lineageRank = lineageIndex === -1 ? 0 : LINEAGE_ORDER_HINTS.length - lineageIndex;
 
   // Pedido do usuário: ordenar APENAS por linhagem
   const weaponRank = 0;
