@@ -284,114 +284,129 @@ async function fulfillOrder(supabaseAdmin: any, payment: any) {
     }
 
     // Regular product fulfillment
+    // Check if this product uses Robot Project API
+    const { data: productData } = await supabaseAdmin
+      .from("products")
+      .select("robot_game_id, robot_markup_percent")
+      .eq("id", item.productId)
+      .maybeSingle();
+
+    const { data: planData } = await supabaseAdmin
+      .from("product_plans")
+      .select("price, robot_duration_days")
+      .eq("id", item.planId)
+      .maybeSingle();
+
+    const isRobotProduct = productData?.robot_game_id && productData.robot_game_id > 0;
     let originalPrice = item.price || 0;
-    if (resellerData) {
-      const { data: planData } = await supabaseAdmin
-        .from("product_plans")
-        .select("price")
-        .eq("id", item.planId)
-        .single();
-      if (planData) originalPrice = Number(planData.price);
+    if (resellerData && planData) {
+      originalPrice = Number(planData.price);
     }
 
     for (let i = 0; i < (item.quantity || 1); i++) {
-      const { data: stockItem } = await supabaseAdmin
-        .from("stock_items")
-        .select("id")
-        .eq("product_plan_id", item.planId)
-        .eq("used", false)
-        .limit(1)
-        .single();
-
-      const stockId = stockItem?.id || null;
-
-      if (stockId) {
-        await supabaseAdmin
+      if (isRobotProduct) {
+        // Robot Project fulfillment - buy key via API
+        await fulfillRobotProduct(supabaseAdmin, payment, item, productData, planData);
+      } else {
+        // Standard stock-based fulfillment
+        const { data: stockItem } = await supabaseAdmin
           .from("stock_items")
-          .update({ used: true, used_at: new Date().toISOString() })
-          .eq("id", stockId);
-      }
+          .select("id")
+          .eq("product_plan_id", item.planId)
+          .eq("used", false)
+          .limit(1)
+          .single();
 
-      const { data: ticket } = await supabaseAdmin
-        .from("order_tickets")
-        .insert({
-          user_id: payment.user_id,
-          product_id: item.productId,
-          product_plan_id: item.planId,
-          stock_item_id: stockId,
-          status: stockId ? "delivered" : "open",
-          status_label: stockId ? "Entregue" : "Aguardando Equipe",
-        })
-        .select("id")
-        .single();
+        const stockId = stockItem?.id || null;
 
-      if (ticket && !stockId) {
-        await supabaseAdmin.from("ticket_messages").insert({
-          ticket_id: ticket.id,
-          sender_id: payment.user_id,
-          sender_role: "staff",
-          message: "⏳ Seu pagamento foi confirmado! No momento não temos este item em estoque. Nossa equipe irá entregar manualmente em breve. Aguarde.",
-        });
-      }
-
-      if (ticket && stockId) {
-        await supabaseAdmin.from("ticket_messages").insert({
-          ticket_id: ticket.id,
-          sender_id: payment.user_id,
-          sender_role: "staff",
-          message: "✅ Seu produto foi entregue automaticamente! Veja a chave acima.",
-        });
-
-        const { data: productData } = await supabaseAdmin
-          .from("product_tutorials")
-          .select("tutorial_text, tutorial_file_url")
-          .eq("product_id", item.productId)
-          .maybeSingle();
-
-        if (productData?.tutorial_text) {
-          const txtContent = productData.tutorial_text;
-          const txtBlob = new Blob([txtContent], { type: "text/plain" });
-          const txtPath = `tutorials/${crypto.randomUUID()}.txt`;
-          const { error: uploadErr } = await supabaseAdmin.storage
-            .from("game-images")
-            .upload(txtPath, txtBlob, { contentType: "text/plain" });
-
-          if (!uploadErr) {
-            const { data: urlData } = supabaseAdmin.storage.from("game-images").getPublicUrl(txtPath);
-            await supabaseAdmin.from("ticket_messages").insert({
-              ticket_id: ticket.id,
-              sender_id: payment.user_id,
-              sender_role: "staff",
-              message: `📖 **Tutorial:** ${urlData.publicUrl}`,
-            });
-          }
+        if (stockId) {
+          await supabaseAdmin
+            .from("stock_items")
+            .update({ used: true, used_at: new Date().toISOString() })
+            .eq("id", stockId);
         }
 
-        if (productData?.tutorial_file_url) {
+        const { data: ticket } = await supabaseAdmin
+          .from("order_tickets")
+          .insert({
+            user_id: payment.user_id,
+            product_id: item.productId,
+            product_plan_id: item.planId,
+            stock_item_id: stockId,
+            status: stockId ? "delivered" : "open",
+            status_label: stockId ? "Entregue" : "Aguardando Equipe",
+          })
+          .select("id")
+          .single();
+
+        if (ticket && !stockId) {
           await supabaseAdmin.from("ticket_messages").insert({
             ticket_id: ticket.id,
             sender_id: payment.user_id,
             sender_role: "staff",
-            message: `📎 **Arquivo:** ${productData.tutorial_file_url}`,
+            message: "⏳ Seu pagamento foi confirmado! No momento não temos este item em estoque. Nossa equipe irá entregar manualmente em breve. Aguarde.",
           });
         }
-      }
 
-      if (resellerData && stockId) {
-        await supabaseAdmin.from("reseller_purchases").insert({
-          reseller_id: resellerData.id,
-          product_plan_id: item.planId,
-          stock_item_id: stockId,
-          original_price: originalPrice,
-          paid_price: item.price || 0,
-        });
+        if (ticket && stockId) {
+          await supabaseAdmin.from("ticket_messages").insert({
+            ticket_id: ticket.id,
+            sender_id: payment.user_id,
+            sender_role: "staff",
+            message: "✅ Seu produto foi entregue automaticamente! Veja a chave acima.",
+          });
 
-        await supabaseAdmin.rpc("increment_reseller_purchases", { _reseller_id: resellerData.id }).catch(() => {
-          supabaseAdmin
-            .from("resellers")
-            .update({ total_purchases: (resellerData.total_purchases || 0) + 1 })
-            .eq("id", resellerData.id);
-        });
+          const { data: tutorialData } = await supabaseAdmin
+            .from("product_tutorials")
+            .select("tutorial_text, tutorial_file_url")
+            .eq("product_id", item.productId)
+            .maybeSingle();
+
+          if (tutorialData?.tutorial_text) {
+            const txtContent = tutorialData.tutorial_text;
+            const txtBlob = new Blob([txtContent], { type: "text/plain" });
+            const txtPath = `tutorials/${crypto.randomUUID()}.txt`;
+            const { error: uploadErr } = await supabaseAdmin.storage
+              .from("game-images")
+              .upload(txtPath, txtBlob, { contentType: "text/plain" });
+
+            if (!uploadErr) {
+              const { data: urlData } = supabaseAdmin.storage.from("game-images").getPublicUrl(txtPath);
+              await supabaseAdmin.from("ticket_messages").insert({
+                ticket_id: ticket.id,
+                sender_id: payment.user_id,
+                sender_role: "staff",
+                message: `📖 **Tutorial:** ${urlData.publicUrl}`,
+              });
+            }
+          }
+
+          if (tutorialData?.tutorial_file_url) {
+            await supabaseAdmin.from("ticket_messages").insert({
+              ticket_id: ticket.id,
+              sender_id: payment.user_id,
+              sender_role: "staff",
+              message: `📎 **Arquivo:** ${tutorialData.tutorial_file_url}`,
+            });
+          }
+        }
+
+        if (resellerData && stockId) {
+          await supabaseAdmin.from("reseller_purchases").insert({
+            reseller_id: resellerData.id,
+            product_plan_id: item.planId,
+            stock_item_id: stockId,
+            original_price: originalPrice,
+            paid_price: item.price || 0,
+          });
+
+          await supabaseAdmin.rpc("increment_reseller_purchases", { _reseller_id: resellerData.id }).catch(() => {
+            supabaseAdmin
+              .from("resellers")
+              .update({ total_purchases: (resellerData.total_purchases || 0) + 1 })
+              .eq("id", resellerData.id);
+          });
+        }
       }
     }
   }
