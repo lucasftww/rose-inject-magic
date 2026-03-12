@@ -575,12 +575,12 @@ const ContaDetalhes = () => {
         {item && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
             {/* Breadcrumb */}
-            <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
-              <button onClick={() => navigate("/")} className="hover:text-success transition-colors">Início</button>
-              <ChevronRight className="h-3 w-3" />
-              <button onClick={() => navigate("/contas")} className="hover:text-success transition-colors">Valorant</button>
-              <ChevronRight className="h-3 w-3" />
-              <span className="text-foreground font-medium">{rank?.name || "Unranked"}</span>
+            <div className="mb-4 sm:mb-6 flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground overflow-x-auto scrollbar-hide">
+              <button onClick={() => navigate("/")} className="hover:text-success transition-colors shrink-0">Início</button>
+              <ChevronRight className="h-3 w-3 shrink-0" />
+              <button onClick={() => navigate("/contas")} className="hover:text-success transition-colors shrink-0">Valorant</button>
+              <ChevronRight className="h-3 w-3 shrink-0" />
+              <span className="text-foreground font-medium truncate">{rank?.name || "Unranked"}</span>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
