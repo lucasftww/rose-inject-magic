@@ -1,14 +1,18 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, RefreshCw, Wifi, WifiOff, Gamepad2, AlertTriangle, CheckCircle, Package, DollarSign } from "lucide-react";
+import { Loader2, RefreshCw, Wifi, WifiOff, Gamepad2, AlertTriangle, CheckCircle, Package, DollarSign, Clock, Zap } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface RobotGame {
   id: number;
   name: string;
-  price?: number;
-  available?: boolean;
-  slots?: number;
+  version: string;
+  status: string;
+  icon: string;
+  is_free: boolean;
+  prices: Record<string, number>;
+  maxKeys: number | null;
+  soldKeys: number;
 }
 
 interface ProductWithRobot {
@@ -29,20 +33,9 @@ const RobotProjectTab = () => {
   const [loadingGames, setLoadingGames] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
 
-  const getAuthHeaders = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    return { Authorization: `Bearer ${session?.access_token}` };
-  };
-
   const checkPing = async () => {
     setPingStatus("loading");
     try {
-      const res = await supabase.functions.invoke("robot-project", {
-        headers: await getAuthHeaders(),
-        body: {},
-        method: "GET",
-      });
-      // Use fetch directly since invoke doesn't support query params well
       const { data: { session } } = await supabase.auth.getSession();
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/robot-project?action=ping`,
@@ -53,11 +46,7 @@ const RobotProjectTab = () => {
           },
         }
       );
-      if (response.ok) {
-        setPingStatus("online");
-      } else {
-        setPingStatus("offline");
-      }
+      setPingStatus(response.ok ? "online" : "offline");
     } catch {
       setPingStatus("offline");
     }
@@ -89,7 +78,6 @@ const RobotProjectTab = () => {
   };
 
   const fetchProductsWithRobot = async () => {
-    // Get all products that have robot_game_id set
     const { data: products } = await supabase
       .from("products")
       .select("id, name, image_url, robot_game_id, robot_markup_percent")
@@ -101,7 +89,6 @@ const RobotProjectTab = () => {
       return;
     }
 
-    // Get stock counts for each product's plans
     const productIds = products.map(p => p.id);
     const { data: plans } = await supabase
       .from("product_plans")
@@ -164,7 +151,7 @@ const RobotProjectTab = () => {
         </p>
       )}
 
-      {/* Status Card */}
+      {/* Status Cards */}
       <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* API Status */}
         <div className="rounded-lg border border-border bg-card p-5">
@@ -239,50 +226,58 @@ const RobotProjectTab = () => {
           </div>
         ) : (
           <div className="space-y-2">
-            {productsWithRobot.map(product => (
-              <div
-                key={product.id}
-                className={`flex items-center gap-4 rounded-lg border p-4 ${
-                  product.hasStock
-                    ? "border-border bg-card"
-                    : "border-warning/30 bg-warning/5"
-                }`}
-              >
-                {product.image_url ? (
-                  <img src={product.image_url} alt="" className="h-12 w-12 rounded-lg border border-border object-cover" />
-                ) : (
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-border bg-secondary">
-                    <Package className="h-5 w-5 text-muted-foreground/40" />
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-foreground truncate">{product.name}</p>
-                  <div className="flex items-center gap-3 mt-1">
-                    <span className="text-[11px] text-muted-foreground">
-                      Robot ID: <span className="font-mono text-foreground">{product.robot_game_id}</span>
-                    </span>
-                    {product.robot_markup_percent && (
+            {productsWithRobot.map(product => {
+              const linkedGame = robotGames.find(g => g.id === product.robot_game_id);
+              return (
+                <div
+                  key={product.id}
+                  className={`flex items-center gap-4 rounded-lg border p-4 ${
+                    product.hasStock
+                      ? "border-border bg-card"
+                      : "border-warning/30 bg-warning/5"
+                  }`}
+                >
+                  {product.image_url ? (
+                    <img src={product.image_url} alt="" className="h-12 w-12 rounded-lg border border-border object-cover" />
+                  ) : (
+                    <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-border bg-secondary">
+                      <Package className="h-5 w-5 text-muted-foreground/40" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-foreground truncate">{product.name}</p>
+                    <div className="flex items-center gap-3 mt-1 flex-wrap">
                       <span className="text-[11px] text-muted-foreground">
-                        Markup: <span className="font-mono text-foreground">{product.robot_markup_percent}%</span>
+                        Robot ID: <span className="font-mono text-foreground">{product.robot_game_id}</span>
+                      </span>
+                      {product.robot_markup_percent && (
+                        <span className="text-[11px] text-muted-foreground">
+                          Markup: <span className="font-mono text-foreground">{product.robot_markup_percent}%</span>
+                        </span>
+                      )}
+                      {linkedGame && (
+                        <span className={`text-[11px] ${linkedGame.status === "on" ? "text-success" : "text-destructive"}`}>
+                          {linkedGame.status === "on" ? "● Online" : "● Offline"}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {product.hasStock ? (
+                      <span className="flex items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-xs font-bold text-success">
+                        <CheckCircle className="h-3.5 w-3.5" />
+                        {product.stockCount} em estoque
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1.5 rounded-full bg-warning/10 px-3 py-1 text-xs font-bold text-warning">
+                        <AlertTriangle className="h-3.5 w-3.5" />
+                        Sem estoque
                       </span>
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  {product.hasStock ? (
-                    <span className="flex items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-xs font-bold text-success">
-                      <CheckCircle className="h-3.5 w-3.5" />
-                      {product.stockCount} em estoque
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-1.5 rounded-full bg-warning/10 px-3 py-1 text-xs font-bold text-warning">
-                      <AlertTriangle className="h-3.5 w-3.5" />
-                      Sem estoque
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -308,6 +303,9 @@ const RobotProjectTab = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {robotGames.map(game => {
               const linkedProduct = productsWithRobot.find(p => p.robot_game_id === game.id);
+              const priceEntries = game.prices ? Object.entries(game.prices) : [];
+              const slotsAvailable = game.maxKeys ? game.maxKeys - game.soldKeys : null;
+
               return (
                 <div
                   key={game.id}
@@ -318,7 +316,16 @@ const RobotProjectTab = () => {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-bold text-foreground">{game.name}</p>
-                      <p className="text-[11px] text-muted-foreground mt-0.5">ID: {game.id}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <p className="text-[11px] text-muted-foreground">ID: {game.id}</p>
+                        <span className="text-[10px] text-muted-foreground">v{game.version}</span>
+                        <span className={`text-[10px] font-bold ${game.status === "on" ? "text-success" : "text-destructive"}`}>
+                          {game.status === "on" ? "● ON" : "● OFF"}
+                        </span>
+                        {game.is_free && (
+                          <span className="rounded bg-accent/20 px-1.5 py-0.5 text-[9px] font-bold text-accent-foreground">FREE</span>
+                        )}
+                      </div>
                     </div>
                     {linkedProduct ? (
                       <span className="rounded bg-success/20 px-2 py-0.5 text-[10px] font-bold text-success">
@@ -330,11 +337,57 @@ const RobotProjectTab = () => {
                       </span>
                     )}
                   </div>
-                  {game.price !== undefined && (
-                    <p className="mt-2 text-xs text-muted-foreground flex items-center gap-1">
-                      <DollarSign className="h-3 w-3" />
-                      Preço base: R$ {Number(game.price).toFixed(2)}
-                    </p>
+
+                  {/* Prices by duration */}
+                  {priceEntries.length > 0 && (
+                    <div className="mt-3 space-y-1">
+                      <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                        <DollarSign className="h-3 w-3" /> Preços por duração
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {priceEntries.map(([days, price]) => (
+                          <span key={days} className="inline-flex items-center gap-1 rounded-md bg-secondary/60 border border-border px-2 py-0.5 text-[11px]">
+                            <Clock className="h-2.5 w-2.5 text-muted-foreground" />
+                            <span className="text-muted-foreground">{days}d</span>
+                            <span className="font-bold text-foreground">R${Number(price).toFixed(2)}</span>
+                          </span>
+                        ))}
+                      </div>
+                      {linkedProduct?.robot_markup_percent && (
+                        <div className="flex flex-wrap gap-1.5 mt-1">
+                          {priceEntries.map(([days, price]) => {
+                            const withMarkup = Number(price) * (1 + (linkedProduct.robot_markup_percent || 0) / 100);
+                            return (
+                              <span key={`mk-${days}`} className="inline-flex items-center gap-1 rounded-md bg-accent/10 border border-accent/20 px-2 py-0.5 text-[11px]">
+                                <Zap className="h-2.5 w-2.5 text-accent-foreground" />
+                                <span className="text-muted-foreground">{days}d</span>
+                                <span className="font-bold text-accent-foreground">R${withMarkup.toFixed(2)}</span>
+                                <span className="text-[9px] text-muted-foreground">+{linkedProduct.robot_markup_percent}%</span>
+                              </span>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Slots info */}
+                  {game.maxKeys !== null && game.maxKeys > 0 && (
+                    <div className="mt-2 flex items-center gap-2">
+                      <div className="flex-1 h-1.5 rounded-full bg-secondary overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all ${
+                            slotsAvailable !== null && slotsAvailable <= 5 ? "bg-warning" : "bg-success"
+                          }`}
+                          style={{ width: `${Math.min(100, ((game.soldKeys || 0) / game.maxKeys) * 100)}%` }}
+                        />
+                      </div>
+                      <span className={`text-[10px] font-bold ${
+                        slotsAvailable !== null && slotsAvailable <= 5 ? "text-warning" : "text-muted-foreground"
+                      }`}>
+                        {game.soldKeys}/{game.maxKeys} slots
+                      </span>
+                    </div>
                   )}
                 </div>
               );
