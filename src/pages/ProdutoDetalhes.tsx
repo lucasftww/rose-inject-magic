@@ -113,22 +113,11 @@ const ProdutoDetalhes = () => {
         })));
       }
 
-      // Check stock for robot products
+      // Check stock for robot products — Robot products generate keys on-demand via API,
+      // so they don't need local stock. Only show "no stock" if the product has NO plans at all.
       if (data.robot_game_id) {
-        const activePlanIds = ((data as any).product_plans || [])
-          .filter((p: any) => p.active)
-          .map((p: any) => p.id);
-        if (activePlanIds.length > 0) {
-          const { data: stockData } = await supabase
-            .from("stock_items")
-            .select("id")
-            .in("product_plan_id", activePlanIds)
-            .eq("used", false)
-            .limit(1);
-          setRobotNoStock(!stockData || stockData.length === 0);
-        } else {
-          setRobotNoStock(true);
-        }
+        // Robot products are always "in stock" since keys are bought on-demand from the Robot API
+        setRobotNoStock(false);
       }
 
       setLoading(false);
