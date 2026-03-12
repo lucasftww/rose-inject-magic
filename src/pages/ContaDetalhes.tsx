@@ -810,7 +810,7 @@ const ContaDetalhes = () => {
 
                 {/* Items grid */}
                 {activeItems.length > 0 ? (
-                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3">
                     {activeItems.map((invItem: any, i: number) => (
                       <motion.div
                         key={`${activeTab}-${i}`}
