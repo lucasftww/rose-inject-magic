@@ -26,6 +26,11 @@ const testimonials = [
 
 const AuthModal = ({ open, onOpenChange, defaultTab = "login" }: AuthModalProps) => {
   const [tab, setTab] = useState<"login" | "register">(defaultTab);
+
+  // Sync internal tab when defaultTab prop changes
+  React.useEffect(() => {
+    if (open) setTab(defaultTab);
+  }, [defaultTab, open]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
