@@ -57,13 +57,6 @@ Deno.serve(async (req) => {
 
     // IMAGE PROXY: Proxy image requests to bypass CORS
     if (action === "image-proxy") {
-      // SECURITY: Require auth for image proxy
-      const user = await getAuthUser();
-      if (!user) {
-        return new Response(JSON.stringify({ error: "Unauthorized" }), {
-          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
       const imageUrl = url.searchParams.get("url");
       if (!imageUrl) {
         return new Response(JSON.stringify({ error: "url parameter required" }), {
