@@ -249,6 +249,8 @@ const ProductsTab = () => {
           name: formName.trim(), description: formDescription.trim() || null,
           features_text: formFeaturesText.trim() || null,
           image_url: formImageUrl.trim() || null, game_id: formGameId, active: formActive,
+          robot_game_id: formRobotGameId || null,
+          robot_markup_percent: formRobotMarkup || null,
         } as any).eq("id", editing.id);
         if (error) throw error;
 
