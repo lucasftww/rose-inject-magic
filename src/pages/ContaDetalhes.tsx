@@ -762,15 +762,15 @@ const ContaDetalhes = () => {
 
 
                 {/* Full Acesso */}
-                <div className="rounded-lg border border-border bg-card p-6 pb-14">
-                  <div className="flex items-center gap-3 mb-4">
-                    <CheckCircle2 className="h-8 w-8 text-success" />
-                    <h3 className="text-xl font-bold text-foreground">Conta FULL ACESSO</h3>
+                <div className="rounded-lg border border-border bg-card p-4 sm:p-6 pb-10 sm:pb-14">
+                  <div className="flex items-center gap-2.5 sm:gap-3 mb-3 sm:mb-4">
+                    <CheckCircle2 className="h-6 w-6 sm:h-8 sm:w-8 text-success" />
+                    <h3 className="text-lg sm:text-xl font-bold text-foreground">Conta FULL ACESSO</h3>
                   </div>
-                  <p className="text-base text-muted-foreground mb-5">
+                  <p className="text-sm sm:text-base text-muted-foreground mb-4 sm:mb-5">
                     Acesso total: email original, alteração de senha e dados, sem enrolação.
                   </p>
-                  <ul className="space-y-3.5 text-base text-muted-foreground">
+                  <ul className="space-y-2.5 sm:space-y-3.5 text-sm sm:text-base text-muted-foreground">
                     <li className="flex items-center gap-2.5"><span className="text-success text-lg">•</span> Email e senha inclusos</li>
                     <li className="flex items-center gap-2.5"><span className="text-success text-lg">•</span> Senha alterável</li>
                     <li className="flex items-center gap-2.5"><span className="text-success text-lg">•</span> Conta verificável</li>
