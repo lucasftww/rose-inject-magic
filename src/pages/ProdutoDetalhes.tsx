@@ -97,25 +97,17 @@ const ProdutoDetalhes = () => {
         .single();
       if (gameData) setGame(gameData);
 
-      // Fetch reviews
+      // Fetch reviews via secure view (no user_id exposed)
       const { data: reviewsData } = await supabase
-        .from("product_reviews")
-        .select("id, rating, comment, created_at, user_id")
+        .from("public_product_reviews" as any)
+        .select("id, rating, comment, created_at, username")
         .eq("product_id", id)
         .order("created_at", { ascending: false });
 
       if (reviewsData && reviewsData.length > 0) {
-        // Fetch usernames for reviewers
-        const userIds = [...new Set(reviewsData.map((r: any) => r.user_id))];
-        const { data: profiles } = await supabase
-          .from("profiles")
-          .select("user_id, username")
-          .in("user_id", userIds);
-
-        const usernameMap = new Map((profiles || []).map((p: any) => [p.user_id, p.username]));
         setReviews(reviewsData.map((r: any) => ({
           ...r,
-          username: usernameMap.get(r.user_id) || "Usuário",
+          username: r.username || "Usuário",
         })));
       }
 
