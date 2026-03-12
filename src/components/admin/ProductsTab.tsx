@@ -531,15 +531,22 @@ const ProductsTab = () => {
                   {robotEnabled && formRobotMarkup && formRobotGameId && robotGames.length > 0 && (
                     <button type="button" onClick={() => {
                       const rg = robotGames.find(g => g.id === formRobotGameId);
-                      if (!rg || !rg.prices) return;
+                      console.log("Auto-fill debug:", { formRobotGameId, formRobotMarkup, robotGamesCount: robotGames.length, foundGame: !!rg, gameId: rg?.id, prices: rg?.prices });
+                      if (!rg || !rg.prices) {
+                        toast({ title: "Jogo Robot não encontrado ou sem preços", variant: "destructive" });
+                        return;
+                      }
                       const updated = formPlans.map(p => {
+                        console.log("Plan:", p.name, "duration_days:", p.robot_duration_days, "type:", typeof p.robot_duration_days);
                         if (!p.robot_duration_days) return p;
                         const robotPriceUsd = rg.prices[String(p.robot_duration_days)];
+                        console.log("Looking for price key:", String(p.robot_duration_days), "found:", robotPriceUsd, "available keys:", Object.keys(rg.prices));
                         if (robotPriceUsd === undefined) return p;
                         // API retorna preço cheio — aplicar desconto de revendedor (-40%) antes do markup
                         const robotCostUsd = Number(robotPriceUsd) * 0.6;
                         const robotPriceBrl = robotCostUsd * robotUsdToBrl;
                         const calc = Number((robotPriceBrl * (1 + (formRobotMarkup || 0) / 100)).toFixed(2));
+                        console.log("Calculated price:", calc);
                         return { ...p, price: calc };
                       });
                       setFormPlans(updated);
