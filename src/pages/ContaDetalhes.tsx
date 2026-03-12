@@ -138,11 +138,101 @@ const resolveSkinImage = (s: any): string | null => {
   return null;
 };
 
+const PREMIUM_COLLECTION_HINTS = [
+  "rgx",
+  "kuronami",
+  "champions",
+  "reaver",
+  "araxys",
+  "imperium",
+  "prelude",
+  "chaos",
+  "singularity",
+  "sentinels of light",
+  "chronovoid",
+  "xenohunter",
+  "sovereign",
+  "prime",
+  "oni",
+  "evori",
+  "radiant entertainment system",
+  "neo frontier",
+  "gaia",
+  "overdrive",
+  "vct",
+];
+
+const MELEE_HINTS = [
+  "karambit",
+  "knife",
+  "faca",
+  "kunitsuna",
+  "yaiba",
+  "blade",
+  "dagger",
+  "hammer",
+  "katana",
+  "espada",
+  "adaga",
+  "xenohunter",
+];
+
+const WEAPON_SCORE_HINTS: Array<[string, number]> = [
+  ["vandal", 24],
+  ["phantom", 22],
+  ["operator", 18],
+  ["sheriff", 16],
+  ["spectre", 14],
+  ["outlaw", 13],
+  ["marshal", 12],
+  ["classic", 9],
+  ["ghost", 8],
+  ["odin", 8],
+  ["ares", 7],
+  ["guardian", 10],
+  ["judge", 8],
+  ["bucky", 7],
+  ["stinger", 7],
+  ["bulldog", 8],
+  ["frenzy", 7],
+  ["shorty", 6],
+];
+
+type SkinRankMeta = {
+  displayScore: number;
+  isPremiumHint: boolean;
+};
+
+const getSkinRankMeta = (name: string, rarityPriority: number): SkinRankMeta => {
+  const normalized = name.toLowerCase();
+
+  let displayScore = rarityPriority * 100;
+  const isMelee = MELEE_HINTS.some((hint) => normalized.includes(hint));
+  const isPremiumCollection = PREMIUM_COLLECTION_HINTS.some((hint) => normalized.includes(hint));
+
+  if (isMelee) displayScore += 34;
+  if (isPremiumCollection) displayScore += 24;
+
+  for (const [weaponName, bonus] of WEAPON_SCORE_HINTS) {
+    if (normalized.includes(weaponName)) {
+      displayScore += bonus;
+      break;
+    }
+  }
+
+  // Rare-but-unknown tiers still surface high if they are known premium collections
+  const isPremiumHint = rarityPriority >= 2 || isPremiumCollection || isMelee;
+
+  return { displayScore, isPremiumHint };
+};
+
 type ValorantSkinItem = {
   name: string;
   image: string;
   rarity: (typeof rarityMap)[string] | null;
   rarityPriority: number;
+  displayScore: number;
+  isPremiumHint: boolean;
 };
 
 const buildSkinLookup = (skins: any[]): Map<string, ValorantSkinItem> => {
@@ -153,11 +243,16 @@ const buildSkinLookup = (skins: any[]): Map<string, ValorantSkinItem> => {
     if (!image) continue;
 
     const rawTier = (s.contentTierUuid || "").toLowerCase();
+    const rarityPriority = RARITY_PRIORITY[rawTier] || 0;
+    const { displayScore, isPremiumHint } = getSkinRankMeta(s.displayName, rarityPriority);
+
     const entry: ValorantSkinItem = {
       name: s.displayName,
       image,
       rarity: rawTier ? rarityMap[rawTier] || null : null,
-      rarityPriority: RARITY_PRIORITY[rawTier] || 0,
+      rarityPriority,
+      displayScore,
+      isPremiumHint,
     };
 
     if (s.uuid) lookup.set(String(s.uuid).toLowerCase(), entry);
@@ -211,11 +306,15 @@ const fetchValorantSkins = async (uuids: string[]) => {
           if (!id || !UUID_REGEX.test(id)) continue;
           const image = lvl.displayIcon || null;
           if (!image) continue;
+          const fallbackName = lvl.displayName;
+          const { displayScore, isPremiumHint } = getSkinRankMeta(fallbackName, 0);
           fallbackByUuid.set(id, {
-            name: lvl.displayName,
+            name: fallbackName,
             image,
             rarity: null,
             rarityPriority: 0,
+            displayScore,
+            isPremiumHint,
           });
         }
       }
@@ -228,11 +327,15 @@ const fetchValorantSkins = async (uuids: string[]) => {
           const image = c.fullRender || c.displayIcon || c.swatch || null;
           if (!image) continue;
           if (!fallbackByUuid.has(id)) {
+            const fallbackName = c.displayName;
+            const { displayScore, isPremiumHint } = getSkinRankMeta(fallbackName, 0);
             fallbackByUuid.set(id, {
-              name: c.displayName,
+              name: fallbackName,
               image,
               rarity: null,
               rarityPriority: 0,
+              displayScore,
+              isPremiumHint,
             });
           }
         }
@@ -252,13 +355,23 @@ const fetchValorantSkins = async (uuids: string[]) => {
   for (const skin of matched) {
     const key = `${skin.name}|${skin.image}`;
     const existing = deduped.get(key);
-    if (!existing || skin.rarityPriority > existing.rarityPriority) {
+    if (!existing || skin.displayScore > existing.displayScore || skin.rarityPriority > existing.rarityPriority) {
       deduped.set(key, skin);
     }
   }
 
   const final = Array.from(deduped.values());
-  final.sort((a, b) => b.rarityPriority - a.rarityPriority || a.name.localeCompare(b.name, "pt-BR"));
+  final.sort((a, b) => {
+    const bucketA = a.rarityPriority >= 2 || a.isPremiumHint ? 0 : a.rarityPriority === 1 ? 1 : 2;
+    const bucketB = b.rarityPriority >= 2 || b.isPremiumHint ? 0 : b.rarityPriority === 1 ? 1 : 2;
+
+    return (
+      bucketA - bucketB ||
+      b.displayScore - a.displayScore ||
+      b.rarityPriority - a.rarityPriority ||
+      a.name.localeCompare(b.name, "pt-BR")
+    );
+  });
   return final;
 };
 
@@ -384,7 +497,7 @@ const ContaDetalhes = () => {
   const buddyUuids = collectUuidStrings(inventory?.Buddy);
 
   const { data: skinItems = [], isLoading: skinsLoading, isError: skinsError } = useQuery({
-    queryKey: ["valorant-skins", "rarity-v6", skinUuids],
+    queryKey: ["valorant-skins", "rarity-v7", skinUuids],
     queryFn: () => fetchValorantSkins(skinUuids),
     enabled: skinUuids.length > 0,
     staleTime: 1000 * 60 * 30,
