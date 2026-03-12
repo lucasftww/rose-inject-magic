@@ -418,22 +418,22 @@ const ValorantCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap
 
   const skinPreviews = useMemo(() => {
     const results: SkinEntry[] = [];
-    // Extract UUIDs from array or object format (LZT API returns both)
     const toUuids = (raw: unknown): string[] => {
       if (Array.isArray(raw)) return raw;
       if (raw && typeof raw === "object") return Object.values(raw as Record<string, string>);
       return [];
     };
-    // Only weapon skins for card preview (no buddies/agents)
     const allUuids = toUuids(item.valorantInventory?.WeaponSkins);
     for (const uuid of allUuids) {
       if (typeof uuid !== "string") continue;
       const entry = skinsMap.get(uuid.toLowerCase());
-      if (entry && entry.rarity > 0) results.push(entry);
+      if (entry) results.push(entry);
     }
-    // Sort by rarity descending (best skins first)
+    // Sort by rarity descending (best skins first), filter out rarity 0 (default/free skins)
     results.sort((a, b) => b.rarity - a.rarity);
-    return results.slice(0, 6);
+    const filtered = results.filter(s => s.rarity > 0);
+    // If not enough rare skins, fill with whatever we have
+    return (filtered.length >= 4 ? filtered : results).slice(0, 6);
   }, [item.valorantInventory, skinsMap]);
 
   return (

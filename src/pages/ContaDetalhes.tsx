@@ -77,37 +77,47 @@ const fetchAccountDetail = async (itemId: string) => {
   return res.json();
 };
 
+// Rarity priority for sorting
+const RARITY_PRIORITY: Record<string, number> = {
+  "411e4a55-4e59-7757-41f0-86a53f101bb5": 5, // Exclusive
+  "e046854e-406c-37f4-6571-7a8baeeb93ab": 4, // Ultra
+  "60bca009-4182-7998-dee7-b8a2558dc369": 3, // Premium
+  "12683d76-48d7-84a3-4e09-6985794f0445": 2, // Deluxe
+  "0cebb8be-46d7-c12a-d306-e9907bfc5a25": 1, // Select
+};
+
 // Fetch skin details from valorant-api.com
 const fetchValorantSkins = async (uuids: string[]) => {
   const res = await fetch("https://valorant-api.com/v1/weapons/skins?language=pt-BR");
   if (!res.ok) return [];
   const data = await res.json();
   const uuidSet = new Set(uuids.map(u => u.toLowerCase()));
-  const matched: { name: string; image: string; rarity: any }[] = [];
+  const matched: { name: string; image: string; rarity: any; rarityPriority: number }[] = [];
   
   for (const s of (data.data || [])) {
     const skinUuid = s.uuid?.toLowerCase();
-    // Check top-level UUID
     let found = uuidSet.has(skinUuid);
-    // Also check chromas UUIDs
     if (!found && s.chromas) {
       found = s.chromas.some((c: any) => uuidSet.has(c.uuid?.toLowerCase()));
     }
-    // Also check levels UUIDs
     if (!found && s.levels) {
       found = s.levels.some((l: any) => uuidSet.has(l.uuid?.toLowerCase()));
     }
     if (found) {
       const image = s.levels?.[0]?.displayIcon || s.displayIcon || s.chromas?.[0]?.fullRender;
       if (image) {
+        const tierUuid = s.contentTierUuid?.toLowerCase() || "";
         matched.push({
           name: s.displayName,
           image,
           rarity: s.contentTierUuid ? rarityMap[s.contentTierUuid] : null,
+          rarityPriority: RARITY_PRIORITY[tierUuid] || 0,
         });
       }
     }
   }
+  // Sort by rarity: best skins first
+  matched.sort((a, b) => b.rarityPriority - a.rarityPriority);
   return matched;
 };
 
