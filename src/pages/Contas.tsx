@@ -1143,6 +1143,7 @@ const Contas = () => {
     setCurrentPage(1);
     setLoadingMore(false);
     setDisplayPage(1);
+    setFirstPageLoaded(false);
 
     try {
       // Fetch first page immediately
