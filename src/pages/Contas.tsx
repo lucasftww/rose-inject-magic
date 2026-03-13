@@ -1182,6 +1182,7 @@ const Contas = () => {
       if (!controller.signal.aborted) setStreamingDone(true);
     } catch (err: any) {
       if (!controller.signal.aborted) {
+        setFirstPageLoaded(true);
         setStreamError(err);
         setStreamingDone(true);
       }
