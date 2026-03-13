@@ -845,18 +845,18 @@ const MinecraftCard = ({ item, formatPrice }: { item: LztItem; formatPrice: (pri
         <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-card to-transparent z-[2]" />
 
         {/* Badges */}
-        <div className="absolute left-3 top-3 z-10 flex flex-wrap gap-1.5">
+        <div className="absolute left-2 top-2 sm:left-3 sm:top-3 z-10 flex flex-wrap gap-1">
           {hasJava && (
-            <span className="rounded px-2 py-0.5 text-xs font-bold text-white" style={{ background: MC_GREEN }}>Java</span>
+            <span className="rounded px-1.5 py-0.5 text-[10px] sm:text-xs font-bold text-white" style={{ background: MC_GREEN }}>Java</span>
           )}
           {hasBedrock && (
-            <span className="rounded px-2 py-0.5 text-xs font-bold text-white" style={{ background: "hsl(25,40%,40%)" }}>Bedrock</span>
+            <span className="rounded px-1.5 py-0.5 text-[10px] sm:text-xs font-bold text-white" style={{ background: "hsl(25,40%,40%)" }}>Bedrock</span>
           )}
           {hypixelRank && (
-            <span className="rounded px-2 py-0.5 text-xs font-bold text-white" style={{ background: "hsl(40,80%,40%)" }}>{hypixelRank}</span>
+            <span className="rounded px-1.5 py-0.5 text-[10px] sm:text-xs font-bold text-white" style={{ background: "hsl(40,80%,40%)" }}>{hypixelRank}</span>
           )}
           {banned && (
-            <span className="rounded px-2 py-0.5 text-xs font-bold text-white bg-destructive">Ban Hypixel</span>
+            <span className="rounded px-1.5 py-0.5 text-[10px] sm:text-xs font-bold text-white bg-destructive">Ban</span>
           )}
         </div>
 
