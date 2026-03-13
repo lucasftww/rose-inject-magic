@@ -70,7 +70,6 @@ const Checkout = () => {
 
   const buildCartSnapshot = () =>
     items.map((i) => {
-      // For LZT accounts, don't send client-side price — server recalculates from LZT API
       const base: Record<string, any> = {
         productId: i.productId,
         productName: i.productName,
@@ -83,7 +82,10 @@ const Checkout = () => {
         base.type = i.type;
         base.lztItemId = i.lztItemId;
         base.lztGame = i.lztGame || (i as any).gameCategory || "";
-        // price intentionally omitted — server fetches real price
+        // Send the displayed price so server can lock it (server still validates profitability)
+        base.price = i.price;
+        base.lztPrice = i.lztPrice;
+        base.lztCurrency = i.lztCurrency;
       } else {
         base.price = i.price;
       }
