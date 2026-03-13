@@ -1164,10 +1164,9 @@ const Contas = () => {
         let nextPage = hasMore;
         let pageNum = 2;
 
-        while (nextPage && pageNum <= MAX_PAGES) {
-          if (controller.signal.aborted) return;
-          await new Promise((r) => setTimeout(r, 100));
-          const pageData = await fetchWithRetry(buildParams(pageNum), controller);
+          while (nextPage && pageNum <= MAX_PAGES) {
+            if (controller.signal.aborted) return;
+            const pageData = await fetchWithRetry(buildParams(pageNum), controller);
           if (controller.signal.aborted) return;
 
           const pageItems: LztItem[] = pageData?.items ?? [];
