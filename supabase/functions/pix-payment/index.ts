@@ -436,12 +436,12 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
     let productId: string | null = null;
     let planId: string | null = null;
 
-    // Try game-specific product name first
+    // Try game-specific product name first (multiple patterns per game)
     const gameSearchPatterns: Record<string, string[]> = {
-      valorant: ["%valorant%conta%", "%conta%valorant%"],
-      lol: ["%lol%conta%", "%conta%lol%", "%league%"],
-      fortnite: ["%fortnite%conta%", "%conta%fortnite%"],
-      minecraft: ["%minecraft%conta%", "%conta%minecraft%"],
+      valorant: ["%valorant%conta%", "%conta%valorant%", "%valorant%"],
+      lol: ["%lol%conta%", "%conta%lol%", "%league%", "%lol%"],
+      fortnite: ["%fortnite%conta%", "%conta%fortnite%", "%fortnite%"],
+      minecraft: ["%minecraft%conta%", "%conta%minecraft%", "%minecraft%"],
     };
 
     const patterns = gameSearchPatterns[lztGame] || gameSearchPatterns.valorant;
@@ -457,15 +457,40 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
       if (found) productId = found.id;
     }
 
-    // Fallback: any active product
+    // Fallback: try to find any product with "conta" in the name (avoid cheats/robots)
+    if (!productId) {
+      const { data: contaFallback } = await supabaseAdmin
+        .from("products")
+        .select("id")
+        .ilike("name", "%conta%")
+        .eq("active", true)
+        .is("robot_game_id", null)
+        .limit(1)
+        .maybeSingle();
+      productId = contaFallback?.id || null;
+    }
+
+    // Last resort: any product WITHOUT robot_game_id (avoid cheats/tools)
     if (!productId) {
       const { data: fallback } = await supabaseAdmin
         .from("products")
         .select("id")
         .eq("active", true)
+        .is("robot_game_id", null)
+        .limit(1)
+        .maybeSingle();
+      productId = fallback?.id || null;
+    }
+
+    // Absolute last resort: any active product
+    if (!productId) {
+      const { data: anyFallback } = await supabaseAdmin
+        .from("products")
+        .select("id")
+        .eq("active", true)
         .limit(1)
         .single();
-      productId = fallback?.id || null;
+      productId = anyFallback?.id || null;
     }
 
     if (productId) {
