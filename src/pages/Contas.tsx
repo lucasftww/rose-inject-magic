@@ -724,7 +724,7 @@ const FortniteCard = ({ item, skinsDb, formatPrice }: { item: LztItem; skinsDb: 
       onClick={() => navigate(`/fortnite/${item.item_id}`)}
     >
       {/* Skin preview grid */}
-      <div className="relative flex h-48 items-center justify-center overflow-hidden">
+      <div className="relative flex h-32 sm:h-48 items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[hsl(265,40%,8%)] via-[hsl(var(--background))] to-[hsl(210,40%,10%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(265,80%,65%,0.1),transparent_70%)]" />
         <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[hsl(var(--card))] to-transparent z-[2]" />
