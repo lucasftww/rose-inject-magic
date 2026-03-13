@@ -1150,6 +1150,7 @@ const Contas = () => {
       const data = await fetchWithRetry(buildParams(1), controller);
       if (controller.signal.aborted) return;
 
+      setFirstPageLoaded(true);
       const firstPageItems: LztItem[] = data?.items ?? [];
       setTotalItems(data?.totalItems ?? 0);
       const hasMore = data?.hasNextPage ?? false;
