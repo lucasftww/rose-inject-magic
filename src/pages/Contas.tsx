@@ -832,7 +832,7 @@ const MinecraftCard = ({ item, formatPrice }: { item: LztItem; formatPrice: (pri
 
   return (
     <div
-      className="group cursor-pointer overflow-hidden rounded-lg border border-border bg-card transition-all"
+      className="group cursor-pointer overflow-hidden rounded-lg border border-border bg-card transition-all flex flex-col"
       style={{ ['--hover-shadow' as string]: `0 0 20px ${MC_GREEN}20` }}
       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = `${MC_GREEN}60`; (e.currentTarget as HTMLElement).style.boxShadow = `0 0 20px ${MC_GREEN}20`; }}
       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = ''; (e.currentTarget as HTMLElement).style.boxShadow = ''; }}
