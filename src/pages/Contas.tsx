@@ -1143,12 +1143,14 @@ const Contas = () => {
     setCurrentPage(1);
     setLoadingMore(false);
     setDisplayPage(1);
+    setFirstPageLoaded(false);
 
     try {
       // Fetch first page immediately
       const data = await fetchWithRetry(buildParams(1), controller);
       if (controller.signal.aborted) return;
 
+      setFirstPageLoaded(true);
       const firstPageItems: LztItem[] = data?.items ?? [];
       setTotalItems(data?.totalItems ?? 0);
       const hasMore = data?.hasNextPage ?? false;
@@ -1162,10 +1164,9 @@ const Contas = () => {
         let nextPage = hasMore;
         let pageNum = 2;
 
-        while (nextPage && pageNum <= MAX_PAGES) {
-          if (controller.signal.aborted) return;
-          await new Promise((r) => setTimeout(r, 100));
-          const pageData = await fetchWithRetry(buildParams(pageNum), controller);
+          while (nextPage && pageNum <= MAX_PAGES) {
+            if (controller.signal.aborted) return;
+            const pageData = await fetchWithRetry(buildParams(pageNum), controller);
           if (controller.signal.aborted) return;
 
           const pageItems: LztItem[] = pageData?.items ?? [];
@@ -1181,6 +1182,7 @@ const Contas = () => {
       if (!controller.signal.aborted) setStreamingDone(true);
     } catch (err: any) {
       if (!controller.signal.aborted) {
+        setFirstPageLoaded(true);
         setStreamError(err);
         setStreamingDone(true);
       }
@@ -1216,9 +1218,10 @@ const Contas = () => {
 
   const ITEMS_PER_PAGE = 24;
   const [displayPage, setDisplayPage] = useState(1);
+  const [firstPageLoaded, setFirstPageLoaded] = useState(false);
 
-  const isLoading = streamedItems.length === 0 && !streamingDone;
-  const isStreaming = streamedItems.length > 0 && !streamingDone;
+  const isLoading = !firstPageLoaded && !streamingDone && !streamError;
+  const isStreaming = firstPageLoaded && !streamingDone;
   const allItems = (() => {
     const sorted = [...streamedItems];
 
@@ -1807,7 +1810,7 @@ const Contas = () => {
                   <div className="mb-4 flex items-center gap-2 rounded-lg border px-4 py-2.5" style={{ borderColor: `${accentColor}30`, background: `${accentColor}08` }}>
                     <Loader2 className="h-4 w-4 animate-spin" style={{ color: accentColor }} />
                     <span className="text-xs font-medium" style={{ color: accentColor }}>
-                      Carregando contas... {items.length} encontradas (página {currentPage}/{MAX_PAGES})
+                      Carregando contas... {allItems.length} encontradas (página {currentPage}/{MAX_PAGES})
                     </span>
                     <div className="ml-auto flex gap-1">
                       {[0, 1, 2].map((i) => (
@@ -1843,7 +1846,7 @@ const Contas = () => {
                   ))}
                 </motion.div>
 
-                {items.length === 0 && allItems.length === 0 && (
+                {items.length === 0 && allItems.length === 0 && streamingDone && (
                   <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
                     <p className="text-lg font-semibold">Nenhuma conta encontrada</p>
                     <p className="mt-1 text-sm">Tente alterar os filtros</p>
