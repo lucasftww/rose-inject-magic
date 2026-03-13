@@ -1846,7 +1846,7 @@ const Contas = () => {
                   ))}
                 </motion.div>
 
-                {items.length === 0 && allItems.length === 0 && (
+                {items.length === 0 && allItems.length === 0 && streamingDone && (
                   <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
                     <p className="text-lg font-semibold">Nenhuma conta encontrada</p>
                     <p className="mt-1 text-sm">Tente alterar os filtros</p>
