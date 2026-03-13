@@ -1810,7 +1810,7 @@ const Contas = () => {
                   <div className="mb-4 flex items-center gap-2 rounded-lg border px-4 py-2.5" style={{ borderColor: `${accentColor}30`, background: `${accentColor}08` }}>
                     <Loader2 className="h-4 w-4 animate-spin" style={{ color: accentColor }} />
                     <span className="text-xs font-medium" style={{ color: accentColor }}>
-                      Carregando contas... {items.length} encontradas (página {currentPage}/{MAX_PAGES})
+                      Carregando contas... {allItems.length} encontradas (página {currentPage}/{MAX_PAGES})
                     </span>
                     <div className="ml-auto flex gap-1">
                       {[0, 1, 2].map((i) => (
