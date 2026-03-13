@@ -881,54 +881,53 @@ const MinecraftCard = ({ item, formatPrice }: { item: LztItem; formatPrice: (pri
       </div>
 
       {/* Content */}
-      <div className="p-5">
-        <div className="flex items-center gap-2">
-          {/* Minecraft icon (grass block pixel) */}
-          <svg className="h-5 w-5 flex-shrink-0" viewBox="0 0 24 24" fill={MC_GREEN} xmlns="http://www.w3.org/2000/svg"><path d="M4,2H20A2,2 0 0,1 22,4V20A2,2 0 0,1 20,22H4A2,2 0 0,1 2,20V4A2,2 0 0,1 4,2M6,6V10H10V12H8V18H10V16H14V18H16V12H14V10H18V6H14V10H10V6H6Z" /></svg>
-          <span className="rounded bg-secondary px-2 py-0.5 text-xs font-medium text-muted-foreground">
+      <div className="p-3 sm:p-5 flex flex-col flex-1">
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <svg className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" viewBox="0 0 24 24" fill={MC_GREEN} xmlns="http://www.w3.org/2000/svg"><path d="M4,2H20A2,2 0 0,1 22,4V20A2,2 0 0,1 20,22H4A2,2 0 0,1 2,20V4A2,2 0 0,1 4,2M6,6V10H10V12H8V18H10V16H14V18H16V12H14V10H18V6H14V10H10V6H6Z" /></svg>
+          <span className="rounded bg-secondary px-1.5 py-0.5 text-[10px] sm:text-xs font-medium text-muted-foreground truncate">
             {nickname ? `@${nickname}` : "Minecraft"}
           </span>
           {hypixelLevel > 0 && (
-            <span className="text-xs text-muted-foreground">Nv. {hypixelLevel} Hypixel</span>
+            <span className="text-[10px] sm:text-xs text-muted-foreground hidden sm:inline">Nv. {hypixelLevel}</span>
           )}
         </div>
 
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          <div className="flex items-center gap-1.5 rounded bg-secondary/40 px-2.5 py-1.5">
-            <svg className="h-3.5 w-3.5 flex-shrink-0" viewBox="0 0 24 24" fill={MC_GREEN}><path d="M4,2H20A2,2 0 0,1 22,4V20A2,2 0 0,1 20,22H4A2,2 0 0,1 2,20V4A2,2 0 0,1 4,2M6,6V10H10V12H8V18H10V16H14V18H16V12H14V10H18V6H14V10H10V6H6Z" /></svg>
-            <span className="text-[11px] text-muted-foreground">{hasJava && hasBedrock ? "Java + Bedrock" : hasJava ? "Java" : hasBedrock ? "Bedrock" : "Conta"}</span>
+        <div className="mt-2 sm:mt-3 grid grid-cols-2 gap-1.5 sm:gap-2">
+          <div className="flex items-center gap-1 sm:gap-1.5 rounded bg-secondary/40 px-1.5 py-1 sm:px-2.5 sm:py-1.5">
+            <svg className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" viewBox="0 0 24 24" fill={MC_GREEN}><path d="M4,2H20A2,2 0 0,1 22,4V20A2,2 0 0,1 20,22H4A2,2 0 0,1 2,20V4A2,2 0 0,1 4,2M6,6V10H10V12H8V18H10V16H14V18H16V12H14V10H18V6H14V10H10V6H6Z" /></svg>
+            <span className="text-[10px] sm:text-[11px] text-muted-foreground">{hasJava && hasBedrock ? "Java+Bed" : hasJava ? "Java" : hasBedrock ? "Bedrock" : "Conta"}</span>
           </div>
           {capes > 0 ? (
-            <div className="flex items-center gap-1.5 rounded bg-secondary/40 px-2.5 py-1.5">
-              <Star className="h-3.5 w-3.5 flex-shrink-0" style={{ color: MC_GREEN }} />
-              <span className="text-[11px] text-muted-foreground">{capes} cape{capes > 1 ? "s" : ""}</span>
+            <div className="flex items-center gap-1 sm:gap-1.5 rounded bg-secondary/40 px-1.5 py-1 sm:px-2.5 sm:py-1.5">
+              <Star className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" style={{ color: MC_GREEN }} />
+              <span className="text-[10px] sm:text-[11px] text-muted-foreground">{capes} cape{capes > 1 ? "s" : ""}</span>
             </div>
           ) : (
-            <div className="flex items-center gap-1.5 rounded bg-secondary/40 px-2.5 py-1.5">
-              <Shield className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground/50" />
-              <span className="text-[11px] text-muted-foreground">Full acesso</span>
+            <div className="flex items-center gap-1 sm:gap-1.5 rounded bg-secondary/40 px-1.5 py-1 sm:px-2.5 sm:py-1.5">
+              <Shield className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0 text-muted-foreground/50" />
+              <span className="text-[10px] sm:text-[11px] text-muted-foreground">Full acesso</span>
             </div>
           )}
         </div>
 
-        <div className="mt-2.5 flex flex-col gap-1.5">
-          <div className="flex items-center gap-1.5">
-            <svg className="h-4 w-4 flex-shrink-0" style={{ color: MC_GREEN }} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M11.14 4L6.43 16H8.36L9.32 13.43H14.67L15.64 16H17.57L12.86 4M12 6.29L14.03 11.71H9.96M4 18V15H2V20H22V18Z" /></svg>
-            <span className="text-xs font-medium" style={{ color: MC_GREEN }}>Conta Full Acesso</span>
+        <div className="mt-2 sm:mt-2.5 flex flex-col gap-1">
+          <div className="flex items-center gap-1">
+            <svg className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" style={{ color: MC_GREEN }} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M11.14 4L6.43 16H8.36L9.32 13.43H14.67L15.64 16H17.57L12.86 4M12 6.29L14.03 11.71H9.96M4 18V15H2V20H22V18Z" /></svg>
+            <span className="text-[10px] sm:text-xs font-medium" style={{ color: MC_GREEN }}>Conta Full Acesso</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <svg className="h-4 w-4 flex-shrink-0" style={{ color: MC_GREEN }} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2.05v2.02c3.95.49 7 3.85 7 7.93 0 1.45-.39 2.81-1.06 3.97l1.47 1.47A9.953 9.953 0 0022 12c0-5.18-3.95-9.45-9-9.95zM12 19c-3.87 0-7-3.13-7-7 0-3.53 2.61-6.43 6-6.92V3.05c-5.06.5-9 4.76-9 9.95 0 5.52 4.47 10 9.99 10 3.31 0 6.24-1.61 8.06-4.09l-1.46-1.46A7.932 7.932 0 0112 19z"/><path d="M16 12l-4-4v3H8v2h4v3z"/></svg>
-            <span className="text-xs font-medium" style={{ color: MC_GREEN }}>Entrega Automática</span>
+          <div className="flex items-center gap-1">
+            <svg className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" style={{ color: MC_GREEN }} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2.05v2.02c3.95.49 7 3.85 7 7.93 0 1.45-.39 2.81-1.06 3.97l1.47 1.47A9.953 9.953 0 0022 12c0-5.18-3.95-9.45-9-9.95zM12 19c-3.87 0-7-3.13-7-7 0-3.53 2.61-6.43 6-6.92V3.05c-5.06.5-9 4.76-9 9.95 0 5.52 4.47 10 9.99 10 3.31 0 6.24-1.61 8.06-4.09l-1.46-1.46A7.932 7.932 0 0112 19z"/><path d="M16 12l-4-4v3H8v2h4v3z"/></svg>
+            <span className="text-[10px] sm:text-xs font-medium" style={{ color: MC_GREEN }}>Entrega Automática</span>
           </div>
         </div>
 
-        <div className="mt-4 flex items-end justify-between">
-          <p className="text-xl font-bold" style={{ color: MC_GREEN }}>{formatPrice(item.price, item.price_currency)}</p>
-          <button className="flex items-center gap-1.5 rounded border border-border px-4 py-2 text-xs font-medium text-muted-foreground transition-colors"
+        <div className="mt-auto pt-3 sm:pt-4 flex items-end justify-between">
+          <p className="text-base sm:text-xl font-bold" style={{ color: MC_GREEN }}>{formatPrice(item.price, item.price_currency)}</p>
+          <button className="flex items-center gap-1 rounded border border-border px-2 py-1.5 sm:px-4 sm:py-2 text-[10px] sm:text-xs font-medium text-muted-foreground transition-colors"
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = MC_GREEN; (e.currentTarget as HTMLElement).style.color = MC_GREEN; }}
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = ''; (e.currentTarget as HTMLElement).style.color = ''; }}
           >
-            Ver produto
+            Ver conta
           </button>
         </div>
       </div>
