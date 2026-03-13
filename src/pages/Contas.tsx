@@ -720,7 +720,7 @@ const FortniteCard = ({ item, skinsDb, formatPrice }: { item: LztItem; skinsDb: 
 
   return (
     <div
-      className="group cursor-pointer overflow-hidden rounded-lg border border-border bg-card transition-all hover:border-[hsl(265,80%,65%)/40%] hover:shadow-[0_0_20px_hsl(265,80%,65%,0.12)]"
+      className="group cursor-pointer overflow-hidden rounded-lg border border-border bg-card transition-all hover:border-[hsl(265,80%,65%)/40%] hover:shadow-[0_0_20px_hsl(265,80%,65%,0.12)] flex flex-col"
       onClick={() => navigate(`/fortnite/${item.item_id}`)}
     >
       {/* Skin preview grid */}
