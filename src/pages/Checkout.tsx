@@ -121,22 +121,10 @@ const Checkout = () => {
       if (!res.ok || !result.success) throw new Error(result.error || "Erro ao criar cobrança");
       setPaymentId(result.payment_id);
       setChargeData(result.charge);
-      // Use server-validated amount (real-time price) instead of stale cart price
+      // Use server-validated amount (price is locked to what customer saw)
       const serverTotal = result.validated_amount ?? cartFinalPrice;
       const serverDiscount = result.validated_discount ?? discountAmount;
       setDisplayPrice({ total: serverTotal + serverDiscount, final: serverTotal, discount: serverDiscount });
-      // Warn user if price changed significantly (>2%) from what they saw
-      if (hasLztItems && Math.abs(serverTotal - cartFinalPrice) > cartFinalPrice * 0.02 && cartFinalPrice > 0) {
-        const diff = serverTotal - cartFinalPrice;
-        toast({
-          title: diff > 0 ? "⚠️ Preço atualizado" : "💰 Preço atualizado",
-          description: diff > 0
-            ? `O preço da conta mudou de R$ ${cartFinalPrice.toFixed(2).replace(".", ",")} para R$ ${serverTotal.toFixed(2).replace(".", ",")} pois o vendedor alterou o valor. Você pode cancelar e tentar outra conta.`
-            : `Boa notícia! O preço caiu de R$ ${cartFinalPrice.toFixed(2).replace(".", ",")} para R$ ${serverTotal.toFixed(2).replace(".", ",")}.`,
-          variant: diff > 0 ? "destructive" : "default",
-          duration: 10000,
-        });
-      }
       setCartSnapshot([...items]);
       clearCart();
     } catch (err: any) {
