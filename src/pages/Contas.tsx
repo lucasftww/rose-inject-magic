@@ -574,7 +574,7 @@ const LolCard = ({ item, champKeyMap, formatPrice }: { item: LztItem; champKeyMa
       onClick={() => navigate(`/lol/${item.item_id}`)}
     >
       {/* Skin portrait grid — mesmo estilo do Valorant */}
-      <div className="relative flex h-48 items-center justify-center overflow-hidden">
+      <div className="relative flex h-32 sm:h-48 items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[hsl(220,30%,10%)] via-[hsl(var(--background))] to-[hsl(220,30%,10%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(198,100%,45%,0.1),transparent_70%)]" />
         <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[hsl(var(--card))] to-transparent z-[2]" />
