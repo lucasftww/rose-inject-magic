@@ -839,7 +839,7 @@ const MinecraftCard = ({ item, formatPrice }: { item: LztItem; formatPrice: (pri
       onClick={() => navigate(`/minecraft/${item.item_id}`)}
     >
       {/* Skin preview */}
-      <div className="relative flex h-48 items-center justify-center overflow-hidden">
+      <div className="relative flex h-32 sm:h-48 items-center justify-center overflow-hidden">
         <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, hsl(120,30%,8%), hsl(30,20%,10%))" }} />
         <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse at center, ${MC_GREEN}12, transparent 70%)` }} />
         <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-card to-transparent z-[2]" />
