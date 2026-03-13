@@ -570,7 +570,7 @@ const LolCard = ({ item, champKeyMap, formatPrice }: { item: LztItem; champKeyMa
 
   return (
     <div
-      className="group cursor-pointer overflow-hidden rounded-lg border border-border bg-card transition-all hover:border-[hsl(198,100%,45%)/40%] hover:shadow-[0_0_20px_hsl(198,100%,45%,0.12)]"
+      className="group cursor-pointer overflow-hidden rounded-lg border border-border bg-card transition-all hover:border-[hsl(198,100%,45%)/40%] hover:shadow-[0_0_20px_hsl(198,100%,45%,0.12)] flex flex-col"
       onClick={() => navigate(`/lol/${item.item_id}`)}
     >
       {/* Skin portrait grid — mesmo estilo do Valorant */}
