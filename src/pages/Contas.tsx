@@ -730,10 +730,10 @@ const FortniteCard = ({ item, skinsDb, formatPrice }: { item: LztItem; skinsDb: 
         <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[hsl(var(--card))] to-transparent z-[2]" />
 
         {/* Badges */}
-        <div className="absolute left-3 top-3 z-10 flex gap-1.5">
+        <div className="absolute left-2 top-2 sm:left-3 sm:top-3 z-10 flex gap-1">
           {vbucks > 0 && (
-            <span className="rounded px-2.5 py-1 text-xs font-bold text-white flex items-center gap-1" style={{ background: FN_BLUE }}>
-              <svg className="h-3 w-3" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <span className="rounded px-1.5 py-0.5 sm:px-2.5 sm:py-1 text-[10px] sm:text-xs font-bold text-white flex items-center gap-1" style={{ background: FN_BLUE }}>
+              <svg className="h-2.5 w-2.5 sm:h-3 sm:w-3" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M152 100 L256 380 L360 100" stroke="white" strokeWidth="70" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
                 <path d="M200 240 L256 380 L312 240" stroke="white" strokeWidth="40" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
               </svg>
@@ -741,7 +741,7 @@ const FortniteCard = ({ item, skinsDb, formatPrice }: { item: LztItem; skinsDb: 
             </span>
           )}
           {level > 0 && (
-            <span className="rounded px-2.5 py-1 text-xs font-bold text-white" style={{ background: FN_PURPLE }}>
+            <span className="rounded px-1.5 py-0.5 sm:px-2.5 sm:py-1 text-[10px] sm:text-xs font-bold text-white" style={{ background: FN_PURPLE }}>
               Nv. {level}
             </span>
           )}
