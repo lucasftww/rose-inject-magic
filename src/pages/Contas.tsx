@@ -1216,9 +1216,10 @@ const Contas = () => {
 
   const ITEMS_PER_PAGE = 24;
   const [displayPage, setDisplayPage] = useState(1);
+  const [firstPageLoaded, setFirstPageLoaded] = useState(false);
 
-  const isLoading = streamedItems.length === 0 && !streamingDone;
-  const isStreaming = streamedItems.length > 0 && !streamingDone;
+  const isLoading = !firstPageLoaded && !streamingDone && !streamError;
+  const isStreaming = firstPageLoaded && !streamingDone;
   const allItems = (() => {
     const sorted = [...streamedItems];
 
