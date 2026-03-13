@@ -1008,8 +1008,8 @@ async function validateAndCalculatePrice(
         return { validatedAmount: 0, validatedDiscount: 0, validatedCart: [], error: "LZT token não configurado" };
       }
 
-      // Fetch REAL price from LZT API - never trust client price
-      // Retry up to 3 times for transient errors (429, 502, 503, 504)
+      // Fetch current LZT price to calculate our COST (not the sale price)
+      // The sale price is locked to what the customer saw (item.price)
       let lztRes: Response | null = null;
       const RETRYABLE = [429, 502, 503, 504];
       for (let attempt = 0; attempt < 3; attempt++) {
@@ -1030,14 +1030,14 @@ async function validateAndCalculatePrice(
         console.error(`LZT API error for item ${lztItemId}: ${status} (after retries)`);
         const userMsg = status === 503 || status === "network error"
           ? "O serviço de contas está temporariamente indisponível. Tente novamente em alguns minutos."
-          : `Erro ao verificar preço da conta LZT ${lztItemId}`;
+          : `Erro ao verificar conta LZT ${lztItemId}`;
         return { validatedAmount: 0, validatedDiscount: 0, validatedCart: [], error: userMsg };
       }
       const lztData = await lztRes.json();
       const realLztPrice = Number(lztData?.item?.price) || 0;
       const realLztCurrency = lztData?.item?.price_currency || "rub";
       if (realLztPrice <= 0) {
-        return { validatedAmount: 0, validatedDiscount: 0, validatedCart: [], error: `Conta LZT ${lztItemId} não disponível ou sem preço` };
+        return { validatedAmount: 0, validatedDiscount: 0, validatedCart: [], error: `Esta conta não está mais disponível` };
       }
 
       const { data: lztConfig } = await supabaseAdmin
@@ -1054,13 +1054,40 @@ async function validateAndCalculatePrice(
       else if (gameCategory === "minecraft" && lztConfig?.markup_minecraft) markup = lztConfig.markup_minecraft;
       
       const RUB_TO_BRL = 0.055;
-      let brlPrice = realLztCurrency === "rub" ? realLztPrice * RUB_TO_BRL : realLztPrice;
-      const expectedPrice = Math.round(brlPrice * markup * 100) / 100;
+      const costBrl = realLztCurrency === "rub" ? realLztPrice * RUB_TO_BRL : realLztPrice;
+      
+      // The price the customer saw (sent from frontend)
+      const clientDisplayPrice = Number(item.price) || 0;
+      
+      // Recalculate what the price SHOULD be now (for reference)
+      const currentCalcPrice = Math.round(costBrl * markup * 100) / 100;
       const MIN_PRICE = 20;
-      const finalPrice = expectedPrice < MIN_PRICE ? MIN_PRICE : expectedPrice;
-      console.log(`LZT VALIDATED price: itemId=${lztItemId}, apiPrice=${realLztPrice}, clientPrice=${item.lztPrice}, brl=${brlPrice.toFixed(2)}, markup=${markup}, finalPrice=${finalPrice}, game=${gameCategory}`);
+      const currentFairPrice = currentCalcPrice < MIN_PRICE ? MIN_PRICE : currentCalcPrice;
+      
+      // PRICE LOCK STRATEGY:
+      // - Use the price the customer saw (clientDisplayPrice) if it covers our cost
+      // - If cost went up so much we'd lose money, reject the purchase
+      // - If client didn't send a price, use current calculated price
+      let finalPrice: number;
+      
+      if (clientDisplayPrice > 0) {
+        // Check if we're still profitable: client price must be >= cost
+        // Allow a small 5% tolerance for edge cases
+        if (clientDisplayPrice < costBrl * 0.95) {
+          console.error(`LZT PRICE LOCK REJECTED: clientPrice=${clientDisplayPrice}, cost=${costBrl.toFixed(2)}, would lose money`);
+          return { validatedAmount: 0, validatedDiscount: 0, validatedCart: [], error: "O preço desta conta mudou. Por favor, volte e tente novamente." };
+        }
+        // Lock to the price the customer saw
+        finalPrice = clientDisplayPrice;
+        console.log(`LZT PRICE LOCKED: itemId=${lztItemId}, lockedPrice=${finalPrice}, cost=${costBrl.toFixed(2)}, currentFair=${currentFairPrice}, margin=${((finalPrice - costBrl) / finalPrice * 100).toFixed(1)}%`);
+      } else {
+        // No client price sent — use current calculated price (backwards compat)
+        finalPrice = currentFairPrice;
+        console.log(`LZT PRICE CALCULATED (no lock): itemId=${lztItemId}, price=${finalPrice}, cost=${costBrl.toFixed(2)}`);
+      }
+      
       totalAmount += Math.round(finalPrice * 100);
-      validatedCart.push({ ...item, price: finalPrice });
+      validatedCart.push({ ...item, price: finalPrice, lztPrice: realLztPrice, lztCurrency: realLztCurrency });
       continue;
     }
 
