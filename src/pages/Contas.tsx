@@ -580,14 +580,14 @@ const LolCard = ({ item, champKeyMap, formatPrice }: { item: LztItem; champKeyMa
         <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[hsl(var(--card))] to-transparent z-[2]" />
 
         {/* Badges */}
-        <div className="absolute left-3 top-3 z-10 flex gap-1.5">
+        <div className="absolute left-2 top-2 sm:left-3 sm:top-3 z-10 flex gap-1">
           {level > 0 && (
-            <span className="rounded bg-[hsl(198,100%,45%)] px-2.5 py-1 text-xs font-bold text-white">
+            <span className="rounded bg-[hsl(198,100%,45%)] px-1.5 py-0.5 sm:px-2.5 sm:py-1 text-[10px] sm:text-xs font-bold text-white">
               Nv. {level}
             </span>
           )}
           {rankFilterId !== "todos" && (
-            <span className="rounded px-2.5 py-1 text-xs font-bold text-white" style={{ background: rankColor }}>
+            <span className="rounded px-1.5 py-0.5 sm:px-2.5 sm:py-1 text-[10px] sm:text-xs font-bold text-white" style={{ background: rankColor }}>
               {rankText.split(" ")[0]}
             </span>
           )}
