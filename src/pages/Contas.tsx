@@ -618,54 +618,54 @@ const LolCard = ({ item, champKeyMap, formatPrice }: { item: LztItem; champKeyMa
       </div>
 
       {/* Content */}
-      <div className="p-5">
+      <div className="p-3 sm:p-5 flex flex-col flex-1">
         {/* Rank + WR */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           {rankFilterData?.img ? (
-            <img src={rankFilterData.img} alt={rankText} className="h-7 w-7 object-contain flex-shrink-0" loading="lazy" />
+            <img src={rankFilterData.img} alt={rankText} className="h-5 w-5 sm:h-7 sm:w-7 object-contain flex-shrink-0" loading="lazy" />
           ) : (
             <div className="h-4 w-4 rounded-full flex-shrink-0" style={{ background: rankColor }} />
           )}
-          <span className="rounded bg-secondary px-2 py-0.5 text-xs font-medium text-muted-foreground">{rankText}</span>
+          <span className="rounded bg-secondary px-1.5 py-0.5 text-[10px] sm:text-xs font-medium text-muted-foreground">{rankText}</span>
           {winRate != null && (
-            <span className="text-xs text-muted-foreground">{winRate}% WR</span>
+            <span className="text-[10px] sm:text-xs text-muted-foreground">{winRate}% WR</span>
           )}
         </div>
 
         {/* Stats */}
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          <div className="flex items-center gap-1.5 rounded bg-secondary/40 px-2.5 py-1.5">
-            <Trophy className="h-3.5 w-3.5 text-[hsl(198,100%,45%)]" />
-            <span className="text-[11px] text-muted-foreground">{champCount} campeões</span>
+        <div className="mt-2 sm:mt-3 grid grid-cols-2 gap-1.5 sm:gap-2">
+          <div className="flex items-center gap-1 sm:gap-1.5 rounded bg-secondary/40 px-1.5 py-1 sm:px-2.5 sm:py-1.5">
+            <Trophy className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-[hsl(198,100%,45%)]" />
+            <span className="text-[10px] sm:text-[11px] text-muted-foreground">{champCount} campeões</span>
           </div>
-          <div className="flex items-center gap-1.5 rounded bg-secondary/40 px-2.5 py-1.5">
-            <Star className="h-3.5 w-3.5 text-[hsl(198,100%,45%)]" />
-            <span className="text-[11px] text-muted-foreground">{skinCount} skins</span>
+          <div className="flex items-center gap-1 sm:gap-1.5 rounded bg-secondary/40 px-1.5 py-1 sm:px-2.5 sm:py-1.5">
+            <Star className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-[hsl(198,100%,45%)]" />
+            <span className="text-[10px] sm:text-[11px] text-muted-foreground">{skinCount} skins</span>
           </div>
         </div>
 
-        <div className="mt-2.5 flex flex-col gap-1.5">
-          <div className="flex items-center gap-1.5">
-            <svg className="h-4 w-4 text-[hsl(198,100%,45%)]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M11.14 4L6.43 16H8.36L9.32 13.43H14.67L15.64 16H17.57L12.86 4M12 6.29L14.03 11.71H9.96M4 18V15H2V20H22V18Z" /></svg>
-            <span className="text-xs font-medium text-[hsl(198,100%,45%)]">Conta Full Acesso</span>
+        <div className="mt-2 sm:mt-2.5 flex flex-col gap-1">
+          <div className="flex items-center gap-1">
+            <svg className="h-3 w-3 sm:h-4 sm:w-4 text-[hsl(198,100%,45%)] flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M11.14 4L6.43 16H8.36L9.32 13.43H14.67L15.64 16H17.57L12.86 4M12 6.29L14.03 11.71H9.96M4 18V15H2V20H22V18Z" /></svg>
+            <span className="text-[10px] sm:text-xs font-medium text-[hsl(198,100%,45%)]">Conta Full Acesso</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <svg className="h-4 w-4 text-[hsl(198,100%,45%)]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2.05v2.02c3.95.49 7 3.85 7 7.93 0 1.45-.39 2.81-1.06 3.97l1.47 1.47A9.953 9.953 0 0022 12c0-5.18-3.95-9.45-9-9.95zM12 19c-3.87 0-7-3.13-7-7 0-3.53 2.61-6.43 6-6.92V3.05c-5.06.5-9 4.76-9 9.95 0 5.52 4.47 10 9.99 10 3.31 0 6.24-1.61 8.06-4.09l-1.46-1.46A7.932 7.932 0 0112 19z"/><path d="M16 12l-4-4v3H8v2h4v3z"/></svg>
-            <span className="text-xs font-medium text-[hsl(198,100%,45%)]">Entrega Automática</span>
+          <div className="flex items-center gap-1">
+            <svg className="h-3 w-3 sm:h-4 sm:w-4 text-[hsl(198,100%,45%)] flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2.05v2.02c3.95.49 7 3.85 7 7.93 0 1.45-.39 2.81-1.06 3.97l1.47 1.47A9.953 9.953 0 0022 12c0-5.18-3.95-9.45-9-9.95zM12 19c-3.87 0-7-3.13-7-7 0-3.53 2.61-6.43 6-6.92V3.05c-5.06.5-9 4.76-9 9.95 0 5.52 4.47 10 9.99 10 3.31 0 6.24-1.61 8.06-4.09l-1.46-1.46A7.932 7.932 0 0112 19z"/><path d="M16 12l-4-4v3H8v2h4v3z"/></svg>
+            <span className="text-[10px] sm:text-xs font-medium text-[hsl(198,100%,45%)]">Entrega Automática</span>
           </div>
         </div>
 
         {item.riot_lol_region && (
-          <div className="mt-2 flex items-center gap-1.5">
-            <Globe className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-[11px] text-muted-foreground">{item.riot_lol_region.toUpperCase()}</span>
+          <div className="mt-1.5 sm:mt-2 flex items-center gap-1">
+            <Globe className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-muted-foreground flex-shrink-0" />
+            <span className="text-[10px] sm:text-[11px] text-muted-foreground truncate">{item.riot_lol_region.toUpperCase()}</span>
           </div>
         )}
 
-        <div className="mt-4 flex items-end justify-between">
-          <p className="text-xl font-bold text-[hsl(198,100%,45%)]">{formatPrice(item.price, item.price_currency)}</p>
-          <button className="flex items-center gap-1.5 rounded border border-border px-4 py-2 text-xs font-medium text-muted-foreground transition-colors hover:border-[hsl(198,100%,45%)] hover:text-[hsl(198,100%,45%)]">
-            Ver produto
+        <div className="mt-auto pt-3 sm:pt-4 flex items-end justify-between">
+          <p className="text-base sm:text-xl font-bold text-[hsl(198,100%,45%)]">{formatPrice(item.price, item.price_currency)}</p>
+          <button className="flex items-center gap-1 rounded border border-border px-2 py-1.5 sm:px-4 sm:py-2 text-[10px] sm:text-xs font-medium text-muted-foreground transition-colors hover:border-[hsl(198,100%,45%)] hover:text-[hsl(198,100%,45%)]">
+            Ver conta
           </button>
         </div>
       </div>
