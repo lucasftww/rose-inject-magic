@@ -369,6 +369,138 @@ const RobotProjectTab = () => {
         </div>
       </div>
 
+      {/* Robot Profit Tracker */}
+      <div className="mt-8">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 text-success" />
+            Lucro Robot Project
+          </h3>
+          <div className="flex items-center gap-1 rounded-lg border border-border p-0.5">
+            {(["7d", "30d", "all"] as const).map(p => (
+              <button
+                key={p}
+                onClick={() => { setSalesPeriod(p); fetchRobotSales(p); }}
+                className={`rounded-md px-3 py-1 text-[11px] font-medium transition-colors ${
+                  salesPeriod === p ? "bg-success text-success-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {p === "7d" ? "7 dias" : p === "30d" ? "30 dias" : "Tudo"}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {salesLoading ? (
+          <div className="flex justify-center py-10">
+            <Loader2 className="h-6 w-6 animate-spin text-success" />
+          </div>
+        ) : (
+          <>
+            {/* Profit summary cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
+              <div className="rounded-lg border border-border bg-card p-4">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Vendas</p>
+                <p className="text-lg font-bold text-foreground">{robotSales.length}</p>
+              </div>
+              <div className="rounded-lg border border-border bg-card p-4">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Receita</p>
+                <p className="text-lg font-bold text-success">
+                  R$ {robotSales.reduce((sum, s) => sum + s.revenue, 0).toFixed(2)}
+                </p>
+              </div>
+              <div className="rounded-lg border border-border bg-card p-4">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Custo Estimado</p>
+                <p className="text-lg font-bold text-destructive">
+                  R$ {robotSales.reduce((sum, s) => sum + s.cost, 0).toFixed(2)}
+                </p>
+              </div>
+              <div className="rounded-lg border border-success/30 bg-success/5 p-4">
+                <p className="text-[10px] uppercase tracking-wider text-success mb-1">Lucro Estimado</p>
+                <p className="text-lg font-bold text-success">
+                  R$ {robotSales.reduce((sum, s) => sum + s.profit, 0).toFixed(2)}
+                </p>
+                {robotSales.length > 0 && (
+                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                    Margem: {(
+                      (robotSales.reduce((sum, s) => sum + s.profit, 0) /
+                        Math.max(1, robotSales.reduce((sum, s) => sum + s.revenue, 0))) *
+                      100
+                    ).toFixed(1)}%
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Sales table */}
+            {robotSales.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-border py-10 text-center text-sm text-muted-foreground">
+                <BarChart3 className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                Nenhuma venda Robot neste período
+              </div>
+            ) : (
+              <div className="rounded-lg border border-border overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="border-b border-border bg-secondary/30">
+                        <th className="px-4 py-2.5 text-left font-medium text-muted-foreground">Data</th>
+                        <th className="px-4 py-2.5 text-left font-medium text-muted-foreground">Produto</th>
+                        <th className="px-4 py-2.5 text-left font-medium text-muted-foreground">Plano</th>
+                        <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">Receita</th>
+                        <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">Custo Est.</th>
+                        <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">Lucro</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {robotSales.map(sale => (
+                        <tr key={sale.id} className="hover:bg-secondary/20 transition-colors">
+                          <td className="px-4 py-2.5 text-muted-foreground whitespace-nowrap">
+                            {new Date(sale.created_at).toLocaleDateString("pt-BR")}
+                          </td>
+                          <td className="px-4 py-2.5 font-medium text-foreground">{sale.product_name}</td>
+                          <td className="px-4 py-2.5 text-muted-foreground">
+                            {sale.plan_name}
+                            {sale.duration && <span className="text-[10px] ml-1">({sale.duration}d)</span>}
+                          </td>
+                          <td className="px-4 py-2.5 text-right font-mono text-success">
+                            R$ {sale.revenue.toFixed(2)}
+                          </td>
+                          <td className="px-4 py-2.5 text-right font-mono text-destructive">
+                            R$ {sale.cost.toFixed(2)}
+                          </td>
+                          <td className={`px-4 py-2.5 text-right font-mono font-bold ${sale.profit >= 0 ? "text-success" : "text-destructive"}`}>
+                            R$ {sale.profit.toFixed(2)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr className="border-t-2 border-border bg-secondary/20">
+                        <td colSpan={3} className="px-4 py-2.5 font-bold text-foreground">Total</td>
+                        <td className="px-4 py-2.5 text-right font-mono font-bold text-success">
+                          R$ {robotSales.reduce((s, sale) => s + sale.revenue, 0).toFixed(2)}
+                        </td>
+                        <td className="px-4 py-2.5 text-right font-mono font-bold text-destructive">
+                          R$ {robotSales.reduce((s, sale) => s + sale.cost, 0).toFixed(2)}
+                        </td>
+                        <td className="px-4 py-2.5 text-right font-mono font-bold text-success">
+                          R$ {robotSales.reduce((s, sale) => s + sale.profit, 0).toFixed(2)}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            <p className="mt-2 text-[10px] text-muted-foreground">
+              * Custo estimado via markup do produto. Vendas com cashback registrado usam o valor real.
+            </p>
+          </>
+        )}
+      </div>
+
       {/* Products with Robot - Stock Status */}
       <div className="mt-8">
         <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
