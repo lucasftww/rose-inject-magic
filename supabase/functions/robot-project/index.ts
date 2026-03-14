@@ -146,7 +146,7 @@ Deno.serve(async (req) => {
       });
 
       const data = await response.json();
-      console.log("Robot buy response:", response.status, JSON.stringify(data).substring(0, 500));
+      log("INFO", "buy", "Robot buy response", { status: response.status, data: JSON.stringify(data).substring(0, 500) });
 
       if (!response.ok) {
         return new Response(JSON.stringify({ error: "Robot buy failed", status: response.status, detail: data }), {
