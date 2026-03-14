@@ -354,13 +354,13 @@ const ProdutoDetalhes = () => {
                 <>
                   <button
                     onClick={prevMedia}
-                    className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-background/80 border border-border text-foreground backdrop-blur-sm transition-colors hover:border-success hover:text-success"
+                    className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-background/70 backdrop-blur-sm text-foreground transition-colors hover:text-success"
                   >
                     <ChevronLeft className="h-5 w-5" />
                   </button>
                   <button
                     onClick={nextMedia}
-                    className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-background/80 border border-border text-foreground backdrop-blur-sm transition-colors hover:border-success hover:text-success"
+                    className="absolute right-2.5 sm:right-3 top-1/2 -translate-y-1/2 flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-background/70 backdrop-blur-sm text-foreground transition-colors hover:text-success"
                   >
                     <ChevronRight className="h-5 w-5" />
                   </button>
@@ -370,15 +370,15 @@ const ProdutoDetalhes = () => {
 
             {/* Thumbnails */}
             {allMedia.length > 1 && (
-              <div className="mt-3 sm:mt-4 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+              <div className="mt-4 sm:mt-4 flex gap-2.5 overflow-x-auto pb-2 scrollbar-hide">
                 {allMedia.map((media, idx) => (
                   <button
                     key={media.id}
                     onClick={() => setSelectedMediaIndex(idx)}
-                    className={`relative h-14 w-14 sm:h-16 sm:w-16 shrink-0 overflow-hidden rounded-lg border-2 transition-all ${
+                    className={`relative h-14 w-14 sm:h-16 sm:w-16 shrink-0 overflow-hidden rounded-xl transition-all ${
                       idx === selectedMediaIndex
-                        ? "border-success shadow-[0_0_10px_hsl(130,99%,41%,0.3)]"
-                        : "border-border hover:border-foreground/40"
+                        ? "ring-2 ring-success shadow-[0_0_10px_hsl(130,99%,41%,0.2)]"
+                        : "opacity-60 hover:opacity-100"
                     }`}
                   >
                     {media.media_type === "video" ? (
@@ -403,7 +403,7 @@ const ProdutoDetalhes = () => {
 
             {/* Features text */}
             {product.features_text && (
-              <div className="mt-6 sm:mt-6 rounded-xl border border-border bg-card p-5 sm:p-5">
+              <div className="mt-6 sm:mt-6 rounded-xl border border-border/60 bg-card p-5 sm:p-5">
                 <div className="mb-4 flex items-center gap-2">
                   <div className="h-px flex-1 bg-gradient-to-r from-success/50 to-transparent" />
                   <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-success">Detalhes</span>
@@ -428,7 +428,7 @@ const ProdutoDetalhes = () => {
                   return (
                     <div
                       key={feat.id}
-                      className="group flex items-start gap-3 rounded-xl border border-border bg-card p-4 sm:p-4 transition-all hover:border-success/40 hover:shadow-[0_0_15px_hsl(130,99%,41%,0.08)]"
+                      className="group flex items-start gap-3 rounded-xl border border-border/50 bg-card p-4 sm:p-4 transition-all hover:border-success/40 hover:shadow-[0_0_15px_hsl(130,99%,41%,0.08)]"
                     >
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-success/10 text-success transition-colors group-hover:bg-success/20">
                         {icon}
@@ -472,7 +472,7 @@ const ProdutoDetalhes = () => {
 
             {/* Plans selection */}
             {sortedPlans.length > 0 && (
-               <div className="mt-8 sm:mt-8 rounded-xl border border-border bg-card p-5 sm:p-6">
+               <div className="mt-8 sm:mt-8 rounded-xl border border-border/60 bg-card p-5 sm:p-6">
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">Escolha seu plano</p>
 
                 <div className="space-y-2.5">
@@ -543,7 +543,7 @@ const ProdutoDetalhes = () => {
             )}
 
             {/* Customer Reviews */}
-            <div className="mt-8 sm:mt-8 rounded-xl border border-border bg-card p-5 sm:p-6">
+            <div className="mt-8 sm:mt-8 rounded-xl border border-border/60 bg-card p-5 sm:p-6">
               <div className="mb-4 flex items-center gap-2">
                 <div className="h-px flex-1 bg-gradient-to-r from-success/50 to-transparent" />
                 <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-success">Avaliações ({reviews.length})</span>
@@ -575,11 +575,11 @@ const ProdutoDetalhes = () => {
                     </div>
                   </div>
 
-                  <div className="space-y-2.5">
+                  <div className="space-y-3">
                     {reviews.map((review) => (
                       <div
                         key={review.id}
-                        className="rounded-lg border border-border bg-secondary/30 p-3 transition-all hover:border-success/30"
+                        className="rounded-xl bg-secondary/20 p-4 transition-all"
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
