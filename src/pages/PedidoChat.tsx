@@ -202,7 +202,7 @@ const PedidoChat = () => {
           return prev;
         });
       }
-    }, 5000);
+    }, 10000);
 
     return () => {
       cancelled = true;

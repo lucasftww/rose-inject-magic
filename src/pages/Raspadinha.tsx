@@ -434,7 +434,7 @@ const Raspadinha = () => {
         }
       } catch { /* silent */ }
     };
-    pollRef.current = setInterval(check, 5000);
+    pollRef.current = setInterval(check, 10000);
     check();
   };
 
