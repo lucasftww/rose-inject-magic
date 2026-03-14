@@ -301,7 +301,7 @@ const LztTab = () => {
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-muted-foreground">Novo Preço</label>
+              <label className="text-xs font-medium text-muted-foreground">Novo Preço (RUB)</label>
               <input
                 type="number"
                 step="0.01"
