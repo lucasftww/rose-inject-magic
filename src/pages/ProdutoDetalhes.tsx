@@ -472,15 +472,15 @@ const ProdutoDetalhes = () => {
 
             {/* Plans selection */}
             {sortedPlans.length > 0 && (
-               <div className="mt-6 sm:mt-8 rounded-xl border border-border bg-card p-4 sm:p-6">
+               <div className="mt-8 sm:mt-8 rounded-xl border border-border bg-card p-5 sm:p-6">
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">Escolha seu plano</p>
 
-                <div className="space-y-2">
+                <div className="space-y-2.5">
                   {sortedPlans.map((plan) => (
                     <button
                       key={plan.id}
                       onClick={() => setSelectedPlanId(plan.id)}
-                      className={`flex w-full items-center justify-between rounded-lg border p-3 sm:p-4 text-left transition-all ${
+                      className={`flex w-full items-center justify-between rounded-xl border p-4 sm:p-4 text-left transition-all ${
                         selectedPlanId === plan.id
                           ? "border-success bg-success/10 shadow-[0_0_15px_hsl(130,99%,41%,0.15)]"
                           : "border-border hover:border-foreground/30"
