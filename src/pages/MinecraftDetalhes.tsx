@@ -97,8 +97,14 @@ const MinecraftDetalhes = () => {
     }
   }, [item]);
 
-  const handleBuyNow = () => {
-    if (!item) return;
+  const [checkingAvailability, setCheckingAvailability] = useState(false);
+
+  const handleBuyNow = async () => {
+    if (!item || checkingAvailability) return;
+    setCheckingAvailability(true);
+    const available = await checkLztAvailability(String(item.item_id), "minecraft");
+    setCheckingAvailability(false);
+    if (!available) return;
     const title = `Conta Minecraft${nickname ? ` · ${nickname}` : ""}${hasJava ? " · Java" : ""}${hasBedrock ? " · Bedrock" : ""}`;
     const priceBRL = getPrice(item, "minecraft");
 
