@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { throwApiError } from "@/lib/apiErrors";
+import { translateRegion } from "@/lib/regionTranslation";
 import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/Header";
 import { ArrowLeft, Shield, Loader2, ChevronRight, ChevronLeft, ChevronRight as ChevronRightIcon, CheckCircle2, ShoppingCart, Swords, Users, Star, X, Zap } from "lucide-react";
