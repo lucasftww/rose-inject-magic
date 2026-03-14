@@ -48,7 +48,7 @@ const LztTab = () => {
   // Change price state
   const [priceItemId, setPriceItemId] = useState("");
   const [newPrice, setNewPrice] = useState("");
-  const [priceCurrency, setPriceCurrency] = useState("rub");
+  const [priceCurrency] = useState("rub");
   const [changingPrice, setChangingPrice] = useState(false);
 
   // Per-game markup state
