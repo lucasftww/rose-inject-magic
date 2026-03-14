@@ -59,14 +59,6 @@
 
     --radius: 0.25rem;
 
-    --sidebar-background: 0 0% 9%;
-    --sidebar-foreground: 0 0% 85%;
-    --sidebar-primary: 0 0% 100%;
-    --sidebar-primary-foreground: 0 0% 7.5%;
-    --sidebar-accent: 0 0% 14%;
-    --sidebar-accent-foreground: 0 0% 85%;
-    --sidebar-border: 0 0% 16%;
-    --sidebar-ring: 0 0% 40%;
   }
 
   /* Slightly soften the vibrant blue on small screens */
