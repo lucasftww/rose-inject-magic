@@ -95,7 +95,7 @@ Deno.serve(async (req) => {
 
       if (!response.ok) {
         const errText = await response.text();
-        console.error("Robot API error:", response.status, errText);
+        log("ERROR", "list-games", "Robot API error", { status: response.status, body: errText.substring(0, 300) });
         return new Response(JSON.stringify({ error: "Robot API error", status: response.status }), {
           status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
