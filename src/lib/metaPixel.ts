@@ -6,7 +6,7 @@
  *   Browser → fbq events with Advanced Matching
  *   Server  → Edge Function meta-capi with event_id deduplication
  *
- * Events: PageView (auto), ViewContent, AddToCart, InitiateCheckout, Purchase
+ * Events: PageView (auto), ViewContent, InitiateCheckout, Purchase
  * Categories: Valorant, Fortnite, Roblox, Minecraft, LoL, CS2, GTA
  *
  * user_data sent to CAPI:
