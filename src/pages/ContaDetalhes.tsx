@@ -764,7 +764,7 @@ const ContaDetalhes = () => {
                 </div>
 
                 {/* Full Acesso */}
-                <div className="rounded-xl border border-border bg-card p-5 sm:p-6 pb-8 sm:pb-14">
+                <div className="rounded-xl border border-border/60 bg-card p-5 sm:p-6 pb-8 sm:pb-14">
                   <div className="flex items-center gap-3 mb-4">
                     <CheckCircle2 className="h-6 w-6 sm:h-8 sm:w-8 text-success" />
                     <h3 className="text-lg sm:text-xl font-bold text-foreground">Conta FULL ACESSO</h3>
