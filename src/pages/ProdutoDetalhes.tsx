@@ -370,15 +370,15 @@ const ProdutoDetalhes = () => {
 
             {/* Thumbnails */}
             {allMedia.length > 1 && (
-              <div className="mt-3 sm:mt-4 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+              <div className="mt-4 sm:mt-4 flex gap-2.5 overflow-x-auto pb-2 scrollbar-hide">
                 {allMedia.map((media, idx) => (
                   <button
                     key={media.id}
                     onClick={() => setSelectedMediaIndex(idx)}
-                    className={`relative h-14 w-14 sm:h-16 sm:w-16 shrink-0 overflow-hidden rounded-lg border-2 transition-all ${
+                    className={`relative h-14 w-14 sm:h-16 sm:w-16 shrink-0 overflow-hidden rounded-xl transition-all ${
                       idx === selectedMediaIndex
-                        ? "border-success shadow-[0_0_10px_hsl(130,99%,41%,0.3)]"
-                        : "border-border hover:border-foreground/40"
+                        ? "ring-2 ring-success shadow-[0_0_10px_hsl(130,99%,41%,0.2)]"
+                        : "opacity-60 hover:opacity-100"
                     }`}
                   >
                     {media.media_type === "video" ? (
