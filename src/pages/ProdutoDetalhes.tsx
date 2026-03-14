@@ -556,26 +556,56 @@ const ProdutoDetalhes = () => {
                   <p className="text-sm text-muted-foreground">Nenhuma avaliação ainda.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {reviews.map((review) => (
-                    <div
-                      key={review.id}
-                      className="rounded-lg border border-border bg-secondary/30 p-3 transition-all hover:border-success/30"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-foreground">{review.username}</span>
-                        <div className="flex gap-0.5">
-                          {Array.from({ length: 5 }).map((_, i) => (
-                            <span key={i} className={`text-[10px] ${i < review.rating ? "text-warning" : "text-muted-foreground/30"}`}>★</span>
-                          ))}
-                        </div>
+                <>
+                  {/* Average rating summary */}
+                  <div className="mb-4 flex items-center gap-3">
+                    <span className="text-3xl font-bold text-foreground">
+                      {(reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)}
+                    </span>
+                    <div>
+                      <div className="flex gap-0.5">
+                        {Array.from({ length: 5 }).map((_, i) => {
+                          const avg = reviews.reduce((s, r) => s + r.rating, 0) / reviews.length;
+                          return (
+                            <span key={i} className={`text-sm ${i < Math.round(avg) ? "text-warning" : "text-muted-foreground/30"}`}>★</span>
+                          );
+                        })}
                       </div>
-                      {review.comment && (
-                        <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{review.comment}</p>
-                      )}
+                      <p className="text-[10px] text-muted-foreground mt-0.5">{reviews.length} avaliações</p>
                     </div>
-                  ))}
-                </div>
+                  </div>
+
+                  <div className="space-y-2.5 max-h-[400px] overflow-y-auto pr-1">
+                    {reviews.map((review) => (
+                      <div
+                        key={review.id}
+                        className="rounded-lg border border-border bg-secondary/30 p-3 transition-all hover:border-success/30"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-success/15 text-[10px] font-bold text-success uppercase">
+                              {(review.username || "U")[0]}
+                            </div>
+                            <div>
+                              <span className="text-xs font-bold text-foreground">{review.username}</span>
+                              <p className="text-[9px] text-muted-foreground">
+                                {new Date(review.created_at).toLocaleDateString("pt-BR")}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex gap-0.5">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                              <span key={i} className={`text-[10px] ${i < review.rating ? "text-warning" : "text-muted-foreground/30"}`}>★</span>
+                            ))}
+                          </div>
+                        </div>
+                        {review.comment && (
+                          <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{review.comment}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </>
               )}
             </div>
           </motion.div>
