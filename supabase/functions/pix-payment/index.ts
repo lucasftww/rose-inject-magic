@@ -1488,7 +1488,7 @@ Deno.serve(async (req) => {
       }
 
       const newStatus = mapMisticPayStatus(txState);
-      console.log(`Webhook: payment ${payment.id} status ${payment.status} -> ${newStatus}`);
+      log("INFO", "webhook", "Status transition", { paymentId: payment.id, from: payment.status, to: newStatus, txId, userId: payment.user_id });
 
       if (newStatus !== payment.status) {
         const updates: Record<string, unknown> = { status: newStatus };
