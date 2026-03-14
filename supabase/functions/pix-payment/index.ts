@@ -401,7 +401,7 @@ async function fulfillOrder(supabaseAdmin: any, payment: any) {
           }
         }
 
-        if (resellerData) {
+        if (resellerData && resellerProductIds.includes(item.productId)) {
           await supabaseAdmin.from("reseller_purchases").insert({
             reseller_id: resellerData.id,
             original_price: originalPrice,
