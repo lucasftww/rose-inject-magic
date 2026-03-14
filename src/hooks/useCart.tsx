@@ -1,5 +1,4 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
 
 export interface CartItem {
   productId: string;
