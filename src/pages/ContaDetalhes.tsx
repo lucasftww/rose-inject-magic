@@ -811,22 +811,22 @@ const ContaDetalhes = () => {
 
                 {/* Items grid */}
                 {activeItems.length > 0 ? (
-                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3">
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2.5 sm:gap-3">
                     {activeItems.map((invItem: any, i: number) => (
                       <motion.div
                         key={`${activeTab}-${i}`}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.2, delay: i * 0.015 }}
-                        className="group rounded-lg border border-border bg-card overflow-hidden hover:border-success/40 transition-all relative cursor-pointer"
+                        className="group rounded-xl bg-card overflow-hidden hover:ring-1 hover:ring-success/30 transition-all relative cursor-pointer"
                         onClick={() => setLightboxIndex(i)}
                       >
                         {invItem.rarity && (
                           <div className="absolute top-1.5 right-1.5 z-10">
-                            <img src={invItem.rarity.img} alt={invItem.rarity.name} className="h-5 w-5 object-contain drop-shadow-md" title={invItem.rarity.name} />
+                            <img src={invItem.rarity.img} alt={invItem.rarity.name} className="h-4.5 w-4.5 object-contain drop-shadow-md" title={invItem.rarity.name} />
                           </div>
                         )}
-                        <div className="aspect-square bg-secondary/20 flex items-center justify-center p-2 sm:p-3">
+                        <div className="aspect-square bg-secondary/15 flex items-center justify-center p-3 sm:p-3">
                           <img
                             src={invItem.image}
                             alt={invItem.name}
@@ -834,11 +834,11 @@ const ContaDetalhes = () => {
                             loading="lazy"
                           />
                         </div>
-                        <div className="p-1.5 sm:p-2 border-t border-border flex items-center gap-1 sm:gap-1.5">
+                        <div className="px-2 py-1.5 sm:p-2 flex items-center gap-1 sm:gap-1.5">
                           {invItem.rarity && (
-                            <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: invItem.rarity.color }} />
+                            <span className="h-1.5 w-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: invItem.rarity.color }} />
                           )}
-                          <p className="text-[11px] font-medium text-foreground truncate">{invItem.name}</p>
+                          <p className="text-[10px] sm:text-[11px] font-medium text-foreground/80 truncate">{invItem.name}</p>
                         </div>
                       </motion.div>
                     ))}
