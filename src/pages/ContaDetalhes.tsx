@@ -347,9 +347,9 @@ const fetchValorantSkins = async (uuids: string[]) => {
       }
     } catch {
 
+
       // ignore fallback failures
     }}
-
   // Deduplicate by skin name (same skin via base uuid + level + chroma)
   const deduped = new Map<string, ValorantSkinItem>();
   for (const skin of matched) {
@@ -834,8 +834,8 @@ const ContaDetalhes = () => {
                   
                         </div>
                         <div className="px-2 py-1.5 sm:p-2 flex items-center gap-1 sm:gap-1.5">
-                          {invItem.rarity &&
-                  <span className="h-1.5 w-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: invItem.rarity.color }} />
+                          {invItem.rarity
+
                   }
                           <p className="text-[10px] sm:text-[11px] font-medium text-foreground/80 truncate">{invItem.name}</p>
                         </div>
