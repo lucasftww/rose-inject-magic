@@ -8,6 +8,13 @@ const corsHeaders = {
 
 const ROBOT_API_URL = "https://api.robotproject.com.br";
 
+function log(level: "INFO" | "WARN" | "ERROR", ctx: string, msg: string, data?: Record<string, unknown>) {
+  const entry = { ts: new Date().toISOString(), level, ctx, msg, ...(data || {}) };
+  if (level === "ERROR") console.error(JSON.stringify(entry));
+  else if (level === "WARN") console.warn(JSON.stringify(entry));
+  else console.log(JSON.stringify(entry));
+}
+
 async function getRobotCredentials(supabaseAdmin: any): Promise<{ username: string; password: string } | null> {
   const [uRes, pRes] = await Promise.all([
     supabaseAdmin.from("system_credentials").select("value").eq("env_key", "ROBOT_API_USERNAME").maybeSingle(),
