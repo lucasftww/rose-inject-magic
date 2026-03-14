@@ -235,20 +235,20 @@ const LztContaCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap
 
   return (
     <div
-      className="group cursor-pointer overflow-hidden rounded-lg border border-border bg-card transition-all hover:border-success/40 hover:shadow-[0_0_20px_hsl(197,100%,50%,0.1)]"
+      className="group cursor-pointer overflow-hidden rounded-lg border border-border bg-card transition-all hover:border-success/40 hover:shadow-[0_0_20px_hsl(197,100%,50%,0.1)] flex flex-col"
       onClick={() => navigate(`/conta/${item.item_id}`)}
     >
-      <div className="relative flex h-48 items-center justify-center overflow-hidden">
+      <div className="relative flex h-36 sm:h-48 items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--secondary))] via-[hsl(var(--background))] to-[hsl(var(--secondary))]" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--success)/0.08),transparent_70%)]" />
         <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[hsl(var(--card))] to-transparent z-[2]" />
-        <div className="absolute left-3 top-3 z-10 flex gap-1.5">
-          {hasKnife && <span className="rounded bg-primary px-2.5 py-1 text-xs font-bold text-primary-foreground">🔪 Knife</span>}
+        <div className="absolute left-2 sm:left-3 top-2 sm:top-3 z-10 flex gap-1.5">
+          {hasKnife && <span className="rounded bg-primary px-1.5 sm:px-2.5 py-0.5 sm:py-1 text-[10px] sm:text-xs font-bold text-primary-foreground">🔪 Knife</span>}
         </div>
         {skinPreviews.length > 0 ? (
-          <div className="relative z-[1] grid grid-cols-3 gap-2 p-4 w-full h-full">
+          <div className="relative z-[1] grid grid-cols-3 gap-1 sm:gap-2 p-2 sm:p-4 w-full h-full">
             {skinPreviews.map((skin, i) => (
-              <div key={i} className="flex items-center justify-center rounded bg-secondary/30 p-1.5">
+              <div key={i} className="flex items-center justify-center rounded bg-secondary/30 p-1 sm:p-1.5">
                 <img src={skin.image} alt={skin.name} className="h-full w-full object-contain" loading="lazy" />
               </div>
             ))}
@@ -256,42 +256,42 @@ const LztContaCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap
         ) : item.imagePreviewLinks?.direct?.weapons ? (
           <LztPreviewFallback url={item.imagePreviewLinks.direct.weapons} />
         ) : (
-          <div className="flex h-full w-full items-center justify-center"><Crosshair className="h-12 w-12 text-muted-foreground/20" /></div>
+          <div className="flex h-full w-full items-center justify-center"><Crosshair className="h-8 w-8 sm:h-12 sm:w-12 text-muted-foreground/20" /></div>
         )}
       </div>
-      <div className="p-5">
+      <div className="p-3 sm:p-5 flex flex-col flex-1">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <img src={rank?.img || rankUnranked} alt={rank?.name || "Unranked"} className="h-6 w-6 object-contain" />
-            <span className="rounded bg-secondary px-2 py-0.5 text-xs font-medium text-muted-foreground">{rank?.name || "Unranked"}</span>
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <img src={rank?.img || rankUnranked} alt={rank?.name || "Unranked"} className="h-5 w-5 sm:h-6 sm:w-6 object-contain" />
+            <span className="rounded bg-secondary px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs font-medium text-muted-foreground">{rank?.name || "Unranked"}</span>
           </div>
-          <span className="text-sm text-muted-foreground">{skinCount} skins</span>
+          <span className="text-[11px] sm:text-sm text-muted-foreground">{skinCount} skins</span>
         </div>
-        <div className="mt-3 flex flex-col gap-1.5">
-          <div className="flex items-center gap-1.5">
-            <svg className="h-4 w-4 text-success" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M11.14 4L6.43 16H8.36L9.32 13.43H14.67L15.64 16H17.57L12.86 4M12 6.29L14.03 11.71H9.96M4 18V15H2V20H22V18Z" /></svg>
-            <span className="text-xs font-medium text-success">Conta Full Acesso</span>
+        <div className="mt-2 sm:mt-3 flex flex-col gap-1 sm:gap-1.5">
+          <div className="flex items-center gap-1 sm:gap-1.5">
+            <svg className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-success flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M11.14 4L6.43 16H8.36L9.32 13.43H14.67L15.64 16H17.57L12.86 4M12 6.29L14.03 11.71H9.96M4 18V15H2V20H22V18Z" /></svg>
+            <span className="text-[10px] sm:text-xs font-medium text-success">Conta Full Acesso</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <svg className="h-4 w-4 text-success" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="currentColor"><path d="M19,24H4L3.9966,8.9062l11.4341,7.9161a1.0008,1.0008,0,0,0,1.1386,0L28,8.9087,28,18h2V8a2.0027,2.0027,0,0,0-2-2H4A2.0023,2.0023,0,0,0,2,8V24a2.0027,2.0027,0,0,0,2,2H19ZM25.7986,8,16,14.7837,6.2014,8Z"/><circle cx="26" cy="24" r="4"/></svg>
-            <span className="text-xs font-medium text-success">Email e Senha inclusos</span>
+          <div className="flex items-center gap-1 sm:gap-1.5">
+            <svg className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-success flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="currentColor"><path d="M19,24H4L3.9966,8.9062l11.4341,7.9161a1.0008,1.0008,0,0,0,1.1386,0L28,8.9087,28,18h2V8a2.0027,2.0027,0,0,0-2-2H4A2.0023,2.0023,0,0,0,2,8V24a2.0027,2.0027,0,0,0,2,2H19ZM25.7986,8,16,14.7837,6.2014,8Z"/><circle cx="26" cy="24" r="4"/></svg>
+            <span className="text-[10px] sm:text-xs font-medium text-success">Email e Senha inclusos</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <svg className="h-4 w-4 text-success" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2.05v2.02c3.95.49 7 3.85 7 7.93 0 1.45-.39 2.81-1.06 3.97l1.47 1.47A9.953 9.953 0 0022 12c0-5.18-3.95-9.45-9-9.95zM12 19c-3.87 0-7-3.13-7-7 0-3.53 2.61-6.43 6-6.92V3.05c-5.06.5-9 4.76-9 9.95 0 5.52 4.47 10 9.99 10 3.31 0 6.24-1.61 8.06-4.09l-1.46-1.46A7.932 7.932 0 0112 19z"/><path d="M16 12l-4-4v3H8v2h4v3z"/></svg>
-            <span className="text-xs font-medium text-success">Entrega Automática</span>
+          <div className="flex items-center gap-1 sm:gap-1.5">
+            <svg className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-success flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2.05v2.02c3.95.49 7 3.85 7 7.93 0 1.45-.39 2.81-1.06 3.97l1.47 1.47A9.953 9.953 0 0022 12c0-5.18-3.95-9.45-9-9.95zM12 19c-3.87 0-7-3.13-7-7 0-3.53 2.61-6.43 6-6.92V3.05c-5.06.5-9 4.76-9 9.95 0 5.52 4.47 10 9.99 10 3.31 0 6.24-1.61 8.06-4.09l-1.46-1.46A7.932 7.932 0 0112 19z"/><path d="M16 12l-4-4v3H8v2h4v3z"/></svg>
+            <span className="text-[10px] sm:text-xs font-medium text-success">Entrega Automática</span>
           </div>
         </div>
         {item.valorantRegionPhrase && (
-          <div className="mt-2 flex items-center gap-1.5">
-            <Globe className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-[11px] text-muted-foreground">{translateRegion(item.valorantRegionPhrase)}</span>
+          <div className="mt-1.5 sm:mt-2 flex items-center gap-1 sm:gap-1.5">
+            <Globe className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-muted-foreground flex-shrink-0" />
+            <span className="text-[10px] sm:text-[11px] text-muted-foreground">{translateRegion(item.valorantRegionPhrase)}</span>
           </div>
         )}
-        <div className="mt-4 flex items-end justify-between">
-          <p className="text-xl font-bold text-success">
+        <div className="mt-auto pt-3 sm:pt-4 flex items-end justify-between">
+          <p className="text-base sm:text-xl font-bold text-success">
             {formatPrice(item.price, item.price_currency)}
           </p>
-          <span className="flex items-center gap-1.5 rounded border border-border px-4 py-2 text-xs font-medium text-muted-foreground transition-colors group-hover:border-success group-hover:text-success">
+          <span className="hidden sm:flex items-center gap-1.5 rounded border border-border px-4 py-2 text-xs font-medium text-muted-foreground transition-colors group-hover:border-success group-hover:text-success">
             Ver conta
           </span>
         </div>
@@ -330,7 +330,7 @@ const ContasSection = () => {
           <div className="mt-14 text-center text-muted-foreground">Nenhuma conta disponível no momento.</div>
         ) : (
           <motion.div
-            className="mt-8 sm:mt-14 grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3"
+            className="mt-8 sm:mt-14 grid grid-cols-2 gap-2.5 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-40px" }}
@@ -347,7 +347,7 @@ const ContasSection = () => {
         <motion.div className="mt-10 sm:mt-12 flex justify-center" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
           <Link
             to="/contas"
-            className="flex w-full sm:w-auto items-center justify-center gap-2 border-2 border-foreground/30 px-8 sm:px-14 py-3.5 sm:py-4 text-sm font-bold uppercase tracking-[0.25em] text-foreground transition-all hover:border-success hover:text-success hover:shadow-[0_0_30px_hsl(197,100%,50%,0.2)] rounded-lg sm:rounded-none mx-4 sm:mx-0"
+            className="flex w-full sm:w-auto items-center justify-center gap-2 border-2 border-foreground/30 px-8 sm:px-14 py-3 sm:py-4 text-xs sm:text-sm font-bold uppercase tracking-[0.25em] text-foreground transition-all hover:border-success hover:text-success hover:shadow-[0_0_30px_hsl(197,100%,50%,0.2)] rounded-lg sm:rounded-none"
             style={{ fontFamily: "'Valorant', sans-serif" }}
           >
             Explorar Contas
@@ -441,7 +441,7 @@ const ProductsSection = () => {
         )}
 
         <motion.div className="mt-10 sm:mt-12 flex justify-center" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
-          <Link to="/produtos" className="flex w-full sm:w-auto items-center justify-center gap-2 border-2 border-foreground/30 px-8 sm:px-14 py-3.5 sm:py-4 text-sm font-bold uppercase tracking-[0.25em] text-foreground transition-all hover:border-success hover:text-success hover:shadow-[0_0_30px_hsl(197,100%,50%,0.2)] rounded-lg sm:rounded-none mx-4 sm:mx-0" style={{ fontFamily: "'Valorant', sans-serif" }}>
+          <Link to="/produtos" className="flex w-full sm:w-auto items-center justify-center gap-2 border-2 border-foreground/30 px-8 sm:px-14 py-3 sm:py-4 text-xs sm:text-sm font-bold uppercase tracking-[0.25em] text-foreground transition-all hover:border-success hover:text-success hover:shadow-[0_0_30px_hsl(197,100%,50%,0.2)] rounded-lg sm:rounded-none" style={{ fontFamily: "'Valorant', sans-serif" }}>
             Ver Todos Produtos
             <ArrowRight className="h-5 w-5" />
           </Link>
@@ -459,7 +459,7 @@ const Index = () => {
       <Header />
 
       {/* HERO */}
-      <main className="relative flex min-h-[85vh] sm:min-h-screen flex-col items-center justify-center px-4 sm:px-6 pt-4 sm:pt-8 pb-10 sm:pb-20 text-center overflow-hidden">
+      <main className="relative flex min-h-[85vh] sm:min-h-screen flex-col items-center justify-center px-5 sm:px-6 pt-4 sm:pt-8 pb-10 sm:pb-20 text-center overflow-hidden">
         <div className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[400px] sm:h-[550px] w-[600px] sm:w-[900px] -translate-x-1/2 -translate-y-1/2"
           style={{
             backgroundImage: "linear-gradient(hsl(var(--border) / 0.8) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--border) / 0.8) 1px, transparent 1px)",
@@ -493,26 +493,26 @@ const Index = () => {
           <span className="sm:hidden">Softwares premium com <span className="text-foreground font-medium">entrega instantânea</span>, <span className="text-foreground font-medium">suporte 24/7</span> e <span className="text-foreground font-medium">garantia total</span>. +20 mil clientes confiam na Royal.</span>
         </motion.p>
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.8, ease: [0.22, 1, 0.36, 1] }} className="z-10 mt-8 sm:mt-12 flex w-full max-w-md sm:max-w-none sm:w-auto flex-col sm:flex-row items-center justify-center gap-3 sm:gap-5 px-4 sm:px-0">
-          <Link to="/produtos" className="btn-shine group relative flex w-full sm:w-auto items-center justify-center gap-2 bg-success px-10 py-4 text-base font-semibold tracking-wide text-success-foreground transition-all hover:shadow-[0_0_30px_hsl(197,100%,50%,0.5)] rounded-xl sm:rounded-none shadow-[0_0_20px_hsl(197,100%,50%,0.25)]">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.8, ease: [0.22, 1, 0.36, 1] }} className="z-10 mt-8 sm:mt-12 flex w-full sm:w-auto flex-col sm:flex-row items-center justify-center gap-3 sm:gap-5 px-0 sm:px-0">
+          <Link to="/produtos" className="btn-shine group relative flex w-full sm:w-auto items-center justify-center gap-2 bg-success px-10 py-3.5 sm:py-4 text-sm sm:text-base font-semibold tracking-wide text-success-foreground transition-all hover:shadow-[0_0_30px_hsl(197,100%,50%,0.5)] rounded-xl sm:rounded-none shadow-[0_0_20px_hsl(197,100%,50%,0.25)]">
             <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,_hsl(197,100%,70%,0.3)_0%,_transparent_60%)]" />
             <span className="relative flex items-center gap-2">
               Ver Produtos
               <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
             </span>
           </Link>
-          <Link to="/contas" className="w-full sm:w-auto border-2 border-success/40 px-10 py-4 text-base font-medium text-success transition-colors hover:border-foreground hover:text-foreground rounded-xl sm:rounded-none text-center">
+          <Link to="/contas" className="w-full sm:w-auto border-2 border-success/40 px-10 py-3.5 sm:py-4 text-sm sm:text-base font-medium text-success transition-colors hover:border-foreground hover:text-foreground rounded-xl sm:rounded-none text-center">
             Ver Contas
           </Link>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8, delay: 1.0 }} className="z-10 mt-10 sm:mt-20 mx-auto grid grid-cols-3 sm:flex items-center justify-center gap-4 sm:gap-10 md:gap-16 w-full max-w-lg sm:max-w-none">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8, delay: 1.0 }} className="z-10 mt-8 sm:mt-20 mx-auto flex items-center justify-center gap-6 sm:gap-10 md:gap-16 w-full">
           {trustBadges.map((item, idx) => (
-            <motion.div key={item.highlight} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 1.0 + idx * 0.15 }} className="flex flex-col sm:flex-row items-center gap-1.5 sm:gap-3">
-              <item.icon className="h-5 w-5 sm:h-6 sm:w-6 text-success" />
+            <motion.div key={item.highlight} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 1.0 + idx * 0.15 }} className="flex flex-col sm:flex-row items-center gap-1 sm:gap-3">
+              <item.icon className="h-4 w-4 sm:h-6 sm:w-6 text-success" />
               <div className="text-center sm:text-left">
-                <span className="text-[10px] sm:text-sm text-muted-foreground whitespace-nowrap">{item.label}</span>
-                <p className="text-xs sm:text-base font-bold tracking-wide text-foreground whitespace-nowrap" style={{ fontFamily: "'Valorant', sans-serif" }}>{item.highlight}</p>
+                <span className="text-[9px] sm:text-sm text-muted-foreground whitespace-nowrap">{item.label}</span>
+                <p className="text-[10px] sm:text-base font-bold tracking-wide text-foreground whitespace-nowrap" style={{ fontFamily: "'Valorant', sans-serif" }}>{item.highlight}</p>
               </div>
             </motion.div>
           ))}
