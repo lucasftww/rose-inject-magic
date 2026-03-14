@@ -403,8 +403,8 @@ const ProdutoDetalhes = () => {
 
             {/* Features text */}
             {product.features_text && (
-              <div className="mt-5 sm:mt-6 rounded-xl border border-border bg-card p-4 sm:p-5">
-                <div className="mb-3 flex items-center gap-2">
+              <div className="mt-6 sm:mt-6 rounded-xl border border-border bg-card p-5 sm:p-5">
+                <div className="mb-4 flex items-center gap-2">
                   <div className="h-px flex-1 bg-gradient-to-r from-success/50 to-transparent" />
                   <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-success">Detalhes</span>
                   <div className="h-px flex-1 bg-gradient-to-l from-success/50 to-transparent" />
@@ -415,7 +415,7 @@ const ProdutoDetalhes = () => {
 
             {/* Features cards */}
             {sortedFeatures.length > 0 && (
-              <div className="mt-5 sm:mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="mt-6 sm:mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {sortedFeatures.map((feat) => {
                   const iconMap: Record<string, React.ReactNode> = {
                     "GPU": <Sparkles className="h-5 w-5" />,
@@ -428,14 +428,14 @@ const ProdutoDetalhes = () => {
                   return (
                     <div
                       key={feat.id}
-                      className="group flex items-start gap-3 rounded-xl border border-border bg-card p-3 sm:p-4 transition-all hover:border-success/40 hover:shadow-[0_0_15px_hsl(130,99%,41%,0.08)]"
+                      className="group flex items-start gap-3 rounded-xl border border-border bg-card p-4 sm:p-4 transition-all hover:border-success/40 hover:shadow-[0_0_15px_hsl(130,99%,41%,0.08)]"
                     >
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-success/10 text-success transition-colors group-hover:bg-success/20">
                         {icon}
                       </div>
                       <div className="min-w-0">
                         <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{feat.label}</p>
-                        <p className="mt-0.5 text-sm font-bold text-foreground">{feat.value}</p>
+                        <p className="mt-1 text-sm font-bold text-foreground">{feat.value}</p>
                       </div>
                     </div>
                   );
