@@ -6,7 +6,7 @@
  *   Browser → fbq events with Advanced Matching
  *   Server  → Edge Function meta-capi with event_id deduplication
  *
- * Events: PageView (auto), ViewContent, AddToCart, InitiateCheckout, Purchase
+ * Events: PageView (auto), ViewContent, InitiateCheckout, Purchase
  * Categories: Valorant, Fortnite, Roblox, Minecraft, LoL, CS2, GTA
  *
  * user_data sent to CAPI:
@@ -286,30 +286,6 @@ export const trackViewContent = (data: TrackingData) => {
   return eventId;
 };
 
-/**
- * Track AddToCart — fires when user adds a product to cart (clicks "Buy Now")
- */
-export const trackAddToCart = (data: TrackingData) => {
-  if (typeof window === "undefined") return;
-
-  const eventId = generateEventId("atc");
-  const customData: Record<string, any> = {
-    content_name: data.contentName,
-    content_category: data.contentCategory,
-    content_ids: data.contentIds,
-    contents: data.contentIds.map((id) => ({ id, quantity: 1 })),
-    content_type: "product",
-    value: data.value,
-    currency: data.currency || "BRL",
-  };
-
-  if (window.fbq) {
-    window.fbq("track", "AddToCart", customData, { eventID: eventId });
-  }
-  sendCAPI("AddToCart", eventId, customData);
-
-  return eventId;
-};
 
 /**
  * Track InitiateCheckout — fires when user enters checkout page
@@ -345,9 +321,8 @@ export const trackPurchase = (
 ) => {
   if (typeof window === "undefined") return;
 
-  // Deterministic event_id with timestamp suffix for webhook retry dedup
-  const ts = Math.floor(Date.now() / 1000);
-  const eventId = `purchase_${data.transactionId}_${ts}`;
+  // Deterministic event_id — must match server-side for deduplication
+  const eventId = `purchase_${data.transactionId}`;
 
   // Guard against double-firing (polling, re-renders, etc.)
   const storageKey = `_meta_purchase_${data.transactionId}`;
