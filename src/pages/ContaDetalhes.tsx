@@ -421,8 +421,14 @@ const ContaDetalhes = () => {
   const { addItem } = useCart();
   const viewTracked = useRef(false);
 
-  const handleBuyNow = () => {
-    if (!item) return;
+  const [checkingAvailability, setCheckingAvailability] = useState(false);
+
+  const handleBuyNow = async () => {
+    if (!item || checkingAvailability) return;
+    setCheckingAvailability(true);
+    const available = await checkLztAvailability(String(item.item_id), "valorant");
+    setCheckingAvailability(false);
+    if (!available) return;
     const rankName = rank?.name || "Unranked";
     const skinCount = item.riot_valorant_skin_count ?? 0;
     const title = `Conta ${rankName} com ${skinCount} Skins`;
