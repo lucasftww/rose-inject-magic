@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 
 const Footer = () => (
   <motion.footer
-    className="border-t border-border bg-background px-4 sm:px-6 py-10 sm:py-16 pb-24 sm:pb-16"
+    className="border-t border-border bg-background px-5 sm:px-6 py-10 sm:py-16 pb-24 sm:pb-16"
     initial={{ opacity: 0 }}
     whileInView={{ opacity: 1 }}
     viewport={{ once: true }}
