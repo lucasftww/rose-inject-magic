@@ -16,6 +16,9 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { AreaChart, Area, ResponsiveContainer } from "recharts";
+import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
+
+const TURNSTILE_SITE_KEY = "0x4AAAAAAClS1zHIEKz4wE9_";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
