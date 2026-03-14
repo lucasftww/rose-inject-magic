@@ -45,6 +45,8 @@ const Dashboard = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showNewPass, setShowNewPass] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
+  const [verifyCaptchaToken, setVerifyCaptchaToken] = useState<string | undefined>();
+  const verifyCaptchaRef = useRef<TurnstileInstance>(null);
 
   // Tickets (pedidos) state
   interface Ticket {
