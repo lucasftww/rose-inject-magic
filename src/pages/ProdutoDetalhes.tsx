@@ -455,7 +455,7 @@ const ProdutoDetalhes = () => {
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-success">{game.name}</p>
             )}
 
-            <h1 className="mt-2 text-xl font-bold text-foreground sm:text-2xl md:text-3xl">{product.name}</h1>
+            <h1 className="mt-3 text-xl font-bold text-foreground sm:text-2xl md:text-3xl leading-tight">{product.name}</h1>
 
             {product.description && (
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{product.description}</p>
