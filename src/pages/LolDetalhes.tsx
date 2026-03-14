@@ -217,8 +217,14 @@ const LolDetalhes = () => {
     }
   }, [item]);
 
-  const handleBuyNow = () => {
-    if (!item) return;
+  const [checkingAvailability, setCheckingAvailability] = useState(false);
+
+  const handleBuyNow = async () => {
+    if (!item || checkingAvailability) return;
+    setCheckingAvailability(true);
+    const available = await checkLztAvailability(String(item.item_id), "lol");
+    setCheckingAvailability(false);
+    if (!available) return;
     const title = `Conta LoL ${rankText} Nv. ${level} | ${champCount} Campeões | ${skinCount} Skins`;
     const priceBRL = getPrice(item, "lol");
 
