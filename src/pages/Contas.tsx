@@ -1123,14 +1123,15 @@ const Contas = () => {
 
   const paramsKey = JSON.stringify(buildParams(1)) + gameTab;
 
-  const fetchWithRetry = useCallback(async (params: Record<string, string | string[]>, controller: AbortController, retries = 1): Promise<any> => {
+  const fetchWithRetry = useCallback(async (params: Record<string, string | string[]>, controller: AbortController, retries = 3): Promise<any> => {
     for (let attempt = 0; attempt <= retries; attempt++) {
       if (controller.signal.aborted) throw new Error("aborted");
       try {
         return await fetchAccountsRaw(params);
       } catch (err: any) {
         if (attempt >= retries) throw err;
-        await new Promise((r) => setTimeout(r, 800));
+        // Exponential backoff: 1s, 2s, 4s
+        await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempt)));
       }
     }
   }, []);
