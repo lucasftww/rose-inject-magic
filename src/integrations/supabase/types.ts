@@ -207,6 +207,30 @@ export type Database = {
         }
         Relationships: []
       }
+      lzt_price_overrides: {
+        Row: {
+          created_at: string | null
+          custom_price_brl: number
+          id: string
+          lzt_item_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          custom_price_brl: number
+          id?: string
+          lzt_item_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          custom_price_brl?: number
+          id?: string
+          lzt_item_id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       lzt_sales: {
         Row: {
           buy_price: number | null
