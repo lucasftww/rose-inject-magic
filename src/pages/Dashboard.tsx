@@ -648,9 +648,18 @@ const Dashboard = () => {
                           {showVerifyPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
                       </div>
+                      <div className="flex justify-center">
+                        <Turnstile
+                          ref={verifyCaptchaRef}
+                          siteKey={TURNSTILE_SITE_KEY}
+                          onSuccess={(token) => setVerifyCaptchaToken(token)}
+                          onExpire={() => setVerifyCaptchaToken(undefined)}
+                          options={{ theme: "dark", size: "flexible" }}
+                        />
+                      </div>
                       <button
                         onClick={handleVerifyIdentity}
-                        disabled={verifying || !verifyPassword}
+                        disabled={verifying || !verifyPassword || !verifyCaptchaToken}
                         className="flex w-full items-center justify-center gap-2 rounded-lg bg-success px-6 py-3 text-sm font-semibold text-success-foreground transition-all hover:shadow-[0_0_20px_hsl(var(--success)/0.3)] disabled:opacity-50"
                       >
                         {verifying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Shield className="h-4 w-4" />}
