@@ -81,13 +81,7 @@ const FinanceTab = () => {
   const methodRevenue: Record<string, number> = { pix: 0, card: 0, crypto: 0 };
 
   payments.forEach((p) => {
-    const cart = p.cart_snapshot as any[];
-    let method = "pix"; // default
-    if (Array.isArray(cart) && cart.length > 0) {
-      const first = cart[0] as any;
-      if (first.paymentMethod) method = first.paymentMethod;
-    }
-    // Try to infer from charge_id pattern or default to pix
+    const method = p.payment_method || "pix";
     if (!methodCounts[method]) {
       methodCounts[method] = 0;
       methodRevenue[method] = 0;
