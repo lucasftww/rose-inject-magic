@@ -757,7 +757,7 @@ const MinecraftCard = ({ item, formatPrice }: { item: LztItem; formatPrice: (pri
       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = ''; (e.currentTarget as HTMLElement).style.boxShadow = ''; }}
       onClick={() => navigate(`/minecraft/${item.item_id}`)}
     >
-      <div className="relative flex h-44 sm:h-52 items-center justify-center overflow-hidden bg-secondary/20">
+      <div className="relative flex h-32 sm:h-44 items-center justify-center overflow-hidden bg-secondary/20">
         <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse at center, ${MC_GREEN}0a, transparent 70%)` }} />
         <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-card to-transparent z-[2]" />
         <div className="absolute left-2.5 top-2.5 z-10 flex items-center gap-1.5">
