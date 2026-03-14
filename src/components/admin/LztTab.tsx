@@ -288,6 +288,8 @@ const LztTab = () => {
           </h3>
           <p className="text-xs text-muted-foreground mt-1">
             Insira o ID da conta no LZT Market e o novo preço desejado. Isso altera o preço diretamente no marketplace.
+            <br />
+            <span className="text-yellow-500/80">⚠ Só funciona para contas que pertencem à sua conta LZT (listadas por você).</span>
           </p>
           <div className="mt-4 flex flex-wrap items-end gap-4">
             <div>
@@ -301,7 +303,7 @@ const LztTab = () => {
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-muted-foreground">Novo Preço (RUB)</label>
+              <label className="text-xs font-medium text-muted-foreground">Novo Preço (Rublos ₽)</label>
               <input
                 type="number"
                 step="0.01"
@@ -341,7 +343,10 @@ const LztTab = () => {
                   );
                   const result = await res.json();
                   if (!res.ok) {
-                    toast({ title: "Erro ao alterar preço", description: result.error || result.detail || "Erro desconhecido", variant: "destructive" });
+                    const desc = res.status === 403 
+                      ? "Sem permissão. Essa conta não pertence ao seu perfil no LZT Market." 
+                      : (result.error || result.detail || "Erro desconhecido");
+                    toast({ title: "Erro ao alterar preço", description: desc, variant: "destructive" });
                   } else {
                     toast({ title: "Preço alterado com sucesso!", description: `Conta #${priceItemId} → ${p} ${priceCurrency.toUpperCase()}` });
                     setPriceItemId("");
