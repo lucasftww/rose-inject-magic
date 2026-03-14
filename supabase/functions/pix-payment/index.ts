@@ -284,9 +284,11 @@ async function fulfillOrder(supabaseAdmin: any, payment: any) {
   }
 
   for (const item of cartItems) {
+    log("INFO", "fulfillOrder", "Processing item", { productName: item.productName, planName: item.planName, type: item.type, qty: item.quantity, price: item.price });
+
     // Skip raspadinha items - fulfillment handled client-side
     if (item.type === "raspadinha" || item.planId === "raspadinha") {
-      console.log("Skipping raspadinha fulfillment (handled client-side)");
+      log("INFO", "fulfillOrder", "Skipping raspadinha (handled client-side)");
       continue;
     }
 
@@ -295,9 +297,10 @@ async function fulfillOrder(supabaseAdmin: any, payment: any) {
     if (isLztAccount) {
       const lztItemId = item.lztItemId || item.productId?.replace("lzt-", "") || "";
       if (lztItemId) {
+        log("INFO", "fulfillOrder", "Fulfilling LZT account", { lztItemId });
         await fulfillLztAccount(supabaseAdmin, payment, { ...item, lztItemId });
       } else {
-        console.error("LZT account item missing lztItemId:", item);
+        log("ERROR", "fulfillOrder", "LZT account missing lztItemId", { item });
       }
       continue;
     }
