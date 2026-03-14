@@ -336,18 +336,6 @@ const LztTab = () => {
                   return;
                 }
                 setChangingPrice(true);
-                try {
-                  const { data, error } = await supabase.functions.invoke("lzt-market", {
-                    method: "POST",
-                    body: { item_id: priceItemId.trim(), price: p, currency: priceCurrency },
-                    headers: { "Content-Type": "application/json" },
-                  });
-                  // supabase.functions.invoke uses query params differently, need to pass action via URL
-                  // Actually, invoke sends POST to the function URL. We need to add action as query param.
-                  // Let's use a workaround: call via fetch directly
-                } catch {
-                  // ignore, we'll use fetch below
-                }
 
                 try {
                   const session = (await supabase.auth.getSession()).data.session;
