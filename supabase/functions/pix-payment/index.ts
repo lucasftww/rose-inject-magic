@@ -409,11 +409,27 @@ async function fulfillOrder(supabaseAdmin: any, payment: any) {
     }
   }
 
-  // Record coupon usage
+  // Record coupon usage and increment counter
   if (payment.coupon_id) {
     await supabaseAdmin
       .from("coupon_usage")
       .insert({ coupon_id: payment.coupon_id, user_id: payment.user_id });
+    
+    // Increment current_uses on the coupon so max_uses limit works
+    await supabaseAdmin.rpc("increment_coupon_uses", { _coupon_id: payment.coupon_id }).catch(async () => {
+      // Fallback: manual increment if RPC doesn't exist
+      const { data: coupon } = await supabaseAdmin
+        .from("coupons")
+        .select("current_uses")
+        .eq("id", payment.coupon_id)
+        .single();
+      if (coupon) {
+        await supabaseAdmin
+          .from("coupons")
+          .update({ current_uses: (coupon.current_uses || 0) + 1 })
+          .eq("id", payment.coupon_id);
+      }
+    });
   }
 }
 
