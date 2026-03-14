@@ -29,15 +29,15 @@ import rarityPremium from "@/assets/rarity-premium.png";
 import rarityUltra from "@/assets/rarity-ultra.png";
 import rarityExclusive from "@/assets/rarity-exclusive.png";
 
-const rarityMap: Record<string, { name: string; img: string; color: string }> = {
+const rarityMap: Record<string, {name: string;img: string;color: string;}> = {
   "0cebb8be-46d7-c12a-d306-e9907bfc5a25": { name: "Select", img: raritySelect, color: "hsl(210, 55%, 60%)" },
   "12683d76-48d7-84a3-4e09-6985794f0445": { name: "Deluxe", img: rarityDeluxe, color: "hsl(170, 55%, 45%)" },
   "60bca009-4182-7998-dee7-b8a2558dc369": { name: "Premium", img: rarityPremium, color: "hsl(330, 50%, 55%)" },
   "e046854e-406c-37f4-6571-7a8baeeb93ab": { name: "Ultra", img: rarityUltra, color: "hsl(45, 70%, 55%)" },
-  "411e4a55-4e59-7757-41f0-86a53f101bb5": { name: "Exclusive", img: rarityExclusive, color: "hsl(25, 65%, 55%)" },
+  "411e4a55-4e59-7757-41f0-86a53f101bb5": { name: "Exclusive", img: rarityExclusive, color: "hsl(25, 65%, 55%)" }
 };
 
-const rankMap: Record<number, { name: string; img: string }> = {
+const rankMap: Record<number, {name: string;img: string;}> = {
   0: { name: "Unranked", img: rankUnranked },
   1: { name: "Unranked", img: rankUnranked },
   2: { name: "Unranked", img: rankUnranked },
@@ -65,7 +65,7 @@ const rankMap: Record<number, { name: string; img: string }> = {
   24: { name: "Imortal 1", img: rankImortal },
   25: { name: "Imortal 2", img: rankImortal },
   26: { name: "Imortal 3", img: rankImortal },
-  27: { name: "Radiante", img: rankRadiante },
+  27: { name: "Radiante", img: rankRadiante }
 };
 
 const fetchAccountDetail = async (itemId: string) => {
@@ -85,7 +85,7 @@ const RARITY_PRIORITY: Record<string, number> = {
   "e046854e-406c-37f4-6571-7a8baeeb93ab": 4, // Ultra
   "60bca009-4182-7998-dee7-b8a2558dc369": 3, // Premium
   "12683d76-48d7-84a3-4e09-6985794f0445": 2, // Deluxe
-  "0cebb8be-46d7-c12a-d306-e9907bfc5a25": 1, // Select / Battle Pass
+  "0cebb8be-46d7-c12a-d306-e9907bfc5a25": 1 // Select / Battle Pass
 };
 
 // Permissive UUID pattern (Valorant UUIDs don't strictly follow RFC 4122)
@@ -141,40 +141,40 @@ const resolveSkinImage = (s: any): string | null => {
 };
 
 const LINEAGE_ORDER_HINTS: string[][] = [
-  ["radiant entertainment system", "sistema de entretenimento radiante"],
-  ["evori dreamwings", "asas oniricas"],
-  ["kuronami"],
-  ["prelude to chaos", "caos prelude"],
-  ["imperium"],
-  ["onimaru"],
-  ["rgx 11z pro", "rgx"],
-  ["araxys"],
-  ["xenohunter", "xenocacador", "xenocaçador"],
-  ["champions 2024", "champions"],
-  ["sentinels of light", "sentinelas da luz"],
-  ["chronovoid", "cronovoid"],
-  ["reaver", "saqueador"],
-  ["prime", "sublime"],
-  ["gaia", "vinganca de gaia", "vingança de gaia"],
-  ["sovereign", "soberania"],
-  ["oni"],
-  ["origin", "origem"],
-  ["overdrive"],
-  ["neo frontier"],
-  ["singularity"],
-  ["vct"],
-  ["guardrail"],
-  ["sandswept"],
-  ["transition"],
-  ["recon", "reconhecimento"],
-];
+["radiant entertainment system", "sistema de entretenimento radiante"],
+["evori dreamwings", "asas oniricas"],
+["kuronami"],
+["prelude to chaos", "caos prelude"],
+["imperium"],
+["onimaru"],
+["rgx 11z pro", "rgx"],
+["araxys"],
+["xenohunter", "xenocacador", "xenocaçador"],
+["champions 2024", "champions"],
+["sentinels of light", "sentinelas da luz"],
+["chronovoid", "cronovoid"],
+["reaver", "saqueador"],
+["prime", "sublime"],
+["gaia", "vinganca de gaia", "vingança de gaia"],
+["sovereign", "soberania"],
+["oni"],
+["origin", "origem"],
+["overdrive"],
+["neo frontier"],
+["singularity"],
+["vct"],
+["guardrail"],
+["sandswept"],
+["transition"],
+["recon", "reconhecimento"]];
+
 
 const normalizeSkinName = (name: string) =>
-  name
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim();
+name.
+toLowerCase().
+normalize("NFD").
+replace(/[\u0300-\u036f]/g, "").
+trim();
 
 type SkinRankMeta = {
   displayScore: number;
@@ -188,7 +188,7 @@ const getSkinRankMeta = (name: string, _rarityPriority: number): SkinRankMeta =>
   const normalized = normalizeSkinName(name);
 
   const lineageIndex = LINEAGE_ORDER_HINTS.findIndex((hints) =>
-    hints.some((hint) => normalized.includes(hint)),
+  hints.some((hint) => normalized.includes(hint))
   );
   const lineageRank = lineageIndex === -1 ? 0 : LINEAGE_ORDER_HINTS.length - lineageIndex;
 
@@ -233,7 +233,7 @@ const buildSkinLookup = (skins: any[]): Map<string, ValorantSkinItem> => {
       lineageRank,
       weaponRank,
       displayScore,
-      isPremiumHint,
+      isPremiumHint
     };
 
     if (s.uuid) lookup.set(String(s.uuid).toLowerCase(), entry);
@@ -282,9 +282,9 @@ const fetchValorantSkins = async (uuids: string[]) => {
   if (missing.length > 0) {
     try {
       const [levelsRes, chromasRes] = await Promise.all([
-        fetch("https://valorant-api.com/v1/weapons/skinlevels?language=pt-BR"),
-        fetch("https://valorant-api.com/v1/weapons/skinchromas?language=pt-BR"),
-      ]);
+      fetch("https://valorant-api.com/v1/weapons/skinlevels?language=pt-BR"),
+      fetch("https://valorant-api.com/v1/weapons/skinchromas?language=pt-BR")]
+      );
 
       const fallbackByUuid = new Map<string, ValorantSkinItem>();
 
@@ -306,7 +306,7 @@ const fetchValorantSkins = async (uuids: string[]) => {
             lineageRank,
             weaponRank,
             displayScore,
-            isPremiumHint,
+            isPremiumHint
           });
         }
       }
@@ -330,7 +330,7 @@ const fetchValorantSkins = async (uuids: string[]) => {
               lineageRank,
               weaponRank,
               displayScore,
-              isPremiumHint,
+              isPremiumHint
             });
           }
         }
@@ -346,9 +346,9 @@ const fetchValorantSkins = async (uuids: string[]) => {
         }
       }
     } catch {
+
       // ignore fallback failures
-    }
-  }
+    }}
 
   // Deduplicate by skin name (same skin via base uuid + level + chroma)
   const deduped = new Map<string, ValorantSkinItem>();
@@ -377,10 +377,10 @@ const fetchValorantAgents = async (uuids: string[]) => {
   const res = await fetch("https://valorant-api.com/v1/agents?isPlayableCharacter=true&language=pt-BR");
   if (!res.ok) return [];
   const data = await res.json();
-  const uuidSet = new Set(uuids.map(u => u.toLowerCase()));
+  const uuidSet = new Set(uuids.map((u) => u.toLowerCase()));
   return (data.data || []).filter((a: any) => uuidSet.has(a.uuid?.toLowerCase())).map((a: any) => ({
     name: a.displayName,
-    image: a.displayIcon,
+    image: a.displayIcon
   })).filter((a: any) => a.image);
 };
 
@@ -389,14 +389,14 @@ const fetchValorantBuddies = async (uuids: string[]) => {
   if (!res.ok) return [];
   const data = await res.json();
   // Buddy UUIDs from inventory might be level UUIDs, so check both
-  const uuidSet = new Set(uuids.map(u => u.toLowerCase()));
+  const uuidSet = new Set(uuids.map((u) => u.toLowerCase()));
   const matched: any[] = [];
-  for (const buddy of (data.data || [])) {
+  for (const buddy of data.data || []) {
     if (uuidSet.has(buddy.uuid?.toLowerCase())) {
       matched.push({ name: buddy.displayName, image: buddy.displayIcon });
     }
     // Also check levels
-    for (const level of (buddy.levels || [])) {
+    for (const level of buddy.levels || []) {
       if (uuidSet.has(level.uuid?.toLowerCase())) {
         matched.push({ name: buddy.displayName, image: level.displayIcon || buddy.displayIcon });
       }
@@ -406,7 +406,7 @@ const fetchValorantBuddies = async (uuids: string[]) => {
 };
 
 const ContaDetalhes = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams<{id: string;}>();
   const navigate = useNavigate();
   const { getPrice, getDisplayPrice } = useLztMarkup();
   const [selectedSkin, setSelectedSkin] = useState(0);
@@ -439,7 +439,7 @@ const ContaDetalhes = () => {
       contentName: title,
       contentCategory: "Valorant",
       contentIds: [`lzt-${item.item_id}`],
-      value: priceBRL,
+      value: priceBRL
     });
 
     const added = addItem({
@@ -454,7 +454,7 @@ const ContaDetalhes = () => {
       lztPrice: item.price,
       lztCurrency: item.price_currency || "rub",
       lztGame: "valorant",
-      skinsCount: skinCount,
+      skinsCount: skinCount
     });
     if (added) navigate("/checkout");
   };
@@ -462,7 +462,7 @@ const ContaDetalhes = () => {
   const { data, isLoading, error } = useQuery({
     queryKey: ["lzt-account-detail", id],
     queryFn: () => fetchAccountDetail(id!),
-    enabled: !!id,
+    enabled: !!id
   });
 
   const item = data?.item;
@@ -478,7 +478,7 @@ const ContaDetalhes = () => {
         contentName: `Conta Valorant #${item.item_id}`,
         contentCategory: "Valorant",
         contentIds: [`lzt-${item.item_id}`],
-        value: priceBRL,
+        value: priceBRL
       });
     }
   }, [item]);
@@ -486,11 +486,11 @@ const ContaDetalhes = () => {
   // Gallery from screenshots
   const gallery = useMemo(() => {
     if (!item) return [];
-    const list: { name: string; image: string }[] = [];
+    const list: {name: string;image: string;}[] = [];
     if (item.ss && Array.isArray(item.ss)) {
       for (const ss of item.ss) {
-        if (typeof ss === "string") list.push({ name: "Screenshot", image: ss });
-        else if (ss?.original || ss?.small) list.push({ name: "Screenshot", image: ss.original || ss.small });
+        if (typeof ss === "string") list.push({ name: "Screenshot", image: ss });else
+        if (ss?.original || ss?.small) list.push({ name: "Screenshot", image: ss.original || ss.small });
       }
     }
     return list;
@@ -506,7 +506,7 @@ const ContaDetalhes = () => {
     queryFn: () => fetchValorantSkins(skinUuids),
     enabled: skinUuids.length > 0,
     staleTime: 1000 * 60 * 30,
-    retry: 2,
+    retry: 2
   });
 
   const { data: agentItems = [], isLoading: agentsLoading, isError: agentsError } = useQuery({
@@ -514,7 +514,7 @@ const ContaDetalhes = () => {
     queryFn: () => fetchValorantAgents(agentUuids),
     enabled: agentUuids.length > 0,
     staleTime: 1000 * 60 * 30,
-    retry: 2,
+    retry: 2
   });
 
   const { data: buddyItems = [], isLoading: buddiesLoading, isError: buddiesError } = useQuery({
@@ -522,7 +522,7 @@ const ContaDetalhes = () => {
     queryFn: () => fetchValorantBuddies(buddyUuids),
     enabled: buddyUuids.length > 0,
     staleTime: 1000 * 60 * 30,
-    retry: 2,
+    retry: 2
   });
 
   const activeLoading = activeTab === "skins" ? skinsLoading : activeTab === "agents" ? agentsLoading : buddiesLoading;
@@ -532,26 +532,26 @@ const ContaDetalhes = () => {
   const mainGallery = gallery.length > 0 ? gallery : skinItems.slice(0, 5);
 
   const galleryLength = skinItems.length > 0 ? skinItems.length : mainGallery.length;
-  
+
   // Clamp selectedSkin to valid range when data changes
   const clampedSkin = galleryLength > 0 ? Math.min(selectedSkin, galleryLength - 1) : 0;
   useEffect(() => {
     if (selectedSkin !== clampedSkin) setSelectedSkin(clampedSkin);
   }, [clampedSkin, selectedSkin]);
-  
-  const handlePrev = () => setSelectedSkin((p) => (p > 0 ? p - 1 : galleryLength - 1));
-  const handleNext = () => setSelectedSkin((p) => (p < galleryLength - 1 ? p + 1 : 0));
+
+  const handlePrev = () => setSelectedSkin((p) => p > 0 ? p - 1 : galleryLength - 1);
+  const handleNext = () => setSelectedSkin((p) => p < galleryLength - 1 ? p + 1 : 0);
 
   const skinCount = item?.riot_valorant_skin_count ?? 0;
-  const dynamicTitle = rank
-    ? `Conta ${rank.name} com ${skinCount} Skins`
-    : `Conta Unranked com ${skinCount} Skins`;
+  const dynamicTitle = rank ?
+  `Conta ${rank.name} com ${skinCount} Skins` :
+  `Conta Unranked com ${skinCount} Skins`;
 
   const tabs = [
-    { key: "skins" as const, label: "Skins", icon: <Swords className="h-4 w-4" />, count: skinItems.length },
-    { key: "agents" as const, label: "Agentes", icon: <Users className="h-4 w-4" />, count: agentItems.length },
-    { key: "buddies" as const, label: "Buddies", icon: <Star className="h-4 w-4" />, count: buddyItems.length },
-  ];
+  { key: "skins" as const, label: "Skins", icon: <Swords className="h-4 w-4" />, count: skinItems.length },
+  { key: "agents" as const, label: "Agentes", icon: <Users className="h-4 w-4" />, count: agentItems.length },
+  { key: "buddies" as const, label: "Buddies", icon: <Star className="h-4 w-4" />, count: buddyItems.length }];
+
 
   const activeItems = activeTab === "skins" ? skinItems : activeTab === "agents" ? agentItems : buddyItems;
 
@@ -561,28 +561,28 @@ const ContaDetalhes = () => {
       <div className="mx-auto max-w-6xl px-5 sm:px-6 pt-4 pb-32 sm:pb-20">
         <button
           onClick={() => navigate("/contas")}
-          className="mb-5 sm:mb-5 flex items-center gap-2 rounded-xl border border-border bg-card/50 px-4 py-2.5 text-sm text-muted-foreground transition-all hover:border-success/40 hover:text-success"
-        >
+          className="mb-5 sm:mb-5 flex items-center gap-2 rounded-xl border border-border bg-card/50 px-4 py-2.5 text-sm text-muted-foreground transition-all hover:border-success/40 hover:text-success">
+          
           <ArrowLeft className="h-4 w-4" />
           Voltar
         </button>
 
-        {isLoading && (
-          <div className="flex flex-col items-center justify-center py-32">
+        {isLoading &&
+        <div className="flex flex-col items-center justify-center py-32">
             <Loader2 className="h-8 w-8 animate-spin text-success" />
             <p className="mt-3 text-sm text-muted-foreground">Carregando detalhes...</p>
           </div>
-        )}
+        }
 
-        {error && (
-          <div className="flex flex-col items-center justify-center py-32">
+        {error &&
+        <div className="flex flex-col items-center justify-center py-32">
             <p className="text-lg font-semibold text-destructive">Erro ao carregar conta</p>
             <p className="mt-1 text-sm text-muted-foreground">{(error as Error).message}</p>
           </div>
-        )}
+        }
 
-        {item && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
+        {item &&
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
             {/* Breadcrumb */}
             <div className="mb-5 sm:mb-6 flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground overflow-x-auto scrollbar-hide">
               <button onClick={() => navigate("/")} className="hover:text-success transition-colors shrink-0">Início</button>
@@ -596,29 +596,29 @@ const ContaDetalhes = () => {
               {/* LEFT: Gallery only */}
               <div className="lg:col-span-3 space-y-4 sm:space-y-4">
                 {/* Single skin carousel */}
-                {skinItems.length > 0 && !skinsLoading ? (
-                  <div className="rounded-xl border border-border/60 bg-card overflow-hidden aspect-[4/3] sm:aspect-[16/10] relative group">
+                {skinItems.length > 0 && !skinsLoading ?
+              <div className="rounded-xl border border-border/60 bg-card overflow-hidden aspect-[4/3] sm:aspect-[16/10] relative group">
                     <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--secondary))] via-[hsl(var(--background))] to-[hsl(var(--secondary))]" />
                     <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--success)/0.06),transparent_70%)]" />
                     <AnimatePresence mode="wait">
                       <motion.div
-                        key={selectedSkin}
-                        className="relative z-[1] flex items-center justify-center h-full w-full p-6 sm:p-8 cursor-pointer"
-                        onClick={() => { setActiveTab("skins"); setLightboxIndex(selectedSkin); }}
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        transition={{ duration: 0.2 }}
-                      >
+                    key={selectedSkin}
+                    className="relative z-[1] flex items-center justify-center h-full w-full p-6 sm:p-8 cursor-pointer"
+                    onClick={() => {setActiveTab("skins");setLightboxIndex(selectedSkin);}}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ duration: 0.2 }}>
+                    
                         <img
-                          src={skinItems[selectedSkin]?.image}
-                          alt={skinItems[selectedSkin]?.name}
-                          className="max-h-full max-w-full object-contain"
-                        />
+                      src={skinItems[selectedSkin]?.image}
+                      alt={skinItems[selectedSkin]?.name}
+                      className="max-h-full max-w-full object-contain" />
+                    
                       </motion.div>
                     </AnimatePresence>
-                    {skinItems.length > 1 && (
-                      <>
+                    {skinItems.length > 1 &&
+                <>
                         <button onClick={handlePrev} className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 z-[2] flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-background/70 backdrop-blur-sm text-muted-foreground sm:opacity-0 sm:group-hover:opacity-100 transition-all hover:text-success">
                           <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
                         </button>
@@ -626,28 +626,28 @@ const ContaDetalhes = () => {
                           <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5 rotate-180" />
                         </button>
                       </>
-                    )}
+                }
                     {/* Counter only */}
                     <div className="absolute bottom-3 right-3 z-[2] rounded-lg bg-background/60 backdrop-blur-sm px-2.5 py-1">
                       <p className="text-[11px] text-muted-foreground tabular-nums">{selectedSkin + 1}/{skinItems.length}</p>
                     </div>
-                  </div>
-                ) : mainGallery.length > 0 ? (
-                  <div className="relative group rounded-lg border border-border bg-card overflow-hidden aspect-[4/3] sm:aspect-[16/10]">
+                  </div> :
+              mainGallery.length > 0 ?
+              <div className="relative group rounded-lg border border-border bg-card overflow-hidden aspect-[4/3] sm:aspect-[16/10]">
                     <AnimatePresence mode="wait">
                       <motion.img
-                        key={selectedSkin}
-                        src={mainGallery[selectedSkin]?.image}
-                        alt={mainGallery[selectedSkin]?.name}
-                        className="h-full w-full object-contain p-6"
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        transition={{ duration: 0.2 }}
-                      />
+                    key={selectedSkin}
+                    src={mainGallery[selectedSkin]?.image}
+                    alt={mainGallery[selectedSkin]?.name}
+                    className="h-full w-full object-contain p-6"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ duration: 0.2 }} />
+                  
                     </AnimatePresence>
-                    {mainGallery.length > 1 && (
-                      <>
+                    {mainGallery.length > 1 &&
+                <>
                         <button onClick={handlePrev} className="absolute left-3 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-background/80 border border-border text-muted-foreground opacity-0 group-hover:opacity-100 transition-all hover:text-success hover:border-success/40">
                           <ChevronLeft className="h-5 w-5" />
                         </button>
@@ -655,32 +655,32 @@ const ContaDetalhes = () => {
                           <ChevronRightIcon className="h-5 w-5" />
                         </button>
                       </>
-                    )}
-                  </div>
-                ) : (
-                  <div className="rounded-lg border border-border bg-card flex items-center justify-center aspect-[4/3] sm:aspect-[16/10]">
+                }
+                  </div> :
+
+              <div className="rounded-lg border border-border bg-card flex items-center justify-center aspect-[4/3] sm:aspect-[16/10]">
                     <div className="flex flex-col items-center gap-4">
                       <img src={rank?.img || rankUnranked} alt={rank?.name || "Unranked"} className="h-28 w-28 object-contain drop-shadow-xl" />
                       <p className="text-2xl font-bold text-foreground">{rank?.name || "Unranked"}</p>
                     </div>
                   </div>
-                )}
+              }
 
               {/* Rank + Stats */}
                 <div className="rounded-xl border border-border/60 bg-card p-5 sm:p-5 space-y-4 sm:space-y-4">
                   <div className="flex items-center justify-center gap-6 sm:justify-between">
                     {/* Último rank (esquerda) */}
-                    {item.riot_valorant_previous_rank && rankMap[item.riot_valorant_previous_rank] ? (
-                      <div className="flex flex-col items-center gap-1.5">
+                    {item.riot_valorant_previous_rank && rankMap[item.riot_valorant_previous_rank] ?
+                  <div className="flex flex-col items-center gap-1.5">
                         <img src={rankMap[item.riot_valorant_previous_rank].img} alt="" className="h-14 w-14 sm:h-16 sm:w-16 object-contain opacity-50" />
                         <div className="text-center">
                           <p className="text-[9px] text-muted-foreground uppercase tracking-wider">Último rank</p>
                           <p className="text-xs sm:text-sm font-bold text-muted-foreground">{rankMap[item.riot_valorant_previous_rank].name}</p>
                         </div>
-                      </div>
-                    ) : (
-                      <div />
-                    )}
+                      </div> :
+
+                  <div />
+                  }
 
                     {/* Seta no meio */}
                     <div className="flex items-center text-success">
@@ -742,17 +742,17 @@ const ContaDetalhes = () => {
                   </div>
 
                   <button
-                    onClick={handleBuyNow}
-                    className="btn-shine group relative flex w-full items-center justify-center gap-2 rounded-xl bg-success py-3.5 text-sm font-bold uppercase tracking-[0.2em] text-success-foreground transition-all hover:shadow-[0_0_30px_hsl(var(--success)/0.4)] active:scale-[0.98]"
-                    style={{ fontFamily: "'Valorant', sans-serif" }}
-                  >
+                  onClick={handleBuyNow}
+                  className="btn-shine group relative flex w-full items-center justify-center gap-2 rounded-xl bg-success py-3.5 text-sm font-bold uppercase tracking-[0.2em] text-success-foreground transition-all hover:shadow-[0_0_30px_hsl(var(--success)/0.4)] active:scale-[0.98]"
+                  style={{ fontFamily: "'Valorant', sans-serif" }}>
+                  
                     <Zap className="h-4 w-4" />
                     COMPRAR AGORA
                   </button>
 
-                  {item.item_id && (
-                    <p className="text-[10px] text-muted-foreground/40 text-center break-all">Código: {item.item_id}</p>
-                  )}
+                  {item.item_id &&
+                <p className="text-[10px] text-muted-foreground/40 text-center break-all">Código: {item.item_id}</p>
+                }
 
                   <div className="grid grid-cols-4 rounded-xl overflow-hidden bg-secondary/20">
                     <HighlightStat label="Skins" value={item.riot_valorant_skin_count ?? 0} />
@@ -781,107 +781,112 @@ const ContaDetalhes = () => {
             </div>
 
             {/* Inventory Tabs - Full width below */}
-            {(skinUuids.length > 0 || agentUuids.length > 0 || buddyUuids.length > 0) && (
-              <div className="mt-4 sm:mt-5">
+            {(skinUuids.length > 0 || agentUuids.length > 0 || buddyUuids.length > 0) &&
+          <div className="mt-4 sm:mt-5">
                 {/* Tab buttons */}
                 <div className="flex w-full gap-2 mb-5 sm:mb-5">
-                  {tabs.map((tab) => (
-                    <button
-                      key={tab.key}
-                      onClick={() => setActiveTab(tab.key)}
-                      className={`flex flex-1 items-center justify-center gap-1.5 sm:gap-2 rounded-xl px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
-                        activeTab === tab.key
-                          ? "bg-success/10 text-success"
-                          : "bg-secondary/40 text-muted-foreground hover:bg-secondary/60"
-                      }`}
-                    >
+                  {tabs.map((tab) =>
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`flex flex-1 items-center justify-center gap-1.5 sm:gap-2 rounded-xl px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
+                activeTab === tab.key ?
+                "bg-success/10 text-success" :
+                "bg-secondary/40 text-muted-foreground hover:bg-secondary/60"}`
+                }>
+                
                       {tab.icon}
                       <span>{tab.label}</span>
-                      {tab.count > 0 && (
-                        <span className={`rounded-full px-1.5 sm:px-2 py-0.5 text-[10px] font-bold ${
-                          activeTab === tab.key ? "bg-success/20 text-success" : "bg-secondary text-muted-foreground"
-                        }`}>
+                      {tab.count > 0 &&
+                <span className={`rounded-full px-1.5 sm:px-2 py-0.5 text-[10px] font-bold ${
+                activeTab === tab.key ? "bg-success/20 text-success" : "bg-secondary text-muted-foreground"}`
+                }>
                           {tab.count}
                         </span>
-                      )}
+                }
                     </button>
-                  ))}
+              )}
                 </div>
 
                 {/* Items grid */}
-                {activeItems.length > 0 ? (
-                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2.5 sm:gap-3">
-                    {activeItems.map((invItem: any, i: number) => (
-                      <motion.div
-                        key={`${activeTab}-${i}`}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.2, delay: i * 0.015 }}
-                        className="group rounded-xl bg-card overflow-hidden hover:ring-1 hover:ring-success/30 transition-all relative cursor-pointer"
-                        onClick={() => setLightboxIndex(i)}
-                      >
+                {activeItems.length > 0 ?
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2.5 sm:gap-3">
+                    {activeItems.map((invItem: any, i: number) =>
+              <motion.div
+                key={`${activeTab}-${i}`}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2, delay: i * 0.015 }}
+                className="group rounded-xl bg-card overflow-hidden hover:ring-1 hover:ring-success/30 transition-all relative cursor-pointer"
+                onClick={() => setLightboxIndex(i)}>
+                
+                        {invItem.rarity &&
+                <div className="absolute top-1.5 right-1.5 z-10">
+                            
+                          </div>
+                }
                         <div className="aspect-square bg-secondary/15 flex items-center justify-center p-3 sm:p-3">
                           <img
-                            src={invItem.image}
-                            alt={invItem.name}
-                            className="h-full w-full object-contain group-hover:scale-105 transition-transform"
-                            loading="lazy"
-                          />
+                    src={invItem.image}
+                    alt={invItem.name}
+                    className="h-full w-full object-contain group-hover:scale-105 transition-transform"
+                    loading="lazy" />
+                  
                         </div>
                         <div className="px-2 py-1.5 sm:p-2 flex items-center gap-1 sm:gap-1.5">
-                          {invItem.rarity && (
-                            <span className="h-1.5 w-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: invItem.rarity.color }} />
-                          )}
+                          {invItem.rarity &&
+                  <span className="h-1.5 w-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: invItem.rarity.color }} />
+                  }
                           <p className="text-[10px] sm:text-[11px] font-medium text-foreground/80 truncate">{invItem.name}</p>
                         </div>
                       </motion.div>
-                    ))}
-                  </div>
-                ) : activeLoading ? (
-                  <div className="flex items-center justify-center py-12 rounded-lg border border-border bg-card">
+              )}
+                  </div> :
+            activeLoading ?
+            <div className="flex items-center justify-center py-12 rounded-lg border border-border bg-card">
                     <Loader2 className="h-5 w-5 animate-spin text-muted-foreground mr-2" />
                     <p className="text-sm text-muted-foreground">Carregando itens...</p>
-                  </div>
-                ) : activeError ? (
-                  <div className="flex items-center justify-center py-12 rounded-lg border border-border bg-card">
+                  </div> :
+            activeError ?
+            <div className="flex items-center justify-center py-12 rounded-lg border border-border bg-card">
                     <p className="text-sm text-muted-foreground">Erro ao carregar itens. Tente recarregar a página.</p>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center py-12 rounded-lg border border-border bg-card">
+                  </div> :
+
+            <div className="flex items-center justify-center py-12 rounded-lg border border-border bg-card">
                     <p className="text-sm text-muted-foreground">Nenhum item encontrado.</p>
                   </div>
-                )}
+            }
 
                 {/* Lightbox Modal */}
                 <AnimatePresence>
                   {lightboxIndex !== null && activeItems[lightboxIndex] && (() => {
-                    const currentItem = activeItems[lightboxIndex];
-                    const total = activeItems.length;
-                    const goPrev = () => setLightboxIndex(prev => prev !== null ? (prev - 1 + total) % total : null);
-                    const goNext = () => setLightboxIndex(prev => prev !== null ? (prev + 1) % total : null);
-                    return (
-                      <motion.div
-                        key="lightbox"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
-                        onClick={() => setLightboxIndex(null)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Escape") setLightboxIndex(null);
-                          if (e.key === "ArrowLeft") goPrev();
-                          if (e.key === "ArrowRight") goNext();
-                        }}
-                        tabIndex={0}
-                        ref={(el) => el?.focus()}
-                      >
+                const currentItem = activeItems[lightboxIndex];
+                const total = activeItems.length;
+                const goPrev = () => setLightboxIndex((prev) => prev !== null ? (prev - 1 + total) % total : null);
+                const goNext = () => setLightboxIndex((prev) => prev !== null ? (prev + 1) % total : null);
+                return (
+                  <motion.div
+                    key="lightbox"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+                    onClick={() => setLightboxIndex(null)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") setLightboxIndex(null);
+                      if (e.key === "ArrowLeft") goPrev();
+                      if (e.key === "ArrowRight") goNext();
+                    }}
+                    tabIndex={0}
+                    ref={(el) => el?.focus()}>
+                    
                         <motion.div
-                          initial={{ scale: 0.9, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          exit={{ scale: 0.9, opacity: 0 }}
-                          className="relative bg-card border border-border rounded-xl max-w-lg w-[90vw] overflow-hidden"
-                          onClick={(e) => e.stopPropagation()}
-                        >
+                      initial={{ scale: 0.9, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0.9, opacity: 0 }}
+                      className="relative bg-card border border-border rounded-xl max-w-lg w-[90vw] overflow-hidden"
+                      onClick={(e) => e.stopPropagation()}>
+                      
                           {/* Close */}
                           <button onClick={() => setLightboxIndex(null)} className="absolute top-3 right-3 z-10 text-muted-foreground hover:text-foreground transition-colors">
                             <X className="h-5 w-5" />
@@ -895,15 +900,15 @@ const ContaDetalhes = () => {
                           {/* Info */}
                           <div className="p-5 flex flex-col items-center gap-3">
                             <h3 className="text-base font-bold text-foreground text-center">{currentItem.name}</h3>
-                            {currentItem.rarity && (
-                              <div className="flex items-center gap-2">
+                            {currentItem.rarity &&
+                        <div className="flex items-center gap-2">
                                 <span className="text-xs text-muted-foreground">Edição:</span>
                                 <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary/50 px-3 py-1 text-xs font-medium" style={{ color: currentItem.rarity.color }}>
                                   <span className="h-2 w-2 rounded-full" style={{ backgroundColor: currentItem.rarity.color }} />
                                   {currentItem.rarity.name} Edition
                                 </span>
                               </div>
-                            )}
+                        }
 
                             {/* Navigation */}
                             <div className="flex items-center gap-4 mt-1">
@@ -919,28 +924,28 @@ const ContaDetalhes = () => {
                             <p className="text-[11px] text-muted-foreground mt-1">Clique fora da imagem ou ESC para fechar</p>
                           </div>
                         </motion.div>
-                      </motion.div>
-                    );
-                  })()}
+                      </motion.div>);
+
+              })()}
                 </AnimatePresence>
 
               </div>
-            )}
+          }
 
             {/* Description */}
-            {item.description && (
-              <div className="mt-4 sm:mt-6 rounded-lg border border-border bg-card p-4 sm:p-5">
+            {item.description &&
+          <div className="mt-4 sm:mt-6 rounded-lg border border-border bg-card p-4 sm:p-5">
                 <h3 className="text-xs sm:text-sm font-bold text-foreground mb-2">Descrição</h3>
                 <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{item.description}</p>
               </div>
-            )}
+          }
           </motion.div>
-        )}
+        }
       </div>
 
       {/* Sticky mobile bottom bar */}
-      {item && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 sm:hidden">
+      {item &&
+      <div className="fixed bottom-0 left-0 right-0 z-40 sm:hidden">
           <div className="border-t border-border bg-card/95 backdrop-blur-xl px-5 py-3.5 safe-area-bottom">
             <div className="flex items-center gap-4">
               <div className="flex flex-col min-w-0">
@@ -950,34 +955,34 @@ const ContaDetalhes = () => {
                 </span>
               </div>
               <button
-                onClick={handleBuyNow}
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-success py-3.5 text-sm font-bold uppercase tracking-wider text-success-foreground transition-all active:scale-[0.98]"
-                style={{ fontFamily: "'Valorant', sans-serif" }}
-              >
+              onClick={handleBuyNow}
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-success py-3.5 text-sm font-bold uppercase tracking-wider text-success-foreground transition-all active:scale-[0.98]"
+              style={{ fontFamily: "'Valorant', sans-serif" }}>
+              
                 <ShoppingCart className="h-4 w-4" />
                 Comprar Agora
               </button>
             </div>
           </div>
         </div>
-      )}
-    </div>
-  );
+      }
+    </div>);
+
 };
 
-const StatCell = ({ label, value }: { label: string; value: string | number }) => (
-  <div className="flex items-center justify-between rounded-xl bg-secondary/30 px-4 py-3">
+const StatCell = ({ label, value }: {label: string;value: string | number;}) =>
+<div className="flex items-center justify-between rounded-xl bg-secondary/30 px-4 py-3">
     <span className="text-xs text-muted-foreground">{label}</span>
     <span className="text-sm font-bold text-foreground">{value}</span>
-  </div>
-);
+  </div>;
 
-const HighlightStat = forwardRef<HTMLDivElement, { label: string; value: string | number }>(({ label, value }, ref) => (
-  <div ref={ref} className="flex flex-col items-center py-3.5 px-1.5">
+
+const HighlightStat = forwardRef<HTMLDivElement, {label: string;value: string | number;}>(({ label, value }, ref) =>
+<div ref={ref} className="flex flex-col items-center py-3.5 px-1.5">
     <span className="text-[10px] text-muted-foreground mb-1">{label}</span>
     <span className="text-base font-bold text-success">{value}</span>
   </div>
-));
+);
 HighlightStat.displayName = "HighlightStat";
 
 export default ContaDetalhes;
