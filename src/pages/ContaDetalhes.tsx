@@ -9,6 +9,7 @@ import { useCart } from "@/hooks/useCart";
 import { toast } from "@/hooks/use-toast";
 import { useLztMarkup } from "@/hooks/useLztMarkup";
 import { trackViewContent, trackInitiateCheckout } from "@/lib/metaPixel";
+import { checkLztAvailability } from "@/lib/lztAvailability";
 
 import rankFerro from "@/assets/rank-ferro.png";
 import rankBronze from "@/assets/rank-bronze.png";
