@@ -608,6 +608,36 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
     return;
   }
 
+  // Pre-check: verify account is still available before purchasing
+  console.log(`Pre-checking availability for LZT item ${itemId}...`);
+  try {
+    const checkRes = await fetch(`https://api.lzt.market/${encodeURIComponent(itemId)}`, {
+      headers: { Authorization: `Bearer ${LZT_TOKEN}`, Accept: "application/json" },
+    });
+    if (checkRes.ok) {
+      const checkData = await checkRes.json();
+      const checkItem = checkData.item;
+      if (checkItem?.buyer) {
+        console.error(`LZT item ${itemId} already sold to buyer ${checkItem.buyer}`);
+        await createManualDeliveryTicket("Account already sold before purchase attempt");
+        return;
+      }
+      if (checkItem?.canBuyItem === false) {
+        console.error(`LZT item ${itemId} cannot be purchased (canBuyItem=false)`);
+        await createManualDeliveryTicket("Account not available for purchase");
+        return;
+      }
+      // Update price to latest if it changed
+      if (checkItem?.price && checkItem.price !== price) {
+        console.log(`Price changed from ${price} to ${checkItem.price} ${checkItem.price_currency || currency}`);
+        price = checkItem.price;
+        currency = checkItem.price_currency || currency;
+      }
+    }
+  } catch (err) {
+    console.warn("Pre-check failed, proceeding with purchase anyway:", err);
+  }
+
   console.log(`Purchasing LZT account ${itemId} at price ${price} ${currency}`);
 
   try {
