@@ -1197,13 +1197,23 @@ async function validateAndCalculatePrice(
 
     const { data: resellerData } = await supabaseAdmin
       .from("resellers")
-      .select("discount_percent, active")
+      .select("id, discount_percent, active")
       .eq("user_id", userId)
       .eq("active", true)
       .maybeSingle();
 
     if (resellerData) {
-      realPrice = realPrice * (1 - resellerData.discount_percent / 100);
+      // Check if reseller is authorized for this specific product
+      const { data: resellerProduct } = await supabaseAdmin
+        .from("reseller_products")
+        .select("id")
+        .eq("reseller_id", resellerData.id)
+        .eq("product_id", plan.product_id)
+        .maybeSingle();
+
+      if (resellerProduct) {
+        realPrice = realPrice * (1 - resellerData.discount_percent / 100);
+      }
     }
 
     totalAmount += Math.round(realPrice * 100) * qty;
