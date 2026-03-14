@@ -268,11 +268,11 @@ const ProdutoDetalhes = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 pt-4 pb-28 sm:pb-20">
+      <div className="mx-auto max-w-7xl px-5 sm:px-6 pt-4 pb-32 sm:pb-20">
         {/* Back button */}
         <button
           onClick={() => navigate(-1)}
-          className="mb-4 sm:mb-6 flex items-center gap-2 rounded-lg border border-border px-3 sm:px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-success hover:text-success"
+          className="mb-5 sm:mb-6 flex items-center gap-2 rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:border-success hover:text-success"
         >
           <ArrowLeft className="h-4 w-4" />
           Voltar
@@ -290,7 +290,7 @@ const ProdutoDetalhes = () => {
         )}
 
         {/* Breadcrumb */}
-        <div className="mb-6 sm:mb-8 flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground overflow-x-auto scrollbar-hide">
+        <div className="mb-6 sm:mb-8 flex items-center gap-2 text-xs sm:text-sm text-muted-foreground overflow-x-auto scrollbar-hide">
           <button onClick={() => navigate("/")} className="hover:text-foreground transition-colors shrink-0">Início</button>
           <span className="shrink-0">›</span>
           {game && (
@@ -302,7 +302,7 @@ const ProdutoDetalhes = () => {
           <span className="text-foreground truncate">{product.name}</span>
         </div>
 
-        <div className="grid gap-6 sm:gap-10 lg:grid-cols-2">
+        <div className="grid gap-8 sm:gap-10 lg:grid-cols-2">
           {/* Left: Media Gallery */}
           <motion.div
             initial={{ opacity: 0, x: -15 }}
@@ -403,8 +403,8 @@ const ProdutoDetalhes = () => {
 
             {/* Features text */}
             {product.features_text && (
-              <div className="mt-5 sm:mt-6 rounded-xl border border-border bg-card p-4 sm:p-5">
-                <div className="mb-3 flex items-center gap-2">
+              <div className="mt-6 sm:mt-6 rounded-xl border border-border bg-card p-5 sm:p-5">
+                <div className="mb-4 flex items-center gap-2">
                   <div className="h-px flex-1 bg-gradient-to-r from-success/50 to-transparent" />
                   <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-success">Detalhes</span>
                   <div className="h-px flex-1 bg-gradient-to-l from-success/50 to-transparent" />
@@ -415,7 +415,7 @@ const ProdutoDetalhes = () => {
 
             {/* Features cards */}
             {sortedFeatures.length > 0 && (
-              <div className="mt-5 sm:mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="mt-6 sm:mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {sortedFeatures.map((feat) => {
                   const iconMap: Record<string, React.ReactNode> = {
                     "GPU": <Sparkles className="h-5 w-5" />,
@@ -428,14 +428,14 @@ const ProdutoDetalhes = () => {
                   return (
                     <div
                       key={feat.id}
-                      className="group flex items-start gap-3 rounded-xl border border-border bg-card p-3 sm:p-4 transition-all hover:border-success/40 hover:shadow-[0_0_15px_hsl(130,99%,41%,0.08)]"
+                      className="group flex items-start gap-3 rounded-xl border border-border bg-card p-4 sm:p-4 transition-all hover:border-success/40 hover:shadow-[0_0_15px_hsl(130,99%,41%,0.08)]"
                     >
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-success/10 text-success transition-colors group-hover:bg-success/20">
                         {icon}
                       </div>
                       <div className="min-w-0">
                         <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{feat.label}</p>
-                        <p className="mt-0.5 text-sm font-bold text-foreground">{feat.value}</p>
+                        <p className="mt-1 text-sm font-bold text-foreground">{feat.value}</p>
                       </div>
                     </div>
                   );
@@ -455,7 +455,7 @@ const ProdutoDetalhes = () => {
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-success">{game.name}</p>
             )}
 
-            <h1 className="mt-2 text-xl font-bold text-foreground sm:text-2xl md:text-3xl">{product.name}</h1>
+            <h1 className="mt-3 text-xl font-bold text-foreground sm:text-2xl md:text-3xl leading-tight">{product.name}</h1>
 
             {product.description && (
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{product.description}</p>
@@ -472,15 +472,15 @@ const ProdutoDetalhes = () => {
 
             {/* Plans selection */}
             {sortedPlans.length > 0 && (
-               <div className="mt-6 sm:mt-8 rounded-xl border border-border bg-card p-4 sm:p-6">
+               <div className="mt-8 sm:mt-8 rounded-xl border border-border bg-card p-5 sm:p-6">
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">Escolha seu plano</p>
 
-                <div className="space-y-2">
+                <div className="space-y-2.5">
                   {sortedPlans.map((plan) => (
                     <button
                       key={plan.id}
                       onClick={() => setSelectedPlanId(plan.id)}
-                      className={`flex w-full items-center justify-between rounded-lg border p-3 sm:p-4 text-left transition-all ${
+                      className={`flex w-full items-center justify-between rounded-xl border p-4 sm:p-4 text-left transition-all ${
                         selectedPlanId === plan.id
                           ? "border-success bg-success/10 shadow-[0_0_15px_hsl(130,99%,41%,0.15)]"
                           : "border-border hover:border-foreground/30"
@@ -519,8 +519,8 @@ const ProdutoDetalhes = () => {
                 {/* Buttons */}
                 {selectedPlan && (
                   <div className="mt-6">
-                    <div className="mb-4 flex items-end justify-between">
-                      <span className="text-xs text-muted-foreground">Total</span>
+                    <div className="mb-5 flex items-end justify-between">
+                      <span className="text-sm text-muted-foreground">Total</span>
                       {isReseller && isResellerForProduct(product.id) ? (
                         <div className="text-right">
                           <span className="text-sm text-muted-foreground line-through mr-2">R$ {Number(selectedPlan.price).toFixed(2)}</span>
@@ -532,7 +532,7 @@ const ProdutoDetalhes = () => {
                     </div>
                     <button
                       onClick={buyNow}
-                      className="flex w-full items-center justify-center gap-2 rounded-lg bg-success py-3.5 text-sm font-bold uppercase tracking-wider text-success-foreground transition-all hover:shadow-[0_0_30px_hsl(130,99%,41%,0.4)]"
+                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-success py-4 text-sm font-bold uppercase tracking-wider text-success-foreground transition-all hover:shadow-[0_0_30px_hsl(130,99%,41%,0.4)] active:scale-[0.98]"
                       style={{ fontFamily: "'Valorant', sans-serif" }}>
                       <Zap className="h-4 w-4" />
                       COMPRAR AGORA
@@ -543,7 +543,7 @@ const ProdutoDetalhes = () => {
             )}
 
             {/* Customer Reviews */}
-            <div className="mt-6 sm:mt-8 rounded-xl border border-border bg-card p-4 sm:p-6">
+            <div className="mt-8 sm:mt-8 rounded-xl border border-border bg-card p-5 sm:p-6">
               <div className="mb-4 flex items-center gap-2">
                 <div className="h-px flex-1 bg-gradient-to-r from-success/50 to-transparent" />
                 <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-success">Avaliações ({reviews.length})</span>
@@ -615,25 +615,26 @@ const ProdutoDetalhes = () => {
       {/* Sticky mobile bottom bar */}
       {selectedPlan && (
         <div className="fixed bottom-0 left-0 right-0 z-40 sm:hidden">
-          <div className="border-t border-border bg-card/95 backdrop-blur-xl px-4 py-3 safe-area-bottom">
-            <div className="flex items-center gap-3">
+          <div className="border-t border-border bg-card/95 backdrop-blur-xl px-5 py-3.5 safe-area-bottom">
+            <div className="flex items-center gap-4">
               <div className="flex flex-col min-w-0">
+                <span className="text-xs text-muted-foreground leading-none mb-0.5">Total</span>
                 {isReseller && isResellerForProduct(product.id) ? (
                   <>
                     <span className="text-[10px] text-muted-foreground line-through leading-none">R$ {Number(selectedPlan.price).toFixed(2)}</span>
-                    <span className="text-lg font-bold text-success leading-tight">
+                    <span className="text-xl font-bold text-success leading-tight">
                       R$ {(Number(selectedPlan.price) * (1 - discountPercent / 100)).toFixed(2)}
                     </span>
                   </>
                 ) : (
-                  <span className="text-lg font-bold text-success leading-tight">
+                  <span className="text-xl font-bold text-success leading-tight">
                     R$ {Number(selectedPlan.price).toFixed(2)}
                   </span>
                 )}
               </div>
               <button
                 onClick={buyNow}
-                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-success py-3 text-sm font-bold uppercase tracking-wider text-success-foreground transition-all active:scale-[0.98]"
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-success py-3.5 text-sm font-bold uppercase tracking-wider text-success-foreground transition-all active:scale-[0.98]"
                 style={{ fontFamily: "'Valorant', sans-serif" }}
               >
                 <ShoppingCart className="h-4 w-4" />
