@@ -259,10 +259,20 @@ async function fulfillOrder(supabaseAdmin: any, payment: any) {
   // Check if buyer is a reseller
   const { data: resellerData } = await supabaseAdmin
     .from("resellers")
-    .select("id, discount_percent")
+    .select("id, discount_percent, total_purchases")
     .eq("user_id", payment.user_id)
     .eq("active", true)
     .maybeSingle();
+
+  // Fetch reseller's authorized products if they are a reseller
+  let resellerProductIds: string[] = [];
+  if (resellerData) {
+    const { data: rProducts } = await supabaseAdmin
+      .from("reseller_products")
+      .select("product_id")
+      .eq("reseller_id", resellerData.id);
+    resellerProductIds = (rProducts || []).map((rp: any) => rp.product_id);
+  }
 
   for (const item of cartItems) {
     // Skip raspadinha items - fulfillment handled client-side
