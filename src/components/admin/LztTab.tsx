@@ -113,7 +113,7 @@ const LztTab = () => {
     setLoading(false);
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { fetchData(); fetchOverrides(); }, []);
 
   const handleSaveConfig = async () => {
     if (!config) return;
