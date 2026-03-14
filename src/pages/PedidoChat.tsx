@@ -18,6 +18,7 @@ interface TicketData {
   status: string;
   status_label: string;
   created_at: string;
+  metadata?: any;
 }
 
 interface Message {
