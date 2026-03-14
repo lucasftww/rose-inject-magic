@@ -1471,6 +1471,44 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ==================== RATE LIMITING (payment creation) ====================
+    if (["create", "create-card", "create-crypto"].includes(action || "") && req.method === "POST") {
+      const { count: activeCount } = await supabaseAdmin
+        .from("payments")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("status", "ACTIVE");
+
+      if ((activeCount ?? 0) >= 5) {
+        const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+        console.error(`RATE LIMIT: user ${userId} has ${activeCount} active payments. IP: ${clientIp}`);
+        return new Response(JSON.stringify({ error: "Você tem muitos pagamentos pendentes. Aguarde a expiração ou conclusão dos pagamentos anteriores." }), {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
+    // ==================== STATUS POLLING THROTTLE ====================
+    if ((action === "status" || action === "card-status" || action === "crypto-status") && req.method === "GET") {
+      const now = Date.now();
+      const lastPoll = statusPollMap.get(userId);
+      if (lastPoll && now - lastPoll < 3000) {
+        return new Response(JSON.stringify({ error: "Aguarde alguns segundos antes de verificar novamente." }), {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      statusPollMap.set(userId, now);
+      // Cleanup old entries periodically
+      if (statusPollMap.size > 5000) {
+        const cutoff = now - 30000;
+        for (const [k, v] of statusPollMap) {
+          if (v < cutoff) statusPollMap.delete(k);
+        }
+      }
+    }
+
     // ==================== CREATE PIX CHARGE (MisticPay) ====================
     if (action === "create" && req.method === "POST") {
       const body = await req.json();
