@@ -1,0 +1,1 @@
+DELETE FROM product_reviews WHERE user_id = '1c56420f-0641-4799-ba84-6bba85b8e179';
