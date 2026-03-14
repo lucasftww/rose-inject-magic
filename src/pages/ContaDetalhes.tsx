@@ -834,9 +834,6 @@ const ContaDetalhes = () => {
                   
                         </div>
                         <div className="px-2 py-1.5 sm:p-2 flex items-center gap-1 sm:gap-1.5">
-                          {invItem.rarity
-
-                  }
                           <p className="text-[10px] sm:text-[11px] font-medium text-foreground/80 truncate">{invItem.name}</p>
                         </div>
                       </motion.div>
