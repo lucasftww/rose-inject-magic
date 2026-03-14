@@ -48,7 +48,7 @@ const LztTab = () => {
   // Change price state
   const [priceItemId, setPriceItemId] = useState("");
   const [newPrice, setNewPrice] = useState("");
-  const [priceCurrency, setPriceCurrency] = useState("rub");
+  const [priceCurrency] = useState("rub");
   const [changingPrice, setChangingPrice] = useState(false);
 
   // Per-game markup state
@@ -301,7 +301,7 @@ const LztTab = () => {
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-muted-foreground">Novo Preço</label>
+              <label className="text-xs font-medium text-muted-foreground">Novo Preço (RUB)</label>
               <input
                 type="number"
                 step="0.01"
@@ -311,18 +311,6 @@ const LztTab = () => {
                 onChange={(e) => setNewPrice(e.target.value)}
                 className="mt-1 w-36 rounded-lg border border-border bg-secondary/50 px-4 py-2.5 text-sm text-foreground outline-none focus:border-success/50"
               />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground">Moeda</label>
-              <select
-                value={priceCurrency}
-                onChange={(e) => setPriceCurrency(e.target.value)}
-                className="mt-1 w-28 rounded-lg border border-border bg-secondary/50 px-3 py-2.5 text-sm text-foreground outline-none focus:border-success/50"
-              >
-                <option value="rub">RUB</option>
-                <option value="usd">USD</option>
-                <option value="eur">EUR</option>
-              </select>
             </div>
             <button
               onClick={async () => {
