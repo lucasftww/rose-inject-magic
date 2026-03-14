@@ -27,6 +27,7 @@ import FaqSection from "@/components/landing/FaqSection";
 import HowItWorksSection from "@/components/landing/HowItWorksSection";
 import CtaSection from "@/components/landing/CtaSection";
 import { fadeUp, staggerContainer, scaleIn, slideInLeft } from "@/components/landing/animations";
+import { translateRegion } from "@/lib/regionTranslation";
 
 const rankMap: Record<number, { name: string; img: string }> = {
   3: { name: "Ferro 1", img: rankFerro },
