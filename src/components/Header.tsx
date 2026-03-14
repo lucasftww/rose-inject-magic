@@ -109,7 +109,7 @@ const Header = () => {
           boxShadow: scrolled ? "0 4px 30px hsla(0,0%,0%,0.3)" : "none",
         }}
       >
-        <div className="mx-auto flex h-14 sm:h-16 lg:h-[72px] max-w-7xl items-center justify-between px-3 sm:px-4 lg:px-6">
+        <div className="mx-auto flex h-14 sm:h-16 lg:h-[72px] max-w-7xl items-center justify-between px-4 sm:px-5 lg:px-6">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 lg:gap-3 shrink-0 group">
             <motion.img
@@ -120,7 +120,7 @@ const Header = () => {
               transition={{ duration: 0.5 }}
             />
             <span
-              className="text-xl lg:text-2xl tracking-[0.2em] whitespace-nowrap"
+              className="text-lg sm:text-xl lg:text-2xl tracking-[0.15em] sm:tracking-[0.2em] whitespace-nowrap"
               style={{ fontFamily: "'Valorant', sans-serif" }}
             >
               <span className="inline-block bg-gradient-to-r from-success via-[hsl(197,100%,70%)] to-success bg-[length:200%_100%] bg-clip-text text-transparent animate-[text-shine_3s_ease-in-out_infinite]">
@@ -165,7 +165,7 @@ const Header = () => {
           </nav>
 
           {/* Right actions */}
-          <div className="flex items-center gap-2 lg:gap-2.5">
+          <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2.5">
             {user ? (
               <>
 
@@ -300,7 +300,7 @@ const Header = () => {
                 </motion.button>
                 <motion.button
                   onClick={() => { setAuthTab("register"); setAuthOpen(true); }}
-                  className="inline-flex px-3.5 sm:px-4 lg:px-5 py-1.5 text-[11px] sm:text-[13px] font-semibold tracking-wide whitespace-nowrap rounded-md transition-all duration-200 btn-shine"
+                  className="inline-flex px-3 sm:px-4 lg:px-5 py-1.5 text-[11px] sm:text-[13px] font-semibold tracking-wide whitespace-nowrap rounded-md transition-all duration-200 btn-shine"
                   style={{
                     background: isLolContext ? LOL_BLUE : "hsl(var(--success))",
                     color: "white",
