@@ -347,7 +347,7 @@ const ContasSection = () => {
         <motion.div className="mt-10 sm:mt-12 flex justify-center" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
           <Link
             to="/contas"
-            className="flex w-full sm:w-auto items-center justify-center gap-2 border-2 border-foreground/30 px-8 sm:px-14 py-3.5 sm:py-4 text-sm font-bold uppercase tracking-[0.25em] text-foreground transition-all hover:border-success hover:text-success hover:shadow-[0_0_30px_hsl(197,100%,50%,0.2)] rounded-lg sm:rounded-none mx-4 sm:mx-0"
+            className="flex w-full sm:w-auto items-center justify-center gap-2 border-2 border-foreground/30 px-8 sm:px-14 py-3 sm:py-4 text-xs sm:text-sm font-bold uppercase tracking-[0.25em] text-foreground transition-all hover:border-success hover:text-success hover:shadow-[0_0_30px_hsl(197,100%,50%,0.2)] rounded-lg sm:rounded-none"
             style={{ fontFamily: "'Valorant', sans-serif" }}
           >
             Explorar Contas
