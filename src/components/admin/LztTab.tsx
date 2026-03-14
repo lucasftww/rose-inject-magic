@@ -45,11 +45,16 @@ const LztTab = () => {
   const [salesPage, setSalesPage] = useState(0);
   const [salesSearch, setSalesSearch] = useState("");
 
-  // Change price state
+  // Override price state
   const [priceItemId, setPriceItemId] = useState("");
   const [newPrice, setNewPrice] = useState("");
-  const [priceCurrency] = useState("rub");
   const [changingPrice, setChangingPrice] = useState(false);
+  const [overrides, setOverrides] = useState<{ lzt_item_id: string; custom_price_brl: number }[]>([]);
+
+  const fetchOverrides = async () => {
+    const { data } = await supabase.from("lzt_price_overrides").select("lzt_item_id, custom_price_brl").order("created_at", { ascending: false });
+    if (data) setOverrides(data);
+  };
 
   // Per-game markup state
   const [markups, setMarkups] = useState({
