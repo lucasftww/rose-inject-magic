@@ -12,6 +12,7 @@ import { useCart } from "@/hooks/useCart";
 import { toast } from "@/hooks/use-toast";
 import { useLztMarkup } from "@/hooks/useLztMarkup";
 import { trackViewContent, trackInitiateCheckout } from "@/lib/metaPixel";
+import { checkLztAvailability } from "@/lib/lztAvailability";
 
 import lolRankFerroImg from "@/assets/lol-rank-ferro.png";
 import lolRankBronzeImg from "@/assets/lol-rank-bronze.webp";
@@ -216,8 +217,14 @@ const LolDetalhes = () => {
     }
   }, [item]);
 
-  const handleBuyNow = () => {
-    if (!item) return;
+  const [checkingAvailability, setCheckingAvailability] = useState(false);
+
+  const handleBuyNow = async () => {
+    if (!item || checkingAvailability) return;
+    setCheckingAvailability(true);
+    const available = await checkLztAvailability(String(item.item_id), "lol");
+    setCheckingAvailability(false);
+    if (!available) return;
     const title = `Conta LoL ${rankText} Nv. ${level} | ${champCount} Campeões | ${skinCount} Skins`;
     const priceBRL = getPrice(item, "lol");
 

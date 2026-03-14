@@ -12,6 +12,7 @@ import { useCart } from "@/hooks/useCart";
 import { toast } from "@/hooks/use-toast";
 import { useLztMarkup } from "@/hooks/useLztMarkup";
 import { trackViewContent, trackInitiateCheckout } from "@/lib/metaPixel";
+import { checkLztAvailability } from "@/lib/lztAvailability";
 
 const FN_PURPLE = "hsl(265,80%,65%)";
 const FN_BLUE = "hsl(210,100%,56%)";
@@ -158,8 +159,14 @@ const FortniteDetalhes = () => {
     }
   }, [item]);
 
-  const handleBuyNow = () => {
-    if (!item) return;
+  const [checkingAvailability, setCheckingAvailability] = useState(false);
+
+  const handleBuyNow = async () => {
+    if (!item || checkingAvailability) return;
+    setCheckingAvailability(true);
+    const available = await checkLztAvailability(String(item.item_id), "fortnite");
+    setCheckingAvailability(false);
+    if (!available) return;
     const title = `Conta Fortnite${vbucks > 0 ? ` | ${vbucks} V-Bucks` : ""}${skinCount > 0 ? ` | ${skinCount} Skins` : ""}`;
     const priceBRL = getPrice(item, "fortnite");
 
