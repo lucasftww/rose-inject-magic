@@ -22,6 +22,7 @@ import PedidoChat from "./pages/PedidoChat";
 import Checkout from "./pages/Checkout";
 import NotFound from "./pages/NotFound";
 import Raspadinha from "./pages/Raspadinha";
+import ResetPassword from "./pages/ResetPassword";
 import TermosDeUso from "./pages/TermosDeUso";
 import PoliticaPrivacidade from "./pages/PoliticaPrivacidade";
 import PoliticaReembolso from "./pages/PoliticaReembolso";
