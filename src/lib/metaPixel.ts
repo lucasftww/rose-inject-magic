@@ -345,9 +345,8 @@ export const trackPurchase = (
 ) => {
   if (typeof window === "undefined") return;
 
-  // Deterministic event_id with timestamp suffix for webhook retry dedup
-  const ts = Math.floor(Date.now() / 1000);
-  const eventId = `purchase_${data.transactionId}_${ts}`;
+  // Deterministic event_id — must match server-side for deduplication
+  const eventId = `purchase_${data.transactionId}`;
 
   // Guard against double-firing (polling, re-renders, etc.)
   const storageKey = `_meta_purchase_${data.transactionId}`;
