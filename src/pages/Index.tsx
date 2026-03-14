@@ -493,7 +493,7 @@ const Index = () => {
           <span className="sm:hidden">Softwares premium com <span className="text-foreground font-medium">entrega instantânea</span>, <span className="text-foreground font-medium">suporte 24/7</span> e <span className="text-foreground font-medium">garantia total</span>. +20 mil clientes confiam na Royal.</span>
         </motion.p>
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.8, ease: [0.22, 1, 0.36, 1] }} className="z-10 mt-8 sm:mt-12 flex w-full sm:w-auto flex-col sm:flex-row items-center justify-center gap-3 sm:gap-5 px-0 sm:px-0">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.8, ease: [0.22, 1, 0.36, 1] }} className="z-10 mt-8 sm:mt-12 flex w-full max-w-md sm:max-w-none sm:w-auto flex-col sm:flex-row items-center justify-center gap-3 sm:gap-5 mx-auto">
           <Link to="/produtos" className="btn-shine group relative flex w-full sm:w-auto items-center justify-center gap-2 bg-success px-10 py-3.5 sm:py-4 text-sm sm:text-base font-semibold tracking-wide text-success-foreground transition-all hover:shadow-[0_0_30px_hsl(197,100%,50%,0.5)] rounded-xl sm:rounded-none shadow-[0_0_20px_hsl(197,100%,50%,0.25)]">
             <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,_hsl(197,100%,70%,0.3)_0%,_transparent_60%)]" />
             <span className="relative flex items-center gap-2">
