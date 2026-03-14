@@ -738,7 +738,7 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
       .single();
 
     if (ticket && email) {
-      const credentialData = JSON.stringify({ login: email, password: password, email: accountEmail });
+      const credentialData = JSON.stringify({ login: email, password: password, email: accountEmail, game: lztGame });
       await supabaseAdmin.from("ticket_messages").insert({
         ticket_id: ticket.id,
         sender_id: payment.user_id,

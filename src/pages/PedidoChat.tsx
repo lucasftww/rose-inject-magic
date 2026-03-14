@@ -18,6 +18,7 @@ interface TicketData {
   status: string;
   status_label: string;
   created_at: string;
+  metadata?: any;
 }
 
 interface Message {
@@ -404,6 +405,88 @@ const PedidoChat = () => {
     );
   };
 
+  const getGameConfig = (game?: string) => {
+    switch (game) {
+      case "fortnite":
+        return {
+          loginUrl: "https://www.epicgames.com/id/login",
+          platform: "Epic Games",
+          changeDataTitle: "Como trocar os dados da Epic",
+          changeDataSteps: [
+            <>Acesse <a href="https://www.epicgames.com/account/personal" target="_blank" rel="noopener noreferrer" className="text-success underline">epicgames.com/account</a></>,
+            <>Faça login com o email e senha acima</>,
+            <>Vá em <strong className="text-foreground">Configurações da Conta</strong></>,
+            <>Na seção <strong className="text-foreground">SENHA</strong>, clique em "Alterar senha"</>,
+            <>Defina sua nova senha</>,
+          ],
+          changeEmailSteps: [
+            <>Acesse <a href="https://www.epicgames.com/account/personal" target="_blank" rel="noopener noreferrer" className="text-success underline">epicgames.com/account</a> e faça login</>,
+            <>Vá em <strong className="text-foreground">Informações Pessoais</strong> {'>'} <strong className="text-foreground">EMAIL</strong></>,
+            <>Clique em <strong className="text-foreground">"Alterar email"</strong></>,
+            <>Confirme com o código enviado ao email atual</>,
+            <>Digite seu novo email pessoal e confirme</>,
+          ],
+          checklist: [
+            "Alterar a senha da conta Epic",
+            "Trocar o email para o seu pessoal",
+            "Alterar o nome de exibição",
+            "Ativar verificação em duas etapas",
+          ],
+        };
+      case "minecraft":
+        return {
+          loginUrl: "https://login.live.com",
+          platform: "Microsoft",
+          changeDataTitle: "Como trocar os dados da Microsoft",
+          changeDataSteps: [
+            <>Acesse <a href="https://account.microsoft.com/security" target="_blank" rel="noopener noreferrer" className="text-success underline">account.microsoft.com</a></>,
+            <>Faça login com o email e senha acima</>,
+            <>Vá em <strong className="text-foreground">Segurança</strong></>,
+            <>Clique em <strong className="text-foreground">"Alterar senha"</strong></>,
+            <>Defina sua nova senha</>,
+          ],
+          changeEmailSteps: [
+            <>Acesse <a href="https://account.microsoft.com" target="_blank" rel="noopener noreferrer" className="text-success underline">account.microsoft.com</a> e faça login</>,
+            <>Vá em <strong className="text-foreground">Suas Informações</strong></>,
+            <>Em <strong className="text-foreground">Informações de contato</strong>, edite o email</>,
+            <>Adicione seu novo email pessoal</>,
+            <>Confirme e defina como email principal</>,
+          ],
+          checklist: [
+            "Alterar a senha da conta Microsoft",
+            "Trocar o email para o seu pessoal",
+            "Ativar verificação em duas etapas",
+          ],
+        };
+      default: // valorant, lol
+        return {
+          loginUrl: "https://account.riotgames.com",
+          platform: "Riot",
+          changeDataTitle: "Como trocar os dados da Riot",
+          changeDataSteps: [
+            <>Acesse <a href="https://account.riotgames.com" target="_blank" rel="noopener noreferrer" className="text-success underline">account.riotgames.com</a></>,
+            <>Faça login com o email e senha acima</>,
+            <>Vá em <strong className="text-foreground">Configurações da Conta</strong></>,
+            <>Na seção <strong className="text-foreground">RIOT ID</strong>, clique em editar para alterar nome e tag</>,
+            <>Na seção <strong className="text-foreground">SENHA</strong>, clique em "Alterar senha"</>,
+          ],
+          changeEmailSteps: [
+            <>Acesse <a href="https://account.riotgames.com" target="_blank" rel="noopener noreferrer" className="text-success underline">account.riotgames.com</a> e faça login</>,
+            <>Vá em <strong className="text-foreground">Configurações da Conta</strong> {'>'} <strong className="text-foreground">EMAIL</strong></>,
+            <>Clique em <strong className="text-foreground">"Alterar email"</strong></>,
+            <>Um código será enviado para o email atual</>,
+            <>Digite o seu novo email pessoal e confirme</>,
+          ],
+          checklist: [
+            "Alterar a senha da conta Riot",
+            "Trocar o email para o seu pessoal",
+            "Alterar o Riot ID (nome + tag)",
+            "Ativar verificação em duas etapas",
+          ],
+        };
+    }
+  };
+
   const renderCredentialCard = (jsonStr: string) => {
     try {
       const creds = JSON.parse(jsonStr);
@@ -412,9 +495,12 @@ const PedidoChat = () => {
       const emailVal = creds.email;
       const accountEmail = typeof emailVal === "string" ? emailVal : (emailVal?.login || emailVal?.raw || JSON.stringify(emailVal) || "");
       
+      // Detect game from credential JSON or from ticket metadata
+      const game = creds.game || (ticket?.metadata as any)?.game || "";
+      const cfg = getGameConfig(game);
+      
       return (
         <div className="space-y-3 w-full max-w-sm">
-          {/* Credential Card */}
           <div className="rounded-xl border border-success/30 bg-background p-3 space-y-2.5">
             <div className="flex items-center gap-2 mb-2">
               <div className="flex h-5 w-5 items-center justify-center rounded-full bg-success/20">
@@ -429,73 +515,47 @@ const PedidoChat = () => {
             <CopyField label="Login and password" value={`${login}:${password}`} />
 
             <div className="flex items-center gap-2 pt-1">
-              <a
-                href="https://account.riotgames.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 rounded-lg border border-border bg-secondary px-3 py-2 text-xs font-medium text-foreground transition-colors hover:border-success/40"
-              >
+              <a href={cfg.loginUrl} target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-1.5 rounded-lg border border-border bg-secondary px-3 py-2 text-xs font-medium text-foreground transition-colors hover:border-success/40">
                 Login page <ExternalLink className="h-3 w-3" />
               </a>
             </div>
           </div>
 
-          {/* Action Buttons */}
           <div className="space-y-1.5">
-            {/* Button 1: Como trocar dados da Riot */}
             <div className="rounded-xl border border-border bg-background overflow-hidden">
-              <button
-                onClick={() => setExpandedSection(expandedSection === "riot" ? null : "riot")}
-                className="flex w-full items-center gap-2.5 px-4 py-3 text-left transition-colors hover:bg-secondary/50"
-              >
+              <button onClick={() => setExpandedSection(expandedSection === "riot" ? null : "riot")}
+                className="flex w-full items-center gap-2.5 px-4 py-3 text-left transition-colors hover:bg-secondary/50">
                 <KeyRound className="h-4 w-4 text-success shrink-0" />
-                <span className="flex-1 text-sm font-medium text-foreground">Como trocar os dados da Riot</span>
+                <span className="flex-1 text-sm font-medium text-foreground">{cfg.changeDataTitle}</span>
                 {expandedSection === "riot" ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
               </button>
               {expandedSection === "riot" && (
                 <div className="border-t border-border px-4 py-3 text-xs text-muted-foreground space-y-1.5 leading-relaxed">
-                  <p>1️⃣ Acesse <a href="https://account.riotgames.com" target="_blank" rel="noopener noreferrer" className="text-success underline">account.riotgames.com</a></p>
-                  <p>2️⃣ Faça login com o email e senha acima</p>
-                  <p>3️⃣ Vá em <strong className="text-foreground">Configurações da Conta</strong></p>
-                  <p>4️⃣ Na seção <strong className="text-foreground">RIOT ID</strong>, clique em editar para alterar nome e tag</p>
-                  <p>5️⃣ Na seção <strong className="text-foreground">SENHA</strong>, clique em "Alterar senha"</p>
-                  <p className="pl-4">• Coloque a senha atual (fornecida acima)</p>
-                  <p className="pl-4">• Defina sua nova senha</p>
+                  {cfg.changeDataSteps.map((step, i) => <p key={i}>{["1️⃣","2️⃣","3️⃣","4️⃣","5️⃣"][i]} {step}</p>)}
                   <p className="mt-2 text-warning font-medium">⚠️ Altere a senha IMEDIATAMENTE para garantir a segurança.</p>
                 </div>
               )}
             </div>
 
-            {/* Button 2: Como trocar o email */}
             <div className="rounded-xl border border-border bg-background overflow-hidden">
-              <button
-                onClick={() => setExpandedSection(expandedSection === "email" ? null : "email")}
-                className="flex w-full items-center gap-2.5 px-4 py-3 text-left transition-colors hover:bg-secondary/50"
-              >
+              <button onClick={() => setExpandedSection(expandedSection === "email" ? null : "email")}
+                className="flex w-full items-center gap-2.5 px-4 py-3 text-left transition-colors hover:bg-secondary/50">
                 <Mail className="h-4 w-4 text-success shrink-0" />
                 <span className="flex-1 text-sm font-medium text-foreground">Como trocar o email da conta</span>
                 {expandedSection === "email" ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
               </button>
               {expandedSection === "email" && (
                 <div className="border-t border-border px-4 py-3 text-xs text-muted-foreground space-y-1.5 leading-relaxed">
-                  <p>1️⃣ Acesse <a href="https://account.riotgames.com" target="_blank" rel="noopener noreferrer" className="text-success underline">account.riotgames.com</a> e faça login</p>
-                  <p>2️⃣ Vá em <strong className="text-foreground">Configurações da Conta</strong> {'>'} <strong className="text-foreground">EMAIL</strong></p>
-                  <p>3️⃣ Clique em <strong className="text-foreground">"Alterar email"</strong></p>
-                  <p>4️⃣ Um código será enviado para o email atual</p>
-                  <p className="pl-4">• Se não tiver acesso, clique em "Não tenho acesso"</p>
-                  <p>5️⃣ Digite o seu novo email pessoal</p>
-                  <p>6️⃣ Confirme o código enviado ao seu novo email</p>
+                  {cfg.changeEmailSteps.map((step, i) => <p key={i}>{["1️⃣","2️⃣","3️⃣","4️⃣","5️⃣","6️⃣"][i]} {step}</p>)}
                   <p className="mt-2 text-success font-medium">✅ Pronto! A conta estará 100% no seu nome.</p>
                 </div>
               )}
             </div>
 
-            {/* Button 3: Entrega Concluída */}
             <div className="rounded-xl border border-success/30 bg-success/5 overflow-hidden">
-              <button
-                onClick={() => setExpandedSection(expandedSection === "done" ? null : "done")}
-                className="flex w-full items-center gap-2.5 px-4 py-3 text-left transition-colors hover:bg-success/10"
-              >
+              <button onClick={() => setExpandedSection(expandedSection === "done" ? null : "done")}
+                className="flex w-full items-center gap-2.5 px-4 py-3 text-left transition-colors hover:bg-success/10">
                 <CheckCircle className="h-4 w-4 text-success shrink-0" />
                 <span className="flex-1 text-sm font-bold text-success">Entrega Concluída</span>
                 {expandedSection === "done" ? <ChevronUp className="h-4 w-4 text-success/60" /> : <ChevronDown className="h-4 w-4 text-success/60" />}
@@ -503,10 +563,7 @@ const PedidoChat = () => {
               {expandedSection === "done" && (
                 <div className="border-t border-success/20 px-4 py-3 text-xs text-muted-foreground space-y-1.5 leading-relaxed">
                   <p className="text-foreground font-medium">📋 Checklist de segurança:</p>
-                  <p>• Alterar a senha da conta Riot</p>
-                  <p>• Trocar o email para o seu pessoal</p>
-                  <p>• Alterar o Riot ID (nome + tag)</p>
-                  <p>• Ativar verificação em duas etapas</p>
+                  {cfg.checklist.map((item, i) => <p key={i}>• {item}</p>)}
                   <p className="mt-2 text-muted-foreground">Se precisar de ajuda, envie uma mensagem aqui! 🙌</p>
                 </div>
               )}
