@@ -251,6 +251,7 @@ async function assignDiscordClientRole(supabaseAdmin: any, userId: string) {
 
 // Helper: fulfill order (deliver stock, create tickets, record coupon)
 async function fulfillOrder(supabaseAdmin: any, payment: any) {
+  log("INFO", "fulfillOrder", "Starting fulfillment", { paymentId: payment.id, userId: payment.user_id, itemCount: payment.cart_snapshot?.length, amount: payment.amount });
   const cartItems = payment.cart_snapshot as Array<{
     productId: string;
     planId: string;
