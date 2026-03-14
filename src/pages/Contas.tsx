@@ -1302,7 +1302,7 @@ const Contas = () => {
     if (tab !== "valorant") params.game = tab;
     setSearchParams(params);
     clearFilters();
-    setSortBy(tab === "minecraft" ? "price_asc" : "price_desc");
+    setSortBy("price_desc");
   };
 
   const isMinecraft = gameTab === "minecraft";
