@@ -120,7 +120,7 @@ const Header = () => {
               transition={{ duration: 0.5 }}
             />
             <span
-              className="text-xl lg:text-2xl tracking-[0.2em] whitespace-nowrap"
+              className="text-lg sm:text-xl lg:text-2xl tracking-[0.15em] sm:tracking-[0.2em] whitespace-nowrap"
               style={{ fontFamily: "'Valorant', sans-serif" }}
             >
               <span className="inline-block bg-gradient-to-r from-success via-[hsl(197,100%,70%)] to-success bg-[length:200%_100%] bg-clip-text text-transparent animate-[text-shine_3s_ease-in-out_infinite]">
