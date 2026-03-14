@@ -1505,7 +1505,7 @@ Deno.serve(async (req) => {
           .maybeSingle();
 
         if (newStatus === "COMPLETED" && updatedPayment) {
-          console.log("Webhook: fulfilling order for payment:", payment.id);
+          log("INFO", "webhook", "Fulfilling completed payment", { paymentId: payment.id, userId: payment.user_id, amount: payment.amount });
           await fulfillOrder(supabaseAdmin, payment);
           await sendDiscordSaleNotification(supabaseAdmin, payment);
           await sendServerPurchaseEvent(payment, req);
