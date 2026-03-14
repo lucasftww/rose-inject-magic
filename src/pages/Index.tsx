@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useLztMarkup } from "@/hooks/useLztMarkup";
-import bannerInject from "@/assets/banner-inject.png";
+import bannerInject from "@/assets/banner-inject.webp";
 import rankAscendente from "@/assets/rank-ascendente.png";
 import rankFerro from "@/assets/rank-ferro.png";
 import rankBronze from "@/assets/rank-bronze.png";
@@ -537,7 +537,7 @@ const Index = () => {
       {/* Banner */}
       <section className="relative overflow-hidden border-t border-border">
         <div className="absolute inset-0">
-          <img src={bannerInject} alt="" className="h-full w-full object-cover" />
+          <img src={bannerInject} alt="" className="h-full w-full object-cover" loading="lazy" />
           <div className="absolute inset-0 bg-background/60 backdrop-blur-sm" />
         </div>
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 py-10 sm:py-20 flex items-center justify-center">
