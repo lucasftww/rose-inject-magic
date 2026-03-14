@@ -118,11 +118,8 @@ const FinanceTab = () => {
       else months[key].produtos += p.amount / 100;
     });
 
-    lztSales.forEach((s) => {
-      const key = new Date(s.created_at).toLocaleDateString("pt-BR", { month: "short", year: "2-digit" });
-      if (!months[key]) months[key] = { produtos: 0, contas: 0 };
-      months[key].contas += Number(s.sell_price);
-    });
+    // NOTE: lzt_sales are NOT added here to avoid double-counting.
+    // LZT revenue is already included via COMPLETED payments above.
 
     return Object.entries(months).map(([name, data]) => ({ name, ...data }));
   };
