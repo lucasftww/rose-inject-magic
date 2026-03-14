@@ -670,13 +670,13 @@ const ContaDetalhes = () => {
                   </div>
                 )}
 
-                {/* Rank + Stats */}
-                <div className="rounded-lg border border-border bg-card p-4 sm:p-5 space-y-3 sm:space-y-4">
-                  <div className="flex items-center justify-between">
+              {/* Rank + Stats */}
+                <div className="rounded-xl border border-border bg-card p-5 sm:p-5 space-y-4 sm:space-y-4">
+                  <div className="flex items-center justify-center gap-6 sm:justify-between">
                     {/* Último rank (esquerda) */}
                     {item.riot_valorant_previous_rank && rankMap[item.riot_valorant_previous_rank] ? (
-                      <div className="flex flex-col items-center gap-1">
-                        <img src={rankMap[item.riot_valorant_previous_rank].img} alt="" className="h-12 w-12 sm:h-16 sm:w-16 object-contain opacity-50" />
+                      <div className="flex flex-col items-center gap-1.5">
+                        <img src={rankMap[item.riot_valorant_previous_rank].img} alt="" className="h-14 w-14 sm:h-16 sm:w-16 object-contain opacity-50" />
                         <div className="text-center">
                           <p className="text-[9px] text-muted-foreground uppercase tracking-wider">Último rank</p>
                           <p className="text-xs sm:text-sm font-bold text-muted-foreground">{rankMap[item.riot_valorant_previous_rank].name}</p>
@@ -692,17 +692,17 @@ const ContaDetalhes = () => {
                     </div>
 
                     {/* Rank atual (direita) */}
-                    <div className="flex flex-col items-center gap-1">
-                      <img src={rank?.img || rankUnranked} alt={rank?.name || "Unranked"} className="h-12 w-12 sm:h-16 sm:w-16 object-contain" />
+                    <div className="flex flex-col items-center gap-1.5">
+                      <img src={rank?.img || rankUnranked} alt={rank?.name || "Unranked"} className="h-14 w-14 sm:h-16 sm:w-16 object-contain" />
                       <div className="text-center">
                         <p className="text-[9px] text-muted-foreground uppercase tracking-wider">Rank atual</p>
                         <p className="text-xs sm:text-sm font-bold text-foreground">{rank?.name || "Unranked"}</p>
                       </div>
                     </div>
                   </div>
-                  <div className="border-t border-border pt-3 sm:pt-4">
-                    <h3 className="text-xs sm:text-sm font-bold text-foreground mb-2 sm:mb-3">Informações da Conta</h3>
-                    <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
+                  <div className="border-t border-border pt-4 sm:pt-4">
+                    <h3 className="text-sm font-bold text-foreground mb-3 sm:mb-3">Informações da Conta</h3>
+                    <div className="grid grid-cols-2 gap-2 sm:gap-2">
                       {item.valorantRegionPhrase && <StatCell label="Região" value={translateRegion(item.valorantRegionPhrase)} />}
                       {item.riot_valorant_wallet_vp != null && <StatCell label="VP na conta" value={item.riot_valorant_wallet_vp} />}
                       {item.riot_valorant_wallet_rp != null && item.riot_valorant_wallet_rp > 0 && <StatCell label="RP na conta" value={item.riot_valorant_wallet_rp} />}
