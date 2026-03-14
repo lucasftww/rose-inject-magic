@@ -55,7 +55,7 @@ const FaqItem = ({ question, answer, index }: { question: string; answer: string
 };
 
 const FaqSection = () => (
-  <section id="faq" className="border-t border-border bg-background px-4 sm:px-6 py-12 sm:py-24">
+  <section id="faq" className="border-t border-border bg-background px-5 sm:px-6 py-12 sm:py-24">
     <div className="mx-auto max-w-3xl">
       <motion.div
         initial="hidden"
