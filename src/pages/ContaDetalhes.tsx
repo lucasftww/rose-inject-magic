@@ -820,11 +820,6 @@ const ContaDetalhes = () => {
                         className="group rounded-xl bg-card overflow-hidden hover:ring-1 hover:ring-success/30 transition-all relative cursor-pointer"
                         onClick={() => setLightboxIndex(i)}
                       >
-                        {invItem.rarity && (
-                          <div className="absolute top-1.5 right-1.5 z-10">
-                            <img src={invItem.rarity.img} alt={invItem.rarity.name} className="h-4.5 w-4.5 object-contain drop-shadow-md" title={invItem.rarity.name} />
-                          </div>
-                        )}
                         <div className="aspect-square bg-secondary/15 flex items-center justify-center p-3 sm:p-3">
                           <img
                             src={invItem.image}
