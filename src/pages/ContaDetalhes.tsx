@@ -743,9 +743,6 @@ const ContaDetalhes = () => {
                         {getDisplayPrice(item, "valorant")}
                       </p>
                     </div>
-                    {item.rub_price && item.price_currency !== "rub" && (
-                      <p className="text-[10px] text-muted-foreground mb-1">≈ $ {(item.price / 5.5).toFixed(2)} USD</p>
-                    )}
                   </div>
 
                   <button
