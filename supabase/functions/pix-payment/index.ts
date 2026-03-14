@@ -1034,10 +1034,16 @@ async function validateAndCalculatePrice(
         return { validatedAmount: 0, validatedDiscount: 0, validatedCart: [], error: userMsg };
       }
       const lztData = await lztRes.json();
-      const realLztPrice = Number(lztData?.item?.price) || 0;
-      const realLztCurrency = lztData?.item?.price_currency || "rub";
-      if (realLztPrice <= 0) {
-        return { validatedAmount: 0, validatedDiscount: 0, validatedCart: [], error: `Esta conta não está mais disponível` };
+      const lztItem = lztData?.item;
+      const realLztPrice = Number(lztItem?.price) || 0;
+      const realLztCurrency = lztItem?.price_currency || "rub";
+
+      // Check if item is still available for purchase
+      // canBuyItem === false or buyer !== null means it's already sold
+      const isSold = lztItem?.buyer != null || lztItem?.canBuyItem === false;
+      if (realLztPrice <= 0 || isSold) {
+        console.warn(`LZT item ${lztItemId} unavailable: price=${realLztPrice}, buyer=${lztItem?.buyer}, canBuyItem=${lztItem?.canBuyItem}`);
+        return { validatedAmount: 0, validatedDiscount: 0, validatedCart: [], error: `Esta conta já foi vendida ou não está mais disponível. Por favor, escolha outra conta.` };
       }
 
       const { data: lztConfig } = await supabaseAdmin
