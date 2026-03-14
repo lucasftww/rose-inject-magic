@@ -316,9 +316,9 @@ const ContasSection = () => {
   });
 
   return (
-    <section className="border-t border-border bg-background px-4 sm:px-6 py-12 sm:py-24">
+    <section className="border-t border-border bg-background px-4 sm:px-6 py-14 sm:py-24">
       <div className="mx-auto max-w-7xl">
-        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-80px" }} variants={slideInLeft}>
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-80px" }} variants={slideInLeft} className="text-center sm:text-left">
           <p className="text-sm font-medium uppercase tracking-[0.3em] text-success">Selecao Accounts</p>
           <h2 className="mt-3 text-3xl sm:text-5xl font-bold tracking-tight text-foreground md:text-7xl" style={{ fontFamily: "'Valorant', sans-serif" }}>CONTAS VALORANT</h2>
         </motion.div>
@@ -375,9 +375,9 @@ const ProductsSection = () => {
   });
 
   return (
-    <section className="border-t border-border bg-background px-4 sm:px-6 py-12 sm:py-24">
+    <section className="border-t border-border bg-background px-4 sm:px-6 py-14 sm:py-24">
       <div className="mx-auto max-w-7xl">
-        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-80px" }} variants={slideInLeft}>
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-80px" }} variants={slideInLeft} className="text-center sm:text-left">
           <p className="text-sm font-medium uppercase tracking-[0.3em] text-success">Selecao Premium</p>
           <h2 className="mt-3 text-3xl sm:text-5xl font-bold tracking-tight text-foreground md:text-7xl" style={{ fontFamily: "'Valorant', sans-serif" }}>DESTAQUE</h2>
         </motion.div>
@@ -458,7 +458,7 @@ const Index = () => {
       <Header />
 
       {/* HERO */}
-      <main className="relative flex min-h-[85vh] sm:min-h-screen flex-col items-center justify-center px-3 sm:px-6 pt-2 sm:pt-4 pb-8 sm:pb-20 text-center overflow-hidden">
+      <main className="relative flex min-h-[85vh] sm:min-h-screen flex-col items-center justify-center px-4 sm:px-6 pt-4 sm:pt-8 pb-10 sm:pb-20 text-center overflow-hidden">
         <div className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[400px] sm:h-[550px] w-[600px] sm:w-[900px] -translate-x-1/2 -translate-y-1/2"
           style={{
             backgroundImage: "linear-gradient(hsl(var(--border) / 0.8) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--border) / 0.8) 1px, transparent 1px)",
@@ -470,19 +470,19 @@ const Index = () => {
         />
         <div className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[400px] sm:h-[600px] w-[600px] sm:w-[900px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,_hsl(197,100%,50%,0.15)_0%,_transparent_65%)]" />
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2, ease: [0.22, 1, 0.36, 1] }} className="z-10 mb-6 sm:mb-12 flex items-center gap-2">
-          <Star className="h-5 w-5 sm:h-6 sm:w-6 fill-success text-success" />
-          <span className="text-sm sm:text-base font-semibold tracking-wide text-success">+20.000 Clientes Satisfeitos</span>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2, ease: [0.22, 1, 0.36, 1] }} className="z-10 mb-6 sm:mb-10 flex items-center justify-center gap-2.5 rounded-full border border-success/20 bg-success/5 px-5 py-2">
+          <Star className="h-4 w-4 sm:h-5 sm:w-5 fill-success text-success" />
+          <span className="text-xs sm:text-sm font-semibold tracking-wide text-success">+20.000 Clientes Satisfeitos</span>
         </motion.div>
 
-        <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.4, ease: [0.22, 1, 0.36, 1] }} className="z-10 max-w-4xl text-[2rem] leading-[1.1] sm:text-5xl font-bold tracking-tight text-foreground md:text-7xl lg:text-8xl">
+        <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.4, ease: [0.22, 1, 0.36, 1] }} className="z-10 mx-auto max-w-4xl text-[2rem] leading-[1.1] sm:text-5xl font-bold tracking-tight text-foreground md:text-7xl lg:text-8xl">
           Domine o Jogo com{" "}
           <span className="inline-block bg-gradient-to-r from-success via-[hsl(197,100%,70%)] to-success bg-[length:200%_100%] bg-clip-text text-transparent" style={{ fontFamily: "'Valorant', sans-serif" }}>
             Royal Store
           </span>
         </motion.h1>
 
-        <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.6, ease: [0.22, 1, 0.36, 1] }} className="z-10 mt-4 sm:mt-8 max-w-2xl text-[13px] leading-relaxed sm:text-lg text-muted-foreground md:text-xl px-2 sm:px-0">
+        <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.6, ease: [0.22, 1, 0.36, 1] }} className="z-10 mt-5 sm:mt-8 mx-auto max-w-2xl text-[13px] leading-relaxed sm:text-lg text-muted-foreground md:text-xl px-4 sm:px-0">
           <span className="hidden sm:inline">Somos referência no mercado há mais de 5 anos, oferecendo softwares premium com{" "}
           <span className="text-foreground font-medium">tecnologia indetectável</span>,{" "}
           <span className="text-foreground font-medium">atualizações constantes</span> e{" "}
@@ -492,8 +492,8 @@ const Index = () => {
           <span className="sm:hidden">Softwares premium com <span className="text-foreground font-medium">entrega instantânea</span>, <span className="text-foreground font-medium">suporte 24/7</span> e <span className="text-foreground font-medium">garantia total</span>. +20 mil clientes confiam na Royal.</span>
         </motion.p>
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.8, ease: [0.22, 1, 0.36, 1] }} className="z-10 mt-6 sm:mt-12 flex w-full sm:w-auto flex-col sm:flex-row items-center justify-center gap-3 sm:gap-5 px-2 sm:px-0">
-          <Link to="/produtos" className="btn-shine group relative flex w-full sm:w-auto items-center justify-center gap-2 bg-success px-10 py-4 sm:py-4 text-base font-semibold tracking-wide text-success-foreground transition-all hover:shadow-[0_0_30px_hsl(197,100%,50%,0.5)] rounded-xl sm:rounded-none shadow-[0_0_20px_hsl(197,100%,50%,0.25)]">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.8, ease: [0.22, 1, 0.36, 1] }} className="z-10 mt-8 sm:mt-12 flex w-full max-w-md sm:max-w-none sm:w-auto flex-col sm:flex-row items-center justify-center gap-3 sm:gap-5 px-4 sm:px-0">
+          <Link to="/produtos" className="btn-shine group relative flex w-full sm:w-auto items-center justify-center gap-2 bg-success px-10 py-4 text-base font-semibold tracking-wide text-success-foreground transition-all hover:shadow-[0_0_30px_hsl(197,100%,50%,0.5)] rounded-xl sm:rounded-none shadow-[0_0_20px_hsl(197,100%,50%,0.25)]">
             <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,_hsl(197,100%,70%,0.3)_0%,_transparent_60%)]" />
             <span className="relative flex items-center gap-2">
               Ver Produtos
@@ -505,9 +505,9 @@ const Index = () => {
           </Link>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8, delay: 1.0 }} className="z-10 mt-8 sm:mt-20 grid grid-cols-3 sm:flex items-center justify-center gap-3 sm:gap-8 md:gap-14 w-full max-w-full px-1 sm:px-0">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8, delay: 1.0 }} className="z-10 mt-10 sm:mt-20 mx-auto grid grid-cols-3 sm:flex items-center justify-center gap-4 sm:gap-10 md:gap-16 w-full max-w-lg sm:max-w-none">
           {trustBadges.map((item, idx) => (
-            <motion.div key={item.highlight} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 1.0 + idx * 0.15 }} className="flex flex-col sm:flex-row items-center gap-1 sm:gap-3">
+            <motion.div key={item.highlight} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 1.0 + idx * 0.15 }} className="flex flex-col sm:flex-row items-center gap-1.5 sm:gap-3">
               <item.icon className="h-5 w-5 sm:h-6 sm:w-6 text-success" />
               <div className="text-center sm:text-left">
                 <span className="text-[10px] sm:text-sm text-muted-foreground whitespace-nowrap">{item.label}</span>
@@ -517,7 +517,7 @@ const Index = () => {
           ))}
         </motion.div>
 
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 1.4 }} className="z-10 mt-6 sm:mt-12 flex flex-col sm:flex-row items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 1.4 }} className="z-10 mt-8 sm:mt-12 flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
           <div className="flex">
             {[...Array(5)].map((_, i) => (
               <Star key={i} className="h-4 w-4 fill-success text-success" />
@@ -526,7 +526,7 @@ const Index = () => {
           <span className="text-center">Avaliação média 4.8/5 • +5000 avaliações</span>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 1.6 }} className="z-10 mt-8 sm:mt-16 hidden sm:flex animate-bounce flex-col items-center gap-1 text-muted-foreground">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 1.6 }} className="z-10 mt-10 sm:mt-16 hidden sm:flex animate-bounce flex-col items-center gap-1 text-muted-foreground">
           <span className="text-xs tracking-widest uppercase">Explorar</span>
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 5v14M19 12l-7 7-7-7"/>
@@ -540,15 +540,15 @@ const Index = () => {
           <img src={bannerInject} alt="" className="h-full w-full object-cover" loading="lazy" />
           <div className="absolute inset-0 bg-background/60 backdrop-blur-sm" />
         </div>
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 py-10 sm:py-20 flex items-center justify-center">
-          <motion.div className="text-center" initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.7 }}>
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 py-12 sm:py-24 flex items-center justify-center">
+          <motion.div className="text-center max-w-2xl mx-auto" initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.7 }}>
             <h2 className="text-xl sm:text-4xl font-bold tracking-tight text-foreground md:text-6xl" style={{ fontFamily: "'Valorant', sans-serif" }}>
               CHEATS <span className="text-success">&</span> ACCOUNTS
             </h2>
-            <p className="mt-3 sm:mt-4 text-sm sm:text-base text-muted-foreground max-w-xl mx-auto px-4 sm:px-0">
+            <p className="mt-4 sm:mt-5 text-sm sm:text-base text-muted-foreground mx-auto px-4 sm:px-0">
               Cheats seguros e otimizados com suporte contínuo e atualizações frequentes.
             </p>
-            <Link to="/produtos" className="mt-6 sm:mt-8 inline-flex items-center gap-2 bg-success px-8 sm:px-10 py-3 sm:py-3.5 text-sm font-bold uppercase tracking-[0.2em] text-success-foreground transition-all hover:shadow-[0_0_30px_hsl(197,100%,50%,0.4)] rounded-xl sm:rounded-none" style={{ fontFamily: "'Valorant', sans-serif" }}>
+            <Link to="/produtos" className="mt-7 sm:mt-10 inline-flex items-center gap-2 bg-success px-8 sm:px-10 py-3 sm:py-3.5 text-sm font-bold uppercase tracking-[0.2em] text-success-foreground transition-all hover:shadow-[0_0_30px_hsl(197,100%,50%,0.4)] rounded-xl sm:rounded-none" style={{ fontFamily: "'Valorant', sans-serif" }}>
               Ver Produtos
               <ArrowRight className="h-5 w-5" />
             </Link>
