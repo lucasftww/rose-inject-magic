@@ -499,7 +499,7 @@ const ValorantCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap
         {item.valorantRegionPhrase && (
           <div className="mt-1.5 sm:mt-2 flex items-center gap-1">
             <Globe className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-muted-foreground flex-shrink-0" />
-            <span className="text-[10px] sm:text-[11px] text-muted-foreground truncate">{item.valorantRegionPhrase}</span>
+            <span className="text-[10px] sm:text-[11px] text-muted-foreground truncate">{translateRegion(item.valorantRegionPhrase)}</span>
           </div>
         )}
 
