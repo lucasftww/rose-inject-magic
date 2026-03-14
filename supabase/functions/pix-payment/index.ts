@@ -71,7 +71,7 @@ async function sendServerPurchaseEvent(payment: any, req: Request) {
     const eventData = {
       event_name: "Purchase",
       event_id: eventId,
-      event_time: ts,
+      event_time: Math.floor(Date.now() / 1000),
       action_source: "website",
       event_source_url: "https://rose-inject-magic.lovable.app/checkout",
       user_data: userData,
