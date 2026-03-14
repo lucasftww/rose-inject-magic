@@ -281,6 +281,7 @@ async function fulfillOrder(supabaseAdmin: any, payment: any) {
       .select("product_id")
       .eq("reseller_id", resellerData.id);
     resellerProductIds = (rProducts || []).map((rp: any) => rp.product_id);
+    log("INFO", "fulfillOrder", "Reseller detected", { resellerId: resellerData.id, discount: resellerData.discount_percent, authorizedProducts: resellerProductIds.length });
   }
 
   for (const item of cartItems) {
