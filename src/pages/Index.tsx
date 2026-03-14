@@ -27,6 +27,7 @@ import FaqSection from "@/components/landing/FaqSection";
 import HowItWorksSection from "@/components/landing/HowItWorksSection";
 import CtaSection from "@/components/landing/CtaSection";
 import { fadeUp, staggerContainer, scaleIn, slideInLeft } from "@/components/landing/animations";
+import { translateRegion } from "@/lib/regionTranslation";
 
 const rankMap: Record<number, { name: string; img: string }> = {
   3: { name: "Ferro 1", img: rankFerro },
@@ -283,7 +284,7 @@ const LztContaCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap
         {item.valorantRegionPhrase && (
           <div className="mt-2 flex items-center gap-1.5">
             <Globe className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-[11px] text-muted-foreground">{item.valorantRegionPhrase}</span>
+            <span className="text-[11px] text-muted-foreground">{translateRegion(item.valorantRegionPhrase)}</span>
           </div>
         )}
         <div className="mt-4 flex items-end justify-between">
