@@ -1037,6 +1037,24 @@ export type Database = {
           },
         ]
       }
+      public_profiles: {
+        Row: {
+          avatar_url: string | null
+          user_id: string | null
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          user_id?: string | null
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          user_id?: string | null
+          username?: string | null
+        }
+        Relationships: []
+      }
       public_scratch_card_prizes: {
         Row: {
           active: boolean | null
