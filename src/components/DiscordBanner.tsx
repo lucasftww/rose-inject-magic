@@ -20,7 +20,7 @@ const DiscordBanner = ({ dismissible = true, onVisibilityChange }: { dismissible
           transition={{ duration: 0.3 }}
           className="relative w-full bg-[#00b3ff] text-white text-center py-2 sm:py-2.5 px-8 sm:px-4 text-sm font-semibold z-[60] shadow-[0_2px_20px_rgba(0,179,255,0.4)] overflow-hidden"
         >
-          <div className="flex items-center justify-center gap-1.5 sm:gap-2 flex-wrap">
+          <div className="flex items-center justify-center gap-1.5 sm:gap-2 overflow-hidden">
             <MessageCircle className="w-4 h-4 animate-pulse hidden sm:block" />
             <span className="text-xs sm:text-sm">⚠️ <span className="hidden sm:inline">Nosso antigo </span>Discord caiu! Entre no novo:</span>
             <a
