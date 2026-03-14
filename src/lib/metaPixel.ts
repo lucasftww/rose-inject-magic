@@ -286,30 +286,6 @@ export const trackViewContent = (data: TrackingData) => {
   return eventId;
 };
 
-/**
- * Track AddToCart — fires when user adds a product to cart (clicks "Buy Now")
- */
-export const trackAddToCart = (data: TrackingData) => {
-  if (typeof window === "undefined") return;
-
-  const eventId = generateEventId("atc");
-  const customData: Record<string, any> = {
-    content_name: data.contentName,
-    content_category: data.contentCategory,
-    content_ids: data.contentIds,
-    contents: data.contentIds.map((id) => ({ id, quantity: 1 })),
-    content_type: "product",
-    value: data.value,
-    currency: data.currency || "BRL",
-  };
-
-  if (window.fbq) {
-    window.fbq("track", "AddToCart", customData, { eventID: eventId });
-  }
-  sendCAPI("AddToCart", eventId, customData);
-
-  return eventId;
-};
 
 /**
  * Track InitiateCheckout — fires when user enters checkout page
