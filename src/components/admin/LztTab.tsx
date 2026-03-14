@@ -288,6 +288,8 @@ const LztTab = () => {
           </h3>
           <p className="text-xs text-muted-foreground mt-1">
             Insira o ID da conta no LZT Market e o novo preço desejado. Isso altera o preço diretamente no marketplace.
+            <br />
+            <span className="text-yellow-500/80">⚠ Só funciona para contas que pertencem à sua conta LZT (listadas por você).</span>
           </p>
           <div className="mt-4 flex flex-wrap items-end gap-4">
             <div>
