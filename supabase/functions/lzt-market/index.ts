@@ -187,6 +187,7 @@ Deno.serve(async (req) => {
       const gameType = url.searchParams.get("game_type") || "riot";
       let activeMarkup = lztConfig?.markup_multiplier || 1.5;
       if (gameType === "riot") activeMarkup = lztConfig?.markup_valorant || activeMarkup;
+      else if (gameType === "lol") activeMarkup = lztConfig?.markup_lol || activeMarkup;
       else if (gameType === "fortnite") activeMarkup = lztConfig?.markup_fortnite || activeMarkup;
       else if (gameType === "minecraft") activeMarkup = lztConfig?.markup_minecraft || activeMarkup;
 

@@ -1088,7 +1088,7 @@ const Contas = () => {
       }
     } else if (gameTab === "lol") {
       // LoL-specific — hide empty accounts, require at least 1 skin and 10 champions
-      params.game_type = "riot";
+      params.game_type = "lol";
       params.lol_smin = "1";
       params.champion_min = "10";
       if (lvlMin) params.lol_level_min = lvlMin;
