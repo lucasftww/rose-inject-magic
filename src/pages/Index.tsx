@@ -507,7 +507,7 @@ const Index = () => {
           </Link>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8, delay: 1.0 }} className="z-10 mt-8 sm:mt-20 mx-auto flex items-center justify-center gap-8 sm:gap-10 md:gap-16 w-full max-w-sm sm:max-w-none">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8, delay: 1.0 }} className="z-10 mt-8 sm:mt-20 mx-auto flex items-center justify-center gap-6 sm:gap-10 md:gap-16 w-full max-w-xs sm:max-w-none px-2 sm:px-0">
           {trustBadges.map((item, idx) => (
             <motion.div key={item.highlight} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 1.0 + idx * 0.15 }} className="flex flex-col items-center gap-1.5 sm:flex-row sm:gap-3">
               <item.icon className="h-5 w-5 sm:h-6 sm:w-6 text-success" />
