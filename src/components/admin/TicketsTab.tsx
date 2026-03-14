@@ -491,7 +491,8 @@ const TicketsTab = () => {
       const login = typeof creds.login === "string" ? creds.login : JSON.stringify(creds.login) || "";
       const password = typeof creds.password === "string" ? creds.password : JSON.stringify(creds.password) || "";
       const emailVal = creds.email;
-      const accountEmail = typeof emailVal === "string" ? emailVal : (emailVal?.login || emailVal?.raw || JSON.stringify(emailVal) || "");
+      const emailLogin = typeof emailVal === "object" && emailVal?.login ? emailVal.login : (typeof emailVal === "string" ? emailVal : "");
+      const emailPassword = typeof emailVal === "object" && emailVal?.password ? emailVal.password : "";
 
       const game = creds.game || selectedTicket?.metadata?.game || "";
       const cfg = getGameConfig(game);
@@ -506,9 +507,19 @@ const TicketsTab = () => {
               <span className="text-xs font-bold text-foreground">Dados de login entregues:</span>
             </div>
             <CopyField label="Login" value={login} />
-            <CopyField label="Password" value={password} />
-            {accountEmail && <CopyField label="Email da conta" value={accountEmail} />}
+            <CopyField label="Senha" value={password} />
             <CopyField label="Login:Senha" value={`${login}:${password}`} />
+
+            {emailLogin && (
+              <div className="mt-3 pt-3 border-t border-border space-y-2.5">
+                <div className="flex items-center gap-2">
+                  <Mail className="h-3.5 w-3.5 text-success" />
+                  <span className="text-[11px] font-bold text-foreground">Acesso ao email (auto registrado):</span>
+                </div>
+                <CopyField label="Email da conta" value={emailLogin} />
+                {emailPassword && <CopyField label="Senha do email" value={emailPassword} />}
+              </div>
+            )}
             <div className="flex items-center gap-2 pt-1">
               <a href={cfg.loginUrl} target="_blank" rel="noopener noreferrer"
                 className="flex items-center gap-1.5 rounded-lg border border-border bg-secondary px-3 py-2 text-xs font-medium text-foreground transition-colors hover:border-success/40">

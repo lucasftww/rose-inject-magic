@@ -667,7 +667,8 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
     let email = loginData?.login || loginData?.email || boughtItem?.email || "";
     let password = loginData?.password || boughtItem?.password || "";
     let rawCredentials = loginData?.raw || "";
-    let accountEmail = loginData?.email || boughtItem?.email || boughtItem?.emailLoginData || "";
+    // Preserve full email login data (login + password) if available
+    let accountEmail: any = boughtItem?.emailLoginData || loginData?.emailLoginData || loginData?.email || boughtItem?.email || "";
 
     if (!email && rawCredentials) {
       const parts = rawCredentials.split(":");
@@ -677,8 +678,9 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
       }
     }
 
-    if (accountEmail === email && boughtItem?.item_origin === "autoreg") {
-      accountEmail = boughtItem?.email || loginData?.email || "";
+    // If accountEmail is a string and equals the main login, try to get richer data
+    if (typeof accountEmail === "string" && accountEmail === email && boughtItem?.item_origin === "autoreg") {
+      accountEmail = boughtItem?.emailLoginData || boughtItem?.email || loginData?.email || "";
     }
 
     const stockContent = email && password
