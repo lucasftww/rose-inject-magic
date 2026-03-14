@@ -520,11 +520,21 @@ const TicketsTab = () => {
                 {emailPassword && <CopyField label="Senha do email" value={emailPassword} />}
               </div>
             )}
-            <div className="flex items-center gap-2 pt-1">
+            <div className="flex flex-wrap items-center gap-2 pt-1">
               <a href={cfg.loginUrl} target="_blank" rel="noopener noreferrer"
                 className="flex items-center gap-1.5 rounded-lg border border-border bg-secondary px-3 py-2 text-xs font-medium text-foreground transition-colors hover:border-success/40">
                 Login page <ExternalLink className="h-3 w-3" />
               </a>
+              {emailLogin && (() => {
+                const emailWebmailUrl = getEmailWebmailUrl(emailLogin);
+                if (!emailWebmailUrl) return null;
+                return (
+                  <a href={emailWebmailUrl} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 rounded-lg border border-border bg-secondary px-3 py-2 text-xs font-medium text-foreground transition-colors hover:border-success/40">
+                    <Mail className="h-3 w-3" /> Email login <ExternalLink className="h-3 w-3" />
+                  </a>
+                );
+              })()}
             </div>
           </div>
           <div className="space-y-1.5">
