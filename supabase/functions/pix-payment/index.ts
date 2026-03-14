@@ -8,6 +8,14 @@ const corsHeaders = {
 
 const MISTICPAY_BASE_URL = "https://api.misticpay.com/api";
 
+// ─── Structured Logger ────────────────────────────────────────────────────────
+function log(level: "INFO" | "WARN" | "ERROR", ctx: string, msg: string, data?: Record<string, unknown>) {
+  const entry = { ts: new Date().toISOString(), level, ctx, msg, ...(data || {}) };
+  if (level === "ERROR") console.error(JSON.stringify(entry));
+  else if (level === "WARN") console.warn(JSON.stringify(entry));
+  else console.log(JSON.stringify(entry));
+}
+
 // ─── Server-side CAPI Purchase (fires when payment is COMPLETED) ────────────
 // This guarantees Meta receives the Purchase event even if the user closes the browser.
 // Uses the same deterministic event_id as the browser Pixel for deduplication.
@@ -243,6 +251,7 @@ async function assignDiscordClientRole(supabaseAdmin: any, userId: string) {
 
 // Helper: fulfill order (deliver stock, create tickets, record coupon)
 async function fulfillOrder(supabaseAdmin: any, payment: any) {
+  log("INFO", "fulfillOrder", "Starting fulfillment", { paymentId: payment.id, userId: payment.user_id, itemCount: payment.cart_snapshot?.length, amount: payment.amount });
   const cartItems = payment.cart_snapshot as Array<{
     productId: string;
     planId: string;
@@ -272,12 +281,15 @@ async function fulfillOrder(supabaseAdmin: any, payment: any) {
       .select("product_id")
       .eq("reseller_id", resellerData.id);
     resellerProductIds = (rProducts || []).map((rp: any) => rp.product_id);
+    log("INFO", "fulfillOrder", "Reseller detected", { resellerId: resellerData.id, discount: resellerData.discount_percent, authorizedProducts: resellerProductIds.length });
   }
 
   for (const item of cartItems) {
+    log("INFO", "fulfillOrder", "Processing item", { productName: item.productName, planName: item.planName, type: item.type, qty: item.quantity, price: item.price });
+
     // Skip raspadinha items - fulfillment handled client-side
     if (item.type === "raspadinha" || item.planId === "raspadinha") {
-      console.log("Skipping raspadinha fulfillment (handled client-side)");
+      log("INFO", "fulfillOrder", "Skipping raspadinha (handled client-side)");
       continue;
     }
 
@@ -286,9 +298,10 @@ async function fulfillOrder(supabaseAdmin: any, payment: any) {
     if (isLztAccount) {
       const lztItemId = item.lztItemId || item.productId?.replace("lzt-", "") || "";
       if (lztItemId) {
+        log("INFO", "fulfillOrder", "Fulfilling LZT account", { lztItemId });
         await fulfillLztAccount(supabaseAdmin, payment, { ...item, lztItemId });
       } else {
-        console.error("LZT account item missing lztItemId:", item);
+        log("ERROR", "fulfillOrder", "LZT account missing lztItemId", { item });
       }
       continue;
     }
@@ -315,7 +328,7 @@ async function fulfillOrder(supabaseAdmin: any, payment: any) {
 
     for (let i = 0; i < (item.quantity || 1); i++) {
       if (isRobotProduct) {
-        // Robot Project fulfillment - buy key via API
+        log("INFO", "fulfillOrder", "Robot product detected", { productId: item.productId, robotGameId: productData.robot_game_id, duration: planData?.robot_duration_days });
         await fulfillRobotProduct(supabaseAdmin, payment, item, productData, planData);
       } else {
         // Standard stock-based fulfillment
@@ -328,6 +341,7 @@ async function fulfillOrder(supabaseAdmin: any, payment: any) {
           .single();
 
         const stockId = stockItem?.id || null;
+        log("INFO", "fulfillOrder", "Stock lookup", { planId: item.planId, stockFound: !!stockId });
 
         if (stockId) {
           await supabaseAdmin
@@ -421,6 +435,7 @@ async function fulfillOrder(supabaseAdmin: any, payment: any) {
 
   // Record coupon usage and increment counter
   if (payment.coupon_id) {
+    log("INFO", "fulfillOrder", "Recording coupon usage", { couponId: payment.coupon_id, userId: payment.user_id });
     await supabaseAdmin
       .from("coupon_usage")
       .insert({ coupon_id: payment.coupon_id, user_id: payment.user_id });
@@ -808,7 +823,7 @@ async function fulfillRobotProduct(supabaseAdmin: any, payment: any, item: any, 
   const robotGameId = productData.robot_game_id;
   const duration = planData?.robot_duration_days || 30;
 
-  console.log(`Robot fulfillment: gameId=${robotGameId}, duration=${duration}, product=${item.productName}`);
+  log("INFO", "fulfillRobot", "Starting Robot fulfillment", { robotGameId, duration, product: item.productName, userId: payment.user_id });
 
   // Get Robot credentials
   const [uRes, pRes] = await Promise.all([
@@ -1473,7 +1488,7 @@ Deno.serve(async (req) => {
       }
 
       const newStatus = mapMisticPayStatus(txState);
-      console.log(`Webhook: payment ${payment.id} status ${payment.status} -> ${newStatus}`);
+      log("INFO", "webhook", "Status transition", { paymentId: payment.id, from: payment.status, to: newStatus, txId, userId: payment.user_id });
 
       if (newStatus !== payment.status) {
         const updates: Record<string, unknown> = { status: newStatus };
@@ -1490,7 +1505,7 @@ Deno.serve(async (req) => {
           .maybeSingle();
 
         if (newStatus === "COMPLETED" && updatedPayment) {
-          console.log("Webhook: fulfilling order for payment:", payment.id);
+          log("INFO", "webhook", "Fulfilling completed payment", { paymentId: payment.id, userId: payment.user_id, amount: payment.amount });
           await fulfillOrder(supabaseAdmin, payment);
           await sendDiscordSaleNotification(supabaseAdmin, payment);
           await sendServerPurchaseEvent(payment, req);

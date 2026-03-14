@@ -8,6 +8,13 @@ const corsHeaders = {
 
 const ROBOT_API_URL = "https://api.robotproject.com.br";
 
+function log(level: "INFO" | "WARN" | "ERROR", ctx: string, msg: string, data?: Record<string, unknown>) {
+  const entry = { ts: new Date().toISOString(), level, ctx, msg, ...(data || {}) };
+  if (level === "ERROR") console.error(JSON.stringify(entry));
+  else if (level === "WARN") console.warn(JSON.stringify(entry));
+  else console.log(JSON.stringify(entry));
+}
+
 async function getRobotCredentials(supabaseAdmin: any): Promise<{ username: string; password: string } | null> {
   const [uRes, pRes] = await Promise.all([
     supabaseAdmin.from("system_credentials").select("value").eq("env_key", "ROBOT_API_USERNAME").maybeSingle(),
@@ -88,7 +95,7 @@ Deno.serve(async (req) => {
 
       if (!response.ok) {
         const errText = await response.text();
-        console.error("Robot API error:", response.status, errText);
+        log("ERROR", "list-games", "Robot API error", { status: response.status, body: errText.substring(0, 300) });
         return new Response(JSON.stringify({ error: "Robot API error", status: response.status }), {
           status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -127,7 +134,7 @@ Deno.serve(async (req) => {
         });
       }
 
-      console.log(`Robot buy: gameId=${game_id}, duration=${duration}`);
+      log("INFO", "buy", "Robot buy request", { game_id, duration });
 
       const response = await fetch(`${ROBOT_API_URL}/buy/${encodeURIComponent(game_id)}`, {
         method: "POST",
@@ -139,7 +146,7 @@ Deno.serve(async (req) => {
       });
 
       const data = await response.json();
-      console.log("Robot buy response:", response.status, JSON.stringify(data).substring(0, 500));
+      log("INFO", "buy", "Robot buy response", { status: response.status, data: JSON.stringify(data).substring(0, 500) });
 
       if (!response.ok) {
         return new Response(JSON.stringify({ error: "Robot buy failed", status: response.status, detail: data }), {
@@ -231,7 +238,7 @@ Deno.serve(async (req) => {
     });
 
   } catch (error: any) {
-    console.error("Robot Project edge function error:", error);
+    log("ERROR", "robot-project", "Edge function error", { error: (error as Error).message });
     return new Response(JSON.stringify({ error: "Internal error" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

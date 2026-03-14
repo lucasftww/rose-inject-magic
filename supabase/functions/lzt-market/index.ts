@@ -6,6 +6,13 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+function log(level: "INFO" | "WARN" | "ERROR", ctx: string, msg: string, data?: Record<string, unknown>) {
+  const entry = { ts: new Date().toISOString(), level, ctx, msg, ...(data || {}) };
+  if (level === "ERROR") console.error(JSON.stringify(entry));
+  else if (level === "WARN") console.warn(JSON.stringify(entry));
+  else console.log(JSON.stringify(entry));
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -487,7 +494,7 @@ Deno.serve(async (req) => {
       },
     });
   } catch (error: any) {
-    console.error("Edge function error:", error);
+    log("ERROR", "lzt-market", "Edge function error", { error: error?.message || String(error) });
     return new Response(JSON.stringify({ error: "An internal error occurred" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
