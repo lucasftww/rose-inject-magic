@@ -532,7 +532,7 @@ const ProdutoDetalhes = () => {
                     </div>
                     <button
                       onClick={buyNow}
-                      className="flex w-full items-center justify-center gap-2 rounded-lg bg-success py-3.5 text-sm font-bold uppercase tracking-wider text-success-foreground transition-all hover:shadow-[0_0_30px_hsl(130,99%,41%,0.4)]"
+                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-success py-4 text-sm font-bold uppercase tracking-wider text-success-foreground transition-all hover:shadow-[0_0_30px_hsl(130,99%,41%,0.4)] active:scale-[0.98]"
                       style={{ fontFamily: "'Valorant', sans-serif" }}>
                       <Zap className="h-4 w-4" />
                       COMPRAR AGORA
