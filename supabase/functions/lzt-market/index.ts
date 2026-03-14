@@ -272,20 +272,32 @@ Deno.serve(async (req) => {
 
     console.log("Fetching:", apiUrl);
 
-    const response = await fetch(apiUrl, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/json",
-      },
-    });
+    const RETRYABLE_STATUSES = [429, 502, 503, 504];
+    let response: Response | null = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      if (attempt > 0) {
+        const delay = 1000 * Math.pow(2, attempt - 1); // 1s, 2s
+        console.log(`LZT retry attempt ${attempt + 1} after ${delay}ms...`);
+        await new Promise(r => setTimeout(r, delay));
+      }
+      response = await fetch(apiUrl, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+      });
+      if (response.ok || !RETRYABLE_STATUSES.includes(response.status)) break;
+      console.warn(`LZT API attempt ${attempt + 1}: ${response.status}`);
+    }
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("LZT API error:", response.status, errorText);
+    if (!response || !response.ok) {
+      const errorText = response ? await response.text() : "No response";
+      const status = response?.status || 502;
+      console.error("LZT API error after retries:", status, errorText);
       return new Response(
-        JSON.stringify({ error: "LZT API error", status: response.status, detail: errorText }),
+        JSON.stringify({ error: "LZT API error", status, detail: errorText }),
         {
-          status: response.status,
+          status,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );
