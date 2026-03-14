@@ -863,7 +863,12 @@ async function fulfillRobotProduct(supabaseAdmin: any, payment: any, item: any, 
     }
 
     // Success! Deliver the key
-    const key = buyData.data?.key || "";
+    // Robot API returns keys without dashes (e.g. "APIBF6A6FBEB89A8")
+    // but they should be formatted as "APIB-F6A6-FBEB-89A8" (groups of 4)
+    const rawKey = buyData.data?.key || "";
+    const key = rawKey.length >= 8 && !rawKey.includes("-")
+      ? rawKey.match(/.{1,4}/g)?.join("-") || rawKey
+      : rawKey;
     const gameName = buyData.data?.gameName || item.productName || "";
     const amountSpent = buyData.data?.amountSpent || 0;
     const robotBalance = buyData.data?.balance ?? null;
