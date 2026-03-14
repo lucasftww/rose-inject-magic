@@ -268,11 +268,11 @@ const ProdutoDetalhes = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 pt-4 pb-28 sm:pb-20">
+      <div className="mx-auto max-w-7xl px-5 sm:px-6 pt-4 pb-32 sm:pb-20">
         {/* Back button */}
         <button
           onClick={() => navigate(-1)}
-          className="mb-4 sm:mb-6 flex items-center gap-2 rounded-lg border border-border px-3 sm:px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-success hover:text-success"
+          className="mb-5 sm:mb-6 flex items-center gap-2 rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:border-success hover:text-success"
         >
           <ArrowLeft className="h-4 w-4" />
           Voltar
