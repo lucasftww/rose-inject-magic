@@ -1063,6 +1063,7 @@ const Contas = () => {
     if (searchQuery) params.title = searchQuery;
 
     if (gameTab === "valorant") {
+      params.game_type = "riot";
       // Valorant-specific — require 10+ skins only when sorting by highest price
       params.valorant_smin = sortBy === "price_desc" ? "10" : "1";
       params.inv_min = "1000";
