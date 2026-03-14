@@ -312,18 +312,6 @@ const LztTab = () => {
                 className="mt-1 w-36 rounded-lg border border-border bg-secondary/50 px-4 py-2.5 text-sm text-foreground outline-none focus:border-success/50"
               />
             </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground">Moeda</label>
-              <select
-                value={priceCurrency}
-                onChange={(e) => setPriceCurrency(e.target.value)}
-                className="mt-1 w-28 rounded-lg border border-border bg-secondary/50 px-3 py-2.5 text-sm text-foreground outline-none focus:border-success/50"
-              >
-                <option value="rub">RUB</option>
-                <option value="usd">USD</option>
-                <option value="eur">EUR</option>
-              </select>
-            </div>
             <button
               onClick={async () => {
                 if (!priceItemId.trim() || !newPrice.trim()) {
