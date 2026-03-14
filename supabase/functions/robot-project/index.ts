@@ -152,8 +152,15 @@ Deno.serve(async (req) => {
       });
     }
 
-    // CHECK BALANCE / PING
+    // CHECK BALANCE / PING - Admin only
     if (action === "ping") {
+      const admin = await requireAdmin();
+      if (!admin) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       const creds = await getRobotCredentials(supabaseAdmin);
       if (!creds) {
         return new Response(JSON.stringify({ error: "Robot credentials not configured" }), {
