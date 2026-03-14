@@ -182,6 +182,7 @@ const FortniteDetalhes = () => {
       lztPrice: item.price,
       lztCurrency: item.price_currency || "rub",
       lztGame: "fortnite",
+      skinsCount: skinCount,
     });
     if (added) navigate("/checkout");
   };
