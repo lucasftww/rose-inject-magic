@@ -9,6 +9,7 @@ interface PaymentRow {
   created_at: string;
   paid_at: string | null;
   cart_snapshot: any;
+  payment_method: string | null;
 }
 
 interface LztSaleRow {
@@ -29,7 +30,7 @@ const FinanceTab = () => {
 
     let paymentsQuery = supabase
       .from("payments")
-      .select("amount, status, created_at, paid_at, cart_snapshot")
+      .select("amount, status, created_at, paid_at, cart_snapshot, payment_method")
       .eq("status", "COMPLETED");
 
     let lztQuery = supabase
@@ -80,13 +81,7 @@ const FinanceTab = () => {
   const methodRevenue: Record<string, number> = { pix: 0, card: 0, crypto: 0 };
 
   payments.forEach((p) => {
-    const cart = p.cart_snapshot as any[];
-    let method = "pix"; // default
-    if (Array.isArray(cart) && cart.length > 0) {
-      const first = cart[0] as any;
-      if (first.paymentMethod) method = first.paymentMethod;
-    }
-    // Try to infer from charge_id pattern or default to pix
+    const method = p.payment_method || "pix";
     if (!methodCounts[method]) {
       methodCounts[method] = 0;
       methodRevenue[method] = 0;
@@ -123,11 +118,8 @@ const FinanceTab = () => {
       else months[key].produtos += p.amount / 100;
     });
 
-    lztSales.forEach((s) => {
-      const key = new Date(s.created_at).toLocaleDateString("pt-BR", { month: "short", year: "2-digit" });
-      if (!months[key]) months[key] = { produtos: 0, contas: 0 };
-      months[key].contas += Number(s.sell_price);
-    });
+    // NOTE: lzt_sales are NOT added here to avoid double-counting.
+    // LZT revenue is already included via COMPLETED payments above.
 
     return Object.entries(months).map(([name, data]) => ({ name, ...data }));
   };
