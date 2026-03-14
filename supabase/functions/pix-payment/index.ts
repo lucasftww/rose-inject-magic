@@ -1526,7 +1526,15 @@ Deno.serve(async (req) => {
   const userId = claimsData.claims.sub;
   const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-  // url and action already declared above
+  // ==================== USER RATE LIMIT (20/min) ====================
+  if (checkRateLimit(userId, userRequestMap, 20)) {
+    console.error(`USER RATE LIMIT: userId=${userId}, IP=${clientIp}, action=${action}`);
+    return new Response(JSON.stringify({ error: "Too many requests" }), {
+      status: 429,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  cleanupMap(userRequestMap, 2000);
 
   try {
     // ==================== BAN CHECK ====================
@@ -1546,6 +1554,18 @@ Deno.serve(async (req) => {
 
     // ==================== RATE LIMITING (payment creation) ====================
     if (["create", "create-card", "create-crypto"].includes(action || "") && req.method === "POST") {
+      // Check duplicate payment creation (30s cooldown)
+      const lastCreate = lastPaymentCreateMap.get(userId);
+      const now = Date.now();
+      if (lastCreate && now - lastCreate < 30_000) {
+        console.error(`DUPLICATE PAYMENT BLOCKED: userId=${userId}, IP=${clientIp}, elapsed=${now - lastCreate}ms`);
+        return new Response(JSON.stringify({ error: "Aguarde 30 segundos antes de criar outro pagamento." }), {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Check active payments per user (max 5)
       const { count: activeCount } = await supabaseAdmin
         .from("payments")
         .select("id", { count: "exact", head: true })
@@ -1553,7 +1573,6 @@ Deno.serve(async (req) => {
         .eq("status", "ACTIVE");
 
       if ((activeCount ?? 0) >= 5) {
-        const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
         console.error(`RATE LIMIT: user ${userId} has ${activeCount} active payments. IP: ${clientIp}`);
         return new Response(JSON.stringify({ error: "Você tem muitos pagamentos pendentes. Aguarde a expiração ou conclusão dos pagamentos anteriores." }), {
           status: 429,
