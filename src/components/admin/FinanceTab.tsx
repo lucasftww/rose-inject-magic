@@ -9,6 +9,7 @@ interface PaymentRow {
   created_at: string;
   paid_at: string | null;
   cart_snapshot: any;
+  payment_method: string | null;
 }
 
 interface LztSaleRow {
