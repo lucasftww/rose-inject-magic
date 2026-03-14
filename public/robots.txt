@@ -12,3 +12,12 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /checkout
+Disallow: /meus-pedidos
+Disallow: /pedido/
+Disallow: /reset-password
+Disallow: /raspadinha
+
+Sitemap: https://rose-inject-magic.lovable.app/sitemap.xml
