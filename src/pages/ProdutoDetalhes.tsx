@@ -519,8 +519,8 @@ const ProdutoDetalhes = () => {
                 {/* Buttons */}
                 {selectedPlan && (
                   <div className="mt-6">
-                    <div className="mb-4 flex items-end justify-between">
-                      <span className="text-xs text-muted-foreground">Total</span>
+                    <div className="mb-5 flex items-end justify-between">
+                      <span className="text-sm text-muted-foreground">Total</span>
                       {isReseller && isResellerForProduct(product.id) ? (
                         <div className="text-right">
                           <span className="text-sm text-muted-foreground line-through mr-2">R$ {Number(selectedPlan.price).toFixed(2)}</span>
