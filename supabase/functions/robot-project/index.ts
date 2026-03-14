@@ -134,7 +134,7 @@ Deno.serve(async (req) => {
         });
       }
 
-      console.log(`Robot buy: gameId=${game_id}, duration=${duration}`);
+      log("INFO", "buy", "Robot buy request", { game_id, duration });
 
       const response = await fetch(`${ROBOT_API_URL}/buy/${encodeURIComponent(game_id)}`, {
         method: "POST",
