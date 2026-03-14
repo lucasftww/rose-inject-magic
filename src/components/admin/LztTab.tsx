@@ -343,7 +343,10 @@ const LztTab = () => {
                   );
                   const result = await res.json();
                   if (!res.ok) {
-                    toast({ title: "Erro ao alterar preço", description: result.error || result.detail || "Erro desconhecido", variant: "destructive" });
+                    const desc = res.status === 403 
+                      ? "Sem permissão. Essa conta não pertence ao seu perfil no LZT Market." 
+                      : (result.error || result.detail || "Erro desconhecido");
+                    toast({ title: "Erro ao alterar preço", description: desc, variant: "destructive" });
                   } else {
                     toast({ title: "Preço alterado com sucesso!", description: `Conta #${priceItemId} → ${p} ${priceCurrency.toUpperCase()}` });
                     setPriceItemId("");
