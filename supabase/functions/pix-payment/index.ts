@@ -8,6 +8,14 @@ const corsHeaders = {
 
 const MISTICPAY_BASE_URL = "https://api.misticpay.com/api";
 
+// ─── Structured Logger ────────────────────────────────────────────────────────
+function log(level: "INFO" | "WARN" | "ERROR", ctx: string, msg: string, data?: Record<string, unknown>) {
+  const entry = { ts: new Date().toISOString(), level, ctx, msg, ...(data || {}) };
+  if (level === "ERROR") console.error(JSON.stringify(entry));
+  else if (level === "WARN") console.warn(JSON.stringify(entry));
+  else console.log(JSON.stringify(entry));
+}
+
 // ─── Server-side CAPI Purchase (fires when payment is COMPLETED) ────────────
 // This guarantees Meta receives the Purchase event even if the user closes the browser.
 // Uses the same deterministic event_id as the browser Pixel for deduplication.
