@@ -714,7 +714,7 @@ const ContaDetalhes = () => {
               {/* RIGHT: Purchase + Rank + Stats + Full Acesso */}
               <div className="lg:col-span-2 space-y-4 sm:space-y-4">
                 {/* Title + Purchase */}
-                <div className="rounded-xl border border-border bg-card p-5 sm:p-5 space-y-4">
+                <div className="rounded-xl border border-border/60 bg-card p-5 sm:p-5 space-y-4">
                   <h1 className="text-lg sm:text-lg font-bold text-foreground leading-snug">{dynamicTitle}</h1>
 
                   <div className="flex flex-wrap gap-2">
