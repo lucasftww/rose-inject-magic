@@ -575,11 +575,11 @@ const ProdutoDetalhes = () => {
                     </div>
                   </div>
 
-                  <div className="space-y-2.5">
+                  <div className="space-y-3">
                     {reviews.map((review) => (
                       <div
                         key={review.id}
-                        className="rounded-lg border border-border bg-secondary/30 p-3 transition-all hover:border-success/30"
+                        className="rounded-xl bg-secondary/20 p-4 transition-all"
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
