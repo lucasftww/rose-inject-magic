@@ -389,6 +389,17 @@ Deno.serve(async (req) => {
       });
 
       // Add price_brl and strip heavy fields
+      // Fetch price overrides for these items
+      const itemIds = data.items.map((item: any) => String(item.item_id));
+      const { data: overridesData } = await supabaseAdmin
+        .from("lzt_price_overrides")
+        .select("lzt_item_id, custom_price_brl")
+        .in("lzt_item_id", itemIds);
+      const overrideMap = new Map<string, number>();
+      if (overridesData) {
+        for (const o of overridesData) overrideMap.set(o.lzt_item_id, Number(o.custom_price_brl));
+      }
+
       const RUB_TO_BRL = 0.055;
       const MIN_PRICE_BRL = 20;
       const gameType = url.searchParams.get("game_type") || "riot";
@@ -399,11 +410,16 @@ Deno.serve(async (req) => {
       else if (gameType === "minecraft") itemMarkup = lztConfig?.markup_minecraft || itemMarkup;
 
       for (const item of data.items) {
-        // Calculate price
-        const currency = item.price_currency || "rub";
-        let brl = currency === "rub" ? item.price * RUB_TO_BRL : item.price;
-        const final = brl * itemMarkup;
-        item.price_brl = final < MIN_PRICE_BRL ? MIN_PRICE_BRL : Math.round(final * 100) / 100;
+        // Check for price override first
+        const override = overrideMap.get(String(item.item_id));
+        if (override && override > 0) {
+          item.price_brl = override;
+        } else {
+          const currency = item.price_currency || "rub";
+          let brl = currency === "rub" ? item.price * RUB_TO_BRL : item.price;
+          const final = brl * itemMarkup;
+          item.price_brl = final < MIN_PRICE_BRL ? MIN_PRICE_BRL : Math.round(final * 100) / 100;
+        }
 
         // Strip heavy fields
         for (const field of STRIP_FIELDS) delete item[field];
@@ -433,19 +449,31 @@ Deno.serve(async (req) => {
 
     // For detail action, also add price_brl (keep full data)
     if (action === "detail" && data.item) {
-      const RUB_TO_BRL = 0.055;
-      const MIN_PRICE_BRL = 20;
-      const detailGameType = url.searchParams.get("game_type") || "";
-      let detailMarkup = lztConfig?.markup_multiplier || 1.5;
-      if (detailGameType === "valorant" || detailGameType === "riot") detailMarkup = lztConfig?.markup_valorant || detailMarkup;
-      else if (detailGameType === "lol") detailMarkup = lztConfig?.markup_lol || detailMarkup;
-      else if (detailGameType === "fortnite") detailMarkup = lztConfig?.markup_fortnite || detailMarkup;
-      else if (detailGameType === "minecraft") detailMarkup = lztConfig?.markup_minecraft || detailMarkup;
-      else detailMarkup = lztConfig?.markup_valorant || detailMarkup;
-      const currency = data.item.price_currency || "rub";
-      let brl = currency === "rub" ? data.item.price * RUB_TO_BRL : data.item.price;
-      const final = brl * detailMarkup;
-      data.item.price_brl = final < MIN_PRICE_BRL ? MIN_PRICE_BRL : Math.round(final * 100) / 100;
+      // Check for price override first
+      const detailItemId = String(data.item.item_id);
+      const { data: overrideRow } = await supabaseAdmin
+        .from("lzt_price_overrides")
+        .select("custom_price_brl")
+        .eq("lzt_item_id", detailItemId)
+        .maybeSingle();
+
+      if (overrideRow && Number(overrideRow.custom_price_brl) > 0) {
+        data.item.price_brl = Number(overrideRow.custom_price_brl);
+      } else {
+        const RUB_TO_BRL = 0.055;
+        const MIN_PRICE_BRL = 20;
+        const detailGameType = url.searchParams.get("game_type") || "";
+        let detailMarkup = lztConfig?.markup_multiplier || 1.5;
+        if (detailGameType === "valorant" || detailGameType === "riot") detailMarkup = lztConfig?.markup_valorant || detailMarkup;
+        else if (detailGameType === "lol") detailMarkup = lztConfig?.markup_lol || detailMarkup;
+        else if (detailGameType === "fortnite") detailMarkup = lztConfig?.markup_fortnite || detailMarkup;
+        else if (detailGameType === "minecraft") detailMarkup = lztConfig?.markup_minecraft || detailMarkup;
+        else detailMarkup = lztConfig?.markup_valorant || detailMarkup;
+        const currency = data.item.price_currency || "rub";
+        let brl = currency === "rub" ? data.item.price * RUB_TO_BRL : data.item.price;
+        const final = brl * detailMarkup;
+        data.item.price_brl = final < MIN_PRICE_BRL ? MIN_PRICE_BRL : Math.round(final * 100) / 100;
+      }
     }
 
     // Add cache headers: list responses cached 2 min, detail cached 30s
