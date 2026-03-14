@@ -45,6 +45,12 @@ const LztTab = () => {
   const [salesPage, setSalesPage] = useState(0);
   const [salesSearch, setSalesSearch] = useState("");
 
+  // Change price state
+  const [priceItemId, setPriceItemId] = useState("");
+  const [newPrice, setNewPrice] = useState("");
+  const [priceCurrency, setPriceCurrency] = useState("rub");
+  const [changingPrice, setChangingPrice] = useState(false);
+
   // Per-game markup state
   const [markups, setMarkups] = useState({
     markup_valorant: "2",
