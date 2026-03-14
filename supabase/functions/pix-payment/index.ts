@@ -259,10 +259,20 @@ async function fulfillOrder(supabaseAdmin: any, payment: any) {
   // Check if buyer is a reseller
   const { data: resellerData } = await supabaseAdmin
     .from("resellers")
-    .select("id, discount_percent")
+    .select("id, discount_percent, total_purchases")
     .eq("user_id", payment.user_id)
     .eq("active", true)
     .maybeSingle();
+
+  // Fetch reseller's authorized products if they are a reseller
+  let resellerProductIds: string[] = [];
+  if (resellerData) {
+    const { data: rProducts } = await supabaseAdmin
+      .from("reseller_products")
+      .select("product_id")
+      .eq("reseller_id", resellerData.id);
+    resellerProductIds = (rProducts || []).map((rp: any) => rp.product_id);
+  }
 
   for (const item of cartItems) {
     // Skip raspadinha items - fulfillment handled client-side
@@ -391,7 +401,7 @@ async function fulfillOrder(supabaseAdmin: any, payment: any) {
           }
         }
 
-        if (resellerData) {
+        if (resellerData && resellerProductIds.includes(item.productId)) {
           await supabaseAdmin.from("reseller_purchases").insert({
             reseller_id: resellerData.id,
             original_price: originalPrice,
@@ -1197,13 +1207,23 @@ async function validateAndCalculatePrice(
 
     const { data: resellerData } = await supabaseAdmin
       .from("resellers")
-      .select("discount_percent, active")
+      .select("id, discount_percent, active")
       .eq("user_id", userId)
       .eq("active", true)
       .maybeSingle();
 
     if (resellerData) {
-      realPrice = realPrice * (1 - resellerData.discount_percent / 100);
+      // Check if reseller is authorized for this specific product
+      const { data: resellerProduct } = await supabaseAdmin
+        .from("reseller_products")
+        .select("id")
+        .eq("reseller_id", resellerData.id)
+        .eq("product_id", plan.product_id)
+        .maybeSingle();
+
+      if (resellerProduct) {
+        realPrice = realPrice * (1 - resellerData.discount_percent / 100);
+      }
     }
 
     totalAmount += Math.round(realPrice * 100) * qty;
