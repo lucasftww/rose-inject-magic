@@ -58,6 +58,7 @@ const App = () => (
               <Route path="/checkout" element={<Checkout />} />
               
               <Route path="/raspadinha" element={<Raspadinha />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/termos" element={<TermosDeUso />} />
               <Route path="/privacidade" element={<PoliticaPrivacidade />} />
               <Route path="/reembolso" element={<PoliticaReembolso />} />
