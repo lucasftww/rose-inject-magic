@@ -668,7 +668,7 @@ const ContaDetalhes = () => {
                 )}
 
               {/* Rank + Stats */}
-                <div className="rounded-xl border border-border bg-card p-5 sm:p-5 space-y-4 sm:space-y-4">
+                <div className="rounded-xl border border-border/60 bg-card p-5 sm:p-5 space-y-4 sm:space-y-4">
                   <div className="flex items-center justify-center gap-6 sm:justify-between">
                     {/* Último rank (esquerda) */}
                     {item.riot_valorant_previous_rank && rankMap[item.riot_valorant_previous_rank] ? (
