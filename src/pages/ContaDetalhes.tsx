@@ -558,10 +558,10 @@ const ContaDetalhes = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 pt-4 pb-28 sm:pb-20">
+      <div className="mx-auto max-w-6xl px-5 sm:px-6 pt-4 pb-32 sm:pb-20">
         <button
           onClick={() => navigate("/contas")}
-          className="mb-4 sm:mb-5 flex items-center gap-2 rounded-lg border border-border bg-card/50 px-3 sm:px-4 py-2 text-sm text-muted-foreground transition-all hover:border-success/40 hover:text-success"
+          className="mb-5 sm:mb-5 flex items-center gap-2 rounded-xl border border-border bg-card/50 px-4 py-2.5 text-sm text-muted-foreground transition-all hover:border-success/40 hover:text-success"
         >
           <ArrowLeft className="h-4 w-4" />
           Voltar
@@ -584,7 +584,7 @@ const ContaDetalhes = () => {
         {item && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
             {/* Breadcrumb */}
-            <div className="mb-4 sm:mb-6 flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground overflow-x-auto scrollbar-hide">
+            <div className="mb-5 sm:mb-6 flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground overflow-x-auto scrollbar-hide">
               <button onClick={() => navigate("/")} className="hover:text-success transition-colors shrink-0">Início</button>
               <ChevronRight className="h-3 w-3 shrink-0" />
               <button onClick={() => navigate("/contas")} className="hover:text-success transition-colors shrink-0">Valorant</button>
@@ -592,7 +592,7 @@ const ContaDetalhes = () => {
               <span className="text-foreground font-medium truncate">{rank?.name || "Unranked"}</span>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 sm:gap-6">
               {/* LEFT: Gallery only */}
               <div className="lg:col-span-3 space-y-3 sm:space-y-4">
                 {/* Single skin carousel */}
@@ -670,13 +670,13 @@ const ContaDetalhes = () => {
                   </div>
                 )}
 
-                {/* Rank + Stats */}
-                <div className="rounded-lg border border-border bg-card p-4 sm:p-5 space-y-3 sm:space-y-4">
-                  <div className="flex items-center justify-between">
+              {/* Rank + Stats */}
+                <div className="rounded-xl border border-border bg-card p-5 sm:p-5 space-y-4 sm:space-y-4">
+                  <div className="flex items-center justify-center gap-6 sm:justify-between">
                     {/* Último rank (esquerda) */}
                     {item.riot_valorant_previous_rank && rankMap[item.riot_valorant_previous_rank] ? (
-                      <div className="flex flex-col items-center gap-1">
-                        <img src={rankMap[item.riot_valorant_previous_rank].img} alt="" className="h-12 w-12 sm:h-16 sm:w-16 object-contain opacity-50" />
+                      <div className="flex flex-col items-center gap-1.5">
+                        <img src={rankMap[item.riot_valorant_previous_rank].img} alt="" className="h-14 w-14 sm:h-16 sm:w-16 object-contain opacity-50" />
                         <div className="text-center">
                           <p className="text-[9px] text-muted-foreground uppercase tracking-wider">Último rank</p>
                           <p className="text-xs sm:text-sm font-bold text-muted-foreground">{rankMap[item.riot_valorant_previous_rank].name}</p>
@@ -692,17 +692,17 @@ const ContaDetalhes = () => {
                     </div>
 
                     {/* Rank atual (direita) */}
-                    <div className="flex flex-col items-center gap-1">
-                      <img src={rank?.img || rankUnranked} alt={rank?.name || "Unranked"} className="h-12 w-12 sm:h-16 sm:w-16 object-contain" />
+                    <div className="flex flex-col items-center gap-1.5">
+                      <img src={rank?.img || rankUnranked} alt={rank?.name || "Unranked"} className="h-14 w-14 sm:h-16 sm:w-16 object-contain" />
                       <div className="text-center">
                         <p className="text-[9px] text-muted-foreground uppercase tracking-wider">Rank atual</p>
                         <p className="text-xs sm:text-sm font-bold text-foreground">{rank?.name || "Unranked"}</p>
                       </div>
                     </div>
                   </div>
-                  <div className="border-t border-border pt-3 sm:pt-4">
-                    <h3 className="text-xs sm:text-sm font-bold text-foreground mb-2 sm:mb-3">Informações da Conta</h3>
-                    <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
+                  <div className="border-t border-border pt-4 sm:pt-4">
+                    <h3 className="text-sm font-bold text-foreground mb-3 sm:mb-3">Informações da Conta</h3>
+                    <div className="grid grid-cols-2 gap-2 sm:gap-2">
                       {item.valorantRegionPhrase && <StatCell label="Região" value={translateRegion(item.valorantRegionPhrase)} />}
                       {item.riot_valorant_wallet_vp != null && <StatCell label="VP na conta" value={item.riot_valorant_wallet_vp} />}
                       {item.riot_valorant_wallet_rp != null && item.riot_valorant_wallet_rp > 0 && <StatCell label="RP na conta" value={item.riot_valorant_wallet_rp} />}
@@ -715,31 +715,31 @@ const ContaDetalhes = () => {
               </div>
 
               {/* RIGHT: Purchase + Rank + Stats + Full Acesso */}
-              <div className="lg:col-span-2 space-y-3 sm:space-y-4">
+              <div className="lg:col-span-2 space-y-4 sm:space-y-4">
                 {/* Title + Purchase */}
-                <div className="rounded-lg border border-border bg-card p-4 sm:p-5 space-y-3">
-                  <h1 className="text-base sm:text-lg font-bold text-foreground leading-snug">{dynamicTitle}</h1>
+                <div className="rounded-xl border border-border bg-card p-5 sm:p-5 space-y-4">
+                  <h1 className="text-lg sm:text-lg font-bold text-foreground leading-snug">{dynamicTitle}</h1>
 
-                  <div className="flex flex-wrap gap-1.5">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-success/10 border border-success/30 px-2.5 py-0.5 text-[11px] font-semibold text-success">
+                  <div className="flex flex-wrap gap-2">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-success/10 border border-success/30 px-3 py-1 text-[11px] font-semibold text-success">
                       <CheckCircle2 className="h-3 w-3" />
                       FULL ACESSO
                     </span>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-secondary border border-border px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary border border-border px-3 py-1 text-[11px] font-medium text-muted-foreground">
                       <Shield className="h-3 w-3" />
                       Conta verificável
                     </span>
                   </div>
 
-                  <div className="space-y-0.5 text-xs text-muted-foreground">
-                    <p className="flex items-center gap-2"><span className="text-success font-bold">✓</span> Entrega automática</p>
-                    <p className="flex items-center gap-2"><span className="text-success font-bold">✓</span> Liberação instantânea</p>
+                  <div className="space-y-1.5 text-sm text-muted-foreground">
+                    <p className="flex items-center gap-2.5"><span className="text-success font-bold">✓</span> Entrega automática</p>
+                    <p className="flex items-center gap-2.5"><span className="text-success font-bold">✓</span> Liberação instantânea</p>
                   </div>
 
-                  <div className="rounded-lg bg-card border border-border p-3 flex items-end justify-between">
+                  <div className="rounded-xl bg-secondary/30 p-4 flex items-end justify-between">
                     <div>
-                      <p className="text-[10px] text-muted-foreground mb-0.5">Por</p>
-                      <p className="text-xl sm:text-2xl font-bold text-success">
+                      <p className="text-[11px] text-muted-foreground mb-1">Por apenas</p>
+                      <p className="text-2xl sm:text-2xl font-bold text-success">
                         {getDisplayPrice(item, "valorant")}
                       </p>
                     </div>
@@ -750,7 +750,7 @@ const ContaDetalhes = () => {
 
                   <button
                     onClick={handleBuyNow}
-                    className="btn-shine group relative flex w-full items-center justify-center gap-2 border-2 px-5 py-3 text-xs font-bold uppercase tracking-[0.25em] transition-all border-foreground/30 text-foreground hover:border-success hover:text-success hover:shadow-[0_0_30px_hsl(130,99%,41%,0.2)]"
+                    className="btn-shine group relative flex w-full items-center justify-center gap-2 rounded-xl bg-success py-3.5 text-sm font-bold uppercase tracking-[0.2em] text-success-foreground transition-all hover:shadow-[0_0_30px_hsl(var(--success)/0.4)] active:scale-[0.98]"
                     style={{ fontFamily: "'Valorant', sans-serif" }}
                   >
                     <Zap className="h-4 w-4" />
@@ -758,10 +758,10 @@ const ContaDetalhes = () => {
                   </button>
 
                   {item.item_id && (
-                    <p className="text-[10px] text-muted-foreground/50 text-center break-all">Código: {item.item_id}</p>
+                    <p className="text-[10px] text-muted-foreground/40 text-center break-all">Código: {item.item_id}</p>
                   )}
 
-                  <div className="grid grid-cols-4 divide-x divide-border border border-border rounded-lg overflow-hidden">
+                  <div className="grid grid-cols-4 divide-x divide-border rounded-xl overflow-hidden border border-border">
                     <HighlightStat label="Skins" value={item.riot_valorant_skin_count ?? 0} />
                     <HighlightStat label="Agentes" value={item.riot_valorant_agent_count ?? 0} />
                     <HighlightStat label="Nível" value={item.riot_valorant_level ?? 0} />
@@ -769,20 +769,19 @@ const ContaDetalhes = () => {
                   </div>
                 </div>
 
-
                 {/* Full Acesso */}
-                <div className="rounded-lg border border-border bg-card p-4 sm:p-6 pb-10 sm:pb-14">
-                  <div className="flex items-center gap-2.5 sm:gap-3 mb-3 sm:mb-4">
+                <div className="rounded-xl border border-border bg-card p-5 sm:p-6 pb-8 sm:pb-14">
+                  <div className="flex items-center gap-3 mb-4">
                     <CheckCircle2 className="h-6 w-6 sm:h-8 sm:w-8 text-success" />
                     <h3 className="text-lg sm:text-xl font-bold text-foreground">Conta FULL ACESSO</h3>
                   </div>
-                  <p className="text-sm sm:text-base text-muted-foreground mb-4 sm:mb-5">
+                  <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
                     Acesso total: email original, alteração de senha e dados, sem enrolação.
                   </p>
-                  <ul className="space-y-2.5 sm:space-y-3.5 text-sm sm:text-base text-muted-foreground">
-                    <li className="flex items-center gap-2.5"><span className="text-success text-lg">•</span> Email e senha inclusos</li>
-                    <li className="flex items-center gap-2.5"><span className="text-success text-lg">•</span> Senha alterável</li>
-                    <li className="flex items-center gap-2.5"><span className="text-success text-lg">•</span> Conta verificável</li>
+                  <ul className="space-y-3 text-sm text-muted-foreground">
+                    <li className="flex items-center gap-3"><span className="text-success text-lg">•</span> Email e senha inclusos</li>
+                    <li className="flex items-center gap-3"><span className="text-success text-lg">•</span> Senha alterável</li>
+                    <li className="flex items-center gap-3"><span className="text-success text-lg">•</span> Conta verificável</li>
                   </ul>
                 </div>
               </div>
@@ -955,16 +954,17 @@ const ContaDetalhes = () => {
       {/* Sticky mobile bottom bar */}
       {item && (
         <div className="fixed bottom-0 left-0 right-0 z-40 sm:hidden">
-          <div className="border-t border-border bg-card/95 backdrop-blur-xl px-4 py-3 safe-area-bottom">
-            <div className="flex items-center gap-3">
+          <div className="border-t border-border bg-card/95 backdrop-blur-xl px-5 py-3.5 safe-area-bottom">
+            <div className="flex items-center gap-4">
               <div className="flex flex-col min-w-0">
-                <span className="text-lg font-bold text-success leading-tight">
+                <span className="text-xs text-muted-foreground leading-none mb-0.5">Total</span>
+                <span className="text-xl font-bold text-success leading-tight">
                   {getDisplayPrice(item, "valorant")}
                 </span>
               </div>
               <button
                 onClick={handleBuyNow}
-                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-success py-3 text-sm font-bold uppercase tracking-wider text-success-foreground transition-all active:scale-[0.98]"
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-success py-3.5 text-sm font-bold uppercase tracking-wider text-success-foreground transition-all active:scale-[0.98]"
                 style={{ fontFamily: "'Valorant', sans-serif" }}
               >
                 <ShoppingCart className="h-4 w-4" />
@@ -979,15 +979,15 @@ const ContaDetalhes = () => {
 };
 
 const StatCell = ({ label, value }: { label: string; value: string | number }) => (
-  <div className="flex items-center justify-between rounded-lg border border-border bg-secondary/30 px-4 py-3">
+  <div className="flex items-center justify-between rounded-xl bg-secondary/30 px-4 py-3">
     <span className="text-xs text-muted-foreground">{label}</span>
     <span className="text-sm font-bold text-foreground">{value}</span>
   </div>
 );
 
 const HighlightStat = forwardRef<HTMLDivElement, { label: string; value: string | number }>(({ label, value }, ref) => (
-  <div ref={ref} className="flex flex-col items-center py-3 px-1.5">
-    <span className="text-[10px] text-muted-foreground mb-0.5">{label}</span>
+  <div ref={ref} className="flex flex-col items-center py-3.5 px-1.5">
+    <span className="text-[10px] text-muted-foreground mb-1">{label}</span>
     <span className="text-base font-bold text-success">{value}</span>
   </div>
 ));
