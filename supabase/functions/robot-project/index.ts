@@ -238,7 +238,7 @@ Deno.serve(async (req) => {
     });
 
   } catch (error: any) {
-    console.error("Robot Project edge function error:", error);
+    log("ERROR", "robot-project", "Edge function error", { error: (error as Error).message });
     return new Response(JSON.stringify({ error: "Internal error" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
