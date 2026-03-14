@@ -376,7 +376,7 @@ const ProductsSection = () => {
   });
 
   return (
-    <section className="border-t border-border bg-background px-4 sm:px-6 py-14 sm:py-24">
+    <section className="border-t border-border bg-background px-5 sm:px-6 py-14 sm:py-24">
       <div className="mx-auto max-w-7xl">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-80px" }} variants={slideInLeft} className="text-center sm:text-left">
           <p className="text-sm font-medium uppercase tracking-[0.3em] text-success">Selecao Premium</p>
