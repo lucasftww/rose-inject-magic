@@ -667,18 +667,12 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
     let email = loginData?.login || loginData?.email || boughtItem?.email || "";
     let password = loginData?.password || boughtItem?.password || "";
     let rawCredentials = loginData?.raw || "";
-    let accountEmail = loginData?.email || boughtItem?.email || boughtItem?.emailLoginData || "";
-
-    if (!email && rawCredentials) {
-      const parts = rawCredentials.split(":");
-      if (parts.length >= 2) {
-        email = parts[0];
-        password = parts.slice(1).join(":");
-      }
-    }
-
-    if (accountEmail === email && boughtItem?.item_origin === "autoreg") {
-      accountEmail = boughtItem?.email || loginData?.email || "";
+    // Preserve full email login data (login + password) if available
+    let accountEmail: any = boughtItem?.emailLoginData || loginData?.emailLoginData || loginData?.email || boughtItem?.email || "";
+    
+    // If accountEmail is a string and equals the main login, try to get richer data
+    if (typeof accountEmail === "string" && accountEmail === email && boughtItem?.item_origin === "autoreg") {
+      accountEmail = boughtItem?.emailLoginData || boughtItem?.email || loginData?.email || "";
     }
 
     const stockContent = email && password
