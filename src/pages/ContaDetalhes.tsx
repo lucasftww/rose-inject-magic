@@ -715,31 +715,31 @@ const ContaDetalhes = () => {
               </div>
 
               {/* RIGHT: Purchase + Rank + Stats + Full Acesso */}
-              <div className="lg:col-span-2 space-y-3 sm:space-y-4">
+              <div className="lg:col-span-2 space-y-4 sm:space-y-4">
                 {/* Title + Purchase */}
-                <div className="rounded-lg border border-border bg-card p-4 sm:p-5 space-y-3">
-                  <h1 className="text-base sm:text-lg font-bold text-foreground leading-snug">{dynamicTitle}</h1>
+                <div className="rounded-xl border border-border bg-card p-5 sm:p-5 space-y-4">
+                  <h1 className="text-lg sm:text-lg font-bold text-foreground leading-snug">{dynamicTitle}</h1>
 
-                  <div className="flex flex-wrap gap-1.5">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-success/10 border border-success/30 px-2.5 py-0.5 text-[11px] font-semibold text-success">
+                  <div className="flex flex-wrap gap-2">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-success/10 border border-success/30 px-3 py-1 text-[11px] font-semibold text-success">
                       <CheckCircle2 className="h-3 w-3" />
                       FULL ACESSO
                     </span>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-secondary border border-border px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary border border-border px-3 py-1 text-[11px] font-medium text-muted-foreground">
                       <Shield className="h-3 w-3" />
                       Conta verificável
                     </span>
                   </div>
 
-                  <div className="space-y-0.5 text-xs text-muted-foreground">
-                    <p className="flex items-center gap-2"><span className="text-success font-bold">✓</span> Entrega automática</p>
-                    <p className="flex items-center gap-2"><span className="text-success font-bold">✓</span> Liberação instantânea</p>
+                  <div className="space-y-1.5 text-sm text-muted-foreground">
+                    <p className="flex items-center gap-2.5"><span className="text-success font-bold">✓</span> Entrega automática</p>
+                    <p className="flex items-center gap-2.5"><span className="text-success font-bold">✓</span> Liberação instantânea</p>
                   </div>
 
-                  <div className="rounded-lg bg-card border border-border p-3 flex items-end justify-between">
+                  <div className="rounded-xl bg-secondary/30 p-4 flex items-end justify-between">
                     <div>
-                      <p className="text-[10px] text-muted-foreground mb-0.5">Por</p>
-                      <p className="text-xl sm:text-2xl font-bold text-success">
+                      <p className="text-[11px] text-muted-foreground mb-1">Por apenas</p>
+                      <p className="text-2xl sm:text-2xl font-bold text-success">
                         {getDisplayPrice(item, "valorant")}
                       </p>
                     </div>
@@ -750,7 +750,7 @@ const ContaDetalhes = () => {
 
                   <button
                     onClick={handleBuyNow}
-                    className="btn-shine group relative flex w-full items-center justify-center gap-2 border-2 px-5 py-3 text-xs font-bold uppercase tracking-[0.25em] transition-all border-foreground/30 text-foreground hover:border-success hover:text-success hover:shadow-[0_0_30px_hsl(130,99%,41%,0.2)]"
+                    className="btn-shine group relative flex w-full items-center justify-center gap-2 rounded-xl bg-success py-3.5 text-sm font-bold uppercase tracking-[0.2em] text-success-foreground transition-all hover:shadow-[0_0_30px_hsl(var(--success)/0.4)] active:scale-[0.98]"
                     style={{ fontFamily: "'Valorant', sans-serif" }}
                   >
                     <Zap className="h-4 w-4" />
@@ -758,10 +758,10 @@ const ContaDetalhes = () => {
                   </button>
 
                   {item.item_id && (
-                    <p className="text-[10px] text-muted-foreground/50 text-center break-all">Código: {item.item_id}</p>
+                    <p className="text-[10px] text-muted-foreground/40 text-center break-all">Código: {item.item_id}</p>
                   )}
 
-                  <div className="grid grid-cols-4 divide-x divide-border border border-border rounded-lg overflow-hidden">
+                  <div className="grid grid-cols-4 divide-x divide-border rounded-xl overflow-hidden border border-border">
                     <HighlightStat label="Skins" value={item.riot_valorant_skin_count ?? 0} />
                     <HighlightStat label="Agentes" value={item.riot_valorant_agent_count ?? 0} />
                     <HighlightStat label="Nível" value={item.riot_valorant_level ?? 0} />
@@ -769,20 +769,19 @@ const ContaDetalhes = () => {
                   </div>
                 </div>
 
-
                 {/* Full Acesso */}
-                <div className="rounded-lg border border-border bg-card p-4 sm:p-6 pb-10 sm:pb-14">
-                  <div className="flex items-center gap-2.5 sm:gap-3 mb-3 sm:mb-4">
+                <div className="rounded-xl border border-border bg-card p-5 sm:p-6 pb-8 sm:pb-14">
+                  <div className="flex items-center gap-3 mb-4">
                     <CheckCircle2 className="h-6 w-6 sm:h-8 sm:w-8 text-success" />
                     <h3 className="text-lg sm:text-xl font-bold text-foreground">Conta FULL ACESSO</h3>
                   </div>
-                  <p className="text-sm sm:text-base text-muted-foreground mb-4 sm:mb-5">
+                  <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
                     Acesso total: email original, alteração de senha e dados, sem enrolação.
                   </p>
-                  <ul className="space-y-2.5 sm:space-y-3.5 text-sm sm:text-base text-muted-foreground">
-                    <li className="flex items-center gap-2.5"><span className="text-success text-lg">•</span> Email e senha inclusos</li>
-                    <li className="flex items-center gap-2.5"><span className="text-success text-lg">•</span> Senha alterável</li>
-                    <li className="flex items-center gap-2.5"><span className="text-success text-lg">•</span> Conta verificável</li>
+                  <ul className="space-y-3 text-sm text-muted-foreground">
+                    <li className="flex items-center gap-3"><span className="text-success text-lg">•</span> Email e senha inclusos</li>
+                    <li className="flex items-center gap-3"><span className="text-success text-lg">•</span> Senha alterável</li>
+                    <li className="flex items-center gap-3"><span className="text-success text-lg">•</span> Conta verificável</li>
                   </ul>
                 </div>
               </div>
