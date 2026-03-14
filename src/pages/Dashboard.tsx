@@ -176,11 +176,18 @@ const Dashboard = () => {
 
   const handleVerifyIdentity = async () => {
     if (!verifyPassword) return;
+    if (!verifyCaptchaToken) {
+      toast({ title: "Erro", description: "Aguarde a verificação de segurança.", variant: "destructive" });
+      return;
+    }
     setVerifying(true);
     const { error } = await supabase.auth.signInWithPassword({
       email: user?.email || "",
       password: verifyPassword,
+      options: { captchaToken: verifyCaptchaToken },
     });
+    setVerifyCaptchaToken(undefined);
+    verifyCaptchaRef.current?.reset();
     setVerifying(false);
     if (error) {
       toast({ title: "Erro", description: "Senha incorreta. Tente novamente.", variant: "destructive" });
