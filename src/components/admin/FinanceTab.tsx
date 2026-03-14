@@ -29,7 +29,7 @@ const FinanceTab = () => {
 
     let paymentsQuery = supabase
       .from("payments")
-      .select("amount, status, created_at, paid_at, cart_snapshot")
+      .select("amount, status, created_at, paid_at, cart_snapshot, payment_method")
       .eq("status", "COMPLETED");
 
     let lztQuery = supabase
