@@ -494,7 +494,7 @@ Deno.serve(async (req) => {
       },
     });
   } catch (error: any) {
-    console.error("Edge function error:", error);
+    log("ERROR", "lzt-market", "Edge function error", { error: error?.message || String(error) });
     return new Response(JSON.stringify({ error: "An internal error occurred" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
