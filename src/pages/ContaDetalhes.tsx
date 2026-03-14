@@ -446,6 +446,7 @@ const ContaDetalhes = () => {
       lztPrice: item.price,
       lztCurrency: item.price_currency || "rub",
       lztGame: "valorant",
+      skinsCount: skinCount,
     });
     if (added) navigate("/checkout");
   };
