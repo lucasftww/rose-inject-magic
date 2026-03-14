@@ -283,7 +283,7 @@ const LztContaCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap
         {item.valorantRegionPhrase && (
           <div className="mt-2 flex items-center gap-1.5">
             <Globe className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-[11px] text-muted-foreground">{item.valorantRegionPhrase}</span>
+            <span className="text-[11px] text-muted-foreground">{translateRegion(item.valorantRegionPhrase)}</span>
           </div>
         )}
         <div className="mt-4 flex items-end justify-between">
