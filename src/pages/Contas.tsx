@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useLztMarkup } from "@/hooks/useLztMarkup";
 import Header from "@/components/Header";
-import { ChevronLeft, ChevronRight, ChevronDown, Search, SlidersHorizontal, DollarSign, Crosshair, Loader2, RefreshCw, Globe, TrendingUp, Star, Shield, Trophy, AlertTriangle, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronDown, Search, SlidersHorizontal, DollarSign, Crosshair, Loader2, RefreshCw, Globe, TrendingUp, Star, Shield, Trophy, AlertTriangle, X, ArrowRight } from "lucide-react";
 import { throwApiError } from "@/lib/apiErrors";
 import { translateRegion } from "@/lib/regionTranslation";
 import { motion } from "framer-motion";
@@ -439,75 +439,62 @@ const ValorantCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap
 
   return (
     <div
-      className="group cursor-pointer overflow-hidden rounded-lg border border-border bg-card transition-all hover:border-success/40 hover:shadow-[0_0_20px_hsl(130,99%,41%,0.1)] flex flex-col"
+      className="group cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-success/50 hover:shadow-[0_4px_24px_hsl(var(--success)/0.12)] flex flex-col h-full"
       onClick={() => navigate(`/conta/${item.item_id}`)}
     >
-      <div className="group/img relative flex h-32 sm:h-48 items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--secondary))] via-[hsl(var(--background))] to-[hsl(var(--secondary))]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--success)/0.08),transparent_70%)]" />
-        <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[hsl(var(--card))] to-transparent z-[2]" />
-
-        <div className="absolute left-2 top-2 sm:left-3 sm:top-3 z-10 flex gap-1">
-          {hasKnife && (
-            <span className="rounded bg-primary px-1.5 py-0.5 sm:px-2.5 sm:py-1 text-[10px] sm:text-xs font-bold text-primary-foreground">🔪 Knife</span>
-          )}
-          {item.riot_valorant_rank_type === "ranked" && (
-            <span className="rounded bg-success px-1.5 py-0.5 sm:px-2.5 sm:py-1 text-[10px] sm:text-xs font-bold text-success-foreground">Ranked</span>
-          )}
+      <div className="relative flex h-44 sm:h-52 items-center justify-center overflow-hidden bg-secondary/20">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--success)/0.06),transparent_70%)]" />
+        <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-[hsl(var(--card))] to-transparent z-[2]" />
+        <div className="absolute left-2.5 top-2.5 z-10 flex items-center gap-1.5">
+          <span className="flex items-center gap-1 rounded-md bg-secondary/80 backdrop-blur-sm px-2 py-1 text-[10px] sm:text-xs font-semibold text-foreground">
+            <img src={rank?.img || rankUnranked} alt={rank?.name || "Unranked"} className="h-4 w-4 object-contain" />
+            {rank?.name || "Unranked"}
+          </span>
+          {hasKnife && <span className="rounded-md bg-primary/90 backdrop-blur-sm px-2 py-1 text-[10px] sm:text-xs font-bold text-primary-foreground">🔪</span>}
         </div>
-
+        <span className="absolute right-2.5 top-2.5 z-10 rounded-md bg-secondary/80 backdrop-blur-sm px-2 py-1 text-[10px] sm:text-xs font-semibold text-foreground">
+          {skinCount} skins
+        </span>
         {skinPreviews.length > 0 ? (
-          <div className="relative z-[1] grid grid-cols-3 gap-1 sm:gap-2 p-2 sm:p-4 w-full h-full">
+          <div className="relative z-[1] grid grid-cols-3 gap-1.5 p-3 sm:p-4 w-full h-full">
             {skinPreviews.map((skin, i) => (
-              <div key={i} className="flex items-center justify-center rounded bg-secondary/30 p-0.5 sm:p-1.5">
-                <img src={skin.image} alt={skin.name} className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-105" loading="lazy" />
+              <div key={i} className="flex items-center justify-center rounded-lg bg-secondary/30 p-1.5">
+                <img src={skin.image} alt={skin.name} className="h-full w-full object-contain drop-shadow-sm" loading="lazy" />
               </div>
             ))}
           </div>
         ) : item.imagePreviewLinks?.direct?.weapons ? (
           <LztPreviewImage url={item.imagePreviewLinks.direct.weapons} />
         ) : (
-          <div className="flex h-full w-full items-center justify-center">
-            <Crosshair className="h-8 w-8 sm:h-12 sm:w-12 text-muted-foreground/20" />
-          </div>
+          <div className="flex h-full w-full items-center justify-center"><Crosshair className="h-8 w-8 sm:h-12 sm:w-12 text-muted-foreground/20" /></div>
         )}
       </div>
-
-      <div className="p-3 sm:p-5 flex flex-col flex-1">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            <img src={rank?.img || rankUnranked} alt={rank?.name || "Unranked"} className="h-5 w-5 sm:h-6 sm:w-6 object-contain" loading="lazy" />
-            <span className="rounded bg-secondary px-1.5 py-0.5 text-[10px] sm:text-xs font-medium text-muted-foreground">{rank?.name || "Unranked"}</span>
+      <div className="p-3.5 sm:p-5 flex flex-col flex-1 gap-3 sm:gap-4">
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-1.5">
+            <div className="flex h-4 w-4 items-center justify-center rounded-full bg-success/15 flex-shrink-0">
+              <svg className="h-2.5 w-2.5 text-success" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            </div>
+            <span className="text-[10px] sm:text-xs text-muted-foreground">Full Acesso · Email incluso</span>
           </div>
-          <span className="text-[10px] sm:text-sm text-muted-foreground">{skinCount} skins</span>
-        </div>
-
-        <div className="mt-2 sm:mt-3 flex flex-col gap-1">
-          <div className="flex items-center gap-1">
-            <svg className="h-3 w-3 sm:h-4 sm:w-4 text-success flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M11.14 4L6.43 16H8.36L9.32 13.43H14.67L15.64 16H17.57L12.86 4M12 6.29L14.03 11.71H9.96M4 18V15H2V20H22V18Z" /></svg>
-            <span className="text-[10px] sm:text-xs font-medium text-success">Conta Full Acesso</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <svg className="h-3 w-3 sm:h-4 sm:w-4 text-success flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="currentColor"><path d="M19,24H4L3.9966,8.9062l11.4341,7.9161a1.0008,1.0008,0,0,0,1.1386,0L28,8.9087,28,18h2V8a2.0027,2.0027,0,0,0-2-2H4A2.0023,2.0023,0,0,0,2,8V24a2.0027,2.0027,0,0,0,2,2H19ZM25.7986,8,16,14.7837,6.2014,8Z"/><circle cx="26" cy="24" r="4"/></svg>
-            <span className="text-[10px] sm:text-xs font-medium text-success">Email e Senha inclusos</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <svg className="h-3 w-3 sm:h-4 sm:w-4 text-success flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2.05v2.02c3.95.49 7 3.85 7 7.93 0 1.45-.39 2.81-1.06 3.97l1.47 1.47A9.953 9.953 0 0022 12c0-5.18-3.95-9.45-9-9.95zM12 19c-3.87 0-7-3.13-7-7 0-3.53 2.61-6.43 6-6.92V3.05c-5.06.5-9 4.76-9 9.95 0 5.52 4.47 10 9.99 10 3.31 0 6.24-1.61 8.06-4.09l-1.46-1.46A7.932 7.932 0 0112 19z"/><path d="M16 12l-4-4v3H8v2h4v3z"/></svg>
-            <span className="text-[10px] sm:text-xs font-medium text-success">Entrega Automática</span>
+          <div className="flex items-center gap-1.5">
+            <div className="flex h-4 w-4 items-center justify-center rounded-full bg-success/15 flex-shrink-0">
+              <svg className="h-2.5 w-2.5 text-success" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            </div>
+            <span className="text-[10px] sm:text-xs text-muted-foreground">Entrega Automática</span>
           </div>
         </div>
-
         {item.valorantRegionPhrase && (
-          <div className="mt-1.5 sm:mt-2 flex items-center gap-1">
-            <Globe className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-muted-foreground flex-shrink-0" />
-            <span className="text-[10px] sm:text-[11px] text-muted-foreground truncate">{translateRegion(item.valorantRegionPhrase)}</span>
+          <div className="flex items-center gap-1.5">
+            <Globe className="h-3 w-3 text-muted-foreground/60 flex-shrink-0" />
+            <span className="text-[10px] sm:text-[11px] text-muted-foreground/80">{translateRegion(item.valorantRegionPhrase)}</span>
           </div>
         )}
-
-        <div className="mt-auto pt-3 sm:pt-4">
-          <p className="text-base sm:text-xl font-bold text-success">{formatPrice(item.price, item.price_currency)}</p>
-          <button className="mt-2 w-full flex items-center justify-center gap-1 rounded border border-border px-2 py-2 sm:py-2 text-[10px] sm:text-xs font-medium text-muted-foreground transition-colors hover:border-success hover:text-success">
+        <div className="mt-auto pt-2 sm:pt-3 border-t border-border/30">
+          <p className="text-lg sm:text-xl font-bold text-success tracking-tight">{formatPrice(item.price, item.price_currency)}</p>
+          <button className="mt-2.5 w-full flex items-center justify-center gap-1.5 rounded-lg bg-success py-2.5 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-success-foreground transition-all group-hover:shadow-[0_0_16px_hsl(var(--success)/0.3)]">
             Ver conta
+            <ArrowRight className="h-3.5 w-3.5" />
           </button>
         </div>
       </div>
@@ -571,42 +558,32 @@ const LolCard = ({ item, champKeyMap, formatPrice }: { item: LztItem; champKeyMa
 
   return (
     <div
-      className="group cursor-pointer overflow-hidden rounded-lg border border-border bg-card transition-all hover:border-[hsl(198,100%,45%)/40%] hover:shadow-[0_0_20px_hsl(198,100%,45%,0.12)] flex flex-col"
+      className="group cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-[hsl(198,100%,45%)/50%] hover:shadow-[0_4px_24px_hsl(198,100%,45%,0.12)] flex flex-col h-full"
       onClick={() => navigate(`/lol/${item.item_id}`)}
     >
-      {/* Skin portrait grid — mesmo estilo do Valorant */}
-      <div className="relative flex h-32 sm:h-48 items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[hsl(220,30%,10%)] via-[hsl(var(--background))] to-[hsl(220,30%,10%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(198,100%,45%,0.1),transparent_70%)]" />
-        <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[hsl(var(--card))] to-transparent z-[2]" />
-
-        {/* Badges */}
-        <div className="absolute left-2 top-2 sm:left-3 sm:top-3 z-10 flex gap-1">
-          {level > 0 && (
-            <span className="rounded bg-[hsl(198,100%,45%)] px-1.5 py-0.5 sm:px-2.5 sm:py-1 text-[10px] sm:text-xs font-bold text-white">
-              Nv. {level}
-            </span>
-          )}
-          {rankFilterId !== "todos" && (
-            <span className="rounded px-1.5 py-0.5 sm:px-2.5 sm:py-1 text-[10px] sm:text-xs font-bold text-white" style={{ background: rankColor }}>
+      <div className="relative flex h-44 sm:h-52 items-center justify-center overflow-hidden bg-secondary/20">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(198,100%,45%,0.08),transparent_70%)]" />
+        <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-[hsl(var(--card))] to-transparent z-[2]" />
+        <div className="absolute left-2.5 top-2.5 z-10 flex items-center gap-1.5">
+          {rankFilterData?.img ? (
+            <span className="flex items-center gap-1 rounded-md bg-secondary/80 backdrop-blur-sm px-2 py-1 text-[10px] sm:text-xs font-semibold text-foreground">
+              <img src={rankFilterData.img} alt={rankText} className="h-4 w-4 object-contain" />
               {rankText.split(" ")[0]}
             </span>
+          ) : (
+            <span className="rounded-md bg-secondary/80 backdrop-blur-sm px-2 py-1 text-[10px] sm:text-xs font-semibold text-foreground">{rankText}</span>
           )}
+          {level > 0 && <span className="rounded-md bg-[hsl(198,100%,45%)]/90 backdrop-blur-sm px-2 py-1 text-[10px] sm:text-xs font-bold text-white">Nv. {level}</span>}
         </div>
-
+        <span className="absolute right-2.5 top-2.5 z-10 rounded-md bg-secondary/80 backdrop-blur-sm px-2 py-1 text-[10px] sm:text-xs font-semibold text-foreground">
+          {skinCount} skins
+        </span>
         {skinPreviews.length > 0 ? (
-          // Portrait grid: 3 columns, imagens verticais igual loading art do LoL
           <div className="relative z-[1] grid grid-cols-3 gap-0 w-full h-full">
             {skinPreviews.map((skin, i) => (
               <div key={i} className="relative overflow-hidden">
-                <img
-                  src={skin.image}
-                  alt={skin.name}
-                  className="h-full w-full object-cover object-top transition-transform duration-300 group-hover:scale-105"
-                  loading="lazy"
-                />
-                {/* subtle separator */}
-                {i > 0 && <div className="absolute inset-y-0 left-0 w-px bg-black/30" />}
+                <img src={skin.image} alt={skin.name} className="h-full w-full object-cover object-top" loading="lazy" />
+                {i > 0 && <div className="absolute inset-y-0 left-0 w-px bg-black/20" />}
               </div>
             ))}
           </div>
@@ -617,56 +594,38 @@ const LolCard = ({ item, champKeyMap, formatPrice }: { item: LztItem; champKeyMa
           </div>
         )}
       </div>
-
-      {/* Content */}
-      <div className="p-3 sm:p-5 flex flex-col flex-1">
-        {/* Rank + WR */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          {rankFilterData?.img ? (
-            <img src={rankFilterData.img} alt={rankText} className="h-5 w-5 sm:h-7 sm:w-7 object-contain flex-shrink-0" loading="lazy" />
-          ) : (
-            <div className="h-4 w-4 rounded-full flex-shrink-0" style={{ background: rankColor }} />
-          )}
-          <span className="rounded bg-secondary px-1.5 py-0.5 text-[10px] sm:text-xs font-medium text-muted-foreground">{rankText}</span>
-          {winRate != null && (
-            <span className="text-[10px] sm:text-xs text-muted-foreground">{winRate}% WR</span>
-          )}
-        </div>
-
-        {/* Stats */}
-        <div className="mt-2 sm:mt-3 grid grid-cols-2 gap-1.5 sm:gap-2">
-          <div className="flex items-center gap-1 sm:gap-1.5 rounded bg-secondary/40 px-1.5 py-1 sm:px-2.5 sm:py-1.5">
-            <Trophy className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-[hsl(198,100%,45%)]" />
+      <div className="p-3.5 sm:p-5 flex flex-col flex-1 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 gap-1.5">
+          <div className="flex items-center gap-1 rounded-md bg-secondary/30 px-2 py-1.5">
+            <Trophy className="h-3 w-3 text-[hsl(198,100%,45%)]" />
             <span className="text-[10px] sm:text-[11px] text-muted-foreground">{champCount} campeões</span>
           </div>
-          <div className="flex items-center gap-1 sm:gap-1.5 rounded bg-secondary/40 px-1.5 py-1 sm:px-2.5 sm:py-1.5">
-            <Star className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-[hsl(198,100%,45%)]" />
-            <span className="text-[10px] sm:text-[11px] text-muted-foreground">{skinCount} skins</span>
+          {winRate != null && (
+            <div className="flex items-center gap-1 rounded-md bg-secondary/30 px-2 py-1.5">
+              <TrendingUp className="h-3 w-3 text-[hsl(198,100%,45%)]" />
+              <span className="text-[10px] sm:text-[11px] text-muted-foreground">{winRate}% WR</span>
+            </div>
+          )}
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-1.5">
+            <div className="flex h-4 w-4 items-center justify-center rounded-full flex-shrink-0" style={{ background: "hsl(198,100%,45%,0.15)" }}>
+              <svg className="h-2.5 w-2.5 text-[hsl(198,100%,45%)]" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            </div>
+            <span className="text-[10px] sm:text-xs text-muted-foreground">Full Acesso · Entrega Automática</span>
           </div>
         </div>
-
-        <div className="mt-2 sm:mt-2.5 flex flex-col gap-1">
-          <div className="flex items-center gap-1">
-            <svg className="h-3 w-3 sm:h-4 sm:w-4 text-[hsl(198,100%,45%)] flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M11.14 4L6.43 16H8.36L9.32 13.43H14.67L15.64 16H17.57L12.86 4M12 6.29L14.03 11.71H9.96M4 18V15H2V20H22V18Z" /></svg>
-            <span className="text-[10px] sm:text-xs font-medium text-[hsl(198,100%,45%)]">Conta Full Acesso</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <svg className="h-3 w-3 sm:h-4 sm:w-4 text-[hsl(198,100%,45%)] flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2.05v2.02c3.95.49 7 3.85 7 7.93 0 1.45-.39 2.81-1.06 3.97l1.47 1.47A9.953 9.953 0 0022 12c0-5.18-3.95-9.45-9-9.95zM12 19c-3.87 0-7-3.13-7-7 0-3.53 2.61-6.43 6-6.92V3.05c-5.06.5-9 4.76-9 9.95 0 5.52 4.47 10 9.99 10 3.31 0 6.24-1.61 8.06-4.09l-1.46-1.46A7.932 7.932 0 0112 19z"/><path d="M16 12l-4-4v3H8v2h4v3z"/></svg>
-            <span className="text-[10px] sm:text-xs font-medium text-[hsl(198,100%,45%)]">Entrega Automática</span>
-          </div>
-        </div>
-
         {item.riot_lol_region && (
-          <div className="mt-1.5 sm:mt-2 flex items-center gap-1">
-            <Globe className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-muted-foreground flex-shrink-0" />
-            <span className="text-[10px] sm:text-[11px] text-muted-foreground truncate">{item.riot_lol_region.toUpperCase()}</span>
+          <div className="flex items-center gap-1.5">
+            <Globe className="h-3 w-3 text-muted-foreground/60 flex-shrink-0" />
+            <span className="text-[10px] sm:text-[11px] text-muted-foreground/80">{item.riot_lol_region.toUpperCase()}</span>
           </div>
         )}
-
-        <div className="mt-auto pt-3 sm:pt-4">
-          <p className="text-base sm:text-xl font-bold text-[hsl(198,100%,45%)]">{formatPrice(item.price, item.price_currency)}</p>
-          <button className="mt-2 w-full flex items-center justify-center gap-1 rounded border border-border px-2 py-2 sm:py-2 text-[10px] sm:text-xs font-medium text-muted-foreground transition-colors hover:border-[hsl(198,100%,45%)] hover:text-[hsl(198,100%,45%)]">
+        <div className="mt-auto pt-2 sm:pt-3 border-t border-border/30">
+          <p className="text-lg sm:text-xl font-bold text-[hsl(198,100%,45%)] tracking-tight">{formatPrice(item.price, item.price_currency)}</p>
+          <button className="mt-2.5 w-full flex items-center justify-center gap-1.5 rounded-lg py-2.5 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-white transition-all group-hover:shadow-[0_0_16px_hsl(198,100%,45%,0.3)]" style={{ background: "hsl(198,100%,45%)" }}>
             Ver conta
+            <ArrowRight className="h-3.5 w-3.5" />
           </button>
         </div>
       </div>
@@ -721,93 +680,57 @@ const FortniteCard = ({ item, skinsDb, formatPrice }: { item: LztItem; skinsDb: 
 
   return (
     <div
-      className="group cursor-pointer overflow-hidden rounded-lg border border-border bg-card transition-all hover:border-[hsl(265,80%,65%)/40%] hover:shadow-[0_0_20px_hsl(265,80%,65%,0.12)] flex flex-col"
+      className="group cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-[hsl(265,80%,65%)/50%] hover:shadow-[0_4px_24px_hsl(265,80%,65%,0.12)] flex flex-col h-full"
       onClick={() => navigate(`/fortnite/${item.item_id}`)}
     >
-      {/* Skin preview grid */}
-      <div className="relative flex h-32 sm:h-48 items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[hsl(265,40%,8%)] via-[hsl(var(--background))] to-[hsl(210,40%,10%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(265,80%,65%,0.1),transparent_70%)]" />
-        <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[hsl(var(--card))] to-transparent z-[2]" />
-
-        {/* Badges */}
-        <div className="absolute left-2 top-2 sm:left-3 sm:top-3 z-10 flex gap-1">
+      <div className="relative flex h-44 sm:h-52 items-center justify-center overflow-hidden bg-secondary/20">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(265,80%,65%,0.08),transparent_70%)]" />
+        <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-[hsl(var(--card))] to-transparent z-[2]" />
+        <div className="absolute left-2.5 top-2.5 z-10 flex items-center gap-1.5">
+          {level > 0 && <span className="rounded-md backdrop-blur-sm px-2 py-1 text-[10px] sm:text-xs font-bold text-white" style={{ background: FN_PURPLE }}>Nv. {level}</span>}
           {vbucks > 0 && (
-            <span className="rounded px-1.5 py-0.5 sm:px-2.5 sm:py-1 text-[10px] sm:text-xs font-bold text-white flex items-center gap-1" style={{ background: FN_BLUE }}>
-              <svg className="h-2.5 w-2.5 sm:h-3 sm:w-3" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M152 100 L256 380 L360 100" stroke="white" strokeWidth="70" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-                <path d="M200 240 L256 380 L312 240" stroke="white" strokeWidth="40" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-              </svg>
+            <span className="rounded-md backdrop-blur-sm px-2 py-1 text-[10px] sm:text-xs font-bold text-white flex items-center gap-1" style={{ background: FN_BLUE }}>
               {vbucks.toLocaleString()} VB
             </span>
           )}
-          {level > 0 && (
-            <span className="rounded px-1.5 py-0.5 sm:px-2.5 sm:py-1 text-[10px] sm:text-xs font-bold text-white" style={{ background: FN_PURPLE }}>
-              Nv. {level}
-            </span>
-          )}
         </div>
-
+        <span className="absolute right-2.5 top-2.5 z-10 rounded-md bg-secondary/80 backdrop-blur-sm px-2 py-1 text-[10px] sm:text-xs font-semibold text-foreground">
+          {skinCount} skins
+        </span>
         {skinPreviews.length > 0 ? (
-          <div className="relative z-[1] grid grid-cols-3 gap-1 p-2 sm:p-3 w-full h-full">
+          <div className="relative z-[1] grid grid-cols-3 gap-1.5 p-3 sm:p-4 w-full h-full">
             {skinPreviews.map((skin, i) => (
-              <div key={i} className="flex items-center justify-center rounded bg-secondary/20 p-1">
-                <img src={skin.image} alt={skin.name} className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-110" loading="lazy" />
+              <div key={i} className="flex items-center justify-center rounded-lg bg-secondary/20 p-1.5">
+                <img src={skin.image} alt={skin.name} className="h-full w-full object-contain drop-shadow-sm" loading="lazy" />
               </div>
             ))}
           </div>
         ) : (
           <div className="flex h-full w-full items-center justify-center">
-            <svg className="h-12 w-12 text-muted-foreground/20" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="m15.767 14.171.097-5.05H12.4V5.197h3.99L16.872 0H7.128v24l5.271-.985V14.17z"/></svg>
+            <svg className="h-12 w-12 text-muted-foreground/20" fill="currentColor" viewBox="0 0 24 24"><path d="m15.767 14.171.097-5.05H12.4V5.197h3.99L16.872 0H7.128v24l5.271-.985V14.17z"/></svg>
           </div>
         )}
       </div>
-
-      {/* Content */}
-      <div className="p-3 sm:p-5 flex flex-col flex-1">
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          <svg className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" fill={FN_PURPLE} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="m15.767 14.171.097-5.05H12.4V5.197h3.99L16.872 0H7.128v24l5.271-.985V14.17z"/></svg>
-          <span className="rounded bg-secondary px-1.5 py-0.5 text-[10px] sm:text-xs font-medium text-muted-foreground">Fortnite</span>
-          {skinCount > 0 && <span className="text-[10px] sm:text-xs text-muted-foreground">{skinCount} skins</span>}
-        </div>
-
-        <div className="mt-2 sm:mt-3 grid grid-cols-2 gap-1.5 sm:gap-2">
-          <div className="flex items-center gap-1 sm:gap-1.5 rounded bg-secondary/40 px-1.5 py-1 sm:px-2.5 sm:py-1.5">
-            <Star className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" style={{ color: FN_PURPLE }} />
-            <span className="text-[10px] sm:text-[11px] text-muted-foreground">{skinCount} skins</span>
-          </div>
-          {vbucks > 0 ? (
-            <div className="flex items-center gap-1 sm:gap-1.5 rounded bg-secondary/40 px-1.5 py-1 sm:px-2.5 sm:py-1.5">
-              <svg className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="256" cy="256" r="256" fill={FN_BLUE} />
-                <path d="M152 140 L256 360 L360 140" stroke="white" strokeWidth="64" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-                <path d="M200 250 L256 360 L312 250" stroke="white" strokeWidth="36" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-              </svg>
-              <span className="text-[10px] sm:text-[11px] text-muted-foreground">{vbucks.toLocaleString()} VB</span>
+      <div className="p-3.5 sm:p-5 flex flex-col flex-1 gap-3 sm:gap-4">
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-1.5">
+            <div className="flex h-4 w-4 items-center justify-center rounded-full flex-shrink-0" style={{ background: "hsl(265,80%,65%,0.15)" }}>
+              <svg className="h-2.5 w-2.5" style={{ color: FN_PURPLE }} viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
             </div>
-          ) : (
-            <div className="flex items-center gap-1 sm:gap-1.5 rounded bg-secondary/40 px-1.5 py-1 sm:px-2.5 sm:py-1.5">
-              <Shield className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0 text-muted-foreground/50" />
-              <span className="text-[10px] sm:text-[11px] text-muted-foreground">Full acesso</span>
+            <span className="text-[10px] sm:text-xs text-muted-foreground">Full Acesso · Email incluso</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="flex h-4 w-4 items-center justify-center rounded-full flex-shrink-0" style={{ background: "hsl(265,80%,65%,0.15)" }}>
+              <svg className="h-2.5 w-2.5" style={{ color: FN_PURPLE }} viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
             </div>
-          )}
-        </div>
-
-        <div className="mt-2 sm:mt-2.5 flex flex-col gap-1">
-          <div className="flex items-center gap-1">
-            <svg className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" style={{ color: FN_PURPLE }} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M11.14 4L6.43 16H8.36L9.32 13.43H14.67L15.64 16H17.57L12.86 4M12 6.29L14.03 11.71H9.96M4 18V15H2V20H22V18Z" /></svg>
-            <span className="text-[10px] sm:text-xs font-medium" style={{ color: FN_PURPLE }}>Conta Full Acesso</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <svg className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" style={{ color: FN_PURPLE }} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2.05v2.02c3.95.49 7 3.85 7 7.93 0 1.45-.39 2.81-1.06 3.97l1.47 1.47A9.953 9.953 0 0022 12c0-5.18-3.95-9.45-9-9.95zM12 19c-3.87 0-7-3.13-7-7 0-3.53 2.61-6.43 6-6.92V3.05c-5.06.5-9 4.76-9 9.95 0 5.52 4.47 10 9.99 10 3.31 0 6.24-1.61 8.06-4.09l-1.46-1.46A7.932 7.932 0 0112 19z"/><path d="M16 12l-4-4v3H8v2h4v3z"/></svg>
-            <span className="text-[10px] sm:text-xs font-medium" style={{ color: FN_PURPLE }}>Entrega Automática</span>
+            <span className="text-[10px] sm:text-xs text-muted-foreground">Entrega Automática</span>
           </div>
         </div>
-
-        <div className="mt-auto pt-3 sm:pt-4">
-          <p className="text-base sm:text-xl font-bold" style={{ color: FN_PURPLE }}>{formatPrice(item.price, item.price_currency)}</p>
-          <button className="mt-2 w-full flex items-center justify-center gap-1 rounded border border-border px-2 py-2 sm:py-2 text-[10px] sm:text-xs font-medium text-muted-foreground transition-colors hover:border-[hsl(265,80%,65%)] hover:text-[hsl(265,80%,65%)]">
+        <div className="mt-auto pt-2 sm:pt-3 border-t border-border/30">
+          <p className="text-lg sm:text-xl font-bold tracking-tight" style={{ color: FN_PURPLE }}>{formatPrice(item.price, item.price_currency)}</p>
+          <button className="mt-2.5 w-full flex items-center justify-center gap-1.5 rounded-lg py-2.5 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-white transition-all group-hover:shadow-[0_0_16px_hsl(265,80%,65%,0.3)]" style={{ background: FN_PURPLE }}>
             Ver conta
+            <ArrowRight className="h-3.5 w-3.5" />
           </button>
         </div>
       </div>
@@ -833,102 +756,63 @@ const MinecraftCard = ({ item, formatPrice }: { item: LztItem; formatPrice: (pri
 
   return (
     <div
-      className="group cursor-pointer overflow-hidden rounded-lg border border-border bg-card transition-all flex flex-col"
-      style={{ ['--hover-shadow' as string]: `0 0 20px ${MC_GREEN}20` }}
-      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = `${MC_GREEN}60`; (e.currentTarget as HTMLElement).style.boxShadow = `0 0 20px ${MC_GREEN}20`; }}
+      className="group cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all flex flex-col h-full"
+      style={{ ['--hover-shadow' as string]: `0 0 24px ${MC_GREEN}15` }}
+      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = `${MC_GREEN}80`; (e.currentTarget as HTMLElement).style.boxShadow = `0 4px 24px ${MC_GREEN}15`; }}
       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = ''; (e.currentTarget as HTMLElement).style.boxShadow = ''; }}
       onClick={() => navigate(`/minecraft/${item.item_id}`)}
     >
-      {/* Skin preview */}
-      <div className="relative flex h-32 sm:h-48 items-center justify-center overflow-hidden">
-        <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, hsl(120,30%,8%), hsl(30,20%,10%))" }} />
-        <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse at center, ${MC_GREEN}12, transparent 70%)` }} />
-        <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-card to-transparent z-[2]" />
-
-        {/* Badges */}
-        <div className="absolute left-2 top-2 sm:left-3 sm:top-3 z-10 flex flex-wrap gap-1">
-          {hasJava && (
-            <span className="rounded px-1.5 py-0.5 text-[10px] sm:text-xs font-bold text-white" style={{ background: MC_GREEN }}>Java</span>
-          )}
-          {hasBedrock && (
-            <span className="rounded px-1.5 py-0.5 text-[10px] sm:text-xs font-bold text-white" style={{ background: "hsl(25,40%,40%)" }}>Bedrock</span>
-          )}
-          {hypixelRank && (
-            <span className="rounded px-1.5 py-0.5 text-[10px] sm:text-xs font-bold text-white" style={{ background: "hsl(40,80%,40%)" }}>{hypixelRank}</span>
-          )}
-          {banned && (
-            <span className="rounded px-1.5 py-0.5 text-[10px] sm:text-xs font-bold text-white bg-destructive">Ban</span>
-          )}
+      <div className="relative flex h-44 sm:h-52 items-center justify-center overflow-hidden bg-secondary/20">
+        <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse at center, ${MC_GREEN}0a, transparent 70%)` }} />
+        <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-card to-transparent z-[2]" />
+        <div className="absolute left-2.5 top-2.5 z-10 flex items-center gap-1.5">
+          {hasJava && <span className="rounded-md backdrop-blur-sm px-2 py-1 text-[10px] sm:text-xs font-bold text-white" style={{ background: MC_GREEN }}>Java</span>}
+          {hasBedrock && <span className="rounded-md backdrop-blur-sm px-2 py-1 text-[10px] sm:text-xs font-bold text-white" style={{ background: "hsl(25,40%,40%)" }}>Bedrock</span>}
+          {hypixelRank && <span className="rounded-md backdrop-blur-sm px-2 py-1 text-[10px] sm:text-xs font-bold text-white" style={{ background: "hsl(40,80%,40%)" }}>{hypixelRank}</span>}
+          {banned && <span className="rounded-md backdrop-blur-sm px-2 py-1 text-[10px] sm:text-xs font-bold text-white bg-destructive">Ban</span>}
         </div>
-
+        {capes > 0 && (
+          <span className="absolute right-2.5 top-2.5 z-10 rounded-md bg-secondary/80 backdrop-blur-sm px-2 py-1 text-[10px] sm:text-xs font-semibold text-foreground">
+            {capes} cape{capes > 1 ? "s" : ""}
+          </span>
+        )}
         {skinUrl ? (
-          <div className="relative z-[1] flex items-end justify-center h-full pt-3 pb-2 gap-4">
-            <img
-              src={skinUrl}
-              alt={nickname || "Skin"}
-              className="h-full w-auto object-contain drop-shadow-2xl transition-transform duration-300 group-hover:scale-105"
-              loading="lazy"
-              onError={(e) => {
-                (e.currentTarget as HTMLImageElement).style.display = "none";
-              }}
-            />
+          <div className="relative z-[1] flex items-end justify-center h-full pt-3 pb-2">
+            <img src={skinUrl} alt={nickname || "Skin"} className="h-full w-auto object-contain drop-shadow-2xl transition-transform duration-300 group-hover:scale-105" loading="lazy" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
           </div>
         ) : (
           <div className="relative z-[1] flex items-center justify-center h-full">
-            {/* Minecraft creeper pixel art svg */}
-            <svg className="h-16 w-16 opacity-20" viewBox="0 0 24 24" fill={MC_GREEN} xmlns="http://www.w3.org/2000/svg"><path d="M4,2H20A2,2 0 0,1 22,4V20A2,2 0 0,1 20,22H4A2,2 0 0,1 2,20V4A2,2 0 0,1 4,2M6,6V10H10V12H8V18H10V16H14V18H16V12H14V10H18V6H14V10H10V6H6Z" /></svg>
+            <svg className="h-16 w-16 opacity-20" viewBox="0 0 24 24" fill={MC_GREEN}><path d="M4,2H20A2,2 0 0,1 22,4V20A2,2 0 0,1 20,22H4A2,2 0 0,1 2,20V4A2,2 0 0,1 4,2M6,6V10H10V12H8V18H10V16H14V18H16V12H14V10H18V6H14V10H10V6H6Z" /></svg>
           </div>
         )}
       </div>
-
-      {/* Content */}
-      <div className="p-3 sm:p-5 flex flex-col flex-1">
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          <svg className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" viewBox="0 0 24 24" fill={MC_GREEN} xmlns="http://www.w3.org/2000/svg"><path d="M4,2H20A2,2 0 0,1 22,4V20A2,2 0 0,1 20,22H4A2,2 0 0,1 2,20V4A2,2 0 0,1 4,2M6,6V10H10V12H8V18H10V16H14V18H16V12H14V10H18V6H14V10H10V6H6Z" /></svg>
-          <span className="rounded bg-secondary px-1.5 py-0.5 text-[10px] sm:text-xs font-medium text-muted-foreground truncate">
-            {nickname ? `@${nickname}` : "Minecraft"}
-          </span>
-          {hypixelLevel > 0 && (
-            <span className="text-[10px] sm:text-xs text-muted-foreground hidden sm:inline">Nv. {hypixelLevel}</span>
-          )}
+      <div className="p-3.5 sm:p-5 flex flex-col flex-1 gap-3 sm:gap-4">
+        <div className="flex items-center gap-1.5">
+          <svg className="h-4 w-4 flex-shrink-0" viewBox="0 0 24 24" fill={MC_GREEN}><path d="M4,2H20A2,2 0 0,1 22,4V20A2,2 0 0,1 20,22H4A2,2 0 0,1 2,20V4A2,2 0 0,1 4,2M6,6V10H10V12H8V18H10V16H14V18H16V12H14V10H18V6H14V10H10V6H6Z" /></svg>
+          <span className="text-xs sm:text-sm font-medium text-foreground truncate">{nickname ? `@${nickname}` : "Minecraft"}</span>
         </div>
-
-        <div className="mt-2 sm:mt-3 grid grid-cols-2 gap-1.5 sm:gap-2">
-          <div className="flex items-center gap-1 sm:gap-1.5 rounded bg-secondary/40 px-1.5 py-1 sm:px-2.5 sm:py-1.5">
-            <svg className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" viewBox="0 0 24 24" fill={MC_GREEN}><path d="M4,2H20A2,2 0 0,1 22,4V20A2,2 0 0,1 20,22H4A2,2 0 0,1 2,20V4A2,2 0 0,1 4,2M6,6V10H10V12H8V18H10V16H14V18H16V12H14V10H18V6H14V10H10V6H6Z" /></svg>
-            <span className="text-[10px] sm:text-[11px] text-muted-foreground">{hasJava && hasBedrock ? "Java+Bed" : hasJava ? "Java" : hasBedrock ? "Bedrock" : "Conta"}</span>
-          </div>
-          {capes > 0 ? (
-            <div className="flex items-center gap-1 sm:gap-1.5 rounded bg-secondary/40 px-1.5 py-1 sm:px-2.5 sm:py-1.5">
-              <Star className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" style={{ color: MC_GREEN }} />
-              <span className="text-[10px] sm:text-[11px] text-muted-foreground">{capes} cape{capes > 1 ? "s" : ""}</span>
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-1.5">
+            <div className="flex h-4 w-4 items-center justify-center rounded-full flex-shrink-0" style={{ background: `${MC_GREEN}20` }}>
+              <svg className="h-2.5 w-2.5" style={{ color: MC_GREEN }} viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
             </div>
-          ) : (
-            <div className="flex items-center gap-1 sm:gap-1.5 rounded bg-secondary/40 px-1.5 py-1 sm:px-2.5 sm:py-1.5">
-              <Shield className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0 text-muted-foreground/50" />
-              <span className="text-[10px] sm:text-[11px] text-muted-foreground">Full acesso</span>
+            <span className="text-[10px] sm:text-xs text-muted-foreground">Full Acesso · Email incluso</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="flex h-4 w-4 items-center justify-center rounded-full flex-shrink-0" style={{ background: `${MC_GREEN}20` }}>
+              <svg className="h-2.5 w-2.5" style={{ color: MC_GREEN }} viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
             </div>
-          )}
-        </div>
-
-        <div className="mt-2 sm:mt-2.5 flex flex-col gap-1">
-          <div className="flex items-center gap-1">
-            <svg className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" style={{ color: MC_GREEN }} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M11.14 4L6.43 16H8.36L9.32 13.43H14.67L15.64 16H17.57L12.86 4M12 6.29L14.03 11.71H9.96M4 18V15H2V20H22V18Z" /></svg>
-            <span className="text-[10px] sm:text-xs font-medium" style={{ color: MC_GREEN }}>Conta Full Acesso</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <svg className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" style={{ color: MC_GREEN }} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2.05v2.02c3.95.49 7 3.85 7 7.93 0 1.45-.39 2.81-1.06 3.97l1.47 1.47A9.953 9.953 0 0022 12c0-5.18-3.95-9.45-9-9.95zM12 19c-3.87 0-7-3.13-7-7 0-3.53 2.61-6.43 6-6.92V3.05c-5.06.5-9 4.76-9 9.95 0 5.52 4.47 10 9.99 10 3.31 0 6.24-1.61 8.06-4.09l-1.46-1.46A7.932 7.932 0 0112 19z"/><path d="M16 12l-4-4v3H8v2h4v3z"/></svg>
-            <span className="text-[10px] sm:text-xs font-medium" style={{ color: MC_GREEN }}>Entrega Automática</span>
+            <span className="text-[10px] sm:text-xs text-muted-foreground">Entrega Automática</span>
           </div>
         </div>
-
-        <div className="mt-auto pt-3 sm:pt-4">
-          <p className="text-base sm:text-xl font-bold" style={{ color: MC_GREEN }}>{formatPrice(item.price, item.price_currency)}</p>
-          <button className="mt-2 w-full flex items-center justify-center gap-1 rounded border border-border px-2 py-2 sm:py-2 text-[10px] sm:text-xs font-medium text-muted-foreground transition-colors"
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = MC_GREEN; (e.currentTarget as HTMLElement).style.color = MC_GREEN; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = ''; (e.currentTarget as HTMLElement).style.color = ''; }}
+        <div className="mt-auto pt-2 sm:pt-3 border-t border-border/30">
+          <p className="text-lg sm:text-xl font-bold tracking-tight" style={{ color: MC_GREEN }}>{formatPrice(item.price, item.price_currency)}</p>
+          <button className="mt-2.5 w-full flex items-center justify-center gap-1.5 rounded-lg py-2.5 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-white transition-all" style={{ background: MC_GREEN }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = `0 0 16px ${MC_GREEN}50`; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = ''; }}
           >
             Ver conta
+            <ArrowRight className="h-3.5 w-3.5" />
           </button>
         </div>
       </div>
@@ -1823,7 +1707,7 @@ const Contas = () => {
                 )}
 
                 <motion.div
-                  className="grid grid-cols-2 gap-2 sm:gap-6 xl:grid-cols-3"
+                  className="grid grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3"
                   initial="hidden"
                   animate="visible"
                   variants={staggerContainer}
