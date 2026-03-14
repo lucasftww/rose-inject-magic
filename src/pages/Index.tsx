@@ -542,7 +542,7 @@ const Index = () => {
           <img src={bannerInject} alt="" className="h-full w-full object-cover" loading="lazy" />
           <div className="absolute inset-0 bg-background/60 backdrop-blur-sm" />
         </div>
-        <div className="relative mx-auto max-w-7xl px-6 sm:px-6 py-12 sm:py-24 flex items-center justify-center">
+        <div className="relative mx-auto max-w-7xl px-5 sm:px-6 py-12 sm:py-24 flex items-center justify-center">
           <motion.div className="text-center max-w-2xl mx-auto" initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.7 }}>
             <h2 className="text-xl sm:text-4xl font-bold tracking-tight text-foreground md:text-6xl" style={{ fontFamily: "'Valorant', sans-serif" }}>
               CHEATS <span className="text-success">&</span> ACCOUNTS
