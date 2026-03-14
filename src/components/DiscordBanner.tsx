@@ -18,16 +18,18 @@ const DiscordBanner = ({ dismissible = true, onVisibilityChange }: { dismissible
           animate={{ height: "auto", opacity: 1 }}
           exit={{ height: 0, opacity: 0 }}
           transition={{ duration: 0.3 }}
-          className="relative w-full bg-[#00b3ff] text-white text-center py-2 sm:py-2.5 px-8 sm:px-4 text-sm font-semibold z-[60] shadow-[0_2px_20px_rgba(0,179,255,0.4)] overflow-hidden"
+          className="relative w-full bg-success text-success-foreground text-center py-1.5 sm:py-2 px-10 sm:px-4 z-[60] overflow-hidden"
         >
-          <div className="flex items-center justify-center gap-1.5 sm:gap-2 overflow-hidden">
-            <MessageCircle className="w-4 h-4 animate-pulse hidden sm:block" />
-            <span className="text-xs sm:text-sm">⚠️ <span className="hidden sm:inline">Nosso antigo </span>Discord caiu! Entre no novo:</span>
+          <div className="mx-auto flex items-center justify-center gap-1.5 sm:gap-2 max-w-7xl">
+            <MessageCircle className="w-3.5 h-3.5 shrink-0 hidden sm:block" />
+            <span className="text-[11px] sm:text-xs font-medium truncate">
+              ⚠️ <span className="hidden sm:inline">Nosso antigo </span>Discord caiu! Novo:
+            </span>
             <a
               href="https://discord.gg/royalstorebr"
               target="_blank"
               rel="noopener noreferrer"
-              className="underline font-bold hover:text-white/80 transition-colors text-xs sm:text-sm"
+              className="underline font-bold hover:text-white/80 transition-colors text-[11px] sm:text-xs shrink-0"
             >
               discord.gg/royalstorebr
             </a>
@@ -35,9 +37,9 @@ const DiscordBanner = ({ dismissible = true, onVisibilityChange }: { dismissible
           {dismissible && (
             <button
               onClick={handleDismiss}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors"
             >
-              <X className="w-4 h-4" />
+              <X className="w-3.5 h-3.5" />
             </button>
           )}
         </motion.div>
