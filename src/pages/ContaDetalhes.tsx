@@ -594,16 +594,16 @@ const ContaDetalhes = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 sm:gap-6">
               {/* LEFT: Gallery only */}
-              <div className="lg:col-span-3 space-y-3 sm:space-y-4">
+              <div className="lg:col-span-3 space-y-4 sm:space-y-4">
                 {/* Single skin carousel */}
                 {skinItems.length > 0 && !skinsLoading ? (
-                  <div className="rounded-lg border border-border bg-card overflow-hidden aspect-[4/3] sm:aspect-[16/10] relative group">
+                  <div className="rounded-xl border border-border/60 bg-card overflow-hidden aspect-[4/3] sm:aspect-[16/10] relative group">
                     <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--secondary))] via-[hsl(var(--background))] to-[hsl(var(--secondary))]" />
-                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--success)/0.08),transparent_70%)]" />
+                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--success)/0.06),transparent_70%)]" />
                     <AnimatePresence mode="wait">
                       <motion.div
                         key={selectedSkin}
-                        className="relative z-[1] flex items-center justify-center h-full w-full p-4 sm:p-8 cursor-pointer"
+                        className="relative z-[1] flex items-center justify-center h-full w-full p-6 sm:p-8 cursor-pointer"
                         onClick={() => { setActiveTab("skins"); setLightboxIndex(selectedSkin); }}
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
@@ -619,22 +619,19 @@ const ContaDetalhes = () => {
                     </AnimatePresence>
                     {skinItems.length > 1 && (
                       <>
-                        <button onClick={handlePrev} className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 z-[2] flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-background/80 border border-border text-muted-foreground sm:opacity-0 sm:group-hover:opacity-100 transition-all hover:text-success hover:border-success/40">
+                        <button onClick={handlePrev} className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 z-[2] flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-background/70 backdrop-blur-sm text-muted-foreground sm:opacity-0 sm:group-hover:opacity-100 transition-all hover:text-success">
                           <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
                         </button>
-                        <button onClick={handleNext} className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 z-[2] flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-background/80 border border-border text-muted-foreground sm:opacity-0 sm:group-hover:opacity-100 transition-all hover:text-success hover:border-success/40">
+                        <button onClick={handleNext} className="absolute right-2.5 sm:right-3 top-1/2 -translate-y-1/2 z-[2] flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-background/70 backdrop-blur-sm text-muted-foreground sm:opacity-0 sm:group-hover:opacity-100 transition-all hover:text-success">
                           <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5 rotate-180" />
                         </button>
                       </>
                     )}
-                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-[2] rounded-lg bg-background/80 backdrop-blur-sm border border-border px-3 py-1.5">
-                      <p className="text-xs font-medium text-muted-foreground">{selectedSkin + 1} / {skinItems.length}</p>
+                    {/* Bottom info bar */}
+                    <div className="absolute bottom-0 left-0 right-0 z-[2] flex items-center justify-between px-4 py-2.5 bg-background/60 backdrop-blur-sm">
+                      <p className="text-xs font-medium text-foreground/80 truncate max-w-[65%]">{skinItems[selectedSkin]?.name}</p>
+                      <p className="text-[11px] text-muted-foreground tabular-nums">{selectedSkin + 1}/{skinItems.length}</p>
                     </div>
-                    {skinItems[selectedSkin]?.name && (
-                      <div className="absolute top-3 left-3 z-[2] rounded-lg bg-background/80 backdrop-blur-sm border border-border px-3 py-1.5">
-                        <p className="text-xs font-medium text-foreground">{skinItems[selectedSkin].name}</p>
-                      </div>
-                    )}
                   </div>
                 ) : mainGallery.length > 0 ? (
                   <div className="relative group rounded-lg border border-border bg-card overflow-hidden aspect-[4/3] sm:aspect-[16/10]">
