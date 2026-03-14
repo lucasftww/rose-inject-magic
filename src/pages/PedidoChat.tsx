@@ -493,7 +493,9 @@ const PedidoChat = () => {
       const login = typeof creds.login === "string" ? creds.login : JSON.stringify(creds.login) || "";
       const password = typeof creds.password === "string" ? creds.password : JSON.stringify(creds.password) || "";
       const emailVal = creds.email;
-      const accountEmail = typeof emailVal === "string" ? emailVal : (emailVal?.login || emailVal?.raw || JSON.stringify(emailVal) || "");
+      // Handle email as object {login, password} or string
+      const emailLogin = typeof emailVal === "object" && emailVal?.login ? emailVal.login : (typeof emailVal === "string" ? emailVal : "");
+      const emailPassword = typeof emailVal === "object" && emailVal?.password ? emailVal.password : "";
       
       // Detect game from credential JSON or from ticket metadata
       const game = creds.game || (ticket?.metadata as any)?.game || "";
@@ -510,9 +512,19 @@ const PedidoChat = () => {
             </div>
             
             <CopyField label="Login" value={login} />
-            <CopyField label="Password" value={password} />
-            {accountEmail && <CopyField label="Access to email (auto registered)" value={accountEmail} />}
-            <CopyField label="Login and password" value={`${login}:${password}`} />
+            <CopyField label="Senha" value={password} />
+            <CopyField label="Login:Senha" value={`${login}:${password}`} />
+
+            {emailLogin && (
+              <div className="mt-3 pt-3 border-t border-border space-y-2.5">
+                <div className="flex items-center gap-2">
+                  <Mail className="h-3.5 w-3.5 text-success" />
+                  <span className="text-[11px] font-bold text-foreground">Acesso ao email (auto registrado):</span>
+                </div>
+                <CopyField label="Login" value={emailLogin} />
+                {emailPassword && <CopyField label="Senha" value={emailPassword} />}
+              </div>
+            )}
 
             <div className="flex items-center gap-2 pt-1">
               <a href={cfg.loginUrl} target="_blank" rel="noopener noreferrer"
