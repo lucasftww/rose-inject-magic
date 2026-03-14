@@ -1686,6 +1686,10 @@ Deno.serve(async (req) => {
         });
       }
 
+      // Record successful creation for duplicate prevention
+      lastPaymentCreateMap.set(userId, Date.now());
+      cleanupMap(lastPaymentCreateMap, 2000);
+
       return new Response(
         JSON.stringify({
           success: true,
