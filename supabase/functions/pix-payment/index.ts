@@ -40,9 +40,8 @@ async function sendServerPurchaseEvent(payment: any, req: Request) {
     const firstItem = cartItems[0];
     const totalValue = (payment.amount || 0) / 100; // amount is in centavos
 
-    // Deterministic event_id with timestamp for webhook retry dedup
-    const ts = Math.floor(Date.now() / 1000);
-    const eventId = `purchase_${payment.id}_${ts}`;
+    // Deterministic event_id — must match browser-side for deduplication
+    const eventId = `purchase_${payment.id}`;
 
     // Resolve category
     const gameName = firstItem.lztGame || firstItem.planName || "";
@@ -72,7 +71,7 @@ async function sendServerPurchaseEvent(payment: any, req: Request) {
     const eventData = {
       event_name: "Purchase",
       event_id: eventId,
-      event_time: ts,
+      event_time: Math.floor(Date.now() / 1000),
       action_source: "website",
       event_source_url: "https://rose-inject-magic.lovable.app/checkout",
       user_data: userData,
