@@ -540,15 +540,15 @@ const Index = () => {
           <img src={bannerInject} alt="" className="h-full w-full object-cover" loading="lazy" />
           <div className="absolute inset-0 bg-background/60 backdrop-blur-sm" />
         </div>
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 py-10 sm:py-20 flex items-center justify-center">
-          <motion.div className="text-center" initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.7 }}>
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 py-12 sm:py-24 flex items-center justify-center">
+          <motion.div className="text-center max-w-2xl mx-auto" initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.7 }}>
             <h2 className="text-xl sm:text-4xl font-bold tracking-tight text-foreground md:text-6xl" style={{ fontFamily: "'Valorant', sans-serif" }}>
               CHEATS <span className="text-success">&</span> ACCOUNTS
             </h2>
-            <p className="mt-3 sm:mt-4 text-sm sm:text-base text-muted-foreground max-w-xl mx-auto px-4 sm:px-0">
+            <p className="mt-4 sm:mt-5 text-sm sm:text-base text-muted-foreground mx-auto px-4 sm:px-0">
               Cheats seguros e otimizados com suporte contínuo e atualizações frequentes.
             </p>
-            <Link to="/produtos" className="mt-6 sm:mt-8 inline-flex items-center gap-2 bg-success px-8 sm:px-10 py-3 sm:py-3.5 text-sm font-bold uppercase tracking-[0.2em] text-success-foreground transition-all hover:shadow-[0_0_30px_hsl(197,100%,50%,0.4)] rounded-xl sm:rounded-none" style={{ fontFamily: "'Valorant', sans-serif" }}>
+            <Link to="/produtos" className="mt-7 sm:mt-10 inline-flex items-center gap-2 bg-success px-8 sm:px-10 py-3 sm:py-3.5 text-sm font-bold uppercase tracking-[0.2em] text-success-foreground transition-all hover:shadow-[0_0_30px_hsl(197,100%,50%,0.4)] rounded-xl sm:rounded-none" style={{ fontFamily: "'Valorant', sans-serif" }}>
               Ver Produtos
               <ArrowRight className="h-5 w-5" />
             </Link>
