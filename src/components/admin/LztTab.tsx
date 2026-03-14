@@ -289,12 +289,10 @@ const LztTab = () => {
       {activeView === "price" && (
         <div className="rounded-lg border border-border bg-card p-6">
           <h3 className="text-base font-bold text-foreground flex items-center gap-2">
-            <Tag className="h-4 w-4 text-success" /> Alterar Preço de Conta por ID
+            <Tag className="h-4 w-4 text-success" /> Definir Preço de Venda no Site
           </h3>
           <p className="text-xs text-muted-foreground mt-1">
-            Insira o ID da conta no LZT Market e o novo preço desejado. Isso altera o preço diretamente no marketplace.
-            <br />
-            <span className="text-yellow-500/80">⚠ Só funciona para contas que pertencem à sua conta LZT (listadas por você).</span>
+            Defina um preço personalizado em R$ (BRL) para uma conta específica no seu site. Esse valor substitui o cálculo automático de markup.
           </p>
           <div className="mt-4 flex flex-wrap items-end gap-4">
             <div>
@@ -308,12 +306,12 @@ const LztTab = () => {
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-muted-foreground">Novo Preço (Rublos ₽)</label>
+              <label className="text-xs font-medium text-muted-foreground">Preço de Venda (R$)</label>
               <input
                 type="number"
                 step="0.01"
                 min="0"
-                placeholder="Ex: 150"
+                placeholder="Ex: 49.90"
                 value={newPrice}
                 onChange={(e) => setNewPrice(e.target.value)}
                 className="mt-1 w-36 rounded-lg border border-border bg-secondary/50 px-4 py-2.5 text-sm text-foreground outline-none focus:border-success/50"
@@ -322,7 +320,7 @@ const LztTab = () => {
             <button
               onClick={async () => {
                 if (!priceItemId.trim() || !newPrice.trim()) {
-                  toast({ title: "Preencha o ID e o novo preço", variant: "destructive" });
+                  toast({ title: "Preencha o ID e o preço", variant: "destructive" });
                   return;
                 }
                 const p = parseFloat(newPrice);
@@ -331,34 +329,18 @@ const LztTab = () => {
                   return;
                 }
                 setChangingPrice(true);
-
                 try {
-                  const session = (await supabase.auth.getSession()).data.session;
-                  const res = await fetch(
-                    `https://cthqzetkshrbsjulfytl.supabase.co/functions/v1/lzt-market?action=change-price`,
-                    {
-                      method: "POST",
-                      headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${session?.access_token}`,
-                        apikey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN0aHF6ZXRrc2hyYnNqdWxmeXRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0ODQ0MzMsImV4cCI6MjA4ODA2MDQzM30.j6cRaiydfGUnoXwoz34HzL3TtnYrj93qinX7aiA9ecg",
-                      },
-                      body: JSON.stringify({ item_id: priceItemId.trim(), price: p, currency: priceCurrency }),
-                    }
+                  const { error } = await supabase.from("lzt_price_overrides").upsert(
+                    { lzt_item_id: priceItemId.trim(), custom_price_brl: p },
+                    { onConflict: "lzt_item_id" }
                   );
-                  const result = await res.json();
-                  if (!res.ok) {
-                    const desc = res.status === 403 
-                      ? "Sem permissão. Essa conta não pertence ao seu perfil no LZT Market." 
-                      : (result.error || result.detail || "Erro desconhecido");
-                    toast({ title: "Erro ao alterar preço", description: desc, variant: "destructive" });
-                  } else {
-                    toast({ title: "Preço alterado com sucesso!", description: `Conta #${priceItemId} → ${p} ${priceCurrency.toUpperCase()}` });
-                    setPriceItemId("");
-                    setNewPrice("");
-                  }
+                  if (error) throw error;
+                  toast({ title: "Preço definido!", description: `Conta #${priceItemId.trim()} → R$ ${p.toFixed(2)}` });
+                  setPriceItemId("");
+                  setNewPrice("");
+                  fetchOverrides();
                 } catch (err: any) {
-                  toast({ title: "Erro de rede", description: err.message, variant: "destructive" });
+                  toast({ title: "Erro ao salvar", description: err.message, variant: "destructive" });
                 }
                 setChangingPrice(false);
               }}
@@ -366,8 +348,37 @@ const LztTab = () => {
               className="flex items-center gap-2 rounded-lg bg-success px-6 py-2.5 text-sm font-semibold text-success-foreground transition-all hover:shadow-[0_0_24px_hsl(130,99%,41%,0.45)] disabled:opacity-50"
             >
               {changingPrice ? <Loader2 className="h-4 w-4 animate-spin" /> : <DollarSign className="h-4 w-4" />}
-              Alterar Preço
+              Salvar Preço
             </button>
+          </div>
+
+          {overrides.length > 0 && (
+            <div className="mt-6">
+              <h4 className="text-sm font-semibold text-muted-foreground mb-2">Preços Personalizados Ativos</h4>
+              <div className="space-y-1.5">
+                {overrides.map((o) => (
+                  <div key={o.lzt_item_id} className="flex items-center justify-between rounded-lg border border-border bg-secondary/30 px-4 py-2">
+                    <span className="text-sm font-mono text-foreground">#{o.lzt_item_id}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-bold text-success">R$ {Number(o.custom_price_brl).toFixed(2)}</span>
+                      <button
+                        onClick={async () => {
+                          await supabase.from("lzt_price_overrides").delete().eq("lzt_item_id", o.lzt_item_id);
+                          toast({ title: "Override removido", description: `Conta #${o.lzt_item_id} voltou ao preço automático.` });
+                          fetchOverrides();
+                        }}
+                        className="text-xs text-destructive hover:text-destructive/80"
+                      >
+                        Remover
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
           </div>
         </div>
       )}
