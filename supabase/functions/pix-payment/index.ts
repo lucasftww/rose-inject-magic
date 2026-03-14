@@ -1297,6 +1297,9 @@ function mapMisticPayStatus(state: string): string {
   }
 }
 
+// In-memory throttle map for status polling (per-isolate)
+const statusPollMap = new Map<string, number>();
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
