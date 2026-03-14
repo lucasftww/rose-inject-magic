@@ -142,12 +142,16 @@ const Dashboard = () => {
           const isLzt = t.metadata?.type === "lzt-account";
           const isRobot = t.metadata?.type === "robot-project";
           if (isLzt) {
+            const lztGameLabels: Record<string, string> = {
+              valorant: "Conta Valorant", lol: "Conta LoL", fortnite: "Conta Fortnite", minecraft: "Conta Minecraft",
+            };
+            const lztGameLabel = lztGameLabels[t.metadata?.game] || "Conta LZT";
             return {
               ...t,
-              product_name: t.metadata.account_name || "Conta Valorant",
-              plan_name: "Conta Valorant",
+              product_name: t.metadata.account_name || t.metadata.title || lztGameLabel,
+              plan_name: lztGameLabel,
               image_url: t.metadata.account_image || null,
-              plan_price: t.metadata.price_paid || 0,
+              plan_price: t.metadata.price_paid || t.metadata.sell_price || 0,
             };
           }
           const duration = isRobot && t.metadata?.duration ? ` (${t.metadata.duration} dias)` : "";
