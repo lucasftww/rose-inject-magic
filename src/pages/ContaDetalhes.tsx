@@ -702,7 +702,7 @@ const ContaDetalhes = () => {
                   <div className="border-t border-border pt-3 sm:pt-4">
                     <h3 className="text-xs sm:text-sm font-bold text-foreground mb-2 sm:mb-3">Informações da Conta</h3>
                     <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
-                      {item.valorantRegionPhrase && <StatCell label="Região" value={item.valorantRegionPhrase} />}
+                      {item.valorantRegionPhrase && <StatCell label="Região" value={translateRegion(item.valorantRegionPhrase)} />}
                       {item.riot_valorant_wallet_vp != null && <StatCell label="VP na conta" value={item.riot_valorant_wallet_vp} />}
                       {item.riot_valorant_wallet_rp != null && item.riot_valorant_wallet_rp > 0 && <StatCell label="RP na conta" value={item.riot_valorant_wallet_rp} />}
                       {item.riot_valorant_inventory_value != null && <StatCell label="Valor inventário" value={`$${item.riot_valorant_inventory_value}`} />}
