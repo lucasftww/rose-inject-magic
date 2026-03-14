@@ -17,7 +17,7 @@
  *   external_id            — SHA-256 hashed user ID (or hashed first-party tracking ID for anonymous)
  *
  * Deduplication:
- *   ViewContent/AddToCart/InitiateCheckout → random event_id shared by Pixel+CAPI
+ *   ViewContent/InitiateCheckout → random event_id shared by Pixel+CAPI
  *   Purchase → deterministic purchase_${transactionId} + sessionStorage guard
  */
 
