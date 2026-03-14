@@ -86,6 +86,7 @@ const Checkout = () => {
         base.price = i.price;
         base.lztPrice = i.lztPrice;
         base.lztCurrency = i.lztCurrency;
+        if (i.skinsCount != null) base.skinsCount = i.skinsCount;
       } else {
         base.price = i.price;
       }
