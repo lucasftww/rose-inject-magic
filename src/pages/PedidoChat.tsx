@@ -418,6 +418,21 @@ const PedidoChat = () => {
     );
   };
 
+  const getEmailWebmailUrl = (email: string): string | null => {
+    const domain = email.split("@")[1]?.toLowerCase();
+    if (!domain) return null;
+    const knownWebmails: Record<string, string> = {
+      "hotmail.com": "https://login.live.com",
+      "outlook.com": "https://login.live.com",
+      "live.com": "https://login.live.com",
+      "gmail.com": "https://mail.google.com",
+      "yahoo.com": "https://mail.yahoo.com",
+    };
+    if (knownWebmails[domain]) return knownWebmails[domain];
+    // Generic webmail fallback for autoreg domains like firstmail.ltd
+    return `https://${domain}/webmail/login/`;
+  };
+
   const getGameConfig = (game?: string) => {
     switch (game) {
       case "fortnite":
