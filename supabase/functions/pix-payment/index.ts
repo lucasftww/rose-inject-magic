@@ -1300,6 +1300,53 @@ function mapMisticPayStatus(state: string): string {
 // In-memory throttle map for status polling (per-isolate)
 const statusPollMap = new Map<string, number>();
 
+// In-memory rate limiter per IP (general requests)
+const ipRequestMap = new Map<string, { count: number; windowStart: number }>();
+// In-memory rate limiter per user (general requests)
+const userRequestMap = new Map<string, { count: number; windowStart: number }>();
+// In-memory duplicate payment prevention (userId -> last create timestamp)
+const lastPaymentCreateMap = new Map<string, number>();
+
+function getClientIp(req: Request): string {
+  return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+    || req.headers.get("x-real-ip")
+    || req.headers.get("cf-connecting-ip")
+    || "unknown";
+}
+
+// Anti-bot: check user-agent
+function isBlockedBot(req: Request): boolean {
+  const ua = req.headers.get("user-agent") || "";
+  if (!ua || ua.length < 5) return true;
+  const blocked = ["python-requests", "curl/", "wget/", "httpie/", "postman", "insomnia", "scrapy", "go-http-client"];
+  const lower = ua.toLowerCase();
+  return blocked.some(b => lower.includes(b));
+}
+
+// General rate limiter (per minute)
+function checkRateLimit(key: string, map: Map<string, { count: number; windowStart: number }>, maxPerMinute: number): boolean {
+  const now = Date.now();
+  const entry = map.get(key);
+  if (!entry || now - entry.windowStart > 60_000) {
+    map.set(key, { count: 1, windowStart: now });
+    return false; // not limited
+  }
+  entry.count++;
+  if (entry.count > maxPerMinute) return true; // limited
+  return false;
+}
+
+// Cleanup old entries from maps periodically
+function cleanupMap(map: Map<string, any>, maxSize: number) {
+  if (map.size > maxSize) {
+    const cutoff = Date.now() - 120_000;
+    for (const [k, v] of map) {
+      const ts = typeof v === "number" ? v : v?.windowStart || 0;
+      if (ts < cutoff) map.delete(k);
+    }
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -1310,6 +1357,29 @@ Deno.serve(async (req) => {
 
   const url = new URL(req.url);
   const action = url.searchParams.get("action");
+  const clientIp = getClientIp(req);
+
+  // ==================== ANTI-BOT CHECK ====================
+  // Skip for webhooks (server-to-server)
+  if (action !== "webhook" && isBlockedBot(req)) {
+    console.error(`BOT BLOCKED: IP=${clientIp}, UA="${req.headers.get("user-agent")}", action=${action}`);
+    return new Response(JSON.stringify({ error: "Forbidden" }), {
+      status: 403,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  // ==================== GENERAL IP RATE LIMIT (60/min) ====================
+  if (action !== "webhook") {
+    if (checkRateLimit(clientIp, ipRequestMap, 60)) {
+      console.error(`IP RATE LIMIT: IP=${clientIp}, action=${action}`);
+      return new Response(JSON.stringify({ error: "Too many requests" }), {
+        status: 429,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    cleanupMap(ipRequestMap, 2000);
+  }
 
   // ==================== MISTICPAY WEBHOOK (no auth required) ====================
   if (action === "webhook" && req.method === "POST") {
@@ -1456,7 +1526,15 @@ Deno.serve(async (req) => {
   const userId = claimsData.claims.sub;
   const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-  // url and action already declared above
+  // ==================== USER RATE LIMIT (20/min) ====================
+  if (checkRateLimit(userId, userRequestMap, 20)) {
+    console.error(`USER RATE LIMIT: userId=${userId}, IP=${clientIp}, action=${action}`);
+    return new Response(JSON.stringify({ error: "Too many requests" }), {
+      status: 429,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  cleanupMap(userRequestMap, 2000);
 
   try {
     // ==================== BAN CHECK ====================
@@ -1476,6 +1554,18 @@ Deno.serve(async (req) => {
 
     // ==================== RATE LIMITING (payment creation) ====================
     if (["create", "create-card", "create-crypto"].includes(action || "") && req.method === "POST") {
+      // Check duplicate payment creation (30s cooldown)
+      const lastCreate = lastPaymentCreateMap.get(userId);
+      const now = Date.now();
+      if (lastCreate && now - lastCreate < 30_000) {
+        console.error(`DUPLICATE PAYMENT BLOCKED: userId=${userId}, IP=${clientIp}, elapsed=${now - lastCreate}ms`);
+        return new Response(JSON.stringify({ error: "Aguarde 30 segundos antes de criar outro pagamento." }), {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Check active payments per user (max 5)
       const { count: activeCount } = await supabaseAdmin
         .from("payments")
         .select("id", { count: "exact", head: true })
@@ -1483,7 +1573,6 @@ Deno.serve(async (req) => {
         .eq("status", "ACTIVE");
 
       if ((activeCount ?? 0) >= 5) {
-        const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
         console.error(`RATE LIMIT: user ${userId} has ${activeCount} active payments. IP: ${clientIp}`);
         return new Response(JSON.stringify({ error: "Você tem muitos pagamentos pendentes. Aguarde a expiração ou conclusão dos pagamentos anteriores." }), {
           status: 429,
@@ -1589,12 +1678,17 @@ Deno.serve(async (req) => {
         .single();
 
       if (insertError) {
+        // Don't set lastPaymentCreateMap on error
         console.error("Insert error:", insertError);
         return new Response(JSON.stringify({ error: "Erro ao salvar pagamento" }), {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+
+      // Record successful creation for duplicate prevention
+      lastPaymentCreateMap.set(userId, Date.now());
+      cleanupMap(lastPaymentCreateMap, 2000);
 
       return new Response(
         JSON.stringify({
