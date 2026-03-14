@@ -435,6 +435,7 @@ async function fulfillOrder(supabaseAdmin: any, payment: any) {
 
   // Record coupon usage and increment counter
   if (payment.coupon_id) {
+    log("INFO", "fulfillOrder", "Recording coupon usage", { couponId: payment.coupon_id, userId: payment.user_id });
     await supabaseAdmin
       .from("coupon_usage")
       .insert({ coupon_id: payment.coupon_id, user_id: payment.user_id });
