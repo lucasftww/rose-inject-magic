@@ -627,9 +627,8 @@ const ContaDetalhes = () => {
                         </button>
                       </>
                     )}
-                    {/* Bottom info bar */}
-                    <div className="absolute bottom-0 left-0 right-0 z-[2] flex items-center justify-between px-4 py-2.5 bg-background/60 backdrop-blur-sm">
-                      <p className="text-xs font-medium text-foreground/80 truncate max-w-[65%]">{skinItems[selectedSkin]?.name}</p>
+                    {/* Counter only */}
+                    <div className="absolute bottom-3 right-3 z-[2] rounded-lg bg-background/60 backdrop-blur-sm px-2.5 py-1">
                       <p className="text-[11px] text-muted-foreground tabular-nums">{selectedSkin + 1}/{skinItems.length}</p>
                     </div>
                   </div>
