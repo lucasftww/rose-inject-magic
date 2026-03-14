@@ -930,38 +930,8 @@ async function fulfillRobotProduct(supabaseAdmin: any, payment: any, item: any, 
         message: deliveryMsg,
       });
 
-      // Send tutorial if exists (skip for robot products since robot handles everything)
-      // But still send if configured manually
-      const { data: tutorialData } = await supabaseAdmin
-        .from("product_tutorials")
-        .select("tutorial_text, tutorial_file_url")
-        .eq("product_id", item.productId)
-        .maybeSingle();
-
-      if (tutorialData?.tutorial_text) {
-        const txtBlob = new Blob([tutorialData.tutorial_text], { type: "text/plain" });
-        const txtPath = `tutorials/${crypto.randomUUID()}.txt`;
-        const { error: uploadErr } = await supabaseAdmin.storage
-          .from("game-images")
-          .upload(txtPath, txtBlob, { contentType: "text/plain" });
-        if (!uploadErr) {
-          const { data: urlData } = supabaseAdmin.storage.from("game-images").getPublicUrl(txtPath);
-          await supabaseAdmin.from("ticket_messages").insert({
-            ticket_id: ticket.id,
-            sender_id: payment.user_id,
-            sender_role: "staff",
-            message: `📖 **Tutorial:** ${urlData.publicUrl}`,
-          });
-        }
-      }
-      if (tutorialData?.tutorial_file_url) {
-        await supabaseAdmin.from("ticket_messages").insert({
-          ticket_id: ticket.id,
-          sender_id: payment.user_id,
-          sender_role: "staff",
-          message: `📎 **Arquivo:** ${tutorialData.tutorial_file_url}`,
-        });
-      }
+      // Robot products get their tutorial/download from the API response (downloadUrl above)
+      // Do NOT send manual product_tutorials for robot products to avoid confusion
     }
 
     console.log(`Robot fulfillment success: key=${key}, game=${gameName}, spent=${amountSpent}, balance=${robotBalance}, free=${isFreeGame}`);
