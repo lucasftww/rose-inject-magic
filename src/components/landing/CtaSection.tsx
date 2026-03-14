@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { fadeUp, staggerContainer } from "./animations";
 
 const CtaSection = () => (
-  <section className="border-t border-border bg-background px-4 sm:px-6 py-14 sm:py-32">
+  <section className="border-t border-border bg-background px-5 sm:px-6 py-14 sm:py-32">
     <motion.div
       className="mx-auto max-w-3xl text-center"
       initial="hidden"
