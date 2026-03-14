@@ -922,9 +922,9 @@ const MinecraftCard = ({ item, formatPrice }: { item: LztItem; formatPrice: (pri
           </div>
         </div>
 
-        <div className="mt-auto pt-3 sm:pt-4 flex items-end justify-between">
+        <div className="mt-auto pt-3 sm:pt-4">
           <p className="text-base sm:text-xl font-bold" style={{ color: MC_GREEN }}>{formatPrice(item.price, item.price_currency)}</p>
-          <button className="flex items-center gap-1 rounded border border-border px-2 py-1.5 sm:px-4 sm:py-2 text-[10px] sm:text-xs font-medium text-muted-foreground transition-colors"
+          <button className="mt-2 w-full flex items-center justify-center gap-1 rounded border border-border px-2 py-2 sm:py-2 text-[10px] sm:text-xs font-medium text-muted-foreground transition-colors"
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = MC_GREEN; (e.currentTarget as HTMLElement).style.color = MC_GREEN; }}
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = ''; (e.currentTarget as HTMLElement).style.color = ''; }}
           >
