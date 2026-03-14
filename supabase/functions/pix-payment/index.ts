@@ -823,7 +823,7 @@ async function fulfillRobotProduct(supabaseAdmin: any, payment: any, item: any, 
   const robotGameId = productData.robot_game_id;
   const duration = planData?.robot_duration_days || 30;
 
-  console.log(`Robot fulfillment: gameId=${robotGameId}, duration=${duration}, product=${item.productName}`);
+  log("INFO", "fulfillRobot", "Starting Robot fulfillment", { robotGameId, duration, product: item.productName, userId: payment.user_id });
 
   // Get Robot credentials
   const [uRes, pRes] = await Promise.all([
