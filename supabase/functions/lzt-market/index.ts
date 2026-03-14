@@ -168,6 +168,62 @@ Deno.serve(async (req) => {
       });
     }
 
+    // CHANGE PRICE: Change price of an account - ADMIN ONLY
+    if (action === "change-price" && req.method === "POST") {
+      const user = await getAuthUser();
+      if (!user) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { data: adminRole } = await supabaseAdmin
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "admin")
+        .maybeSingle();
+
+      if (!adminRole) {
+        return new Response(JSON.stringify({ error: "Forbidden: admin only" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const body = await req.json();
+      const { item_id: priceItemId, price: newPrice, currency: priceCurrency } = body;
+
+      if (!priceItemId || !newPrice) {
+        return new Response(JSON.stringify({ error: "item_id and price required" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const editUrl = `https://api.lzt.market/${encodeURIComponent(priceItemId)}/edit?price=${encodeURIComponent(newPrice)}${priceCurrency ? `&currency=${encodeURIComponent(priceCurrency)}` : ""}`;
+      console.log("Change price:", editUrl);
+
+      const editResponse = await fetch(editUrl, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+      });
+
+      const editData = await editResponse.json();
+      console.log("Change price response:", editResponse.status, JSON.stringify(editData).substring(0, 500));
+
+      if (!editResponse.ok) {
+        return new Response(
+          JSON.stringify({ error: "LZT change-price failed", status: editResponse.status, detail: editData }),
+          { status: editResponse.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      return new Response(JSON.stringify(editData), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Fetch lzt_config once for both list and detail actions
     const { data: lztConfig } = await supabaseAdmin
       .from("lzt_config")
