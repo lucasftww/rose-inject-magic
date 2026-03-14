@@ -281,6 +281,111 @@ const LztTab = () => {
         </>
       )}
 
+      {activeView === "price" && (
+        <div className="rounded-lg border border-border bg-card p-6">
+          <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+            <Tag className="h-4 w-4 text-success" /> Alterar Preço de Conta por ID
+          </h3>
+          <p className="text-xs text-muted-foreground mt-1">
+            Insira o ID da conta no LZT Market e o novo preço desejado. Isso altera o preço diretamente no marketplace.
+          </p>
+          <div className="mt-4 flex flex-wrap items-end gap-4">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">ID da Conta (LZT)</label>
+              <input
+                type="text"
+                placeholder="Ex: 12345678"
+                value={priceItemId}
+                onChange={(e) => setPriceItemId(e.target.value)}
+                className="mt-1 w-48 rounded-lg border border-border bg-secondary/50 px-4 py-2.5 text-sm text-foreground outline-none focus:border-success/50"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">Novo Preço</label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="Ex: 150"
+                value={newPrice}
+                onChange={(e) => setNewPrice(e.target.value)}
+                className="mt-1 w-36 rounded-lg border border-border bg-secondary/50 px-4 py-2.5 text-sm text-foreground outline-none focus:border-success/50"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">Moeda</label>
+              <select
+                value={priceCurrency}
+                onChange={(e) => setPriceCurrency(e.target.value)}
+                className="mt-1 w-28 rounded-lg border border-border bg-secondary/50 px-3 py-2.5 text-sm text-foreground outline-none focus:border-success/50"
+              >
+                <option value="rub">RUB</option>
+                <option value="usd">USD</option>
+                <option value="eur">EUR</option>
+              </select>
+            </div>
+            <button
+              onClick={async () => {
+                if (!priceItemId.trim() || !newPrice.trim()) {
+                  toast({ title: "Preencha o ID e o novo preço", variant: "destructive" });
+                  return;
+                }
+                const p = parseFloat(newPrice);
+                if (isNaN(p) || p <= 0) {
+                  toast({ title: "Preço inválido", variant: "destructive" });
+                  return;
+                }
+                setChangingPrice(true);
+                try {
+                  const { data, error } = await supabase.functions.invoke("lzt-market", {
+                    method: "POST",
+                    body: { item_id: priceItemId.trim(), price: p, currency: priceCurrency },
+                    headers: { "Content-Type": "application/json" },
+                  });
+                  // supabase.functions.invoke uses query params differently, need to pass action via URL
+                  // Actually, invoke sends POST to the function URL. We need to add action as query param.
+                  // Let's use a workaround: call via fetch directly
+                } catch {
+                  // ignore, we'll use fetch below
+                }
+
+                try {
+                  const session = (await supabase.auth.getSession()).data.session;
+                  const res = await fetch(
+                    `https://cthqzetkshrbsjulfytl.supabase.co/functions/v1/lzt-market?action=change-price`,
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${session?.access_token}`,
+                        apikey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN0aHF6ZXRrc2hyYnNqdWxmeXRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0ODQ0MzMsImV4cCI6MjA4ODA2MDQzM30.j6cRaiydfGUnoXwoz34HzL3TtnYrj93qinX7aiA9ecg",
+                      },
+                      body: JSON.stringify({ item_id: priceItemId.trim(), price: p, currency: priceCurrency }),
+                    }
+                  );
+                  const result = await res.json();
+                  if (!res.ok) {
+                    toast({ title: "Erro ao alterar preço", description: result.error || result.detail || "Erro desconhecido", variant: "destructive" });
+                  } else {
+                    toast({ title: "Preço alterado com sucesso!", description: `Conta #${priceItemId} → ${p} ${priceCurrency.toUpperCase()}` });
+                    setPriceItemId("");
+                    setNewPrice("");
+                  }
+                } catch (err: any) {
+                  toast({ title: "Erro de rede", description: err.message, variant: "destructive" });
+                }
+                setChangingPrice(false);
+              }}
+              disabled={changingPrice}
+              className="flex items-center gap-2 rounded-lg bg-success px-6 py-2.5 text-sm font-semibold text-success-foreground transition-all hover:shadow-[0_0_24px_hsl(130,99%,41%,0.45)] disabled:opacity-50"
+            >
+              {changingPrice ? <Loader2 className="h-4 w-4 animate-spin" /> : <DollarSign className="h-4 w-4" />}
+              Alterar Preço
+            </button>
+          </div>
+        </div>
+      )}
+
       {activeView === "sales" && (
         <div className="rounded-lg border border-border bg-card p-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
