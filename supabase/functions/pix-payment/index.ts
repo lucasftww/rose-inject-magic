@@ -1565,6 +1565,14 @@ Deno.serve(async (req) => {
         });
       }
 
+      // Auto-expire stale ACTIVE payments older than 30 minutes
+      await supabaseAdmin
+        .from("payments")
+        .update({ status: "EXPIRED" })
+        .eq("user_id", userId)
+        .eq("status", "ACTIVE")
+        .lt("created_at", new Date(Date.now() - 30 * 60 * 1000).toISOString());
+
       // Check active payments per user (max 5)
       const { count: activeCount } = await supabaseAdmin
         .from("payments")
