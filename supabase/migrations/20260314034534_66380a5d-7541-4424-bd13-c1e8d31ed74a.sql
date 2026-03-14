@@ -1,0 +1,1 @@
+UPDATE payments SET status = 'EXPIRED' WHERE status = 'ACTIVE' AND created_at < NOW() - INTERVAL '30 minutes';
