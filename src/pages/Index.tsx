@@ -287,11 +287,11 @@ const LztContaCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap
             <span className="text-[10px] sm:text-[11px] text-muted-foreground">{translateRegion(item.valorantRegionPhrase)}</span>
           </div>
         )}
-        <div className="mt-auto pt-3 sm:pt-4 flex items-end justify-between">
+        <div className="mt-auto pt-3 sm:pt-4">
           <p className="text-base sm:text-xl font-bold text-success">
             {formatPrice(item.price, item.price_currency)}
           </p>
-          <span className="hidden sm:flex items-center gap-1.5 rounded border border-border px-4 py-2 text-xs font-medium text-muted-foreground transition-colors group-hover:border-success group-hover:text-success">
+          <span className="mt-2 w-full flex items-center justify-center gap-1.5 rounded border border-border px-2 py-2 text-[10px] sm:text-xs font-medium text-muted-foreground transition-colors group-hover:border-success group-hover:text-success">
             Ver conta
           </span>
         </div>
