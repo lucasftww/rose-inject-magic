@@ -979,15 +979,15 @@ const ContaDetalhes = () => {
 };
 
 const StatCell = ({ label, value }: { label: string; value: string | number }) => (
-  <div className="flex items-center justify-between rounded-lg border border-border bg-secondary/30 px-4 py-3">
+  <div className="flex items-center justify-between rounded-xl bg-secondary/30 px-4 py-3">
     <span className="text-xs text-muted-foreground">{label}</span>
     <span className="text-sm font-bold text-foreground">{value}</span>
   </div>
 );
 
 const HighlightStat = forwardRef<HTMLDivElement, { label: string; value: string | number }>(({ label, value }, ref) => (
-  <div ref={ref} className="flex flex-col items-center py-3 px-1.5">
-    <span className="text-[10px] text-muted-foreground mb-0.5">{label}</span>
+  <div ref={ref} className="flex flex-col items-center py-3.5 px-1.5">
+    <span className="text-[10px] text-muted-foreground mb-1">{label}</span>
     <span className="text-base font-bold text-success">{value}</span>
   </div>
 ));
