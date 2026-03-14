@@ -328,7 +328,7 @@ async function fulfillOrder(supabaseAdmin: any, payment: any) {
 
     for (let i = 0; i < (item.quantity || 1); i++) {
       if (isRobotProduct) {
-        // Robot Project fulfillment - buy key via API
+        log("INFO", "fulfillOrder", "Robot product detected", { productId: item.productId, robotGameId: productData.robot_game_id, duration: planData?.robot_duration_days });
         await fulfillRobotProduct(supabaseAdmin, payment, item, productData, planData);
       } else {
         // Standard stock-based fulfillment
@@ -341,6 +341,7 @@ async function fulfillOrder(supabaseAdmin: any, payment: any) {
           .single();
 
         const stockId = stockItem?.id || null;
+        log("INFO", "fulfillOrder", "Stock lookup", { planId: item.planId, stockFound: !!stockId });
 
         if (stockId) {
           await supabaseAdmin
