@@ -785,20 +785,19 @@ const ContaDetalhes = () => {
             {(skinUuids.length > 0 || agentUuids.length > 0 || buddyUuids.length > 0) && (
               <div className="mt-4 sm:mt-5">
                 {/* Tab buttons */}
-                <div className="flex w-full gap-1 sm:gap-2 mb-4 sm:mb-5">
+                <div className="flex w-full gap-2 mb-5 sm:mb-5">
                   {tabs.map((tab) => (
                     <button
                       key={tab.key}
                       onClick={() => setActiveTab(tab.key)}
-                      className={`flex flex-1 items-center justify-center gap-1 sm:gap-2 rounded-lg border px-2 sm:px-4 py-2.5 text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
+                      className={`flex flex-1 items-center justify-center gap-1.5 sm:gap-2 rounded-xl px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
                         activeTab === tab.key
-                          ? "border-success bg-success/10 text-success"
-                          : "border-border bg-card text-muted-foreground hover:border-muted-foreground/50"
+                          ? "bg-success/10 text-success"
+                          : "bg-secondary/40 text-muted-foreground hover:bg-secondary/60"
                       }`}
                     >
                       {tab.icon}
-                      <span className="hidden sm:inline">{tab.label}</span>
-                      <span className="sm:hidden">{tab.label.slice(0, 5)}{tab.label.length > 5 ? '' : ''}</span>
+                      <span>{tab.label}</span>
                       {tab.count > 0 && (
                         <span className={`rounded-full px-1.5 sm:px-2 py-0.5 text-[10px] font-bold ${
                           activeTab === tab.key ? "bg-success/20 text-success" : "bg-secondary text-muted-foreground"
