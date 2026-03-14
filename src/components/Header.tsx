@@ -97,7 +97,7 @@ const Header = () => {
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ type: "spring", damping: 20, stiffness: 200 }}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${bannerVisible ? 'mt-[36px]' : 'mt-0'}`}
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${bannerVisible ? 'mt-[30px] sm:mt-[32px]' : 'mt-0'}`}
         style={{
           borderBottom: `1px solid ${scrolled ? (isLolContext ? `${LOL_BLUE}20` : "hsl(var(--border))") : "transparent"}`,
           background: scrolled
