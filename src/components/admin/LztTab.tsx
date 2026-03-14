@@ -41,7 +41,7 @@ const LztTab = () => {
   const [config, setConfig] = useState<LztConfig | null>(null);
   const [allSales, setAllSales] = useState<LztSale[]>([]);
   const [maxPrice, setMaxPrice] = useState("500");
-  const [activeView, setActiveView] = useState<"config" | "sales">("config");
+  const [activeView, setActiveView] = useState<"config" | "sales" | "price">("config");
   const [salesPage, setSalesPage] = useState(0);
   const [salesSearch, setSalesSearch] = useState("");
 
