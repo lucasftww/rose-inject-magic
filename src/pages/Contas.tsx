@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useLztMarkup } from "@/hooks/useLztMarkup";
 import Header from "@/components/Header";
-import { ChevronLeft, ChevronRight, ChevronDown, Search, SlidersHorizontal, DollarSign, Crosshair, Loader2, RefreshCw, Globe, TrendingUp, Star, Shield, Trophy, AlertTriangle, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronDown, Search, SlidersHorizontal, DollarSign, Crosshair, Loader2, RefreshCw, Globe, TrendingUp, Star, Shield, Trophy, AlertTriangle, X, ArrowRight } from "lucide-react";
 import { throwApiError } from "@/lib/apiErrors";
 import { translateRegion } from "@/lib/regionTranslation";
 import { motion } from "framer-motion";
