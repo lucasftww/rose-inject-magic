@@ -594,16 +594,16 @@ const ContaDetalhes = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 sm:gap-6">
               {/* LEFT: Gallery only */}
-              <div className="lg:col-span-3 space-y-3 sm:space-y-4">
+              <div className="lg:col-span-3 space-y-4 sm:space-y-4">
                 {/* Single skin carousel */}
                 {skinItems.length > 0 && !skinsLoading ? (
-                  <div className="rounded-lg border border-border bg-card overflow-hidden aspect-[4/3] sm:aspect-[16/10] relative group">
+                  <div className="rounded-xl border border-border/60 bg-card overflow-hidden aspect-[4/3] sm:aspect-[16/10] relative group">
                     <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--secondary))] via-[hsl(var(--background))] to-[hsl(var(--secondary))]" />
-                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--success)/0.08),transparent_70%)]" />
+                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--success)/0.06),transparent_70%)]" />
                     <AnimatePresence mode="wait">
                       <motion.div
                         key={selectedSkin}
-                        className="relative z-[1] flex items-center justify-center h-full w-full p-4 sm:p-8 cursor-pointer"
+                        className="relative z-[1] flex items-center justify-center h-full w-full p-6 sm:p-8 cursor-pointer"
                         onClick={() => { setActiveTab("skins"); setLightboxIndex(selectedSkin); }}
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
@@ -619,22 +619,19 @@ const ContaDetalhes = () => {
                     </AnimatePresence>
                     {skinItems.length > 1 && (
                       <>
-                        <button onClick={handlePrev} className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 z-[2] flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-background/80 border border-border text-muted-foreground sm:opacity-0 sm:group-hover:opacity-100 transition-all hover:text-success hover:border-success/40">
+                        <button onClick={handlePrev} className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 z-[2] flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-background/70 backdrop-blur-sm text-muted-foreground sm:opacity-0 sm:group-hover:opacity-100 transition-all hover:text-success">
                           <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
                         </button>
-                        <button onClick={handleNext} className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 z-[2] flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-background/80 border border-border text-muted-foreground sm:opacity-0 sm:group-hover:opacity-100 transition-all hover:text-success hover:border-success/40">
+                        <button onClick={handleNext} className="absolute right-2.5 sm:right-3 top-1/2 -translate-y-1/2 z-[2] flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-background/70 backdrop-blur-sm text-muted-foreground sm:opacity-0 sm:group-hover:opacity-100 transition-all hover:text-success">
                           <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5 rotate-180" />
                         </button>
                       </>
                     )}
-                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-[2] rounded-lg bg-background/80 backdrop-blur-sm border border-border px-3 py-1.5">
-                      <p className="text-xs font-medium text-muted-foreground">{selectedSkin + 1} / {skinItems.length}</p>
+                    {/* Bottom info bar */}
+                    <div className="absolute bottom-0 left-0 right-0 z-[2] flex items-center justify-between px-4 py-2.5 bg-background/60 backdrop-blur-sm">
+                      <p className="text-xs font-medium text-foreground/80 truncate max-w-[65%]">{skinItems[selectedSkin]?.name}</p>
+                      <p className="text-[11px] text-muted-foreground tabular-nums">{selectedSkin + 1}/{skinItems.length}</p>
                     </div>
-                    {skinItems[selectedSkin]?.name && (
-                      <div className="absolute top-3 left-3 z-[2] rounded-lg bg-background/80 backdrop-blur-sm border border-border px-3 py-1.5">
-                        <p className="text-xs font-medium text-foreground">{skinItems[selectedSkin].name}</p>
-                      </div>
-                    )}
                   </div>
                 ) : mainGallery.length > 0 ? (
                   <div className="relative group rounded-lg border border-border bg-card overflow-hidden aspect-[4/3] sm:aspect-[16/10]">
@@ -671,7 +668,7 @@ const ContaDetalhes = () => {
                 )}
 
               {/* Rank + Stats */}
-                <div className="rounded-xl border border-border bg-card p-5 sm:p-5 space-y-4 sm:space-y-4">
+                <div className="rounded-xl border border-border/60 bg-card p-5 sm:p-5 space-y-4 sm:space-y-4">
                   <div className="flex items-center justify-center gap-6 sm:justify-between">
                     {/* Último rank (esquerda) */}
                     {item.riot_valorant_previous_rank && rankMap[item.riot_valorant_previous_rank] ? (
@@ -717,7 +714,7 @@ const ContaDetalhes = () => {
               {/* RIGHT: Purchase + Rank + Stats + Full Acesso */}
               <div className="lg:col-span-2 space-y-4 sm:space-y-4">
                 {/* Title + Purchase */}
-                <div className="rounded-xl border border-border bg-card p-5 sm:p-5 space-y-4">
+                <div className="rounded-xl border border-border/60 bg-card p-5 sm:p-5 space-y-4">
                   <h1 className="text-lg sm:text-lg font-bold text-foreground leading-snug">{dynamicTitle}</h1>
 
                   <div className="flex flex-wrap gap-2">
@@ -758,7 +755,7 @@ const ContaDetalhes = () => {
                     <p className="text-[10px] text-muted-foreground/40 text-center break-all">Código: {item.item_id}</p>
                   )}
 
-                  <div className="grid grid-cols-4 divide-x divide-border rounded-xl overflow-hidden border border-border">
+                  <div className="grid grid-cols-4 rounded-xl overflow-hidden bg-secondary/20">
                     <HighlightStat label="Skins" value={item.riot_valorant_skin_count ?? 0} />
                     <HighlightStat label="Agentes" value={item.riot_valorant_agent_count ?? 0} />
                     <HighlightStat label="Nível" value={item.riot_valorant_level ?? 0} />
@@ -767,7 +764,7 @@ const ContaDetalhes = () => {
                 </div>
 
                 {/* Full Acesso */}
-                <div className="rounded-xl border border-border bg-card p-5 sm:p-6 pb-8 sm:pb-14">
+                <div className="rounded-xl border border-border/60 bg-card p-5 sm:p-6 pb-8 sm:pb-14">
                   <div className="flex items-center gap-3 mb-4">
                     <CheckCircle2 className="h-6 w-6 sm:h-8 sm:w-8 text-success" />
                     <h3 className="text-lg sm:text-xl font-bold text-foreground">Conta FULL ACESSO</h3>
@@ -788,20 +785,19 @@ const ContaDetalhes = () => {
             {(skinUuids.length > 0 || agentUuids.length > 0 || buddyUuids.length > 0) && (
               <div className="mt-4 sm:mt-5">
                 {/* Tab buttons */}
-                <div className="flex w-full gap-1 sm:gap-2 mb-4 sm:mb-5">
+                <div className="flex w-full gap-2 mb-5 sm:mb-5">
                   {tabs.map((tab) => (
                     <button
                       key={tab.key}
                       onClick={() => setActiveTab(tab.key)}
-                      className={`flex flex-1 items-center justify-center gap-1 sm:gap-2 rounded-lg border px-2 sm:px-4 py-2.5 text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
+                      className={`flex flex-1 items-center justify-center gap-1.5 sm:gap-2 rounded-xl px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
                         activeTab === tab.key
-                          ? "border-success bg-success/10 text-success"
-                          : "border-border bg-card text-muted-foreground hover:border-muted-foreground/50"
+                          ? "bg-success/10 text-success"
+                          : "bg-secondary/40 text-muted-foreground hover:bg-secondary/60"
                       }`}
                     >
                       {tab.icon}
-                      <span className="hidden sm:inline">{tab.label}</span>
-                      <span className="sm:hidden">{tab.label.slice(0, 5)}{tab.label.length > 5 ? '' : ''}</span>
+                      <span>{tab.label}</span>
                       {tab.count > 0 && (
                         <span className={`rounded-full px-1.5 sm:px-2 py-0.5 text-[10px] font-bold ${
                           activeTab === tab.key ? "bg-success/20 text-success" : "bg-secondary text-muted-foreground"
@@ -815,22 +811,22 @@ const ContaDetalhes = () => {
 
                 {/* Items grid */}
                 {activeItems.length > 0 ? (
-                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3">
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2.5 sm:gap-3">
                     {activeItems.map((invItem: any, i: number) => (
                       <motion.div
                         key={`${activeTab}-${i}`}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.2, delay: i * 0.015 }}
-                        className="group rounded-lg border border-border bg-card overflow-hidden hover:border-success/40 transition-all relative cursor-pointer"
+                        className="group rounded-xl bg-card overflow-hidden hover:ring-1 hover:ring-success/30 transition-all relative cursor-pointer"
                         onClick={() => setLightboxIndex(i)}
                       >
                         {invItem.rarity && (
                           <div className="absolute top-1.5 right-1.5 z-10">
-                            <img src={invItem.rarity.img} alt={invItem.rarity.name} className="h-5 w-5 object-contain drop-shadow-md" title={invItem.rarity.name} />
+                            <img src={invItem.rarity.img} alt={invItem.rarity.name} className="h-4.5 w-4.5 object-contain drop-shadow-md" title={invItem.rarity.name} />
                           </div>
                         )}
-                        <div className="aspect-square bg-secondary/20 flex items-center justify-center p-2 sm:p-3">
+                        <div className="aspect-square bg-secondary/15 flex items-center justify-center p-3 sm:p-3">
                           <img
                             src={invItem.image}
                             alt={invItem.name}
@@ -838,11 +834,11 @@ const ContaDetalhes = () => {
                             loading="lazy"
                           />
                         </div>
-                        <div className="p-1.5 sm:p-2 border-t border-border flex items-center gap-1 sm:gap-1.5">
+                        <div className="px-2 py-1.5 sm:p-2 flex items-center gap-1 sm:gap-1.5">
                           {invItem.rarity && (
-                            <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: invItem.rarity.color }} />
+                            <span className="h-1.5 w-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: invItem.rarity.color }} />
                           )}
-                          <p className="text-[11px] font-medium text-foreground truncate">{invItem.name}</p>
+                          <p className="text-[10px] sm:text-[11px] font-medium text-foreground/80 truncate">{invItem.name}</p>
                         </div>
                       </motion.div>
                     ))}
