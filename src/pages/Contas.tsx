@@ -1707,7 +1707,7 @@ const Contas = () => {
                 )}
 
                 <motion.div
-                  className="grid grid-cols-2 gap-2 sm:gap-6 xl:grid-cols-3"
+                  className="grid grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3"
                   initial="hidden"
                   animate="visible"
                   variants={staggerContainer}
