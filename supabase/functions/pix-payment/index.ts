@@ -1678,6 +1678,7 @@ Deno.serve(async (req) => {
         .single();
 
       if (insertError) {
+        // Don't set lastPaymentCreateMap on error
         console.error("Insert error:", insertError);
         return new Response(JSON.stringify({ error: "Erro ao salvar pagamento" }), {
           status: 500,
