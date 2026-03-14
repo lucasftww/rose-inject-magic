@@ -558,42 +558,32 @@ const LolCard = ({ item, champKeyMap, formatPrice }: { item: LztItem; champKeyMa
 
   return (
     <div
-      className="group cursor-pointer overflow-hidden rounded-lg border border-border bg-card transition-all hover:border-[hsl(198,100%,45%)/40%] hover:shadow-[0_0_20px_hsl(198,100%,45%,0.12)] flex flex-col"
+      className="group cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-[hsl(198,100%,45%)/50%] hover:shadow-[0_4px_24px_hsl(198,100%,45%,0.12)] flex flex-col h-full"
       onClick={() => navigate(`/lol/${item.item_id}`)}
     >
-      {/* Skin portrait grid — mesmo estilo do Valorant */}
-      <div className="relative flex h-32 sm:h-48 items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[hsl(220,30%,10%)] via-[hsl(var(--background))] to-[hsl(220,30%,10%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(198,100%,45%,0.1),transparent_70%)]" />
-        <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[hsl(var(--card))] to-transparent z-[2]" />
-
-        {/* Badges */}
-        <div className="absolute left-2 top-2 sm:left-3 sm:top-3 z-10 flex gap-1">
-          {level > 0 && (
-            <span className="rounded bg-[hsl(198,100%,45%)] px-1.5 py-0.5 sm:px-2.5 sm:py-1 text-[10px] sm:text-xs font-bold text-white">
-              Nv. {level}
-            </span>
-          )}
-          {rankFilterId !== "todos" && (
-            <span className="rounded px-1.5 py-0.5 sm:px-2.5 sm:py-1 text-[10px] sm:text-xs font-bold text-white" style={{ background: rankColor }}>
+      <div className="relative flex h-44 sm:h-52 items-center justify-center overflow-hidden bg-secondary/20">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(198,100%,45%,0.08),transparent_70%)]" />
+        <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-[hsl(var(--card))] to-transparent z-[2]" />
+        <div className="absolute left-2.5 top-2.5 z-10 flex items-center gap-1.5">
+          {rankFilterData?.img ? (
+            <span className="flex items-center gap-1 rounded-md bg-secondary/80 backdrop-blur-sm px-2 py-1 text-[10px] sm:text-xs font-semibold text-foreground">
+              <img src={rankFilterData.img} alt={rankText} className="h-4 w-4 object-contain" />
               {rankText.split(" ")[0]}
             </span>
+          ) : (
+            <span className="rounded-md bg-secondary/80 backdrop-blur-sm px-2 py-1 text-[10px] sm:text-xs font-semibold text-foreground">{rankText}</span>
           )}
+          {level > 0 && <span className="rounded-md bg-[hsl(198,100%,45%)]/90 backdrop-blur-sm px-2 py-1 text-[10px] sm:text-xs font-bold text-white">Nv. {level}</span>}
         </div>
-
+        <span className="absolute right-2.5 top-2.5 z-10 rounded-md bg-secondary/80 backdrop-blur-sm px-2 py-1 text-[10px] sm:text-xs font-semibold text-foreground">
+          {skinCount} skins
+        </span>
         {skinPreviews.length > 0 ? (
-          // Portrait grid: 3 columns, imagens verticais igual loading art do LoL
           <div className="relative z-[1] grid grid-cols-3 gap-0 w-full h-full">
             {skinPreviews.map((skin, i) => (
               <div key={i} className="relative overflow-hidden">
-                <img
-                  src={skin.image}
-                  alt={skin.name}
-                  className="h-full w-full object-cover object-top transition-transform duration-300 group-hover:scale-105"
-                  loading="lazy"
-                />
-                {/* subtle separator */}
-                {i > 0 && <div className="absolute inset-y-0 left-0 w-px bg-black/30" />}
+                <img src={skin.image} alt={skin.name} className="h-full w-full object-cover object-top" loading="lazy" />
+                {i > 0 && <div className="absolute inset-y-0 left-0 w-px bg-black/20" />}
               </div>
             ))}
           </div>
@@ -604,56 +594,38 @@ const LolCard = ({ item, champKeyMap, formatPrice }: { item: LztItem; champKeyMa
           </div>
         )}
       </div>
-
-      {/* Content */}
-      <div className="p-3 sm:p-5 flex flex-col flex-1">
-        {/* Rank + WR */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          {rankFilterData?.img ? (
-            <img src={rankFilterData.img} alt={rankText} className="h-5 w-5 sm:h-7 sm:w-7 object-contain flex-shrink-0" loading="lazy" />
-          ) : (
-            <div className="h-4 w-4 rounded-full flex-shrink-0" style={{ background: rankColor }} />
-          )}
-          <span className="rounded bg-secondary px-1.5 py-0.5 text-[10px] sm:text-xs font-medium text-muted-foreground">{rankText}</span>
-          {winRate != null && (
-            <span className="text-[10px] sm:text-xs text-muted-foreground">{winRate}% WR</span>
-          )}
-        </div>
-
-        {/* Stats */}
-        <div className="mt-2 sm:mt-3 grid grid-cols-2 gap-1.5 sm:gap-2">
-          <div className="flex items-center gap-1 sm:gap-1.5 rounded bg-secondary/40 px-1.5 py-1 sm:px-2.5 sm:py-1.5">
-            <Trophy className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-[hsl(198,100%,45%)]" />
+      <div className="p-3.5 sm:p-5 flex flex-col flex-1 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 gap-1.5">
+          <div className="flex items-center gap-1 rounded-md bg-secondary/30 px-2 py-1.5">
+            <Trophy className="h-3 w-3 text-[hsl(198,100%,45%)]" />
             <span className="text-[10px] sm:text-[11px] text-muted-foreground">{champCount} campeões</span>
           </div>
-          <div className="flex items-center gap-1 sm:gap-1.5 rounded bg-secondary/40 px-1.5 py-1 sm:px-2.5 sm:py-1.5">
-            <Star className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-[hsl(198,100%,45%)]" />
-            <span className="text-[10px] sm:text-[11px] text-muted-foreground">{skinCount} skins</span>
+          {winRate != null && (
+            <div className="flex items-center gap-1 rounded-md bg-secondary/30 px-2 py-1.5">
+              <TrendingUp className="h-3 w-3 text-[hsl(198,100%,45%)]" />
+              <span className="text-[10px] sm:text-[11px] text-muted-foreground">{winRate}% WR</span>
+            </div>
+          )}
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-1.5">
+            <div className="flex h-4 w-4 items-center justify-center rounded-full flex-shrink-0" style={{ background: "hsl(198,100%,45%,0.15)" }}>
+              <svg className="h-2.5 w-2.5 text-[hsl(198,100%,45%)]" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            </div>
+            <span className="text-[10px] sm:text-xs text-muted-foreground">Full Acesso · Entrega Automática</span>
           </div>
         </div>
-
-        <div className="mt-2 sm:mt-2.5 flex flex-col gap-1">
-          <div className="flex items-center gap-1">
-            <svg className="h-3 w-3 sm:h-4 sm:w-4 text-[hsl(198,100%,45%)] flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M11.14 4L6.43 16H8.36L9.32 13.43H14.67L15.64 16H17.57L12.86 4M12 6.29L14.03 11.71H9.96M4 18V15H2V20H22V18Z" /></svg>
-            <span className="text-[10px] sm:text-xs font-medium text-[hsl(198,100%,45%)]">Conta Full Acesso</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <svg className="h-3 w-3 sm:h-4 sm:w-4 text-[hsl(198,100%,45%)] flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2.05v2.02c3.95.49 7 3.85 7 7.93 0 1.45-.39 2.81-1.06 3.97l1.47 1.47A9.953 9.953 0 0022 12c0-5.18-3.95-9.45-9-9.95zM12 19c-3.87 0-7-3.13-7-7 0-3.53 2.61-6.43 6-6.92V3.05c-5.06.5-9 4.76-9 9.95 0 5.52 4.47 10 9.99 10 3.31 0 6.24-1.61 8.06-4.09l-1.46-1.46A7.932 7.932 0 0112 19z"/><path d="M16 12l-4-4v3H8v2h4v3z"/></svg>
-            <span className="text-[10px] sm:text-xs font-medium text-[hsl(198,100%,45%)]">Entrega Automática</span>
-          </div>
-        </div>
-
         {item.riot_lol_region && (
-          <div className="mt-1.5 sm:mt-2 flex items-center gap-1">
-            <Globe className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-muted-foreground flex-shrink-0" />
-            <span className="text-[10px] sm:text-[11px] text-muted-foreground truncate">{item.riot_lol_region.toUpperCase()}</span>
+          <div className="flex items-center gap-1.5">
+            <Globe className="h-3 w-3 text-muted-foreground/60 flex-shrink-0" />
+            <span className="text-[10px] sm:text-[11px] text-muted-foreground/80">{item.riot_lol_region.toUpperCase()}</span>
           </div>
         )}
-
-        <div className="mt-auto pt-3 sm:pt-4">
-          <p className="text-base sm:text-xl font-bold text-[hsl(198,100%,45%)]">{formatPrice(item.price, item.price_currency)}</p>
-          <button className="mt-2 w-full flex items-center justify-center gap-1 rounded border border-border px-2 py-2 sm:py-2 text-[10px] sm:text-xs font-medium text-muted-foreground transition-colors hover:border-[hsl(198,100%,45%)] hover:text-[hsl(198,100%,45%)]">
+        <div className="mt-auto pt-2 sm:pt-3 border-t border-border/30">
+          <p className="text-lg sm:text-xl font-bold text-[hsl(198,100%,45%)] tracking-tight">{formatPrice(item.price, item.price_currency)}</p>
+          <button className="mt-2.5 w-full flex items-center justify-center gap-1.5 rounded-lg py-2.5 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-white transition-all group-hover:shadow-[0_0_16px_hsl(198,100%,45%,0.3)]" style={{ background: "hsl(198,100%,45%)" }}>
             Ver conta
+            <ArrowRight className="h-3.5 w-3.5" />
           </button>
         </div>
       </div>
