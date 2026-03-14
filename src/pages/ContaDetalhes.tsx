@@ -755,7 +755,7 @@ const ContaDetalhes = () => {
                     <p className="text-[10px] text-muted-foreground/40 text-center break-all">Código: {item.item_id}</p>
                   )}
 
-                  <div className="grid grid-cols-4 divide-x divide-border rounded-xl overflow-hidden border border-border">
+                  <div className="grid grid-cols-4 rounded-xl overflow-hidden bg-secondary/20">
                     <HighlightStat label="Skins" value={item.riot_valorant_skin_count ?? 0} />
                     <HighlightStat label="Agentes" value={item.riot_valorant_agent_count ?? 0} />
                     <HighlightStat label="Nível" value={item.riot_valorant_level ?? 0} />
