@@ -165,7 +165,7 @@ const Header = () => {
           </nav>
 
           {/* Right actions */}
-          <div className="flex items-center gap-2 lg:gap-2.5">
+          <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2.5">
             {user ? (
               <>
 
