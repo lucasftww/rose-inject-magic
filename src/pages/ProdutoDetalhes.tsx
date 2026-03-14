@@ -290,7 +290,7 @@ const ProdutoDetalhes = () => {
         )}
 
         {/* Breadcrumb */}
-        <div className="mb-6 sm:mb-8 flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground overflow-x-auto scrollbar-hide">
+        <div className="mb-6 sm:mb-8 flex items-center gap-2 text-xs sm:text-sm text-muted-foreground overflow-x-auto scrollbar-hide">
           <button onClick={() => navigate("/")} className="hover:text-foreground transition-colors shrink-0">Início</button>
           <span className="shrink-0">›</span>
           {game && (
