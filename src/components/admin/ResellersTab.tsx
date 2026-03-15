@@ -128,7 +128,7 @@ const ResellersTab = () => {
   const handleAddReseller = async () => {
     if (!selectedUserId) { toast({ title: "Selecione um usuário", variant: "destructive" }); return; }
     setSaving(true);
-    const { data: resData, error } = await supabase.from("resellers" as any).insert({
+    const { data: resData, error } = await supabase.from("resellers").insert({
       user_id: selectedUserId,
       discount_percent: formDiscount,
       active: formActive,
