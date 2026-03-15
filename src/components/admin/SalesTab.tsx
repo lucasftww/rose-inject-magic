@@ -71,7 +71,7 @@ const SalesTab = () => {
       supabase.from("product_plans").select("id, name, price").in("id", planIds),
       supabase.from("profiles").select("user_id, username").in("user_id", userIds),
       supabase.from("lzt_sales").select("lzt_item_id, sell_price"),
-      supabase.from("payments").select("user_id, amount, cart_snapshot, status, created_at").in("user_id", userIds).in("status", ["COMPLETED", "ACTIVE"]).order("created_at", { ascending: false }).limit(2000),
+      supabase.from("payments").select("user_id, amount, cart_snapshot, status, created_at").in("user_id", userIds).in("status", ["COMPLETED", "ACTIVE"]).order("created_at", { ascending: false }).limit(5000),
     ]);
 
     const productsMap = new Map((productsRes.data || []).map((p) => [p.id, p]));

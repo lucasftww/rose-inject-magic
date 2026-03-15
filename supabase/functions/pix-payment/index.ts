@@ -136,7 +136,8 @@ async function sendDiscordSaleNotification(supabaseAdmin: any, payment: any) {
     }>;
 
     const totalAmount = (payment.amount / 100).toFixed(2);
-    const discount = payment.discount_amount ? (payment.discount_amount / 100).toFixed(2) : null;
+    // discount_amount is stored in reais (NOT centavos), don't divide by 100
+    const discount = payment.discount_amount ? Number(payment.discount_amount).toFixed(2) : null;
 
     const itemsList = cartItems.map((item) =>
       `> 🎮 **${item.productName}** — ${item.planName}\n> 💵 R$ ${Number(item.price).toFixed(2)} × ${item.quantity || 1}`
