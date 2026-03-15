@@ -64,7 +64,7 @@ const App = () => (
                 <Route path="/fortnite/:id" element={<FortniteDetalhes />} />
                 <Route path="/minecraft/:id" element={<MinecraftDetalhes />} />
                 <Route path="/status" element={<Status />} />
-                <Route path="/admin" element={<AdminPanel />} />
+                <Route path="/admin" element={<AdminGuard><AdminPanel /></AdminGuard>} />
                 <Route path="/avaliacoes" element={<Avaliacoes />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 
