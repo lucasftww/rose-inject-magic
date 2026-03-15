@@ -462,7 +462,8 @@ const ContaDetalhes = () => {
   const { data, isLoading, error } = useQuery({
     queryKey: ["lzt-account-detail", id],
     queryFn: () => fetchAccountDetail(id!),
-    enabled: !!id
+    enabled: !!id,
+    staleTime: 1000 * 60 * 5,
   });
 
   const item = data?.item;
@@ -967,11 +968,12 @@ const ContaDetalhes = () => {
 
 };
 
-const StatCell = ({ label, value }: {label: string;value: string | number;}) =>
-<div className="flex items-center justify-between rounded-xl bg-secondary/30 px-4 py-3">
+const StatCell = forwardRef<HTMLDivElement, {label: string;value: string | number;}>(({ label, value }, ref) =>
+<div ref={ref} className="flex items-center justify-between rounded-xl bg-secondary/30 px-4 py-3">
     <span className="text-xs text-muted-foreground">{label}</span>
     <span className="text-sm font-bold text-foreground">{value}</span>
-  </div>;
+  </div>);
+StatCell.displayName = "StatCell";
 
 
 const HighlightStat = forwardRef<HTMLDivElement, {label: string;value: string | number;}>(({ label, value }, ref) =>
