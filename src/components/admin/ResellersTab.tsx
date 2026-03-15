@@ -236,7 +236,7 @@ const ResellersTab = () => {
 
   const handleDelete = async (reseller: Reseller) => {
     if (!confirm(`Remover revendedor ${reseller.email || reseller.user_id}?`)) return;
-    const { error } = await supabase.from("resellers" as any).delete().eq("id", reseller.id);
+    const { error } = await supabase.from("resellers").delete().eq("id", reseller.id);
     if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
     else { toast({ title: "Removido!" }); fetchResellers(); }
   };

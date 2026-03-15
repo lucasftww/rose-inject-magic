@@ -47,7 +47,7 @@ export const useReseller = () => {
 
       // Fetch allowed products
       const { data: prodData } = await supabase
-        .from("reseller_products" as any)
+        .from("reseller_products")
         .select("product_id")
         .eq("reseller_id", r.id);
 
