@@ -75,7 +75,7 @@ const OverviewTab = () => {
         supabase.from("payments").select("id, amount, status").eq("status", "COMPLETED"),
         supabase.from("order_tickets").select("*").order("created_at", { ascending: false }).limit(5),
         supabase.from("payments").select("*").eq("status", "COMPLETED").order("paid_at", { ascending: false }).limit(5),
-        supabase.from("resellers" as any).select("id", { count: "exact", head: true }).eq("active", true),
+        supabase.from("resellers").select("id", { count: "exact", head: true }).eq("active", true),
         supabase.from("products").select("id", { count: "exact", head: true }),
       ]);
 
