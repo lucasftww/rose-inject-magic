@@ -642,28 +642,24 @@ const LolCard = ({ item, champKeyMap, formatPrice }: { item: LztItem; champKeyMa
         <span className="text-[9px] sm:text-[11px] font-semibold text-muted-foreground">{skinCount} skins</span>
       </div>
       <div className="p-2.5 sm:p-3 flex flex-col flex-1 gap-1.5">
-        <div className="grid grid-cols-2 gap-1">
-          <div className="flex items-center gap-1 rounded bg-secondary/30 px-1.5 py-1">
-            <Trophy className="h-2.5 w-2.5 text-[hsl(198,100%,45%)]" />
-            <span className="text-[9px] sm:text-[10px] text-muted-foreground">{champCount} champs</span>
-          </div>
+        <div className="flex items-center gap-2 text-[9px] sm:text-[10px] text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <Trophy className="h-2.5 w-2.5 text-primary" />
+            {champCount} champs
+          </span>
           {winRate != null && (
-            <div className="flex items-center gap-1 rounded bg-secondary/30 px-1.5 py-1">
-              <TrendingUp className="h-2.5 w-2.5 text-[hsl(198,100%,45%)]" />
-              <span className="text-[9px] sm:text-[10px] text-muted-foreground">{winRate}% WR</span>
-            </div>
+            <span className="flex items-center gap-1">
+              <TrendingUp className="h-2.5 w-2.5 text-primary" />
+              {winRate}% WR
+            </span>
+          )}
+          {item.riot_lol_region && (
+            <span className="flex items-center gap-1">
+              <Globe className="h-2.5 w-2.5 text-muted-foreground/60" />
+              {item.riot_lol_region.toUpperCase()}
+            </span>
           )}
         </div>
-        <div className="flex items-center gap-1">
-          <svg className="h-2.5 w-2.5 text-[hsl(198,100%,45%)]" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-          <span className="text-[9px] sm:text-[11px] text-muted-foreground">Full Acesso · Entrega Automática</span>
-        </div>
-        {item.riot_lol_region && (
-          <div className="flex items-center gap-1">
-            <Globe className="h-2.5 w-2.5 text-muted-foreground/60 flex-shrink-0" />
-            <span className="text-[9px] sm:text-[10px] text-muted-foreground/80">{item.riot_lol_region.toUpperCase()}</span>
-          </div>
-        )}
         <div className="mt-auto pt-1.5 border-t border-border/30">
           <p className="text-sm sm:text-base font-bold text-[hsl(198,100%,45%)] tracking-tight">{formatPrice(item.price, item.price_currency)}</p>
           <button className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg py-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-white" style={{ background: "hsl(198,100%,45%)" }}>
