@@ -1104,6 +1104,7 @@ export type Database = {
           id: string | null
           image_url: string | null
           name: string | null
+          robot_game_id: number | null
           sort_order: number | null
           status: string | null
           status_label: string | null
@@ -1118,6 +1119,7 @@ export type Database = {
           id?: string | null
           image_url?: string | null
           name?: string | null
+          robot_game_id?: number | null
           sort_order?: number | null
           status?: string | null
           status_label?: string | null
@@ -1132,6 +1134,7 @@ export type Database = {
           id?: string | null
           image_url?: string | null
           name?: string | null
+          robot_game_id?: number | null
           sort_order?: number | null
           status?: string | null
           status_label?: string | null
