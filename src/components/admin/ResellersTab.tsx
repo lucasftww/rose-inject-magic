@@ -172,8 +172,8 @@ const ResellersTab = () => {
 
     // Load products and purchases
     const [prodRes, purchRes] = await Promise.all([
-      supabase.from("reseller_products" as any).select("product_id").eq("reseller_id", reseller.id),
-      supabase.from("reseller_purchases" as any).select("*").eq("reseller_id", reseller.id).order("created_at", { ascending: false }),
+      supabase.from("reseller_products").select("product_id").eq("reseller_id", reseller.id),
+      supabase.from("reseller_purchases").select("*").eq("reseller_id", reseller.id).order("created_at", { ascending: false }),
     ]);
 
     if (prodRes.data) {
