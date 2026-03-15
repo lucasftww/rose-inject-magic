@@ -332,7 +332,11 @@ const RobotProjectTab = () => {
             <div>
               <p className="text-xs text-muted-foreground">Saldo Robot</p>
               <p className="text-sm font-bold text-foreground">
-                {robotBalance !== null ? `R$${robotBalance.toFixed(2)}` : "—"}
+                {robotBalance !== null ? `$${robotBalance.toFixed(2)} USD` : "—"}
+              </p>
+              {robotBalance !== null && (
+                <p className="text-[10px] text-muted-foreground">≈ R${(robotBalance * usdToBrl).toFixed(2)}</p>
+              )}
               </p>
             </div>
           </div>
