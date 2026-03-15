@@ -548,9 +548,9 @@ const LolCard = ({ item, champKeyMap, formatPrice }: { item: LztItem; champKeyMa
       className="group cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-[hsl(198,100%,45%)/50%] hover:shadow-[0_4px_24px_hsl(198,100%,45%,0.12)] flex flex-col h-full"
       onClick={() => navigate(`/lol/${item.item_id}`)}
     >
-      <div className="relative flex h-32 sm:h-44 items-center justify-center overflow-hidden bg-secondary/20">
+      <div className="relative flex h-28 sm:h-36 items-center justify-center overflow-hidden bg-secondary/20">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(198,100%,45%,0.08),transparent_70%)]" />
-        <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-[hsl(var(--card))] to-transparent z-[2]" />
+        <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[hsl(var(--card))] to-transparent z-[2]" />
         {skinPreviews.length > 0 ? (
           <div className="relative z-[1] grid grid-cols-3 gap-0 w-full h-full">
             {skinPreviews.map((skin, i) => (
@@ -561,61 +561,54 @@ const LolCard = ({ item, champKeyMap, formatPrice }: { item: LztItem; champKeyMa
             ))}
           </div>
         ) : (
-          <div className="flex flex-col h-full w-full items-center justify-center gap-2">
-            <Shield className="h-12 w-12 text-muted-foreground/20" />
-            <span className="text-xs text-muted-foreground/40">{champCount} campeões</span>
+          <div className="flex flex-col h-full w-full items-center justify-center gap-1">
+            <Shield className="h-8 w-8 text-muted-foreground/20" />
+            <span className="text-[10px] text-muted-foreground/40">{champCount} campeões</span>
           </div>
         )}
       </div>
       {/* Info bar */}
-      <div className="flex items-center justify-between px-3 py-1.5 bg-secondary/40 border-b border-border/20">
-        <div className="flex items-center gap-1.5">
+      <div className="flex items-center justify-between px-2.5 py-1 bg-secondary/40 border-b border-border/20">
+        <div className="flex items-center gap-1">
           {rankFilterData?.img ? (
-            <span className="flex items-center gap-1 text-[9px] sm:text-xs font-semibold text-foreground">
-              <img src={rankFilterData.img} alt={rankText} className="h-3.5 w-3.5 sm:h-4 sm:w-4 object-contain" />
+            <span className="flex items-center gap-1 text-[9px] sm:text-[11px] font-semibold text-foreground">
+              <img src={rankFilterData.img} alt={rankText} className="h-3 w-3 sm:h-3.5 sm:w-3.5 object-contain" />
               {rankText.split(" ")[0]}
             </span>
           ) : (
-            <span className="text-[9px] sm:text-xs font-semibold text-foreground">{rankText}</span>
+            <span className="text-[9px] sm:text-[11px] font-semibold text-foreground">{rankText}</span>
           )}
-          {level > 0 && <span className="rounded px-1.5 py-0.5 text-[9px] sm:text-xs font-bold text-white" style={{ background: "hsl(198,100%,45%)" }}>Nv. {level}</span>}
+          {level > 0 && <span className="rounded px-1 py-0.5 text-[8px] sm:text-[10px] font-bold text-white" style={{ background: "hsl(198,100%,45%)" }}>Nv.{level}</span>}
         </div>
-        <span className="text-[9px] sm:text-xs font-semibold text-muted-foreground">
-          {skinCount} skins
-        </span>
+        <span className="text-[9px] sm:text-[11px] font-semibold text-muted-foreground">{skinCount} skins</span>
       </div>
-      <div className="p-3.5 sm:p-5 flex flex-col flex-1 gap-3 sm:gap-4">
-        <div className="grid grid-cols-2 gap-1.5">
-          <div className="flex items-center gap-1 rounded-md bg-secondary/30 px-2 py-1.5">
-            <Trophy className="h-3 w-3 text-[hsl(198,100%,45%)]" />
-            <span className="text-[10px] sm:text-[11px] text-muted-foreground">{champCount} campeões</span>
+      <div className="p-2.5 sm:p-3 flex flex-col flex-1 gap-1.5">
+        <div className="grid grid-cols-2 gap-1">
+          <div className="flex items-center gap-1 rounded bg-secondary/30 px-1.5 py-1">
+            <Trophy className="h-2.5 w-2.5 text-[hsl(198,100%,45%)]" />
+            <span className="text-[9px] sm:text-[10px] text-muted-foreground">{champCount} champs</span>
           </div>
           {winRate != null && (
-            <div className="flex items-center gap-1 rounded-md bg-secondary/30 px-2 py-1.5">
-              <TrendingUp className="h-3 w-3 text-[hsl(198,100%,45%)]" />
-              <span className="text-[10px] sm:text-[11px] text-muted-foreground">{winRate}% WR</span>
+            <div className="flex items-center gap-1 rounded bg-secondary/30 px-1.5 py-1">
+              <TrendingUp className="h-2.5 w-2.5 text-[hsl(198,100%,45%)]" />
+              <span className="text-[9px] sm:text-[10px] text-muted-foreground">{winRate}% WR</span>
             </div>
           )}
         </div>
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center gap-1.5">
-            <div className="flex h-4 w-4 items-center justify-center rounded-full flex-shrink-0" style={{ background: "hsl(198,100%,45%,0.15)" }}>
-              <svg className="h-2.5 w-2.5 text-[hsl(198,100%,45%)]" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-            </div>
-            <span className="text-[10px] sm:text-xs text-muted-foreground">Full Acesso · Entrega Automática</span>
-          </div>
+        <div className="flex items-center gap-1">
+          <svg className="h-2.5 w-2.5 text-[hsl(198,100%,45%)]" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+          <span className="text-[9px] sm:text-[11px] text-muted-foreground">Full Acesso · Entrega Automática</span>
         </div>
         {item.riot_lol_region && (
-          <div className="flex items-center gap-1.5">
-            <Globe className="h-3 w-3 text-muted-foreground/60 flex-shrink-0" />
-            <span className="text-[10px] sm:text-[11px] text-muted-foreground/80">{item.riot_lol_region.toUpperCase()}</span>
+          <div className="flex items-center gap-1">
+            <Globe className="h-2.5 w-2.5 text-muted-foreground/60 flex-shrink-0" />
+            <span className="text-[9px] sm:text-[10px] text-muted-foreground/80">{item.riot_lol_region.toUpperCase()}</span>
           </div>
         )}
-        <div className="mt-auto pt-2 sm:pt-3 border-t border-border/30">
-          <p className="text-lg sm:text-xl font-bold text-[hsl(198,100%,45%)] tracking-tight">{formatPrice(item.price, item.price_currency)}</p>
-          <button className="mt-2.5 w-full flex items-center justify-center gap-1.5 rounded-lg py-2.5 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-white transition-all group-hover:shadow-[0_0_16px_hsl(198,100%,45%,0.3)]" style={{ background: "hsl(198,100%,45%)" }}>
-            Ver conta
-            <ArrowRight className="h-3.5 w-3.5" />
+        <div className="mt-auto pt-1.5 border-t border-border/30">
+          <p className="text-sm sm:text-base font-bold text-[hsl(198,100%,45%)] tracking-tight">{formatPrice(item.price, item.price_currency)}</p>
+          <button className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg py-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-white" style={{ background: "hsl(198,100%,45%)" }}>
+            Ver conta <ArrowRight className="h-2.5 w-2.5" />
           </button>
         </div>
       </div>
