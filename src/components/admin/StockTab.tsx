@@ -136,7 +136,7 @@ const StockTab = () => {
   };
 
   const handleDeleteStock = async (stockId: string, planId: string) => {
-    const { error } = await supabase.from("stock_items" as any).delete().eq("id", stockId);
+    const { error } = await supabase.from("stock_items").delete().eq("id", stockId);
     if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } else {
