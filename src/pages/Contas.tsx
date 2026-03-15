@@ -728,8 +728,16 @@ const FortniteCard = ({ item, skinsDb, formatPrice }: { item: LztItem; skinsDb: 
               </div>
             ))}
           </div>
+        ) : skinPreviews.length === 4 ? (
+          <div className="relative z-[1] grid grid-cols-2 grid-rows-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
+            {skinPreviews.map((skin, i) => (
+              <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/20 p-0.5">
+                <img src={skin.image} alt={skin.name} className="h-full w-full object-contain drop-shadow-sm" loading="lazy" />
+              </div>
+            ))}
+          </div>
         ) : skinPreviews.length > 0 ? (
-          <div className="relative z-[1] grid grid-cols-3 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
+          <div className="relative z-[1] grid grid-cols-3 grid-rows-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
             {skinPreviews.map((skin, i) => (
               <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/20 p-0.5">
                 <img src={skin.image} alt={skin.name} className="h-full w-full object-contain drop-shadow-sm" loading="lazy" />
