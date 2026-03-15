@@ -473,7 +473,7 @@ const InfoCard = ({ icon, label, value }: { icon: React.ReactNode; label: string
 
 // ─── Main Admin ───
 const AdminPanel = () => {
-  const { user, loading, isAdmin } = useAuth();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [serverVerified, setServerVerified] = useState<boolean | null>(null);
