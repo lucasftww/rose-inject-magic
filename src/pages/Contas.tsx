@@ -456,6 +456,22 @@ const ValorantCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap
               </div>
             ))}
           </div>
+        ) : skinPreviews.length === 4 ? (
+          <div className="relative z-[1] grid grid-cols-2 grid-rows-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
+            {skinPreviews.map((skin, i) => (
+              <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/30 p-0.5">
+                <img src={skin.image} alt={skin.name} className="w-full h-full object-contain" loading="lazy" />
+              </div>
+            ))}
+          </div>
+        ) : skinPreviews.length === 5 ? (
+          <div className="relative z-[1] grid grid-cols-3 grid-rows-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
+            {skinPreviews.map((skin, i) => (
+              <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/30 p-0.5">
+                <img src={skin.image} alt={skin.name} className="w-full h-full object-contain" loading="lazy" />
+              </div>
+            ))}
+          </div>
         ) : skinPreviews.length > 0 ? (
           <div className="relative z-[1] grid grid-cols-3 grid-rows-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
             {skinPreviews.map((skin, i) => (
@@ -576,12 +592,19 @@ const LolCard = ({ item, champKeyMap, formatPrice }: { item: LztItem; champKeyMa
               </div>
             ))}
           </div>
-        ) : skinPreviews.length > 0 ? (
-          <div className="relative z-[1] grid grid-cols-3 gap-0 w-full h-full">
+        ) : skinPreviews.length <= 4 ? (
+          <div className="relative z-[1] grid grid-cols-2 grid-rows-2 gap-0 w-full h-full">
             {skinPreviews.map((skin, i) => (
               <div key={i} className="relative overflow-hidden">
                 <img src={skin.image} alt={skin.name} className="h-full w-full object-cover object-top" loading="lazy" />
-                {i > 0 && <div className="absolute inset-y-0 left-0 w-px bg-black/20" />}
+              </div>
+            ))}
+          </div>
+        ) : skinPreviews.length > 0 ? (
+          <div className="relative z-[1] grid grid-cols-3 grid-rows-2 gap-0 w-full h-full">
+            {skinPreviews.map((skin, i) => (
+              <div key={i} className="relative overflow-hidden">
+                <img src={skin.image} alt={skin.name} className="h-full w-full object-cover object-top" loading="lazy" />
               </div>
             ))}
           </div>
@@ -705,8 +728,16 @@ const FortniteCard = ({ item, skinsDb, formatPrice }: { item: LztItem; skinsDb: 
               </div>
             ))}
           </div>
+        ) : skinPreviews.length === 4 ? (
+          <div className="relative z-[1] grid grid-cols-2 grid-rows-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
+            {skinPreviews.map((skin, i) => (
+              <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/20 p-0.5">
+                <img src={skin.image} alt={skin.name} className="h-full w-full object-contain drop-shadow-sm" loading="lazy" />
+              </div>
+            ))}
+          </div>
         ) : skinPreviews.length > 0 ? (
-          <div className="relative z-[1] grid grid-cols-3 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
+          <div className="relative z-[1] grid grid-cols-3 grid-rows-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
             {skinPreviews.map((skin, i) => (
               <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/20 p-0.5">
                 <img src={skin.image} alt={skin.name} className="h-full w-full object-contain drop-shadow-sm" loading="lazy" />

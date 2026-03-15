@@ -253,6 +253,14 @@ const LztContaCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap
               </div>
             ))}
           </div>
+        ) : skinPreviews.length === 4 ? (
+          <div className="relative z-[1] grid grid-cols-2 grid-rows-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
+            {skinPreviews.map((skin, i) => (
+              <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/30 p-0.5">
+                <img src={skin.image} alt={skin.name} className="w-full h-full object-contain" loading="lazy" />
+              </div>
+            ))}
+          </div>
         ) : skinPreviews.length > 0 ? (
           <div className="relative z-[1] grid grid-cols-3 grid-rows-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
             {skinPreviews.map((skin, i) => (
