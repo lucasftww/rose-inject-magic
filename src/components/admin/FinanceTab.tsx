@@ -268,7 +268,7 @@ const FinanceTab = () => {
             <span className="text-xs font-medium text-muted-foreground">Total Geral</span>
           </div>
           <p className="text-2xl font-bold text-success">R$ {totalGeneral.toFixed(2)}</p>
-          <p className="text-[10px] text-muted-foreground mt-1">{payments.length + lztSales.length} total transações</p>
+          <p className="text-[10px] text-muted-foreground mt-1">{payments.length} transações</p>
         </div>
       </div>
 
