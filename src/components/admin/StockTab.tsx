@@ -53,7 +53,7 @@ const StockTab = () => {
       const planIds = data.flatMap((p: any) => p.product_plans.map((pl: any) => pl.id));
       if (planIds.length > 0) {
         const { data: stockData } = await supabase
-          .from("stock_items" as any)
+          .from("stock_items")
           .select("product_plan_id, used")
           .in("product_plan_id", planIds);
         if (stockData) {
