@@ -212,6 +212,7 @@ const GameSelectScreen = ({ onSelect, games, loading }: { onSelect: (gameId: str
 );
 
 const Produtos = () => {
+  const navigate = useNavigate();
   const [games, setGames] = useState<GameFromDB[]>([]);
   const [loadingGames, setLoadingGames] = useState(true);
   const [products, setProducts] = useState<ProductFromDB[]>([]);
