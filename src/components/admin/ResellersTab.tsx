@@ -208,7 +208,7 @@ const ResellersTab = () => {
 
   const saveEdit = async (reseller: Reseller) => {
     setSavingEdit(true);
-    const { error } = await supabase.from("resellers" as any).update({
+    const { error } = await supabase.from("resellers").update({
       discount_percent: editDiscount,
       active: editActive,
       expires_at: editExpires || null,
