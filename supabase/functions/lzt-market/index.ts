@@ -231,7 +231,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Fetch lzt_config once for both list and detail actions
+    // Fetch lzt_config (needed for list and detail actions)
     const { data: lztConfig } = await supabaseAdmin
       .from("lzt_config")
       .select("max_fetch_price, currency, markup_multiplier, markup_valorant, markup_lol, markup_fortnite, markup_minecraft")
