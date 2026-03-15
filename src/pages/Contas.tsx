@@ -551,7 +551,20 @@ const LolCard = ({ item, champKeyMap, formatPrice }: { item: LztItem; champKeyMa
       <div className="relative flex h-28 sm:h-36 items-center justify-center overflow-hidden bg-secondary/20">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(198,100%,45%,0.08),transparent_70%)]" />
         <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[hsl(var(--card))] to-transparent z-[2]" />
-        {skinPreviews.length > 0 ? (
+        {skinPreviews.length === 1 ? (
+          <div className="relative z-[1] w-full h-full">
+            <img src={skinPreviews[0].image} alt={skinPreviews[0].name} className="h-full w-full object-cover object-top" loading="lazy" />
+          </div>
+        ) : skinPreviews.length === 2 ? (
+          <div className="relative z-[1] grid grid-cols-2 gap-0 w-full h-full">
+            {skinPreviews.map((skin, i) => (
+              <div key={i} className="relative overflow-hidden">
+                <img src={skin.image} alt={skin.name} className="h-full w-full object-cover object-top" loading="lazy" />
+                {i > 0 && <div className="absolute inset-y-0 left-0 w-px bg-black/20" />}
+              </div>
+            ))}
+          </div>
+        ) : skinPreviews.length > 0 ? (
           <div className="relative z-[1] grid grid-cols-3 gap-0 w-full h-full">
             {skinPreviews.map((skin, i) => (
               <div key={i} className="relative overflow-hidden">
