@@ -1040,40 +1040,8 @@ async function fulfillRobotProduct(supabaseAdmin: any, payment: any, item: any, 
         message: deliveryMsg,
       });
 
-      // If Robot API didn't provide a download URL, fall back to product_tutorials
-      if (!downloadUrl) {
-        const { data: tutorialData } = await supabaseAdmin
-          .from("product_tutorials")
-          .select("tutorial_text, tutorial_file_url")
-          .eq("product_id", item.productId)
-          .maybeSingle();
-
-        if (tutorialData?.tutorial_file_url) {
-          await supabaseAdmin.from("ticket_messages").insert({
-            ticket_id: ticket.id,
-            sender_id: payment.user_id,
-            sender_role: "staff",
-            message: `📥 **Download:** ${tutorialData.tutorial_file_url}`,
-          });
-        }
-        if (tutorialData?.tutorial_text) {
-          const txtContent = tutorialData.tutorial_text;
-          const txtBlob = new Blob([txtContent], { type: "text/plain" });
-          const txtPath = `tutorials/${crypto.randomUUID()}.txt`;
-          const { error: uploadErr } = await supabaseAdmin.storage
-            .from("game-images")
-            .upload(txtPath, txtBlob, { contentType: "text/plain" });
-          if (!uploadErr) {
-            const { data: urlData } = supabaseAdmin.storage.from("game-images").getPublicUrl(txtPath);
-            await supabaseAdmin.from("ticket_messages").insert({
-              ticket_id: ticket.id,
-              sender_id: payment.user_id,
-              sender_role: "staff",
-              message: `📋 **Tutorial:** ${urlData.publicUrl}`,
-            });
-          }
-        }
-      }
+      // Robot products: tutorial is shown via PedidoChat UI from product_tutorials table
+      // No need to send tutorial as chat messages — admin configures it in the product settings
     }
 
     console.log(`Robot fulfillment success: key=${key}, game=${gameName}, spent=${amountSpent}, balance=${robotBalance}, free=${isFreeGame}`);
