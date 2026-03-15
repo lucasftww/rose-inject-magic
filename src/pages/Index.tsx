@@ -507,13 +507,13 @@ const Index = () => {
           </Link>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8, delay: 1.0 }} className="z-10 mt-8 sm:mt-20 mx-auto flex items-center justify-center gap-6 sm:gap-10 md:gap-16 w-full max-w-xs sm:max-w-none px-2 sm:px-0">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8, delay: 1.0 }} className="z-10 mt-10 sm:mt-20 mx-auto grid grid-cols-3 gap-4 sm:gap-10 md:gap-16 w-full max-w-sm sm:max-w-2xl px-2 sm:px-0">
           {trustBadges.map((item, idx) => (
-            <motion.div key={item.highlight} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 1.0 + idx * 0.15 }} className="flex flex-col items-center gap-1.5 sm:flex-row sm:gap-3">
+            <motion.div key={item.highlight} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 1.0 + idx * 0.15 }} className="flex flex-col items-center gap-1.5 text-center">
               <item.icon className="h-5 w-5 sm:h-6 sm:w-6 text-success" />
-              <div className="text-center sm:text-left">
-                <span className="text-[10px] sm:text-sm text-muted-foreground whitespace-nowrap">{item.label}</span>
-                <p className="text-[11px] sm:text-base font-bold tracking-wide text-foreground whitespace-nowrap" style={{ fontFamily: "'Valorant', sans-serif" }}>{item.highlight}</p>
+              <div>
+                <span className="text-[10px] sm:text-sm text-muted-foreground block leading-tight">{item.label}</span>
+                <p className="text-[11px] sm:text-base font-bold tracking-wide text-foreground leading-tight" style={{ fontFamily: "'Valorant', sans-serif" }}>{item.highlight}</p>
               </div>
             </motion.div>
           ))}
