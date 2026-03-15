@@ -187,7 +187,7 @@ const RobotProjectTab = () => {
       // Get tickets for robot products
       let query = supabase
         .from("order_tickets")
-        .select("id, created_at, product_id, product_plan_id, status, metadata")
+        .select("id, created_at, product_id, product_plan_id, status, metadata, user_id")
         .in("product_id", productIds)
         .eq("status", "delivered")
         .order("created_at", { ascending: false });
@@ -205,22 +205,35 @@ const RobotProjectTab = () => {
 
       // Get plan names & prices
       const planIds = [...new Set(tickets.map(t => t.product_plan_id))];
-      const { data: plans } = await supabase
-        .from("product_plans")
-        .select("id, name, price, robot_duration_days")
-        .in("id", planIds);
-      const planMap = Object.fromEntries((plans || []).map(p => [p.id, p]));
-
-      // Get payment amounts from cart_snapshot
-      const userIds = [...new Set(tickets.map(t => (t as any).user_id || ""))].filter(Boolean);
+      const ticketUserIds = [...new Set(tickets.map(t => t.user_id))];
+      
+      const [plansRes, paymentsRes] = await Promise.all([
+        supabase.from("product_plans").select("id, name, price, robot_duration_days").in("id", planIds),
+        supabase.from("payments").select("user_id, amount, cart_snapshot, status").in("user_id", ticketUserIds).in("status", ["COMPLETED", "ACTIVE"]).order("created_at", { ascending: false }).limit(2000),
+      ]);
+      
+      const planMap = Object.fromEntries((plansRes.data || []).map(p => [p.id, p]));
+      
+      // Build paid price map from cart_snapshot (historical prices)
+      const paidPriceMap = new Map<string, number>();
+      for (const pay of (paymentsRes.data || [])) {
+        const snapshot = pay.cart_snapshot as any[];
+        if (!Array.isArray(snapshot)) continue;
+        for (const item of snapshot) {
+          const key = `${pay.user_id}|${item.productId}|${item.planId}`;
+          if (!paidPriceMap.has(key) && item.price != null) {
+            paidPriceMap.set(key, Number(item.price));
+          }
+        }
+      }
       
       const sales: RobotSale[] = tickets.map(t => {
         const product = productMap[t.product_id];
         const plan = planMap[t.product_plan_id];
         const meta = (t.metadata || {}) as Record<string, any>;
         
-        // Revenue = plan price (what customer paid)
-        const revenue = plan?.price || 0;
+        // Revenue = historical paid price from cart_snapshot, fallback to current plan price
+        const revenue = paidPriceMap.get(`${t.user_id}|${t.product_id}|${t.product_plan_id}`) ?? plan?.price ?? 0;
         
         // Cost estimation: if metadata has amount_spent use it, otherwise estimate from markup
         let cost = 0;
