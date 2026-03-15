@@ -1221,6 +1221,7 @@ export type Database = {
       }
     }
     Functions: {
+      claim_stock_item: { Args: { _plan_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
