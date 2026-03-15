@@ -75,7 +75,7 @@ const StockTab = () => {
   const fetchStockForPlan = async (planId: string) => {
     setLoadingStock(planId);
     const { data, error } = await supabase
-      .from("stock_items" as any)
+      .from("stock_items")
       .select("*")
       .eq("product_plan_id", planId)
       .order("created_at", { ascending: false });
