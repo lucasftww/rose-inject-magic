@@ -616,8 +616,6 @@ export type Database = {
           status: string | null
           status_label: string | null
           status_updated_at: string | null
-          tutorial_file_url: string | null
-          tutorial_text: string | null
         }
         Insert: {
           active?: boolean | null
@@ -634,8 +632,6 @@ export type Database = {
           status?: string | null
           status_label?: string | null
           status_updated_at?: string | null
-          tutorial_file_url?: string | null
-          tutorial_text?: string | null
         }
         Update: {
           active?: boolean | null
@@ -652,8 +648,6 @@ export type Database = {
           status?: string | null
           status_label?: string | null
           status_updated_at?: string | null
-          tutorial_file_url?: string | null
-          tutorial_text?: string | null
         }
         Relationships: [
           {
