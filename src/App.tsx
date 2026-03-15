@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { CartProvider } from "@/hooks/useCart";
 import { lazy, Suspense } from "react";
+import AdminGuard from "@/components/AdminGuard";
 
 // Eager-load critical routes
 import Index from "./pages/Index";
@@ -20,7 +21,6 @@ const LolDetalhes = lazy(() => import("./pages/LolDetalhes"));
 const FortniteDetalhes = lazy(() => import("./pages/FortniteDetalhes"));
 const MinecraftDetalhes = lazy(() => import("./pages/MinecraftDetalhes"));
 const Status = lazy(() => import("./pages/Status"));
-const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Avaliacoes = lazy(() => import("./pages/Avaliacoes"));
 const MeusPedidos = lazy(() => import("./pages/MeusPedidos"));
@@ -33,6 +33,9 @@ const PoliticaPrivacidade = lazy(() => import("./pages/PoliticaPrivacidade"));
 const PoliticaReembolso = lazy(() => import("./pages/PoliticaReembolso"));
 const Garantia = lazy(() => import("./pages/Garantia"));
 const CentralAjuda = lazy(() => import("./pages/CentralAjuda"));
+
+// Admin panel — lazy-loaded INSIDE AdminGuard so the bundle never downloads for non-admins
+const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 
 const queryClient = new QueryClient({});
 
@@ -61,7 +64,7 @@ const App = () => (
                 <Route path="/fortnite/:id" element={<FortniteDetalhes />} />
                 <Route path="/minecraft/:id" element={<MinecraftDetalhes />} />
                 <Route path="/status" element={<Status />} />
-                <Route path="/admin" element={<AdminPanel />} />
+                <Route path="/admin" element={<AdminGuard><AdminPanel /></AdminGuard>} />
                 <Route path="/avaliacoes" element={<Avaliacoes />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 
