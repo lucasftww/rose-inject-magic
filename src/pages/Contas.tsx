@@ -560,20 +560,6 @@ const LolCard = ({ item, champKeyMap, formatPrice }: { item: LztItem; champKeyMa
       <div className="relative flex h-32 sm:h-44 items-center justify-center overflow-hidden bg-secondary/20">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(198,100%,45%,0.08),transparent_70%)]" />
         <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-[hsl(var(--card))] to-transparent z-[2]" />
-        <div className="absolute left-2.5 top-2.5 z-10 flex items-center gap-1.5">
-          {rankFilterData?.img ? (
-            <span className="flex items-center gap-1 rounded-md bg-secondary/80 backdrop-blur-sm px-2 py-1 text-[10px] sm:text-xs font-semibold text-foreground">
-              <img src={rankFilterData.img} alt={rankText} className="h-4 w-4 object-contain" />
-              {rankText.split(" ")[0]}
-            </span>
-          ) : (
-            <span className="rounded-md bg-secondary/80 backdrop-blur-sm px-2 py-1 text-[10px] sm:text-xs font-semibold text-foreground">{rankText}</span>
-          )}
-          {level > 0 && <span className="rounded-md bg-[hsl(198,100%,45%)]/90 backdrop-blur-sm px-2 py-1 text-[10px] sm:text-xs font-bold text-white">Nv. {level}</span>}
-        </div>
-        <span className="absolute right-2.5 top-2.5 z-10 rounded-md bg-secondary/80 backdrop-blur-sm px-2 py-1 text-[10px] sm:text-xs font-semibold text-foreground">
-          {skinCount} skins
-        </span>
         {skinPreviews.length > 0 ? (
           <div className="relative z-[1] grid grid-cols-3 gap-0 w-full h-full">
             {skinPreviews.map((skin, i) => (
@@ -589,6 +575,23 @@ const LolCard = ({ item, champKeyMap, formatPrice }: { item: LztItem; champKeyMa
             <span className="text-xs text-muted-foreground/40">{champCount} campeões</span>
           </div>
         )}
+      </div>
+      {/* Info bar */}
+      <div className="flex items-center justify-between px-3 py-1.5 bg-secondary/40 border-b border-border/20">
+        <div className="flex items-center gap-1.5">
+          {rankFilterData?.img ? (
+            <span className="flex items-center gap-1 text-[9px] sm:text-xs font-semibold text-foreground">
+              <img src={rankFilterData.img} alt={rankText} className="h-3.5 w-3.5 sm:h-4 sm:w-4 object-contain" />
+              {rankText.split(" ")[0]}
+            </span>
+          ) : (
+            <span className="text-[9px] sm:text-xs font-semibold text-foreground">{rankText}</span>
+          )}
+          {level > 0 && <span className="rounded px-1.5 py-0.5 text-[9px] sm:text-xs font-bold text-white" style={{ background: "hsl(198,100%,45%)" }}>Nv. {level}</span>}
+        </div>
+        <span className="text-[9px] sm:text-xs font-semibold text-muted-foreground">
+          {skinCount} skins
+        </span>
       </div>
       <div className="p-3.5 sm:p-5 flex flex-col flex-1 gap-3 sm:gap-4">
         <div className="grid grid-cols-2 gap-1.5">
@@ -681,22 +684,10 @@ const FortniteCard = ({ item, skinsDb, formatPrice }: { item: LztItem; skinsDb: 
     >
       <div className="relative flex h-32 sm:h-44 items-center justify-center overflow-hidden bg-secondary/20">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(265,80%,65%,0.08),transparent_70%)]" />
-        <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-[hsl(var(--card))] to-transparent z-[2]" />
-        <div className="absolute left-2.5 top-2.5 z-10 flex items-center gap-1.5">
-          {level > 0 && <span className="rounded-md backdrop-blur-sm px-2 py-1 text-[10px] sm:text-xs font-bold text-white" style={{ background: FN_PURPLE }}>Nv. {level}</span>}
-          {vbucks > 0 && (
-            <span className="rounded-md backdrop-blur-sm px-2 py-1 text-[10px] sm:text-xs font-bold text-white flex items-center gap-1" style={{ background: FN_BLUE }}>
-              {vbucks.toLocaleString()} VB
-            </span>
-          )}
-        </div>
-        <span className="absolute right-2.5 top-2.5 z-10 rounded-md bg-secondary/80 backdrop-blur-sm px-2 py-1 text-[10px] sm:text-xs font-semibold text-foreground">
-          {skinCount} skins
-        </span>
         {skinPreviews.length > 0 ? (
-          <div className="relative z-[1] grid grid-cols-3 gap-1.5 p-3 sm:p-4 w-full h-full">
+          <div className="relative z-[1] grid grid-cols-3 gap-1 sm:gap-1.5 p-2 sm:p-3 w-full h-full place-items-center">
             {skinPreviews.map((skin, i) => (
-              <div key={i} className="flex items-center justify-center rounded-lg bg-secondary/20 p-1.5">
+              <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/20 p-0.5 sm:p-1">
                 <img src={skin.image} alt={skin.name} className="h-full w-full object-contain drop-shadow-sm" loading="lazy" />
               </div>
             ))}
@@ -706,6 +697,16 @@ const FortniteCard = ({ item, skinsDb, formatPrice }: { item: LztItem; skinsDb: 
             <svg className="h-12 w-12 text-muted-foreground/20" fill="currentColor" viewBox="0 0 24 24"><path d="m15.767 14.171.097-5.05H12.4V5.197h3.99L16.872 0H7.128v24l5.271-.985V14.17z"/></svg>
           </div>
         )}
+      </div>
+      {/* Info bar */}
+      <div className="flex items-center justify-between px-3 py-1.5 bg-secondary/40 border-b border-border/20">
+        <div className="flex items-center gap-1.5">
+          {level > 0 && <span className="rounded px-1.5 py-0.5 text-[9px] sm:text-xs font-bold text-white" style={{ background: FN_PURPLE }}>Nv. {level}</span>}
+          {vbucks > 0 && <span className="rounded px-1.5 py-0.5 text-[9px] sm:text-xs font-bold text-white" style={{ background: FN_BLUE }}>{vbucks.toLocaleString()} VB</span>}
+        </div>
+        <span className="text-[9px] sm:text-xs font-semibold text-muted-foreground">
+          {skinCount} skins
+        </span>
       </div>
       <div className="p-3.5 sm:p-5 flex flex-col flex-1 gap-3 sm:gap-4">
         <div className="flex flex-col gap-1.5">
@@ -760,18 +761,6 @@ const MinecraftCard = ({ item, formatPrice }: { item: LztItem; formatPrice: (pri
     >
       <div className="relative flex h-32 sm:h-44 items-center justify-center overflow-hidden bg-secondary/20">
         <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse at center, ${MC_GREEN}0a, transparent 70%)` }} />
-        <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-card to-transparent z-[2]" />
-        <div className="absolute left-2.5 top-2.5 z-10 flex items-center gap-1.5">
-          {hasJava && <span className="rounded-md backdrop-blur-sm px-2 py-1 text-[10px] sm:text-xs font-bold text-white" style={{ background: MC_GREEN }}>Java</span>}
-          {hasBedrock && <span className="rounded-md backdrop-blur-sm px-2 py-1 text-[10px] sm:text-xs font-bold text-white" style={{ background: "hsl(25,40%,40%)" }}>Bedrock</span>}
-          {hypixelRank && <span className="rounded-md backdrop-blur-sm px-2 py-1 text-[10px] sm:text-xs font-bold text-white" style={{ background: "hsl(40,80%,40%)" }}>{hypixelRank}</span>}
-          {banned && <span className="rounded-md backdrop-blur-sm px-2 py-1 text-[10px] sm:text-xs font-bold text-white bg-destructive">Ban</span>}
-        </div>
-        {capes > 0 && (
-          <span className="absolute right-2.5 top-2.5 z-10 rounded-md bg-secondary/80 backdrop-blur-sm px-2 py-1 text-[10px] sm:text-xs font-semibold text-foreground">
-            {capes} cape{capes > 1 ? "s" : ""}
-          </span>
-        )}
         {skinUrl ? (
           <div className="relative z-[1] flex items-end justify-center h-full pt-3 pb-2">
             <img src={skinUrl} alt={nickname || "Skin"} className="h-full w-auto object-contain drop-shadow-2xl transition-transform duration-300 group-hover:scale-105" loading="lazy" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
@@ -781,6 +770,18 @@ const MinecraftCard = ({ item, formatPrice }: { item: LztItem; formatPrice: (pri
             <svg className="h-16 w-16 opacity-20" viewBox="0 0 24 24" fill={MC_GREEN}><path d="M4,2H20A2,2 0 0,1 22,4V20A2,2 0 0,1 20,22H4A2,2 0 0,1 2,20V4A2,2 0 0,1 4,2M6,6V10H10V12H8V18H10V16H14V18H16V12H14V10H18V6H14V10H10V6H6Z" /></svg>
           </div>
         )}
+      </div>
+      {/* Info bar */}
+      <div className="flex items-center justify-between px-3 py-1.5 bg-secondary/40 border-b border-border/20">
+        <div className="flex items-center gap-1.5 min-w-0">
+          {hasJava && <span className="rounded px-1.5 py-0.5 text-[9px] sm:text-xs font-bold text-white" style={{ background: MC_GREEN }}>Java</span>}
+          {hasBedrock && <span className="rounded px-1.5 py-0.5 text-[9px] sm:text-xs font-bold text-white" style={{ background: "hsl(25,40%,40%)" }}>Bedrock</span>}
+          {hypixelRank && <span className="rounded px-1.5 py-0.5 text-[9px] sm:text-xs font-bold text-white" style={{ background: "hsl(40,80%,40%)" }}>{hypixelRank}</span>}
+          {banned && <span className="rounded px-1.5 py-0.5 text-[9px] sm:text-xs font-bold text-white bg-destructive">Ban</span>}
+        </div>
+        <span className="text-[9px] sm:text-xs font-semibold text-muted-foreground flex-shrink-0">
+          {capes > 0 ? `${capes} cape${capes > 1 ? "s" : ""}` : nickname ? `@${nickname}` : "MC"}
+        </span>
       </div>
       <div className="p-3.5 sm:p-5 flex flex-col flex-1 gap-3 sm:gap-4">
         <div className="flex items-center gap-1.5">
