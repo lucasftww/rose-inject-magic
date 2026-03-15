@@ -442,22 +442,12 @@ const ValorantCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap
       className="group cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-success/50 hover:shadow-[0_4px_24px_hsl(var(--success)/0.12)] flex flex-col h-full"
       onClick={() => navigate(`/conta/${item.item_id}`)}
     >
-      <div className="relative flex h-36 sm:h-48 items-center justify-center overflow-hidden bg-secondary/20">
+      <div className="relative flex h-32 sm:h-44 items-center justify-center overflow-hidden bg-secondary/20">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--success)/0.06),transparent_70%)]" />
-        <div className="absolute left-2 bottom-2 z-10 flex items-center gap-1">
-          <span className="flex items-center gap-1 rounded-md bg-secondary/80 backdrop-blur-sm px-1.5 py-0.5 text-[9px] sm:text-xs font-semibold text-foreground">
-            <img src={rank?.img || rankUnranked} alt={rank?.name || "Unranked"} className="h-3.5 w-3.5 sm:h-4 sm:w-4 object-contain" />
-            {rank?.name || "Unranked"}
-          </span>
-          {hasKnife && <span className="rounded-md bg-primary/90 backdrop-blur-sm px-1.5 py-0.5 text-[9px] sm:text-xs font-bold text-primary-foreground">🔪</span>}
-        </div>
-        <span className="absolute right-2 bottom-2 z-10 rounded-md bg-secondary/80 backdrop-blur-sm px-1.5 py-0.5 text-[9px] sm:text-xs font-semibold text-foreground">
-          {skinCount} skins
-        </span>
         {skinPreviews.length > 0 ? (
-          <div className="relative z-[1] grid grid-cols-3 grid-rows-2 gap-1.5 p-2.5 sm:p-3 w-full h-full place-items-center">
+          <div className="relative z-[1] grid grid-cols-3 grid-rows-2 gap-1 sm:gap-1.5 p-2 sm:p-3 w-full h-full place-items-center">
             {skinPreviews.map((skin, i) => (
-              <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/30 p-1">
+              <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/30 p-0.5 sm:p-1">
                 <img src={skin.image} alt={skin.name} className="w-full h-full object-contain" loading="lazy" />
               </div>
             ))}
@@ -467,6 +457,17 @@ const ValorantCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap
         ) : (
           <div className="flex h-full w-full items-center justify-center"><Crosshair className="h-8 w-8 sm:h-12 sm:w-12 text-muted-foreground/20" /></div>
         )}
+      </div>
+      {/* Info bar - separated from image to avoid overlap */}
+      <div className="flex items-center justify-between px-3 py-1.5 bg-secondary/40 border-b border-border/20">
+        <span className="flex items-center gap-1 text-[9px] sm:text-xs font-semibold text-foreground">
+          <img src={rank?.img || rankUnranked} alt={rank?.name || "Unranked"} className="h-3.5 w-3.5 sm:h-4 sm:w-4 object-contain" />
+          {rank?.name || "Unranked"}
+          {hasKnife && <span className="ml-0.5">🔪</span>}
+        </span>
+        <span className="text-[9px] sm:text-xs font-semibold text-muted-foreground">
+          {skinCount} skins
+        </span>
       </div>
       <div className="p-3 sm:p-4 flex flex-col flex-1 gap-2 sm:gap-3">
         <div className="flex flex-col gap-1">

@@ -239,10 +239,10 @@ const LztContaCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap
       onClick={() => navigate(`/conta/${item.item_id}`)}
     >
       {/* Skin preview area */}
-      <div className="relative flex h-36 sm:h-48 items-center justify-center overflow-hidden bg-secondary/20">
+      <div className="relative flex h-32 sm:h-44 items-center justify-center overflow-hidden bg-secondary/20">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--success)/0.06),transparent_70%)]" />
         {skinPreviews.length > 0 ? (
-          <div className="relative z-[1] grid grid-cols-3 grid-rows-2 gap-1 sm:gap-1.5 p-2 pb-7 sm:p-3 sm:pb-8 w-full h-full place-items-center">
+          <div className="relative z-[1] grid grid-cols-3 grid-rows-2 gap-1 sm:gap-1.5 p-2 sm:p-3 w-full h-full place-items-center">
             {skinPreviews.map((skin, i) => (
               <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/30 p-0.5 sm:p-1">
                 <img src={skin.image} alt={skin.name} className="w-full h-full object-contain" loading="lazy" />
@@ -254,17 +254,17 @@ const LztContaCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap
         ) : (
           <div className="flex h-full w-full items-center justify-center"><Crosshair className="h-8 w-8 sm:h-12 sm:w-12 text-muted-foreground/20" /></div>
         )}
-        {/* Badges bar - clean bottom strip */}
-        <div className="absolute left-0 right-0 bottom-0 z-10 flex items-center justify-between px-2 py-1.5 bg-card/90 backdrop-blur-sm border-t border-border/20">
-          <span className="flex items-center gap-1 text-[9px] sm:text-xs font-semibold text-foreground">
-            <img src={rank?.img || rankUnranked} alt={rank?.name || "Unranked"} className="h-3.5 w-3.5 sm:h-4 sm:w-4 object-contain" />
-            {rank?.name || "Unranked"}
-            {hasKnife && <span className="ml-0.5">🔪</span>}
-          </span>
-          <span className="text-[9px] sm:text-xs font-semibold text-muted-foreground">
-            {skinCount} skins
-          </span>
-        </div>
+      </div>
+      {/* Info bar - separated from image */}
+      <div className="flex items-center justify-between px-3 py-1.5 bg-secondary/40 border-b border-border/20">
+        <span className="flex items-center gap-1 text-[9px] sm:text-xs font-semibold text-foreground">
+          <img src={rank?.img || rankUnranked} alt={rank?.name || "Unranked"} className="h-3.5 w-3.5 sm:h-4 sm:w-4 object-contain" />
+          {rank?.name || "Unranked"}
+          {hasKnife && <span className="ml-0.5">🔪</span>}
+        </span>
+        <span className="text-[9px] sm:text-xs font-semibold text-muted-foreground">
+          {skinCount} skins
+        </span>
       </div>
 
       {/* Card body - compact */}
