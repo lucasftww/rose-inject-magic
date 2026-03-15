@@ -476,14 +476,35 @@ const AdminPanel = () => {
   const { user, loading, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabId>("overview");
+  const [serverVerified, setServerVerified] = useState<boolean | null>(null);
+
+  // Independent server-side admin verification — cannot be bypassed via DevTools
+  useEffect(() => {
+    if (loading || !user) return;
+    let cancelled = false;
+    const verify = async () => {
+      try {
+        const { data, error } = await supabase.rpc("has_role", {
+          _user_id: user.id,
+          _role: "admin" as const,
+        });
+        if (cancelled) return;
+        setServerVerified(!error && !!data);
+      } catch {
+        if (!cancelled) setServerVerified(false);
+      }
+    };
+    verify();
+    return () => { cancelled = true; };
+  }, [loading, user]);
 
   useEffect(() => { 
-    if (!loading && (!user || !isAdmin)) navigate("/", { replace: true }); 
-  }, [loading, user, isAdmin, navigate]);
+    if (!loading && (!user || serverVerified === false)) navigate("/", { replace: true }); 
+  }, [loading, user, serverVerified, navigate]);
 
-  // Block rendering entirely for non-admins
-  if (loading) return <div className="flex min-h-screen items-center justify-center bg-background"><Loader2 className="h-8 w-8 animate-spin text-success" /></div>;
-  if (!user || !isAdmin) return null;
+  // Block rendering until server verification completes
+  if (loading || serverVerified === null) return <div className="flex min-h-screen items-center justify-center bg-background"><Loader2 className="h-8 w-8 animate-spin text-success" /></div>;
+  if (!user || !serverVerified) return null;
 
   return (
     <div className="min-h-screen bg-background">
