@@ -66,11 +66,12 @@ const SalesTab = () => {
     const planIds = [...new Set(rawTickets.map((t) => t.product_plan_id))];
     const userIds = [...new Set(rawTickets.map((t) => t.user_id))];
 
-    const [productsRes, plansRes, profilesRes, lztSalesRes] = await Promise.all([
+    const [productsRes, plansRes, profilesRes, lztSalesRes, paymentsRes] = await Promise.all([
       supabase.from("products").select("id, name, image_url").in("id", productIds),
       supabase.from("product_plans").select("id, name, price").in("id", planIds),
       supabase.from("profiles").select("user_id, username").in("user_id", userIds),
       supabase.from("lzt_sales").select("lzt_item_id, sell_price"),
+      supabase.from("payments").select("user_id, amount, cart_snapshot, status, created_at").in("user_id", userIds).in("status", ["COMPLETED", "ACTIVE"]).order("created_at", { ascending: false }).limit(2000),
     ]);
 
     const productsMap = new Map((productsRes.data || []).map((p) => [p.id, p]));
@@ -78,6 +79,19 @@ const SalesTab = () => {
     const profilesMap = new Map((profilesRes.data || []).map((p) => [p.user_id, p]));
     const lztSalesMap = new Map((lztSalesRes.data || []).map((s) => [s.lzt_item_id, Number(s.sell_price)]));
 
+    // Build a map: userId+productId+planId -> actual paid price from cart_snapshot
+    const paidPriceMap = new Map<string, number>();
+    for (const pay of (paymentsRes.data || [])) {
+      const snapshot = pay.cart_snapshot as any[];
+      if (!Array.isArray(snapshot)) continue;
+      for (const item of snapshot) {
+        const key = `${pay.user_id}|${item.productId}|${item.planId}`;
+        // Only set if not already set (we ordered by newest first)
+        if (!paidPriceMap.has(key) && item.price != null) {
+          paidPriceMap.set(key, Number(item.price));
+        }
+      }
+    }
     // 3. Get user emails via admin-users edge function
     let emailsMap = new Map<string, string>();
     if (session?.access_token) {
