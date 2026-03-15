@@ -331,24 +331,13 @@ async function fulfillOrder(supabaseAdmin: any, payment: any) {
         log("INFO", "fulfillOrder", "Robot product detected", { productId: item.productId, robotGameId: productData.robot_game_id, duration: planData?.robot_duration_days });
         await fulfillRobotProduct(supabaseAdmin, payment, item, productData, planData);
       } else {
-        // Standard stock-based fulfillment
-        const { data: stockItem } = await supabaseAdmin
-          .from("stock_items")
-          .select("id")
-          .eq("product_plan_id", item.planId)
-          .eq("used", false)
-          .limit(1)
-          .single();
-
-        const stockId = stockItem?.id || null;
-        log("INFO", "fulfillOrder", "Stock lookup", { planId: item.planId, stockFound: !!stockId });
-
-        if (stockId) {
-          await supabaseAdmin
-            .from("stock_items")
-            .update({ used: true, used_at: new Date().toISOString() })
-            .eq("id", stockId);
+        // Standard stock-based fulfillment — atomic claim to prevent race conditions
+        let stockId: string | null = null;
+        const { data: claimedId } = await supabaseAdmin.rpc("claim_stock_item", { _plan_id: item.planId });
+        if (claimedId) {
+          stockId = claimedId;
         }
+        log("INFO", "fulfillOrder", "Stock claim", { planId: item.planId, stockFound: !!stockId });
 
         const { data: ticket } = await supabaseAdmin
           .from("order_tickets")
