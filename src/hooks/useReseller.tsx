@@ -24,7 +24,7 @@ export const useReseller = () => {
 
     const fetch = async () => {
       const { data, error } = await supabase
-        .from("resellers" as any)
+        .from("resellers")
         .select("id, discount_percent, active, expires_at")
         .eq("user_id", user.id)
         .eq("active", true)
@@ -36,7 +36,7 @@ export const useReseller = () => {
         return;
       }
 
-      const r = data as any;
+      const r = data;
 
       // Check expiration
       if (r.expires_at && new Date(r.expires_at) < new Date()) {
@@ -47,7 +47,7 @@ export const useReseller = () => {
 
       // Fetch allowed products
       const { data: prodData } = await supabase
-        .from("reseller_products" as any)
+        .from("reseller_products")
         .select("product_id")
         .eq("reseller_id", r.id);
 
@@ -56,7 +56,7 @@ export const useReseller = () => {
         discount_percent: Number(r.discount_percent),
         active: r.active,
         expires_at: r.expires_at,
-        productIds: (prodData as any[] || []).map((p: any) => p.product_id),
+        productIds: (prodData || []).map((p) => p.product_id),
       });
       setLoading(false);
     };

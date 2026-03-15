@@ -72,7 +72,7 @@ const ResellersTab = () => {
 
   const fetchResellers = async () => {
     const { data, error } = await supabase
-      .from("resellers" as any)
+      .from("resellers")
       .select("*")
       .order("created_at", { ascending: false });
 
@@ -128,7 +128,7 @@ const ResellersTab = () => {
   const handleAddReseller = async () => {
     if (!selectedUserId) { toast({ title: "Selecione um usuário", variant: "destructive" }); return; }
     setSaving(true);
-    const { data: resData, error } = await supabase.from("resellers" as any).insert({
+    const { data: resData, error } = await supabase.from("resellers").insert({
       user_id: selectedUserId,
       discount_percent: formDiscount,
       active: formActive,
@@ -141,8 +141,8 @@ const ResellersTab = () => {
     }
     // Add product associations
     if (formProductIds.length > 0 && resData) {
-      const items = formProductIds.map(pid => ({ reseller_id: (resData as any).id, product_id: pid }));
-      await supabase.from("reseller_products" as any).insert(items);
+      const items = formProductIds.map(pid => ({ reseller_id: resData.id, product_id: pid }));
+      await supabase.from("reseller_products").insert(items);
     }
     toast({ title: "Revendedor adicionado!" });
     resetForm();
@@ -172,8 +172,8 @@ const ResellersTab = () => {
 
     // Load products and purchases
     const [prodRes, purchRes] = await Promise.all([
-      supabase.from("reseller_products" as any).select("product_id").eq("reseller_id", reseller.id),
-      supabase.from("reseller_purchases" as any).select("*").eq("reseller_id", reseller.id).order("created_at", { ascending: false }),
+      supabase.from("reseller_products").select("product_id").eq("reseller_id", reseller.id),
+      supabase.from("reseller_purchases").select("*").eq("reseller_id", reseller.id).order("created_at", { ascending: false }),
     ]);
 
     if (prodRes.data) {
@@ -208,7 +208,7 @@ const ResellersTab = () => {
 
   const saveEdit = async (reseller: Reseller) => {
     setSavingEdit(true);
-    const { error } = await supabase.from("resellers" as any).update({
+    const { error } = await supabase.from("resellers").update({
       discount_percent: editDiscount,
       active: editActive,
       expires_at: editExpires || null,
@@ -221,10 +221,10 @@ const ResellersTab = () => {
     }
 
     // Update product associations
-    await supabase.from("reseller_products" as any).delete().eq("reseller_id", reseller.id);
+    await supabase.from("reseller_products").delete().eq("reseller_id", reseller.id);
     if (editProductIds.length > 0) {
       const items = editProductIds.map(pid => ({ reseller_id: reseller.id, product_id: pid }));
-      await supabase.from("reseller_products" as any).insert(items);
+      await supabase.from("reseller_products").insert(items);
     }
     setResellerProducts(prev => ({ ...prev, [reseller.id]: editProductIds }));
 
@@ -236,7 +236,7 @@ const ResellersTab = () => {
 
   const handleDelete = async (reseller: Reseller) => {
     if (!confirm(`Remover revendedor ${reseller.email || reseller.user_id}?`)) return;
-    const { error } = await supabase.from("resellers" as any).delete().eq("id", reseller.id);
+    const { error } = await supabase.from("resellers").delete().eq("id", reseller.id);
     if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
     else { toast({ title: "Removido!" }); fetchResellers(); }
   };

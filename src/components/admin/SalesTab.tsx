@@ -311,8 +311,8 @@ const SalesTab = () => {
                         R$ {(sale.plan_price || 0).toFixed(2)}
                       </td>
                       <td className="px-4 py-3">
-                        <span className="inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-semibold bg-success/15 text-success border-success/30">
-                          Pago
+                        <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-semibold ${statusColors[sale.status] || "bg-muted text-muted-foreground border-border"}`}>
+                          {sale.status === "delivered" ? "Entregue" : sale.status === "open" ? "Aberto" : sale.status === "waiting_staff" ? "Aguardando" : sale.status === "closed" ? "Fechado" : sale.status_label || sale.status}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-muted-foreground text-xs">
