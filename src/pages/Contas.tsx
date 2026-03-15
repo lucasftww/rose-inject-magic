@@ -666,52 +666,39 @@ const FortniteCard = ({ item, skinsDb, formatPrice }: { item: LztItem; skinsDb: 
       className="group cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-[hsl(265,80%,65%)/50%] hover:shadow-[0_4px_24px_hsl(265,80%,65%,0.12)] flex flex-col h-full"
       onClick={() => navigate(`/fortnite/${item.item_id}`)}
     >
-      <div className="relative flex h-32 sm:h-44 items-center justify-center overflow-hidden bg-secondary/20">
+      <div className="relative flex h-28 sm:h-36 items-center justify-center overflow-hidden bg-secondary/20">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(265,80%,65%,0.08),transparent_70%)]" />
         {skinPreviews.length > 0 ? (
-          <div className="relative z-[1] grid grid-cols-3 gap-1 sm:gap-1.5 p-2 sm:p-3 w-full h-full place-items-center">
+          <div className="relative z-[1] grid grid-cols-3 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
             {skinPreviews.map((skin, i) => (
-              <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/20 p-0.5 sm:p-1">
+              <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/20 p-0.5">
                 <img src={skin.image} alt={skin.name} className="h-full w-full object-contain drop-shadow-sm" loading="lazy" />
               </div>
             ))}
           </div>
         ) : (
           <div className="flex h-full w-full items-center justify-center">
-            <svg className="h-12 w-12 text-muted-foreground/20" fill="currentColor" viewBox="0 0 24 24"><path d="m15.767 14.171.097-5.05H12.4V5.197h3.99L16.872 0H7.128v24l5.271-.985V14.17z"/></svg>
+            <svg className="h-8 w-8 text-muted-foreground/20" fill="currentColor" viewBox="0 0 24 24"><path d="m15.767 14.171.097-5.05H12.4V5.197h3.99L16.872 0H7.128v24l5.271-.985V14.17z"/></svg>
           </div>
         )}
       </div>
       {/* Info bar */}
-      <div className="flex items-center justify-between px-3 py-1.5 bg-secondary/40 border-b border-border/20">
-        <div className="flex items-center gap-1.5">
-          {level > 0 && <span className="rounded px-1.5 py-0.5 text-[9px] sm:text-xs font-bold text-white" style={{ background: FN_PURPLE }}>Nv. {level}</span>}
-          {vbucks > 0 && <span className="rounded px-1.5 py-0.5 text-[9px] sm:text-xs font-bold text-white" style={{ background: FN_BLUE }}>{vbucks.toLocaleString()} VB</span>}
+      <div className="flex items-center justify-between px-2.5 py-1 bg-secondary/40 border-b border-border/20">
+        <div className="flex items-center gap-1">
+          {level > 0 && <span className="rounded px-1 py-0.5 text-[8px] sm:text-[10px] font-bold text-white" style={{ background: FN_PURPLE }}>Nv.{level}</span>}
+          {vbucks > 0 && <span className="rounded px-1 py-0.5 text-[8px] sm:text-[10px] font-bold text-white" style={{ background: FN_BLUE }}>{vbucks.toLocaleString()} VB</span>}
         </div>
-        <span className="text-[9px] sm:text-xs font-semibold text-muted-foreground">
-          {skinCount} skins
-        </span>
+        <span className="text-[9px] sm:text-[11px] font-semibold text-muted-foreground">{skinCount} skins</span>
       </div>
-      <div className="p-3.5 sm:p-5 flex flex-col flex-1 gap-3 sm:gap-4">
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center gap-1.5">
-            <div className="flex h-4 w-4 items-center justify-center rounded-full flex-shrink-0" style={{ background: "hsl(265,80%,65%,0.15)" }}>
-              <svg className="h-2.5 w-2.5" style={{ color: FN_PURPLE }} viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-            </div>
-            <span className="text-[10px] sm:text-xs text-muted-foreground">Full Acesso · Email incluso</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="flex h-4 w-4 items-center justify-center rounded-full flex-shrink-0" style={{ background: "hsl(265,80%,65%,0.15)" }}>
-              <svg className="h-2.5 w-2.5" style={{ color: FN_PURPLE }} viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-            </div>
-            <span className="text-[10px] sm:text-xs text-muted-foreground">Entrega Automática</span>
-          </div>
+      <div className="p-2.5 sm:p-3 flex flex-col flex-1 gap-1.5">
+        <div className="flex items-center gap-1">
+          <svg className="h-2.5 w-2.5" style={{ color: FN_PURPLE }} viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+          <span className="text-[9px] sm:text-[11px] text-muted-foreground">Full Acesso · Entrega Automática</span>
         </div>
-        <div className="mt-auto pt-2 sm:pt-3 border-t border-border/30">
-          <p className="text-lg sm:text-xl font-bold tracking-tight" style={{ color: FN_PURPLE }}>{formatPrice(item.price, item.price_currency)}</p>
-          <button className="mt-2.5 w-full flex items-center justify-center gap-1.5 rounded-lg py-2.5 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-white transition-all group-hover:shadow-[0_0_16px_hsl(265,80%,65%,0.3)]" style={{ background: FN_PURPLE }}>
-            Ver conta
-            <ArrowRight className="h-3.5 w-3.5" />
+        <div className="mt-auto pt-1.5 border-t border-border/30">
+          <p className="text-sm sm:text-base font-bold tracking-tight" style={{ color: FN_PURPLE }}>{formatPrice(item.price, item.price_currency)}</p>
+          <button className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg py-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-white" style={{ background: FN_PURPLE }}>
+            Ver conta <ArrowRight className="h-2.5 w-2.5" />
           </button>
         </div>
       </div>
