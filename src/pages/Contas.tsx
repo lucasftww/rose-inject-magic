@@ -684,22 +684,10 @@ const FortniteCard = ({ item, skinsDb, formatPrice }: { item: LztItem; skinsDb: 
     >
       <div className="relative flex h-32 sm:h-44 items-center justify-center overflow-hidden bg-secondary/20">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(265,80%,65%,0.08),transparent_70%)]" />
-        <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-[hsl(var(--card))] to-transparent z-[2]" />
-        <div className="absolute left-2.5 top-2.5 z-10 flex items-center gap-1.5">
-          {level > 0 && <span className="rounded-md backdrop-blur-sm px-2 py-1 text-[10px] sm:text-xs font-bold text-white" style={{ background: FN_PURPLE }}>Nv. {level}</span>}
-          {vbucks > 0 && (
-            <span className="rounded-md backdrop-blur-sm px-2 py-1 text-[10px] sm:text-xs font-bold text-white flex items-center gap-1" style={{ background: FN_BLUE }}>
-              {vbucks.toLocaleString()} VB
-            </span>
-          )}
-        </div>
-        <span className="absolute right-2.5 top-2.5 z-10 rounded-md bg-secondary/80 backdrop-blur-sm px-2 py-1 text-[10px] sm:text-xs font-semibold text-foreground">
-          {skinCount} skins
-        </span>
         {skinPreviews.length > 0 ? (
-          <div className="relative z-[1] grid grid-cols-3 gap-1.5 p-3 sm:p-4 w-full h-full">
+          <div className="relative z-[1] grid grid-cols-3 gap-1 sm:gap-1.5 p-2 sm:p-3 w-full h-full place-items-center">
             {skinPreviews.map((skin, i) => (
-              <div key={i} className="flex items-center justify-center rounded-lg bg-secondary/20 p-1.5">
+              <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/20 p-0.5 sm:p-1">
                 <img src={skin.image} alt={skin.name} className="h-full w-full object-contain drop-shadow-sm" loading="lazy" />
               </div>
             ))}
@@ -709,6 +697,16 @@ const FortniteCard = ({ item, skinsDb, formatPrice }: { item: LztItem; skinsDb: 
             <svg className="h-12 w-12 text-muted-foreground/20" fill="currentColor" viewBox="0 0 24 24"><path d="m15.767 14.171.097-5.05H12.4V5.197h3.99L16.872 0H7.128v24l5.271-.985V14.17z"/></svg>
           </div>
         )}
+      </div>
+      {/* Info bar */}
+      <div className="flex items-center justify-between px-3 py-1.5 bg-secondary/40 border-b border-border/20">
+        <div className="flex items-center gap-1.5">
+          {level > 0 && <span className="rounded px-1.5 py-0.5 text-[9px] sm:text-xs font-bold text-white" style={{ background: FN_PURPLE }}>Nv. {level}</span>}
+          {vbucks > 0 && <span className="rounded px-1.5 py-0.5 text-[9px] sm:text-xs font-bold text-white" style={{ background: FN_BLUE }}>{vbucks.toLocaleString()} VB</span>}
+        </div>
+        <span className="text-[9px] sm:text-xs font-semibold text-muted-foreground">
+          {skinCount} skins
+        </span>
       </div>
       <div className="p-3.5 sm:p-5 flex flex-col flex-1 gap-3 sm:gap-4">
         <div className="flex flex-col gap-1.5">
