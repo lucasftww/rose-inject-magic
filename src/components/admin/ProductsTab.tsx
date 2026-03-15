@@ -43,8 +43,6 @@ interface Product {
   image_url: string | null;
   active: boolean;
   sort_order: number;
-  tutorial_text: string | null;
-  tutorial_file_url: string | null;
   robot_game_id: number | null;
   robot_markup_percent: number | null;
   product_plans?: ProductPlan[];
