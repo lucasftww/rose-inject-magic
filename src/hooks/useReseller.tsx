@@ -36,7 +36,7 @@ export const useReseller = () => {
         return;
       }
 
-      const r = data as any;
+      const r = data;
 
       // Check expiration
       if (r.expires_at && new Date(r.expires_at) < new Date()) {
