@@ -761,18 +761,6 @@ const MinecraftCard = ({ item, formatPrice }: { item: LztItem; formatPrice: (pri
     >
       <div className="relative flex h-32 sm:h-44 items-center justify-center overflow-hidden bg-secondary/20">
         <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse at center, ${MC_GREEN}0a, transparent 70%)` }} />
-        <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-card to-transparent z-[2]" />
-        <div className="absolute left-2.5 top-2.5 z-10 flex items-center gap-1.5">
-          {hasJava && <span className="rounded-md backdrop-blur-sm px-2 py-1 text-[10px] sm:text-xs font-bold text-white" style={{ background: MC_GREEN }}>Java</span>}
-          {hasBedrock && <span className="rounded-md backdrop-blur-sm px-2 py-1 text-[10px] sm:text-xs font-bold text-white" style={{ background: "hsl(25,40%,40%)" }}>Bedrock</span>}
-          {hypixelRank && <span className="rounded-md backdrop-blur-sm px-2 py-1 text-[10px] sm:text-xs font-bold text-white" style={{ background: "hsl(40,80%,40%)" }}>{hypixelRank}</span>}
-          {banned && <span className="rounded-md backdrop-blur-sm px-2 py-1 text-[10px] sm:text-xs font-bold text-white bg-destructive">Ban</span>}
-        </div>
-        {capes > 0 && (
-          <span className="absolute right-2.5 top-2.5 z-10 rounded-md bg-secondary/80 backdrop-blur-sm px-2 py-1 text-[10px] sm:text-xs font-semibold text-foreground">
-            {capes} cape{capes > 1 ? "s" : ""}
-          </span>
-        )}
         {skinUrl ? (
           <div className="relative z-[1] flex items-end justify-center h-full pt-3 pb-2">
             <img src={skinUrl} alt={nickname || "Skin"} className="h-full w-auto object-contain drop-shadow-2xl transition-transform duration-300 group-hover:scale-105" loading="lazy" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
@@ -782,6 +770,18 @@ const MinecraftCard = ({ item, formatPrice }: { item: LztItem; formatPrice: (pri
             <svg className="h-16 w-16 opacity-20" viewBox="0 0 24 24" fill={MC_GREEN}><path d="M4,2H20A2,2 0 0,1 22,4V20A2,2 0 0,1 20,22H4A2,2 0 0,1 2,20V4A2,2 0 0,1 4,2M6,6V10H10V12H8V18H10V16H14V18H16V12H14V10H18V6H14V10H10V6H6Z" /></svg>
           </div>
         )}
+      </div>
+      {/* Info bar */}
+      <div className="flex items-center justify-between px-3 py-1.5 bg-secondary/40 border-b border-border/20">
+        <div className="flex items-center gap-1.5 min-w-0">
+          {hasJava && <span className="rounded px-1.5 py-0.5 text-[9px] sm:text-xs font-bold text-white" style={{ background: MC_GREEN }}>Java</span>}
+          {hasBedrock && <span className="rounded px-1.5 py-0.5 text-[9px] sm:text-xs font-bold text-white" style={{ background: "hsl(25,40%,40%)" }}>Bedrock</span>}
+          {hypixelRank && <span className="rounded px-1.5 py-0.5 text-[9px] sm:text-xs font-bold text-white" style={{ background: "hsl(40,80%,40%)" }}>{hypixelRank}</span>}
+          {banned && <span className="rounded px-1.5 py-0.5 text-[9px] sm:text-xs font-bold text-white bg-destructive">Ban</span>}
+        </div>
+        <span className="text-[9px] sm:text-xs font-semibold text-muted-foreground flex-shrink-0">
+          {capes > 0 ? `${capes} cape${capes > 1 ? "s" : ""}` : nickname ? `@${nickname}` : "MC"}
+        </span>
       </div>
       <div className="p-3.5 sm:p-5 flex flex-col flex-1 gap-3 sm:gap-4">
         <div className="flex items-center gap-1.5">
