@@ -212,6 +212,7 @@ const GameSelectScreen = ({ onSelect, games, loading }: { onSelect: (gameId: str
 );
 
 const Produtos = () => {
+  const navigate = useNavigate();
   const [games, setGames] = useState<GameFromDB[]>([]);
   const [loadingGames, setLoadingGames] = useState(true);
   const [products, setProducts] = useState<ProductFromDB[]>([]);
@@ -457,8 +458,26 @@ const Produtos = () => {
     </>
   );
 
+  const handleGameSelect = async (gameId: string) => {
+    const game = games.find(g => g.id === gameId);
+    if (game && game.product_count === 1) {
+      // Only 1 product — navigate directly to it
+      const { data } = await supabase
+        .from("products")
+        .select("id")
+        .eq("game_id", gameId)
+        .eq("active", true)
+        .limit(1);
+      if (data && data.length === 1) {
+        navigate(`/produto/${data[0].id}`);
+        return;
+      }
+    }
+    setSelectedGame(gameId);
+  };
+
   if (!selectedGame) {
-    return <GameSelectScreen onSelect={setSelectedGame} games={games} loading={loadingGames} />;
+    return <GameSelectScreen onSelect={handleGameSelect} games={games} loading={loadingGames} />;
   }
 
   return (
