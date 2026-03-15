@@ -225,9 +225,11 @@ const PedidoChat = () => {
   }, [messages]);
 
   // Cleanup Object URLs on unmount to prevent memory leaks
+  const previewUrlsRef = useRef(previewUrls);
+  previewUrlsRef.current = previewUrls;
   useEffect(() => {
     return () => {
-      previewUrls.forEach(url => { if (url) URL.revokeObjectURL(url); });
+      previewUrlsRef.current.forEach(url => { if (url) URL.revokeObjectURL(url); });
     };
   }, []);
 
