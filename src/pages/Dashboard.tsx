@@ -81,6 +81,7 @@ const Dashboard = () => {
 
   const statusColors: Record<string, string> = {
     open: "bg-warning/20 text-warning",
+    waiting: "bg-warning/20 text-warning",
     delivered: "bg-success/20 text-success",
     resolved: "bg-positive/20 text-positive",
     closed: "bg-muted text-muted-foreground",
@@ -89,6 +90,7 @@ const Dashboard = () => {
   };
   const statusLabels: Record<string, string> = {
     open: "Aguardando Equipe",
+    waiting: "Aguardando",
     delivered: "Entregue",
     resolved: "Resolvido",
     closed: "Encerrado",
