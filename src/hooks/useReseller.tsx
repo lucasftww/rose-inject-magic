@@ -56,7 +56,7 @@ export const useReseller = () => {
         discount_percent: Number(r.discount_percent),
         active: r.active,
         expires_at: r.expires_at,
-        productIds: (prodData as any[] || []).map((p: any) => p.product_id),
+        productIds: (prodData || []).map((p) => p.product_id),
       });
       setLoading(false);
     };
