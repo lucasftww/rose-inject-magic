@@ -148,7 +148,7 @@ const StockTab = () => {
 
   const handleDeleteAllAvailable = async (planId: string) => {
     if (!confirm("Excluir todo estoque disponível deste plano?")) return;
-    const { error } = await supabase.from("stock_items" as any).delete().eq("product_plan_id", planId).eq("used", false);
+    const { error } = await supabase.from("stock_items").delete().eq("product_plan_id", planId).eq("used", false);
     if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } else {
