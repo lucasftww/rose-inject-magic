@@ -72,7 +72,7 @@ const ResellersTab = () => {
 
   const fetchResellers = async () => {
     const { data, error } = await supabase
-      .from("resellers" as any)
+      .from("resellers")
       .select("*")
       .order("created_at", { ascending: false });
 
