@@ -442,12 +442,12 @@ const ValorantCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap
       className="group cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-success/50 hover:shadow-[0_4px_24px_hsl(var(--success)/0.12)] flex flex-col h-full"
       onClick={() => navigate(`/conta/${item.item_id}`)}
     >
-      <div className="relative flex h-32 sm:h-44 items-center justify-center overflow-hidden bg-secondary/20">
+      <div className="relative flex h-28 sm:h-36 items-center justify-center overflow-hidden bg-secondary/20">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--success)/0.06),transparent_70%)]" />
         {skinPreviews.length > 0 ? (
-          <div className="relative z-[1] grid grid-cols-3 grid-rows-2 gap-1 sm:gap-1.5 p-2 sm:p-3 w-full h-full place-items-center">
+          <div className="relative z-[1] grid grid-cols-3 grid-rows-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
             {skinPreviews.map((skin, i) => (
-              <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/30 p-0.5 sm:p-1">
+              <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/30 p-0.5">
                 <img src={skin.image} alt={skin.name} className="w-full h-full object-contain" loading="lazy" />
               </div>
             ))}
@@ -455,42 +455,33 @@ const ValorantCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap
         ) : item.imagePreviewLinks?.direct?.weapons ? (
           <LztPreviewImage url={item.imagePreviewLinks.direct.weapons} />
         ) : (
-          <div className="flex h-full w-full items-center justify-center"><Crosshair className="h-8 w-8 sm:h-12 sm:w-12 text-muted-foreground/20" /></div>
+          <div className="flex h-full w-full items-center justify-center"><Crosshair className="h-6 w-6 sm:h-10 sm:w-10 text-muted-foreground/20" /></div>
         )}
       </div>
-      {/* Info bar - separated from image to avoid overlap */}
-      <div className="flex items-center justify-between px-3 py-1.5 bg-secondary/40 border-b border-border/20">
-        <span className="flex items-center gap-1 text-[9px] sm:text-xs font-semibold text-foreground">
-          <img src={rank?.img || rankUnranked} alt={rank?.name || "Unranked"} className="h-3.5 w-3.5 sm:h-4 sm:w-4 object-contain" />
+      {/* Info bar */}
+      <div className="flex items-center justify-between px-2.5 py-1 bg-secondary/40 border-b border-border/20">
+        <span className="flex items-center gap-1 text-[9px] sm:text-[11px] font-semibold text-foreground">
+          <img src={rank?.img || rankUnranked} alt={rank?.name || "Unranked"} className="h-3 w-3 sm:h-3.5 sm:w-3.5 object-contain" />
           {rank?.name || "Unranked"}
           {hasKnife && <span className="ml-0.5">🔪</span>}
         </span>
-        <span className="text-[9px] sm:text-xs font-semibold text-muted-foreground">
-          {skinCount} skins
-        </span>
+        <span className="text-[9px] sm:text-[11px] font-semibold text-muted-foreground">{skinCount} skins</span>
       </div>
-      <div className="p-3 sm:p-4 flex flex-col flex-1 gap-2 sm:gap-3">
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-1">
-            <svg className="h-3 w-3 text-success flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-            <span className="text-[10px] sm:text-xs text-muted-foreground">Full Acesso · Email incluso</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <svg className="h-3 w-3 text-success flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-            <span className="text-[10px] sm:text-xs text-muted-foreground">Entrega Automática</span>
-          </div>
+      <div className="p-2.5 sm:p-3 flex flex-col flex-1 gap-1.5">
+        <div className="flex items-center gap-1">
+          <svg className="h-2.5 w-2.5 text-success flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+          <span className="text-[9px] sm:text-[11px] text-muted-foreground">Full Acesso · Entrega Automática</span>
         </div>
         {item.valorantRegionPhrase && (
           <div className="flex items-center gap-1">
-            <Globe className="h-3 w-3 text-muted-foreground/60 flex-shrink-0" />
-            <span className="text-[10px] text-muted-foreground/80">{translateRegion(item.valorantRegionPhrase)}</span>
+            <Globe className="h-2.5 w-2.5 text-muted-foreground/60 flex-shrink-0" />
+            <span className="text-[9px] sm:text-[11px] text-muted-foreground/80">{translateRegion(item.valorantRegionPhrase)}</span>
           </div>
         )}
-        <div className="mt-auto pt-2 border-t border-border/30">
-          <p className="text-base sm:text-lg font-bold text-success tracking-tight">{formatPrice(item.price, item.price_currency)}</p>
-          <button className="mt-2 w-full flex items-center justify-center gap-1.5 rounded-lg bg-success py-2 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-success-foreground transition-all group-hover:shadow-[0_0_16px_hsl(var(--success)/0.3)]">
-            Ver conta
-            <ArrowRight className="h-3 w-3" />
+        <div className="mt-auto pt-1.5 border-t border-border/30">
+          <p className="text-sm sm:text-base font-bold text-success tracking-tight">{formatPrice(item.price, item.price_currency)}</p>
+          <button className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg bg-success py-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-success-foreground">
+            Ver conta <ArrowRight className="h-2.5 w-2.5" />
           </button>
         </div>
       </div>
@@ -557,9 +548,9 @@ const LolCard = ({ item, champKeyMap, formatPrice }: { item: LztItem; champKeyMa
       className="group cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-[hsl(198,100%,45%)/50%] hover:shadow-[0_4px_24px_hsl(198,100%,45%,0.12)] flex flex-col h-full"
       onClick={() => navigate(`/lol/${item.item_id}`)}
     >
-      <div className="relative flex h-32 sm:h-44 items-center justify-center overflow-hidden bg-secondary/20">
+      <div className="relative flex h-28 sm:h-36 items-center justify-center overflow-hidden bg-secondary/20">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(198,100%,45%,0.08),transparent_70%)]" />
-        <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-[hsl(var(--card))] to-transparent z-[2]" />
+        <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[hsl(var(--card))] to-transparent z-[2]" />
         {skinPreviews.length > 0 ? (
           <div className="relative z-[1] grid grid-cols-3 gap-0 w-full h-full">
             {skinPreviews.map((skin, i) => (
@@ -570,61 +561,54 @@ const LolCard = ({ item, champKeyMap, formatPrice }: { item: LztItem; champKeyMa
             ))}
           </div>
         ) : (
-          <div className="flex flex-col h-full w-full items-center justify-center gap-2">
-            <Shield className="h-12 w-12 text-muted-foreground/20" />
-            <span className="text-xs text-muted-foreground/40">{champCount} campeões</span>
+          <div className="flex flex-col h-full w-full items-center justify-center gap-1">
+            <Shield className="h-8 w-8 text-muted-foreground/20" />
+            <span className="text-[10px] text-muted-foreground/40">{champCount} campeões</span>
           </div>
         )}
       </div>
       {/* Info bar */}
-      <div className="flex items-center justify-between px-3 py-1.5 bg-secondary/40 border-b border-border/20">
-        <div className="flex items-center gap-1.5">
+      <div className="flex items-center justify-between px-2.5 py-1 bg-secondary/40 border-b border-border/20">
+        <div className="flex items-center gap-1">
           {rankFilterData?.img ? (
-            <span className="flex items-center gap-1 text-[9px] sm:text-xs font-semibold text-foreground">
-              <img src={rankFilterData.img} alt={rankText} className="h-3.5 w-3.5 sm:h-4 sm:w-4 object-contain" />
+            <span className="flex items-center gap-1 text-[9px] sm:text-[11px] font-semibold text-foreground">
+              <img src={rankFilterData.img} alt={rankText} className="h-3 w-3 sm:h-3.5 sm:w-3.5 object-contain" />
               {rankText.split(" ")[0]}
             </span>
           ) : (
-            <span className="text-[9px] sm:text-xs font-semibold text-foreground">{rankText}</span>
+            <span className="text-[9px] sm:text-[11px] font-semibold text-foreground">{rankText}</span>
           )}
-          {level > 0 && <span className="rounded px-1.5 py-0.5 text-[9px] sm:text-xs font-bold text-white" style={{ background: "hsl(198,100%,45%)" }}>Nv. {level}</span>}
+          {level > 0 && <span className="rounded px-1 py-0.5 text-[8px] sm:text-[10px] font-bold text-white" style={{ background: "hsl(198,100%,45%)" }}>Nv.{level}</span>}
         </div>
-        <span className="text-[9px] sm:text-xs font-semibold text-muted-foreground">
-          {skinCount} skins
-        </span>
+        <span className="text-[9px] sm:text-[11px] font-semibold text-muted-foreground">{skinCount} skins</span>
       </div>
-      <div className="p-3.5 sm:p-5 flex flex-col flex-1 gap-3 sm:gap-4">
-        <div className="grid grid-cols-2 gap-1.5">
-          <div className="flex items-center gap-1 rounded-md bg-secondary/30 px-2 py-1.5">
-            <Trophy className="h-3 w-3 text-[hsl(198,100%,45%)]" />
-            <span className="text-[10px] sm:text-[11px] text-muted-foreground">{champCount} campeões</span>
+      <div className="p-2.5 sm:p-3 flex flex-col flex-1 gap-1.5">
+        <div className="grid grid-cols-2 gap-1">
+          <div className="flex items-center gap-1 rounded bg-secondary/30 px-1.5 py-1">
+            <Trophy className="h-2.5 w-2.5 text-[hsl(198,100%,45%)]" />
+            <span className="text-[9px] sm:text-[10px] text-muted-foreground">{champCount} champs</span>
           </div>
           {winRate != null && (
-            <div className="flex items-center gap-1 rounded-md bg-secondary/30 px-2 py-1.5">
-              <TrendingUp className="h-3 w-3 text-[hsl(198,100%,45%)]" />
-              <span className="text-[10px] sm:text-[11px] text-muted-foreground">{winRate}% WR</span>
+            <div className="flex items-center gap-1 rounded bg-secondary/30 px-1.5 py-1">
+              <TrendingUp className="h-2.5 w-2.5 text-[hsl(198,100%,45%)]" />
+              <span className="text-[9px] sm:text-[10px] text-muted-foreground">{winRate}% WR</span>
             </div>
           )}
         </div>
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center gap-1.5">
-            <div className="flex h-4 w-4 items-center justify-center rounded-full flex-shrink-0" style={{ background: "hsl(198,100%,45%,0.15)" }}>
-              <svg className="h-2.5 w-2.5 text-[hsl(198,100%,45%)]" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-            </div>
-            <span className="text-[10px] sm:text-xs text-muted-foreground">Full Acesso · Entrega Automática</span>
-          </div>
+        <div className="flex items-center gap-1">
+          <svg className="h-2.5 w-2.5 text-[hsl(198,100%,45%)]" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+          <span className="text-[9px] sm:text-[11px] text-muted-foreground">Full Acesso · Entrega Automática</span>
         </div>
         {item.riot_lol_region && (
-          <div className="flex items-center gap-1.5">
-            <Globe className="h-3 w-3 text-muted-foreground/60 flex-shrink-0" />
-            <span className="text-[10px] sm:text-[11px] text-muted-foreground/80">{item.riot_lol_region.toUpperCase()}</span>
+          <div className="flex items-center gap-1">
+            <Globe className="h-2.5 w-2.5 text-muted-foreground/60 flex-shrink-0" />
+            <span className="text-[9px] sm:text-[10px] text-muted-foreground/80">{item.riot_lol_region.toUpperCase()}</span>
           </div>
         )}
-        <div className="mt-auto pt-2 sm:pt-3 border-t border-border/30">
-          <p className="text-lg sm:text-xl font-bold text-[hsl(198,100%,45%)] tracking-tight">{formatPrice(item.price, item.price_currency)}</p>
-          <button className="mt-2.5 w-full flex items-center justify-center gap-1.5 rounded-lg py-2.5 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-white transition-all group-hover:shadow-[0_0_16px_hsl(198,100%,45%,0.3)]" style={{ background: "hsl(198,100%,45%)" }}>
-            Ver conta
-            <ArrowRight className="h-3.5 w-3.5" />
+        <div className="mt-auto pt-1.5 border-t border-border/30">
+          <p className="text-sm sm:text-base font-bold text-[hsl(198,100%,45%)] tracking-tight">{formatPrice(item.price, item.price_currency)}</p>
+          <button className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg py-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-white" style={{ background: "hsl(198,100%,45%)" }}>
+            Ver conta <ArrowRight className="h-2.5 w-2.5" />
           </button>
         </div>
       </div>
@@ -682,52 +666,39 @@ const FortniteCard = ({ item, skinsDb, formatPrice }: { item: LztItem; skinsDb: 
       className="group cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-[hsl(265,80%,65%)/50%] hover:shadow-[0_4px_24px_hsl(265,80%,65%,0.12)] flex flex-col h-full"
       onClick={() => navigate(`/fortnite/${item.item_id}`)}
     >
-      <div className="relative flex h-32 sm:h-44 items-center justify-center overflow-hidden bg-secondary/20">
+      <div className="relative flex h-28 sm:h-36 items-center justify-center overflow-hidden bg-secondary/20">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(265,80%,65%,0.08),transparent_70%)]" />
         {skinPreviews.length > 0 ? (
-          <div className="relative z-[1] grid grid-cols-3 gap-1 sm:gap-1.5 p-2 sm:p-3 w-full h-full place-items-center">
+          <div className="relative z-[1] grid grid-cols-3 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
             {skinPreviews.map((skin, i) => (
-              <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/20 p-0.5 sm:p-1">
+              <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/20 p-0.5">
                 <img src={skin.image} alt={skin.name} className="h-full w-full object-contain drop-shadow-sm" loading="lazy" />
               </div>
             ))}
           </div>
         ) : (
           <div className="flex h-full w-full items-center justify-center">
-            <svg className="h-12 w-12 text-muted-foreground/20" fill="currentColor" viewBox="0 0 24 24"><path d="m15.767 14.171.097-5.05H12.4V5.197h3.99L16.872 0H7.128v24l5.271-.985V14.17z"/></svg>
+            <svg className="h-8 w-8 text-muted-foreground/20" fill="currentColor" viewBox="0 0 24 24"><path d="m15.767 14.171.097-5.05H12.4V5.197h3.99L16.872 0H7.128v24l5.271-.985V14.17z"/></svg>
           </div>
         )}
       </div>
       {/* Info bar */}
-      <div className="flex items-center justify-between px-3 py-1.5 bg-secondary/40 border-b border-border/20">
-        <div className="flex items-center gap-1.5">
-          {level > 0 && <span className="rounded px-1.5 py-0.5 text-[9px] sm:text-xs font-bold text-white" style={{ background: FN_PURPLE }}>Nv. {level}</span>}
-          {vbucks > 0 && <span className="rounded px-1.5 py-0.5 text-[9px] sm:text-xs font-bold text-white" style={{ background: FN_BLUE }}>{vbucks.toLocaleString()} VB</span>}
+      <div className="flex items-center justify-between px-2.5 py-1 bg-secondary/40 border-b border-border/20">
+        <div className="flex items-center gap-1">
+          {level > 0 && <span className="rounded px-1 py-0.5 text-[8px] sm:text-[10px] font-bold text-white" style={{ background: FN_PURPLE }}>Nv.{level}</span>}
+          {vbucks > 0 && <span className="rounded px-1 py-0.5 text-[8px] sm:text-[10px] font-bold text-white" style={{ background: FN_BLUE }}>{vbucks.toLocaleString()} VB</span>}
         </div>
-        <span className="text-[9px] sm:text-xs font-semibold text-muted-foreground">
-          {skinCount} skins
-        </span>
+        <span className="text-[9px] sm:text-[11px] font-semibold text-muted-foreground">{skinCount} skins</span>
       </div>
-      <div className="p-3.5 sm:p-5 flex flex-col flex-1 gap-3 sm:gap-4">
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center gap-1.5">
-            <div className="flex h-4 w-4 items-center justify-center rounded-full flex-shrink-0" style={{ background: "hsl(265,80%,65%,0.15)" }}>
-              <svg className="h-2.5 w-2.5" style={{ color: FN_PURPLE }} viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-            </div>
-            <span className="text-[10px] sm:text-xs text-muted-foreground">Full Acesso · Email incluso</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="flex h-4 w-4 items-center justify-center rounded-full flex-shrink-0" style={{ background: "hsl(265,80%,65%,0.15)" }}>
-              <svg className="h-2.5 w-2.5" style={{ color: FN_PURPLE }} viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-            </div>
-            <span className="text-[10px] sm:text-xs text-muted-foreground">Entrega Automática</span>
-          </div>
+      <div className="p-2.5 sm:p-3 flex flex-col flex-1 gap-1.5">
+        <div className="flex items-center gap-1">
+          <svg className="h-2.5 w-2.5" style={{ color: FN_PURPLE }} viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+          <span className="text-[9px] sm:text-[11px] text-muted-foreground">Full Acesso · Entrega Automática</span>
         </div>
-        <div className="mt-auto pt-2 sm:pt-3 border-t border-border/30">
-          <p className="text-lg sm:text-xl font-bold tracking-tight" style={{ color: FN_PURPLE }}>{formatPrice(item.price, item.price_currency)}</p>
-          <button className="mt-2.5 w-full flex items-center justify-center gap-1.5 rounded-lg py-2.5 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-white transition-all group-hover:shadow-[0_0_16px_hsl(265,80%,65%,0.3)]" style={{ background: FN_PURPLE }}>
-            Ver conta
-            <ArrowRight className="h-3.5 w-3.5" />
+        <div className="mt-auto pt-1.5 border-t border-border/30">
+          <p className="text-sm sm:text-base font-bold tracking-tight" style={{ color: FN_PURPLE }}>{formatPrice(item.price, item.price_currency)}</p>
+          <button className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg py-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-white" style={{ background: FN_PURPLE }}>
+            Ver conta <ArrowRight className="h-2.5 w-2.5" />
           </button>
         </div>
       </div>
@@ -759,57 +730,43 @@ const MinecraftCard = ({ item, formatPrice }: { item: LztItem; formatPrice: (pri
       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = ''; (e.currentTarget as HTMLElement).style.boxShadow = ''; }}
       onClick={() => navigate(`/minecraft/${item.item_id}`)}
     >
-      <div className="relative flex h-32 sm:h-44 items-center justify-center overflow-hidden bg-secondary/20">
+      <div className="relative flex h-28 sm:h-36 items-center justify-center overflow-hidden bg-secondary/20">
         <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse at center, ${MC_GREEN}0a, transparent 70%)` }} />
         {skinUrl ? (
-          <div className="relative z-[1] flex items-end justify-center h-full pt-3 pb-2">
+          <div className="relative z-[1] flex items-end justify-center h-full pt-2 pb-1">
             <img src={skinUrl} alt={nickname || "Skin"} className="h-full w-auto object-contain drop-shadow-2xl transition-transform duration-300 group-hover:scale-105" loading="lazy" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
           </div>
         ) : (
           <div className="relative z-[1] flex items-center justify-center h-full">
-            <svg className="h-16 w-16 opacity-20" viewBox="0 0 24 24" fill={MC_GREEN}><path d="M4,2H20A2,2 0 0,1 22,4V20A2,2 0 0,1 20,22H4A2,2 0 0,1 2,20V4A2,2 0 0,1 4,2M6,6V10H10V12H8V18H10V16H14V18H16V12H14V10H18V6H14V10H10V6H6Z" /></svg>
+            <svg className="h-12 w-12 opacity-20" viewBox="0 0 24 24" fill={MC_GREEN}><path d="M4,2H20A2,2 0 0,1 22,4V20A2,2 0 0,1 20,22H4A2,2 0 0,1 2,20V4A2,2 0 0,1 4,2M6,6V10H10V12H8V18H10V16H14V18H16V12H14V10H18V6H14V10H10V6H6Z" /></svg>
           </div>
         )}
       </div>
       {/* Info bar */}
-      <div className="flex items-center justify-between px-3 py-1.5 bg-secondary/40 border-b border-border/20">
-        <div className="flex items-center gap-1.5 min-w-0">
-          {hasJava && <span className="rounded px-1.5 py-0.5 text-[9px] sm:text-xs font-bold text-white" style={{ background: MC_GREEN }}>Java</span>}
-          {hasBedrock && <span className="rounded px-1.5 py-0.5 text-[9px] sm:text-xs font-bold text-white" style={{ background: "hsl(25,40%,40%)" }}>Bedrock</span>}
-          {hypixelRank && <span className="rounded px-1.5 py-0.5 text-[9px] sm:text-xs font-bold text-white" style={{ background: "hsl(40,80%,40%)" }}>{hypixelRank}</span>}
-          {banned && <span className="rounded px-1.5 py-0.5 text-[9px] sm:text-xs font-bold text-white bg-destructive">Ban</span>}
+      <div className="flex items-center justify-between px-2.5 py-1 bg-secondary/40 border-b border-border/20">
+        <div className="flex items-center gap-1 min-w-0">
+          {hasJava && <span className="rounded px-1 py-0.5 text-[8px] sm:text-[10px] font-bold text-white" style={{ background: MC_GREEN }}>Java</span>}
+          {hasBedrock && <span className="rounded px-1 py-0.5 text-[8px] sm:text-[10px] font-bold text-white" style={{ background: "hsl(25,40%,40%)" }}>Bedrock</span>}
+          {hypixelRank && <span className="rounded px-1 py-0.5 text-[8px] sm:text-[10px] font-bold text-white" style={{ background: "hsl(40,80%,40%)" }}>{hypixelRank}</span>}
+          {banned && <span className="rounded px-1 py-0.5 text-[8px] sm:text-[10px] font-bold text-white bg-destructive">Ban</span>}
         </div>
-        <span className="text-[9px] sm:text-xs font-semibold text-muted-foreground flex-shrink-0">
+        <span className="text-[9px] sm:text-[11px] font-semibold text-muted-foreground flex-shrink-0">
           {capes > 0 ? `${capes} cape${capes > 1 ? "s" : ""}` : nickname ? `@${nickname}` : "MC"}
         </span>
       </div>
-      <div className="p-3.5 sm:p-5 flex flex-col flex-1 gap-3 sm:gap-4">
-        <div className="flex items-center gap-1.5">
-          <svg className="h-4 w-4 flex-shrink-0" viewBox="0 0 24 24" fill={MC_GREEN}><path d="M4,2H20A2,2 0 0,1 22,4V20A2,2 0 0,1 20,22H4A2,2 0 0,1 2,20V4A2,2 0 0,1 4,2M6,6V10H10V12H8V18H10V16H14V18H16V12H14V10H18V6H14V10H10V6H6Z" /></svg>
-          <span className="text-xs sm:text-sm font-medium text-foreground truncate">{nickname ? `@${nickname}` : "Minecraft"}</span>
+      <div className="p-2.5 sm:p-3 flex flex-col flex-1 gap-1.5">
+        <div className="flex items-center gap-1">
+          <svg className="h-3 w-3 flex-shrink-0" viewBox="0 0 24 24" fill={MC_GREEN}><path d="M4,2H20A2,2 0 0,1 22,4V20A2,2 0 0,1 20,22H4A2,2 0 0,1 2,20V4A2,2 0 0,1 4,2M6,6V10H10V12H8V18H10V16H14V18H16V12H14V10H18V6H14V10H10V6H6Z" /></svg>
+          <span className="text-[10px] sm:text-xs font-medium text-foreground truncate">{nickname ? `@${nickname}` : "Minecraft"}</span>
         </div>
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center gap-1.5">
-            <div className="flex h-4 w-4 items-center justify-center rounded-full flex-shrink-0" style={{ background: `${MC_GREEN}20` }}>
-              <svg className="h-2.5 w-2.5" style={{ color: MC_GREEN }} viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-            </div>
-            <span className="text-[10px] sm:text-xs text-muted-foreground">Full Acesso · Email incluso</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="flex h-4 w-4 items-center justify-center rounded-full flex-shrink-0" style={{ background: `${MC_GREEN}20` }}>
-              <svg className="h-2.5 w-2.5" style={{ color: MC_GREEN }} viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-            </div>
-            <span className="text-[10px] sm:text-xs text-muted-foreground">Entrega Automática</span>
-          </div>
+        <div className="flex items-center gap-1">
+          <svg className="h-2.5 w-2.5" style={{ color: MC_GREEN }} viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+          <span className="text-[9px] sm:text-[11px] text-muted-foreground">Full Acesso · Entrega Automática</span>
         </div>
-        <div className="mt-auto pt-2 sm:pt-3 border-t border-border/30">
-          <p className="text-lg sm:text-xl font-bold tracking-tight" style={{ color: MC_GREEN }}>{formatPrice(item.price, item.price_currency)}</p>
-          <button className="mt-2.5 w-full flex items-center justify-center gap-1.5 rounded-lg py-2.5 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-white transition-all" style={{ background: MC_GREEN }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = `0 0 16px ${MC_GREEN}50`; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = ''; }}
-          >
-            Ver conta
-            <ArrowRight className="h-3.5 w-3.5" />
+        <div className="mt-auto pt-1.5 border-t border-border/30">
+          <p className="text-sm sm:text-base font-bold tracking-tight" style={{ color: MC_GREEN }}>{formatPrice(item.price, item.price_currency)}</p>
+          <button className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg py-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-white" style={{ background: MC_GREEN }}>
+            Ver conta <ArrowRight className="h-2.5 w-2.5" />
           </button>
         </div>
       </div>
