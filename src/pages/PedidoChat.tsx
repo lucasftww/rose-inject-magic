@@ -119,11 +119,14 @@ const PedidoChat = () => {
           setPlanPrice((planRes.data as any).price);
         }
       }
-      // For Robot products, use download_url from metadata instead of manual tutorials
+      // For Robot products, use download_url from metadata; fallback to product_tutorials
       if (isRobot) {
         if (meta?.download_url) {
           setTutorialFileUrl(meta.download_url);
           setTutorialText(meta.file_name ? `Arquivo: ${meta.file_name}` : null);
+        } else if (tutorialRes.data) {
+          setTutorialText((tutorialRes.data as any).tutorial_text || null);
+          setTutorialFileUrl((tutorialRes.data as any).tutorial_file_url || null);
         }
       } else if (tutorialRes.data) {
         setTutorialText((tutorialRes.data as any).tutorial_text || null);
