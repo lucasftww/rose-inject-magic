@@ -66,8 +66,17 @@ serve(async (req) => {
 
     // If no action, list users
     if (!action) {
-      const { data: { users }, error: listError } = await supabase.auth.admin.listUsers({ perPage: 1000 });
-      if (listError) throw listError;
+      // Paginate listUsers to handle >1000 users
+      let users: any[] = [];
+      let page = 1;
+      while (true) {
+        const { data, error: listError } = await supabase.auth.admin.listUsers({ page, perPage: 1000 });
+        if (listError) throw listError;
+        if (!data.users || data.users.length === 0) break;
+        users = users.concat(data.users);
+        if (data.users.length < 1000) break;
+        page++;
+      }
 
       const { data: profiles } = await supabase.from("profiles").select("user_id, username, avatar_url, banned, banned_at, banned_reason");
       const { data: roles } = await supabase.from("user_roles").select("user_id, role");
