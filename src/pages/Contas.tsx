@@ -560,20 +560,6 @@ const LolCard = ({ item, champKeyMap, formatPrice }: { item: LztItem; champKeyMa
       <div className="relative flex h-32 sm:h-44 items-center justify-center overflow-hidden bg-secondary/20">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(198,100%,45%,0.08),transparent_70%)]" />
         <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-[hsl(var(--card))] to-transparent z-[2]" />
-        <div className="absolute left-2.5 top-2.5 z-10 flex items-center gap-1.5">
-          {rankFilterData?.img ? (
-            <span className="flex items-center gap-1 rounded-md bg-secondary/80 backdrop-blur-sm px-2 py-1 text-[10px] sm:text-xs font-semibold text-foreground">
-              <img src={rankFilterData.img} alt={rankText} className="h-4 w-4 object-contain" />
-              {rankText.split(" ")[0]}
-            </span>
-          ) : (
-            <span className="rounded-md bg-secondary/80 backdrop-blur-sm px-2 py-1 text-[10px] sm:text-xs font-semibold text-foreground">{rankText}</span>
-          )}
-          {level > 0 && <span className="rounded-md bg-[hsl(198,100%,45%)]/90 backdrop-blur-sm px-2 py-1 text-[10px] sm:text-xs font-bold text-white">Nv. {level}</span>}
-        </div>
-        <span className="absolute right-2.5 top-2.5 z-10 rounded-md bg-secondary/80 backdrop-blur-sm px-2 py-1 text-[10px] sm:text-xs font-semibold text-foreground">
-          {skinCount} skins
-        </span>
         {skinPreviews.length > 0 ? (
           <div className="relative z-[1] grid grid-cols-3 gap-0 w-full h-full">
             {skinPreviews.map((skin, i) => (
@@ -589,6 +575,23 @@ const LolCard = ({ item, champKeyMap, formatPrice }: { item: LztItem; champKeyMa
             <span className="text-xs text-muted-foreground/40">{champCount} campeões</span>
           </div>
         )}
+      </div>
+      {/* Info bar */}
+      <div className="flex items-center justify-between px-3 py-1.5 bg-secondary/40 border-b border-border/20">
+        <div className="flex items-center gap-1.5">
+          {rankFilterData?.img ? (
+            <span className="flex items-center gap-1 text-[9px] sm:text-xs font-semibold text-foreground">
+              <img src={rankFilterData.img} alt={rankText} className="h-3.5 w-3.5 sm:h-4 sm:w-4 object-contain" />
+              {rankText.split(" ")[0]}
+            </span>
+          ) : (
+            <span className="text-[9px] sm:text-xs font-semibold text-foreground">{rankText}</span>
+          )}
+          {level > 0 && <span className="rounded px-1.5 py-0.5 text-[9px] sm:text-xs font-bold text-white" style={{ background: "hsl(198,100%,45%)" }}>Nv. {level}</span>}
+        </div>
+        <span className="text-[9px] sm:text-xs font-semibold text-muted-foreground">
+          {skinCount} skins
+        </span>
       </div>
       <div className="p-3.5 sm:p-5 flex flex-col flex-1 gap-3 sm:gap-4">
         <div className="grid grid-cols-2 gap-1.5">
