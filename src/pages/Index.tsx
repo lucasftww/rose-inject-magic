@@ -391,31 +391,29 @@ const ProductsSection = () => {
                   variants={scaleIn}
                   custom={idx}
                   onClick={() => navigate(`/produto/${product.id}`)}
-                  className="group flex flex-col cursor-pointer overflow-hidden rounded-lg border border-border bg-card transition-all hover:border-success/40 hover:shadow-[0_0_20px_hsl(197,100%,50%,0.1)]"
+                  className="group flex flex-col cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-success/40 hover:shadow-[0_0_20px_hsl(197,100%,50%,0.1)]"
                 >
-                  <div className="relative aspect-square w-full overflow-hidden bg-secondary/50">
+                  <div className="relative aspect-[4/3] w-full overflow-hidden bg-secondary/50">
                     {product.image_url ? (
                       <img src={product.image_url} alt={product.name} className="absolute inset-0 h-full w-full object-cover" />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center">
-                        <Package className="h-8 w-8 sm:h-12 sm:w-12 text-muted-foreground/20" />
+                        <Package className="h-6 w-6 sm:h-10 sm:w-10 text-muted-foreground/20" />
                       </div>
                     )}
                   </div>
-                  <div className="flex flex-col justify-between p-3 sm:p-5 flex-1">
-                    <div>
-                      <h3 className="text-xs sm:text-base font-bold text-foreground line-clamp-1">{product.name}</h3>
-                      {product.description && (
-                        <p className="mt-1 text-[10px] sm:text-xs text-muted-foreground line-clamp-2 hidden sm:block">{product.description}</p>
-                      )}
-                    </div>
+                  <div className="flex flex-col justify-between p-2.5 sm:p-4 flex-1">
+                    <h3 className="text-[11px] sm:text-sm font-bold text-foreground line-clamp-1">{product.name}</h3>
+                    {product.description && (
+                      <p className="mt-0.5 text-[9px] sm:text-xs text-muted-foreground line-clamp-2 hidden sm:block">{product.description}</p>
+                    )}
                     {lowestPrice !== null && (
-                      <div className="mt-2 sm:mt-4 flex items-end justify-between gap-2">
+                      <div className="mt-1.5 sm:mt-3 flex items-end justify-between gap-2">
                         <div>
-                          <p className="text-[9px] sm:text-[10px] text-muted-foreground">A partir de</p>
-                          <p className="text-base sm:text-xl font-bold text-success">R$ {lowestPrice.toFixed(2)}</p>
+                          <p className="text-[8px] sm:text-[10px] text-muted-foreground">A partir de</p>
+                          <p className="text-sm sm:text-lg font-bold text-success">R$ {lowestPrice.toFixed(2)}</p>
                         </div>
-                        <span className="hidden sm:flex items-center gap-1.5 rounded border border-border px-4 py-2 text-xs font-medium text-muted-foreground transition-colors group-hover:border-success group-hover:text-success">
+                        <span className="hidden sm:flex items-center gap-1 rounded border border-border px-3 py-1.5 text-[11px] font-medium text-muted-foreground transition-colors group-hover:border-success group-hover:text-success">
                           Ver produto
                         </span>
                       </div>
