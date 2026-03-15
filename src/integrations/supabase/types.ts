@@ -1176,7 +1176,6 @@ export type Database = {
           id: string | null
           image_url: string | null
           name: string | null
-          prize_value: number | null
           product_id: string | null
           sort_order: number | null
         }
@@ -1187,7 +1186,6 @@ export type Database = {
           id?: string | null
           image_url?: string | null
           name?: string | null
-          prize_value?: number | null
           product_id?: string | null
           sort_order?: number | null
         }
@@ -1198,7 +1196,6 @@ export type Database = {
           id?: string | null
           image_url?: string | null
           name?: string | null
-          prize_value?: number | null
           product_id?: string | null
           sort_order?: number | null
         }
