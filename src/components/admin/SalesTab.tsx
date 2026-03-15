@@ -136,7 +136,8 @@ const SalesTab = () => {
         product_name: isLzt ? (meta?.title || meta?.account_name || "Conta LZT") : (product?.name || "—"),
         product_image: isLzt ? null : (product?.image_url || null),
         plan_name: isLzt ? "Conta LZT" : (plan?.name || "—"),
-        plan_price: isLzt ? lztPrice : (plan?.price || 0),
+        // Use actual paid price from payment cart_snapshot, fallback to current plan price
+        plan_price: isLzt ? lztPrice : (paidPriceMap.get(`${t.user_id}|${t.product_id}|${t.product_plan_id}`) ?? plan?.price ?? 0),
         username: profile?.username || null,
         email: emailsMap.get(t.user_id) || null,
         stock_content: t.stock_item_id ? (stockMap.get(t.stock_item_id) || null) : null,
