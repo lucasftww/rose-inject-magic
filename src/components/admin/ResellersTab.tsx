@@ -221,10 +221,10 @@ const ResellersTab = () => {
     }
 
     // Update product associations
-    await supabase.from("reseller_products" as any).delete().eq("reseller_id", reseller.id);
+    await supabase.from("reseller_products").delete().eq("reseller_id", reseller.id);
     if (editProductIds.length > 0) {
       const items = editProductIds.map(pid => ({ reseller_id: reseller.id, product_id: pid }));
-      await supabase.from("reseller_products" as any).insert(items);
+      await supabase.from("reseller_products").insert(items);
     }
     setResellerProducts(prev => ({ ...prev, [reseller.id]: editProductIds }));
 
