@@ -103,7 +103,7 @@ const StockTab = () => {
     if (lines.length === 0) { toast({ title: "Adicione pelo menos uma linha", variant: "destructive" }); return; }
     setAddingStock(true);
     const items = lines.map(content => ({ product_plan_id: planId, content }));
-    const { error } = await supabase.from("stock_items" as any).insert(items);
+    const { error } = await supabase.from("stock_items").insert(items);
     if (error) {
       toast({ title: "Erro ao adicionar", description: error.message, variant: "destructive" });
     } else {
