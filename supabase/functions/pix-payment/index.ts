@@ -863,6 +863,38 @@ async function fulfillRobotProduct(supabaseAdmin: any, payment: any, item: any, 
   const auth = btoa(`${robotUsername}:${robotPassword}`);
 
   try {
+    // Pre-check: fetch game price to log and verify balance
+    let expectedPrice: number | null = null;
+    try {
+      const gamesRes = await fetch(`https://api.robotproject.com.br/games`, {
+        headers: { Authorization: `Basic ${auth}`, "Content-Type": "application/json" },
+      });
+      if (gamesRes.ok) {
+        const gamesData = await gamesRes.json();
+        const games = Array.isArray(gamesData) ? gamesData : gamesData.games || [];
+        const targetGame = games.find((g: any) => g.id === robotGameId);
+        if (targetGame) {
+          expectedPrice = targetGame.prices?.[String(duration)] ?? targetGame.prices?.["1"] ?? null;
+          const balance = gamesData.balance ?? null;
+          log("INFO", "fulfillRobot", "Pre-check", {
+            gameId: robotGameId,
+            gameName: targetGame.name,
+            prices: JSON.stringify(targetGame.prices),
+            expectedPrice,
+            balance,
+            duration,
+          });
+          if (balance !== null && expectedPrice !== null && balance < expectedPrice) {
+            log("ERROR", "fulfillRobot", "Insufficient balance detected before buy", { balance, expectedPrice, duration });
+          }
+        } else {
+          log("WARN", "fulfillRobot", "Game not found in /games list", { robotGameId });
+        }
+      }
+    } catch (preErr: any) {
+      log("WARN", "fulfillRobot", "Pre-check failed, proceeding anyway", { error: preErr.message });
+    }
+
     const buyRes = await fetch(`https://api.robotproject.com.br/buy/${encodeURIComponent(robotGameId)}`, {
       method: "POST",
       headers: {
@@ -873,7 +905,7 @@ async function fulfillRobotProduct(supabaseAdmin: any, payment: any, item: any, 
     });
 
     const buyData = await buyRes.json();
-    console.log("Robot buy response:", buyRes.status, JSON.stringify(buyData).substring(0, 500));
+    log("INFO", "fulfillRobot", "Robot buy response", { status: buyRes.status, body: JSON.stringify(buyData).substring(0, 500), expectedPrice, duration });
 
     if (!buyRes.ok || !buyData.success) {
       const reason = buyData.message || `HTTP ${buyRes.status}`;
