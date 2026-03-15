@@ -427,6 +427,20 @@ const PedidoChat = () => {
       "live.com": "https://login.live.com",
       "gmail.com": "https://mail.google.com",
       "yahoo.com": "https://mail.yahoo.com",
+      "rambler.ru": "https://mail.rambler.ru",
+      "autorambler.ru": "https://mail.rambler.ru",
+      "myrambler.ru": "https://mail.rambler.ru",
+      "ro.ru": "https://mail.rambler.ru",
+      "lenta.ru": "https://mail.rambler.ru",
+      "mail.ru": "https://e.mail.ru",
+      "bk.ru": "https://e.mail.ru",
+      "inbox.ru": "https://e.mail.ru",
+      "list.ru": "https://e.mail.ru",
+      "yandex.ru": "https://mail.yandex.ru",
+      "yandex.com": "https://mail.yandex.com",
+      "ya.ru": "https://mail.yandex.ru",
+      "firstmail.ltd": "https://firstmail.ltd/webmail/login/",
+      "ffrmail.com": "https://ffrmail.com/webmail/login/",
     };
     if (knownWebmails[domain]) return knownWebmails[domain];
     // Generic webmail fallback for autoreg domains like firstmail.ltd
