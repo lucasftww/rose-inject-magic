@@ -906,7 +906,7 @@ const Contas = () => {
 
   // ─── Fortnite filters ───
   const [fnVbMin, setFnVbMin] = useState("");
-  const [fnSkinsMin, setFnSkinsMin] = useState("");
+  const [fnSkinsMin, setFnSkinsMin] = useState("1");
 
   // ─── Minecraft filters ───
   const [mcJava, setMcJava] = useState(false);
