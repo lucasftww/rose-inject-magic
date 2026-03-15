@@ -209,7 +209,7 @@ const RobotProjectTab = () => {
       
       const [plansRes, paymentsRes] = await Promise.all([
         supabase.from("product_plans").select("id, name, price, robot_duration_days").in("id", planIds),
-        supabase.from("payments").select("user_id, amount, cart_snapshot, status").in("user_id", ticketUserIds).in("status", ["COMPLETED", "ACTIVE"]).order("created_at", { ascending: false }).limit(2000),
+        supabase.from("payments").select("user_id, amount, cart_snapshot, status").in("user_id", ticketUserIds).in("status", ["COMPLETED", "ACTIVE"]).order("created_at", { ascending: false }).limit(5000),
       ]);
       
       const planMap = Object.fromEntries((plansRes.data || []).map(p => [p.id, p]));
