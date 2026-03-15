@@ -693,7 +693,19 @@ const FortniteCard = ({ item, skinsDb, formatPrice }: { item: LztItem; skinsDb: 
     >
       <div className="relative flex h-28 sm:h-36 items-center justify-center overflow-hidden bg-secondary/20">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(265,80%,65%,0.08),transparent_70%)]" />
-        {skinPreviews.length > 0 ? (
+        {skinPreviews.length === 1 ? (
+          <div className="relative z-[1] w-full h-full flex items-center justify-center bg-secondary/20">
+            <img src={skinPreviews[0].image} alt={skinPreviews[0].name} className="w-full h-full object-contain" loading="lazy" />
+          </div>
+        ) : skinPreviews.length >= 2 && skinPreviews.length <= 3 ? (
+          <div className={`relative z-[1] grid gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center ${skinPreviews.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+            {skinPreviews.map((skin, i) => (
+              <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/20 p-0.5">
+                <img src={skin.image} alt={skin.name} className="h-full w-full object-contain drop-shadow-sm" loading="lazy" />
+              </div>
+            ))}
+          </div>
+        ) : skinPreviews.length > 0 ? (
           <div className="relative z-[1] grid grid-cols-3 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
             {skinPreviews.map((skin, i) => (
               <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/20 p-0.5">
