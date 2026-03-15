@@ -53,7 +53,7 @@ const StockTab = () => {
       const planIds = data.flatMap((p: any) => p.product_plans.map((pl: any) => pl.id));
       if (planIds.length > 0) {
         const { data: stockData } = await supabase
-          .from("stock_items" as any)
+          .from("stock_items")
           .select("product_plan_id, used")
           .in("product_plan_id", planIds);
         if (stockData) {
@@ -75,7 +75,7 @@ const StockTab = () => {
   const fetchStockForPlan = async (planId: string) => {
     setLoadingStock(planId);
     const { data, error } = await supabase
-      .from("stock_items" as any)
+      .from("stock_items")
       .select("*")
       .eq("product_plan_id", planId)
       .order("created_at", { ascending: false });
@@ -103,7 +103,7 @@ const StockTab = () => {
     if (lines.length === 0) { toast({ title: "Adicione pelo menos uma linha", variant: "destructive" }); return; }
     setAddingStock(true);
     const items = lines.map(content => ({ product_plan_id: planId, content }));
-    const { error } = await supabase.from("stock_items" as any).insert(items);
+    const { error } = await supabase.from("stock_items").insert(items);
     if (error) {
       toast({ title: "Erro ao adicionar", description: error.message, variant: "destructive" });
     } else {
@@ -136,7 +136,7 @@ const StockTab = () => {
   };
 
   const handleDeleteStock = async (stockId: string, planId: string) => {
-    const { error } = await supabase.from("stock_items" as any).delete().eq("id", stockId);
+    const { error } = await supabase.from("stock_items").delete().eq("id", stockId);
     if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } else {
@@ -148,7 +148,7 @@ const StockTab = () => {
 
   const handleDeleteAllAvailable = async (planId: string) => {
     if (!confirm("Excluir todo estoque disponível deste plano?")) return;
-    const { error } = await supabase.from("stock_items" as any).delete().eq("product_plan_id", planId).eq("used", false);
+    const { error } = await supabase.from("stock_items").delete().eq("product_plan_id", planId).eq("used", false);
     if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } else {
