@@ -24,7 +24,7 @@ export const useReseller = () => {
 
     const fetch = async () => {
       const { data, error } = await supabase
-        .from("resellers" as any)
+        .from("resellers")
         .select("id, discount_percent, active, expires_at")
         .eq("user_id", user.id)
         .eq("active", true)
