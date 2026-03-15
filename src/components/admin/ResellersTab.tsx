@@ -141,8 +141,8 @@ const ResellersTab = () => {
     }
     // Add product associations
     if (formProductIds.length > 0 && resData) {
-      const items = formProductIds.map(pid => ({ reseller_id: (resData as any).id, product_id: pid }));
-      await supabase.from("reseller_products" as any).insert(items);
+      const items = formProductIds.map(pid => ({ reseller_id: resData.id, product_id: pid }));
+      await supabase.from("reseller_products").insert(items);
     }
     toast({ title: "Revendedor adicionado!" });
     resetForm();
