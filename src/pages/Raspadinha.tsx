@@ -13,7 +13,7 @@ interface Prize {
   description: string | null;
   image_url: string | null;
   win_percentage?: number;
-  prize_value: number;
+  prize_value?: number;
 }
 
 interface Play {
