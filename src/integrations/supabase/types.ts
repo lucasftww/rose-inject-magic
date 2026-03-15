@@ -1225,6 +1225,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_coupon_uses: {
+        Args: { _coupon_id: string }
+        Returns: undefined
+      }
+      increment_reseller_purchases: {
+        Args: { _reseller_id: string }
+        Returns: undefined
+      }
       validate_coupon: {
         Args: { _cart_product_ids?: string[]; _code: string; _user_id: string }
         Returns: Json
