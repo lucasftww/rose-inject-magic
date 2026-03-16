@@ -255,7 +255,7 @@ const GamesTab = () => {
             onDragEnter={() => handleDragEnter(index)}
             onDragOver={(e) => e.preventDefault()}
             onDragEnd={handleDragEnd}
-            className={`flex items-center gap-4 rounded-lg border p-4 transition-all cursor-grab active:cursor-grabbing ${
+            className={`flex items-center gap-4 rounded-lg border p-4 cursor-grab active:cursor-grabbing ${
               dragOverIndex === index ? "border-success bg-success/5" : "border-border bg-card hover:border-success/30"
             } ${dragIndex === index ? "opacity-50" : ""}`}>
             <GripVertical className="h-4 w-4 shrink-0 text-muted-foreground/40" />
