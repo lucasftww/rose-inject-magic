@@ -34,11 +34,11 @@ const GamesTab = () => {
 
   const invalidateAdmin = useInvalidateAdminCache();
 
-  const fetchGames = async () => {
+  const fetchGames = async (shouldInvalidate = false) => {
     const { data, error } = await supabase.from("games").select("*").order("sort_order", { ascending: true });
     if (!error && data) setGames(data as Game[]);
     setLoadingGames(false);
-    invalidateAdmin();
+    if (shouldInvalidate) invalidateAdmin();
   };
 
   useEffect(() => { fetchGames(); }, []);
