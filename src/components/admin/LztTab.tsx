@@ -537,7 +537,7 @@ const SaleRow = ({ sale, onCopy }: { sale: LztSale; onCopy: (t: string) => void 
       </p>
       <div className="flex items-center gap-2 mt-0.5">
         <button onClick={() => onCopy(sale.lzt_item_id)}
-          className="text-xs text-muted-foreground hover:text-success flex items-center gap-1 font-mono transition-colors">
+          className="text-xs text-muted-foreground hover:text-success flex items-center gap-1 font-mono">
           LZT #{sale.lzt_item_id}
           <Copy className="h-3 w-3 opacity-0 group-hover:opacity-60" />
         </button>

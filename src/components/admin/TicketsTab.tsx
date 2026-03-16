@@ -882,7 +882,7 @@ const TicketsTab = ({
                 )
               )}
               <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}
-                className="rounded-lg border border-border px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground disabled:opacity-20 transition-colors">›</button>
+                className="rounded-lg border border-border px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground disabled:opacity-20">›</button>
             </div>
           )}
         </div>
