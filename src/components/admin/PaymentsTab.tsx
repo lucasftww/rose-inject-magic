@@ -105,7 +105,7 @@ const PaymentsTab = () => {
                 className={`mt-2 w-full rounded-lg px-4 py-2.5 text-sm font-semibold transition-all ${
                   s.enabled
                     ? "border border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20"
-                    : "bg-success px-6 text-success-foreground hover:shadow-[0_0_24px_hsl(130,99%,41%,0.45)]"
+                    : "bg-success px-6 text-success-foreground hover:shadow-[0_0_24px_hsl(var(--success)/0.35)]"
                 }`}
               >
                 {toggling === s.id ? (
