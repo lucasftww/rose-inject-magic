@@ -333,6 +333,8 @@ const TicketsTab = ({
         }
       }
       setUploadingFile(false);
+      // Revoke preview URLs before clearing to prevent memory leaks
+      previewUrls.forEach(url => { if (url) URL.revokeObjectURL(url); });
       setPendingFiles([]);
       setPreviewUrls([]);
     }
