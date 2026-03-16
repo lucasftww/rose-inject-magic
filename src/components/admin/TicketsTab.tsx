@@ -1066,7 +1066,7 @@ const TicketsTab = ({ initialTicketId, onTicketOpened }: { initialTicketId?: str
               )}
 
               {/* Quick replies */}
-              <div className="border-t border-border px-3 pt-2 pb-1 bg-card/80 flex gap-1.5 flex-wrap">
+              <div className="border-t border-border px-3 pt-2 pb-1 bg-card/80 flex gap-1.5 overflow-x-auto scrollbar-hide">
                 {[
                   "Precisa de ajuda?",
                   "Qual seu problema?",
