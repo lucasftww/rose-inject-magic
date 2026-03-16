@@ -1072,10 +1072,10 @@ const TicketsTab = ({
                   <div className="flex items-center gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-2.5">
                     <div className="h-2.5 w-2.5 rounded-full bg-destructive animate-pulse" />
                     <span className="text-sm font-medium text-foreground flex-1">Gravando... {formatDuration(recordingDuration)}</span>
-                    <button onClick={cancelRecording} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all" title="Cancelar">
+                    <button onClick={cancelRecording} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10" title="Cancelar">
                       <Trash2 className="h-4 w-4" />
                     </button>
-                    <button onClick={handleSendAudio} disabled={sending || uploadingFile} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-success text-success-foreground disabled:opacity-30 hover:brightness-110 transition-all" title="Enviar áudio">
+                    <button onClick={handleSendAudio} disabled={sending || uploadingFile} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-success text-success-foreground disabled:opacity-30" title="Enviar áudio">
                       {sending || uploadingFile ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                     </button>
                   </div>
