@@ -1,10 +1,6 @@
 import { ReactNode, forwardRef } from "react";
 import { Loader2, LucideIcon } from "lucide-react";
 
-/* ─── Success glow shadow using CSS variable ─── */
-export const successGlow = "hover:shadow-[0_0_24px_hsl(var(--success)/0.35)]";
-export const successGlowSm = "hover:shadow-[0_0_16px_hsl(var(--success)/0.25)]";
-
 /* ─── Page Header ─── */
 export const AdminPageHeader = ({
   title,
@@ -41,8 +37,8 @@ export const AdminButton = forwardRef<
     : "rounded-lg px-5 py-2.5 text-sm font-semibold";
 
   const variants = {
-    primary: `bg-success text-success-foreground ${successGlow} disabled:opacity-50`,
-    secondary: "border border-border bg-card text-muted-foreground hover:text-foreground hover:border-success/50",
+    primary: "bg-success text-success-foreground disabled:opacity-50",
+    secondary: "border border-border bg-card text-muted-foreground hover:text-foreground",
     danger: "border border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20",
     ghost: "text-muted-foreground hover:text-foreground hover:bg-secondary/50",
   };
@@ -51,7 +47,7 @@ export const AdminButton = forwardRef<
     <button
       ref={ref}
       disabled={disabled || loading}
-      className={`flex items-center gap-2 transition-all ${base} ${variants[variant]} ${className}`}
+      className={`flex items-center gap-2 ${base} ${variants[variant]} ${className}`}
       {...props}
     >
       {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : Icon && <Icon className={size === "sm" ? "h-3.5 w-3.5" : "h-4 w-4"} />}
@@ -75,7 +71,7 @@ export const AdminStatCard = ({
   accent?: string;
   highlight?: boolean;
 }) => (
-  <div className={`rounded-xl border p-4 transition-all ${highlight ? "border-success/30 bg-success/5" : "border-border bg-card"}`}>
+  <div className={`rounded-xl border p-4 ${highlight ? "border-success/30 bg-success/5" : "border-border bg-card"}`}>
     <div className="flex items-center gap-2 mb-1.5">
       <div className={accent}>{icon}</div>
       <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{label}</span>
@@ -126,8 +122,8 @@ export const AdminToggle = ({
         onChange={(e) => onChange(e.target.checked)}
         className="peer sr-only"
       />
-      <div className="h-5 w-9 rounded-full border border-border bg-secondary transition-colors peer-checked:border-success peer-checked:bg-success" />
-      <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-foreground/60 transition-all peer-checked:left-[18px] peer-checked:bg-success-foreground" />
+      <div className="h-5 w-9 rounded-full border border-border bg-secondary peer-checked:border-success peer-checked:bg-success" />
+      <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-foreground/60 peer-checked:left-[18px] peer-checked:bg-success-foreground" />
     </div>
     {label && <span className="text-xs font-medium text-muted-foreground">{label}</span>}
   </label>
@@ -142,7 +138,7 @@ export const AdminInput = forwardRef<
     {label && <label className="text-xs font-medium text-muted-foreground">{label}</label>}
     <input
       ref={ref}
-      className={`${label ? "mt-1 " : ""}w-full rounded-lg border border-border bg-secondary/50 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-success/50 transition-colors ${mono ? "font-mono" : ""} ${className}`}
+      className={`${label ? "mt-1 " : ""}w-full rounded-lg border border-border bg-secondary/50 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-success/50 ${mono ? "font-mono" : ""} ${className}`}
       {...props}
     />
   </div>
@@ -161,7 +157,7 @@ export const AdminFilterChip = ({
 }) => (
   <button
     onClick={onClick}
-    className={`rounded-lg px-3 py-2 text-xs font-medium transition-colors whitespace-nowrap ${
+    className={`rounded-lg px-3 py-2 text-xs font-medium whitespace-nowrap ${
       active
         ? "bg-success/20 text-success border border-success/30"
         : "bg-secondary/50 text-muted-foreground border border-border hover:text-foreground"
