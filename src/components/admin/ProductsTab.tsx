@@ -178,8 +178,8 @@ const ProductsTab = () => {
     }
   }, [cachedProducts]);
 
-  const fetchData = async () => {
-    invalidateAdmin();
+  const fetchData = async (shouldInvalidate = false) => {
+    if (shouldInvalidate) invalidateAdmin();
     await Promise.all([refetchGames(), refetchProducts()]);
     setLoading(false);
   };
@@ -351,7 +351,7 @@ const ProductsTab = () => {
           features_text: formFeaturesText.trim() || null,
           image_url: formImageUrl.trim() || null, game_id: formGameId, active: formActive,
           robot_game_id: robotEnabled && formRobotGameId ? formRobotGameId : null,
-          robot_markup_percent: robotEnabled && formRobotMarkup ? formRobotMarkup : null,
+          robot_markup_percent: robotEnabled && formRobotMarkup != null ? formRobotMarkup : null,
         } as any).eq("id", editing.id);
         if (error) throw error;
 
@@ -417,7 +417,7 @@ const ProductsTab = () => {
           image_url: formImageUrl.trim() || null, game_id: formGameId, active: formActive,
           sort_order: products.length,
           robot_game_id: robotEnabled && formRobotGameId ? formRobotGameId : null,
-          robot_markup_percent: robotEnabled && formRobotMarkup ? formRobotMarkup : null,
+          robot_markup_percent: robotEnabled && formRobotMarkup != null ? formRobotMarkup : null,
         } as any).select().single();
         if (error) throw error;
 
@@ -457,7 +457,7 @@ const ProductsTab = () => {
         toast({ title: "Produto criado!" });
       }
       resetForm();
-      fetchData();
+      fetchData(true);
     } catch (err: any) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
     }
@@ -468,7 +468,7 @@ const ProductsTab = () => {
     if (!confirm(`Excluir "${product.name}"?`)) return;
     const { error } = await supabase.from("products").delete().eq("id", product.id);
     if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
-    else { toast({ title: "Excluído!" }); fetchData(); }
+    else { toast({ title: "Excluído!" }); fetchData(true); }
   };
 
   const getGameName = (gameId: string) => games.find(g => g.id === gameId)?.name || "—";
@@ -498,7 +498,7 @@ const ProductsTab = () => {
     const updates = allReordered.map((p, i) => supabase.from("products").update({ sort_order: i }).eq("id", p.id));
     await Promise.all(updates);
     toast({ title: "Ordem atualizada!" });
-    fetchData();
+    fetchData(true);
   };
 
   return (
