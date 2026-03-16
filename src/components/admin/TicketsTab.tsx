@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdminUsers } from "@/hooks/useAdminUsers";
 import { toast } from "@/hooks/use-toast";
 import AudioMessagePlayer from "@/components/AudioMessagePlayer";
 import { Loader2, MessageSquare, Search, Send, Archive, ArchiveRestore, ArrowLeft, Clock, User, Copy, Check, ShieldCheck, ExternalLink, KeyRound, Mail, ChevronDown, ChevronUp, CheckCircle, BookOpen, FolderDown, Download, Package, Eye, EyeOff, Paperclip, Image, X, FileText, Bot, UserCircle, Mic, Square, Trash2 } from "lucide-react";
@@ -46,6 +47,7 @@ const ITEMS_PER_PAGE = 8;
 
 const TicketsTab = ({ initialTicketId, onTicketOpened }: { initialTicketId?: string | null; onTicketOpened?: () => void }) => {
   const { user } = useAuth();
+  const { emailMap: adminEmailMap } = useAdminUsers();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
@@ -88,16 +90,9 @@ const TicketsTab = ({ initialTicketId, onTicketOpened }: { initialTicketId?: str
         supabase.from("lzt_sales").select("lzt_item_id, sell_price"),
       ]);
 
-      let emailMap: Record<string, string> = {};
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        const { data: usersData } = await supabase.functions.invoke("admin-users", {
-          headers: session ? { Authorization: `Bearer ${session.access_token}` } : {},
-        });
-        if (Array.isArray(usersData)) {
-          usersData.forEach((u: any) => { emailMap[u.id] = u.email; });
-        }
-      } catch {}
+      // Use cached admin-users data
+      const emailMap: Record<string, string> = {};
+      adminEmailMap.forEach((v, k) => { emailMap[k] = v; });
 
       const productMap: Record<string, string> = {};
       const planMap: Record<string, { name: string; price: number }> = {};

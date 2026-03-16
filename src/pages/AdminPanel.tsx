@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense, useCallback, memo } from "react";
+import { useState, lazy, Suspense, useCallback, memo, useTransition } from "react";
 import Header from "@/components/Header";
 import {
   ShieldAlert, Gamepad2, Mail, Package, Tag, UserCheck, TrendingUp,
@@ -138,14 +138,15 @@ const AdminPanel = () => {
   const [pendingTicketId, setPendingTicketId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [, startTransition] = useTransition();
 
   const handleGoToTicket = useCallback((ticketId: string) => {
     setPendingTicketId(ticketId);
-    setActiveTab("tickets");
+    startTransition(() => setActiveTab("tickets"));
   }, []);
 
   const handleTabSelect = useCallback((id: TabId) => {
-    setActiveTab(id);
+    startTransition(() => setActiveTab(id));
     setMobileOpen(false);
   }, []);
 

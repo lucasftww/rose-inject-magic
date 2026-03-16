@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-
 import { useAuth } from "@/hooks/useAuth";
+import { useAdminUsers } from "@/hooks/useAdminUsers";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2, Users, Mail, Calendar, Clock, Search, Shield, Ban, ShieldCheck,
@@ -39,6 +39,7 @@ const InfoCard = ({ icon, label, value }: { icon: React.ReactNode; label: string
 
 const UsersTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void }) => {
   const { user: currentUser } = useAuth();
+  const { users: adminUsersRaw, loading: loadingAdminUsers, fetchUsers: refetchAdminUsers } = useAdminUsers();
   const [users, setUsers] = useState<UserData[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -49,19 +50,17 @@ const UsersTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
   const [showOrdersUser, setShowOrdersUser] = useState<UserData | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>("all");
 
+  useEffect(() => {
+    if (!loadingAdminUsers) {
+      setUsers(adminUsersRaw as UserData[]);
+      setLoadingUsers(false);
+    }
+  }, [adminUsersRaw, loadingAdminUsers]);
+
   const fetchUsers = async () => {
     setLoadingUsers(true);
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-    const res = await supabase.functions.invoke("admin-users", {
-      headers: { Authorization: `Bearer ${session.access_token}` },
-    });
-    if (res.error) toast({ title: "Erro ao carregar", description: String(res.error), variant: "destructive" });
-    else setUsers(res.data || []);
-    setLoadingUsers(false);
+    await refetchAdminUsers(true);
   };
-
-  useEffect(() => { fetchUsers(); }, []);
 
   const executeAction = async (action: string, targetUserId: string, reason?: string) => {
     setActionLoading(action + targetUserId);
