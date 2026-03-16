@@ -457,7 +457,7 @@ const ProductsTab = () => {
         toast({ title: "Produto criado!" });
       }
       resetForm();
-      fetchData();
+      fetchData(true);
     } catch (err: any) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
     }
