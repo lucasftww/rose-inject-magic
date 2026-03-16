@@ -476,6 +476,12 @@ const AdminPanel = () => {
   // Auth & admin role are already verified by AdminGuard wrapper in App.tsx
   // This component only renders after server-side confirmation
   const [activeTab, setActiveTab] = useState<TabId>("overview");
+  const [pendingTicketId, setPendingTicketId] = useState<string | null>(null);
+
+  const handleGoToTicket = (ticketId: string) => {
+    setPendingTicketId(ticketId);
+    setActiveTab("tickets");
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -508,13 +514,13 @@ const AdminPanel = () => {
           {activeTab === "estoque" && <StockTab />}
           {activeTab === "robot" && <RobotProjectTab />}
           {activeTab === "revendedores" && <ResellersTab />}
-          {activeTab === "tickets" && <TicketsTab />}
+          {activeTab === "tickets" && <TicketsTab initialTicketId={pendingTicketId} onTicketOpened={() => setPendingTicketId(null)} />}
           {activeTab === "status" && <StatusTab />}
           {activeTab === "cupons" && <CouponsTab />}
           {activeTab === "usuarios" && <UsersTab />}
           {activeTab === "credenciais" && <CredentialsTab />}
           {activeTab === "lzt" && <LztTab />}
-          {activeTab === "vendas" && <SalesTab />}
+          {activeTab === "vendas" && <SalesTab onGoToTicket={handleGoToTicket} />}
           {activeTab === "pagamentos" && <PaymentsTab />}
           {activeTab === "financeiro" && <FinanceTab />}
           {activeTab === "raspadinha" && <ScratchCardTab />}
