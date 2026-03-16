@@ -1,8 +1,9 @@
 import { useState, lazy, Suspense, useCallback, memo, useTransition } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   ShieldAlert, Gamepad2, Mail, Package, Tag, UserCheck, TrendingUp,
   Key, CreditCard, BarChart3, ShoppingBag, Globe, Shield, Users,
-  ChevronRight, Menu, Loader2
+  ChevronRight, Menu, Loader2, Home
 } from "lucide-react";
 import {
   Sheet,
