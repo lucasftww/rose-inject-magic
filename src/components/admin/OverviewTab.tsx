@@ -86,10 +86,8 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
   // Profit data
   const [lztProfit, setLztProfit] = useState(0);
   const [lztCost, setLztCost] = useState(0);
-  const [lztSold, setLztSold] = useState(0);
   const [robotProfit, setRobotProfit] = useState(0);
   const [robotCost, setRobotCost] = useState(0);
-  const [robotRevenue, setRobotRevenue] = useState(0);
   const [totalDiscounts, setTotalDiscounts] = useState(0);
 
   useEffect(() => {
