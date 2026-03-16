@@ -569,7 +569,7 @@ const TicketsTab = ({
 
             <div className="flex flex-wrap items-center gap-2 pt-1.5">
               <a href={cfg.loginUrl} target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-secondary/60 px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-success/30 hover:bg-success/5">
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-secondary/60 px-3 py-1.5 text-xs font-medium text-foreground hover:border-success/30 hover:bg-success/5">
                 Login page <ExternalLink className="h-3 w-3" />
               </a>
               {emailLogin && (() => {
