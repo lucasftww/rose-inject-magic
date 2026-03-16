@@ -332,7 +332,7 @@ const UsersTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
           <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-20 text-muted-foreground">
             <Users className="h-10 w-10 mb-3 opacity-40" /><p className="font-semibold">Nenhum usuário encontrado</p>
           </div>
-        ) : filtered.map((u) => (
+        ) : paginatedUsers.map((u) => (
           <button key={u.id} onClick={() => setSelectedUser(u)}
             className="flex w-full items-center gap-4 rounded-lg border border-border bg-card p-4 text-left hover:border-success/30">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary border border-border">
