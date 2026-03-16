@@ -157,10 +157,14 @@ const FinanceTab = () => {
     setLoading(true);
 
     // Fetch USD exchange rate
+    let currentRate = usdToBrl;
     try {
       const res = await fetch("https://open.er-api.com/v6/latest/USD");
       const json = await res.json();
-      if (json?.rates?.BRL) setUsdToBrl(json.rates.BRL);
+      if (json?.rates?.BRL) {
+        currentRate = json.rates.BRL;
+        setUsdToBrl(currentRate);
+      }
     } catch { /* use fallback */ }
 
     const [paymentsData, lztData, resellerData, robotProductsRes] = await Promise.all([
@@ -226,7 +230,7 @@ const FinanceTab = () => {
 
         let cost = 0;
         if (meta.amount_spent && Number(meta.amount_spent) > 0) {
-          cost = Number(meta.amount_spent) * usdToBrl;
+          cost = Number(meta.amount_spent) * currentRate;
         } else if (meta.is_free) {
           cost = 0;
         } else if (product?.robot_markup_percent) {
