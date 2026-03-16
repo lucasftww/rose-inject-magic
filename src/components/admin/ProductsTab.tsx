@@ -901,7 +901,7 @@ const ProductsTab = () => {
                     placeholder="https://link-do-arquivo..."
                     className="flex-1 rounded-lg border border-border bg-secondary/50 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-success/50" />
                   <button type="button" onClick={() => tutorialFileInputRef.current?.click()} disabled={uploadingTutorial}
-                    className="flex items-center gap-1.5 rounded-lg border border-dashed border-border px-3 py-2 text-xs font-medium text-muted-foreground hover:border-success/40 hover:text-foreground transition-colors">
+                    className="flex items-center gap-1.5 rounded-lg border border-dashed border-border px-3 py-2 text-xs font-medium text-muted-foreground hover:border-success/40 hover:text-foreground">
                     {uploadingTutorial ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
                     {uploadingTutorial ? "Enviando..." : "Upload"}
                   </button>
