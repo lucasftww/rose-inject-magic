@@ -205,7 +205,7 @@ const CredentialsTab = () => {
                   {visibleKeys.has(cred.id) ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                 </button>
                 <button onClick={() => openEdit(cred)}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:border-accent hover:text-accent">
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground hover:border-accent hover:text-accent">
                   <Pencil className="h-3.5 w-3.5" />
                 </button>
                 <button onClick={() => handleDelete(cred)}
