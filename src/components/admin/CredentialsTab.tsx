@@ -201,7 +201,7 @@ const CredentialsTab = () => {
                   </a>
                 )}
                 <button onClick={() => toggleVisibility(cred.id)}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:border-success hover:text-success">
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground hover:border-success hover:text-success">
                   {visibleKeys.has(cred.id) ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                 </button>
                 <button onClick={() => openEdit(cred)}
