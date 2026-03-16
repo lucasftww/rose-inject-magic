@@ -157,7 +157,7 @@ const Raspadinha = () => {
   const [checkingPayments, setCheckingPayments] = useState(false);
 
   // Check for paid-but-unplayed scratch card payments AND active payments that may have been paid
-  const checkPendingPayments = async (silent = false) => {
+  const checkPendingPayments = useCallback(async (silent = false) => {
     if (!user) return;
     if (!silent) setCheckingPayments(true);
     try {
@@ -233,12 +233,12 @@ const Raspadinha = () => {
       }
     } catch { /* silent */ }
     setCheckingPayments(false);
-  };
+  }, [user]);
 
   useEffect(() => {
-    if (!user || paymentPhase !== "idle") return;
+    if (paymentPhase !== "idle") return;
     checkPendingPayments(true);
-  }, [user, paymentPhase]);
+  }, [checkPendingPayments, paymentPhase]);
 
   useEffect(() => {
     return () => {
