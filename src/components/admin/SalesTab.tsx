@@ -96,7 +96,7 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
 
     // Build a map: userId+productId+planId -> actual paid price from cart_snapshot
     const paidPriceMap = new Map<string, number>();
-    for (const pay of (paymentsRes.data || [])) {
+    for (const pay of allPayments) {
       const snapshot = pay.cart_snapshot as any[];
       if (!Array.isArray(snapshot)) continue;
       for (const item of snapshot) {
