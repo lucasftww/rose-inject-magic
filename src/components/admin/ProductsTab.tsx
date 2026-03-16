@@ -684,8 +684,8 @@ const ProductsTab = () => {
                     if (robotEnabled) { setRobotEnabled(false); setFormRobotGameId(null); setFormRobotMarkup(null); }
                     else { setRobotEnabled(true); fetchRobotGames(); }
                   }}>
-                    <div className={`h-4 w-7 rounded-full border transition-colors relative ${robotEnabled ? "border-accent bg-accent" : "border-border bg-secondary"}`}>
-                      <div className={`absolute top-0.5 h-3 w-3 rounded-full transition-all ${robotEnabled ? "left-[12px] bg-white" : "left-0.5 bg-foreground/60"}`} />
+                    <div className={`h-4 w-7 rounded-full border relative ${robotEnabled ? "border-accent bg-accent" : "border-border bg-secondary"}`}>
+                      <div className={`absolute top-0.5 h-3 w-3 rounded-full ${robotEnabled ? "left-[12px] bg-white" : "left-0.5 bg-foreground/60"}`} />
                     </div>
                     <span className="text-xs text-muted-foreground">Produto fornecido via Robot Project</span>
                   </label>
