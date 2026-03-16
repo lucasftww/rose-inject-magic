@@ -812,7 +812,7 @@ const TicketsTab = ({
             ) : paginatedTickets.map((ticket) => (
               <div
                 key={ticket.id}
-                className={`group rounded-lg border p-3 cursor-pointer transition-all ${
+                className={`group rounded-lg border p-3 cursor-pointer ${
                   selectedTicket?.id === ticket.id
                     ? "border-success/30 bg-success/[0.06]"
                     : "border-border/60 bg-card hover:border-muted-foreground/20 hover:bg-accent/20"
