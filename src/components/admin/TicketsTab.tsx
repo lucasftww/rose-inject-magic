@@ -603,7 +603,7 @@ const TicketsTab = ({
             {/* Change email */}
             <div className="rounded-xl border border-border bg-background overflow-hidden">
               <button onClick={() => setExpandedSection(expandedSection === "email-admin" ? null : "email-admin")}
-                className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left transition-colors hover:bg-secondary/40">
+                className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left hover:bg-secondary/40">
                 <Mail className="h-3.5 w-3.5 text-success shrink-0" />
                 <span className="flex-1 text-xs font-medium text-foreground">Como trocar o email da conta</span>
                 {expandedSection === "email-admin" ? <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />}
