@@ -159,7 +159,7 @@ const CouponsTab = () => {
               <div className="mt-1 flex gap-2">
                 {(["percentage", "fixed"] as const).map((t) => (
                   <button key={t} onClick={() => setFormType(t)}
-                    className={`flex-1 rounded-lg border px-3 py-2.5 text-xs font-medium transition-colors ${formType === t ? "border-success bg-success/10 text-success" : "border-border text-muted-foreground hover:text-foreground"}`}>
+                    className={`flex-1 rounded-lg border px-3 py-2.5 text-xs font-medium ${formType === t ? "border-success bg-success/10 text-success" : "border-border text-muted-foreground hover:text-foreground"}`}>
                     {t === "percentage" ? "% Porcentagem" : "R$ Valor fixo"}
                   </button>
                 ))}
