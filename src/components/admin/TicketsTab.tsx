@@ -788,7 +788,7 @@ const TicketsTab = ({
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-foreground outline-none focus:border-success/40 transition-colors cursor-pointer"
+            className="rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-foreground outline-none focus:border-success/40 cursor-pointer"
           >
             <option value="all">Todos</option>
             {statusOptions.map((s) => (
