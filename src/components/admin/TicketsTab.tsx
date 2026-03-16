@@ -858,7 +858,7 @@ const TicketsTab = ({
                   ) : (
                     <button
                       onClick={(e) => { e.stopPropagation(); archiveTicket(ticket.id); }}
-                      className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium text-muted-foreground/40 hover:text-muted-foreground hover:bg-muted/40 transition-all opacity-0 group-hover:opacity-100"
+                      className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium text-muted-foreground/40 hover:text-muted-foreground hover:bg-muted/40 opacity-0 group-hover:opacity-100"
                     >
                       <Archive className="h-3 w-3" /> Arquivar
                     </button>
