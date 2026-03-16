@@ -1,9 +1,9 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Fragment } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import {
   Loader2, Search, ShoppingBag, Package, DollarSign, Users,
-  ChevronLeft, ChevronRight, Eye, Copy, Check, Filter
+  ChevronLeft, ChevronRight, Eye, Copy, Check
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
