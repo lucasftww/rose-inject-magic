@@ -166,8 +166,8 @@ const ScratchCardTab = () => {
           <label className="flex cursor-pointer items-center gap-3 pb-2">
             <div className="relative">
               <input type="checkbox" checked={configActive} onChange={(e) => setConfigActive(e.target.checked)} className="peer sr-only" />
-              <div className="h-5 w-9 rounded-full border border-border bg-secondary transition-colors peer-checked:border-success peer-checked:bg-success" />
-              <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-foreground/60 transition-all peer-checked:left-[18px] peer-checked:bg-success-foreground" />
+              <div className="h-5 w-9 rounded-full border border-border bg-secondary peer-checked:border-success peer-checked:bg-success" />
+              <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-foreground/60 peer-checked:left-[18px] peer-checked:bg-success-foreground" />
             </div>
             <span className="text-xs font-medium text-muted-foreground">Raspadinha Ativa</span>
           </label>
