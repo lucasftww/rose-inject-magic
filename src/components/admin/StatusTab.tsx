@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAdminProductsStatus } from "@/hooks/useAdminData";
+import { useAdminProductsStatus, useInvalidateAdminCache } from "@/hooks/useAdminData";
 import { Loader2, ShieldCheck, ShieldAlert, RefreshCw, Clock, Save } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
@@ -22,6 +22,7 @@ const statusOptions = [
 
 const StatusTab = () => {
   const { data: fetchedProducts, isLoading: queryLoading, refetch } = useAdminProductsStatus();
+  const invalidateAdmin = useInvalidateAdminCache();
   const [products, setProducts] = useState<ProductRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
@@ -74,6 +75,7 @@ const StatusTab = () => {
     } else {
       toast({ title: "Status atualizado!" });
       setEdits(prev => { const n = { ...prev }; delete n[productId]; return n; });
+      invalidateAdmin();
       refetch();
     }
     setSaving(null);
@@ -92,6 +94,7 @@ const StatusTab = () => {
     }
     toast({ title: `${ids.length} produto(s) atualizado(s)!` });
     setEdits({});
+    invalidateAdmin();
     refetch();
     setSaving(null);
   };
