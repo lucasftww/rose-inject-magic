@@ -5,7 +5,7 @@ import { useAdminUsers } from "@/hooks/useAdminUsers";
 import {
   Loader2, DollarSign, ShoppingCart, Users, UserCheck,
   Package, Receipt, RefreshCw, TrendingUp, Clock, Activity,
-  Zap, BarChart3, ArrowDown
+  Zap, BarChart3, ArrowDown, AlertTriangle
 } from "lucide-react";
 
 interface OrderTicket {
