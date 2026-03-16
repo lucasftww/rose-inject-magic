@@ -31,13 +31,15 @@ interface Payment {
 }
 
 const statusColors: Record<string, string> = {
-  open: "bg-success/15 text-success border-success/20",
-  delivered: "bg-info/15 text-info border-info/20",
-  waiting_staff: "bg-warning/15 text-warning border-warning/20",
+  open: "bg-warning/15 text-warning border-warning/20",
+  delivered: "bg-success/15 text-success border-success/20",
+  waiting: "bg-info/15 text-info border-info/20",
+  waiting_staff: "bg-info/15 text-info border-info/20",
   resolved: "bg-positive/15 text-positive border-positive/20",
   closed: "bg-muted/50 text-muted-foreground border-border",
   banned: "bg-destructive/15 text-destructive border-destructive/20",
   finished: "bg-muted/50 text-muted-foreground border-border",
+  archived: "bg-muted/50 text-muted-foreground border-border",
 };
 const statusLabels: Record<string, string> = {
   open: "Aberto",
