@@ -1,9 +1,11 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAllRows } from "@/lib/supabaseAllRows";
 import { useAdminUsers } from "@/hooks/useAdminUsers";
 import {
   Loader2, DollarSign, ShoppingCart, Users, UserCheck,
-  Package, Receipt, RefreshCw, TrendingUp, Clock, Activity
+  Package, Receipt, RefreshCw, TrendingUp, Clock, Activity,
+  Zap, BarChart3, ArrowUp, ArrowDown
 } from "lucide-react";
 
 interface OrderTicket {
@@ -65,6 +67,8 @@ const timeAgo = (dateStr: string) => {
   return `${days}d`;
 };
 
+const fmt = (v: number) => v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
 const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void }) => {
   const { users: adminUsers, usernameMap } = useAdminUsers();
   const [loading, setLoading] = useState(true);
@@ -79,15 +83,38 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
   const [todayRevenue, setTodayRevenue] = useState(0);
   const [todayOrders, setTodayOrders] = useState(0);
 
+  // Profit data
+  const [lztProfit, setLztProfit] = useState(0);
+  const [lztCost, setLztCost] = useState(0);
+  const [lztSold, setLztSold] = useState(0);
+  const [robotProfit, setRobotProfit] = useState(0);
+  const [robotCost, setRobotCost] = useState(0);
+  const [robotRevenue, setRobotRevenue] = useState(0);
+  const [totalDiscounts, setTotalDiscounts] = useState(0);
+
   useEffect(() => {
     const fetchAll = async () => {
       setLoading(true);
 
-      const [statsRes, recentOrdersRes, recentPaymentsRes, todayPayRes] = await Promise.all([
+      // Fetch USD rate
+      let usdToBrl = 5.5;
+      try {
+        const res = await fetch("https://open.er-api.com/v6/latest/USD");
+        const json = await res.json();
+        if (json?.rates?.BRL) usdToBrl = json.rates.BRL;
+      } catch { /* fallback */ }
+
+      const [statsRes, recentOrdersRes, recentPaymentsRes, todayPayRes, lztRes, allPaymentsRes, robotProductsRes] = await Promise.all([
         supabase.rpc("admin_overview_stats"),
         supabase.from("order_tickets").select("*").order("created_at", { ascending: false }).limit(8),
         supabase.from("payments").select("*").eq("status", "COMPLETED").order("paid_at", { ascending: false }).limit(8),
         supabase.from("payments").select("amount").eq("status", "COMPLETED").gte("paid_at", new Date(new Date().setHours(0, 0, 0, 0)).toISOString()),
+        supabase.rpc("admin_lzt_stats"),
+        fetchAllRows("payments", {
+          select: "amount, discount_amount, user_id, cart_snapshot, status",
+          filters: [{ column: "status", op: "eq", value: "COMPLETED" }],
+        }),
+        supabase.from("products").select("id, name, robot_game_id, robot_markup_percent").not("robot_game_id", "is", null),
       ]);
 
       if (statsRes.data) {
@@ -99,6 +126,71 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
           setTotalResellers(Number(s.total_resellers));
           setTotalProducts(Number(s.total_products));
         }
+      }
+
+      // Discounts
+      const discTotal = (allPaymentsRes || []).reduce((s: number, p: any) => s + (Number(p.discount_amount) || 0), 0);
+      setTotalDiscounts(discTotal);
+
+      // LZT profit
+      if (lztRes.data) {
+        const l = lztRes.data as any;
+        if (!l.error) {
+          setLztProfit(Number(l.total_profit));
+          setLztCost(Number(l.total_bought));
+          setLztSold(Number(l.total_sold));
+        }
+      }
+
+      // Robot profit
+      const robotProducts = robotProductsRes.data || [];
+      if (robotProducts.length > 0) {
+        const productIds = robotProducts.map((p: any) => p.id);
+        const productMap = Object.fromEntries(robotProducts.map((p: any) => [p.id, p]));
+
+        const [ticketsRes, plansRes] = await Promise.all([
+          fetchAllRows("order_tickets", {
+            select: "id, product_id, product_plan_id, user_id, metadata, status",
+            filters: [{ column: "status", op: "eq", value: "delivered" }],
+          }),
+          supabase.from("product_plans").select("id, name, price").in("product_id", productIds),
+        ]);
+
+        const robotTickets = (ticketsRes || []).filter((t: any) => productIds.includes(t.product_id));
+        const planMap = Object.fromEntries((plansRes.data || []).map((p: any) => [p.id, p]));
+
+        // Build paid price map
+        const paidPriceMap = new Map<string, number>();
+        for (const pay of (allPaymentsRes || [])) {
+          const snapshot = pay.cart_snapshot as any[];
+          if (!Array.isArray(snapshot)) continue;
+          for (const item of snapshot) {
+            const key = `${pay.user_id}|${item.productId}|${item.planId}`;
+            if (!paidPriceMap.has(key) && item.price != null) {
+              paidPriceMap.set(key, Number(item.price));
+            }
+          }
+        }
+
+        let rRev = 0, rCost = 0;
+        robotTickets.forEach((t: any) => {
+          const product = productMap[t.product_id];
+          const plan = planMap[t.product_plan_id];
+          const meta = (t.metadata || {}) as Record<string, any>;
+          const revenue = paidPriceMap.get(`${t.user_id}|${t.product_id}|${t.product_plan_id}`) ?? plan?.price ?? 0;
+          let cost = 0;
+          if (meta.amount_spent && Number(meta.amount_spent) > 0) {
+            cost = Number(meta.amount_spent) * usdToBrl;
+          } else if (!meta.is_free && product?.robot_markup_percent) {
+            cost = revenue / (1 + (product.robot_markup_percent || 50) / 100);
+          }
+          rRev += revenue;
+          rCost += Math.round(cost * 100) / 100;
+        });
+
+        setRobotRevenue(rRev);
+        setRobotCost(rCost);
+        setRobotProfit(Math.round((rRev - rCost) * 100) / 100);
       }
 
       if (todayPayRes.data) {
@@ -128,7 +220,7 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
             product_name: isLzt ? (meta?.title || meta?.account_name || "Conta LZT") : (prod?.name || "Produto"),
             product_image: isLzt ? null : (prod?.image_url || null),
             plan_name: isLzt ? "Conta LZT" : (planMap[t.product_plan_id] || "Plano"),
-            username: "?",
+            username: "...",
           };
         }));
       }
@@ -151,10 +243,15 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
     })));
   }, [usernameMap]);
 
-  // Count open/pending tickets
   const openTickets = useMemo(() =>
     recentOrders.filter(o => o.status === "open" || o.status === "waiting" || o.status === "waiting_staff").length
   , [recentOrders]);
+
+  // Computed profits
+  const revenueTotal = totalRevenue / 100;
+  const totalCosts = lztCost + robotCost + totalDiscounts;
+  const netProfit = revenueTotal - totalCosts;
+  const profitMargin = revenueTotal > 0 ? (netProfit / revenueTotal) * 100 : 0;
 
   if (loading) {
     return (
@@ -206,10 +303,50 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
         </div>
       </div>
 
+      {/* Profit Summary */}
+      <div className="rounded-xl border border-positive/20 bg-positive/[0.03] p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <TrendingUp className="h-4 w-4 text-positive" />
+          <span className="text-xs font-bold text-positive uppercase tracking-wider">Lucro Total</span>
+          <span className="text-[10px] text-muted-foreground ml-auto">Margem: {profitMargin.toFixed(1)}%</span>
+        </div>
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
+          <div>
+            <p className="text-2xl font-bold text-positive tracking-tight">R$ {fmt(netProfit)}</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Lucro Líquido</p>
+          </div>
+          <div>
+            <p className="text-lg font-bold text-foreground tracking-tight">R$ {fmt(revenueTotal)}</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Receita Bruta</p>
+          </div>
+          <div>
+            <p className="text-lg font-bold text-foreground tracking-tight flex items-center gap-1.5">
+              <BarChart3 className="h-3.5 w-3.5 text-success" />
+              R$ {fmt(lztProfit)}
+            </p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Lucro LZT</p>
+          </div>
+          <div>
+            <p className="text-lg font-bold text-foreground tracking-tight flex items-center gap-1.5">
+              <Zap className="h-3.5 w-3.5 text-warning" />
+              R$ {fmt(robotProfit)}
+            </p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Lucro Robot</p>
+          </div>
+          <div>
+            <p className="text-lg font-bold text-destructive tracking-tight flex items-center gap-1.5">
+              <ArrowDown className="h-3.5 w-3.5" />
+              R$ {fmt(totalCosts)}
+            </p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Custos Totais</p>
+          </div>
+        </div>
+      </div>
+
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
         {[
-          { icon: DollarSign, label: "Receita Total", value: `R$ ${(totalRevenue / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`, accent: "text-positive", bg: "bg-positive/10" },
+          { icon: DollarSign, label: "Receita Total", value: `R$ ${fmt(revenueTotal)}`, accent: "text-positive", bg: "bg-positive/10" },
           { icon: ShoppingCart, label: "Total de Pedidos", value: String(totalOrders), accent: "text-success", bg: "bg-success/10" },
           { icon: Receipt, label: "Faturas Pagas", value: String(totalPaidPayments), accent: "text-info", bg: "bg-info/10" },
           { icon: Users, label: "Usuários", value: String(adminUsers.length), accent: "text-success", bg: "bg-success/10" },
@@ -245,7 +382,7 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
           <div className="divide-y divide-border">
             {recentOrders.length === 0 ? (
               <p className="py-8 text-center text-sm text-muted-foreground">Nenhum pedido encontrado.</p>
-            ) : recentOrders.map((order, idx) => (
+            ) : recentOrders.map((order) => (
               <div
                 key={order.id}
                 onClick={() => onGoToTicket?.(order.id)}
