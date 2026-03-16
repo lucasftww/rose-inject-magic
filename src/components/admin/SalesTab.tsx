@@ -148,7 +148,7 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
         product_image: isLzt ? null : (product?.image_url || null),
         plan_name: isLzt ? "Conta LZT" : (plan?.name || "—"),
         plan_price: isLzt ? lztPrice : (metaPrice ?? plan?.price ?? 0),
-        username: profile?.username || null,
+        username: (profile as any)?.username || null,
         email: null, // enriched below from adminEmailMap
         stock_content: t.stock_item_id ? (stockMap.get(t.stock_item_id) || null) : null,
       };
