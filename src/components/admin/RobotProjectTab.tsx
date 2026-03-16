@@ -355,41 +355,6 @@ const RobotProjectTab = () => {
     }
   };
 
-  const fetchBalance = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/robot-project?action=balance`,
-        {
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          },
-        }
-      );
-      if (response.ok) {
-        const data = await response.json();
-        console.log("[Robot Balance] Full response:", JSON.stringify(data, null, 2));
-        if (data.balance !== undefined && data.balance !== null) {
-          setRobotBalance(Number(data.balance));
-        } else {
-          // Log probe results for debugging
-          console.warn("[Robot Balance] No balance found. Probe results:", data.probeResults);
-          toast({
-            title: "Saldo Robot não encontrado",
-            description: "A API não retornou campo de saldo. Veja o console para detalhes.",
-            variant: "destructive",
-          });
-        }
-      } else {
-        const errText = await response.text().catch(() => "");
-        console.warn("[Robot Balance] HTTP", response.status, errText);
-      }
-    } catch (err) {
-      console.warn("[Robot Balance] Fetch error:", err);
-    }
-  };
 
   const refreshAll = async () => {
     setLoading(true);
