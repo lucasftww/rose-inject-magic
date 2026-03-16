@@ -22,6 +22,7 @@ const statusOptions = [
 
 const StatusTab = () => {
   const { data: fetchedProducts, isLoading: queryLoading, refetch } = useAdminProductsStatus();
+  const invalidateAdmin = useInvalidateAdminCache();
   const [products, setProducts] = useState<ProductRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
