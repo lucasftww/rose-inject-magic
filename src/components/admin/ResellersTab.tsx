@@ -124,7 +124,8 @@ const ResellersTab = () => {
     // Add product associations
     if (formProductIds.length > 0 && resData) {
       const items = formProductIds.map(pid => ({ reseller_id: resData.id, product_id: pid }));
-      await supabase.from("reseller_products").insert(items);
+      const { error: prodErr } = await supabase.from("reseller_products").insert(items);
+      if (prodErr) { toast({ title: "Revendedor criado, mas erro ao vincular produtos", description: prodErr.message, variant: "destructive" }); }
     }
     toast({ title: "Revendedor adicionado!" });
     resetForm();
