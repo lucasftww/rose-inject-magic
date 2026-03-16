@@ -197,8 +197,11 @@ const FinanceTab = () => {
           order: { column: "created_at", ascending: false },
         }),
         supabase.from("product_plans").select("id, name, price, robot_duration_days").in("product_id", productIds),
-        supabase.from("payments").select("user_id, amount, cart_snapshot, status")
-          .eq("status", "COMPLETED").order("created_at", { ascending: false }).limit(5000),
+        fetchAllRows("payments", {
+          select: "user_id, amount, cart_snapshot, status",
+          filters: [{ column: "status", op: "eq", value: "COMPLETED" }],
+          order: { column: "created_at", ascending: false },
+        }),
       ]);
 
       const robotTicketsRaw = (ticketsRes || []).filter((t: any) => productIds.includes(t.product_id));
@@ -206,7 +209,7 @@ const FinanceTab = () => {
 
       // Build paid price map from cart_snapshot
       const paidPriceMap = new Map<string, number>();
-      for (const pay of (robotPaymentsRes.data || [])) {
+      for (const pay of (robotPaymentsRes || [])) {
         const snapshot = pay.cart_snapshot as any[];
         if (!Array.isArray(snapshot)) continue;
         for (const item of snapshot) {
