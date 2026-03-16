@@ -172,7 +172,7 @@ const ScratchCardTab = () => {
             <span className="text-xs font-medium text-muted-foreground">Raspadinha Ativa</span>
           </label>
           <button onClick={handleSaveConfig} disabled={savingConfig}
-            className="flex items-center gap-2 rounded-lg bg-success px-5 py-2.5 text-sm font-semibold text-success-foreground hover:shadow-[0_0_24px_hsl(197,100%,50%,0.45)] disabled:opacity-50">
+            className="flex items-center gap-2 rounded-lg bg-success px-5 py-2.5 text-sm font-semibold text-success-foreground disabled:opacity-50">
             {savingConfig && <Loader2 className="h-4 w-4 animate-spin" />} Salvar Config
           </button>
         </div>
