@@ -111,7 +111,7 @@ const SidebarNav = memo(({
               key={tab.id}
               onClick={() => onSelect(tab.id)}
               title={collapsed ? tab.label : undefined}
-              className={`group flex w-full items-center gap-2.5 text-sm font-medium transition-all duration-150 relative
+              className={`group flex w-full items-center gap-2.5 text-sm font-medium relative
                 ${collapsed ? "justify-center px-2 py-2.5 mx-auto" : "px-4 py-2"}
                 ${isActive
                   ? "text-success bg-success/8"
@@ -121,7 +121,7 @@ const SidebarNav = memo(({
               {isActive && (
                 <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-success" />
               )}
-              <Icon className={`h-4 w-4 shrink-0 transition-colors ${isActive ? "text-success" : "text-muted-foreground group-hover:text-foreground"}`} />
+              <Icon className={`h-4 w-4 shrink-0 ${isActive ? "text-success" : "text-muted-foreground"}`} />
               {!collapsed && <span className="truncate">{tab.label}</span>}
             </button>
           );
@@ -174,7 +174,7 @@ const AdminPanel = () => {
       <div className="flex">
         {/* Desktop Sidebar */}
         <aside
-          className={`hidden lg:flex flex-col fixed top-0 left-0 bottom-0 shrink-0 border-r border-border bg-card/60 backdrop-blur-md transition-[width] duration-200 overflow-hidden z-30 ${sidebarOpen ? "w-56" : "w-14"}`}
+          className={`hidden lg:flex flex-col fixed top-0 left-0 bottom-0 shrink-0 border-r border-border bg-card z-30 ${sidebarOpen ? "w-56" : "w-14"}`}
         >
           <div className="flex items-center gap-2 px-3 py-3 border-b border-border min-h-[48px]">
             <ShieldAlert className="h-4 w-4 text-success shrink-0" />
@@ -183,9 +183,9 @@ const AdminPanel = () => {
             )}
             <button
               onClick={() => setSidebarOpen(v => !v)}
-              className="ml-auto rounded-md p-1 text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+              className="ml-auto rounded-md p-1 text-muted-foreground hover:text-foreground"
             >
-              <ChevronRight className={`h-3.5 w-3.5 transition-transform duration-200 ${sidebarOpen ? "rotate-180" : ""}`} />
+              <ChevronRight className={`h-3.5 w-3.5 ${sidebarOpen ? "rotate-180" : ""}`} />
             </button>
           </div>
           <div className="flex-1 overflow-y-auto scrollbar-hide">
@@ -194,12 +194,12 @@ const AdminPanel = () => {
         </aside>
 
         {/* Main Content — offset by sidebar width */}
-        <main className={`flex-1 min-w-0 transition-[margin] duration-200 ${sidebarOpen ? "lg:ml-56" : "lg:ml-14"}`}>
+        <main className={`flex-1 min-w-0 ${sidebarOpen ? "lg:ml-56" : "lg:ml-14"}`}>
           {/* Top bar */}
-          <div className="sticky top-0 z-20 flex items-center gap-3 px-4 lg:px-8 py-3 border-b border-border bg-background/80 backdrop-blur-md">
+          <div className="sticky top-0 z-20 flex items-center gap-3 px-4 lg:px-8 py-3 border-b border-border bg-background">
             <button
               onClick={() => setMobileOpen(true)}
-              className="lg:hidden rounded-md p-1.5 text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+              className="lg:hidden rounded-md p-1.5 text-muted-foreground hover:text-foreground"
             >
               <Menu className="h-5 w-5" />
             </button>
