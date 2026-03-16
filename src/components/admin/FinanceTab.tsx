@@ -157,10 +157,14 @@ const FinanceTab = () => {
     setLoading(true);
 
     // Fetch USD exchange rate
+    let currentRate = usdToBrl;
     try {
       const res = await fetch("https://open.er-api.com/v6/latest/USD");
       const json = await res.json();
-      if (json?.rates?.BRL) setUsdToBrl(json.rates.BRL);
+      if (json?.rates?.BRL) {
+        currentRate = json.rates.BRL;
+        setUsdToBrl(currentRate);
+      }
     } catch { /* use fallback */ }
 
     const [paymentsData, lztData, resellerData, robotProductsRes] = await Promise.all([
