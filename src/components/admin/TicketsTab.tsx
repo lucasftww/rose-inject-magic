@@ -1060,7 +1060,7 @@ const TicketsTab = ({
               <div className="border-t border-border/50 px-3 pt-1.5 pb-1 bg-card/50 flex gap-1 overflow-x-auto scrollbar-hide">
                 {QUICK_REPLIES.map((text) => (
                   <button key={text} onClick={() => setNewMessage(text)}
-                    className="text-[10px] px-2 py-1 rounded-full border border-border/60 bg-secondary/30 text-muted-foreground/70 hover:bg-success/10 hover:text-success hover:border-success/25 transition-all whitespace-nowrap shrink-0">
+                    className="text-[10px] px-2 py-1 rounded-full border border-border/60 bg-secondary/30 text-muted-foreground/70 hover:bg-success/10 hover:text-success hover:border-success/25 whitespace-nowrap shrink-0">
                     {text}
                   </button>
                 ))}
