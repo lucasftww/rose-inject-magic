@@ -19,6 +19,7 @@ interface ProductPlan {
   active: boolean;
   sort_order: number;
   robot_duration_days?: number | null;
+  _key?: string;
 }
 
 interface MediaItem {
@@ -26,6 +27,7 @@ interface MediaItem {
   media_type: "image" | "video";
   url: string;
   sort_order: number;
+  _key?: string;
 }
 
 interface FeatureItem {
@@ -33,6 +35,7 @@ interface FeatureItem {
   label: string;
   value: string;
   sort_order: number;
+  _key?: string;
 }
 
 interface Product {
@@ -62,16 +65,16 @@ interface RobotGame {
 }
 
 const defaultPlans: ProductPlan[] = [
-  { name: "Diário", price: 0, active: true, sort_order: 0, robot_duration_days: 1 },
-  { name: "Semanal", price: 0, active: true, sort_order: 1, robot_duration_days: 7 },
-  { name: "Mensal", price: 0, active: true, sort_order: 2, robot_duration_days: 30 },
+  { _key: "dp0", name: "Diário", price: 0, active: true, sort_order: 0, robot_duration_days: 1 },
+  { _key: "dp1", name: "Semanal", price: 0, active: true, sort_order: 1, robot_duration_days: 7 },
+  { _key: "dp2", name: "Mensal", price: 0, active: true, sort_order: 2, robot_duration_days: 30 },
 ];
 
 const defaultFeatures: FeatureItem[] = [
-  { label: "GPU", value: "Compatible with AMD & NVIDIA", sort_order: 0 },
-  { label: "OS", value: "Windows 10 & 11 (24H2 and below)", sort_order: 1 },
-  { label: "CPU", value: "Intel & AMD", sort_order: 2 },
-  { label: "HVCI (Core Isolation)", value: "ON / OFF supported", sort_order: 3 },
+  { _key: "df0", label: "GPU", value: "Compatible with AMD & NVIDIA", sort_order: 0 },
+  { _key: "df1", label: "OS", value: "Windows 10 & 11 (24H2 and below)", sort_order: 1 },
+  { _key: "df2", label: "CPU", value: "Intel & AMD", sort_order: 2 },
+  { _key: "df3", label: "HVCI (Core Isolation)", value: "ON / OFF supported", sort_order: 3 },
 ];
 
 const ITEMS_PER_PAGE = 10;
@@ -246,12 +249,12 @@ const ProductsTab = () => {
       supabase.from("product_features").select("*").eq("product_id", product.id).order("sort_order"),
     ]);
     if (plansRes.data && plansRes.data.length > 0) {
-      setFormPlans(plansRes.data.map((p: any) => ({ id: p.id, name: p.name, price: Number(p.price), active: p.active, sort_order: p.sort_order, robot_duration_days: p.robot_duration_days || null })));
+      setFormPlans(plansRes.data.map((p: any) => ({ id: p.id, name: p.name, price: Number(p.price), active: p.active, sort_order: p.sort_order, robot_duration_days: p.robot_duration_days || null, _key: p.id })));
     } else {
       setFormPlans([...defaultPlans]);
     }
-    setFormMedia((mediaRes.data || []).map((m: any) => ({ id: m.id, media_type: m.media_type, url: m.url, sort_order: m.sort_order })));
-    setFormFeatures((featuresRes.data || []).map((f: any) => ({ id: f.id, label: f.label, value: f.value, sort_order: f.sort_order })));
+    setFormMedia((mediaRes.data || []).map((m: any) => ({ id: m.id, media_type: m.media_type, url: m.url, sort_order: m.sort_order, _key: m.id })));
+    setFormFeatures((featuresRes.data || []).map((f: any) => ({ id: f.id, label: f.label, value: f.value, sort_order: f.sort_order, _key: f.id })));
     setShowForm(true);
   };
 
@@ -283,7 +286,7 @@ const ProductsTab = () => {
   };
 
   const addPlan = () => {
-    setFormPlans([...formPlans, { name: "", price: 0, active: true, sort_order: formPlans.length }]);
+    setFormPlans([...formPlans, { name: "", price: 0, active: true, sort_order: formPlans.length, _key: crypto.randomUUID() }]);
   };
 
   const removePlan = (index: number) => {
@@ -301,7 +304,7 @@ const ProductsTab = () => {
     const { error } = await supabase.storage.from("game-images").upload(path, file, { contentType: file.type });
     if (error) { toast({ title: "Erro no upload", description: error.message, variant: "destructive" }); setUploadingMedia(false); return; }
     const { data: urlData } = supabase.storage.from("game-images").getPublicUrl(path);
-    setFormMedia([...formMedia, { media_type: isVideo ? "video" : "image", url: urlData.publicUrl, sort_order: formMedia.length }]);
+    setFormMedia([...formMedia, { media_type: isVideo ? "video" : "image", url: urlData.publicUrl, sort_order: formMedia.length, _key: crypto.randomUUID() }]);
     toast({ title: "Mídia enviada!" });
     setUploadingMedia(false);
   };
@@ -309,7 +312,7 @@ const ProductsTab = () => {
   const addMediaByUrl = () => {
     if (!mediaUrlInput.trim()) return;
     const detectedType = detectMediaType(mediaUrlInput.trim());
-    setFormMedia([...formMedia, { media_type: detectedType, url: mediaUrlInput.trim(), sort_order: formMedia.length }]);
+    setFormMedia([...formMedia, { media_type: detectedType, url: mediaUrlInput.trim(), sort_order: formMedia.length, _key: crypto.randomUUID() }]);
     setMediaUrlInput("");
   };
 
@@ -632,7 +635,7 @@ const ProductsTab = () => {
                     ? Number((robotPriceBrl * (1 + formRobotMarkup / 100)).toFixed(2)) : null;
 
                   return (
-                    <div key={index} className="rounded-lg border border-border bg-secondary/30 p-3">
+                    <div key={plan._key || index} className="rounded-lg border border-border bg-secondary/30 p-3">
                       <div className="flex flex-wrap items-center gap-2">
                         <input type="text" value={plan.name} onChange={(e) => updatePlan(index, "name", e.target.value.slice(0, 50))}
                           placeholder="Nome (ex: Diário)"
@@ -780,7 +783,7 @@ const ProductsTab = () => {
                   {formMedia.map((m, idx) => {
                     const ytId = getYouTubeId(m.url);
                     return (
-                      <div key={idx} className="relative group">
+                      <div key={m._key || idx} className="relative group">
                         {m.media_type === "video" ? (
                           ytId ? (
                             <img src={getYouTubeThumbnail(ytId)} alt="YouTube" className="h-20 w-20 rounded-lg border border-border object-cover" />
@@ -852,7 +855,7 @@ const ProductsTab = () => {
                   <Sparkles className="h-3.5 w-3.5 text-success" />
                   Features / Características
                 </label>
-                <button type="button" onClick={() => setFormFeatures([...formFeatures, { label: "", value: "", sort_order: formFeatures.length }])}
+                <button type="button" onClick={() => setFormFeatures([...formFeatures, { label: "", value: "", sort_order: formFeatures.length, _key: crypto.randomUUID() }])}
                   className="flex items-center gap-1 rounded-lg bg-secondary/50 border border-border px-3 py-1 text-xs font-medium text-muted-foreground hover:text-foreground">
                   <Plus className="h-3 w-3" /> Adicionar
                 </button>
@@ -862,7 +865,7 @@ const ProductsTab = () => {
               )}
               <div className="space-y-2">
                 {formFeatures.map((feat, idx) => (
-                  <div key={idx} className="flex items-center gap-2 rounded-lg border border-border bg-secondary/30 p-3">
+                  <div key={feat._key || idx} className="flex items-center gap-2 rounded-lg border border-border bg-secondary/30 p-3">
                     <input type="text" value={feat.label} onChange={(e) => {
                       const updated = [...formFeatures];
                       updated[idx].label = e.target.value.slice(0, 30);
