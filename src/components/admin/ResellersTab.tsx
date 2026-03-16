@@ -79,21 +79,11 @@ const ResellersTab = () => {
       .order("created_at", { ascending: false });
 
     if (!error && data) {
-      // Fetch user info via admin-users edge function
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const res = await supabase.functions.invoke("admin-users", {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        });
-        const users = res.data || [];
-        const enriched = (data as any[]).map((r: any) => {
-          const user = users.find((u: any) => u.id === r.user_id);
-          return { ...r, username: user?.username || null, email: user?.email || "?" };
-        });
-        setResellers(enriched);
-      } else {
-        setResellers(data as any[]);
-      }
+      const enriched = (data as any[]).map((r: any) => {
+        const user = adminUsersData.find((u: any) => u.id === r.user_id);
+        return { ...r, username: user?.username || null, email: user?.email || "?" };
+      });
+      setResellers(enriched);
     }
     setLoading(false);
   };
