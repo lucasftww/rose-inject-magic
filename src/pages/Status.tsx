@@ -152,7 +152,7 @@ const Status = () => {
                             </span>
                           </div>
                           <p className="text-[9px] text-muted-foreground">
-                            {timeAgo(product.status_updated_at)}
+                            {product.status_updated_at ? timeAgo(product.status_updated_at) : "—"}
                           </p>
                         </div>
                       </motion.div>
