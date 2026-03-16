@@ -235,7 +235,7 @@ const StockTab = () => {
                           {/* Plan header */}
                           <button
                             onClick={() => togglePlan(plan.id)}
-                            className="flex w-full items-center gap-3 px-6 py-3 text-left hover:bg-secondary/20 transition-colors"
+                            className="flex w-full items-center gap-3 px-6 py-3 text-left hover:bg-secondary/20"
                           >
                             {planExpanded ? <ChevronDown className="h-3.5 w-3.5 text-success shrink-0" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
                             <span className="text-sm font-semibold text-foreground">{plan.name}</span>
