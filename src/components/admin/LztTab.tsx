@@ -511,7 +511,7 @@ const LztTab = () => {
                   else page = salesPage - 2 + i;
                   return (
                     <button key={page} onClick={() => setSalesPage(page)}
-                      className={`h-7 w-7 rounded-lg text-xs font-medium transition-colors ${page === salesPage ? "bg-success/20 text-success border border-success/30" : "text-muted-foreground hover:text-foreground"}`}>
+                      className={`h-7 w-7 rounded-lg text-xs font-medium ${page === salesPage ? "bg-success/20 text-success border border-success/30" : "text-muted-foreground hover:text-foreground"}`}>
                       {page + 1}
                     </button>
                   );
