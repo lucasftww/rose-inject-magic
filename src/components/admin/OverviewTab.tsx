@@ -15,6 +15,7 @@ interface OrderTicket {
   created_at: string;
   user_id: string;
   product_name?: string;
+  product_image?: string | null;
   plan_name?: string;
   username?: string;
 }
