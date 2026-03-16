@@ -81,13 +81,15 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
         supabase.from("payments").select("*").eq("status", "COMPLETED").order("paid_at", { ascending: false }).limit(5),
       ]);
 
-      if (statsRes.data && !statsRes.data.error) {
-        const s = statsRes.data;
-        setTotalOrders(Number(s.total_orders));
-        setTotalRevenue(Number(s.total_revenue));
-        setTotalPaidPayments(Number(s.total_paid_payments));
-        setTotalResellers(Number(s.total_resellers));
-        setTotalProducts(Number(s.total_products));
+      if (statsRes.data) {
+        const s = statsRes.data as any;
+        if (!s.error) {
+          setTotalOrders(Number(s.total_orders));
+          setTotalRevenue(Number(s.total_revenue));
+          setTotalPaidPayments(Number(s.total_paid_payments));
+          setTotalResellers(Number(s.total_resellers));
+          setTotalProducts(Number(s.total_products));
+        }
       }
 
       setTotalUsers(adminUsers.length);
