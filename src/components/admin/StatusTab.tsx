@@ -74,7 +74,7 @@ const StatusTab = () => {
     } else {
       toast({ title: "Status atualizado!" });
       setEdits(prev => { const n = { ...prev }; delete n[productId]; return n; });
-      fetchProducts();
+      refetch();
     }
     setSaving(null);
   };
