@@ -80,3 +80,11 @@ export function useAdminProductsStatus() {
     staleTime: ADMIN_STALE_TIME,
   });
 }
+
+// ─── Invalidation helper — call after any product/game mutation ───
+export function useInvalidateAdminCache() {
+  const queryClient = useQueryClient();
+  return useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["admin"] });
+  }, [queryClient]);
+}
