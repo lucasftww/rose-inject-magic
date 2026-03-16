@@ -44,7 +44,7 @@ const statusOptions = [
 
 const ITEMS_PER_PAGE = 8;
 
-const TicketsTab = () => {
+const TicketsTab = ({ initialTicketId, onTicketOpened }: { initialTicketId?: string | null; onTicketOpened?: () => void }) => {
   const { user } = useAuth();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
@@ -129,6 +129,9 @@ const TicketsTab = () => {
 
   useEffect(() => { fetchTickets(); }, [fetchTickets]);
 
+
+
+
   const selectTicket = useCallback(async (ticket: Ticket) => {
     setSelectedTicket(ticket);
     setStockContent(null);
@@ -156,7 +159,20 @@ const TicketsTab = () => {
     }
   }, []);
 
-  // Realtime subscription + polling fallback for reliable message sync
+  // Auto-select ticket when navigated from SalesTab
+  useEffect(() => {
+    if (initialTicketId && tickets.length > 0) {
+      const found = tickets.find(t => t.id === initialTicketId);
+      if (found) {
+        selectTicket(found);
+        onTicketOpened?.();
+      } else {
+        setSearchQuery(initialTicketId.slice(0, 8));
+        onTicketOpened?.();
+      }
+    }
+  }, [initialTicketId, tickets, selectTicket, onTicketOpened]);
+
   useEffect(() => {
     if (!selectedTicket) return;
     let cancelled = false;

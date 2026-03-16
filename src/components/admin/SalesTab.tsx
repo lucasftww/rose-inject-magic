@@ -36,7 +36,7 @@ const statusColors: Record<string, string> = {
   closed: "bg-muted text-muted-foreground border-border",
 };
 
-const SalesTab = () => {
+const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void }) => {
   const { session } = useAuth();
   const [loading, setLoading] = useState(true);
   const [tickets, setTickets] = useState<SaleTicket[]>([]);
@@ -319,7 +319,11 @@ const SalesTab = () => {
                         {new Date(sale.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "2-digit" })}
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <button className="rounded-md p-1.5 text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); onGoToTicket?.(sale.id); }}
+                          title="Abrir ticket no chat"
+                          className="rounded-md p-1.5 text-muted-foreground hover:text-success hover:bg-success/10 transition-colors"
+                        >
                           <Eye className="h-4 w-4" />
                         </button>
                       </td>
