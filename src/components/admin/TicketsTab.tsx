@@ -738,7 +738,7 @@ const TicketsTab = ({
   // ─── Render ─────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex flex-col h-[calc(100vh-140px)] min-h-[500px]">
+    <div className="flex flex-col h-[calc(100vh-200px)] overflow-hidden">
       {/* ── Header ── */}
       <div className="flex items-center justify-between mb-3 flex-shrink-0">
         <div className="flex items-center gap-2.5">
@@ -803,7 +803,7 @@ const TicketsTab = ({
 
         {/* ── Ticket List ── */}
         <div className={`flex flex-col min-h-0 ${selectedTicket ? "hidden lg:flex" : "flex"}`}>
-          <div className="flex-1 overflow-y-auto space-y-1 pr-0.5 scrollbar-chat">
+          <div className="flex-1 overflow-y-auto space-y-1 pr-0.5 scrollbar-hide">
             {paginatedTickets.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
                 <MessageSquare className="h-10 w-10 mb-3 opacity-15" />
@@ -983,7 +983,7 @@ const TicketsTab = ({
               </div>
 
               {/* Messages */}
-              <div ref={chatContainerRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3 scrollbar-chat bg-background/40">
+              <div ref={chatContainerRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3 scrollbar-hide bg-background/40">
                 {messages.length === 0 && (
                   <div className="flex flex-col items-center justify-center h-full text-muted-foreground/30">
                     <Bot className="h-10 w-10 mb-2" />
