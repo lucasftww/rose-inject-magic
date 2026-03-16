@@ -485,7 +485,7 @@ const LztTab = () => {
                     </td>
                     <td className="py-3">
                       <a href={`https://lzt.market/${sale.lzt_item_id}`} target="_blank" rel="noopener noreferrer"
-                        className="text-muted-foreground hover:text-success transition-colors" title="Abrir no LZT Market">
+                        className="text-muted-foreground hover:text-success" title="Abrir no LZT Market">
                         <ExternalLink className="h-3.5 w-3.5" />
                       </a>
                     </td>
