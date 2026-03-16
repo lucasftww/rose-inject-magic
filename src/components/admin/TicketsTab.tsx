@@ -589,7 +589,7 @@ const TicketsTab = ({
             {/* Change data */}
             <div className="rounded-xl border border-border bg-background overflow-hidden">
               <button onClick={() => setExpandedSection(expandedSection === "riot-admin" ? null : "riot-admin")}
-                className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left transition-colors hover:bg-secondary/40">
+                className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left hover:bg-secondary/40">
                 <KeyRound className="h-3.5 w-3.5 text-success shrink-0" />
                 <span className="flex-1 text-xs font-medium text-foreground">{cfg.changeDataTitle}</span>
                 {expandedSection === "riot-admin" ? <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />}
