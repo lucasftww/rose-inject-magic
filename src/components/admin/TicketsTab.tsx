@@ -776,7 +776,7 @@ const TicketsTab = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Buscar por nome, email ou ID..."
-            className="w-full rounded-lg border border-border bg-card pl-9 pr-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/40 outline-none focus:border-success/40 focus:ring-1 focus:ring-success/10 transition-all"
+            className="w-full rounded-lg border border-border bg-card pl-9 pr-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/40 outline-none focus:border-success/40 focus:ring-1 focus:ring-success/10"
           />
           {searchQuery && (
             <button onClick={() => setSearchQuery("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground/40 hover:text-foreground transition-colors">
