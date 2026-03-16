@@ -98,17 +98,11 @@ const ResellersTab = () => {
   const searchUsers = async () => {
     if (searchEmail.trim().length < 2) return;
     setSearching(true);
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
-      const res = await supabase.functions.invoke("admin-users", {
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      });
-      const users = (res.data || []).filter((u: any) =>
-        u.email?.toLowerCase().includes(searchEmail.toLowerCase()) ||
-        u.username?.toLowerCase().includes(searchEmail.toLowerCase())
-      );
-      setSearchResults(users.slice(0, 5));
-    }
+    const users = adminUsersData.filter((u: any) =>
+      u.email?.toLowerCase().includes(searchEmail.toLowerCase()) ||
+      u.username?.toLowerCase().includes(searchEmail.toLowerCase())
+    );
+    setSearchResults(users.slice(0, 5));
     setSearching(false);
   };
 
