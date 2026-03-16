@@ -87,8 +87,8 @@ const PedidoChat = () => {
       const isRobot = meta?.type === "robot-project";
 
       const [prodRes, planRes, messagesRes, tutorialRes] = await Promise.all([
-        supabase.from("products").select("name").eq("id", ticketData.product_id).single(),
-        supabase.from("product_plans").select("name, price").eq("id", ticketData.product_plan_id).single(),
+        supabase.from("products").select("name").eq("id", ticketData.product_id).maybeSingle(),
+        supabase.from("product_plans").select("name, price").eq("id", ticketData.product_plan_id).maybeSingle(),
         supabase.from("ticket_messages").select("*").eq("ticket_id", id).order("created_at", { ascending: true }),
         supabase.from("product_tutorials").select("tutorial_text, tutorial_file_url").eq("product_id", ticketData.product_id).maybeSingle(),
       ]);
@@ -139,7 +139,7 @@ const PedidoChat = () => {
           .from("stock_items")
           .select("content")
           .eq("id", ticketData.stock_item_id)
-          .single();
+          .maybeSingle();
         if (stockData) {
           const raw = (stockData as any).content;
           setStockContent(typeof raw === "string" ? raw : JSON.stringify(raw));
@@ -236,6 +236,8 @@ const PedidoChat = () => {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
+    // Revoke old preview URLs to prevent memory leaks
+    previewUrls.forEach(url => { if (url) URL.revokeObjectURL(url); });
     const newFiles = [...pendingFiles, ...files].slice(0, 5);
     setPendingFiles(newFiles);
     setPreviewUrls(newFiles.map(f => f.type.startsWith("image/") ? URL.createObjectURL(f) : ""));
