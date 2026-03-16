@@ -918,14 +918,9 @@ async function fulfillRobotProduct(supabaseAdmin: any, payment: any, item: any, 
   log("INFO", "fulfillRobot", "Starting Robot fulfillment", { robotGameId, duration, product: item.productName, userId: payment.user_id });
 
   // Get Robot credentials
-  const [uRes, pRes] = await Promise.all([
-    supabaseAdmin.from("system_credentials").select("value").eq("env_key", "ROBOT_API_USERNAME").maybeSingle(),
-    supabaseAdmin.from("system_credentials").select("value").eq("env_key", "ROBOT_API_PASSWORD").maybeSingle(),
-  ]);
-  const robotUsername = uRes.data?.value;
-  const robotPassword = pRes.data?.value;
+  const creds = await getRobotCredentials(supabaseAdmin);
 
-  if (!robotUsername || !robotPassword) {
+  if (!creds) {
     console.error("Robot Project credentials not configured");
     // Create manual delivery ticket
     const { data: ticket } = await supabaseAdmin
@@ -952,39 +947,25 @@ async function fulfillRobotProduct(supabaseAdmin: any, payment: any, item: any, 
     return;
   }
 
-  const auth = btoa(`${robotUsername}:${robotPassword}`);
-
   try {
-    // Pre-check: fetch game price to log and verify balance
-    let expectedPrice: number | null = null;
-    try {
-      const gamesRes = await fetch(`https://api.robotproject.com.br/games`, {
-        headers: { Authorization: `Basic ${auth}`, "Content-Type": "application/json" },
+    // Pre-check: fetch live provider status / price / balance before buy
+    const robotSnapshot = await fetchRobotGameSnapshot(creds, robotGameId, duration);
+    log("INFO", "fulfillRobot", "Pre-check", {
+      gameId: robotGameId,
+      gameName: robotSnapshot.game?.name || null,
+      expectedPrice: robotSnapshot.expectedPrice,
+      balance: robotSnapshot.balance,
+      availableSlots: robotSnapshot.availableSlots,
+      duration,
+      reason: robotSnapshot.reason || null,
+    });
+
+    if (robotSnapshot.reason) {
+      log("ERROR", "fulfillRobot", "Provider pre-check blocked auto-delivery", {
+        robotGameId,
+        duration,
+        reason: robotSnapshot.reason,
       });
-      if (gamesRes.ok) {
-        const gamesData = await gamesRes.json();
-        const games = Array.isArray(gamesData) ? gamesData : gamesData.games || [];
-        const targetGame = games.find((g: any) => g.id === robotGameId);
-        if (targetGame) {
-          expectedPrice = targetGame.prices?.[String(duration)] ?? targetGame.prices?.["1"] ?? null;
-          const balance = gamesData.balance ?? null;
-          log("INFO", "fulfillRobot", "Pre-check", {
-            gameId: robotGameId,
-            gameName: targetGame.name,
-            prices: JSON.stringify(targetGame.prices),
-            expectedPrice,
-            balance,
-            duration,
-          });
-          if (balance !== null && expectedPrice !== null && balance < expectedPrice) {
-            log("ERROR", "fulfillRobot", "Insufficient balance detected before buy", { balance, expectedPrice, duration });
-          }
-        } else {
-          log("WARN", "fulfillRobot", "Game not found in /games list", { robotGameId });
-        }
-      }
-    } catch (preErr: any) {
-      log("WARN", "fulfillRobot", "Pre-check failed, proceeding anyway", { error: preErr.message });
     }
 
     const buyRes = await fetch(`https://api.robotproject.com.br/buy/${encodeURIComponent(robotGameId)}`, {
