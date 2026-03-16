@@ -120,6 +120,7 @@ export const setAdvancedMatching = async (userData: {
  */
 export const clearAdvancedMatching = () => {
   _cachedUserData = {};
+  _pixelInitWithAM = false; // allow re-init on next login
   try {
     localStorage.removeItem(STORAGE_KEY_EM);
     localStorage.removeItem(STORAGE_KEY_EID);
