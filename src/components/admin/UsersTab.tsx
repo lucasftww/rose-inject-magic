@@ -326,7 +326,7 @@ const UsersTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
           </div>
         ) : filtered.map((u) => (
           <button key={u.id} onClick={() => setSelectedUser(u)}
-            className="flex w-full items-center gap-4 rounded-lg border border-border bg-card p-4 text-left transition-colors hover:border-success/30">
+            className="flex w-full items-center gap-4 rounded-lg border border-border bg-card p-4 text-left hover:border-success/30">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary border border-border">
               {u.avatar_url ? <img src={u.avatar_url} className="h-10 w-10 rounded-full object-cover" /> : <Users className="h-4 w-4 text-muted-foreground" />}
             </div>
