@@ -936,7 +936,7 @@ const TicketsTab = ({
                       <select
                         value={selectedTicket.status}
                         onChange={(e) => updateStatus(selectedTicket.id, e.target.value)}
-                        className={`rounded-lg border px-2.5 py-1.5 text-[11px] font-bold outline-none cursor-pointer transition-colors ${getStatusBadge(selectedTicket.status)}`}
+                        className={`rounded-lg border px-2.5 py-1.5 text-[11px] font-bold outline-none cursor-pointer ${getStatusBadge(selectedTicket.status)}`}
                       >
                         {statusOptions.map((s) => (
                           <option key={s.value} value={s.value}>{s.label}</option>
