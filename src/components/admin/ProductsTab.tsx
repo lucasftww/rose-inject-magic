@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useAdminGames, useAdminProductsWithPlans } from "@/hooks/useAdminData";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Plus, Pencil, Trash2, Loader2, ImageIcon, Upload, Link, X,
