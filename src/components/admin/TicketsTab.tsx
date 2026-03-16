@@ -114,7 +114,6 @@ const TicketsTab = ({
     if (data) {
       const productIds = [...new Set(data.map((t: any) => t.product_id))] as string[];
       const planIds = [...new Set(data.map((t: any) => t.product_plan_id))] as string[];
-      const userIds = [...new Set(data.map((t: any) => t.user_id))] as string[];
 
       const [productsRes, plansRes, profilesData, lztSalesData] = await Promise.all([
         supabase.from("products").select("id, name").in("id", productIds),
@@ -122,9 +121,6 @@ const TicketsTab = ({
         fetchAllRows("profiles", { select: "user_id, username" }),
         fetchAllRows("lzt_sales", { select: "lzt_item_id, sell_price" }),
       ]);
-
-      const emailMap: Record<string, string> = {};
-      adminEmailMap.forEach((v, k) => { emailMap[k] = v; });
 
       const productMap: Record<string, string> = {};
       const planMap: Record<string, { name: string; price: number }> = {};
@@ -146,15 +142,24 @@ const TicketsTab = ({
           product_name: isLzt ? (meta?.title || "Conta LZT") : (productMap[t.product_id] || "Produto"),
           plan_name: isLzt ? "Conta" : (planMap[t.product_plan_id]?.name || "Plano"),
           plan_price: isLzt ? lztPrice : (planMap[t.product_plan_id]?.price ?? 0),
-          buyer_email: emailMap[t.user_id] || "—",
+          buyer_email: "—",
           buyer_username: profileMap[t.user_id] || "—",
         };
       }));
     }
     setLoading(false);
-  }, [adminEmailMap]);
+  }, []);
 
   useEffect(() => { fetchTickets(); }, [fetchTickets]);
+
+  // Enrich emails separately when adminEmailMap updates (no refetch)
+  useEffect(() => {
+    if (adminEmailMap.size === 0) return;
+    setTickets(prev => prev.map(t => ({
+      ...t,
+      buyer_email: adminEmailMap.get(t.user_id) || t.buyer_email,
+    })));
+  }, [adminEmailMap]);
 
   // ─── Ticket Selection & Realtime ────────────────────────────────────────
 
