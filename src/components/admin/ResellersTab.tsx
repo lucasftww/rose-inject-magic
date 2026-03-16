@@ -40,6 +40,7 @@ interface Purchase {
 }
 
 const ResellersTab = () => {
+  const { users: adminUsersData } = useAdminUsers();
   const [resellers, setResellers] = useState<Reseller[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
