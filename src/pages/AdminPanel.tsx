@@ -111,7 +111,7 @@ const SidebarNav = memo(({
               key={tab.id}
               onClick={() => onSelect(tab.id)}
               title={collapsed ? tab.label : undefined}
-              className={`group flex w-full items-center gap-2.5 text-sm font-medium transition-all duration-150 relative
+              className={`group flex w-full items-center gap-2.5 text-sm font-medium relative
                 ${collapsed ? "justify-center px-2 py-2.5 mx-auto" : "px-4 py-2"}
                 ${isActive
                   ? "text-success bg-success/8"
@@ -121,7 +121,7 @@ const SidebarNav = memo(({
               {isActive && (
                 <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-success" />
               )}
-              <Icon className={`h-4 w-4 shrink-0 transition-colors ${isActive ? "text-success" : "text-muted-foreground group-hover:text-foreground"}`} />
+              <Icon className={`h-4 w-4 shrink-0 ${isActive ? "text-success" : "text-muted-foreground"}`} />
               {!collapsed && <span className="truncate">{tab.label}</span>}
             </button>
           );
