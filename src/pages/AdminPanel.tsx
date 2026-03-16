@@ -1,5 +1,4 @@
 import { useState, lazy, Suspense, useCallback, memo, useTransition } from "react";
-import Header from "@/components/Header";
 import {
   ShieldAlert, Gamepad2, Mail, Package, Tag, UserCheck, TrendingUp,
   Key, CreditCard, BarChart3, ShoppingBag, Globe, Shield, Users,
@@ -156,10 +155,6 @@ const AdminPanel = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header hideBanner />
-
-      {/* Spacer for fixed header */}
-      <div className="h-14 sm:h-16 lg:h-[72px]" />
 
       {/* Mobile Sheet Sidebar */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
@@ -179,7 +174,7 @@ const AdminPanel = () => {
       <div className="flex">
         {/* Desktop Sidebar */}
         <aside
-          className={`hidden lg:flex flex-col fixed top-14 sm:top-16 lg:top-[72px] left-0 bottom-0 shrink-0 border-r border-border bg-card/60 backdrop-blur-md transition-[width] duration-200 overflow-hidden z-30 ${sidebarOpen ? "w-56" : "w-14"}`}
+          className={`hidden lg:flex flex-col fixed top-0 left-0 bottom-0 shrink-0 border-r border-border bg-card/60 backdrop-blur-md transition-[width] duration-200 overflow-hidden z-30 ${sidebarOpen ? "w-56" : "w-14"}`}
         >
           <div className="flex items-center gap-2 px-3 py-3 border-b border-border min-h-[48px]">
             <ShieldAlert className="h-4 w-4 text-success shrink-0" />
@@ -201,7 +196,7 @@ const AdminPanel = () => {
         {/* Main Content — offset by sidebar width */}
         <main className={`flex-1 min-w-0 transition-[margin] duration-200 ${sidebarOpen ? "lg:ml-56" : "lg:ml-14"}`}>
           {/* Top bar */}
-          <div className="sticky top-14 sm:top-16 lg:top-[72px] z-20 flex items-center gap-3 px-4 lg:px-8 py-3 border-b border-border bg-background/80 backdrop-blur-md">
+          <div className="sticky top-0 z-20 flex items-center gap-3 px-4 lg:px-8 py-3 border-b border-border bg-background/80 backdrop-blur-md">
             <button
               onClick={() => setMobileOpen(true)}
               className="lg:hidden rounded-md p-1.5 text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
