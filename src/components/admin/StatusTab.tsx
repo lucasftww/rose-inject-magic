@@ -57,10 +57,17 @@ const StatusTab = () => {
   };
 
   const handleLabelChange = (productId: string, label: string) => {
-    setEdits(prev => ({
-      ...prev,
-      [productId]: { ...prev[productId], status_label: label },
-    }));
+    setEdits(prev => {
+      const existing = prev[productId];
+      const product = products.find(p => p.id === productId);
+      return {
+        ...prev,
+        [productId]: {
+          status: existing?.status || product?.status || "undetected",
+          status_label: label,
+        },
+      };
+    });
   };
 
   const handleSave = async (productId: string) => {

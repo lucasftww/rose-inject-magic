@@ -270,69 +270,8 @@ const Raspadinha = () => {
 
   const cellId = (cell: GridCell) => cell.type === "prize" ? cell.prizeId! : `nothing-${cell.nothingIcon}`;
 
-  const rollWin = (prizesPool: Prize[], forceWin = false): Prize | null => {
-    // Win chance is determined server-side; client uses a placeholder for grid preview only
-    const winChance = pendingModeRef.current === "contas" ? 0.667 : 1.0;
-    const roll = Math.random() * 100;
-    if (!forceWin && roll >= winChance) return null;
-    if (prizesPool.length === 0) return null;
-    const totalWeight = prizesPool.reduce((s, p) => s + p.win_percentage, 0);
-    if (totalWeight === 0) return prizesPool[Math.floor(Math.random() * prizesPool.length)];
-    let cursor = Math.random() * totalWeight;
-    for (const p of prizesPool) {
-      cursor -= p.win_percentage;
-      if (cursor <= 0) return p;
-    }
-    return prizesPool[prizesPool.length - 1];
-  };
-
-  const generateGrid = useCallback((wonPrize: Prize | null, prizesPool: Prize[]): GridCell[] => {
-    const winPatterns = [
-      [0, 1, 2], [3, 4, 5], [6, 7, 8],
-      [0, 3, 6], [1, 4, 7], [2, 5, 8],
-      [0, 4, 8], [2, 4, 6],
-    ];
-
-    if (wonPrize) {
-      const newGrid: GridCell[] = Array(9).fill(null);
-      const pattern = winPatterns[Math.floor(Math.random() * winPatterns.length)];
-      for (const idx of pattern) {
-        newGrid[idx] = makePrizeCell(wonPrize);
-      }
-      const otherPrizes = prizesPool.filter(p => p.id !== wonPrize.id);
-      for (let i = 0; i < 9; i++) {
-        if (newGrid[i]) continue;
-        if (otherPrizes.length > 0 && Math.random() > 0.5) {
-          newGrid[i] = makePrizeCell(otherPrizes[Math.floor(Math.random() * otherPrizes.length)]);
-        } else {
-          newGrid[i] = makeNothingCell();
-        }
-      }
-      return newGrid;
-    } else {
-      let attempts = 0;
-      while (attempts < 100) {
-        attempts++;
-        const newGrid: GridCell[] = [];
-        for (let i = 0; i < 9; i++) {
-          const r = Math.random();
-          if (prizesPool.length > 0 && r > 0.4) {
-            newGrid.push(makePrizeCell(prizesPool[Math.floor(Math.random() * prizesPool.length)]));
-          } else {
-            newGrid.push(makeNothingCell());
-          }
-        }
-        const hasWin = winPatterns.some(([a, b, c]) => {
-          const idA = cellId(newGrid[a]);
-          const idB = cellId(newGrid[b]);
-          const idC = cellId(newGrid[c]);
-          return idA === idB && idB === idC;
-        });
-        if (!hasWin) return newGrid;
-      }
-      return Array(9).fill(null).map(() => makeNothingCell());
-    }
-  }, []);
+  // Grid generation and win determination are handled server-side only.
+  // See edge function scratch-card-play for the secure implementation.
 
   const getAuthHeaders = async () => {
     const session = (await supabase.auth.getSession()).data.session;
