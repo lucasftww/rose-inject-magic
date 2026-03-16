@@ -174,7 +174,7 @@ const AdminPanel = () => {
       <div className="flex">
         {/* Desktop Sidebar */}
         <aside
-          className={`hidden lg:flex flex-col fixed top-0 left-0 bottom-0 shrink-0 border-r border-border bg-card/60 backdrop-blur-md transition-[width] duration-200 overflow-hidden z-30 ${sidebarOpen ? "w-56" : "w-14"}`}
+          className={`hidden lg:flex flex-col fixed top-0 left-0 bottom-0 shrink-0 border-r border-border bg-card z-30 ${sidebarOpen ? "w-56" : "w-14"}`}
         >
           <div className="flex items-center gap-2 px-3 py-3 border-b border-border min-h-[48px]">
             <ShieldAlert className="h-4 w-4 text-success shrink-0" />
