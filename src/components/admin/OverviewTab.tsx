@@ -185,7 +185,6 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
           rCost += Math.round(cost * 100) / 100;
         });
 
-        setRobotRevenue(rRev);
         setRobotCost(rCost);
         setRobotProfit(Math.round((rRev - rCost) * 100) / 100);
       }
