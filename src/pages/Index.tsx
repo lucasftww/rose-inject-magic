@@ -1,8 +1,9 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, forwardRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import { Star, ArrowRight, Package, Loader2, Crosshair, Globe } from "lucide-react";
 import { motion } from "framer-motion";
+import ValorantImage from "@/components/ValorantImage";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useLztMarkup } from "@/hooks/useLztMarkup";
