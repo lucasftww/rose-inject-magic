@@ -120,7 +120,7 @@ const TicketsTab = ({ initialTicketId, onTicketOpened }: { initialTicketId?: str
       }));
     }
     setLoading(false);
-  }, []);
+  }, [adminEmailMap]);
 
   useEffect(() => { fetchTickets(); }, [fetchTickets]);
 

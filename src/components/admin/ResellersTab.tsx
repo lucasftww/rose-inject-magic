@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAdminUsers } from "@/hooks/useAdminUsers";
 import { toast } from "@/hooks/use-toast";
 import {
   Plus, Trash2, Loader2, Search, ChevronDown, ChevronRight,
@@ -39,6 +40,7 @@ interface Purchase {
 }
 
 const ResellersTab = () => {
+  const { users: adminUsersData } = useAdminUsers();
   const [resellers, setResellers] = useState<Reseller[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -77,21 +79,11 @@ const ResellersTab = () => {
       .order("created_at", { ascending: false });
 
     if (!error && data) {
-      // Fetch user info via admin-users edge function
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const res = await supabase.functions.invoke("admin-users", {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        });
-        const users = res.data || [];
-        const enriched = (data as any[]).map((r: any) => {
-          const user = users.find((u: any) => u.id === r.user_id);
-          return { ...r, username: user?.username || null, email: user?.email || "?" };
-        });
-        setResellers(enriched);
-      } else {
-        setResellers(data as any[]);
-      }
+      const enriched = (data as any[]).map((r: any) => {
+        const user = adminUsersData.find((u: any) => u.id === r.user_id);
+        return { ...r, username: user?.username || null, email: user?.email || "?" };
+      });
+      setResellers(enriched);
     }
     setLoading(false);
   };
@@ -106,17 +98,11 @@ const ResellersTab = () => {
   const searchUsers = async () => {
     if (searchEmail.trim().length < 2) return;
     setSearching(true);
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
-      const res = await supabase.functions.invoke("admin-users", {
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      });
-      const users = (res.data || []).filter((u: any) =>
-        u.email?.toLowerCase().includes(searchEmail.toLowerCase()) ||
-        u.username?.toLowerCase().includes(searchEmail.toLowerCase())
-      );
-      setSearchResults(users.slice(0, 5));
-    }
+    const users = adminUsersData.filter((u: any) =>
+      u.email?.toLowerCase().includes(searchEmail.toLowerCase()) ||
+      u.username?.toLowerCase().includes(searchEmail.toLowerCase())
+    );
+    setSearchResults(users.slice(0, 5).map((u: any) => ({ id: u.id, email: u.email, username: u.username || "" })));
     setSearching(false);
   };
 

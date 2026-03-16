@@ -127,7 +127,7 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
     };
 
     fetchAll();
-  }, [refreshKey]);
+  }, [refreshKey, adminUsers, usernameMap]);
 
   if (loading) {
     return (
