@@ -77,7 +77,7 @@ const LztTab = () => {
 
     // Fetch aggregated stats from DB function (no 1000-row limit)
     const [configRes, statsRes] = await Promise.all([
-      supabase.from("lzt_config").select("*").limit(1).single(),
+      supabase.from("lzt_config").select("*").limit(1).maybeSingle(),
       supabase.rpc("admin_lzt_stats"),
     ]);
 

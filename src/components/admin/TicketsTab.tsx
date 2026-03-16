@@ -163,8 +163,9 @@ const TicketsTab = ({
     setStockContent(null);
     setShowDelivery(false);
     setShowStockKey(false);
+    // Revoke old object URLs to prevent memory leaks
+    setPreviewUrls(prev => { prev.forEach(u => { if (u) URL.revokeObjectURL(u); }); return []; });
     setPendingFiles([]);
-    setPreviewUrls([]);
     const { data } = await supabase
       .from("ticket_messages")
       .select("*")
