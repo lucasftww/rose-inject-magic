@@ -238,7 +238,7 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
             <button
               key={f.key}
               onClick={() => setStatusFilter(f.key)}
-              className={`rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
+              className={`rounded-lg px-3 py-2 text-xs font-medium transition-colors whitespace-nowrap ${
                 statusFilter === f.key
                   ? "bg-success/20 text-success border border-success/30"
                   : "bg-secondary/50 text-muted-foreground border border-border hover:text-foreground"
