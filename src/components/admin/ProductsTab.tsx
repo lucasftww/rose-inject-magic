@@ -638,8 +638,8 @@ const ProductsTab = () => {
                           </div>
                         )}
                         <label className="flex items-center gap-1.5 cursor-pointer" onClick={() => updatePlan(index, "active", !plan.active)}>
-                          <div className={`h-4 w-7 rounded-full border transition-colors relative ${plan.active ? "border-success bg-success" : "border-border bg-secondary"}`}>
-                            <div className={`absolute top-0.5 h-3 w-3 rounded-full transition-all ${plan.active ? "left-[12px] bg-white" : "left-0.5 bg-foreground/60"}`} />
+                         <div className={`h-4 w-7 rounded-full border relative ${plan.active ? "border-success bg-success" : "border-border bg-secondary"}`}>
+                            <div className={`absolute top-0.5 h-3 w-3 rounded-full ${plan.active ? "left-[12px] bg-white" : "left-0.5 bg-foreground/60"}`} />
                           </div>
                         </label>
                         <button type="button" onClick={() => removePlan(index)}
