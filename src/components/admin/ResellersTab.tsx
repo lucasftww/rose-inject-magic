@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAdminUsers } from "@/hooks/useAdminUsers";
 import { toast } from "@/hooks/use-toast";
 import {
   Plus, Trash2, Loader2, Search, ChevronDown, ChevronRight,
