@@ -803,7 +803,7 @@ const TicketsTab = ({
 
         {/* ── Ticket List ── */}
         <div className={`flex flex-col min-h-0 ${selectedTicket ? "hidden lg:flex" : "flex"}`}>
-          <div className="flex-1 overflow-y-auto space-y-1 pr-0.5 scrollbar-chat">
+          <div className="flex-1 overflow-y-auto space-y-1 pr-0.5 scrollbar-hide">
             {paginatedTickets.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
                 <MessageSquare className="h-10 w-10 mb-3 opacity-15" />
