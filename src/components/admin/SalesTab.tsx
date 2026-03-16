@@ -282,9 +282,8 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
                 </tr>
               ) : (
                 paginated.map((sale) => (
-                  <>
+                <Fragment key={sale.id}>
                     <tr
-                      key={sale.id}
                       className="border-b border-border/50 hover:bg-secondary/20 transition-colors cursor-pointer"
                       onClick={() => setExpandedId(expandedId === sale.id ? null : sale.id)}
                     >
