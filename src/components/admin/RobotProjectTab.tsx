@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, RefreshCw, Wifi, WifiOff, Gamepad2, AlertTriangle, CheckCircle, Package, DollarSign, Clock, Zap, Wallet, Gift, TrendingUp, BarChart3 } from "lucide-react";
+import { Loader2, RefreshCw, Wifi, WifiOff, Gamepad2, AlertTriangle, CheckCircle, Package, DollarSign, Clock, Zap, Wallet, Gift, TrendingUp, BarChart3, RotateCw } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface RobotGame {
@@ -37,6 +37,17 @@ interface RobotSale {
   duration: number | null;
 }
 
+interface PendingRobotTicket {
+  id: string;
+  created_at: string;
+  status: string;
+  status_label: string;
+  error: string;
+  product_name: string;
+  plan_name: string;
+  user_label: string;
+}
+
 const RobotProjectTab = () => {
   const [loading, setLoading] = useState(true);
   const [pingStatus, setPingStatus] = useState<"online" | "offline" | "loading">("loading");
@@ -50,6 +61,8 @@ const RobotProjectTab = () => {
   const [robotSales, setRobotSales] = useState<RobotSale[]>([]);
   const [salesLoading, setSalesLoading] = useState(false);
   const [salesPeriod, setSalesPeriod] = useState<"7d" | "30d" | "all">("30d");
+  const [pendingRobotTickets, setPendingRobotTickets] = useState<PendingRobotTicket[]>([]);
+  const [retryingTicketId, setRetryingTicketId] = useState<string | null>(null);
 
   const checkPing = async () => {
     setPingStatus("loading");
