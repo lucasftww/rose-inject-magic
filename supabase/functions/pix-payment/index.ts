@@ -1300,51 +1300,58 @@ async function validateAndCalculatePrice(
     const qty = Math.max(1, Math.floor(Number(item.quantity) || 1));
     let realPrice = Number(plan.price);
 
+    const { data: productData } = await supabaseAdmin
+      .from("products")
+      .select("robot_game_id, robot_markup_percent")
+      .eq("id", plan.product_id)
+      .maybeSingle();
+
+    const isRobotProduct = !!(productData?.robot_game_id && productData.robot_game_id > 0);
+
+    if (isRobotProduct) {
+      const creds = await getRobotCredentials(supabaseAdmin);
+      if (!creds) {
+        return { validatedAmount: 0, validatedDiscount: 0, validatedCart: [], error: "Credenciais da Robot Project não configuradas" };
+      }
+
+      const robotSnapshot = await fetchRobotGameSnapshot(creds, productData.robot_game_id, plan.robot_duration_days || 30);
+      log("INFO", "validatePrice", "Robot product pre-check", {
+        productId: plan.product_id,
+        robotGameId: productData.robot_game_id,
+        duration: plan.robot_duration_days || 30,
+        expectedPrice: robotSnapshot.expectedPrice,
+        balance: robotSnapshot.balance,
+        availableSlots: robotSnapshot.availableSlots,
+        reason: robotSnapshot.reason || null,
+      });
+
+      if (robotSnapshot.reason) {
+        return { validatedAmount: 0, validatedDiscount: 0, validatedCart: [], error: robotSnapshot.reason };
+      }
+    }
+
     // If price is 0 and product has robot markup, calculate from Robot API prices
     if (realPrice <= 0) {
-      const { data: productData } = await supabaseAdmin
-        .from("products")
-        .select("robot_game_id, robot_markup_percent")
-        .eq("id", plan.product_id)
-        .maybeSingle();
-
       if (productData?.robot_game_id && productData.robot_markup_percent && plan.robot_duration_days) {
-        // Fetch robot game prices to calculate
-        const [uRes, pRes] = await Promise.all([
-          supabaseAdmin.from("system_credentials").select("value").eq("env_key", "ROBOT_API_USERNAME").maybeSingle(),
-          supabaseAdmin.from("system_credentials").select("value").eq("env_key", "ROBOT_API_PASSWORD").maybeSingle(),
-        ]);
-        const robotUsername = uRes.data?.value;
-        const robotPassword = pRes.data?.value;
-        if (robotUsername && robotPassword) {
+        const creds = await getRobotCredentials(supabaseAdmin);
+        if (creds) {
           try {
-            const auth = btoa(`${robotUsername}:${robotPassword}`);
-            const gamesRes = await fetch("https://api.robotproject.com.br/games", {
-              headers: { Authorization: `Basic ${auth}`, "Content-Type": "application/json" },
-            });
-            if (gamesRes.ok) {
-              const games = await gamesRes.json();
-              const robotGame = Array.isArray(games) ? games.find((g: any) => g.id === productData.robot_game_id) : null;
-              if (robotGame?.prices) {
-                const basePriceUsd = robotGame.prices[String(plan.robot_duration_days)];
-                if (basePriceUsd !== undefined && basePriceUsd > 0) {
-                  // Robot API returns full price — apply reseller discount (-40%) first
-                  const costPriceUsd = basePriceUsd * 0.6;
-                  // Fetch live exchange rate
-                  let usdToBrl = 5.25; // fallback
-                  try {
-                    const fxRes = await fetch("https://economia.awesomeapi.com.br/json/last/USD-BRL");
-                    if (fxRes.ok) {
-                      const fxData = await fxRes.json();
-                      const bid = Number(fxData?.USDBRL?.bid);
-                      if (bid > 0) usdToBrl = bid;
-                    }
-                  } catch (_) { /* use fallback */ }
-                  const basePriceBrl = costPriceUsd * usdToBrl;
-                  realPrice = Number((basePriceBrl * (1 + productData.robot_markup_percent / 100)).toFixed(2));
-                  console.log(`Robot markup price: fullUSD=${basePriceUsd}, costUSD=${costPriceUsd} (-40%), rate=${usdToBrl}, baseBRL=${basePriceBrl.toFixed(2)}, markup=${productData.robot_markup_percent}%, final=${realPrice}`);
+            const robotSnapshot = await fetchRobotGameSnapshot(creds, productData.robot_game_id, plan.robot_duration_days);
+            const basePriceUsd = robotSnapshot.expectedPrice;
+            if (basePriceUsd !== null && basePriceUsd > 0) {
+              const costPriceUsd = basePriceUsd * 0.6;
+              let usdToBrl = 5.25;
+              try {
+                const fxRes = await fetch("https://economia.awesomeapi.com.br/json/last/USD-BRL");
+                if (fxRes.ok) {
+                  const fxData = await fxRes.json();
+                  const bid = Number(fxData?.USDBRL?.bid);
+                  if (bid > 0) usdToBrl = bid;
                 }
-              }
+              } catch (_) { /* use fallback */ }
+              const basePriceBrl = costPriceUsd * usdToBrl;
+              realPrice = Number((basePriceBrl * (1 + productData.robot_markup_percent / 100)).toFixed(2));
+              console.log(`Robot markup price: fullUSD=${basePriceUsd}, costUSD=${costPriceUsd} (-40%), rate=${usdToBrl}, baseBRL=${basePriceBrl.toFixed(2)}, markup=${productData.robot_markup_percent}%, final=${realPrice}`);
             }
           } catch (err) {
             console.error("Failed to fetch robot prices for validation:", err);
