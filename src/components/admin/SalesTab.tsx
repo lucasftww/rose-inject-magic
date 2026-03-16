@@ -211,7 +211,7 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
         {[
           { icon: <ShoppingBag className="h-4 w-4 text-success" />, label: "Total Vendas", value: String(stats.total) },
           { icon: <Package className="h-4 w-4 text-success" />, label: "Entregues", value: String(stats.delivered) },
-          { icon: <Loader2 className="h-4 w-4 text-warning" />, label: "Pendentes", value: String(stats.pending) },
+          { icon: <Clock className="h-4 w-4 text-warning" />, label: "Pendentes", value: String(stats.pending) },
           { icon: <DollarSign className="h-4 w-4 text-success" />, label: "Receita", value: `R$ ${stats.revenue.toFixed(2)}` },
           { icon: <Users className="h-4 w-4 text-success" />, label: "Compradores", value: String(stats.uniqueBuyers) },
         ].map((s, i) => (

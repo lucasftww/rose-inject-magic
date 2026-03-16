@@ -141,7 +141,7 @@ const StatusTab = () => {
         <div className="space-y-6">
           {Object.entries(grouped).map(([gameName, prods]) => (
             <div key={gameName}>
-              <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{gameName}</h3>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">{gameName || "Sem Categoria"}</h3>
               <div className="space-y-2">
                 {prods.map((product) => {
                   const edit = edits[product.id];
