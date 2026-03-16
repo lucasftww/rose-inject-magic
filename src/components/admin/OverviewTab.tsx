@@ -15,6 +15,7 @@ interface OrderTicket {
   created_at: string;
   user_id: string;
   product_name?: string;
+  product_image?: string | null;
   plan_name?: string;
   username?: string;
 }
@@ -110,20 +111,22 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
         const productIds = [...new Set((recentOrdersRes.data as any[]).map((t: any) => t.product_id))];
         const planIds = [...new Set((recentOrdersRes.data as any[]).map((t: any) => t.product_plan_id))];
         const [prodsRes, plansRes] = await Promise.all([
-          productIds.length > 0 ? supabase.from("products").select("id, name").in("id", productIds) : { data: [] },
+          productIds.length > 0 ? supabase.from("products").select("id, name, image_url").in("id", productIds) : { data: [] },
           planIds.length > 0 ? supabase.from("product_plans").select("id, name").in("id", planIds) : { data: [] },
         ]);
-        const prodMap: Record<string, string> = {};
+        const prodMap: Record<string, { name: string; image_url: string | null }> = {};
         const planMap: Record<string, string> = {};
-        prodsRes.data?.forEach((p: any) => { prodMap[p.id] = p.name; });
+        prodsRes.data?.forEach((p: any) => { prodMap[p.id] = { name: p.name, image_url: p.image_url }; });
         plansRes.data?.forEach((p: any) => { planMap[p.id] = p.name; });
 
         setRecentOrders((recentOrdersRes.data as any[]).map((t: any) => {
           const meta = t.metadata as any;
           const isLzt = meta?.type === "lzt-account";
+          const prod = prodMap[t.product_id];
           return {
             ...t,
-            product_name: isLzt ? (meta?.title || meta?.account_name || "Conta LZT") : (prodMap[t.product_id] || "Produto"),
+            product_name: isLzt ? (meta?.title || meta?.account_name || "Conta LZT") : (prod?.name || "Produto"),
+            product_image: isLzt ? null : (prod?.image_url || null),
             plan_name: isLzt ? "Conta LZT" : (planMap[t.product_plan_id] || "Plano"),
             username: "?",
           };
@@ -242,25 +245,42 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
           <div className="divide-y divide-border">
             {recentOrders.length === 0 ? (
               <p className="py-8 text-center text-sm text-muted-foreground">Nenhum pedido encontrado.</p>
-            ) : recentOrders.map((order) => (
+            ) : recentOrders.map((order, idx) => (
               <div
                 key={order.id}
                 onClick={() => onGoToTicket?.(order.id)}
-                className="flex cursor-pointer items-center gap-3 px-5 py-3 hover:bg-secondary/30 transition-colors"
+                className="flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-secondary/40 transition-colors group"
               >
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary shrink-0">
-                  <Package className="h-3.5 w-3.5 text-muted-foreground" />
+                <div className="relative shrink-0">
+                  {order.product_image ? (
+                    <img
+                      src={order.product_image}
+                      alt={order.product_name}
+                      className="h-10 w-10 rounded-lg object-cover border border-border group-hover:border-success/30 transition-colors"
+                    />
+                  ) : (
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary border border-border group-hover:border-success/30 transition-colors">
+                      <Package className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                  )}
+                  <span className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-card ${
+                    order.status === "delivered" ? "bg-success" :
+                    order.status === "open" || order.status === "waiting" || order.status === "waiting_staff" ? "bg-warning" :
+                    "bg-muted-foreground"
+                  }`} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">{order.product_name}</p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">
-                    <span>{order.username}</span>
-                    <span className="opacity-40">·</span>
-                    <Clock className="h-2.5 w-2.5 inline opacity-50" />
-                    <span>{timeAgo(order.created_at)}</span>
-                  </p>
+                  <p className="text-[13px] font-semibold text-foreground truncate group-hover:text-success transition-colors">{order.product_name}</p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="text-[11px] text-muted-foreground truncate max-w-[100px]">{order.username !== "?" ? order.username : "..."}</span>
+                    <span className="text-muted-foreground/30 text-[10px]">•</span>
+                    <span className="text-[10px] text-muted-foreground/70 flex items-center gap-0.5">
+                      <Clock className="h-2.5 w-2.5" />
+                      {timeAgo(order.created_at)}
+                    </span>
+                  </div>
                 </div>
-                <span className={`shrink-0 rounded-md border px-2 py-0.5 text-[10px] font-semibold ${statusColors[order.status] || "bg-muted/50 text-muted-foreground border-border"}`}>
+                <span className={`shrink-0 rounded-md border px-2.5 py-1 text-[10px] font-bold tracking-wide ${statusColors[order.status] || "bg-muted/50 text-muted-foreground border-border"}`}>
                   {statusLabels[order.status] || order.status_label}
                 </span>
               </div>
