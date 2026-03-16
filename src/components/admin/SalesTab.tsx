@@ -92,17 +92,16 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
     let stockMap = new Map<string, string>();
     if (stockIds.length > 0) {
       try {
-        const stockData = await fetchAllRows("stock_items", {
-          select: "id, content",
-          filters: stockIds.length <= 100
-            ? [{ column: "id", op: "in", value: stockIds }]
-            : undefined,
-        });
-        // If we couldn't filter by ID (too many), filter client-side
-        const stockSet = new Set(stockIds);
-        (stockData || []).forEach((s: any) => {
-          if (!stockIds.length || stockSet.has(s.id)) stockMap.set(s.id, s.content);
-        });
+        // Batch stock fetches in chunks of 100 to avoid unbounded queries
+        const CHUNK_SIZE = 100;
+        for (let i = 0; i < stockIds.length; i += CHUNK_SIZE) {
+          const chunk = stockIds.slice(i, i + CHUNK_SIZE);
+          const stockData = await fetchAllRows("stock_items", {
+            select: "id, content",
+            filters: [{ column: "id", op: "in", value: chunk }],
+          });
+          (stockData || []).forEach((s: any) => { stockMap.set(s.id, s.content); });
+        }
       } catch {
         // fallback: do nothing
       }

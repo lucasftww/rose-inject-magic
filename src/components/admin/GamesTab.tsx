@@ -34,11 +34,11 @@ const GamesTab = () => {
 
   const invalidateAdmin = useInvalidateAdminCache();
 
-  const fetchGames = async () => {
+  const fetchGames = async (shouldInvalidate = false) => {
     const { data, error } = await supabase.from("games").select("*").order("sort_order", { ascending: true });
     if (!error && data) setGames(data as Game[]);
     setLoadingGames(false);
-    invalidateAdmin();
+    if (shouldInvalidate) invalidateAdmin();
   };
 
   useEffect(() => { fetchGames(); }, []);
@@ -133,11 +133,11 @@ const GamesTab = () => {
     if (editingGame) {
       const { error } = await supabase.from("games").update({ name: formName.trim(), slug: formSlug.trim(), image_url: formImageUrl.trim() || null, active: formActive }).eq("id", editingGame.id);
       if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
-      else { toast({ title: "Jogo atualizado!" }); resetForm(); fetchGames(); }
+      else { toast({ title: "Jogo atualizado!" }); resetForm(); fetchGames(true); }
     } else {
       const { error } = await supabase.from("games").insert({ name: formName.trim(), slug: formSlug.trim(), image_url: formImageUrl.trim() || null, active: formActive, sort_order: games.length });
       if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
-      else { toast({ title: "Jogo criado!" }); resetForm(); fetchGames(); }
+      else { toast({ title: "Jogo criado!" }); resetForm(); fetchGames(true); }
     }
     setSaving(false);
   };
@@ -146,7 +146,7 @@ const GamesTab = () => {
     if (!confirm(`Excluir "${game.name}"?`)) return;
     const { error } = await supabase.from("games").delete().eq("id", game.id);
     if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
-    else { toast({ title: "Excluído!" }); fetchGames(); }
+    else { toast({ title: "Excluído!" }); fetchGames(true); }
   };
 
   return (
