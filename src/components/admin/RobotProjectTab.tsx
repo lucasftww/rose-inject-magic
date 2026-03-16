@@ -280,9 +280,78 @@ const RobotProjectTab = () => {
     setSalesLoading(false);
   };
 
+  const fetchPendingRobotTickets = async () => {
+    const { data: tickets } = await supabase
+      .from("order_tickets")
+      .select("id, created_at, status, status_label, metadata, product_id, product_plan_id, user_id")
+      .eq("status", "open")
+      .order("created_at", { ascending: false })
+      .limit(20);
+
+    const robotTickets = (tickets || []).filter((ticket: any) => ticket.metadata?.type === "robot-project");
+    if (robotTickets.length === 0) {
+      setPendingRobotTickets([]);
+      return;
+    }
+
+    const productIds = [...new Set(robotTickets.map((ticket: any) => ticket.product_id))];
+    const planIds = [...new Set(robotTickets.map((ticket: any) => ticket.product_plan_id))];
+    const userIds = [...new Set(robotTickets.map((ticket: any) => ticket.user_id))];
+
+    const [productsRes, plansRes, profilesRes] = await Promise.all([
+      supabase.from("products").select("id, name").in("id", productIds),
+      supabase.from("product_plans").select("id, name").in("id", planIds),
+      supabase.from("profiles").select("user_id, username").in("user_id", userIds),
+    ]);
+
+    const productMap = Object.fromEntries((productsRes.data || []).map((item) => [item.id, item.name]));
+    const planMap = Object.fromEntries((plansRes.data || []).map((item) => [item.id, item.name]));
+    const profileMap = Object.fromEntries((profilesRes.data || []).map((item) => [item.user_id, item.username || item.user_id.slice(0, 8)]));
+
+    setPendingRobotTickets(robotTickets.map((ticket: any) => ({
+      id: ticket.id,
+      created_at: ticket.created_at || "",
+      status: ticket.status || "open",
+      status_label: ticket.status_label || "Entrega Manual",
+      error: String(ticket.metadata?.error || "Falha não informada"),
+      product_name: productMap[ticket.product_id] || "Produto desconhecido",
+      plan_name: planMap[ticket.product_plan_id] || "Plano desconhecido",
+      user_label: profileMap[ticket.user_id] || ticket.user_id.slice(0, 8),
+    })));
+  };
+
+  const retryRobotDelivery = async (ticketId: string) => {
+    try {
+      setRetryingTicketId(ticketId);
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pix-payment?action=retry-robot`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session?.access_token}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ ticket_id: ticketId }),
+        }
+      );
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Não foi possível reprocessar a entrega");
+      }
+      toast({ title: "Entrega Robot reprocessada", description: result.message || "Verifique o ticket do pedido." });
+      await refreshAll();
+    } catch (error: any) {
+      toast({ title: "Falha ao reprocessar", description: error.message, variant: "destructive" });
+    } finally {
+      setRetryingTicketId(null);
+    }
+  };
+
   const refreshAll = async () => {
     setLoading(true);
-    await Promise.all([checkPing(), fetchRobotGames(), fetchProductsWithRobot(), fetchExchangeRate()]);
+    await Promise.all([checkPing(), fetchRobotGames(), fetchProductsWithRobot(), fetchExchangeRate(), fetchPendingRobotTickets()]);
     await fetchRobotSales();
     setLastRefresh(new Date());
     setLoading(false);
