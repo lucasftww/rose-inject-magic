@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { fetchAllRows } from "@/lib/supabaseAllRows";
 import {
   Loader2, DollarSign, ShoppingCart, Globe, TrendingUp, TrendingDown,
-  Download, PieChart, Wallet, Users, ArrowUp, ArrowDown, Minus,
+  Download, PieChart, Wallet, Users, ArrowUp, ArrowDown, Minus, Gamepad2,
   Receipt, BarChart3, CalendarDays, Package, Percent
 } from "lucide-react";
 import {
