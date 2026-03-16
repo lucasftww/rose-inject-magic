@@ -316,7 +316,7 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
                         <button
                           onClick={(e) => { e.stopPropagation(); onGoToTicket?.(sale.id); }}
                           title="Abrir ticket no chat"
-                          className="rounded-md p-1.5 text-muted-foreground hover:text-success hover:bg-success/10 transition-colors"
+                          className="rounded-md p-1.5 text-muted-foreground hover:text-success hover:bg-success/10"
                         >
                           <Eye className="h-4 w-4" />
                         </button>
