@@ -922,7 +922,7 @@ const TicketsTab = ({
                     {stockContent && (
                       <button
                         onClick={() => setShowDelivery(!showDelivery)}
-                        className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-[11px] font-bold transition-all ${
+                        className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-[11px] font-bold ${
                           showDelivery
                             ? "border-success/25 bg-success/10 text-success"
                             : "border-border bg-secondary/40 text-muted-foreground hover:text-foreground"
