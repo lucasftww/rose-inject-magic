@@ -171,7 +171,7 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
         {stats.map((stat) => {
           const Icon = stat.icon;
           return (
-            <div key={stat.label} className="group rounded-xl border border-border bg-card p-5 transition-all duration-200 hover:border-border/80 hover:shadow-lg hover:shadow-black/10">
+            <div key={stat.label} className="group rounded-xl border border-border bg-card p-5">
               <div className="flex items-center justify-between mb-3">
                 <div className={`flex h-9 w-9 items-center justify-center rounded-lg bg-secondary ${stat.accent}`}>
                   <Icon className="h-4 w-4" />
