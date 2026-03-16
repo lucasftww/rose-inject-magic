@@ -183,9 +183,9 @@ const AdminPanel = () => {
             )}
             <button
               onClick={() => setSidebarOpen(v => !v)}
-              className="ml-auto rounded-md p-1 text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+              className="ml-auto rounded-md p-1 text-muted-foreground hover:text-foreground"
             >
-              <ChevronRight className={`h-3.5 w-3.5 transition-transform duration-200 ${sidebarOpen ? "rotate-180" : ""}`} />
+              <ChevronRight className={`h-3.5 w-3.5 ${sidebarOpen ? "rotate-180" : ""}`} />
             </button>
           </div>
           <div className="flex-1 overflow-y-auto scrollbar-hide">
