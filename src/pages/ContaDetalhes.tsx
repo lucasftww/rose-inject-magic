@@ -592,7 +592,7 @@ const ContaDetalhes = () => {
                           <ChevronLeft className="h-5 w-5" />
                         </button>
                         <button onClick={handleNext} className="absolute right-3 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-background/80 border border-border text-muted-foreground opacity-0 group-hover:opacity-100 transition-all hover:text-success hover:border-success/40">
-                          <ChevronRightIcon className="h-5 w-5" />
+                          <ChevronRight className="h-5 w-5" />
                         </button>
                       </>
                 }
