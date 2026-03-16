@@ -165,6 +165,7 @@ const ProductsTab = () => {
 
   const { data: cachedGames, refetch: refetchGames } = useAdminGames();
   const { data: cachedProducts, refetch: refetchProducts } = useAdminProductsWithPlans();
+  const invalidateAdmin = useInvalidateAdminCache();
 
   useEffect(() => {
     if (cachedGames) setGames(cachedGames);
@@ -178,6 +179,7 @@ const ProductsTab = () => {
   }, [cachedProducts]);
 
   const fetchData = async () => {
+    invalidateAdmin();
     await Promise.all([refetchGames(), refetchProducts()]);
     setLoading(false);
   };
