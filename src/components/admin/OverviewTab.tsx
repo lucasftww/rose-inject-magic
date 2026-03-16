@@ -51,6 +51,7 @@ const statusLabels: Record<string, string> = {
 
 const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void }) => {
   const { users: adminUsers, usernameMap } = useAdminUsers();
+  const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
   const [totalOrders, setTotalOrders] = useState(0);
   const [totalRevenue, setTotalRevenue] = useState(0);
