@@ -123,7 +123,10 @@ const TicketsTab = ({
       select: "*",
       order: { column: "created_at", ascending: false },
       limit: 500,
-    }).catch(() => null);
+    }).catch((err) => {
+      console.error("fetchTickets error:", err);
+      return null;
+    });
 
     if (data) {
       const productIds = [...new Set(data.map((t: any) => t.product_id))] as string[];
@@ -668,7 +671,8 @@ const TicketsTab = ({
           </div>
         </div>
       );
-    } catch {
+    } catch (err) {
+      console.error("Credential parse error:", err);
       return <p className="text-sm text-foreground whitespace-pre-wrap">{jsonStr}</p>;
     }
   };

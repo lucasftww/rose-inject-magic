@@ -105,7 +105,8 @@ const RobotProjectTab = () => {
       } else {
         toast({ title: "Erro ao carregar jogos Robot", variant: "destructive" });
       }
-    } catch {
+    } catch (err) {
+      console.error("fetchRobotGames error:", err);
       toast({ title: "Erro de conexão com Robot Project", variant: "destructive" });
     }
     setLoadingGames(false);
@@ -163,7 +164,10 @@ const RobotProjectTab = () => {
         const bid = Number(data?.USDBRL?.bid);
         if (bid > 0) setUsdToBrl(bid);
       }
-    } catch (_) { /* use fallback */ }
+    } catch (err) {
+      console.error("fetchExchangeRate error:", err);
+      /* use fallback */
+    }
   };
 
   const fetchRobotSales = async (period: "7d" | "30d" | "all" = salesPeriod) => {
