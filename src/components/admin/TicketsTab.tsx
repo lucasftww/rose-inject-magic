@@ -116,10 +116,10 @@ const TicketsTab = ({
       const planIds = [...new Set(data.map((t: any) => t.product_plan_id))] as string[];
       const userIds = [...new Set(data.map((t: any) => t.user_id))] as string[];
 
-      const [productsRes, plansRes, profilesRes, lztSalesData] = await Promise.all([
+      const [productsRes, plansRes, profilesData, lztSalesData] = await Promise.all([
         supabase.from("products").select("id, name").in("id", productIds),
         supabase.from("product_plans").select("id, name, price").in("id", planIds),
-        supabase.from("profiles").select("user_id, username").in("user_id", userIds),
+        fetchAllRows("profiles", { select: "user_id, username" }),
         fetchAllRows("lzt_sales", { select: "lzt_item_id, sell_price" }),
       ]);
 
