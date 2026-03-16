@@ -704,7 +704,7 @@ const Dashboard = () => {
                              autoComplete="new-password"
                              value={newPassword}
                              onChange={(e) => setNewPassword(e.target.value)}
-                             placeholder="Mínimo 6 caracteres"
+                             placeholder="Mínimo 8 caracteres"
                             className="w-full rounded-lg border border-border bg-secondary/50 py-3 pl-4 pr-11 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none focus:border-success/50 transition-colors"
                           />
                           <button onClick={() => setShowNewPass(!showNewPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
