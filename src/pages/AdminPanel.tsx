@@ -476,6 +476,12 @@ const AdminPanel = () => {
   // Auth & admin role are already verified by AdminGuard wrapper in App.tsx
   // This component only renders after server-side confirmation
   const [activeTab, setActiveTab] = useState<TabId>("overview");
+  const [pendingTicketId, setPendingTicketId] = useState<string | null>(null);
+
+  const handleGoToTicket = (ticketId: string) => {
+    setPendingTicketId(ticketId);
+    setActiveTab("tickets");
+  };
 
   return (
     <div className="min-h-screen bg-background">
