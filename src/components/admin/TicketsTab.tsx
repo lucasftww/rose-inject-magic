@@ -617,7 +617,7 @@ const TicketsTab = ({
             {/* Checklist */}
             <div className="rounded-xl border border-success/20 bg-success/5 overflow-hidden">
               <button onClick={() => setExpandedSection(expandedSection === "done-admin" ? null : "done-admin")}
-                className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left transition-colors hover:bg-success/10">
+                className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left hover:bg-success/10">
                 <CheckCircle className="h-3.5 w-3.5 text-success shrink-0" />
                 <span className="flex-1 text-xs font-bold text-success">Entrega Concluída</span>
                 {expandedSection === "done-admin" ? <ChevronUp className="h-3.5 w-3.5 text-success/60" /> : <ChevronDown className="h-3.5 w-3.5 text-success/60" />}
