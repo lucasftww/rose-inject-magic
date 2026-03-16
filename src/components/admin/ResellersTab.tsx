@@ -357,7 +357,7 @@ const ResellersTab = () => {
           return (
             <div key={reseller.id} className="rounded-lg border border-border bg-card overflow-hidden">
               <button onClick={() => toggleExpand(reseller)}
-                className="flex w-full items-center gap-4 p-4 text-left hover:bg-secondary/30 transition-colors">
+                className="flex w-full items-center gap-4 p-4 text-left hover:bg-secondary/30">
                 {isExpanded ? <ChevronDown className="h-4 w-4 text-success shrink-0" /> : <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />}
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-success/10 shrink-0">
                   <UserCheck className="h-4 w-4 text-success" />
