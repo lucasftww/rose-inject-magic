@@ -108,7 +108,7 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
         supabase.rpc("admin_overview_stats"),
         supabase.from("order_tickets").select("*").order("created_at", { ascending: false }).limit(8),
         supabase.from("payments").select("*").eq("status", "COMPLETED").order("paid_at", { ascending: false }).limit(8),
-        supabase.from("payments").select("amount").eq("status", "COMPLETED").gte("paid_at", new Date(new Date().setHours(0, 0, 0, 0)).toISOString()),
+        fetchAllRows("payments", { select: "amount", filters: [{ column: "status", op: "eq", value: "COMPLETED" }, { column: "paid_at", op: "gte", value: new Date(new Date().setHours(0, 0, 0, 0)).toISOString() }] }),
         supabase.rpc("admin_lzt_stats"),
         fetchAllRows("payments", {
           select: "amount, discount_amount, user_id, cart_snapshot, status",
