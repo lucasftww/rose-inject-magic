@@ -386,7 +386,7 @@ const RobotProjectTab = () => {
       )}
 
       {/* Status Cards */}
-      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* API Status */}
         <div className="rounded-lg border border-border bg-card p-5">
           <div className="flex items-center gap-3">
