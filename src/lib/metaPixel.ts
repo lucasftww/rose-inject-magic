@@ -51,6 +51,7 @@ const sha256 = async (message: string): Promise<string> => {
 // In-memory + localStorage so it survives page reloads during checkout
 
 let _cachedUserData: { em?: string; external_id?: string } = {};
+let _pixelInitWithAM = false; // guard against duplicate fbq('init') calls
 
 const persistUserData = () => {
   try {
@@ -107,7 +108,9 @@ export const setAdvancedMatching = async (userData: {
 
   persistUserData();
 
-  if (typeof window !== "undefined" && window.fbq && Object.keys(matchData).length > 0) {
+  // Only re-init pixel once per session to avoid duplicate events
+  if (typeof window !== "undefined" && window.fbq && Object.keys(matchData).length > 0 && !_pixelInitWithAM) {
+    _pixelInitWithAM = true;
     window.fbq("init", PIXEL_ID, matchData);
   }
 };
@@ -117,6 +120,7 @@ export const setAdvancedMatching = async (userData: {
  */
 export const clearAdvancedMatching = () => {
   _cachedUserData = {};
+  _pixelInitWithAM = false; // allow re-init on next login
   try {
     localStorage.removeItem(STORAGE_KEY_EM);
     localStorage.removeItem(STORAGE_KEY_EID);

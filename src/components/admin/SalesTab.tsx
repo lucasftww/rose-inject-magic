@@ -42,47 +42,69 @@ const statusColors: Record<string, string> = {
   archived: "bg-muted text-muted-foreground border-border",
 };
 
+// Module-level cache to persist data across tab switches
+let _cachedSales: SaleTicket[] | null = null;
+let _salesCacheTs = 0;
+const SALES_CACHE_TTL = 3 * 60 * 1000; // 3 minutes
+
 const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void }) => {
   const { emailMap: adminEmailMap, usernameMap } = useAdminUsers();
-  const [loading, setLoading] = useState(true);
-  const [tickets, setTickets] = useState<SaleTicket[]>([]);
+  const [loading, setLoading] = useState(!_cachedSales);
+  const [tickets, setTickets] = useState<SaleTicket[]>(_cachedSales || []);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [dataLoaded, setDataLoaded] = useState(false);
+  const [dataLoaded, setDataLoaded] = useState(!!_cachedSales);
 
-  const fetchSales = async () => {
+  const fetchSales = async (force = false) => {
+    // Return cached data if fresh
+    if (!force && _cachedSales && Date.now() - _salesCacheTs < SALES_CACHE_TTL) {
+      setTickets(_cachedSales);
+      setDataLoaded(true);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
 
-    // 1. Fetch ALL tickets using paginated helper (no 1000-row limit)
+    // 1. Fetch latest 500 tickets (covers most admin needs without fetching everything)
     let rawTickets: any[];
     try {
       rawTickets = await fetchAllRows("order_tickets", {
         select: "*",
         order: { column: "created_at", ascending: false },
+        limit: 500,
       });
     } catch {
       setLoading(false);
       return;
     }
 
-    // 2. Enrich with product/plan data
+    // 2. Enrich with product/plan data (only for fetched tickets)
     const productIds = [...new Set(rawTickets.map((t) => t.product_id))];
     const planIds = [...new Set(rawTickets.map((t) => t.product_plan_id))];
+    const userIds = [...new Set(rawTickets.map((t) => t.user_id))];
+
+    // Only fetch lzt_sales for tickets that have lzt metadata
+    const lztItemIds = rawTickets
+      .filter((t) => t.metadata?.type === "lzt-account" && t.metadata?.lzt_item_id)
+      .map((t) => String(t.metadata.lzt_item_id));
 
     const [productsRes, plansRes, profilesData, lztSalesData] = await Promise.all([
       supabase.from("products").select("id, name, image_url").in("id", productIds),
       supabase.from("product_plans").select("id, name, price").in("id", planIds),
-      fetchAllRows("profiles", { select: "user_id, username" }),
-      fetchAllRows("lzt_sales", { select: "lzt_item_id, sell_price" }),
+      supabase.from("profiles").select("user_id, username").in("user_id", userIds),
+      lztItemIds.length > 0
+        ? supabase.from("lzt_sales").select("lzt_item_id, sell_price").in("lzt_item_id", lztItemIds)
+        : Promise.resolve({ data: [] }),
     ]);
 
     const productsMap = new Map((productsRes.data || []).map((p) => [p.id, p]));
     const plansMap = new Map((plansRes.data || []).map((p) => [p.id, p]));
-    const profilesMap = new Map((profilesData || []).map((p: any) => [p.user_id, p]));
-    const lztSalesMap = new Map((lztSalesData || []).map((s: any) => [s.lzt_item_id, Number(s.sell_price)]));
+    const profilesMap = new Map((profilesData.data || []).map((p: any) => [p.user_id, p]));
+    const lztSalesMap = new Map(((lztSalesData as any).data || []).map((s: any) => [s.lzt_item_id, Number(s.sell_price)]));
 
     // 3. Load stock content for delivered items
     const stockIds = rawTickets
@@ -126,12 +148,14 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
         product_image: isLzt ? null : (product?.image_url || null),
         plan_name: isLzt ? "Conta LZT" : (plan?.name || "—"),
         plan_price: isLzt ? lztPrice : (metaPrice ?? plan?.price ?? 0),
-        username: profile?.username || null,
+        username: (profile as any)?.username || null,
         email: null, // enriched below from adminEmailMap
         stock_content: t.stock_item_id ? (stockMap.get(t.stock_item_id) || null) : null,
       };
     });
 
+    _cachedSales = enriched;
+    _salesCacheTs = Date.now();
     setTickets(enriched);
     setDataLoaded(true);
     setLoading(false);
