@@ -776,20 +776,40 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
   try {
     const buyUrl = `https://api.lzt.market/${encodeURIComponent(itemId)}/fast-buy?price=${encodeURIComponent(price)}${currency ? `&currency=${encodeURIComponent(currency)}` : ""}`;
 
-    const buyRes = await fetch(buyUrl, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LZT_TOKEN}`,
-        Accept: "application/json",
-      },
-    });
+    // Retry fast-buy up to 4 times with exponential backoff
+    // LZT API returns 403 "retry_request" as a temporary rate-limit signal
+    const RETRYABLE_BUY_STATUSES = [403, 429, 502, 503, 504];
+    let buyRes: Response | null = null;
+    let buyData: any = null;
+    for (let attempt = 0; attempt < 4; attempt++) {
+      if (attempt > 0) {
+        const delay = 2000 * Math.pow(2, attempt - 1); // 2s, 4s, 8s
+        console.log(`LZT fast-buy retry attempt ${attempt + 1} after ${delay}ms...`);
+        await new Promise(r => setTimeout(r, delay));
+      }
+      buyRes = await fetch(buyUrl, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LZT_TOKEN}`,
+          Accept: "application/json",
+        },
+      });
+      buyData = await buyRes.json();
+      console.log(`LZT fast-buy attempt ${attempt + 1}: ${buyRes.status}`, JSON.stringify(buyData).substring(0, 500));
 
-    const buyData = await buyRes.json();
-    console.log("LZT fast-buy result:", buyRes.status, JSON.stringify(buyData).substring(0, 1000));
+      // If success or non-retryable error, stop
+      if (buyRes.ok) break;
 
-    if (!buyRes.ok) {
-      const reason = `HTTP ${buyRes.status}: ${JSON.stringify(buyData).substring(0, 300)}`;
-      console.error("LZT fast-buy failed:", reason);
+      // Check if this is a retryable error (retry_request or server error)
+      const isRetryableStatus = RETRYABLE_BUY_STATUSES.includes(buyRes.status);
+      const isRetryableError = Array.isArray(buyData?.errors) &&
+        buyData.errors.some((e: string) => e === "retry_request" || e.includes("retry"));
+      if (!isRetryableStatus && !isRetryableError) break; // non-retryable, stop
+    }
+
+    if (!buyRes || !buyRes.ok) {
+      const reason = `HTTP ${buyRes?.status || 0}: ${JSON.stringify(buyData).substring(0, 300)}`;
+      console.error("LZT fast-buy failed after retries:", reason);
       await createManualDeliveryTicket(reason);
       return;
     }
