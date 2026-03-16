@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAdminUsers } from "@/hooks/useAdminUsers";
 import {
   Loader2, DollarSign, ShoppingCart, Users, UserCheck,
   Package, Receipt, RefreshCw, ArrowUpRight
