@@ -1097,7 +1097,7 @@ const TicketsTab = ({
                     <button
                       onClick={() => startRecording().catch(() => toast({ title: "Erro", description: "Permita o acesso ao microfone", variant: "destructive" }))}
                       disabled={sending || uploadingFile}
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground/60 hover:text-foreground hover:bg-muted/40 transition-all disabled:opacity-30" title="Gravar áudio">
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground/60 hover:text-foreground hover:bg-muted/40 disabled:opacity-30" title="Gravar áudio">
                       <Mic className="h-4 w-4" />
                     </button>
                     <button onClick={sendMessage} disabled={sending || uploadingFile || (!newMessage.trim() && pendingFiles.length === 0)}
