@@ -148,7 +148,7 @@ const StockTab = () => {
     } else {
       toast({ title: "Item removido!" });
       fetchStockForPlan(planId);
-      fetchProducts();
+      fetchStockCounts(products);
     }
   };
 
