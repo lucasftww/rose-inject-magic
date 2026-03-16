@@ -23,19 +23,11 @@ export async function fetchAllRows<T = any>(
   let from = 0;
 
   while (true) {
-    let query = supabase.from(tableName).select(select);
+    let query = (supabase.from as any)(tableName).select(select);
 
     if (filters) {
       for (const f of filters) {
-        switch (f.op) {
-          case "eq": query = query.eq(f.column, f.value); break;
-          case "neq": query = query.neq(f.column, f.value); break;
-          case "gt": query = query.gt(f.column, f.value); break;
-          case "gte": query = query.gte(f.column, f.value); break;
-          case "lt": query = query.lt(f.column, f.value); break;
-          case "lte": query = query.lte(f.column, f.value); break;
-          case "in": query = query.in(f.column, f.value); break;
-        }
+        query = query[f.op](f.column, f.value);
       }
     }
 
