@@ -265,17 +265,18 @@ const Produtos = () => {
           robotProducts.forEach(p => (p.product_plans || []).forEach((pl: any) => { planToProduct[pl.id] = p.id; }));
 
           if (allPlanIds.length > 0) {
-            const { data: stockData } = await supabase
-              .from("stock_items")
-              .select("product_plan_id")
-              .in("product_plan_id", allPlanIds)
-              .eq("used", false);
-
+            // Use count query instead of fetching all rows (avoids 1000-row limit)
             const stockCounts: Record<string, number> = {};
-            (stockData || []).forEach(s => {
-              const pid = planToProduct[s.product_plan_id];
-              if (pid) stockCounts[pid] = (stockCounts[pid] || 0) + 1;
+            const stockPromises = allPlanIds.map(async (planId: string) => {
+              const { count } = await supabase
+                .from("stock_items")
+                .select("id", { count: "exact", head: true })
+                .eq("product_plan_id", planId)
+                .eq("used", false);
+              const pid = planToProduct[planId];
+              if (pid) stockCounts[pid] = (stockCounts[pid] || 0) + (count || 0);
             });
+            await Promise.all(stockPromises);
 
             data.forEach((p: any) => {
               if (p.robot_game_id) p._stockCount = stockCounts[p.id] || 0;
