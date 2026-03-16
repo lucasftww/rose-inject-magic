@@ -651,15 +651,7 @@ const Dashboard = () => {
                           {showVerifyPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
                       </div>
-                      <div className="flex justify-center">
-                        <Turnstile
-                          ref={verifyCaptchaRef}
-                          siteKey={TURNSTILE_SITE_KEY}
-                          onSuccess={(token) => setVerifyCaptchaToken(token)}
-                          onExpire={() => setVerifyCaptchaToken(undefined)}
-                          options={{ theme: "dark", size: "flexible" }}
-                        />
-                      </div>
+                      {/* Turnstile temporarily disabled for debugging */}
                       <button
                         onClick={handleVerifyIdentity}
                         disabled={verifying || !verifyPassword || !verifyCaptchaToken}
