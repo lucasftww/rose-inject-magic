@@ -47,7 +47,7 @@ const statusLabels: Record<string, string> = {
   finished: "Finalizado",
 };
 
-const OverviewTab = () => {
+const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void }) => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [totalOrders, setTotalOrders] = useState(0);
