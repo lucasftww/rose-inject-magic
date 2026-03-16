@@ -137,7 +137,7 @@ const GamesTab = () => {
     } else {
       const { error } = await supabase.from("games").insert({ name: formName.trim(), slug: formSlug.trim(), image_url: formImageUrl.trim() || null, active: formActive, sort_order: games.length });
       if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
-      else { toast({ title: "Jogo criado!" }); resetForm(); fetchGames(); }
+      else { toast({ title: "Jogo criado!" }); resetForm(); fetchGames(true); }
     }
     setSaving(false);
   };
