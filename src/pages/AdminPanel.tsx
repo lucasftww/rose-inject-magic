@@ -185,12 +185,21 @@ const AdminPanel = () => {
             {sidebarOpen && (
               <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-success truncate">Painel Admin</span>
             )}
-            <button
-              onClick={() => setSidebarOpen(v => !v)}
-              className="ml-auto rounded-md p-1 text-muted-foreground hover:text-foreground"
-            >
-              <ChevronRight className={`h-3.5 w-3.5 ${sidebarOpen ? "rotate-180" : ""}`} />
-            </button>
+            <div className="ml-auto flex items-center gap-0.5">
+              <button
+                onClick={() => navigate("/")}
+                title="Voltar ao site"
+                className="rounded-md p-1 text-muted-foreground hover:text-foreground"
+              >
+                <Home className="h-3.5 w-3.5" />
+              </button>
+              <button
+                onClick={() => setSidebarOpen(v => !v)}
+                className="rounded-md p-1 text-muted-foreground hover:text-foreground"
+              >
+                <ChevronRight className={`h-3.5 w-3.5 ${sidebarOpen ? "rotate-180" : ""}`} />
+              </button>
+            </div>
           </div>
           <div className="flex-1 overflow-y-auto scrollbar-hide">
             <SidebarNav activeTab={activeTab} onSelect={handleTabSelect} collapsed={!sidebarOpen} />
