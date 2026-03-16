@@ -129,20 +129,8 @@ const TicketsTab = ({ initialTicketId, onTicketOpened }: { initialTicketId?: str
 
   useEffect(() => { fetchTickets(); }, [fetchTickets]);
 
-  // Auto-select ticket when navigated from SalesTab
-  useEffect(() => {
-    if (initialTicketId && tickets.length > 0) {
-      const found = tickets.find(t => t.id === initialTicketId);
-      if (found) {
-        selectTicket(found);
-        onTicketOpened?.();
-      } else {
-        // Ticket exists but might not be in current filter, search by ID
-        setSearchQuery(initialTicketId.slice(0, 8));
-        onTicketOpened?.();
-      }
-    }
-  }, [initialTicketId, tickets, selectTicket, onTicketOpened]);
+
+
 
   const selectTicket = useCallback(async (ticket: Ticket) => {
     setSelectedTicket(ticket);
