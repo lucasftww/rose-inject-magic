@@ -39,7 +39,7 @@ const Checkout = () => {
   const [checking, setChecking] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<string>("ACTIVE");
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const [enabledMethods, setEnabledMethods] = useState<Record<string, boolean>>({ pix: true, card: true, crypto: true });
+  const [enabledMethods, setEnabledMethods] = useState<Record<string, boolean>>({ pix: true, card: false, crypto: false });
   const hasLztItems = items.some((i) => i.type === "lzt-account");
   const couponId = searchParams.get("coupon_id");
   // Snapshot of cart items for Purchase tracking (survives clearCart)
