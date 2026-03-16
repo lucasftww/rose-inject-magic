@@ -103,7 +103,7 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
         if (json?.rates?.BRL) usdToBrl = json.rates.BRL;
       } catch { /* fallback */ }
 
-      const [statsRes, recentOrdersRes, recentPaymentsRes, todayPayRes, lztRes, allPaymentsRes, robotProductsRes] = await Promise.all([
+      const [statsRes, recentOrdersRes, recentPaymentsRes, todayPayRes, lztRes, allPaymentsRes, robotProductsRes, openTicketsRes] = await Promise.all([
         supabase.rpc("admin_overview_stats"),
         supabase.from("order_tickets").select("*").order("created_at", { ascending: false }).limit(8),
         supabase.from("payments").select("*").eq("status", "COMPLETED").order("paid_at", { ascending: false }).limit(8),
@@ -114,6 +114,7 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
           filters: [{ column: "status", op: "eq", value: "COMPLETED" }],
         }),
         supabase.from("products").select("id, name, robot_game_id, robot_markup_percent").not("robot_game_id", "is", null),
+        supabase.from("order_tickets").select("id", { count: "exact", head: true }).in("status", ["open", "waiting", "waiting_staff"]),
       ]);
 
       if (statsRes.data) {
