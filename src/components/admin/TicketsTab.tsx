@@ -90,16 +90,9 @@ const TicketsTab = ({ initialTicketId, onTicketOpened }: { initialTicketId?: str
         supabase.from("lzt_sales").select("lzt_item_id, sell_price"),
       ]);
 
-      let emailMap: Record<string, string> = {};
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        const { data: usersData } = await supabase.functions.invoke("admin-users", {
-          headers: session ? { Authorization: `Bearer ${session.access_token}` } : {},
-        });
-        if (Array.isArray(usersData)) {
-          usersData.forEach((u: any) => { emailMap[u.id] = u.email; });
-        }
-      } catch {}
+      // Use cached admin-users data
+      const emailMap: Record<string, string> = {};
+      adminEmailMap.forEach((v, k) => { emailMap[k] = v; });
 
       const productMap: Record<string, string> = {};
       const planMap: Record<string, { name: string; price: number }> = {};
