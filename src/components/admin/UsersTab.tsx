@@ -49,6 +49,8 @@ const UsersTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
   const [showBanDialog, setShowBanDialog] = useState<UserData | null>(null);
   const [showOrdersUser, setShowOrdersUser] = useState<UserData | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [userPage, setUserPage] = useState(1);
+  const USERS_PER_PAGE = 50;
 
   useEffect(() => {
     if (!loadingAdminUsers) {
@@ -105,6 +107,12 @@ const UsersTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
     }
     return true;
   });
+
+  const totalUserPages = Math.max(1, Math.ceil(filtered.length / USERS_PER_PAGE));
+  const paginatedUsers = filtered.slice((userPage - 1) * USERS_PER_PAGE, userPage * USERS_PER_PAGE);
+
+  // Reset page when filters change
+  useEffect(() => { setUserPage(1); }, [searchQuery, filterStatus]);
 
   return (
     <div>
@@ -324,7 +332,7 @@ const UsersTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
           <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-20 text-muted-foreground">
             <Users className="h-10 w-10 mb-3 opacity-40" /><p className="font-semibold">Nenhum usuário encontrado</p>
           </div>
-        ) : filtered.map((u) => (
+        ) : paginatedUsers.map((u) => (
           <button key={u.id} onClick={() => setSelectedUser(u)}
             className="flex w-full items-center gap-4 rounded-lg border border-border bg-card p-4 text-left hover:border-success/30">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary border border-border">
@@ -350,6 +358,26 @@ const UsersTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
           </button>
         ))}
       </div>
+
+      {/* Pagination */}
+      {totalUserPages > 1 && (
+        <div className="flex items-center justify-between mt-4">
+          <p className="text-xs text-muted-foreground">
+            Mostrando {((userPage - 1) * USERS_PER_PAGE) + 1}–{Math.min(userPage * USERS_PER_PAGE, filtered.length)} de {filtered.length}
+          </p>
+          <div className="flex gap-1">
+            <button onClick={() => setUserPage(p => Math.max(1, p - 1))} disabled={userPage === 1}
+              className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground disabled:opacity-40">
+              Anterior
+            </button>
+            <span className="flex items-center px-3 text-xs text-muted-foreground">{userPage}/{totalUserPages}</span>
+            <button onClick={() => setUserPage(p => Math.min(totalUserPages, p + 1))} disabled={userPage === totalUserPages}
+              className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground disabled:opacity-40">
+              Próximo
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Orders Modal */}
       {showOrdersUser && (

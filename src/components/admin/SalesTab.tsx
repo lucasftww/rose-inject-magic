@@ -4,7 +4,7 @@ import { fetchAllRows } from "@/lib/supabaseAllRows";
 import { useAdminUsers } from "@/hooks/useAdminUsers";
 import {
   Loader2, Search, ShoppingBag, Package, DollarSign, Users,
-  ChevronLeft, ChevronRight, Eye, Copy, Check
+  ChevronLeft, ChevronRight, Eye, Copy, Check, Clock
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
@@ -211,7 +211,7 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
         {[
           { icon: <ShoppingBag className="h-4 w-4 text-success" />, label: "Total Vendas", value: String(stats.total) },
           { icon: <Package className="h-4 w-4 text-success" />, label: "Entregues", value: String(stats.delivered) },
-          { icon: <Loader2 className="h-4 w-4 text-warning" />, label: "Pendentes", value: String(stats.pending) },
+          { icon: <Clock className="h-4 w-4 text-warning" />, label: "Pendentes", value: String(stats.pending) },
           { icon: <DollarSign className="h-4 w-4 text-success" />, label: "Receita", value: `R$ ${stats.revenue.toFixed(2)}` },
           { icon: <Users className="h-4 w-4 text-success" />, label: "Compradores", value: String(stats.uniqueBuyers) },
         ].map((s, i) => (
