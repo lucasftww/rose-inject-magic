@@ -113,7 +113,7 @@ serve(async (req) => {
 
       const profileMap = new Map(profiles.map((p: any) => [p.user_id, p]));
       const roleMap = new Map<string, string[]>();
-      (roles || []).forEach((r: any) => {
+      roles.forEach((r: any) => {
         const existing = roleMap.get(r.user_id) || [];
         existing.push(r.role);
         roleMap.set(r.user_id, existing);
