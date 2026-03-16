@@ -140,7 +140,7 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
 
   useEffect(() => {
     fetchSales();
-  }, []);
+  }, [adminEmailMap]);
 
   // Stats
   const stats = useMemo(() => {
