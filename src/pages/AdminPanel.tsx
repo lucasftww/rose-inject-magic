@@ -514,7 +514,7 @@ const AdminPanel = () => {
           {activeTab === "estoque" && <StockTab />}
           {activeTab === "robot" && <RobotProjectTab />}
           {activeTab === "revendedores" && <ResellersTab />}
-          {activeTab === "tickets" && <TicketsTab />}
+          {activeTab === "tickets" && <TicketsTab initialTicketId={pendingTicketId} onTicketOpened={() => setPendingTicketId(null)} />}
           {activeTab === "status" && <StatusTab />}
           {activeTab === "cupons" && <CouponsTab />}
           {activeTab === "usuarios" && <UsersTab />}
