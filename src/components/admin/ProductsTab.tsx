@@ -417,7 +417,7 @@ const ProductsTab = () => {
           image_url: formImageUrl.trim() || null, game_id: formGameId, active: formActive,
           sort_order: products.length,
           robot_game_id: robotEnabled && formRobotGameId ? formRobotGameId : null,
-          robot_markup_percent: robotEnabled && formRobotMarkup ? formRobotMarkup : null,
+          robot_markup_percent: robotEnabled && formRobotMarkup != null ? formRobotMarkup : null,
         } as any).select().single();
         if (error) throw error;
 
