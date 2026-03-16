@@ -3,7 +3,7 @@ import { throwApiError } from "@/lib/apiErrors";
 import { translateRegion } from "@/lib/regionTranslation";
 import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/Header";
-import { ArrowLeft, Shield, Loader2, ChevronRight, ChevronLeft, ChevronRight as ChevronRightIcon, CheckCircle2, ShoppingCart, Swords, Users, Star, X, Zap } from "lucide-react";
+import { ArrowLeft, Shield, Loader2, ChevronRight, ChevronLeft, CheckCircle2, ShoppingCart, Swords, Users, Star, X, Zap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useMemo, useCallback, useEffect, useRef, forwardRef } from "react";
 import { useCart } from "@/hooks/useCart";
