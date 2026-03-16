@@ -150,7 +150,7 @@ const GamesTab = () => {
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-foreground">Gerenciar Jogos</h2>
         <button onClick={() => { resetForm(); setShowForm(true); }}
-          className="flex items-center gap-2 rounded-lg bg-success px-5 py-2.5 text-sm font-semibold text-success-foreground transition-all hover:shadow-[0_0_24px_hsl(130,99%,41%,0.45)]">
+          className="flex items-center gap-2 rounded-lg bg-success px-5 py-2.5 text-sm font-semibold text-success-foreground transition-all hover:shadow-[0_0_24px_hsl(var(--success)/0.35)]">
           <Plus className="h-4 w-4" /> Novo Jogo
         </button>
       </div>
