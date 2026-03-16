@@ -1,9 +1,9 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Fragment } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import {
   Loader2, Search, ShoppingBag, Package, DollarSign, Users,
-  ChevronLeft, ChevronRight, Eye, Copy, Check, Filter
+  ChevronLeft, ChevronRight, Eye, Copy, Check
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
@@ -282,9 +282,8 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
                 </tr>
               ) : (
                 paginated.map((sale) => (
-                  <>
+                <Fragment key={sale.id}>
                     <tr
-                      key={sale.id}
                       className="border-b border-border/50 hover:bg-secondary/20 transition-colors cursor-pointer"
                       onClick={() => setExpandedId(expandedId === sale.id ? null : sale.id)}
                     >
@@ -426,7 +425,7 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
                         </td>
                       </tr>
                     )}
-                  </>
+                  </Fragment>
                 ))
               )}
             </tbody>
