@@ -72,17 +72,17 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
     const productIds = [...new Set(rawTickets.map((t) => t.product_id))];
     const planIds = [...new Set(rawTickets.map((t) => t.product_plan_id))];
 
-    const [productsRes, plansRes, profilesRes, lztSalesRes] = await Promise.all([
+    const [productsRes, plansRes, profilesRes, lztSalesData] = await Promise.all([
       supabase.from("products").select("id, name, image_url").in("id", productIds),
       supabase.from("product_plans").select("id, name, price").in("id", planIds),
       supabase.from("profiles").select("user_id, username").in("user_id", [...new Set(rawTickets.map((t) => t.user_id))]),
-      supabase.from("lzt_sales").select("lzt_item_id, sell_price"),
+      fetchAllRows("lzt_sales", { select: "lzt_item_id, sell_price" }),
     ]);
 
     const productsMap = new Map((productsRes.data || []).map((p) => [p.id, p]));
     const plansMap = new Map((plansRes.data || []).map((p) => [p.id, p]));
     const profilesMap = new Map((profilesRes.data || []).map((p) => [p.user_id, p]));
-    const lztSalesMap = new Map((lztSalesRes.data || []).map((s) => [s.lzt_item_id, Number(s.sell_price)]));
+    const lztSalesMap = new Map((lztSalesData || []).map((s: any) => [s.lzt_item_id, Number(s.sell_price)]));
 
     // 3. Load stock content for delivered items
     const stockIds = rawTickets
@@ -91,12 +91,20 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
 
     let stockMap = new Map<string, string>();
     if (stockIds.length > 0) {
-      const { data: stockData } = await supabase
-        .from("stock_items")
-        .select("id, content")
-        .in("id", stockIds);
-      if (stockData) {
-        stockData.forEach((s) => stockMap.set(s.id, s.content));
+      try {
+        const stockData = await fetchAllRows("stock_items", {
+          select: "id, content",
+          filters: stockIds.length <= 100
+            ? [{ column: "id", op: "in", value: stockIds }]
+            : undefined,
+        });
+        // If we couldn't filter by ID (too many), filter client-side
+        const stockSet = new Set(stockIds);
+        (stockData || []).forEach((s: any) => {
+          if (!stockIds.length || stockSet.has(s.id)) stockMap.set(s.id, s.content);
+        });
+      } catch {
+        // fallback: do nothing
       }
     }
 
