@@ -178,8 +178,8 @@ const ProductsTab = () => {
     }
   }, [cachedProducts]);
 
-  const fetchData = async () => {
-    invalidateAdmin();
+  const fetchData = async (shouldInvalidate = false) => {
+    if (shouldInvalidate) invalidateAdmin();
     await Promise.all([refetchGames(), refetchProducts()]);
     setLoading(false);
   };
