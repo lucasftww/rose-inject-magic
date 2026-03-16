@@ -70,6 +70,11 @@ const QUICK_REPLIES = [
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
+// Module-level cache to persist across tab switches
+let _cachedTickets: Ticket[] | null = null;
+let _ticketsCacheTs = 0;
+const TICKETS_CACHE_TTL = 3 * 60 * 1000;
+
 const TicketsTab = ({
   initialTicketId,
   onTicketOpened,
