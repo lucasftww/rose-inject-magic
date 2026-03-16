@@ -25,13 +25,13 @@ const NAV_ITEMS = [
 
 const LOL_BLUE = "hsl(198,100%,45%)";
 
-const Header = () => {
+const Header = ({ hideBanner = false }: { hideBanner?: boolean }) => {
   const [authOpen, setAuthOpen] = useState(false);
   const [authTab, setAuthTab] = useState<"login" | "register">("login");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [bannerVisible, setBannerVisible] = useState(true);
+  const [bannerVisible, setBannerVisible] = useState(!hideBanner);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { user, profile, isAdmin, signOut } = useAuth();
   const { requiresAuth, clearRequiresAuth } = useCart();
@@ -89,9 +89,11 @@ const Header = () => {
     <>
       <AuthModal open={authOpen} onOpenChange={setAuthOpen} defaultTab={authTab} />
 
-      <div className="fixed top-0 left-0 right-0 z-50">
-        <DiscordBanner onVisibilityChange={setBannerVisible} />
-      </div>
+      {!hideBanner && (
+        <div className="fixed top-0 left-0 right-0 z-50">
+          <DiscordBanner onVisibilityChange={setBannerVisible} />
+        </div>
+      )}
 
       <motion.header
         initial={{ y: -100 }}
