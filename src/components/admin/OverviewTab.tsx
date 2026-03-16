@@ -32,6 +32,7 @@ interface Payment {
 const statusColors: Record<string, string> = {
   open: "bg-success/20 text-success",
   delivered: "bg-info/20 text-info",
+  waiting_staff: "bg-warning/20 text-warning",
   resolved: "bg-positive/20 text-positive",
   closed: "bg-muted text-muted-foreground",
   banned: "bg-destructive/20 text-destructive",
@@ -40,6 +41,7 @@ const statusColors: Record<string, string> = {
 const statusLabels: Record<string, string> = {
   open: "Aberto",
   delivered: "Entregue",
+  waiting_staff: "Aguardando",
   resolved: "Resolvido",
   closed: "Encerrado",
   banned: "Banido",
