@@ -41,7 +41,7 @@ const ScratchCardTab = () => {
   const fetchData = async () => {
     const [{ data: prizesData }, { data: configData }, statsRes] = await Promise.all([
       supabase.from("scratch_card_prizes").select("*").order("sort_order"),
-      supabase.from("scratch_card_config").select("*").limit(1).single(),
+      supabase.from("scratch_card_config").select("*").limit(1).maybeSingle(),
       // Use DB aggregation function for accurate stats (no 1000-row limit)
       supabase.rpc("admin_scratch_stats"),
     ]);
