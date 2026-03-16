@@ -971,14 +971,14 @@ async function fulfillRobotProduct(supabaseAdmin: any, payment: any, item: any, 
     const buyRes = await fetch(`https://api.robotproject.com.br/buy/${encodeURIComponent(robotGameId)}`, {
       method: "POST",
       headers: {
-        Authorization: `Basic ${auth}`,
+        Authorization: robotAuthHeader(creds),
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ duration: Number(duration) }),
     });
 
     const buyData = await buyRes.json();
-    log("INFO", "fulfillRobot", "Robot buy response", { status: buyRes.status, body: JSON.stringify(buyData).substring(0, 500), expectedPrice, duration });
+    log("INFO", "fulfillRobot", "Robot buy response", { status: buyRes.status, body: JSON.stringify(buyData).substring(0, 500), expectedPrice: robotSnapshot.expectedPrice, duration });
 
     if (!buyRes.ok || !buyData.success) {
       const reason = buyData.message || `HTTP ${buyRes.status}`;
