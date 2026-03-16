@@ -624,7 +624,7 @@ const ContaDetalhes = () => {
 
                     {/* Seta no meio */}
                     <div className="flex items-center text-success">
-                      <ChevronRightIcon className="h-6 w-6" />
+                      <ChevronRight className="h-6 w-6" />
                     </div>
 
                     {/* Rank atual (direita) */}
