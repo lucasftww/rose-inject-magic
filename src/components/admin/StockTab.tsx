@@ -286,7 +286,7 @@ const StockTab = () => {
                                   <button
                                     onClick={() => handleAddStock(plan.id)}
                                     disabled={addingStock || !newStockText.trim()}
-                                    className="flex items-center gap-2 rounded-lg bg-success px-4 py-2 text-xs font-semibold text-success-foreground hover:shadow-[0_0_24px_hsl(var(--success)/0.35)] disabled:opacity-50"
+                                    className="flex items-center gap-2 rounded-lg bg-success px-4 py-2 text-xs font-semibold text-success-foreground disabled:opacity-50"
                                   >
                                     {addingStock ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
                                     Adicionar
