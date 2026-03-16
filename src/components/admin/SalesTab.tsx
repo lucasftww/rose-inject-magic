@@ -37,7 +37,7 @@ const statusColors: Record<string, string> = {
 };
 
 const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void }) => {
-  const { session } = useAuth();
+  const { emailMap: adminEmailMap } = useAdminUsers();
   const [loading, setLoading] = useState(true);
   const [tickets, setTickets] = useState<SaleTicket[]>([]);
   const [search, setSearch] = useState("");
