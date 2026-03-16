@@ -500,7 +500,7 @@ const LztTab = () => {
               <span className="text-xs text-muted-foreground">Página {salesPage + 1} de {totalPages} · {filteredSales.length} vendas</span>
               <div className="flex items-center gap-1">
                 <button onClick={() => setSalesPage(p => Math.max(0, p - 1))} disabled={salesPage === 0}
-                  className="rounded-lg border border-border p-1.5 text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors">
+                  className="rounded-lg border border-border p-1.5 text-muted-foreground hover:text-foreground disabled:opacity-30">
                   <ChevronLeft className="h-4 w-4" />
                 </button>
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
