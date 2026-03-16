@@ -174,6 +174,28 @@ const ProductsTab = () => {
 
   useEffect(() => { fetchData(); }, []);
 
+  // Auto-fill plan prices when Robot games data loads (on edit)
+  useEffect(() => {
+    if (!robotEnabled || !formRobotGameId || formRobotMarkup === null || robotGames.length === 0) return;
+    // Only auto-fill when editing an existing product (not creating new)
+    if (!editing) return;
+    const rg = robotGames.find(g => Number(g.id) === Number(formRobotGameId));
+    if (!rg?.prices) return;
+
+    setFormPlans(prev => {
+      let changed = false;
+      const updated = prev.map(p => {
+        if (!p.robot_duration_days) return p;
+        const robotPriceUsd = rg.prices[String(p.robot_duration_days)];
+        if (robotPriceUsd === undefined) return p;
+        const calc = Number((Number(robotPriceUsd) * robotUsdToBrl * (1 + (formRobotMarkup || 0) / 100)).toFixed(2));
+        if (p.price !== calc) changed = true;
+        return { ...p, price: calc };
+      });
+      return changed ? updated : prev;
+    });
+  }, [robotGames, robotUsdToBrl, robotEnabled, formRobotGameId, formRobotMarkup, editing]);
+
   const resetForm = () => {
     setFormName(""); setFormDescription(""); setFormFeaturesText(""); setFormImageUrl(""); setFormGameId("");
     setFormActive(true); setFormPlans([...defaultPlans]); setEditing(null);
