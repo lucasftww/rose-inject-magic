@@ -1,5 +1,4 @@
 import { useState, lazy, Suspense, useCallback, memo, useTransition } from "react";
-import Header from "@/components/Header";
 import {
   ShieldAlert, Gamepad2, Mail, Package, Tag, UserCheck, TrendingUp,
   Key, CreditCard, BarChart3, ShoppingBag, Globe, Shield, Users,
