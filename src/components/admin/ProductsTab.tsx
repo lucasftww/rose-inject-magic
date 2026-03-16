@@ -972,7 +972,7 @@ const ProductsTab = () => {
             onDragEnter={() => handleDragEnter(index)}
             onDragOver={(e) => e.preventDefault()}
             onDragEnd={handleDragEnd}
-            className={`rounded-lg border bg-card overflow-hidden transition-all cursor-grab active:cursor-grabbing ${
+            className={`rounded-lg border bg-card overflow-hidden cursor-grab active:cursor-grabbing ${
               dragOverIndex === index ? "border-success bg-success/5" : "border-border hover:border-success/30"
             } ${dragIndex === index ? "opacity-50" : ""}`}>
             <div className="flex items-center gap-4 p-4">
