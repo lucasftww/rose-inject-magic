@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAdminProductsStatus } from "@/hooks/useAdminData";
+import { useAdminProductsStatus, useInvalidateAdminCache } from "@/hooks/useAdminData";
 import { Loader2, ShieldCheck, ShieldAlert, RefreshCw, Clock, Save } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
