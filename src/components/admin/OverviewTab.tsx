@@ -203,7 +203,7 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
               <div
                 key={order.id}
                 onClick={() => onGoToTicket?.(order.id)}
-                className="flex cursor-pointer items-center gap-3 px-5 py-3.5 transition-colors hover:bg-secondary/30"
+                className="flex cursor-pointer items-center gap-3 px-5 py-3.5 hover:bg-secondary/30"
               >
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary shrink-0">
                   <Package className="h-3.5 w-3.5 text-muted-foreground" />
