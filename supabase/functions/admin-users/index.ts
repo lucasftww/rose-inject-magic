@@ -160,7 +160,7 @@ serve(async (req) => {
         userOrdersMap.set(t.user_id, existing);
       });
 
-      const result = (users || []).map((u: any) => {
+      const result = users.map((u: any) => {
         const profile = profileMap.get(u.id);
         return {
           id: u.id,
