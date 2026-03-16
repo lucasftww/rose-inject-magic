@@ -111,12 +111,12 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
         const productIds = [...new Set((recentOrdersRes.data as any[]).map((t: any) => t.product_id))];
         const planIds = [...new Set((recentOrdersRes.data as any[]).map((t: any) => t.product_plan_id))];
         const [prodsRes, plansRes] = await Promise.all([
-          productIds.length > 0 ? supabase.from("products").select("id, name").in("id", productIds) : { data: [] },
+          productIds.length > 0 ? supabase.from("products").select("id, name, image_url").in("id", productIds) : { data: [] },
           planIds.length > 0 ? supabase.from("product_plans").select("id, name").in("id", planIds) : { data: [] },
         ]);
-        const prodMap: Record<string, string> = {};
+        const prodMap: Record<string, { name: string; image_url: string | null }> = {};
         const planMap: Record<string, string> = {};
-        prodsRes.data?.forEach((p: any) => { prodMap[p.id] = p.name; });
+        prodsRes.data?.forEach((p: any) => { prodMap[p.id] = { name: p.name, image_url: p.image_url }; });
         plansRes.data?.forEach((p: any) => { planMap[p.id] = p.name; });
 
         setRecentOrders((recentOrdersRes.data as any[]).map((t: any) => {
