@@ -17,7 +17,7 @@ interface LztSaleRow {
   created_at: string;
 }
 
-const COLORS = ["hsl(130,99%,41%)", "hsl(220,80%,55%)", "hsl(45,100%,55%)", "hsl(0,80%,55%)"];
+const COLORS = ["hsl(197,100%,50%)", "hsl(220,80%,55%)", "hsl(45,100%,55%)", "hsl(0,80%,55%)"];
 
 const FinanceTab = () => {
   const [loading, setLoading] = useState(true);
