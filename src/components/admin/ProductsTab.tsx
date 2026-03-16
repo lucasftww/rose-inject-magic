@@ -477,8 +477,13 @@ const ProductsTab = () => {
     const [moved] = reordered.splice(dragIndex, 1);
     reordered.splice(dragOverIndex, 0, moved);
     setDragIndex(null); setDragOverIndex(null);
-    // Save new order
-    const updates = reordered.map((p, i) => supabase.from("products").update({ sort_order: i }).eq("id", p.id));
+    // When a game filter is active, preserve other products' sort_order
+    // by only updating the filtered subset with offsets based on their current positions
+    const filteredIds = new Set(reordered.map(p => p.id));
+    const otherProducts = products.filter(p => !filteredIds.has(p.id));
+    // Merge: filtered products get new sequential order, others keep theirs
+    const allReordered = [...reordered, ...otherProducts];
+    const updates = allReordered.map((p, i) => supabase.from("products").update({ sort_order: i }).eq("id", p.id));
     await Promise.all(updates);
     toast({ title: "Ordem atualizada!" });
     fetchData();
