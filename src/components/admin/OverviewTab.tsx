@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchAllRows } from "@/lib/supabaseAllRows";
 import { useAdminUsers } from "@/hooks/useAdminUsers";
@@ -73,6 +73,7 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
   const { users: adminUsers, usernameMap } = useAdminUsers();
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [openTickets, setOpenTickets] = useState(0);
   const [totalOrders, setTotalOrders] = useState(0);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [totalPaidPayments, setTotalPaidPayments] = useState(0);
@@ -102,7 +103,7 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
         if (json?.rates?.BRL) usdToBrl = json.rates.BRL;
       } catch { /* fallback */ }
 
-      const [statsRes, recentOrdersRes, recentPaymentsRes, todayPayRes, lztRes, allPaymentsRes, robotProductsRes] = await Promise.all([
+      const [statsRes, recentOrdersRes, recentPaymentsRes, todayPayRes, lztRes, allPaymentsRes, robotProductsRes, openTicketsRes] = await Promise.all([
         supabase.rpc("admin_overview_stats"),
         supabase.from("order_tickets").select("*").order("created_at", { ascending: false }).limit(8),
         supabase.from("payments").select("*").eq("status", "COMPLETED").order("paid_at", { ascending: false }).limit(8),
@@ -113,6 +114,7 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
           filters: [{ column: "status", op: "eq", value: "COMPLETED" }],
         }),
         supabase.from("products").select("id, name, robot_game_id, robot_markup_percent").not("robot_game_id", "is", null),
+        supabase.from("order_tickets").select("id", { count: "exact", head: true }).in("status", ["open", "waiting", "waiting_staff"]),
       ]);
 
       if (statsRes.data) {
@@ -126,7 +128,9 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
         }
       }
 
-      // Discounts
+      // Open tickets count (real count, not just from recent 8)
+      setOpenTickets(openTicketsRes.count ?? 0);
+
       const discTotal = (allPaymentsRes || []).reduce((s: number, p: any) => s + (Number(p.discount_amount) || 0), 0);
       setTotalDiscounts(discTotal);
 
@@ -239,9 +243,6 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
     })));
   }, [usernameMap]);
 
-  const openTickets = useMemo(() =>
-    recentOrders.filter(o => o.status === "open" || o.status === "waiting" || o.status === "waiting_staff").length
-  , [recentOrders]);
 
   // Computed profits
   const revenueTotal = totalRevenue / 100;
