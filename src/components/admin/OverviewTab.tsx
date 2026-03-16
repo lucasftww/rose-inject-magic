@@ -128,7 +128,9 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
         }
       }
 
-      // Discounts
+      // Open tickets count (real count, not just from recent 8)
+      setOpenTickets(openTicketsRes.count ?? 0);
+
       const discTotal = (allPaymentsRes || []).reduce((s: number, p: any) => s + (Number(p.discount_amount) || 0), 0);
       setTotalDiscounts(discTotal);
 
