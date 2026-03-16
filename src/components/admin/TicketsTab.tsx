@@ -757,7 +757,7 @@ const TicketsTab = ({
         </div>
         <button
           onClick={() => { setShowArchived(!showArchived); setSelectedTicket(null); }}
-          className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-all ${
+          className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold ${
             showArchived
               ? "border-success/25 bg-success/10 text-success"
               : "border-border bg-card text-muted-foreground hover:text-foreground"
