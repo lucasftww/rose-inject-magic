@@ -35,8 +35,10 @@ interface Message {
 }
 
 const statusOptions = [
-  { value: "open", label: "Aberto", color: "bg-success/20 text-success border-success/30" },
-  { value: "delivered", label: "Entregue", color: "bg-info/20 text-info border-info/30" },
+  { value: "open", label: "Aberto", color: "bg-warning/20 text-warning border-warning/30" },
+  { value: "delivered", label: "Entregue", color: "bg-success/20 text-success border-success/30" },
+  { value: "waiting", label: "Aguardando", color: "bg-info/20 text-info border-info/30" },
+  { value: "waiting_staff", label: "Aguardando Equipe", color: "bg-info/20 text-info border-info/30" },
   { value: "resolved", label: "Resolvido", color: "bg-positive/20 text-positive border-positive/30" },
   { value: "closed", label: "Encerrado", color: "bg-muted text-muted-foreground border-border" },
   { value: "banned", label: "Banido", color: "bg-destructive/20 text-destructive border-destructive/30" },

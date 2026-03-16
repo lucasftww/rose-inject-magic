@@ -44,11 +44,13 @@ const statusColors: Record<string, string> = {
 const statusLabels: Record<string, string> = {
   open: "Aberto",
   delivered: "Entregue",
-  waiting_staff: "Aguardando",
+  waiting: "Aguardando",
+  waiting_staff: "Aguardando Equipe",
   resolved: "Resolvido",
   closed: "Encerrado",
   banned: "Banido",
   finished: "Finalizado",
+  archived: "Arquivado",
 };
 
 const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void }) => {

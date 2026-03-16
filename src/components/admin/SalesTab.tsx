@@ -32,8 +32,13 @@ const ITEMS_PER_PAGE = 15;
 const statusColors: Record<string, string> = {
   delivered: "bg-success/15 text-success border-success/30",
   open: "bg-warning/15 text-warning border-warning/30",
+  waiting: "bg-info/15 text-info border-info/30",
   waiting_staff: "bg-info/15 text-info border-info/30",
+  resolved: "bg-positive/15 text-positive border-positive/30",
   closed: "bg-muted text-muted-foreground border-border",
+  banned: "bg-destructive/15 text-destructive border-destructive/30",
+  finished: "bg-muted text-muted-foreground border-border",
+  archived: "bg-muted text-muted-foreground border-border",
 };
 
 const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void }) => {
