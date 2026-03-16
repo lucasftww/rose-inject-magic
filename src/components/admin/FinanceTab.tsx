@@ -190,26 +190,23 @@ const FinanceTab = () => {
       const productIds = robotProducts.map(p => p.id);
       const productMap = Object.fromEntries(robotProducts.map(p => [p.id, p]));
 
-      const [ticketsRes, plansRes, robotPaymentsRes] = await Promise.all([
+      const [ticketsRes, plansRes] = await Promise.all([
         fetchAllRows("order_tickets", {
           select: "id, created_at, product_id, product_plan_id, user_id, metadata, status",
           filters: [{ column: "status", op: "eq", value: "delivered" }],
           order: { column: "created_at", ascending: false },
         }),
         supabase.from("product_plans").select("id, name, price, robot_duration_days").in("product_id", productIds),
-        fetchAllRows("payments", {
-          select: "user_id, amount, cart_snapshot, status",
-          filters: [{ column: "status", op: "eq", value: "COMPLETED" }],
-          order: { column: "created_at", ascending: false },
-        }),
       ]);
+      // Reuse paymentsData already fetched above instead of fetching again
+      const robotPaymentsRes = paymentsData;
 
       const robotTicketsRaw = (ticketsRes || []).filter((t: any) => productIds.includes(t.product_id));
       const planMap = Object.fromEntries((plansRes.data || []).map((p: any) => [p.id, p]));
 
       // Build paid price map from cart_snapshot
       const paidPriceMap = new Map<string, number>();
-      for (const pay of (robotPaymentsRes || [])) {
+      for (const pay of robotPaymentsRes) {
         const snapshot = pay.cart_snapshot as any[];
         if (!Array.isArray(snapshot)) continue;
         for (const item of snapshot) {
