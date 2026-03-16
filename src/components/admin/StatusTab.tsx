@@ -147,7 +147,7 @@ const StatusTab = () => {
                   return (
                     <div
                       key={product.id}
-                      className={`flex flex-wrap items-center gap-3 rounded-xl border p-4 transition-all ${
+                      className={`flex flex-wrap items-center gap-3 rounded-xl border p-4 ${
                         hasChange ? "border-success/50 bg-success/5" : "border-border bg-card"
                       }`}
                     >
