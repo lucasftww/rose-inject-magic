@@ -2029,6 +2029,116 @@ Deno.serve(async (req) => {
       );
     }
 
+    // ==================== RETRY ROBOT FULFILLMENT (admin-only) ====================
+    if (action === "retry-robot" && req.method === "POST") {
+      const { data: adminRole } = await supabaseAdmin
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .eq("role", "admin")
+        .maybeSingle();
+
+      if (!adminRole) {
+        return new Response(JSON.stringify({ error: "Forbidden: admin only" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const body = await req.json();
+      const { ticket_id } = body;
+
+      if (!ticket_id) {
+        return new Response(JSON.stringify({ error: "ticket_id required" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { data: ticket } = await supabaseAdmin
+        .from("order_tickets")
+        .select("id, user_id, product_id, product_plan_id, status, metadata")
+        .eq("id", ticket_id)
+        .single();
+
+      if (!ticket) {
+        return new Response(JSON.stringify({ error: "Ticket não encontrado" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const meta = (ticket.metadata || {}) as Record<string, any>;
+      if (meta.type !== "robot-project") {
+        return new Response(JSON.stringify({ error: "Este ticket não é do Robot Project" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (ticket.status === "delivered") {
+        return new Response(JSON.stringify({ success: true, message: "Este ticket já foi entregue" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { data: payment } = await supabaseAdmin
+        .from("payments")
+        .select("*")
+        .eq("user_id", ticket.user_id)
+        .eq("status", "COMPLETED")
+        .contains("cart_snapshot", [{ productId: ticket.product_id, planId: ticket.product_plan_id }])
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!payment) {
+        return new Response(JSON.stringify({ error: "Pagamento concluído não encontrado para este ticket" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const [productDataRes, planDataRes] = await Promise.all([
+        supabaseAdmin.from("products").select("name, robot_game_id, robot_markup_percent").eq("id", ticket.product_id).single(),
+        supabaseAdmin.from("product_plans").select("name, price, robot_duration_days").eq("id", ticket.product_plan_id).single(),
+      ]);
+
+      const productData = productDataRes.data;
+      const planData = planDataRes.data;
+
+      if (!productData?.robot_game_id || !planData) {
+        return new Response(JSON.stringify({ error: "Configuração Robot inválida para este ticket" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      await supabaseAdmin
+        .from("ticket_messages")
+        .insert({
+          ticket_id: ticket.id,
+          sender_id: userId,
+          sender_role: "staff",
+          message: "🔄 Reprocessando entrega automática da sua key. Aguarde alguns instantes...",
+        });
+
+      const item = {
+        productId: ticket.product_id,
+        planId: ticket.product_plan_id,
+        productName: productData.name,
+        planName: planData.name,
+        price: Number(planData.price || 0),
+        quantity: 1,
+      };
+
+      await fulfillRobotProduct(supabaseAdmin, payment, item, productData, planData);
+
+      return new Response(JSON.stringify({ success: true, message: "Reprocessamento da entrega Robot executado" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // ==================== CARD / CRYPTO — NOT SUPPORTED ====================
     if (action === "create-card" || action === "card-status" || action === "create-crypto" || action === "crypto-status") {
       return new Response(JSON.stringify({ error: "Método de pagamento não disponível com a gateway atual (MisticPay). Apenas PIX é suportado." }), {
