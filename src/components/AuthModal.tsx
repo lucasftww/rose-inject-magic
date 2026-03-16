@@ -46,9 +46,6 @@ const AuthModal = ({ open, onOpenChange, defaultTab = "login" }: AuthModalProps)
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl w-[95vw] max-h-[95vh] sm:max-h-[90vh] p-0 border-border overflow-hidden gap-0 rounded-2xl [&>button:last-child]:hidden">
-        <DialogTitle className="sr-only">Autenticação</DialogTitle>
-        <DialogDescription className="sr-only">Faça login ou crie sua conta</DialogDescription>
-        <DiscordBanner dismissible={false} />
         {/* Close button */}
         <button
           onClick={() => onOpenChange(false)}
