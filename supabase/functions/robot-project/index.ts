@@ -185,7 +185,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // GET BALANCE - Admin only (buy a free game to check balance without spending)
+    // GET BALANCE - Admin only
     if (action === "balance") {
       const admin = await requireAdmin();
       if (!admin) {
@@ -201,33 +201,55 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Fetch games to find a free one, or just use /games response which may include balance info
-      const response = await fetch(`${ROBOT_API_URL}/games`, {
-        headers: {
-          Authorization: robotAuthHeader(creds),
-          "Content-Type": "application/json",
-        },
-      });
+      const authHdr = robotAuthHeader(creds);
 
-      if (!response.ok) {
-        return new Response(JSON.stringify({ error: "Failed to fetch balance info" }), {
-          status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+      // Try multiple endpoints to find balance
+      const endpoints = ["/balance", "/account", "/user", "/me", "/wallet", "/games"];
+      const results: Record<string, any> = {};
+      let foundBalance: number | null = null;
+
+      for (const ep of endpoints) {
+        try {
+          const response = await fetch(`${ROBOT_API_URL}${ep}`, {
+            headers: { Authorization: authHdr, "Content-Type": "application/json" },
+          });
+          const body = await response.text();
+          log("INFO", "balance-probe", `${ep} → ${response.status}`, { body: body.substring(0, 800) });
+
+          if (response.ok) {
+            try {
+              const parsed = JSON.parse(body);
+              results[ep] = { status: response.status, data: parsed };
+
+              // Search for balance in common field names
+              const bal = parsed.balance ?? parsed.credit ?? parsed.credits ??
+                parsed.wallet ?? parsed.funds ?? parsed.amount ??
+                parsed.data?.balance ?? parsed.data?.credit ?? parsed.data?.credits ??
+                parsed.user?.balance ?? parsed.user?.credit ?? parsed.account?.balance;
+              if (bal !== undefined && bal !== null && !isNaN(Number(bal))) {
+                foundBalance = Number(bal);
+                log("INFO", "balance-probe", `Found balance in ${ep}`, { balance: foundBalance });
+                break; // stop probing once we have it
+              }
+            } catch { results[ep] = { status: response.status, raw: body.substring(0, 500) }; }
+          } else {
+            results[ep] = { status: response.status, error: body.substring(0, 300) };
+          }
+        } catch (err: any) {
+          results[ep] = { error: err.message };
+        }
       }
 
-      const data = await response.json();
-      // The /games endpoint may return balance info - pass it through
-      // Also return total games count for context
-      const games = Array.isArray(data) ? data : data.games || [];
-      const freeGames = games.filter((g: any) => g.is_free);
-      const onlineGames = games.filter((g: any) => g.status === "on");
+      // Also extract games stats from /games if we already fetched it
+      const gamesData = results["/games"]?.data;
+      const games = gamesData ? (Array.isArray(gamesData) ? gamesData : gamesData.games || []) : [];
 
       return new Response(JSON.stringify({
-        balance: data.balance ?? null,
+        balance: foundBalance,
         totalGames: games.length,
-        freeGames: freeGames.length,
-        onlineGames: onlineGames.length,
-        raw: data,
+        freeGames: Array.isArray(games) ? games.filter((g: any) => g.is_free).length : 0,
+        onlineGames: Array.isArray(games) ? games.filter((g: any) => g.status === "on").length : 0,
+        probeResults: results,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
