@@ -959,7 +959,7 @@ const TicketsTab = ({
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-[10px] text-muted-foreground font-medium">Chave / Credenciais</span>
                         <div className="flex items-center gap-0.5">
-                          <button onClick={() => setShowStockKey(!showStockKey)} className="rounded p-1 text-muted-foreground hover:text-foreground transition-colors">
+                          <button onClick={() => setShowStockKey(!showStockKey)} className="rounded p-1 text-muted-foreground hover:text-foreground">
                             {showStockKey ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                           </button>
                           <button
