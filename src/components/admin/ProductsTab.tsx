@@ -811,7 +811,7 @@ const ProductsTab = () => {
               {/* Upload button */}
               <button type="button" onClick={() => mediaFileInputRef.current?.click()}
                 disabled={uploadingMedia}
-                className="flex items-center gap-2 rounded-lg border border-dashed border-border px-4 py-2.5 text-xs font-medium text-muted-foreground hover:border-success/40 hover:text-foreground transition-colors">
+                className="flex items-center gap-2 rounded-lg border border-dashed border-border px-4 py-2.5 text-xs font-medium text-muted-foreground hover:border-success/40 hover:text-foreground">
                 {uploadingMedia ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
                 {uploadingMedia ? "Enviando..." : "Upload de arquivo"}
               </button>
