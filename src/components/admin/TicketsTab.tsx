@@ -159,7 +159,20 @@ const TicketsTab = ({ initialTicketId, onTicketOpened }: { initialTicketId?: str
     }
   }, []);
 
-  // Realtime subscription + polling fallback for reliable message sync
+  // Auto-select ticket when navigated from SalesTab
+  useEffect(() => {
+    if (initialTicketId && tickets.length > 0) {
+      const found = tickets.find(t => t.id === initialTicketId);
+      if (found) {
+        selectTicket(found);
+        onTicketOpened?.();
+      } else {
+        setSearchQuery(initialTicketId.slice(0, 8));
+        onTicketOpened?.();
+      }
+    }
+  }, [initialTicketId, tickets, selectTicket, onTicketOpened]);
+
   useEffect(() => {
     if (!selectedTicket) return;
     let cancelled = false;
