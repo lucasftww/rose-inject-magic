@@ -55,14 +55,14 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
   const fetchSales = async () => {
     setLoading(true);
 
-    // 1. Fetch all tickets (sales)
-    const { data: rawTickets, error } = await supabase
-      .from("order_tickets")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(1000);
-
-    if (error || !rawTickets) {
+    // 1. Fetch ALL tickets using paginated helper (no 1000-row limit)
+    let rawTickets: any[];
+    try {
+      rawTickets = await fetchAllRows("order_tickets", {
+        select: "*",
+        order: { column: "created_at", ascending: false },
+      });
+    } catch {
       setLoading(false);
       return;
     }
@@ -72,13 +72,22 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
     const planIds = [...new Set(rawTickets.map((t) => t.product_plan_id))];
     const userIds = [...new Set(rawTickets.map((t) => t.user_id))];
 
-    const [productsRes, plansRes, profilesRes, lztSalesRes, paymentsRes] = await Promise.all([
+    const [productsRes, plansRes, profilesRes, lztSalesRes] = await Promise.all([
       supabase.from("products").select("id, name, image_url").in("id", productIds),
       supabase.from("product_plans").select("id, name, price").in("id", planIds),
       supabase.from("profiles").select("user_id, username").in("user_id", userIds),
       supabase.from("lzt_sales").select("lzt_item_id, sell_price"),
-      supabase.from("payments").select("user_id, amount, cart_snapshot, status, created_at").in("user_id", userIds).in("status", ["COMPLETED", "ACTIVE"]).order("created_at", { ascending: false }).limit(5000),
     ]);
+
+    // Fetch ALL payments for price mapping (paginated)
+    const allPayments = await fetchAllRows("payments", {
+      select: "user_id, amount, cart_snapshot, status, created_at",
+      filters: [
+        { column: "user_id", op: "in", value: userIds },
+        { column: "status", op: "in", value: ["COMPLETED", "ACTIVE"] },
+      ],
+      order: { column: "created_at", ascending: false },
+    });
 
     const productsMap = new Map((productsRes.data || []).map((p) => [p.id, p]));
     const plansMap = new Map((plansRes.data || []).map((p) => [p.id, p]));
