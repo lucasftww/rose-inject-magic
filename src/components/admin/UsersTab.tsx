@@ -130,7 +130,7 @@ const UsersTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
           { value: "normal", label: "Normal" },
         ].map((f) => (
           <button key={f.value} onClick={() => setFilterStatus(f.value)}
-            className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${filterStatus === f.value ? "bg-success/20 text-success border border-success/30" : "bg-secondary/50 text-muted-foreground border border-border hover:text-foreground"}`}>
+            className={`rounded-lg px-3 py-1.5 text-xs font-medium ${filterStatus === f.value ? "bg-success/20 text-success border border-success/30" : "bg-secondary/50 text-muted-foreground border border-border hover:text-foreground"}`}>
             {f.label}
           </button>
         ))}
