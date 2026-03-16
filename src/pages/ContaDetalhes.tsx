@@ -3,7 +3,7 @@ import { throwApiError } from "@/lib/apiErrors";
 import { translateRegion } from "@/lib/regionTranslation";
 import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/Header";
-import { ArrowLeft, Shield, Loader2, ChevronRight, ChevronLeft, ChevronRight as ChevronRightIcon, CheckCircle2, ShoppingCart, Swords, Users, Star, X, Zap } from "lucide-react";
+import { ArrowLeft, Shield, Loader2, ChevronRight, ChevronLeft, CheckCircle2, ShoppingCart, Swords, Users, Star, X, Zap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useMemo, useCallback, useEffect, useRef, forwardRef } from "react";
 import { useCart } from "@/hooks/useCart";
@@ -12,8 +12,7 @@ import { useLztMarkup } from "@/hooks/useLztMarkup";
 import { trackViewContent, trackInitiateCheckout } from "@/lib/metaPixel";
 import { checkLztAvailability } from "@/lib/lztAvailability";
 
-import { rankMap, rarityMap, fetchAllValorantSkins, rankUnranked, type SkinEntry } from "@/lib/valorantData";
-import { RARITY_PRIORITY } from "@/lib/valorantData";
+import { rankMap, rarityMap, fetchAllValorantSkins, rankUnranked, RARITY_PRIORITY, type SkinEntry } from "@/lib/valorantData";
 
 const fetchAccountDetail = async (itemId: string) => {
   const projectUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -593,7 +592,7 @@ const ContaDetalhes = () => {
                           <ChevronLeft className="h-5 w-5" />
                         </button>
                         <button onClick={handleNext} className="absolute right-3 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-background/80 border border-border text-muted-foreground opacity-0 group-hover:opacity-100 transition-all hover:text-success hover:border-success/40">
-                          <ChevronRightIcon className="h-5 w-5" />
+                          <ChevronRight className="h-5 w-5" />
                         </button>
                       </>
                 }
@@ -625,7 +624,7 @@ const ContaDetalhes = () => {
 
                     {/* Seta no meio */}
                     <div className="flex items-center text-success">
-                      <ChevronRightIcon className="h-6 w-6" />
+                      <ChevronRight className="h-6 w-6" />
                     </div>
 
                     {/* Rank atual (direita) */}
