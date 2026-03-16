@@ -47,7 +47,7 @@ const statusLabels: Record<string, string> = {
   finished: "Finalizado",
 };
 
-const OverviewTab = () => {
+const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void }) => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [totalOrders, setTotalOrders] = useState(0);
@@ -173,7 +173,7 @@ const OverviewTab = () => {
             ) : recentOrders.map((order) => (
               <div
                 key={order.id}
-                onClick={() => navigate(`/pedido/${order.id}`)}
+                onClick={() => onGoToTicket?.(order.id)}
                 className="flex cursor-pointer items-center gap-3 rounded-lg border border-border bg-secondary/30 p-3 transition-colors hover:border-success/30"
               >
                 <div className="flex-1 min-w-0">

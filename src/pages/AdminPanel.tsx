@@ -508,7 +508,7 @@ const AdminPanel = () => {
         </div>
 
         <div className="mt-8">
-          {activeTab === "overview" && <OverviewTab />}
+          {activeTab === "overview" && <OverviewTab onGoToTicket={handleGoToTicket} />}
           {activeTab === "jogos" && <GamesTab />}
           {activeTab === "produtos" && <ProductsTab />}
           {activeTab === "estoque" && <StockTab />}
