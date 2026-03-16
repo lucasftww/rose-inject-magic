@@ -134,6 +134,7 @@ SidebarNav.displayName = "SidebarNav";
 
 const AdminPanel = () => {
   const [activeTab, setActiveTab] = useState<TabId>("overview");
+  const [visitedTabs, setVisitedTabs] = useState<Set<TabId>>(new Set(["overview"]));
   const [pendingTicketId, setPendingTicketId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
