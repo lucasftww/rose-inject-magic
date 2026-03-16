@@ -1,5 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useCallback } from "react";
 
 /**
  * Shared admin data hooks using React Query.
@@ -78,4 +79,12 @@ export function useAdminProductsStatus() {
     },
     staleTime: ADMIN_STALE_TIME,
   });
+}
+
+// ─── Invalidation helper — call after any product/game mutation ───
+export function useInvalidateAdminCache() {
+  const queryClient = useQueryClient();
+  return useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["admin"] });
+  }, [queryClient]);
 }

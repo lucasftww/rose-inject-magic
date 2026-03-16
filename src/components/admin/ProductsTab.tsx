@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useAdminGames, useAdminProductsWithPlans } from "@/hooks/useAdminData";
+import { useAdminGames, useAdminProductsWithPlans, useInvalidateAdminCache } from "@/hooks/useAdminData";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Plus, Pencil, Trash2, Loader2, ImageIcon, Upload, Link, X,
@@ -165,6 +165,7 @@ const ProductsTab = () => {
 
   const { data: cachedGames, refetch: refetchGames } = useAdminGames();
   const { data: cachedProducts, refetch: refetchProducts } = useAdminProductsWithPlans();
+  const invalidateAdmin = useInvalidateAdminCache();
 
   useEffect(() => {
     if (cachedGames) setGames(cachedGames);
@@ -178,6 +179,7 @@ const ProductsTab = () => {
   }, [cachedProducts]);
 
   const fetchData = async () => {
+    invalidateAdmin();
     await Promise.all([refetchGames(), refetchProducts()]);
     setLoading(false);
   };

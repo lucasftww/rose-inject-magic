@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useInvalidateAdminCache } from "@/hooks/useAdminData";
 import {
   Plus, Pencil, Trash2, GripVertical, ImageIcon, Loader2,
   Upload, Link, Sparkles, X,
@@ -31,10 +32,13 @@ const GamesTab = () => {
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const invalidateAdmin = useInvalidateAdminCache();
+
   const fetchGames = async () => {
     const { data, error } = await supabase.from("games").select("*").order("sort_order", { ascending: true });
     if (!error && data) setGames(data as Game[]);
     setLoadingGames(false);
+    invalidateAdmin();
   };
 
   useEffect(() => { fetchGames(); }, []);
