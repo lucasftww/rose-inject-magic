@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useAdminProductsList } from "@/hooks/useAdminData";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminUsers } from "@/hooks/useAdminUsers";
 import { toast } from "@/hooks/use-toast";
