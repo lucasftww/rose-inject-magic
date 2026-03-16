@@ -108,7 +108,9 @@ export const setAdvancedMatching = async (userData: {
 
   persistUserData();
 
-  if (typeof window !== "undefined" && window.fbq && Object.keys(matchData).length > 0) {
+  // Only re-init pixel once per session to avoid duplicate events
+  if (typeof window !== "undefined" && window.fbq && Object.keys(matchData).length > 0 && !_pixelInitWithAM) {
+    _pixelInitWithAM = true;
     window.fbq("init", PIXEL_ID, matchData);
   }
 };
