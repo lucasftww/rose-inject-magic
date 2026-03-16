@@ -110,21 +110,37 @@ const TicketsTab = ({
 
   // ─── Data Fetching ──────────────────────────────────────────────────────
 
-  const fetchTickets = useCallback(async () => {
+  const fetchTickets = useCallback(async (force = false) => {
+    // Return cached data if fresh
+    if (!force && _cachedTickets && Date.now() - _ticketsCacheTs < TICKETS_CACHE_TTL) {
+      setTickets(_cachedTickets);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
     const data = await fetchAllRows("order_tickets", {
       select: "*",
       order: { column: "created_at", ascending: false },
+      limit: 500,
     }).catch(() => null);
 
     if (data) {
       const productIds = [...new Set(data.map((t: any) => t.product_id))] as string[];
       const planIds = [...new Set(data.map((t: any) => t.product_plan_id))] as string[];
+      const userIds = [...new Set(data.map((t: any) => t.user_id))] as string[];
+
+      const lztItemIds = data
+        .filter((t: any) => t.metadata?.type === "lzt-account" && t.metadata?.lzt_item_id)
+        .map((t: any) => String(t.metadata.lzt_item_id));
 
       const [productsRes, plansRes, profilesData, lztSalesData] = await Promise.all([
         supabase.from("products").select("id, name").in("id", productIds),
         supabase.from("product_plans").select("id, name, price").in("id", planIds),
-        fetchAllRows("profiles", { select: "user_id, username" }),
-        fetchAllRows("lzt_sales", { select: "lzt_item_id, sell_price" }),
+        supabase.from("profiles").select("user_id, username").in("user_id", userIds),
+        lztItemIds.length > 0
+          ? supabase.from("lzt_sales").select("lzt_item_id, sell_price").in("lzt_item_id", lztItemIds)
+          : Promise.resolve({ data: [] }),
       ]);
 
       const productMap: Record<string, string> = {};
