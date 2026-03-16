@@ -134,7 +134,7 @@ const RobotProjectTab = () => {
     const planToProduct: Record<string, string> = {};
     (plans || []).forEach(p => { planToProduct[p.id] = p.product_id; });
 
-    let stockCounts: Record<string, number> = {};
+    const stockCounts: Record<string, number> = {};
     if (planIds.length > 0) {
       const stockPromises = planIds.map(async (planId: string) => {
         const { count } = await supabase

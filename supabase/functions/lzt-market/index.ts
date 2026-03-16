@@ -423,7 +423,7 @@ Deno.serve(async (req) => {
           item.price_brl = override;
         } else {
           const currency = item.price_currency || "rub";
-          let brl = currency === "rub" ? item.price * RUB_TO_BRL : item.price;
+          const brl = currency === "rub" ? item.price * RUB_TO_BRL : item.price;
           const final = brl * itemMarkup;
           item.price_brl = final < MIN_PRICE_BRL ? MIN_PRICE_BRL : Math.round(final * 100) / 100;
         }
@@ -477,7 +477,7 @@ Deno.serve(async (req) => {
         else if (detailGameType === "minecraft") detailMarkup = lztConfig?.markup_minecraft || detailMarkup;
         else detailMarkup = lztConfig?.markup_valorant || detailMarkup;
         const currency = data.item.price_currency || "rub";
-        let brl = currency === "rub" ? data.item.price * RUB_TO_BRL : data.item.price;
+        const brl = currency === "rub" ? data.item.price * RUB_TO_BRL : data.item.price;
         const final = brl * detailMarkup;
         data.item.price_brl = final < MIN_PRICE_BRL ? MIN_PRICE_BRL : Math.round(final * 100) / 100;
       }

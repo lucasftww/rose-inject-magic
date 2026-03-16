@@ -276,7 +276,7 @@ const FinanceTab = () => {
 
   // Separate product revenue: Robot vs Stock vs LZT
   const revenueBreakdown = useMemo(() => {
-    let lzt = 0, robot = 0, stock = 0;
+    let lzt = 0, stock = 0;
     fp.forEach(p => {
       const cart = p.cart_snapshot as any[];
       if (!Array.isArray(cart)) { stock += p.amount / 100; return; }

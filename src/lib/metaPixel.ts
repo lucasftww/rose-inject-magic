@@ -57,7 +57,7 @@ const persistUserData = () => {
   try {
     if (_cachedUserData.em) localStorage.setItem(STORAGE_KEY_EM, _cachedUserData.em);
     if (_cachedUserData.external_id) localStorage.setItem(STORAGE_KEY_EID, _cachedUserData.external_id);
-  } catch (_) {}
+  } catch (_) { /* ignore */ }
 };
 
 const restoreUserData = () => {
@@ -66,7 +66,7 @@ const restoreUserData = () => {
     const eid = localStorage.getItem(STORAGE_KEY_EID);
     if (em) _cachedUserData.em = em;
     if (eid) _cachedUserData.external_id = eid;
-  } catch (_) {}
+  } catch (_) { /* ignore */ }
 };
 
 // Restore on module load
@@ -124,7 +124,7 @@ export const clearAdvancedMatching = () => {
   try {
     localStorage.removeItem(STORAGE_KEY_EM);
     localStorage.removeItem(STORAGE_KEY_EID);
-  } catch (_) {}
+  } catch (_) { /* ignore */ }
 };
 
 // ─── First-Party Tracking ID ────────────────────────────────────────────────
@@ -221,7 +221,7 @@ const getUserData = (): Record<string, string> => {
     } else if (_trackingIdHash) {
       data.external_id = _trackingIdHash;
     }
-  } catch (_) {}
+  } catch (_) { /* ignore */ }
   return data;
 };
 
@@ -259,8 +259,8 @@ const sendCAPI = (
       body,
       keepalive: true,
       credentials: "omit",
-    }).catch(() => {});
-  } catch (_) {}
+    }).catch(() => { /* ignore */ });
+  } catch (_) { /* ignore */ }
 };
 
 // ─── Event Tracking ─────────────────────────────────────────────────────────
@@ -333,7 +333,7 @@ export const trackPurchase = (
   try {
     if (sessionStorage.getItem(storageKey)) return;
     sessionStorage.setItem(storageKey, eventId);
-  } catch (_) {}
+  } catch (_) { /* ignore */ }
 
   const customData: Record<string, any> = {
     content_name: data.contentName,
