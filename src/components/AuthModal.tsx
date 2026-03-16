@@ -7,7 +7,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import logoRoyal from "@/assets/logo-royal.png";
-
 import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 
 const TURNSTILE_SITE_KEY = "0x4AAAAAAClS1zHIEKz4wE9_";
