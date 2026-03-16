@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useInvalidateAdminCache } from "@/hooks/useAdminData";
 import {
   Plus, Pencil, Trash2, GripVertical, ImageIcon, Loader2,
   Upload, Link, Sparkles, X,
