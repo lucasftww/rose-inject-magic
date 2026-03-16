@@ -118,7 +118,7 @@ const LztPreviewFallback = forwardRef<HTMLDivElement, { url: string }>(({ url },
 });
 LztPreviewFallback.displayName = "LztPreviewFallback";
 
-const LztContaCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap: Map<string, SkinEntry>; formatPrice: (price: number, currency?: string) => string }) => {
+const LztContaCard = forwardRef<HTMLDivElement, { item: LztItem; skinsMap: Map<string, SkinEntry>; formatPrice: (price: number, currency?: string) => string }>(({ item, skinsMap, formatPrice }, ref) => {
   const navigate = useNavigate();
   const rank = item.riot_valorant_rank ? rankMap[item.riot_valorant_rank] : null;
   const hasKnife = (item.riot_valorant_knife ?? 0) > 0;
@@ -142,8 +142,13 @@ const LztContaCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap
     return (premium.length >= 4 ? premium : results.filter(s => s.rarity > 0).length >= 4 ? results.filter(s => s.rarity > 0) : results).slice(0, 6);
   }, [item.valorantInventory, skinsMap]);
 
+  const SkinImg = ({ skin }: { skin: SkinEntry }) => (
+    <ValorantImage src={skin.image} alt={skin.name} className="w-full h-full object-contain" />
+  );
+
   return (
     <div
+      ref={ref}
       className="group cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-success/50 hover:shadow-[0_4px_24px_hsl(197,100%,50%,0.12)] flex flex-col h-full"
       onClick={() => navigate(`/conta/${item.item_id}`)}
     >
@@ -152,13 +157,13 @@ const LztContaCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--success)/0.06),transparent_70%)]" />
         {skinPreviews.length === 1 ? (
           <div className="relative z-[1] w-full h-full flex items-center justify-center bg-secondary/30">
-            <img src={skinPreviews[0].image} alt={skinPreviews[0].name} className="w-full h-full object-contain" loading="lazy" />
+            <SkinImg skin={skinPreviews[0]} />
           </div>
         ) : skinPreviews.length === 2 ? (
           <div className="relative z-[1] grid grid-cols-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
             {skinPreviews.map((skin, i) => (
               <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/30 p-0.5">
-                <img src={skin.image} alt={skin.name} className="w-full h-full object-contain" loading="lazy" />
+                <SkinImg skin={skin} />
               </div>
             ))}
           </div>
@@ -166,18 +171,18 @@ const LztContaCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap
           <div className="relative z-[1] grid grid-cols-2 grid-rows-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
             {skinPreviews.slice(0, 2).map((skin, i) => (
               <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/30 p-0.5">
-                <img src={skin.image} alt={skin.name} className="w-full h-full object-contain" loading="lazy" />
+                <SkinImg skin={skin} />
               </div>
             ))}
             <div className="flex items-center justify-center w-full h-full rounded bg-secondary/30 p-0.5 col-span-2">
-              <img src={skinPreviews[2].image} alt={skinPreviews[2].name} className="w-full h-full object-contain" loading="lazy" />
+              <SkinImg skin={skinPreviews[2]} />
             </div>
           </div>
         ) : skinPreviews.length === 4 ? (
           <div className="relative z-[1] grid grid-cols-2 grid-rows-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
             {skinPreviews.map((skin, i) => (
               <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/30 p-0.5">
-                <img src={skin.image} alt={skin.name} className="w-full h-full object-contain" loading="lazy" />
+                <SkinImg skin={skin} />
               </div>
             ))}
           </div>
@@ -185,7 +190,7 @@ const LztContaCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap
           <div className="relative z-[1] grid grid-cols-3 grid-rows-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
             {skinPreviews.map((skin, i) => (
               <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/30 p-0.5">
-                <img src={skin.image} alt={skin.name} className="w-full h-full object-contain" loading="lazy" />
+                <SkinImg skin={skin} />
               </div>
             ))}
           </div>
@@ -225,7 +230,8 @@ const LztContaCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap
       </div>
     </div>
   );
-};
+});
+LztContaCard.displayName = "LztContaCard";
 
 // ─── Sections ───────────────────────────────────────────────────────────────
 
