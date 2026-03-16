@@ -146,7 +146,7 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
     { icon: DollarSign, label: "Receita Total", value: `R$ ${(totalRevenue / 100).toFixed(2)}`, accent: "text-positive" },
     { icon: ShoppingCart, label: "Total de Pedidos", value: String(totalOrders), accent: "text-success" },
     { icon: Receipt, label: "Faturas Pagas", value: String(totalPaidPayments), accent: "text-info" },
-    { icon: Users, label: "Usuários", value: String(totalUsers), accent: "text-success" },
+    { icon: Users, label: "Usuários", value: String(adminUsers.length), accent: "text-success" },
     { icon: UserCheck, label: "Revendedores", value: String(totalResellers), accent: "text-warning" },
     { icon: Package, label: "Produtos", value: String(totalProducts), accent: "text-info" },
   ];
