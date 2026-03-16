@@ -196,7 +196,7 @@ const CredentialsTab = () => {
               <div className="flex items-center gap-1.5">
                 {cred.help_url && (
                   <a href={cred.help_url} target="_blank" rel="noopener noreferrer"
-                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:border-success hover:text-success">
+                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground hover:border-success hover:text-success">
                     <ExternalLink className="h-3.5 w-3.5" />
                   </a>
                 )}
