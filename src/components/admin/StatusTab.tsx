@@ -175,7 +175,7 @@ const StatusTab = () => {
                               key={so.value}
                               onClick={() => handleStatusChange(product.id, so.value)}
                               title={so.label}
-                              className={`flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-[10px] font-bold transition-all ${
+                              className={`flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-[10px] font-bold ${
                                 active
                                   ? `${so.color} border-current bg-current/10`
                                   : "text-muted-foreground/40 border-transparent hover:text-muted-foreground"
