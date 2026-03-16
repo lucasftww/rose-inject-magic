@@ -358,7 +358,7 @@ const RobotProjectTab = () => {
 
   const refreshAll = async () => {
     setLoading(true);
-    await Promise.all([checkPing(), fetchRobotGames(), fetchBalance(), fetchProductsWithRobot(), fetchExchangeRate(), fetchPendingRobotTickets()]);
+    await Promise.all([checkPing(), fetchRobotGames(), fetchProductsWithRobot(), fetchExchangeRate(), fetchPendingRobotTickets()]);
     await fetchRobotSales();
     setLastRefresh(new Date());
     setLoading(false);
