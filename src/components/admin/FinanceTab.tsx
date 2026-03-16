@@ -350,7 +350,7 @@ const FinanceTab = () => {
                 formatter={(value: number) => [`R$ ${value.toFixed(2)}`]}
               />
               <Bar dataKey="produtos" name="Produtos" fill="hsl(220,80%,55%)" radius={[4, 4, 0, 0]} stackId="a" />
-              <Bar dataKey="contas" name="Contas" fill="hsl(130,99%,41%)" radius={[4, 4, 0, 0]} stackId="a" />
+              <Bar dataKey="contas" name="Contas" fill="hsl(197,100%,50%)" radius={[4, 4, 0, 0]} stackId="a" />
             </BarChart>
           </ResponsiveContainer>
         </div>
