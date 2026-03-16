@@ -230,7 +230,7 @@ const FinanceTab = () => {
 
         let cost = 0;
         if (meta.amount_spent && Number(meta.amount_spent) > 0) {
-          cost = Number(meta.amount_spent) * usdToBrl;
+          cost = Number(meta.amount_spent) * currentRate;
         } else if (meta.is_free) {
           cost = 0;
         } else if (product?.robot_markup_percent) {
