@@ -77,7 +77,8 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
         order: { column: "created_at", ascending: false },
         limit: 500,
       });
-    } catch {
+    } catch (err) {
+      console.error("fetchSales order_tickets error:", err);
       setLoading(false);
       return;
     }
@@ -124,7 +125,8 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
           });
           (stockData || []).forEach((s: any) => { stockMap.set(s.id, s.content); });
         }
-      } catch {
+      } catch (err) {
+        console.error("fetchSales stock_items error:", err);
         // fallback: do nothing
       }
     }
@@ -391,7 +393,7 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
 
                             {sale.stock_content && (() => {
                               let parsed: Record<string, string> | null = null;
-                              try { parsed = JSON.parse(sale.stock_content); } catch { /* ignore */ }
+                              try { parsed = JSON.parse(sale.stock_content); } catch (err) { console.error("JSON parse error:", err); }
 
                               const fieldLabels: Record<string, string> = {
                                 login: "Login",

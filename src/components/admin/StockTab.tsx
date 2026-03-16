@@ -92,7 +92,8 @@ const StockTab = () => {
         order: { column: "created_at", ascending: false },
       });
       setStockMap(prev => ({ ...prev, [planId]: data }));
-    } catch {
+    } catch (err) {
+      console.error("fetchStockForPlan error:", err);
       // fallback
     }
     setLoadingStock(null);
