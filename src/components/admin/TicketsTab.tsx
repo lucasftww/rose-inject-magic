@@ -968,7 +968,7 @@ const TicketsTab = ({
                               setStockCopied(true);
                               setTimeout(() => setStockCopied(false), 2000);
                             }}
-                            className="rounded p-1 text-muted-foreground hover:text-foreground transition-colors"
+                            className="rounded p-1 text-muted-foreground hover:text-foreground"
                           >
                             {stockCopied ? <Check className="h-3.5 w-3.5 text-success" /> : <Copy className="h-3.5 w-3.5" />}
                           </button>
