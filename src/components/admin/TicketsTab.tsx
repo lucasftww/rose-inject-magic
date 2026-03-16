@@ -44,7 +44,7 @@ const statusOptions = [
 
 const ITEMS_PER_PAGE = 8;
 
-const TicketsTab = () => {
+const TicketsTab = ({ initialTicketId, onTicketOpened }: { initialTicketId?: string | null; onTicketOpened?: () => void }) => {
   const { user } = useAuth();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
