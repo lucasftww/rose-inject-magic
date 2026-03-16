@@ -203,10 +203,12 @@ const ResellersTab = () => {
     }
 
     // Update product associations
-    await supabase.from("reseller_products").delete().eq("reseller_id", reseller.id);
+    const { error: delProdErr } = await supabase.from("reseller_products").delete().eq("reseller_id", reseller.id);
+    if (delProdErr) { toast({ title: "Erro ao atualizar produtos", description: delProdErr.message, variant: "destructive" }); setSavingEdit(false); return; }
     if (editProductIds.length > 0) {
       const items = editProductIds.map(pid => ({ reseller_id: reseller.id, product_id: pid }));
-      await supabase.from("reseller_products").insert(items);
+      const { error: insProdErr } = await supabase.from("reseller_products").insert(items);
+      if (insProdErr) { toast({ title: "Erro ao vincular produtos", description: insProdErr.message, variant: "destructive" }); setSavingEdit(false); return; }
     }
     setResellerProducts(prev => ({ ...prev, [reseller.id]: editProductIds }));
 

@@ -104,16 +104,18 @@ const CouponsTab = () => {
     }
 
     // Update product associations
-    await supabase.from("coupon_products").delete().eq("coupon_id", couponId);
+    const { error: delError } = await supabase.from("coupon_products").delete().eq("coupon_id", couponId);
+    if (delError) { toast({ title: "Erro ao atualizar produtos", description: delError.message, variant: "destructive" }); setSaving(false); return; }
     if (formProductIds.length > 0) {
-      await supabase.from("coupon_products").insert(
+      const { error: insError } = await supabase.from("coupon_products").insert(
         formProductIds.map(pid => ({ coupon_id: couponId, product_id: pid }))
       );
+      if (insError) { toast({ title: "Erro ao vincular produtos", description: insError.message, variant: "destructive" }); setSaving(false); return; }
     }
 
     toast({ title: editing ? "Cupom atualizado!" : "Cupom criado!" });
     resetForm();
-    fetchCoupons();
+    await fetchCoupons();
     setSaving(false);
   };
 
