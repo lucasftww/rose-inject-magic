@@ -278,12 +278,6 @@ const Produtos = () => {
             });
             await Promise.all(stockPromises);
 
-            const stockCounts: Record<string, number> = {};
-            (stockData || []).forEach(s => {
-              const pid = planToProduct[s.product_plan_id];
-              if (pid) stockCounts[pid] = (stockCounts[pid] || 0) + 1;
-            });
-
             data.forEach((p: any) => {
               if (p.robot_game_id) p._stockCount = stockCounts[p.id] || 0;
             });
