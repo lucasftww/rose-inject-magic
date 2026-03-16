@@ -31,6 +31,13 @@ const CartSheet = ({ open, onOpenChange }: CartSheetProps) => {
   const [couponLoading, setCouponLoading] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
 
+  // Reset coupon when items change (prevents stale discount calculations)
+  const itemsKey = items.map(i => `${i.productId}:${i.planId}:${i.quantity}`).join(",");
+  useEffect(() => {
+    setAppliedCoupon(null);
+    setCouponCode("");
+  }, [itemsKey]);
+
   const applyCoupon = async () => {
     const code = couponCode.trim().toUpperCase();
     if (!code) return;
