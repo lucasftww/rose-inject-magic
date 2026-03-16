@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2, Package, Smartphone, ArrowLeft, Search,
   ChevronLeft, ChevronRight, Clock, CheckCircle, XCircle,
-  AlertTriangle, Filter, ChevronRight as ChevronRightIcon,
+  AlertTriangle, Filter,
 } from "lucide-react";
 import { motion } from "framer-motion";
 

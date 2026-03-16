@@ -12,8 +12,7 @@ import { useLztMarkup } from "@/hooks/useLztMarkup";
 import { trackViewContent, trackInitiateCheckout } from "@/lib/metaPixel";
 import { checkLztAvailability } from "@/lib/lztAvailability";
 
-import { rankMap, rarityMap, fetchAllValorantSkins, rankUnranked, type SkinEntry } from "@/lib/valorantData";
-import { RARITY_PRIORITY } from "@/lib/valorantData";
+import { rankMap, rarityMap, fetchAllValorantSkins, rankUnranked, RARITY_PRIORITY, type SkinEntry } from "@/lib/valorantData";
 
 const fetchAccountDetail = async (itemId: string) => {
   const projectUrl = import.meta.env.VITE_SUPABASE_URL;
