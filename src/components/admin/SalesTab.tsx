@@ -43,7 +43,7 @@ const statusColors: Record<string, string> = {
 };
 
 const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void }) => {
-  const { emailMap: adminEmailMap } = useAdminUsers();
+  const { emailMap: adminEmailMap, usernameMap } = useAdminUsers();
   const [loading, setLoading] = useState(true);
   const [tickets, setTickets] = useState<SaleTicket[]>([]);
   const [search, setSearch] = useState("");
@@ -51,6 +51,7 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
   const [page, setPage] = useState(1);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   const fetchSales = async () => {
     setLoading(true);
@@ -70,47 +71,20 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
     // 2. Enrich with product/plan data
     const productIds = [...new Set(rawTickets.map((t) => t.product_id))];
     const planIds = [...new Set(rawTickets.map((t) => t.product_plan_id))];
-    const userIds = [...new Set(rawTickets.map((t) => t.user_id))];
 
     const [productsRes, plansRes, profilesRes, lztSalesRes] = await Promise.all([
       supabase.from("products").select("id, name, image_url").in("id", productIds),
       supabase.from("product_plans").select("id, name, price").in("id", planIds),
-      supabase.from("profiles").select("user_id, username").in("user_id", userIds),
+      supabase.from("profiles").select("user_id, username").in("user_id", [...new Set(rawTickets.map((t) => t.user_id))]),
       supabase.from("lzt_sales").select("lzt_item_id, sell_price"),
     ]);
-
-    // Fetch ALL payments for price mapping (paginated)
-    const allPayments = await fetchAllRows("payments", {
-      select: "user_id, amount, cart_snapshot, status, created_at",
-      filters: [
-        { column: "user_id", op: "in", value: userIds },
-        { column: "status", op: "in", value: ["COMPLETED", "ACTIVE"] },
-      ],
-      order: { column: "created_at", ascending: false },
-    });
 
     const productsMap = new Map((productsRes.data || []).map((p) => [p.id, p]));
     const plansMap = new Map((plansRes.data || []).map((p) => [p.id, p]));
     const profilesMap = new Map((profilesRes.data || []).map((p) => [p.user_id, p]));
     const lztSalesMap = new Map((lztSalesRes.data || []).map((s) => [s.lzt_item_id, Number(s.sell_price)]));
 
-    // Build a map: userId+productId+planId -> actual paid price from cart_snapshot
-    const paidPriceMap = new Map<string, number>();
-    for (const pay of allPayments) {
-      const snapshot = pay.cart_snapshot as any[];
-      if (!Array.isArray(snapshot)) continue;
-      for (const item of snapshot) {
-        const key = `${pay.user_id}|${item.productId}|${item.planId}`;
-        // Only set if not already set (we ordered by newest first)
-        if (!paidPriceMap.has(key) && item.price != null) {
-          paidPriceMap.set(key, Number(item.price));
-        }
-      }
-    }
-    // 3. Use cached admin-users data
-    const emailsMap = adminEmailMap;
-
-    // 4. Load stock content for delivered items
+    // 3. Load stock content for delivered items
     const stockIds = rawTickets
       .filter((t) => t.stock_item_id)
       .map((t) => t.stock_item_id as string);
@@ -126,7 +100,7 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
       }
     }
 
-    // 5. Merge
+    // 4. Merge — use plan price as fallback (skip expensive ALL payments fetch)
     const enriched: SaleTicket[] = rawTickets.map((t) => {
       const product = productsMap.get(t.product_id);
       const plan = plansMap.get(t.product_plan_id);
@@ -136,26 +110,40 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
       const lztItemId = meta?.lzt_item_id;
       const lztPrice = lztItemId ? (lztSalesMap.get(String(lztItemId)) || meta?.price_paid || meta?.price || meta?.sell_price || 0) : 0;
 
+      // Use metadata price if available (saved at purchase time), fallback to plan price
+      const metaPrice = meta?.price_paid || meta?.plan_price;
+
       return {
         ...t,
         product_name: isLzt ? (meta?.title || meta?.account_name || "Conta LZT") : (product?.name || "—"),
         product_image: isLzt ? null : (product?.image_url || null),
         plan_name: isLzt ? "Conta LZT" : (plan?.name || "—"),
-        // Use actual paid price from payment cart_snapshot, fallback to current plan price
-        plan_price: isLzt ? lztPrice : (paidPriceMap.get(`${t.user_id}|${t.product_id}|${t.product_plan_id}`) ?? plan?.price ?? 0),
+        plan_price: isLzt ? lztPrice : (metaPrice ?? plan?.price ?? 0),
         username: profile?.username || null,
-        email: emailsMap.get(t.user_id) || null,
+        email: null, // enriched below from adminEmailMap
         stock_content: t.stock_item_id ? (stockMap.get(t.stock_item_id) || null) : null,
       };
     });
 
     setTickets(enriched);
+    setDataLoaded(true);
     setLoading(false);
   };
 
+  // Fetch data only once on mount
   useEffect(() => {
     fetchSales();
-  }, [adminEmailMap]);
+  }, []);
+
+  // Enrich emails separately when adminEmailMap updates (no refetch)
+  useEffect(() => {
+    if (!dataLoaded || adminEmailMap.size === 0) return;
+    setTickets(prev => prev.map(t => ({
+      ...t,
+      email: adminEmailMap.get(t.user_id) || t.email,
+      username: t.username || usernameMap.get(t.user_id) || null,
+    })));
+  }, [adminEmailMap, usernameMap, dataLoaded]);
 
   // Stats
   const stats = useMemo(() => {

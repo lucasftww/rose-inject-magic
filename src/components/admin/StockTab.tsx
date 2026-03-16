@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAllRows } from "@/lib/supabaseAllRows";
 import { toast } from "@/hooks/use-toast";
 import { Package, ChevronDown, ChevronRight, Plus, Trash2, Loader2, Sparkles, AlertTriangle } from "lucide-react";
 
@@ -52,19 +53,18 @@ const StockTab = () => {
       // Fetch stock counts for all plans
       const planIds = data.flatMap((p: any) => p.product_plans.map((pl: any) => pl.id));
       if (planIds.length > 0) {
-        const { data: stockData } = await supabase
-          .from("stock_items")
-          .select("product_plan_id, used")
-          .in("product_plan_id", planIds);
-        if (stockData) {
-          const counts: Record<string, { total: number; available: number }> = {};
-          stockData.forEach((s: any) => {
-            if (!counts[s.product_plan_id]) counts[s.product_plan_id] = { total: 0, available: 0 };
-            counts[s.product_plan_id].total++;
-            if (!s.used) counts[s.product_plan_id].available++;
-          });
-          setStockCounts(counts);
-        }
+        // Use fetchAllRows to bypass 1000-row limit on stock counts
+        const stockData = await fetchAllRows("stock_items", {
+          select: "product_plan_id, used",
+          filters: [{ column: "product_plan_id", op: "in", value: planIds }],
+        });
+        const counts: Record<string, { total: number; available: number }> = {};
+        stockData.forEach((s: any) => {
+          if (!counts[s.product_plan_id]) counts[s.product_plan_id] = { total: 0, available: 0 };
+          counts[s.product_plan_id].total++;
+          if (!s.used) counts[s.product_plan_id].available++;
+        });
+        setStockCounts(counts);
       }
     }
     setLoading(false);
