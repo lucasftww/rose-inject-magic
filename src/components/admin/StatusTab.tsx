@@ -94,6 +94,7 @@ const StatusTab = () => {
     }
     toast({ title: `${ids.length} produto(s) atualizado(s)!` });
     setEdits({});
+    invalidateAdmin();
     refetch();
     setSaving(null);
   };
