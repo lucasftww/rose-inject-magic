@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchAllRows } from "@/lib/supabaseAllRows";
-import { Loader2, RefreshCw, Wifi, WifiOff, Gamepad2, AlertTriangle, CheckCircle, Package, DollarSign, Clock, Zap, Wallet, Gift, TrendingUp, BarChart3, RotateCw } from "lucide-react";
+import { Loader2, RefreshCw, Wifi, WifiOff, Gamepad2, AlertTriangle, CheckCircle, Package, DollarSign, Clock, Zap, Gift, TrendingUp, BarChart3, RotateCw } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface RobotGame {
