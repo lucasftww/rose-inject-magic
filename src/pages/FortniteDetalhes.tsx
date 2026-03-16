@@ -7,7 +7,7 @@ import {
   CheckCircle2, Shield, ShoppingCart, X, Zap, Gift,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "@/hooks/use-toast";
 import { useLztMarkup } from "@/hooks/useLztMarkup";
@@ -109,7 +109,7 @@ const FortniteDetalhes = () => {
   const raw = item as any;
 
   // Build preview list from a cosmetics array (fortniteSkins, fortnitePickaxe, etc.)
-  const buildPreviews = (arr: CosmeticItem[], skipDefault = true): CosmeticPreview[] => {
+  const buildPreviews = useCallback((arr: CosmeticItem[], skipDefault = true): CosmeticPreview[] => {
     const results: CosmeticPreview[] = [];
     for (const c of (arr || [])) {
       if (skipDefault && (c.id === "defaultpickaxe" || c.id === "defaultglider")) continue;
@@ -122,12 +122,12 @@ const FortniteDetalhes = () => {
       });
     }
     return results;
-  };
+  }, [cosmeticsDb]);
 
-  const skinPreviews = useMemo(() => buildPreviews(raw?.fortniteSkins || []), [raw?.fortniteSkins, cosmeticsDb]);
-  const pickaxePreviews = useMemo(() => buildPreviews(raw?.fortnitePickaxe || []), [raw?.fortnitePickaxe, cosmeticsDb]);
-  const dancePreviews = useMemo(() => buildPreviews(raw?.fortniteDance || []), [raw?.fortniteDance, cosmeticsDb]);
-  const gliderPreviews = useMemo(() => buildPreviews(raw?.fortniteGliders || []), [raw?.fortniteGliders, cosmeticsDb]);
+  const skinPreviews = useMemo(() => buildPreviews(raw?.fortniteSkins || []), [raw?.fortniteSkins, buildPreviews]);
+  const pickaxePreviews = useMemo(() => buildPreviews(raw?.fortnitePickaxe || []), [raw?.fortnitePickaxe, buildPreviews]);
+  const dancePreviews = useMemo(() => buildPreviews(raw?.fortniteDance || []), [raw?.fortniteDance, buildPreviews]);
+  const gliderPreviews = useMemo(() => buildPreviews(raw?.fortniteGliders || []), [raw?.fortniteGliders, buildPreviews]);
 
   const tabPreviews: Record<InventoryTab, CosmeticPreview[]> = {
     skins: skinPreviews,
@@ -158,7 +158,7 @@ const FortniteDetalhes = () => {
         value: priceBRL,
       });
     }
-  }, [item]);
+  }, [item, getPrice]);
 
   const [checkingAvailability, setCheckingAvailability] = useState(false);
 

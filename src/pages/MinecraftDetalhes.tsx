@@ -96,7 +96,7 @@ const MinecraftDetalhes = () => {
         value: priceBRL,
       });
     }
-  }, [item]);
+  }, [item, nickname, getPrice]);
 
   const [checkingAvailability, setCheckingAvailability] = useState(false);
 

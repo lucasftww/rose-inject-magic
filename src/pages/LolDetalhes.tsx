@@ -170,7 +170,7 @@ const LolDetalhes = () => {
       }
     }
     return results;
-  }, [lolInventory?.Champion, champKeyMap]);
+  }, [JSON.stringify(lolInventory?.Champion), champKeyMap]);
 
   const rankText = item?.riot_lol_rank || "Unranked";
   const rankKey = lolRankToKey(rankText);
@@ -216,7 +216,7 @@ const LolDetalhes = () => {
         value: priceBRL,
       });
     }
-  }, [item]);
+  }, [item, getPrice]);
 
   const [checkingAvailability, setCheckingAvailability] = useState(false);
 
