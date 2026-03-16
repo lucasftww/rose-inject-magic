@@ -1,8 +1,9 @@
 import { useState, lazy, Suspense, useCallback, memo, useTransition } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   ShieldAlert, Gamepad2, Mail, Package, Tag, UserCheck, TrendingUp,
   Key, CreditCard, BarChart3, ShoppingBag, Globe, Shield, Users,
-  ChevronRight, Menu, Loader2
+  ChevronRight, Menu, Loader2, Home
 } from "lucide-react";
 import {
   Sheet,
@@ -133,6 +134,7 @@ const SidebarNav = memo(({
 SidebarNav.displayName = "SidebarNav";
 
 const AdminPanel = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [visitedTabs, setVisitedTabs] = useState<Set<TabId>>(new Set(["overview"]));
   const [pendingTicketId, setPendingTicketId] = useState<string | null>(null);
@@ -164,7 +166,10 @@ const AdminPanel = () => {
           <SheetHeader className="px-4 py-4 border-b border-border">
             <SheetTitle className="flex items-center gap-2 text-sm">
               <ShieldAlert className="h-4 w-4 text-success" />
-              <span className="text-xs font-bold uppercase tracking-[0.2em] text-success">Admin</span>
+              <span className="text-xs font-bold uppercase tracking-[0.2em] text-success flex-1">Admin</span>
+              <button onClick={() => { setMobileOpen(false); navigate("/"); }} className="rounded-md p-1 text-muted-foreground hover:text-foreground">
+                <Home className="h-4 w-4" />
+              </button>
             </SheetTitle>
           </SheetHeader>
           <div className="overflow-y-auto h-[calc(100%-60px)] scrollbar-hide">
@@ -183,12 +188,21 @@ const AdminPanel = () => {
             {sidebarOpen && (
               <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-success truncate">Painel Admin</span>
             )}
-            <button
-              onClick={() => setSidebarOpen(v => !v)}
-              className="ml-auto rounded-md p-1 text-muted-foreground hover:text-foreground"
-            >
-              <ChevronRight className={`h-3.5 w-3.5 ${sidebarOpen ? "rotate-180" : ""}`} />
-            </button>
+            <div className="ml-auto flex items-center gap-0.5">
+              <button
+                onClick={() => navigate("/")}
+                title="Voltar ao site"
+                className="rounded-md p-1 text-muted-foreground hover:text-foreground"
+              >
+                <Home className="h-3.5 w-3.5" />
+              </button>
+              <button
+                onClick={() => setSidebarOpen(v => !v)}
+                className="rounded-md p-1 text-muted-foreground hover:text-foreground"
+              >
+                <ChevronRight className={`h-3.5 w-3.5 ${sidebarOpen ? "rotate-180" : ""}`} />
+              </button>
+            </div>
           </div>
           <div className="flex-1 overflow-y-auto scrollbar-hide">
             <SidebarNav activeTab={activeTab} onSelect={handleTabSelect} collapsed={!sidebarOpen} />
