@@ -39,8 +39,7 @@ type RaspadinhaMode = "produtos" | "contas";
 
 
 const NOTHING_ICONS = ["x", "flower", "skull"] as const;
-const HIDDEN_WIN_CHANCE_PRODUTOS = 1.0;   // ~1 em 100
-const HIDDEN_WIN_CHANCE_CONTAS  = 0.667; // ~1 em 150
+// Win chances are determined server-side only
 const CONTAS_PRICE = 5.50;
 const MAX_QUANTITY = 10;
 
@@ -272,9 +271,8 @@ const Raspadinha = () => {
   const cellId = (cell: GridCell) => cell.type === "prize" ? cell.prizeId! : `nothing-${cell.nothingIcon}`;
 
   const rollWin = (prizesPool: Prize[], forceWin = false): Prize | null => {
-    const winChance = pendingModeRef.current === "contas"
-      ? HIDDEN_WIN_CHANCE_CONTAS
-      : HIDDEN_WIN_CHANCE_PRODUTOS;
+    // Win chance is determined server-side; client uses a placeholder for grid preview only
+    const winChance = pendingModeRef.current === "contas" ? 0.667 : 1.0;
     const roll = Math.random() * 100;
     if (!forceWin && roll >= winChance) return null;
     if (prizesPool.length === 0) return null;
