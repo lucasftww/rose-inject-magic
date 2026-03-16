@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdminUsers } from "@/hooks/useAdminUsers";
 import { toast } from "@/hooks/use-toast";
 import AudioMessagePlayer from "@/components/AudioMessagePlayer";
 import { Loader2, MessageSquare, Search, Send, Archive, ArchiveRestore, ArrowLeft, Clock, User, Copy, Check, ShieldCheck, ExternalLink, KeyRound, Mail, ChevronDown, ChevronUp, CheckCircle, BookOpen, FolderDown, Download, Package, Eye, EyeOff, Paperclip, Image, X, FileText, Bot, UserCircle, Mic, Square, Trash2 } from "lucide-react";
