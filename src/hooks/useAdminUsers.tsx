@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface AdminUser {
@@ -56,19 +56,23 @@ export function useAdminUsers() {
     fetchUsers();
   }, [fetchUsers]);
 
-  const emailMap = useRef(new Map<string, string>());
-  const usernameMap = useRef(new Map<string, string>());
-
-  useEffect(() => {
-    const eMap = new Map<string, string>();
-    const uMap = new Map<string, string>();
+  // Use useMemo instead of refs so consumers get stable references
+  // that only change when users actually change
+  const emailMap = useMemo(() => {
+    const map = new Map<string, string>();
     for (const u of users) {
-      eMap.set(u.id, u.email);
-      uMap.set(u.id, u.username || u.email?.split("@")[0] || "?");
+      map.set(u.id, u.email);
     }
-    emailMap.current = eMap;
-    usernameMap.current = uMap;
+    return map;
   }, [users]);
 
-  return { users, loading, fetchUsers, emailMap: emailMap.current, usernameMap: usernameMap.current };
+  const usernameMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const u of users) {
+      map.set(u.id, u.username || u.email?.split("@")[0] || "?");
+    }
+    return map;
+  }, [users]);
+
+  return { users, loading, fetchUsers, emailMap, usernameMap };
 }
