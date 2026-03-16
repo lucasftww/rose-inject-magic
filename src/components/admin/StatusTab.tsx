@@ -201,7 +201,7 @@ const StatusTab = () => {
                         <button
                           onClick={() => handleSave(product.id)}
                           disabled={saving === product.id}
-                          className="flex h-8 w-8 items-center justify-center rounded-lg bg-success text-success-foreground transition-all hover:shadow-md disabled:opacity-50"
+                          className="flex h-8 w-8 items-center justify-center rounded-lg bg-success text-success-foreground disabled:opacity-50"
                         >
                           {saving === product.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
                         </button>
