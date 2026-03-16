@@ -216,22 +216,22 @@ const AdminPanel = () => {
           {/* Tab Content — each tab lazy-loaded */}
           <div className="px-3 sm:px-5 lg:px-8 py-5 lg:py-6">
             <Suspense fallback={<TabFallback />}>
-              {activeTab === "overview" && <OverviewTab onGoToTicket={handleGoToTicket} />}
-              {activeTab === "jogos" && <GamesTab />}
-              {activeTab === "produtos" && <ProductsTab />}
-              {activeTab === "estoque" && <StockTab />}
-              {activeTab === "robot" && <RobotProjectTab />}
-              {activeTab === "revendedores" && <ResellersTab />}
-              {activeTab === "tickets" && <TicketsTab initialTicketId={pendingTicketId} onTicketOpened={handleTicketOpened} />}
-              {activeTab === "status" && <StatusTab />}
-              {activeTab === "cupons" && <CouponsTab />}
-              {activeTab === "usuarios" && <UsersTab onGoToTicket={handleGoToTicket} />}
-              {activeTab === "credenciais" && <CredentialsTab />}
-              {activeTab === "lzt" && <LztTab />}
-              {activeTab === "vendas" && <SalesTab onGoToTicket={handleGoToTicket} />}
-              {activeTab === "pagamentos" && <PaymentsTab />}
-              {activeTab === "financeiro" && <FinanceTab />}
-              {activeTab === "raspadinha" && <ScratchCardTab />}
+              <div style={{ display: activeTab === "overview" ? "block" : "none" }}>{visitedTabs.has("overview") && <OverviewTab onGoToTicket={handleGoToTicket} />}</div>
+              <div style={{ display: activeTab === "jogos" ? "block" : "none" }}>{visitedTabs.has("jogos") && <GamesTab />}</div>
+              <div style={{ display: activeTab === "produtos" ? "block" : "none" }}>{visitedTabs.has("produtos") && <ProductsTab />}</div>
+              <div style={{ display: activeTab === "estoque" ? "block" : "none" }}>{visitedTabs.has("estoque") && <StockTab />}</div>
+              <div style={{ display: activeTab === "robot" ? "block" : "none" }}>{visitedTabs.has("robot") && <RobotProjectTab />}</div>
+              <div style={{ display: activeTab === "revendedores" ? "block" : "none" }}>{visitedTabs.has("revendedores") && <ResellersTab />}</div>
+              <div style={{ display: activeTab === "tickets" ? "block" : "none" }}>{visitedTabs.has("tickets") && <TicketsTab initialTicketId={pendingTicketId} onTicketOpened={handleTicketOpened} />}</div>
+              <div style={{ display: activeTab === "status" ? "block" : "none" }}>{visitedTabs.has("status") && <StatusTab />}</div>
+              <div style={{ display: activeTab === "cupons" ? "block" : "none" }}>{visitedTabs.has("cupons") && <CouponsTab />}</div>
+              <div style={{ display: activeTab === "usuarios" ? "block" : "none" }}>{visitedTabs.has("usuarios") && <UsersTab onGoToTicket={handleGoToTicket} />}</div>
+              <div style={{ display: activeTab === "credenciais" ? "block" : "none" }}>{visitedTabs.has("credenciais") && <CredentialsTab />}</div>
+              <div style={{ display: activeTab === "lzt" ? "block" : "none" }}>{visitedTabs.has("lzt") && <LztTab />}</div>
+              <div style={{ display: activeTab === "vendas" ? "block" : "none" }}>{visitedTabs.has("vendas") && <SalesTab onGoToTicket={handleGoToTicket} />}</div>
+              <div style={{ display: activeTab === "pagamentos" ? "block" : "none" }}>{visitedTabs.has("pagamentos") && <PaymentsTab />}</div>
+              <div style={{ display: activeTab === "financeiro" ? "block" : "none" }}>{visitedTabs.has("financeiro") && <FinanceTab />}</div>
+              <div style={{ display: activeTab === "raspadinha" ? "block" : "none" }}>{visitedTabs.has("raspadinha") && <ScratchCardTab />}</div>
             </Suspense>
           </div>
         </main>
