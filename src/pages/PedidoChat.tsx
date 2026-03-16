@@ -448,6 +448,8 @@ const PedidoChat = () => {
       "ya.ru": "https://mail.yandex.ru",
       "firstmail.ltd": "https://firstmail.ltd/webmail/login/",
       "ffrmail.com": "https://ffrmail.com/webmail/login/",
+      "hyssopusmail.com": "https://notletters.com/email/login",
+      "notletters.com": "https://notletters.com/email/login",
     };
     if (knownWebmails[domain]) return knownWebmails[domain];
     // Generic webmail fallback for autoreg domains like firstmail.ltd
