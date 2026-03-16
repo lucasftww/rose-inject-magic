@@ -70,7 +70,7 @@ const PaymentsTab = () => {
           return (
             <div
               key={s.id}
-              className={`relative flex flex-col items-center gap-4 rounded-xl border-2 p-8 transition-all ${
+              className={`relative flex flex-col items-center gap-4 rounded-xl border-2 p-8 ${
                 s.enabled
                   ? "border-success/40 bg-success/5"
                   : "border-border bg-card opacity-60"
