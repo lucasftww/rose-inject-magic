@@ -326,7 +326,7 @@ const FinanceTab = () => {
                   contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }}
                   formatter={(value: number) => [`R$ ${value.toFixed(2)}`, "Receita"]}
                 />
-                <Bar dataKey="valor" fill="hsl(130,99%,41%)" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="valor" fill="hsl(197,100%,50%)" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}
