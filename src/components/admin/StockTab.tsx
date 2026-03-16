@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAllRows } from "@/lib/supabaseAllRows";
 import { toast } from "@/hooks/use-toast";
 import { Package, ChevronDown, ChevronRight, Plus, Trash2, Loader2, Sparkles, AlertTriangle } from "lucide-react";
 
