@@ -16,6 +16,109 @@ function log(level: "INFO" | "WARN" | "ERROR", ctx: string, msg: string, data?: 
   else console.log(JSON.stringify(entry));
 }
 
+type RobotCredentials = { username: string; password: string };
+type RobotGameSnapshot = {
+  game: any | null;
+  balance: number | null;
+  expectedPrice: number | null;
+  availableSlots: number | null;
+  reason?: string;
+};
+
+async function getRobotCredentials(supabaseAdmin: any): Promise<RobotCredentials | null> {
+  const [uRes, pRes] = await Promise.all([
+    supabaseAdmin.from("system_credentials").select("value").eq("env_key", "ROBOT_API_USERNAME").maybeSingle(),
+    supabaseAdmin.from("system_credentials").select("value").eq("env_key", "ROBOT_API_PASSWORD").maybeSingle(),
+  ]);
+
+  const username = uRes.data?.value || Deno.env.get("ROBOT_API_USERNAME");
+  const password = pRes.data?.value || Deno.env.get("ROBOT_API_PASSWORD");
+  if (!username || !password) return null;
+
+  return { username, password };
+}
+
+function robotAuthHeader(creds: RobotCredentials) {
+  return `Basic ${btoa(`${creds.username}:${creds.password}`)}`;
+}
+
+async function fetchRobotGameSnapshot(
+  creds: RobotCredentials,
+  robotGameId: number,
+  duration: number,
+): Promise<RobotGameSnapshot> {
+  const gamesRes = await fetch("https://api.robotproject.com.br/games", {
+    headers: {
+      Authorization: robotAuthHeader(creds),
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!gamesRes.ok) {
+    return {
+      game: null,
+      balance: null,
+      expectedPrice: null,
+      availableSlots: null,
+      reason: `Falha ao consultar o provedor Robot (HTTP ${gamesRes.status}).`,
+    };
+  }
+
+  const gamesData = await gamesRes.json();
+  const games = Array.isArray(gamesData) ? gamesData : gamesData.games || [];
+  const game = games.find((g: any) => Number(g.id) === Number(robotGameId)) || null;
+  const parsedBalance = Number(Array.isArray(gamesData) ? NaN : gamesData?.balance);
+  const balance = Number.isFinite(parsedBalance) ? parsedBalance : null;
+
+  if (!game) {
+    return {
+      game: null,
+      balance,
+      expectedPrice: null,
+      availableSlots: null,
+      reason: "Produto não encontrado na Robot API.",
+    };
+  }
+
+  const expectedRaw = game.prices?.[String(duration)] ?? game.prices?.["1"] ?? null;
+  const parsedExpectedPrice = Number(expectedRaw);
+  const expectedPrice = Number.isFinite(parsedExpectedPrice) ? parsedExpectedPrice : null;
+  const parsedMaxKeys = Number(game.maxKeys);
+  const maxKeys = game.maxKeys == null || !Number.isFinite(parsedMaxKeys) ? null : parsedMaxKeys;
+  const soldKeys = Number(game.soldKeys || 0);
+  const availableSlots = maxKeys === null ? null : Math.max(0, maxKeys - soldKeys);
+
+  if (game.status !== "on") {
+    return { game, balance, expectedPrice, availableSlots, reason: "Produto offline no provedor no momento." };
+  }
+
+  if (!game.is_free && (expectedPrice === null || expectedPrice <= 0)) {
+    return {
+      game,
+      balance,
+      expectedPrice,
+      availableSlots,
+      reason: `A duração de ${duration} dia(s) não está disponível na Robot API.`,
+    };
+  }
+
+  if (!game.is_free && availableSlots !== null && availableSlots <= 0) {
+    return { game, balance, expectedPrice, availableSlots, reason: "Sem slots disponíveis no provedor no momento." };
+  }
+
+  if (!game.is_free && balance !== null && expectedPrice !== null && balance < expectedPrice) {
+    return {
+      game,
+      balance,
+      expectedPrice,
+      availableSlots,
+      reason: `Saldo insuficiente no provedor para entrega automática. Disponível: $${balance.toFixed(2)} • Necessário: $${expectedPrice.toFixed(2)}`,
+    };
+  }
+
+  return { game, balance, expectedPrice, availableSlots };
+}
+
 // ─── Server-side CAPI Purchase (fires when payment is COMPLETED) ────────────
 // This guarantees Meta receives the Purchase event even if the user closes the browser.
 // Uses the same deterministic event_id as the browser Pixel for deduplication.
@@ -815,14 +918,9 @@ async function fulfillRobotProduct(supabaseAdmin: any, payment: any, item: any, 
   log("INFO", "fulfillRobot", "Starting Robot fulfillment", { robotGameId, duration, product: item.productName, userId: payment.user_id });
 
   // Get Robot credentials
-  const [uRes, pRes] = await Promise.all([
-    supabaseAdmin.from("system_credentials").select("value").eq("env_key", "ROBOT_API_USERNAME").maybeSingle(),
-    supabaseAdmin.from("system_credentials").select("value").eq("env_key", "ROBOT_API_PASSWORD").maybeSingle(),
-  ]);
-  const robotUsername = uRes.data?.value;
-  const robotPassword = pRes.data?.value;
+  const creds = await getRobotCredentials(supabaseAdmin);
 
-  if (!robotUsername || !robotPassword) {
+  if (!creds) {
     console.error("Robot Project credentials not configured");
     // Create manual delivery ticket
     const { data: ticket } = await supabaseAdmin
@@ -849,52 +947,38 @@ async function fulfillRobotProduct(supabaseAdmin: any, payment: any, item: any, 
     return;
   }
 
-  const auth = btoa(`${robotUsername}:${robotPassword}`);
-
   try {
-    // Pre-check: fetch game price to log and verify balance
-    let expectedPrice: number | null = null;
-    try {
-      const gamesRes = await fetch(`https://api.robotproject.com.br/games`, {
-        headers: { Authorization: `Basic ${auth}`, "Content-Type": "application/json" },
+    // Pre-check: fetch live provider status / price / balance before buy
+    const robotSnapshot = await fetchRobotGameSnapshot(creds, robotGameId, duration);
+    log("INFO", "fulfillRobot", "Pre-check", {
+      gameId: robotGameId,
+      gameName: robotSnapshot.game?.name || null,
+      expectedPrice: robotSnapshot.expectedPrice,
+      balance: robotSnapshot.balance,
+      availableSlots: robotSnapshot.availableSlots,
+      duration,
+      reason: robotSnapshot.reason || null,
+    });
+
+    if (robotSnapshot.reason) {
+      log("ERROR", "fulfillRobot", "Provider pre-check blocked auto-delivery", {
+        robotGameId,
+        duration,
+        reason: robotSnapshot.reason,
       });
-      if (gamesRes.ok) {
-        const gamesData = await gamesRes.json();
-        const games = Array.isArray(gamesData) ? gamesData : gamesData.games || [];
-        const targetGame = games.find((g: any) => g.id === robotGameId);
-        if (targetGame) {
-          expectedPrice = targetGame.prices?.[String(duration)] ?? targetGame.prices?.["1"] ?? null;
-          const balance = gamesData.balance ?? null;
-          log("INFO", "fulfillRobot", "Pre-check", {
-            gameId: robotGameId,
-            gameName: targetGame.name,
-            prices: JSON.stringify(targetGame.prices),
-            expectedPrice,
-            balance,
-            duration,
-          });
-          if (balance !== null && expectedPrice !== null && balance < expectedPrice) {
-            log("ERROR", "fulfillRobot", "Insufficient balance detected before buy", { balance, expectedPrice, duration });
-          }
-        } else {
-          log("WARN", "fulfillRobot", "Game not found in /games list", { robotGameId });
-        }
-      }
-    } catch (preErr: any) {
-      log("WARN", "fulfillRobot", "Pre-check failed, proceeding anyway", { error: preErr.message });
     }
 
     const buyRes = await fetch(`https://api.robotproject.com.br/buy/${encodeURIComponent(robotGameId)}`, {
       method: "POST",
       headers: {
-        Authorization: `Basic ${auth}`,
+        Authorization: robotAuthHeader(creds),
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ duration: Number(duration) }),
     });
 
     const buyData = await buyRes.json();
-    log("INFO", "fulfillRobot", "Robot buy response", { status: buyRes.status, body: JSON.stringify(buyData).substring(0, 500), expectedPrice, duration });
+    log("INFO", "fulfillRobot", "Robot buy response", { status: buyRes.status, body: JSON.stringify(buyData).substring(0, 500), expectedPrice: robotSnapshot.expectedPrice, duration });
 
     if (!buyRes.ok || !buyData.success) {
       const reason = buyData.message || `HTTP ${buyRes.status}`;
@@ -1216,51 +1300,58 @@ async function validateAndCalculatePrice(
     const qty = Math.max(1, Math.floor(Number(item.quantity) || 1));
     let realPrice = Number(plan.price);
 
+    const { data: productData } = await supabaseAdmin
+      .from("products")
+      .select("robot_game_id, robot_markup_percent")
+      .eq("id", plan.product_id)
+      .maybeSingle();
+
+    const isRobotProduct = !!(productData?.robot_game_id && productData.robot_game_id > 0);
+
+    if (isRobotProduct) {
+      const creds = await getRobotCredentials(supabaseAdmin);
+      if (!creds) {
+        return { validatedAmount: 0, validatedDiscount: 0, validatedCart: [], error: "Credenciais da Robot Project não configuradas" };
+      }
+
+      const robotSnapshot = await fetchRobotGameSnapshot(creds, productData.robot_game_id, plan.robot_duration_days || 30);
+      log("INFO", "validatePrice", "Robot product pre-check", {
+        productId: plan.product_id,
+        robotGameId: productData.robot_game_id,
+        duration: plan.robot_duration_days || 30,
+        expectedPrice: robotSnapshot.expectedPrice,
+        balance: robotSnapshot.balance,
+        availableSlots: robotSnapshot.availableSlots,
+        reason: robotSnapshot.reason || null,
+      });
+
+      if (robotSnapshot.reason) {
+        return { validatedAmount: 0, validatedDiscount: 0, validatedCart: [], error: robotSnapshot.reason };
+      }
+    }
+
     // If price is 0 and product has robot markup, calculate from Robot API prices
     if (realPrice <= 0) {
-      const { data: productData } = await supabaseAdmin
-        .from("products")
-        .select("robot_game_id, robot_markup_percent")
-        .eq("id", plan.product_id)
-        .maybeSingle();
-
       if (productData?.robot_game_id && productData.robot_markup_percent && plan.robot_duration_days) {
-        // Fetch robot game prices to calculate
-        const [uRes, pRes] = await Promise.all([
-          supabaseAdmin.from("system_credentials").select("value").eq("env_key", "ROBOT_API_USERNAME").maybeSingle(),
-          supabaseAdmin.from("system_credentials").select("value").eq("env_key", "ROBOT_API_PASSWORD").maybeSingle(),
-        ]);
-        const robotUsername = uRes.data?.value;
-        const robotPassword = pRes.data?.value;
-        if (robotUsername && robotPassword) {
+        const creds = await getRobotCredentials(supabaseAdmin);
+        if (creds) {
           try {
-            const auth = btoa(`${robotUsername}:${robotPassword}`);
-            const gamesRes = await fetch("https://api.robotproject.com.br/games", {
-              headers: { Authorization: `Basic ${auth}`, "Content-Type": "application/json" },
-            });
-            if (gamesRes.ok) {
-              const games = await gamesRes.json();
-              const robotGame = Array.isArray(games) ? games.find((g: any) => g.id === productData.robot_game_id) : null;
-              if (robotGame?.prices) {
-                const basePriceUsd = robotGame.prices[String(plan.robot_duration_days)];
-                if (basePriceUsd !== undefined && basePriceUsd > 0) {
-                  // Robot API returns full price — apply reseller discount (-40%) first
-                  const costPriceUsd = basePriceUsd * 0.6;
-                  // Fetch live exchange rate
-                  let usdToBrl = 5.25; // fallback
-                  try {
-                    const fxRes = await fetch("https://economia.awesomeapi.com.br/json/last/USD-BRL");
-                    if (fxRes.ok) {
-                      const fxData = await fxRes.json();
-                      const bid = Number(fxData?.USDBRL?.bid);
-                      if (bid > 0) usdToBrl = bid;
-                    }
-                  } catch (_) { /* use fallback */ }
-                  const basePriceBrl = costPriceUsd * usdToBrl;
-                  realPrice = Number((basePriceBrl * (1 + productData.robot_markup_percent / 100)).toFixed(2));
-                  console.log(`Robot markup price: fullUSD=${basePriceUsd}, costUSD=${costPriceUsd} (-40%), rate=${usdToBrl}, baseBRL=${basePriceBrl.toFixed(2)}, markup=${productData.robot_markup_percent}%, final=${realPrice}`);
+            const robotSnapshot = await fetchRobotGameSnapshot(creds, productData.robot_game_id, plan.robot_duration_days);
+            const basePriceUsd = robotSnapshot.expectedPrice;
+            if (basePriceUsd !== null && basePriceUsd > 0) {
+              const costPriceUsd = basePriceUsd * 0.6;
+              let usdToBrl = 5.25;
+              try {
+                const fxRes = await fetch("https://economia.awesomeapi.com.br/json/last/USD-BRL");
+                if (fxRes.ok) {
+                  const fxData = await fxRes.json();
+                  const bid = Number(fxData?.USDBRL?.bid);
+                  if (bid > 0) usdToBrl = bid;
                 }
-              }
+              } catch (_) { /* use fallback */ }
+              const basePriceBrl = costPriceUsd * usdToBrl;
+              realPrice = Number((basePriceBrl * (1 + productData.robot_markup_percent / 100)).toFixed(2));
+              console.log(`Robot markup price: fullUSD=${basePriceUsd}, costUSD=${costPriceUsd} (-40%), rate=${usdToBrl}, baseBRL=${basePriceBrl.toFixed(2)}, markup=${productData.robot_markup_percent}%, final=${realPrice}`);
             }
           } catch (err) {
             console.error("Failed to fetch robot prices for validation:", err);
@@ -1936,6 +2027,116 @@ Deno.serve(async (req) => {
         JSON.stringify({ success: true, status: "COMPLETED", message: "Pagamento validado e produtos entregues" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // ==================== RETRY ROBOT FULFILLMENT (admin-only) ====================
+    if (action === "retry-robot" && req.method === "POST") {
+      const { data: adminRole } = await supabaseAdmin
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .eq("role", "admin")
+        .maybeSingle();
+
+      if (!adminRole) {
+        return new Response(JSON.stringify({ error: "Forbidden: admin only" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const body = await req.json();
+      const { ticket_id } = body;
+
+      if (!ticket_id) {
+        return new Response(JSON.stringify({ error: "ticket_id required" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { data: ticket } = await supabaseAdmin
+        .from("order_tickets")
+        .select("id, user_id, product_id, product_plan_id, status, metadata")
+        .eq("id", ticket_id)
+        .single();
+
+      if (!ticket) {
+        return new Response(JSON.stringify({ error: "Ticket não encontrado" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const meta = (ticket.metadata || {}) as Record<string, any>;
+      if (meta.type !== "robot-project") {
+        return new Response(JSON.stringify({ error: "Este ticket não é do Robot Project" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (ticket.status === "delivered") {
+        return new Response(JSON.stringify({ success: true, message: "Este ticket já foi entregue" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { data: payment } = await supabaseAdmin
+        .from("payments")
+        .select("*")
+        .eq("user_id", ticket.user_id)
+        .eq("status", "COMPLETED")
+        .contains("cart_snapshot", [{ productId: ticket.product_id, planId: ticket.product_plan_id }])
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!payment) {
+        return new Response(JSON.stringify({ error: "Pagamento concluído não encontrado para este ticket" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const [productDataRes, planDataRes] = await Promise.all([
+        supabaseAdmin.from("products").select("name, robot_game_id, robot_markup_percent").eq("id", ticket.product_id).single(),
+        supabaseAdmin.from("product_plans").select("name, price, robot_duration_days").eq("id", ticket.product_plan_id).single(),
+      ]);
+
+      const productData = productDataRes.data;
+      const planData = planDataRes.data;
+
+      if (!productData?.robot_game_id || !planData) {
+        return new Response(JSON.stringify({ error: "Configuração Robot inválida para este ticket" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      await supabaseAdmin
+        .from("ticket_messages")
+        .insert({
+          ticket_id: ticket.id,
+          sender_id: userId,
+          sender_role: "staff",
+          message: "🔄 Reprocessando entrega automática da sua key. Aguarde alguns instantes...",
+        });
+
+      const item = {
+        productId: ticket.product_id,
+        planId: ticket.product_plan_id,
+        productName: productData.name,
+        planName: planData.name,
+        price: Number(planData.price || 0),
+        quantity: 1,
+      };
+
+      await fulfillRobotProduct(supabaseAdmin, payment, item, productData, planData);
+
+      return new Response(JSON.stringify({ success: true, message: "Reprocessamento da entrega Robot executado" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // ==================== CARD / CRYPTO — NOT SUPPORTED ====================
