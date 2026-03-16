@@ -4,7 +4,7 @@ import { fetchAllRows } from "@/lib/supabaseAllRows";
 import { useAdminUsers } from "@/hooks/useAdminUsers";
 import {
   Loader2, Search, ShoppingBag, Package, DollarSign, Users,
-  ChevronLeft, ChevronRight, Eye, Copy, Check
+  ChevronLeft, ChevronRight, Eye, Copy, Check, Clock
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
