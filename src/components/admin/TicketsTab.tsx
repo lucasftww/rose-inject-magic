@@ -1080,10 +1080,10 @@ const TicketsTab = ({
                     </button>
                   </div>
                 ) : (
-                  <div className="flex items-end gap-1.5 rounded-xl border border-border bg-background p-1.5 focus-within:border-success/30 focus-within:ring-1 focus-within:ring-success/10 transition-all">
+                  <div className="flex items-end gap-1.5 rounded-xl border border-border bg-background p-1.5 focus-within:border-success/30 focus-within:ring-1 focus-within:ring-success/10">
                     <input ref={fileInputRef} type="file" multiple accept="image/*,.pdf,.txt,.doc,.docx,.zip,.rar,.exe" className="hidden" onChange={handleFileSelect} />
                     <button onClick={() => fileInputRef.current?.click()} disabled={uploadingFile}
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground/60 hover:text-foreground hover:bg-muted/40 transition-all disabled:opacity-30" title="Anexar">
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground/60 hover:text-foreground hover:bg-muted/40 disabled:opacity-30" title="Anexar">
                       <Paperclip className="h-4 w-4" />
                     </button>
                     <textarea
