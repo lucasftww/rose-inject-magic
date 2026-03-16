@@ -706,7 +706,7 @@ const TicketsTab = ({
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="rounded bg-secondary px-1.5 py-0.5 text-[9px] font-bold text-muted-foreground">.{ext}</span>
-                <Download className="h-3.5 w-3.5 text-muted-foreground group-hover:text-success transition-colors" />
+                <Download className="h-3.5 w-3.5 text-muted-foreground group-hover:text-success" />
               </div>
             </a>
           );
