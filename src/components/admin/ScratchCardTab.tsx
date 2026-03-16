@@ -206,7 +206,7 @@ const ScratchCardTab = () => {
         ) : (
           <div className="space-y-2">
             {prizes.map((prize) => (
-              <div key={prize.id} className={`flex items-center justify-between rounded-lg border p-4 transition-colors ${
+              <div key={prize.id} className={`flex items-center justify-between rounded-lg border p-4 ${
                 !prize.active ? "border-border/50 bg-card/50 opacity-60" : "border-border bg-card hover:border-success/30"
               }`}>
                 <div className="flex items-center gap-3">
