@@ -686,7 +686,7 @@ const TicketsTab = ({
           if (part.type === "image") {
             return (
               <a key={i} href={part.url} target="_blank" rel="noopener noreferrer" className="block">
-                <img src={part.url} alt="Imagem enviada" className="rounded-lg max-w-[260px] max-h-[180px] object-cover border border-border hover:brightness-110 transition-all cursor-pointer" loading="lazy" />
+                <img src={part.url} alt="Imagem enviada" className="rounded-lg max-w-[260px] max-h-[180px] object-cover border border-border hover:brightness-110 cursor-pointer" loading="lazy" />
               </a>
             );
           }
