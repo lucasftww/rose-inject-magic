@@ -1218,6 +1218,12 @@ export type Database = {
       }
     }
     Functions: {
+      admin_finance_summary: { Args: { _since?: string }; Returns: Json }
+      admin_lzt_stats: { Args: never; Returns: Json }
+      admin_overview_stats: { Args: never; Returns: Json }
+      admin_sales_count: { Args: { _status?: string }; Returns: number }
+      admin_sales_revenue: { Args: never; Returns: number }
+      admin_scratch_stats: { Args: never; Returns: Json }
       claim_stock_item: { Args: { _plan_id: string }; Returns: string }
       has_role: {
         Args: {

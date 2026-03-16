@@ -39,10 +39,11 @@ const ScratchCardTab = () => {
   const [totalRevenue, setTotalRevenue] = useState(0);
 
   const fetchData = async () => {
-    const [{ data: prizesData }, { data: configData }, { data: playsData }] = await Promise.all([
+    const [{ data: prizesData }, { data: configData }, statsRes] = await Promise.all([
       supabase.from("scratch_card_prizes").select("*").order("sort_order"),
       supabase.from("scratch_card_config").select("*").limit(1).single(),
-      supabase.from("scratch_card_plays").select("id, won, amount_paid"),
+      // Use DB aggregation function for accurate stats (no 1000-row limit)
+      supabase.rpc("admin_scratch_stats"),
     ]);
     if (prizesData) setPrizes(prizesData as Prize[]);
     if (configData) {
@@ -51,10 +52,13 @@ const ScratchCardTab = () => {
       setConfigPrice(String(c.price));
       setConfigActive(c.active);
     }
-    if (playsData) {
-      setTotalPlays(playsData.length);
-      setTotalWins(playsData.filter((p: any) => p.won).length);
-      setTotalRevenue(playsData.reduce((s: number, p: any) => s + Number(p.amount_paid), 0));
+    if (statsRes.data) {
+      const s = statsRes.data as any;
+      if (!s.error) {
+        setTotalPlays(Number(s.total_plays));
+        setTotalWins(Number(s.total_wins));
+        setTotalRevenue(Number(s.total_revenue));
+      }
     }
     setLoading(false);
   };
