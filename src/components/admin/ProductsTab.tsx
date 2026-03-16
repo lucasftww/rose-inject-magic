@@ -781,7 +781,7 @@ const ProductsTab = () => {
                           </div>
                         )}
                         <button onClick={() => removeMedia(idx)}
-                          className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground text-xs opacity-0 group-hover:opacity-100 transition-opacity">
+                          className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground text-xs opacity-0 group-hover:opacity-100">
                           <X className="h-3 w-3" />
                         </button>
                         <span className="absolute bottom-0.5 left-0.5 rounded bg-background/80 px-1 text-[8px] font-bold text-foreground">{idx + 1}</span>
