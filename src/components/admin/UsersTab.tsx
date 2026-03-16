@@ -49,6 +49,8 @@ const UsersTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
   const [showBanDialog, setShowBanDialog] = useState<UserData | null>(null);
   const [showOrdersUser, setShowOrdersUser] = useState<UserData | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [userPage, setUserPage] = useState(1);
+  const USERS_PER_PAGE = 50;
 
   useEffect(() => {
     if (!loadingAdminUsers) {
