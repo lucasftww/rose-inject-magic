@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchAllRows } from "@/lib/supabaseAllRows";
+import { useAdminProductsWithPlans } from "@/hooks/useAdminData";
 import { toast } from "@/hooks/use-toast";
 import { Package, ChevronDown, ChevronRight, Plus, Trash2, Loader2, Sparkles, AlertTriangle } from "lucide-react";
 
@@ -30,6 +31,7 @@ interface StockItem {
 const ITEMS_PER_PAGE = 5;
 
 const StockTab = () => {
+  const { data: cachedProducts } = useAdminProductsWithPlans();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedProduct, setExpandedProduct] = useState<string | null>(null);
@@ -43,34 +45,35 @@ const StockTab = () => {
   const [generatingAI, setGeneratingAI] = useState(false);
   const [aiLines, setAiLines] = useState(5);
 
-  const fetchProducts = async () => {
-    const { data, error } = await supabase
-      .from("products")
-      .select("id, name, image_url, product_plans(id, name, product_id, sort_order)")
-      .order("sort_order", { ascending: true });
-    if (!error && data) {
-      setProducts(data as Product[]);
-      // Fetch stock counts for all plans
-      const planIds = data.flatMap((p: any) => p.product_plans.map((pl: any) => pl.id));
-      if (planIds.length > 0) {
-        // Use fetchAllRows to bypass 1000-row limit on stock counts
-        const stockData = await fetchAllRows("stock_items", {
-          select: "product_plan_id, used",
-          filters: [{ column: "product_plan_id", op: "in", value: planIds }],
-        });
-        const counts: Record<string, { total: number; available: number }> = {};
-        stockData.forEach((s: any) => {
-          if (!counts[s.product_plan_id]) counts[s.product_plan_id] = { total: 0, available: 0 };
-          counts[s.product_plan_id].total++;
-          if (!s.used) counts[s.product_plan_id].available++;
-        });
-        setStockCounts(counts);
-      }
+  const fetchStockCounts = async (prods: Product[]) => {
+    const planIds = prods.flatMap((p) => p.product_plans.map((pl) => pl.id));
+    if (planIds.length > 0) {
+      const stockData = await fetchAllRows("stock_items", {
+        select: "product_plan_id, used",
+        filters: [{ column: "product_plan_id", op: "in", value: planIds }],
+      });
+      const counts: Record<string, { total: number; available: number }> = {};
+      stockData.forEach((s: any) => {
+        if (!counts[s.product_plan_id]) counts[s.product_plan_id] = { total: 0, available: 0 };
+        counts[s.product_plan_id].total++;
+        if (!s.used) counts[s.product_plan_id].available++;
+      });
+      setStockCounts(counts);
     }
-    setLoading(false);
   };
 
-  useEffect(() => { fetchProducts(); }, []);
+  useEffect(() => {
+    if (cachedProducts) {
+      const mapped = cachedProducts.map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        image_url: p.image_url,
+        product_plans: p.product_plans || [],
+      }));
+      setProducts(mapped);
+      fetchStockCounts(mapped).then(() => setLoading(false));
+    }
+  }, [cachedProducts]);
 
   const fetchStockForPlan = async (planId: string) => {
     setLoadingStock(planId);

@@ -163,17 +163,26 @@ const ProductsTab = () => {
     setLoadingRobotGames(false);
   };
 
+  const { data: cachedGames, refetch: refetchGames } = useAdminGames();
+  const { data: cachedProducts, refetch: refetchProducts } = useAdminProductsWithPlans();
+
+  useEffect(() => {
+    if (cachedGames) setGames(cachedGames);
+  }, [cachedGames]);
+
+  useEffect(() => {
+    if (cachedProducts) {
+      setProducts(cachedProducts as any);
+      setLoading(false);
+    }
+  }, [cachedProducts]);
+
   const fetchData = async () => {
-    const [gamesRes, productsRes] = await Promise.all([
-      supabase.from("games").select("id, name").order("sort_order"),
-      supabase.from("products").select("*, product_plans(*)").order("sort_order"),
-    ]);
-    if (gamesRes.data) setGames(gamesRes.data);
-    if (productsRes.data) setProducts(productsRes.data as any);
+    await Promise.all([refetchGames(), refetchProducts()]);
     setLoading(false);
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { if (!cachedProducts) fetchData(); }, []);
 
   // Auto-fill plan prices when Robot games data loads (on edit)
   useEffect(() => {

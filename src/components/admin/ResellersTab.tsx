@@ -42,8 +42,8 @@ interface Purchase {
 
 const ResellersTab = () => {
   const { users: adminUsersData } = useAdminUsers();
+  const { data: products = [] } = useAdminProductsList();
   const [resellers, setResellers] = useState<Reseller[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -89,12 +89,6 @@ const ResellersTab = () => {
     setLoading(false);
   };
 
-  const fetchProducts = async () => {
-    const { data } = await supabase.from("products").select("id, name").order("name", { ascending: true });
-    if (data) setProducts(data);
-  };
-
-  useEffect(() => { fetchProducts(); }, []);
   useEffect(() => { if (adminUsersData.length > 0) fetchResellers(); }, [adminUsersData]);
 
   const searchUsers = async () => {
