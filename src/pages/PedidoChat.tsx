@@ -236,6 +236,8 @@ const PedidoChat = () => {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
+    // Revoke old preview URLs to prevent memory leaks
+    previewUrls.forEach(url => { if (url) URL.revokeObjectURL(url); });
     const newFiles = [...pendingFiles, ...files].slice(0, 5);
     setPendingFiles(newFiles);
     setPreviewUrls(newFiles.map(f => f.type.startsWith("image/") ? URL.createObjectURL(f) : ""));
