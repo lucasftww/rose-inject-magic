@@ -138,7 +138,11 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
     };
 
     fetchAll();
-  }, []);
+  }, [refreshKey]);
+
+  const handleRefresh = () => {
+    setRefreshKey(k => k + 1);
+  };
 
   if (loading) {
     return (
@@ -150,6 +154,14 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
 
   return (
     <div className="space-y-8">
+      {/* Header with refresh */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold text-foreground">Visão Geral</h2>
+        <button onClick={handleRefresh} className="flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-xs font-medium text-muted-foreground hover:border-success hover:text-success transition-colors">
+          <RefreshCw className="h-3 w-3" /> Atualizar
+        </button>
+      </div>
+
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
         <StatCard icon={<DollarSign className="h-5 w-5 text-success" />} label="Receita Total" value={`R$ ${(totalRevenue / 100).toFixed(2)}`} />
