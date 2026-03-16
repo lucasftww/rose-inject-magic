@@ -193,10 +193,10 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
         setRobotProfit(Math.round((rRev - rCost) * 100) / 100);
       }
 
-      if (todayPayRes.data) {
-        const todayTotal = (todayPayRes.data as any[]).reduce((s, p) => s + Number(p.amount), 0);
+      if (todayPayRes && todayPayRes.length > 0) {
+        const todayTotal = todayPayRes.reduce((s: number, p: any) => s + Number(p.amount), 0);
         setTodayRevenue(todayTotal / 100);
-        setTodayOrders((todayPayRes.data as any[]).length);
+        setTodayOrders(todayPayRes.length);
       }
 
       if (recentOrdersRes.data) {
