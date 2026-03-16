@@ -160,7 +160,7 @@ const StockTab = () => {
     } else {
       toast({ title: "Estoque limpo!" });
       fetchStockForPlan(planId);
-      fetchProducts();
+      fetchStockCounts(products);
     }
   };
 
