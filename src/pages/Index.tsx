@@ -426,7 +426,18 @@ const ProductsSection = () => {
                 >
                   <div className="relative aspect-[4/3] w-full overflow-hidden bg-secondary/50">
                     {product.image_url ? (
-                      <img src={product.image_url} alt={product.name} className="absolute inset-0 h-full w-full object-cover" />
+                      <>
+                        <img
+                          src={product.image_url}
+                          alt=""
+                          aria-hidden="true"
+                          className="absolute inset-0 h-full w-full scale-110 object-cover opacity-25 blur-xl"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-b from-background/5 via-transparent to-background/10" />
+                        <div className="relative flex h-full w-full items-center justify-center p-3 sm:p-4">
+                          <img src={product.image_url} alt={product.name} className="h-full w-full object-contain" />
+                        </div>
+                      </>
                     ) : (
                       <div className="flex h-full w-full items-center justify-center">
                         <Package className="h-6 w-6 sm:h-10 sm:w-10 text-muted-foreground/20" />
