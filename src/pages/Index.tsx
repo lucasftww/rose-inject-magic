@@ -7,16 +7,12 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useLztMarkup } from "@/hooks/useLztMarkup";
 import bannerInject from "@/assets/banner-inject.webp";
-import rankAscendente from "@/assets/rank-ascendente.png";
-import rankFerro from "@/assets/rank-ferro.png";
-import rankBronze from "@/assets/rank-bronze.png";
-import rankPrata from "@/assets/rank-prata.png";
-import rankOuro from "@/assets/rank-ouro.png";
-import rankPlatina from "@/assets/rank-platina.png";
-import rankDiamante from "@/assets/rank-diamante.png";
-import rankImortal from "@/assets/rank-imortal.png";
-import rankRadiante from "@/assets/rank-radiante-new.png";
-import rankUnranked from "@/assets/rank-unranked.png";
+import {
+  rankFerro, rankBronze, rankPrata, rankOuro, rankPlatina,
+  rankDiamante, rankAscendente, rankImortal, rankRadianteNew as rankRadiante,
+  rankUnranked, rankMap, RARITY_PRIORITY, fetchAllValorantSkins,
+  type SkinEntry,
+} from "@/lib/valorantData";
 
 // Extracted components
 import FloatingWidgets from "@/components/landing/FloatingWidgets";
