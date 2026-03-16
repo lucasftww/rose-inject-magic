@@ -3,7 +3,7 @@ import Header from "@/components/Header";
 import {
   ShieldAlert, Gamepad2, Mail, Package, Tag, UserCheck, TrendingUp,
   Key, CreditCard, BarChart3, ShoppingBag, Globe, Shield, Users,
-  ChevronRight
+  ChevronRight, Menu, X
 } from "lucide-react";
 import ProductsTab from "@/components/admin/ProductsTab";
 import CouponsTab from "@/components/admin/CouponsTab";
@@ -21,6 +21,12 @@ import SalesTab from "@/components/admin/SalesTab";
 import GamesTab from "@/components/admin/GamesTab";
 import RobotProjectTab from "@/components/admin/RobotProjectTab";
 import UsersTab from "@/components/admin/UsersTab";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 
 type TabId = "overview" | "financeiro" | "jogos" | "produtos" | "estoque" | "lzt" | "robot" | "vendas" | "pagamentos" | "cupons" | "raspadinha" | "tickets" | "status" | "usuarios" | "revendedores" | "credenciais";
 
@@ -71,14 +77,67 @@ const tabGroups: TabGroup[] = [
   },
 ];
 
+/* Shared nav renderer */
+const SidebarNav = ({
+  activeTab,
+  onSelect,
+  collapsed = false,
+}: {
+  activeTab: TabId;
+  onSelect: (id: TabId) => void;
+  collapsed?: boolean;
+}) => (
+  <nav className="py-2 space-y-0.5">
+    {tabGroups.map((group) => (
+      <div key={group.label}>
+        {!collapsed && (
+          <p className="px-4 pt-4 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/60 select-none">
+            {group.label}
+          </p>
+        )}
+        {collapsed && <div className="pt-2" />}
+        {group.tabs.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => onSelect(tab.id)}
+              title={collapsed ? tab.label : undefined}
+              className={`group flex w-full items-center gap-2.5 text-sm font-medium transition-all duration-200 relative
+                ${collapsed ? "justify-center px-2 py-2.5" : "px-4 py-2"}
+                ${isActive
+                  ? "text-success bg-success/10"
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                }`}
+            >
+              {isActive && (
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-success" />
+              )}
+              <Icon className={`h-4 w-4 shrink-0 ${isActive ? "text-success" : "text-muted-foreground group-hover:text-foreground"}`} />
+              {!collapsed && <span className="truncate">{tab.label}</span>}
+            </button>
+          );
+        })}
+      </div>
+    ))}
+  </nav>
+);
+
 const AdminPanel = () => {
   const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [pendingTicketId, setPendingTicketId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleGoToTicket = (ticketId: string) => {
     setPendingTicketId(ticketId);
     setActiveTab("tickets");
+  };
+
+  const handleTabSelect = (id: TabId) => {
+    setActiveTab(id);
+    setMobileOpen(false);
   };
 
   const activeLabel = tabGroups.flatMap(g => g.tabs).find(t => t.id === activeTab)?.label || "";
@@ -86,11 +145,29 @@ const AdminPanel = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
+
+      {/* Mobile Sheet Sidebar */}
+      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+        <SheetContent side="left" className="w-64 p-0 bg-card border-r border-border">
+          <SheetHeader className="px-4 py-4 border-b border-border">
+            <SheetTitle className="flex items-center gap-2 text-sm">
+              <ShieldAlert className="h-4 w-4 text-success" />
+              <span className="text-xs font-bold uppercase tracking-[0.2em] text-success">Admin</span>
+            </SheetTitle>
+          </SheetHeader>
+          <div className="overflow-y-auto h-[calc(100%-60px)] scrollbar-hide">
+            <SidebarNav activeTab={activeTab} onSelect={handleTabSelect} />
+          </div>
+        </SheetContent>
+      </Sheet>
+
       <div className="flex">
-        {/* Sidebar */}
-        <aside className={`sticky top-0 h-[calc(100vh-64px)] shrink-0 border-r border-border bg-card/50 backdrop-blur-sm transition-all duration-300 overflow-y-auto ${sidebarOpen ? "w-56" : "w-14"}`}>
+        {/* Desktop Sidebar */}
+        <aside
+          className={`hidden lg:flex flex-col sticky top-0 h-screen shrink-0 border-r border-border bg-card/50 backdrop-blur-sm transition-all duration-300 overflow-hidden ${sidebarOpen ? "w-56" : "w-14"}`}
+        >
           {/* Brand */}
-          <div className="flex items-center gap-2 px-4 py-5 border-b border-border">
+          <div className="flex items-center gap-2 px-3 py-4 border-b border-border min-h-[56px]">
             <ShieldAlert className="h-5 w-5 text-success shrink-0" />
             {sidebarOpen && (
               <span className="text-xs font-bold uppercase tracking-[0.2em] text-success truncate">Admin</span>
@@ -103,54 +180,34 @@ const AdminPanel = () => {
             </button>
           </div>
 
-          {/* Nav Groups */}
-          <nav className="py-3 space-y-1">
-            {tabGroups.map((group) => (
-              <div key={group.label}>
-                {sidebarOpen && (
-                  <p className="px-4 pt-4 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/60">
-                    {group.label}
-                  </p>
-                )}
-                {group.tabs.map((tab) => {
-                  const Icon = tab.icon;
-                  const isActive = activeTab === tab.id;
-                  return (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      title={!sidebarOpen ? tab.label : undefined}
-                      className={`group flex w-full items-center gap-2.5 px-4 py-2 text-sm font-medium transition-all duration-200 relative
-                        ${isActive
-                          ? "text-success bg-success/10"
-                          : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
-                        }`}
-                    >
-                      {isActive && (
-                        <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-success" />
-                      )}
-                      <Icon className={`h-4 w-4 shrink-0 ${isActive ? "text-success" : "text-muted-foreground group-hover:text-foreground"}`} />
-                      {sidebarOpen && <span className="truncate">{tab.label}</span>}
-                    </button>
-                  );
-                })}
-              </div>
-            ))}
-          </nav>
+          {/* Nav */}
+          <div className="flex-1 overflow-y-auto scrollbar-hide">
+            <SidebarNav activeTab={activeTab} onSelect={handleTabSelect} collapsed={!sidebarOpen} />
+          </div>
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 min-w-0 px-6 lg:px-10 pt-6 pb-20">
-          {/* Page Title */}
-          <div className="mb-8">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Administração</p>
-            <h1 className="text-2xl font-bold text-foreground" style={{ fontFamily: "'Valorant', sans-serif" }}>
-              {activeLabel.toUpperCase()}
-            </h1>
+        <main className="flex-1 min-w-0">
+          {/* Top bar */}
+          <div className="sticky top-0 z-10 flex items-center gap-3 px-4 lg:px-8 py-3 border-b border-border bg-background/80 backdrop-blur-sm">
+            {/* Mobile menu trigger */}
+            <button
+              onClick={() => setMobileOpen(true)}
+              className="lg:hidden rounded-md p-1.5 text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Administração</p>
+              <h1 className="text-lg sm:text-xl font-bold text-foreground truncate" style={{ fontFamily: "'Valorant', sans-serif" }}>
+                {activeLabel.toUpperCase()}
+              </h1>
+            </div>
           </div>
 
           {/* Tab Content */}
-          <div>
+          <div className="px-3 sm:px-4 lg:px-8 py-4 lg:py-6">
             {activeTab === "overview" && <OverviewTab onGoToTicket={handleGoToTicket} />}
             {activeTab === "jogos" && <GamesTab />}
             {activeTab === "produtos" && <ProductsTab />}
