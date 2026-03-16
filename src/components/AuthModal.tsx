@@ -259,7 +259,7 @@ const AuthModal = ({ open, onOpenChange, defaultTab = "login" }: AuthModalProps)
 
                   {/* Turnstile temporarily disabled for debugging */}
 
-                  <Button type="submit" disabled={isLoading || !captchaToken} className="w-full h-11 sm:h-12 bg-success text-success-foreground font-semibold text-sm sm:text-base hover:bg-success/90 mt-1">
+                  <Button type="submit" disabled={isLoading} className="w-full h-11 sm:h-12 bg-success text-success-foreground font-semibold text-sm sm:text-base hover:bg-success/90 mt-1">
                     {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : tab === "login" ? "Entrar" : "Criar Conta"}
                   </Button>
 
