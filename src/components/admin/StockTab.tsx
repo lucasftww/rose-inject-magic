@@ -74,13 +74,15 @@ const StockTab = () => {
 
   const fetchStockForPlan = async (planId: string) => {
     setLoadingStock(planId);
-    const { data, error } = await supabase
-      .from("stock_items")
-      .select("*")
-      .eq("product_plan_id", planId)
-      .order("created_at", { ascending: false });
-    if (!error && data) {
-      setStockMap(prev => ({ ...prev, [planId]: data as unknown as StockItem[] }));
+    try {
+      const data = await fetchAllRows<StockItem>("stock_items", {
+        select: "id, product_plan_id, content, used, used_at, created_at",
+        filters: [{ column: "product_plan_id", op: "eq", value: planId }],
+        order: { column: "created_at", ascending: false },
+      });
+      setStockMap(prev => ({ ...prev, [planId]: data }));
+    } catch {
+      // fallback
     }
     setLoadingStock(null);
   };

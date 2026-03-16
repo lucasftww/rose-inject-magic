@@ -116,10 +116,10 @@ const TicketsTab = ({
       const planIds = [...new Set(data.map((t: any) => t.product_plan_id))] as string[];
       const userIds = [...new Set(data.map((t: any) => t.user_id))] as string[];
 
-      const [productsRes, plansRes, profilesRes, lztSalesData] = await Promise.all([
+      const [productsRes, plansRes, profilesData, lztSalesData] = await Promise.all([
         supabase.from("products").select("id, name").in("id", productIds),
         supabase.from("product_plans").select("id, name, price").in("id", planIds),
-        supabase.from("profiles").select("user_id, username").in("user_id", userIds),
+        fetchAllRows("profiles", { select: "user_id, username" }),
         fetchAllRows("lzt_sales", { select: "lzt_item_id, sell_price" }),
       ]);
 
@@ -132,7 +132,7 @@ const TicketsTab = ({
       const lztSalesMap = new Map<string, number>();
       productsRes.data?.forEach((p: any) => { productMap[p.id] = p.name; });
       plansRes.data?.forEach((p: any) => { planMap[p.id] = { name: p.name, price: p.price }; });
-      profilesRes.data?.forEach((p: any) => { profileMap[p.user_id] = p.username || "—"; });
+      (profilesData || []).forEach((p: any) => { profileMap[p.user_id] = p.username || "—"; });
       (lztSalesData || []).forEach((s: any) => { lztSalesMap.set(String(s.lzt_item_id), Number(s.sell_price)); });
 
       setTickets(data.map((t: any) => {

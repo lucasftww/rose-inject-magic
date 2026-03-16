@@ -108,7 +108,7 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
         supabase.rpc("admin_overview_stats"),
         supabase.from("order_tickets").select("*").order("created_at", { ascending: false }).limit(8),
         supabase.from("payments").select("*").eq("status", "COMPLETED").order("paid_at", { ascending: false }).limit(8),
-        supabase.from("payments").select("amount").eq("status", "COMPLETED").gte("paid_at", new Date(new Date().setHours(0, 0, 0, 0)).toISOString()),
+        fetchAllRows("payments", { select: "amount", filters: [{ column: "status", op: "eq", value: "COMPLETED" }, { column: "paid_at", op: "gte", value: new Date(new Date().setHours(0, 0, 0, 0)).toISOString() }] }),
         supabase.rpc("admin_lzt_stats"),
         fetchAllRows("payments", {
           select: "amount, discount_amount, user_id, cart_snapshot, status",
@@ -193,10 +193,10 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
         setRobotProfit(Math.round((rRev - rCost) * 100) / 100);
       }
 
-      if (todayPayRes.data) {
-        const todayTotal = (todayPayRes.data as any[]).reduce((s, p) => s + Number(p.amount), 0);
+      if (todayPayRes && todayPayRes.length > 0) {
+        const todayTotal = todayPayRes.reduce((s: number, p: any) => s + Number(p.amount), 0);
         setTodayRevenue(todayTotal / 100);
-        setTodayOrders((todayPayRes.data as any[]).length);
+        setTodayOrders(todayPayRes.length);
       }
 
       if (recentOrdersRes.data) {
