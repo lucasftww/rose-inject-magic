@@ -65,18 +65,22 @@ const LztTab = () => {
     markup_minecraft: "2",
   });
 
-  const totalBought = allSales.reduce((s, sale) => s + Number(sale.buy_price), 0);
-  const totalSold = allSales.reduce((s, sale) => s + Number(sale.sell_price), 0);
-  const totalProfit = allSales.reduce((s, sale) => s + Number(sale.profit), 0);
+  // Aggregated stats from DB (accurate, no row limit)
+  const [dbStats, setDbStats] = useState<any>(null);
+  const totalBought = dbStats ? Number(dbStats.total_bought) : 0;
+  const totalSold = dbStats ? Number(dbStats.total_sold) : 0;
+  const totalProfit = dbStats ? Number(dbStats.total_profit) : 0;
+  const totalSalesCount = dbStats ? Number(dbStats.total_count) : allSales.length;
 
   const fetchData = async () => {
     setLoading(true);
-    const [configRes, salesRes, ticketsRes] = await Promise.all([
+
+    // Fetch aggregated stats from DB function (no 1000-row limit)
+    const [configRes, statsRes] = await Promise.all([
       supabase.from("lzt_config").select("*").limit(1).single(),
-      supabase.from("lzt_sales").select("*").order("created_at", { ascending: false }),
-      // Fallback: also fetch LZT account tickets to reconstruct sales if lzt_sales is empty
-      supabase.from("order_tickets").select("id, metadata, created_at").order("created_at", { ascending: false }),
+      supabase.rpc("admin_lzt_stats"),
     ]);
+
     if (configRes.data) {
       const c = configRes.data as any as LztConfig;
       setConfig(c);
@@ -89,25 +93,44 @@ const LztTab = () => {
       });
     }
 
-    let sales = (salesRes.data || []) as any as LztSale[];
+    if (statsRes.data) setDbStats(statsRes.data);
+
+    // Fetch ALL sales using paginated helper
+    let sales: LztSale[];
+    try {
+      sales = await fetchAllRows<LztSale>("lzt_sales", {
+        select: "*",
+        order: { column: "created_at", ascending: false },
+      });
+    } catch {
+      sales = [];
+    }
 
     // If lzt_sales is empty, reconstruct from order_tickets metadata
-    if (sales.length === 0 && ticketsRes.data) {
-      const lztTickets = ticketsRes.data.filter((t: any) => (t.metadata as any)?.type === "lzt-account");
-      sales = lztTickets.map((t: any) => {
-        const meta = t.metadata as any;
-        return {
-          id: t.id,
-          lzt_item_id: meta?.lzt_item_id || "",
-          buy_price: 0, // unknown for manual deliveries
-          sell_price: Number(meta?.price_paid || meta?.sell_price || 0),
-          profit: Number(meta?.price_paid || meta?.sell_price || 0), // approximate
-          title: meta?.account_name || meta?.title || "Conta LZT",
-          game: meta?.game || null,
-          buyer_user_id: null,
-          created_at: t.created_at,
-        } as LztSale;
-      });
+    if (sales.length === 0) {
+      try {
+        const tickets = await fetchAllRows("order_tickets", {
+          select: "id, metadata, created_at",
+          order: { column: "created_at", ascending: false },
+        });
+        const lztTickets = tickets.filter((t: any) => (t.metadata as any)?.type === "lzt-account");
+        sales = lztTickets.map((t: any) => {
+          const meta = t.metadata as any;
+          return {
+            id: t.id,
+            lzt_item_id: meta?.lzt_item_id || "",
+            buy_price: 0,
+            sell_price: Number(meta?.price_paid || meta?.sell_price || 0),
+            profit: Number(meta?.price_paid || meta?.sell_price || 0),
+            title: meta?.account_name || meta?.title || "Conta LZT",
+            game: meta?.game || null,
+            buyer_user_id: null,
+            created_at: t.created_at,
+          } as LztSale;
+        });
+      } catch {
+        sales = [];
+      }
     }
 
     setAllSales(sales);
