@@ -872,7 +872,7 @@ const TicketsTab = ({
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-1 pt-2.5 flex-shrink-0 border-t border-border/30 mt-1.5">
               <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}
-                className="rounded-lg border border-border px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground disabled:opacity-20 transition-colors">‹</button>
+                className="rounded-lg border border-border px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground disabled:opacity-20">‹</button>
               {getPageNumbers().map((p, i) =>
                 p === "..." ? (
                   <span key={`dots-${i}`} className="px-1.5 text-xs text-muted-foreground/40">…</span>
