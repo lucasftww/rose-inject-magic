@@ -238,7 +238,7 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
             <button
               key={f.key}
               onClick={() => setStatusFilter(f.key)}
-              className={`rounded-lg px-3 py-2 text-xs font-medium transition-colors whitespace-nowrap ${
+              className={`rounded-lg px-3 py-2 text-xs font-medium whitespace-nowrap ${
                 statusFilter === f.key
                   ? "bg-success/20 text-success border border-success/30"
                   : "bg-secondary/50 text-muted-foreground border border-border hover:text-foreground"
@@ -279,7 +279,7 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
                 paginated.map((sale) => (
                 <Fragment key={sale.id}>
                     <tr
-                      className="border-b border-border/50 hover:bg-secondary/20 transition-colors cursor-pointer"
+                      className="border-b border-border/50 hover:bg-secondary/20 cursor-pointer"
                       onClick={() => setExpandedId(expandedId === sale.id ? null : sale.id)}
                     >
                       <td className="px-4 py-3">
@@ -316,7 +316,7 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
                         <button
                           onClick={(e) => { e.stopPropagation(); onGoToTicket?.(sale.id); }}
                           title="Abrir ticket no chat"
-                          className="rounded-md p-1.5 text-muted-foreground hover:text-success hover:bg-success/10 transition-colors"
+                          className="rounded-md p-1.5 text-muted-foreground hover:text-success hover:bg-success/10"
                         >
                           <Eye className="h-4 w-4" />
                         </button>

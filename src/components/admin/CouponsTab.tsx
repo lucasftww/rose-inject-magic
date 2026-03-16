@@ -137,7 +137,7 @@ const CouponsTab = () => {
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-foreground">Cupons de Desconto</h2>
         <button onClick={() => { resetForm(); setShowForm(true); }}
-          className="flex items-center gap-2 rounded-lg bg-success px-5 py-2.5 text-sm font-semibold text-success-foreground transition-all hover:shadow-[0_0_24px_hsl(var(--success)/0.35)]">
+          className="flex items-center gap-2 rounded-lg bg-success px-5 py-2.5 text-sm font-semibold text-success-foreground">
           <Plus className="h-4 w-4" /> Novo Cupom
         </button>
       </div>
@@ -159,7 +159,7 @@ const CouponsTab = () => {
               <div className="mt-1 flex gap-2">
                 {(["percentage", "fixed"] as const).map((t) => (
                   <button key={t} onClick={() => setFormType(t)}
-                    className={`flex-1 rounded-lg border px-3 py-2.5 text-xs font-medium transition-colors ${formType === t ? "border-success bg-success/10 text-success" : "border-border text-muted-foreground hover:text-foreground"}`}>
+                    className={`flex-1 rounded-lg border px-3 py-2.5 text-xs font-medium ${formType === t ? "border-success bg-success/10 text-success" : "border-border text-muted-foreground hover:text-foreground"}`}>
                     {t === "percentage" ? "% Porcentagem" : "R$ Valor fixo"}
                   </button>
                 ))}
@@ -203,7 +203,7 @@ const CouponsTab = () => {
               <div className="flex flex-wrap gap-2">
                 {products.map((p) => (
                   <button key={p.id} onClick={() => toggleProduct(p.id)}
-                    className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+                    className={`rounded-lg border px-3 py-1.5 text-xs font-medium ${
                       formProductIds.includes(p.id)
                         ? "border-success bg-success/10 text-success"
                         : "border-border text-muted-foreground hover:text-foreground"
@@ -218,8 +218,8 @@ const CouponsTab = () => {
             <label className="flex cursor-pointer items-center gap-3">
               <div className="relative">
                 <input type="checkbox" checked={formActive} onChange={(e) => setFormActive(e.target.checked)} className="peer sr-only" />
-                <div className="h-5 w-9 rounded-full border border-border bg-secondary transition-colors peer-checked:border-success peer-checked:bg-success" />
-                <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-foreground/60 transition-all peer-checked:left-[18px] peer-checked:bg-success-foreground" />
+                <div className="h-5 w-9 rounded-full border border-border bg-secondary peer-checked:border-success peer-checked:bg-success" />
+                <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-foreground/60 peer-checked:left-[18px] peer-checked:bg-success-foreground" />
               </div>
               <span className="text-xs font-medium text-muted-foreground">Ativo</span>
             </label>
@@ -227,7 +227,7 @@ const CouponsTab = () => {
 
           <div className="mt-6 flex gap-3">
             <button onClick={handleSave} disabled={saving}
-              className="flex items-center gap-2 rounded-lg bg-success px-6 py-2.5 text-sm font-semibold text-success-foreground hover:shadow-[0_0_24px_hsl(var(--success)/0.35)] disabled:opacity-50">
+              className="flex items-center gap-2 rounded-lg bg-success px-6 py-2.5 text-sm font-semibold text-success-foreground disabled:opacity-50">
               {saving && <Loader2 className="h-4 w-4 animate-spin" />} {editing ? "Salvar" : "Criar"}
             </button>
             <button onClick={resetForm} className="rounded-lg border border-border px-6 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground">Cancelar</button>
@@ -244,7 +244,7 @@ const CouponsTab = () => {
             <Tag className="h-10 w-10 mb-3 opacity-40" /><p className="font-semibold">Nenhum cupom cadastrado</p>
           </div>
         ) : coupons.map((coupon) => (
-          <div key={coupon.id} className="flex items-center gap-4 rounded-lg border border-border bg-card p-4 transition-all hover:border-success/30">
+          <div key={coupon.id} className="flex items-center gap-4 rounded-lg border border-border bg-card p-4">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-success/10">
               <Tag className="h-5 w-5 text-success" />
             </div>

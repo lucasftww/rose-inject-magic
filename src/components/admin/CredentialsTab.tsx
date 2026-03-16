@@ -109,7 +109,7 @@ const CredentialsTab = () => {
         <h2 className="text-xl font-bold text-foreground">Credenciais</h2>
         <button
           onClick={() => { resetForm(); setShowForm(true); }}
-          className="flex items-center gap-2 rounded-lg bg-success px-5 py-2.5 text-sm font-semibold text-success-foreground transition-all hover:shadow-[0_0_24px_hsl(var(--success)/0.35)]"
+          className="flex items-center gap-2 rounded-lg bg-success px-5 py-2.5 text-sm font-semibold text-success-foreground"
         >
           <Plus className="h-4 w-4" /> Nova Credencial
         </button>
@@ -154,7 +154,7 @@ const CredentialsTab = () => {
           </form>
           <div className="mt-6 flex gap-3">
             <button onClick={handleSave} disabled={saving}
-              className="flex items-center gap-2 rounded-lg bg-success px-6 py-2.5 text-sm font-semibold text-success-foreground hover:shadow-[0_0_24px_hsl(var(--success)/0.35)] disabled:opacity-50">
+              className="flex items-center gap-2 rounded-lg bg-success px-6 py-2.5 text-sm font-semibold text-success-foreground disabled:opacity-50">
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} {editing ? "Salvar" : "Criar"}
             </button>
             <button onClick={resetForm} className="rounded-lg border border-border px-6 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground">Cancelar</button>
@@ -173,7 +173,7 @@ const CredentialsTab = () => {
             <p className="mt-1 text-sm">Clique em "Nova Credencial" para começar</p>
           </div>
         ) : credentials.map((cred) => (
-          <div key={cred.id} className="rounded-xl border border-border bg-card p-5 transition-all hover:border-success/30">
+          <div key={cred.id} className="rounded-xl border border-border bg-card p-5">
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-start gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-success/10 text-success">
@@ -196,20 +196,20 @@ const CredentialsTab = () => {
               <div className="flex items-center gap-1.5">
                 {cred.help_url && (
                   <a href={cred.help_url} target="_blank" rel="noopener noreferrer"
-                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:border-success hover:text-success">
+                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground hover:border-success hover:text-success">
                     <ExternalLink className="h-3.5 w-3.5" />
                   </a>
                 )}
                 <button onClick={() => toggleVisibility(cred.id)}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:border-success hover:text-success">
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground hover:border-success hover:text-success">
                   {visibleKeys.has(cred.id) ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                 </button>
                 <button onClick={() => openEdit(cred)}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:border-accent hover:text-accent">
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground hover:border-accent hover:text-accent">
                   <Pencil className="h-3.5 w-3.5" />
                 </button>
                 <button onClick={() => handleDelete(cred)}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:border-destructive hover:text-destructive">
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground hover:border-destructive hover:text-destructive">
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
               </div>

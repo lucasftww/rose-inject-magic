@@ -479,7 +479,7 @@ const RobotProjectTab = () => {
               <button
                 key={p}
                 onClick={() => { setSalesPeriod(p); fetchRobotSales(p); }}
-                className={`rounded-md px-3 py-1 text-[11px] font-medium transition-colors ${
+                className={`rounded-md px-3 py-1 text-[11px] font-medium ${
                   salesPeriod === p ? "bg-success text-success-foreground" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -549,7 +549,7 @@ const RobotProjectTab = () => {
                       <button
                         onClick={() => retryRobotDelivery(ticket.id)}
                         disabled={retryingTicketId === ticket.id}
-                        className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+                        className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                       >
                         {retryingTicketId === ticket.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCw className="h-3.5 w-3.5" />}
                         Reprocessar entrega
@@ -582,7 +582,7 @@ const RobotProjectTab = () => {
                     </thead>
                     <tbody className="divide-y divide-border">
                       {robotSales.map(sale => (
-                        <tr key={sale.id} className="hover:bg-secondary/20 transition-colors">
+                        <tr key={sale.id} className="hover:bg-secondary/20">
                           <td className="px-4 py-2.5 text-muted-foreground whitespace-nowrap">
                             {new Date(sale.created_at).toLocaleDateString("pt-BR")}
                           </td>
@@ -810,7 +810,7 @@ const RobotProjectTab = () => {
                     <div className="mt-2 flex items-center gap-2">
                       <div className="flex-1 h-1.5 rounded-full bg-secondary overflow-hidden">
                         <div
-                          className={`h-full rounded-full transition-all ${
+                          className={`h-full rounded-full ${
                             slotsAvailable !== null && slotsAvailable <= 5 ? "bg-warning" : "bg-success"
                           }`}
                           style={{ width: `${Math.min(100, ((game.soldKeys || 0) / game.maxKeys) * 100)}%` }}

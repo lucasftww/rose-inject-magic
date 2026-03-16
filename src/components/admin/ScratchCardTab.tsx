@@ -166,13 +166,13 @@ const ScratchCardTab = () => {
           <label className="flex cursor-pointer items-center gap-3 pb-2">
             <div className="relative">
               <input type="checkbox" checked={configActive} onChange={(e) => setConfigActive(e.target.checked)} className="peer sr-only" />
-              <div className="h-5 w-9 rounded-full border border-border bg-secondary transition-colors peer-checked:border-success peer-checked:bg-success" />
-              <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-foreground/60 transition-all peer-checked:left-[18px] peer-checked:bg-success-foreground" />
+              <div className="h-5 w-9 rounded-full border border-border bg-secondary peer-checked:border-success peer-checked:bg-success" />
+              <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-foreground/60 peer-checked:left-[18px] peer-checked:bg-success-foreground" />
             </div>
             <span className="text-xs font-medium text-muted-foreground">Raspadinha Ativa</span>
           </label>
           <button onClick={handleSaveConfig} disabled={savingConfig}
-            className="flex items-center gap-2 rounded-lg bg-success px-5 py-2.5 text-sm font-semibold text-success-foreground hover:shadow-[0_0_24px_hsl(197,100%,50%,0.45)] disabled:opacity-50">
+            className="flex items-center gap-2 rounded-lg bg-success px-5 py-2.5 text-sm font-semibold text-success-foreground disabled:opacity-50">
             {savingConfig && <Loader2 className="h-4 w-4 animate-spin" />} Salvar Config
           </button>
         </div>
@@ -191,7 +191,7 @@ const ScratchCardTab = () => {
             </p>
           </div>
           <button onClick={handleSyncProducts} disabled={syncing}
-            className="flex items-center gap-2 rounded-lg border border-border px-4 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:border-success/30 transition-colors disabled:opacity-50">
+            className="flex items-center gap-2 rounded-lg border border-border px-4 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:border-success/30 disabled:opacity-50">
             <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
             Sincronizar Produtos
           </button>
@@ -206,7 +206,7 @@ const ScratchCardTab = () => {
         ) : (
           <div className="space-y-2">
             {prizes.map((prize) => (
-              <div key={prize.id} className={`flex items-center justify-between rounded-lg border p-4 transition-colors ${
+              <div key={prize.id} className={`flex items-center justify-between rounded-lg border p-4 ${
                 !prize.active ? "border-border/50 bg-card/50 opacity-60" : "border-border bg-card hover:border-success/30"
               }`}>
                 <div className="flex items-center gap-3">
@@ -237,13 +237,13 @@ const ScratchCardTab = () => {
                     <label className="flex cursor-pointer items-center gap-2">
                       <div className="relative">
                         <input type="checkbox" checked={editActive} onChange={(e) => setEditActive(e.target.checked)} className="peer sr-only" />
-                        <div className="h-4 w-7 rounded-full border border-border bg-secondary transition-colors peer-checked:border-success peer-checked:bg-success" />
-                        <div className="absolute left-0.5 top-0.5 h-3 w-3 rounded-full bg-foreground/60 transition-all peer-checked:left-[13px] peer-checked:bg-success-foreground" />
+                        <div className="h-4 w-7 rounded-full border border-border bg-secondary peer-checked:border-success peer-checked:bg-success" />
+                        <div className="absolute left-0.5 top-0.5 h-3 w-3 rounded-full bg-foreground/60 peer-checked:left-[13px] peer-checked:bg-success-foreground" />
                       </div>
                       <span className="text-[10px] text-muted-foreground">Ativo</span>
                     </label>
                     <button onClick={() => handleSavePrize(prize)} disabled={savingPct === prize.id}
-                      className="p-2 rounded-lg bg-success text-success-foreground hover:shadow-lg transition-all disabled:opacity-50">
+                      className="p-2 rounded-lg bg-success text-success-foreground disabled:opacity-50">
                       {savingPct === prize.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                     </button>
                     <button onClick={() => setEditingId(null)} className="p-2 rounded-lg text-muted-foreground hover:text-foreground">
@@ -252,7 +252,7 @@ const ScratchCardTab = () => {
                   </div>
                 ) : (
                   <button onClick={() => { setEditingId(prize.id); setEditPct(String(prize.win_percentage)); setEditActive(prize.active); }}
-                    className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
+                    className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent">
                     <Pencil className="h-4 w-4" />
                   </button>
                 )}
