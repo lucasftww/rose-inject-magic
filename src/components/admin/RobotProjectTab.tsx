@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchAllRows } from "@/lib/supabaseAllRows";
-import { Loader2, RefreshCw, Wifi, WifiOff, Gamepad2, AlertTriangle, CheckCircle, Package, DollarSign, Clock, Zap, Wallet, Gift, TrendingUp, BarChart3, RotateCw } from "lucide-react";
+import { Loader2, RefreshCw, Wifi, WifiOff, Gamepad2, AlertTriangle, CheckCircle, Package, DollarSign, Clock, Zap, Gift, TrendingUp, BarChart3, RotateCw } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface RobotGame {
@@ -56,7 +56,7 @@ const RobotProjectTab = () => {
   const [productsWithRobot, setProductsWithRobot] = useState<ProductWithRobot[]>([]);
   const [loadingGames, setLoadingGames] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
-  const [robotBalance, setRobotBalance] = useState<number | null>(null);
+  
   const [freeGamesCount, setFreeGamesCount] = useState(0);
   const [usdToBrl, setUsdToBrl] = useState(5.25);
   const [robotSales, setRobotSales] = useState<RobotSale[]>([]);
@@ -102,10 +102,6 @@ const RobotProjectTab = () => {
         const games = Array.isArray(data) ? data : data.games || [];
         setRobotGames(games);
         setFreeGamesCount(games.filter((g: RobotGame) => g.is_free).length);
-        // Check if API returns balance info
-        if (data.balance !== undefined && data.balance !== null) {
-          setRobotBalance(data.balance);
-        }
       } else {
         toast({ title: "Erro ao carregar jogos Robot", variant: "destructive" });
       }
@@ -359,45 +355,10 @@ const RobotProjectTab = () => {
     }
   };
 
-  const fetchBalance = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/robot-project?action=balance`,
-        {
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          },
-        }
-      );
-      if (response.ok) {
-        const data = await response.json();
-        console.log("[Robot Balance] Full response:", JSON.stringify(data, null, 2));
-        if (data.balance !== undefined && data.balance !== null) {
-          setRobotBalance(Number(data.balance));
-        } else {
-          // Log probe results for debugging
-          console.warn("[Robot Balance] No balance found. Probe results:", data.probeResults);
-          toast({
-            title: "Saldo Robot não encontrado",
-            description: "A API não retornou campo de saldo. Veja o console para detalhes.",
-            variant: "destructive",
-          });
-        }
-      } else {
-        const errText = await response.text().catch(() => "");
-        console.warn("[Robot Balance] HTTP", response.status, errText);
-      }
-    } catch (err) {
-      console.warn("[Robot Balance] Fetch error:", err);
-    }
-  };
 
   const refreshAll = async () => {
     setLoading(true);
-    await Promise.all([checkPing(), fetchRobotGames(), fetchBalance(), fetchProductsWithRobot(), fetchExchangeRate(), fetchPendingRobotTickets()]);
+    await Promise.all([checkPing(), fetchRobotGames(), fetchProductsWithRobot(), fetchExchangeRate(), fetchPendingRobotTickets()]);
     await fetchRobotSales();
     setLastRefresh(new Date());
     setLoading(false);
@@ -425,7 +386,7 @@ const RobotProjectTab = () => {
       )}
 
       {/* Status Cards */}
-      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* API Status */}
         <div className="rounded-lg border border-border bg-card p-5">
           <div className="flex items-center gap-3">
@@ -447,24 +408,6 @@ const RobotProjectTab = () => {
               }`}>
                 {pingStatus === "loading" ? "Verificando..." : pingStatus === "online" ? "Online" : "Offline"}
               </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Robot Balance */}
-        <div className="rounded-lg border border-border bg-card p-5">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10">
-              <Wallet className="h-5 w-5 text-accent-foreground" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Saldo Robot</p>
-              <p className="text-sm font-bold text-foreground">
-                {robotBalance !== null ? `$${robotBalance.toFixed(2)} USD` : "—"}
-              </p>
-              {robotBalance !== null && (
-                <p className="text-[10px] text-muted-foreground">≈ R${(robotBalance * usdToBrl).toFixed(2)}</p>
-              )}
             </div>
           </div>
         </div>
