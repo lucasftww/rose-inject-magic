@@ -252,7 +252,7 @@ const ScratchCardTab = () => {
                   </div>
                 ) : (
                   <button onClick={() => { setEditingId(prize.id); setEditPct(String(prize.win_percentage)); setEditActive(prize.active); }}
-                    className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
+                    className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent">
                     <Pencil className="h-4 w-4" />
                   </button>
                 )}
