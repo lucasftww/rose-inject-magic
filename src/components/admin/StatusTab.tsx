@@ -92,7 +92,7 @@ const StatusTab = () => {
     }
     toast({ title: `${ids.length} produto(s) atualizado(s)!` });
     setEdits({});
-    fetchProducts();
+    refetch();
     setSaving(null);
   };
 
