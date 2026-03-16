@@ -103,8 +103,8 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
 
     const productsMap = new Map((productsRes.data || []).map((p) => [p.id, p]));
     const plansMap = new Map((plansRes.data || []).map((p) => [p.id, p]));
-    const profilesMap = new Map((profilesData?.data ? profilesData.data : profilesData || []).map((p: any) => [p.user_id, p]));
-    const lztSalesMap = new Map(((lztSalesData as any)?.data ? (lztSalesData as any).data : lztSalesData || []).map((s: any) => [s.lzt_item_id, Number(s.sell_price)]));
+    const profilesMap = new Map((profilesData.data || []).map((p: any) => [p.user_id, p]));
+    const lztSalesMap = new Map(((lztSalesData as any).data || []).map((s: any) => [s.lzt_item_id, Number(s.sell_price)]));
 
     // 3. Load stock content for delivered items
     const stockIds = rawTickets
