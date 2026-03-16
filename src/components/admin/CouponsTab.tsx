@@ -34,7 +34,7 @@ const CouponsTab = () => {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Coupon | null>(null);
   const [saving, setSaving] = useState(false);
-  const [products, setProducts] = useState<Product[]>([]);
+  const { data: products = [] } = useAdminProductsList();
 
   // Form state
   const [formCode, setFormCode] = useState("");
@@ -52,12 +52,7 @@ const CouponsTab = () => {
     setLoading(false);
   };
 
-  const fetchProducts = async () => {
-    const { data } = await supabase.from("products").select("id, name").order("name");
-    if (data) setProducts(data);
-  };
-
-  useEffect(() => { fetchCoupons(); fetchProducts(); }, []);
+  useEffect(() => { fetchCoupons(); }, []);
 
   const resetForm = () => {
     setFormCode(""); setFormType("percentage"); setFormValue(""); setFormMaxUses("");
