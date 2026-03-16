@@ -111,7 +111,7 @@ serve(async (req) => {
       const planMap = new Map(plans.map((p: any) => [p.id, p]));
       const stockMap = new Map(stockItems.map((s: any) => [s.id, s]));
 
-      const profileMap = new Map((profiles || []).map((p: any) => [p.user_id, p]));
+      const profileMap = new Map(profiles.map((p: any) => [p.user_id, p]));
       const roleMap = new Map<string, string[]>();
       (roles || []).forEach((r: any) => {
         const existing = roleMap.get(r.user_id) || [];
