@@ -146,6 +146,7 @@ const AdminPanel = () => {
   }, []);
 
   const handleTabSelect = useCallback((id: TabId) => {
+    setVisitedTabs(prev => new Set(prev).add(id));
     startTransition(() => setActiveTab(id));
     setMobileOpen(false);
   }, []);
