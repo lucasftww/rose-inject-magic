@@ -696,8 +696,8 @@ const TicketsTab = ({
           const ext = getFileExtension(part.url!);
           return (
             <a key={i} href={part.url} target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-3 rounded-lg border border-border bg-background/80 p-2.5 transition-all hover:border-success/30 hover:bg-success/5 group">
-              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors ${isTutorial ? "bg-info/10 text-info" : "bg-warning/10 text-warning"}`}>
+              className="flex items-center gap-3 rounded-lg border border-border bg-background/80 p-2.5 hover:border-success/30 hover:bg-success/5 group">
+              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${isTutorial ? "bg-info/10 text-info" : "bg-warning/10 text-warning"}`}>
                 <IconComp className="h-4 w-4" />
               </div>
               <div className="flex-1 min-w-0">
