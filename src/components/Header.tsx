@@ -31,7 +31,7 @@ const Header = ({ hideBanner = false }: { hideBanner?: boolean }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [bannerVisible, setBannerVisible] = useState(true);
+  const [bannerVisible, setBannerVisible] = useState(!hideBanner);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { user, profile, isAdmin, signOut } = useAuth();
   const { requiresAuth, clearRequiresAuth } = useCart();
