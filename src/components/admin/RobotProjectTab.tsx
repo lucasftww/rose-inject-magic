@@ -359,9 +359,37 @@ const RobotProjectTab = () => {
     }
   };
 
+  const fetchBalance = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/robot-project?action=balance`,
+        {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+        }
+      );
+      if (response.ok) {
+        const data = await response.json();
+        if (data.balance !== undefined && data.balance !== null) {
+          setRobotBalance(Number(data.balance));
+        } else if (data.raw?.balance !== undefined) {
+          setRobotBalance(Number(data.raw.balance));
+        }
+      } else {
+        console.warn("[Robot Balance] HTTP", response.status, await response.text().catch(() => ""));
+      }
+    } catch (err) {
+      console.warn("[Robot Balance] Fetch error:", err);
+    }
+  };
+
   const refreshAll = async () => {
     setLoading(true);
-    await Promise.all([checkPing(), fetchRobotGames(), fetchProductsWithRobot(), fetchExchangeRate(), fetchPendingRobotTickets()]);
+    await Promise.all([checkPing(), fetchRobotGames(), fetchBalance(), fetchProductsWithRobot(), fetchExchangeRate(), fetchPendingRobotTickets()]);
     await fetchRobotSales();
     setLastRefresh(new Date());
     setLoading(false);

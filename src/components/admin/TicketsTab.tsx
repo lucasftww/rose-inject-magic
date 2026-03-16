@@ -70,6 +70,11 @@ const QUICK_REPLIES = [
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
+// Module-level cache to persist across tab switches
+let _cachedTickets: Ticket[] | null = null;
+let _ticketsCacheTs = 0;
+const TICKETS_CACHE_TTL = 3 * 60 * 1000;
+
 const TicketsTab = ({
   initialTicketId,
   onTicketOpened,
@@ -79,8 +84,8 @@ const TicketsTab = ({
 }) => {
   const { user } = useAuth();
   const { emailMap: adminEmailMap } = useAdminUsers();
-  const [tickets, setTickets] = useState<Ticket[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [tickets, setTickets] = useState<Ticket[]>(_cachedTickets || []);
+  const [loading, setLoading] = useState(!_cachedTickets);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
@@ -105,21 +110,37 @@ const TicketsTab = ({
 
   // ─── Data Fetching ──────────────────────────────────────────────────────
 
-  const fetchTickets = useCallback(async () => {
+  const fetchTickets = useCallback(async (force = false) => {
+    // Return cached data if fresh
+    if (!force && _cachedTickets && Date.now() - _ticketsCacheTs < TICKETS_CACHE_TTL) {
+      setTickets(_cachedTickets);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
     const data = await fetchAllRows("order_tickets", {
       select: "*",
       order: { column: "created_at", ascending: false },
+      limit: 500,
     }).catch(() => null);
 
     if (data) {
       const productIds = [...new Set(data.map((t: any) => t.product_id))] as string[];
       const planIds = [...new Set(data.map((t: any) => t.product_plan_id))] as string[];
+      const userIds = [...new Set(data.map((t: any) => t.user_id))] as string[];
+
+      const lztItemIds = data
+        .filter((t: any) => t.metadata?.type === "lzt-account" && t.metadata?.lzt_item_id)
+        .map((t: any) => String(t.metadata.lzt_item_id));
 
       const [productsRes, plansRes, profilesData, lztSalesData] = await Promise.all([
         supabase.from("products").select("id, name").in("id", productIds),
         supabase.from("product_plans").select("id, name, price").in("id", planIds),
-        fetchAllRows("profiles", { select: "user_id, username" }),
-        fetchAllRows("lzt_sales", { select: "lzt_item_id, sell_price" }),
+        supabase.from("profiles").select("user_id, username").in("user_id", userIds),
+        lztItemIds.length > 0
+          ? supabase.from("lzt_sales").select("lzt_item_id, sell_price").in("lzt_item_id", lztItemIds)
+          : Promise.resolve({ data: [] }),
       ]);
 
       const productMap: Record<string, string> = {};
@@ -128,10 +149,10 @@ const TicketsTab = ({
       const lztSalesMap = new Map<string, number>();
       productsRes.data?.forEach((p: any) => { productMap[p.id] = p.name; });
       plansRes.data?.forEach((p: any) => { planMap[p.id] = { name: p.name, price: p.price }; });
-      (profilesData || []).forEach((p: any) => { profileMap[p.user_id] = p.username || "—"; });
-      (lztSalesData || []).forEach((s: any) => { lztSalesMap.set(String(s.lzt_item_id), Number(s.sell_price)); });
+      (profilesData.data || []).forEach((p: any) => { profileMap[p.user_id] = p.username || "—"; });
+      (lztSalesData.data || []).forEach((s: any) => { lztSalesMap.set(String(s.lzt_item_id), Number(s.sell_price)); });
 
-      setTickets(data.map((t: any) => {
+      const mapped = data.map((t: any) => {
         const meta = t.metadata as any;
         const isLzt = meta?.type === "lzt-account";
         const lztItemId = meta?.lzt_item_id;
@@ -145,7 +166,10 @@ const TicketsTab = ({
           buyer_email: "—",
           buyer_username: profileMap[t.user_id] || "—",
         };
-      }));
+      });
+      _cachedTickets = mapped;
+      _ticketsCacheTs = Date.now();
+      setTickets(mapped);
     }
     setLoading(false);
   }, []);
