@@ -49,6 +49,7 @@ const MinecraftDetalhes = () => {
     queryKey: ["lzt-account-detail", id],
     queryFn: () => fetchAccountDetail(id!),
     enabled: !!id,
+    staleTime: 1000 * 60 * 5,
   });
 
   const item = data?.item;
