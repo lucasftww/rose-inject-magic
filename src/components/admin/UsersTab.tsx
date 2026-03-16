@@ -382,7 +382,7 @@ const UsersTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
                     <div
                       key={order.id}
                       onClick={() => onGoToTicket?.(order.id)}
-                      className="rounded-lg border border-border bg-secondary/30 p-4 space-y-2 cursor-pointer hover:border-success/30 transition-colors"
+                      className="rounded-lg border border-border bg-secondary/30 p-4 space-y-2 cursor-pointer hover:border-success/30"
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 min-w-0">
