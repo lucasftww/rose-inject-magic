@@ -208,7 +208,7 @@ const LztTab = () => {
         <StatCard icon={<DollarSign className="h-5 w-5 text-success" />} label="Gasto Total (Compra)" value={`R$ ${totalBought.toFixed(2)}`} />
         <StatCard icon={<ShoppingCart className="h-5 w-5 text-success" />} label="Receita (Venda)" value={`R$ ${totalSold.toFixed(2)}`} />
         <StatCard icon={<TrendingUp className="h-5 w-5 text-success" />} label="Lucro Total" value={`R$ ${totalProfit.toFixed(2)}`} highlight />
-        <StatCard icon={<ShoppingCart className="h-5 w-5 text-muted-foreground" />} label="Total Vendas" value={String(allSales.length)} />
+        <StatCard icon={<ShoppingCart className="h-5 w-5 text-muted-foreground" />} label="Total Vendas" value={String(totalSalesCount)} />
       </div>
 
       {/* View Tabs */}
