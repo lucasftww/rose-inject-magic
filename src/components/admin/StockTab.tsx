@@ -115,7 +115,7 @@ const StockTab = () => {
       toast({ title: `${lines.length} item(s) adicionado(s)!` });
       setNewStockText("");
       fetchStockForPlan(planId);
-      fetchProducts(); // refresh counts
+      fetchStockCounts(products); // refresh counts
     }
     setAddingStock(false);
   };
