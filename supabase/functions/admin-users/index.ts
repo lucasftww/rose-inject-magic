@@ -140,7 +140,7 @@ serve(async (req) => {
         recentPaymentsMap.set(p.user_id, existing);
       });
       const userOrdersMap = new Map<string, any[]>();
-      (tickets || []).forEach((t: any) => {
+      tickets.forEach((t: any) => {
         ordersMap.set(t.user_id, (ordersMap.get(t.user_id) || 0) + 1);
         const existing = userOrdersMap.get(t.user_id) || [];
         const prod = productMap.get(t.product_id);
