@@ -208,22 +208,16 @@ const AuthModal = ({ open, onOpenChange, defaultTab = "login" }: AuthModalProps)
 
                 <form onSubmit={async (e) => {
                   e.preventDefault();
-                  if (!captchaToken) {
-                    toast.error("Aguarde a verificação de segurança.");
-                    return;
-                  }
                   setIsLoading(true);
                   if (tab === "login") {
-                    const { error } = await signIn(email, password, captchaToken);
+                    const { error } = await signIn(email, password);
                     if (error) { toast.error(error.message); }
                     else { toast.success("Login realizado!"); onOpenChange(false); }
                   } else {
-                    const { error } = await signUp(email, password, username, captchaToken);
+                    const { error } = await signUp(email, password, username);
                     if (error) { toast.error(error.message); }
                     else { toast.success("Conta criada com sucesso!"); onOpenChange(false); }
                   }
-                  setCaptchaToken(undefined);
-                  captchaRef.current?.reset();
                   setIsLoading(false);
                 }} className="flex flex-col gap-4 sm:gap-5">
                   {tab === "register" && (
