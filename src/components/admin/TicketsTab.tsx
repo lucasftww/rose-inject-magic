@@ -4,8 +4,16 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAdminUsers } from "@/hooks/useAdminUsers";
 import { toast } from "@/hooks/use-toast";
 import AudioMessagePlayer from "@/components/AudioMessagePlayer";
-import { Loader2, MessageSquare, Search, Send, Archive, ArchiveRestore, ArrowLeft, Clock, User, Copy, Check, ShieldCheck, ExternalLink, KeyRound, Mail, ChevronDown, ChevronUp, CheckCircle, BookOpen, FolderDown, Download, Package, Eye, EyeOff, Paperclip, Image, X, FileText, Bot, UserCircle, Mic, Square, Trash2 } from "lucide-react";
+import {
+  Loader2, MessageSquare, Search, Send, Archive, ArchiveRestore, ArrowLeft,
+  Clock, User, Copy, Check, ShieldCheck, ExternalLink, KeyRound, Mail,
+  ChevronDown, ChevronUp, CheckCircle, BookOpen, FolderDown, Download,
+  Package, Eye, EyeOff, Paperclip, Image, X, FileText, Bot, UserCircle,
+  Mic, Square, Trash2, Hash,
+} from "lucide-react";
 import { useAudioRecorder, formatDuration } from "@/hooks/useAudioRecorder";
+
+// ─── Types ──────────────────────────────────────────────────────────────────
 
 interface Ticket {
   id: string;
@@ -34,20 +42,40 @@ interface Message {
   created_at: string;
 }
 
+// ─── Constants ──────────────────────────────────────────────────────────────
+
 const statusOptions = [
-  { value: "open", label: "Aberto", color: "bg-warning/20 text-warning border-warning/30" },
-  { value: "delivered", label: "Entregue", color: "bg-success/20 text-success border-success/30" },
-  { value: "waiting", label: "Aguardando", color: "bg-info/20 text-info border-info/30" },
-  { value: "waiting_staff", label: "Aguardando Equipe", color: "bg-info/20 text-info border-info/30" },
-  { value: "resolved", label: "Resolvido", color: "bg-positive/20 text-positive border-positive/30" },
+  { value: "open", label: "Aberto", color: "bg-warning/15 text-warning border-warning/25" },
+  { value: "delivered", label: "Entregue", color: "bg-success/15 text-success border-success/25" },
+  { value: "waiting", label: "Aguardando", color: "bg-info/15 text-info border-info/25" },
+  { value: "waiting_staff", label: "Ag. Equipe", color: "bg-info/15 text-info border-info/25" },
+  { value: "resolved", label: "Resolvido", color: "bg-positive/15 text-positive border-positive/25" },
   { value: "closed", label: "Encerrado", color: "bg-muted text-muted-foreground border-border" },
-  { value: "banned", label: "Banido", color: "bg-destructive/20 text-destructive border-destructive/30" },
+  { value: "banned", label: "Banido", color: "bg-destructive/15 text-destructive border-destructive/25" },
   { value: "finished", label: "Finalizado", color: "bg-muted text-muted-foreground border-border" },
 ];
 
-const ITEMS_PER_PAGE = 8;
+const ITEMS_PER_PAGE = 10;
 
-const TicketsTab = ({ initialTicketId, onTicketOpened }: { initialTicketId?: string | null; onTicketOpened?: () => void }) => {
+const QUICK_REPLIES = [
+  "Precisa de ajuda?",
+  "Qual seu problema?",
+  "Quer resetar HWID?",
+  "Qual sua key?",
+  "Envie seu login e senha",
+  "Problema resolvido!",
+  "Aguarde um momento",
+];
+
+// ─── Component ──────────────────────────────────────────────────────────────
+
+const TicketsTab = ({
+  initialTicketId,
+  onTicketOpened,
+}: {
+  initialTicketId?: string | null;
+  onTicketOpened?: () => void;
+}) => {
   const { user } = useAuth();
   const { emailMap: adminEmailMap } = useAdminUsers();
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -74,6 +102,8 @@ const TicketsTab = ({ initialTicketId, onTicketOpened }: { initialTicketId?: str
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const { isRecording, recordingDuration, startRecording, stopRecording, cancelRecording } = useAudioRecorder();
 
+  // ─── Data Fetching ──────────────────────────────────────────────────────
+
   const fetchTickets = useCallback(async () => {
     const { data } = await supabase
       .from("order_tickets")
@@ -92,7 +122,6 @@ const TicketsTab = ({ initialTicketId, onTicketOpened }: { initialTicketId?: str
         supabase.from("lzt_sales").select("lzt_item_id, sell_price"),
       ]);
 
-      // Use cached admin-users data
       const emailMap: Record<string, string> = {};
       adminEmailMap.forEach((v, k) => { emailMap[k] = v; });
 
@@ -126,8 +155,7 @@ const TicketsTab = ({ initialTicketId, onTicketOpened }: { initialTicketId?: str
 
   useEffect(() => { fetchTickets(); }, [fetchTickets]);
 
-
-
+  // ─── Ticket Selection & Realtime ────────────────────────────────────────
 
   const selectTicket = useCallback(async (ticket: Ticket) => {
     setSelectedTicket(ticket);
@@ -156,7 +184,6 @@ const TicketsTab = ({ initialTicketId, onTicketOpened }: { initialTicketId?: str
     }
   }, []);
 
-  // Auto-select ticket when navigated from SalesTab
   useEffect(() => {
     if (initialTicketId && tickets.length > 0) {
       const found = tickets.find(t => t.id === initialTicketId);
@@ -194,7 +221,6 @@ const TicketsTab = ({ initialTicketId, onTicketOpened }: { initialTicketId?: str
       })
       .subscribe();
 
-    // Polling fallback every 5s to catch missed realtime events
     const pollInterval = setInterval(async () => {
       if (cancelled) return;
       const { data } = await supabase
@@ -224,17 +250,14 @@ const TicketsTab = ({ initialTicketId, onTicketOpened }: { initialTicketId?: str
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // File upload helpers
+  // ─── File Upload ────────────────────────────────────────────────────────
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
     const newFiles = [...pendingFiles, ...files].slice(0, 5);
     setPendingFiles(newFiles);
-    const urls = newFiles.map(f => {
-      if (f.type.startsWith("image/")) return URL.createObjectURL(f);
-      return "";
-    });
-    setPreviewUrls(urls);
+    setPreviewUrls(newFiles.map(f => f.type.startsWith("image/") ? URL.createObjectURL(f) : ""));
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -249,10 +272,7 @@ const TicketsTab = ({ initialTicketId, onTicketOpened }: { initialTicketId?: str
     const ext = file.name.split(".").pop() || "bin";
     const path = `${selectedTicket.user_id}/${selectedTicket.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
     const { error } = await supabase.storage.from("ticket-files").upload(path, file, { upsert: false });
-    if (error) {
-      console.error("Upload error:", error);
-      return null;
-    }
+    if (error) return null;
     const { data: urlData } = await supabase.storage.from("ticket-files").createSignedUrl(path, 7 * 24 * 3600);
     return urlData?.signedUrl || null;
   };
@@ -292,23 +312,20 @@ const TicketsTab = ({ initialTicketId, onTicketOpened }: { initialTicketId?: str
     }
   };
 
+  // ─── Send Message ───────────────────────────────────────────────────────
+
   const sendMessage = async () => {
     if ((!newMessage.trim() && pendingFiles.length === 0) || !user || !selectedTicket) return;
     setSending(true);
 
-    let messageParts: string[] = [];
+    const messageParts: string[] = [];
 
-    // Upload pending files
     if (pendingFiles.length > 0) {
       setUploadingFile(true);
       for (const file of pendingFiles) {
         const url = await uploadFileToStorage(file);
         if (url) {
-          if (file.type.startsWith("image/")) {
-            messageParts.push(`[IMAGE]${url}`);
-          } else {
-            messageParts.push(`📎 **Arquivo:** ${url}`);
-          }
+          messageParts.push(file.type.startsWith("image/") ? `[IMAGE]${url}` : `📎 **Arquivo:** ${url}`);
         }
       }
       setUploadingFile(false);
@@ -316,9 +333,7 @@ const TicketsTab = ({ initialTicketId, onTicketOpened }: { initialTicketId?: str
       setPreviewUrls([]);
     }
 
-    if (newMessage.trim()) {
-      messageParts.push(newMessage.trim());
-    }
+    if (newMessage.trim()) messageParts.push(newMessage.trim());
 
     const fullMessage = messageParts.join("\n");
     if (!fullMessage) { setSending(false); return; }
@@ -335,29 +350,25 @@ const TicketsTab = ({ initialTicketId, onTicketOpened }: { initialTicketId?: str
     setSending(false);
   };
 
+  // ─── Status Management ──────────────────────────────────────────────────
+
   const updateStatus = async (ticketId: string, status: string) => {
-    // Se marcar como "closed", arquiva automaticamente
     const finalStatus = status === "closed" ? "archived" : status;
     const finalLabel = status === "closed" ? "Arquivado" : (statusOptions.find(s => s.value === status)?.label || status);
-    const updates: any = { status: finalStatus, status_label: finalLabel };
-
-    const { error } = await supabase.from("order_tickets").update(updates).eq("id", ticketId);
+    const { error } = await supabase.from("order_tickets").update({ status: finalStatus, status_label: finalLabel }).eq("id", ticketId);
     if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } else {
       toast({ title: `Status: ${finalLabel}` });
       fetchTickets();
       if (selectedTicket?.id === ticketId) {
-        setSelectedTicket((prev) => prev ? { ...prev, status: finalStatus, status_label: finalLabel } : null);
+        setSelectedTicket(prev => prev ? { ...prev, status: finalStatus, status_label: finalLabel } : null);
       }
     }
   };
 
   const archiveTicket = async (ticketId: string) => {
-    const { error } = await supabase
-      .from("order_tickets")
-      .update({ status: "archived" as any, status_label: "Arquivado" })
-      .eq("id", ticketId);
+    const { error } = await supabase.from("order_tickets").update({ status: "archived" as any, status_label: "Arquivado" }).eq("id", ticketId);
     if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } else {
@@ -368,10 +379,7 @@ const TicketsTab = ({ initialTicketId, onTicketOpened }: { initialTicketId?: str
   };
 
   const unarchiveTicket = async (ticketId: string) => {
-    const { error } = await supabase
-      .from("order_tickets")
-      .update({ status: "open" as any, status_label: "Aberto" })
-      .eq("id", ticketId);
+    const { error } = await supabase.from("order_tickets").update({ status: "open" as any, status_label: "Aberto" }).eq("id", ticketId);
     if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } else {
@@ -380,16 +388,19 @@ const TicketsTab = ({ initialTicketId, onTicketOpened }: { initialTicketId?: str
     }
   };
 
+  // ─── Filtering & Pagination ─────────────────────────────────────────────
+
   const filteredTickets = tickets.filter((t) => {
-    if (showArchived) {
-      if (t.status !== "archived") return false;
-    } else {
-      if (t.status === "archived") return false;
-    }
+    if (showArchived ? t.status !== "archived" : t.status === "archived") return false;
     if (filterStatus !== "all" && t.status !== filterStatus) return false;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      return (t.product_name?.toLowerCase().includes(q) || t.id.toLowerCase().includes(q) || t.buyer_email?.toLowerCase().includes(q) || t.buyer_username?.toLowerCase().includes(q));
+      return (
+        t.product_name?.toLowerCase().includes(q) ||
+        t.id.toLowerCase().includes(q) ||
+        t.buyer_email?.toLowerCase().includes(q) ||
+        t.buyer_username?.toLowerCase().includes(q)
+      );
     }
     return true;
   });
@@ -398,6 +409,8 @@ const TicketsTab = ({ initialTicketId, onTicketOpened }: { initialTicketId?: str
   const paginatedTickets = filteredTickets.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   useEffect(() => { setCurrentPage(1); }, [searchQuery, filterStatus, showArchived]);
+
+  // ─── Helpers ────────────────────────────────────────────────────────────
 
   const getStatusBadge = (status: string) => {
     if (status === "archived") return "bg-muted text-muted-foreground border border-border";
@@ -414,6 +427,8 @@ const TicketsTab = ({ initialTicketId, onTicketOpened }: { initialTicketId?: str
 
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
 
+  // ─── Sub-Components ─────────────────────────────────────────────────────
+
   const CopyField = ({ label, value }: { label: string; value: string }) => {
     const [fieldCopied, setFieldCopied] = useState(false);
     const handleCopy = () => {
@@ -427,7 +442,7 @@ const TicketsTab = ({ initialTicketId, onTicketOpened }: { initialTicketId?: str
         <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2">
           <code className="flex-1 text-sm font-mono text-foreground break-all">{value}</code>
           <button onClick={handleCopy} className="shrink-0 rounded p-1 text-muted-foreground hover:text-foreground transition-colors">
-            {fieldCopied ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
+            {fieldCopied ? <Check className="h-3.5 w-3.5 text-success" /> : <Copy className="h-3.5 w-3.5" />}
           </button>
         </div>
       </div>
@@ -437,29 +452,16 @@ const TicketsTab = ({ initialTicketId, onTicketOpened }: { initialTicketId?: str
   const getEmailWebmailUrl = (email: string): string | null => {
     const domain = email.split("@")[1]?.toLowerCase();
     if (!domain) return null;
-    const knownWebmails: Record<string, string> = {
-      "hotmail.com": "https://login.live.com",
-      "outlook.com": "https://login.live.com",
-      "live.com": "https://login.live.com",
-      "gmail.com": "https://mail.google.com",
-      "yahoo.com": "https://mail.yahoo.com",
-      "rambler.ru": "https://mail.rambler.ru",
-      "autorambler.ru": "https://mail.rambler.ru",
-      "myrambler.ru": "https://mail.rambler.ru",
-      "ro.ru": "https://mail.rambler.ru",
-      "lenta.ru": "https://mail.rambler.ru",
-      "mail.ru": "https://e.mail.ru",
-      "bk.ru": "https://e.mail.ru",
-      "inbox.ru": "https://e.mail.ru",
-      "list.ru": "https://e.mail.ru",
-      "yandex.ru": "https://mail.yandex.ru",
-      "yandex.com": "https://mail.yandex.com",
-      "ya.ru": "https://mail.yandex.ru",
-      "firstmail.ltd": "https://firstmail.ltd/webmail/login/",
-      "ffrmail.com": "https://ffrmail.com/webmail/login/",
+    const known: Record<string, string> = {
+      "hotmail.com": "https://login.live.com", "outlook.com": "https://login.live.com", "live.com": "https://login.live.com",
+      "gmail.com": "https://mail.google.com", "yahoo.com": "https://mail.yahoo.com",
+      "rambler.ru": "https://mail.rambler.ru", "autorambler.ru": "https://mail.rambler.ru", "myrambler.ru": "https://mail.rambler.ru",
+      "ro.ru": "https://mail.rambler.ru", "lenta.ru": "https://mail.rambler.ru",
+      "mail.ru": "https://e.mail.ru", "bk.ru": "https://e.mail.ru", "inbox.ru": "https://e.mail.ru", "list.ru": "https://e.mail.ru",
+      "yandex.ru": "https://mail.yandex.ru", "yandex.com": "https://mail.yandex.com", "ya.ru": "https://mail.yandex.ru",
+      "firstmail.ltd": "https://firstmail.ltd/webmail/login/", "ffrmail.com": "https://ffrmail.com/webmail/login/",
     };
-    if (knownWebmails[domain]) return knownWebmails[domain];
-    return `https://${domain}/webmail/login/`;
+    return known[domain] || `https://${domain}/webmail/login/`;
   };
 
   const getGameConfig = (game?: string) => {
@@ -526,6 +528,8 @@ const TicketsTab = ({ initialTicketId, onTicketOpened }: { initialTicketId?: str
     }
   };
 
+  // ─── Credential Card ────────────────────────────────────────────────────
+
   const renderCredentialCard = (jsonStr: string) => {
     try {
       const creds = JSON.parse(jsonStr);
@@ -539,81 +543,87 @@ const TicketsTab = ({ initialTicketId, onTicketOpened }: { initialTicketId?: str
       const cfg = getGameConfig(game);
 
       return (
-        <div className="space-y-3 w-full max-w-md">
-          <div className="rounded-xl border border-success/30 bg-background p-3 space-y-2.5">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="flex h-5 w-5 items-center justify-center rounded-full bg-success/20">
+        <div className="space-y-2.5 w-full max-w-md">
+          {/* Main credentials */}
+          <div className="rounded-xl border border-success/25 bg-background p-3 space-y-2">
+            <div className="flex items-center gap-2 mb-1.5">
+              <div className="flex h-5 w-5 items-center justify-center rounded-full bg-success/15">
                 <ShieldCheck className="h-3 w-3 text-success" />
               </div>
-              <span className="text-xs font-bold text-foreground">Dados de login entregues:</span>
+              <span className="text-xs font-bold text-foreground">Dados de login entregues</span>
             </div>
             <CopyField label="Login" value={login} />
             <CopyField label="Senha" value={password} />
             <CopyField label="Login:Senha" value={`${login}:${password}`} />
 
             {emailLogin && (
-              <div className="mt-3 pt-3 border-t border-border space-y-2.5">
+              <div className="mt-2.5 pt-2.5 border-t border-border space-y-2">
                 <div className="flex items-center gap-2">
                   <Mail className="h-3.5 w-3.5 text-success" />
-                  <span className="text-[11px] font-bold text-foreground">Acesso ao email (auto registrado):</span>
+                  <span className="text-[11px] font-bold text-foreground">Acesso ao email (auto registrado)</span>
                 </div>
                 <CopyField label="Email da conta" value={emailLogin} />
                 {emailPassword && <CopyField label="Senha do email" value={emailPassword} />}
               </div>
             )}
-            <div className="flex flex-wrap items-center gap-2 pt-1">
+
+            <div className="flex flex-wrap items-center gap-2 pt-1.5">
               <a href={cfg.loginUrl} target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-1.5 rounded-lg border border-border bg-secondary px-3 py-2 text-xs font-medium text-foreground transition-colors hover:border-success/40">
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-secondary/60 px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-success/30 hover:bg-success/5">
                 Login page <ExternalLink className="h-3 w-3" />
               </a>
               {emailLogin && (() => {
-                const emailWebmailUrl = getEmailWebmailUrl(emailLogin);
-                if (!emailWebmailUrl) return null;
-                return (
-                  <a href={emailWebmailUrl} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 rounded-lg border border-border bg-secondary px-3 py-2 text-xs font-medium text-foreground transition-colors hover:border-success/40">
+                const url = getEmailWebmailUrl(emailLogin);
+                return url ? (
+                  <a href={url} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-secondary/60 px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-success/30 hover:bg-success/5">
                     <Mail className="h-3 w-3" /> Email login <ExternalLink className="h-3 w-3" />
                   </a>
-                );
+                ) : null;
               })()}
             </div>
           </div>
-          <div className="space-y-1.5">
+
+          {/* Expandable sections */}
+          <div className="space-y-1">
+            {/* Change data */}
             <div className="rounded-xl border border-border bg-background overflow-hidden">
               <button onClick={() => setExpandedSection(expandedSection === "riot-admin" ? null : "riot-admin")}
-                className="flex w-full items-center gap-2.5 px-4 py-3 text-left transition-colors hover:bg-secondary/50">
-                <KeyRound className="h-4 w-4 text-success shrink-0" />
-                <span className="flex-1 text-sm font-medium text-foreground">{cfg.changeDataTitle}</span>
-                {expandedSection === "riot-admin" ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+                className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left transition-colors hover:bg-secondary/40">
+                <KeyRound className="h-3.5 w-3.5 text-success shrink-0" />
+                <span className="flex-1 text-xs font-medium text-foreground">{cfg.changeDataTitle}</span>
+                {expandedSection === "riot-admin" ? <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />}
               </button>
               {expandedSection === "riot-admin" && (
-                <div className="border-t border-border px-4 py-3 text-xs text-muted-foreground space-y-1.5 leading-relaxed">
+                <div className="border-t border-border px-3.5 py-2.5 text-xs text-muted-foreground space-y-1 leading-relaxed">
                   {cfg.changeDataSteps.map((step, i) => <p key={i}>{["1️⃣","2️⃣","3️⃣","4️⃣","5️⃣"][i]} {step}</p>)}
                 </div>
               )}
             </div>
+            {/* Change email */}
             <div className="rounded-xl border border-border bg-background overflow-hidden">
               <button onClick={() => setExpandedSection(expandedSection === "email-admin" ? null : "email-admin")}
-                className="flex w-full items-center gap-2.5 px-4 py-3 text-left transition-colors hover:bg-secondary/50">
-                <Mail className="h-4 w-4 text-success shrink-0" />
-                <span className="flex-1 text-sm font-medium text-foreground">Como trocar o email da conta</span>
-                {expandedSection === "email-admin" ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+                className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left transition-colors hover:bg-secondary/40">
+                <Mail className="h-3.5 w-3.5 text-success shrink-0" />
+                <span className="flex-1 text-xs font-medium text-foreground">Como trocar o email da conta</span>
+                {expandedSection === "email-admin" ? <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />}
               </button>
               {expandedSection === "email-admin" && (
-                <div className="border-t border-border px-4 py-3 text-xs text-muted-foreground space-y-1.5 leading-relaxed">
+                <div className="border-t border-border px-3.5 py-2.5 text-xs text-muted-foreground space-y-1 leading-relaxed">
                   {cfg.changeEmailSteps.map((step, i) => <p key={i}>{["1️⃣","2️⃣","3️⃣","4️⃣","5️⃣","6️⃣"][i]} {step}</p>)}
                 </div>
               )}
             </div>
-            <div className="rounded-xl border border-success/30 bg-success/5 overflow-hidden">
+            {/* Checklist */}
+            <div className="rounded-xl border border-success/20 bg-success/5 overflow-hidden">
               <button onClick={() => setExpandedSection(expandedSection === "done-admin" ? null : "done-admin")}
-                className="flex w-full items-center gap-2.5 px-4 py-3 text-left transition-colors hover:bg-success/10">
-                <CheckCircle className="h-4 w-4 text-success shrink-0" />
-                <span className="flex-1 text-sm font-bold text-success">Entrega Concluída</span>
-                {expandedSection === "done-admin" ? <ChevronUp className="h-4 w-4 text-success/60" /> : <ChevronDown className="h-4 w-4 text-success/60" />}
+                className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left transition-colors hover:bg-success/10">
+                <CheckCircle className="h-3.5 w-3.5 text-success shrink-0" />
+                <span className="flex-1 text-xs font-bold text-success">Entrega Concluída</span>
+                {expandedSection === "done-admin" ? <ChevronUp className="h-3.5 w-3.5 text-success/60" /> : <ChevronDown className="h-3.5 w-3.5 text-success/60" />}
               </button>
               {expandedSection === "done-admin" && (
-                <div className="border-t border-success/20 px-4 py-3 text-xs text-muted-foreground space-y-1.5 leading-relaxed">
+                <div className="border-t border-success/15 px-3.5 py-2.5 text-xs text-muted-foreground space-y-1 leading-relaxed">
                   <p className="text-foreground font-medium">📋 Checklist de segurança:</p>
                   {cfg.checklist.map((item, i) => <p key={i}>• {item}</p>)}
                 </div>
@@ -627,46 +637,33 @@ const TicketsTab = ({ initialTicketId, onTicketOpened }: { initialTicketId?: str
     }
   };
 
+  // ─── Message Content Renderer ───────────────────────────────────────────
+
   const getFileExtension = (url: string) => {
     const match = url.match(/\.(\w+)(?:\?|$)/);
     return match ? match[1].toUpperCase() : "FILE";
   };
 
-  const isImageUrl = (url: string) => {
-    return /\.(jpg|jpeg|png|gif|webp|svg|bmp)(\?|$)/i.test(url);
-  };
-
-  // Renders message content with support for images, audio, credentials, and file attachments
   const renderMessageContent = (message: string, isStaff: boolean = false) => {
     const trimmed = message.trim();
     if (trimmed.startsWith("[CREDENTIALS]") || trimmed.includes("[CREDENTIALS]")) {
       const jsonStr = trimmed.replace("[CREDENTIALS]", "").trim();
-      if (jsonStr.startsWith("{")) {
-        return renderCredentialCard(jsonStr);
-      }
+      if (jsonStr.startsWith("{")) return renderCredentialCard(jsonStr);
     }
 
-    // Handle [IMAGE] tags
-    const imageTagPattern = /\[IMAGE\](https?:\/\/\S+)/g;
-    const filePattern = /(📖\s*\*\*Tutorial:\*\*|📎\s*\*\*Arquivo:\*\*)\s*(https?:\/\/\S+)/g;
-    
-    const parts: { type: "text" | "file" | "image" | "audio"; content: string; label?: string; url?: string }[] = [];
-    
-    // Combined regex approach
     const combinedPattern = /(\[IMAGE\](https?:\/\/\S+))|(\[AUDIO\](https?:\/\/\S+))|((?:📖\s*\*\*Tutorial:\*\*|📎\s*\*\*Arquivo:\*\*)\s*(https?:\/\/\S+))/g;
+    const parts: { type: "text" | "file" | "image" | "audio"; content: string; label?: string; url?: string }[] = [];
     let lastIndex = 0;
     let match;
 
     while ((match = combinedPattern.exec(message)) !== null) {
       if (match.index > lastIndex) {
-        const textBefore = message.slice(lastIndex, match.index).trim();
-        if (textBefore) parts.push({ type: "text", content: textBefore });
+        const text = message.slice(lastIndex, match.index).trim();
+        if (text) parts.push({ type: "text", content: text });
       }
-      if (match[1]) {
-        parts.push({ type: "image", content: match[1], url: match[2] });
-      } else if (match[3]) {
-        parts.push({ type: "audio", content: match[3], url: match[4] });
-      } else if (match[5]) {
+      if (match[1]) parts.push({ type: "image", content: match[1], url: match[2] });
+      else if (match[3]) parts.push({ type: "audio", content: match[3], url: match[4] });
+      else if (match[5]) {
         const label = match[5].includes("Tutorial") ? "Tutorial" : "Arquivo";
         parts.push({ type: "file", content: match[5], label, url: match[6] });
       }
@@ -685,46 +682,31 @@ const TicketsTab = ({ initialTicketId, onTicketOpened }: { initialTicketId?: str
     return (
       <div className="space-y-2">
         {parts.map((part, i) => {
-          if (part.type === "text") {
-            return <p key={i} className="text-sm leading-relaxed whitespace-pre-wrap text-foreground">{part.content}</p>;
-          }
+          if (part.type === "text") return <p key={i} className="text-sm leading-relaxed whitespace-pre-wrap text-foreground">{part.content}</p>;
           if (part.type === "image") {
             return (
               <a key={i} href={part.url} target="_blank" rel="noopener noreferrer" className="block">
-                <img
-                  src={part.url}
-                  alt="Imagem enviada"
-                  className="rounded-xl max-w-[280px] max-h-[200px] object-cover border border-border hover:brightness-110 transition-all cursor-pointer"
-                  loading="lazy"
-                />
+                <img src={part.url} alt="Imagem enviada" className="rounded-lg max-w-[260px] max-h-[180px] object-cover border border-border hover:brightness-110 transition-all cursor-pointer" loading="lazy" />
               </a>
             );
           }
-          if (part.type === "audio") {
-            return <AudioMessagePlayer key={i} src={part.url!} isStaff={isStaff} />;
-          }
+          if (part.type === "audio") return <AudioMessagePlayer key={i} src={part.url!} isStaff={isStaff} />;
           const isTutorial = part.label === "Tutorial";
           const IconComp = isTutorial ? BookOpen : FolderDown;
-          const description = isTutorial ? "Baixe aqui o tutorial" : "Baixe aqui o arquivo";
           const ext = getFileExtension(part.url!);
           return (
-            <a
-              key={i}
-              href={part.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-3 rounded-xl border border-border bg-background/80 p-3 transition-all hover:border-success/40 hover:bg-success/5 group"
-            >
-              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors ${isTutorial ? "bg-info/10 text-info group-hover:bg-info/20" : "bg-warning/10 text-warning group-hover:bg-warning/20"}`}>
-                <IconComp className="h-5 w-5" />
+            <a key={i} href={part.url} target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-3 rounded-lg border border-border bg-background/80 p-2.5 transition-all hover:border-success/30 hover:bg-success/5 group">
+              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors ${isTutorial ? "bg-info/10 text-info" : "bg-warning/10 text-warning"}`}>
+                <IconComp className="h-4 w-4" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-bold text-foreground">{part.label}</p>
-                <p className="text-[10px] text-muted-foreground">{description}</p>
+                <p className="text-[10px] text-muted-foreground">{isTutorial ? "Baixe aqui o tutorial" : "Baixe aqui o arquivo"}</p>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="rounded bg-secondary px-1.5 py-0.5 text-[9px] font-bold text-muted-foreground">.{ext}</span>
-                <Download className="h-4 w-4 text-muted-foreground group-hover:text-success transition-colors" />
+                <Download className="h-3.5 w-3.5 text-muted-foreground group-hover:text-success transition-colors" />
               </div>
             </a>
           );
@@ -733,37 +715,52 @@ const TicketsTab = ({ initialTicketId, onTicketOpened }: { initialTicketId?: str
     );
   };
 
+  // ─── Pagination Helper ──────────────────────────────────────────────────
+
+  const getPageNumbers = () => {
+    if (totalPages <= 5) return Array.from({ length: totalPages }, (_, i) => i + 1);
+    const pages: (number | "...")[] = [1];
+    if (currentPage > 3) pages.push("...");
+    for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) pages.push(i);
+    if (currentPage < totalPages - 2) pages.push("...");
+    pages.push(totalPages);
+    return pages;
+  };
+
+  // ─── Loading ────────────────────────────────────────────────────────────
+
   if (loading) return (
     <div className="flex justify-center py-20">
       <Loader2 className="h-6 w-6 animate-spin text-success" />
     </div>
   );
 
+  // ─── Render ─────────────────────────────────────────────────────────────
+
   return (
-    <div className="flex flex-col h-[calc(100vh-180px)] min-h-[600px]">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4 flex-shrink-0">
-        <div className="flex items-center gap-3">
+    <div className="flex flex-col h-[calc(100vh-140px)] min-h-[500px]">
+      {/* ── Header ── */}
+      <div className="flex items-center justify-between mb-3 flex-shrink-0">
+        <div className="flex items-center gap-2.5">
           {selectedTicket && (
             <button
               onClick={() => setSelectedTicket(null)}
-              className="lg:hidden flex items-center gap-1 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+              className="lg:hidden inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
-              Voltar
             </button>
           )}
-          <h2 className="text-xl font-bold text-foreground">Tickets</h2>
-          <span className="rounded-full bg-success/10 border border-success/20 px-2.5 py-0.5 text-xs font-bold text-success">
+          <h2 className="text-lg font-bold text-foreground">Tickets</h2>
+          <span className="rounded-full bg-success/10 border border-success/20 px-2 py-0.5 text-[11px] font-bold text-success tabular-nums">
             {filteredTickets.length}
           </span>
         </div>
         <button
           onClick={() => { setShowArchived(!showArchived); setSelectedTicket(null); }}
-          className={`flex items-center gap-2 rounded-lg border px-4 py-2 text-xs font-semibold transition-all ${
+          className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-all ${
             showArchived
-              ? "border-success/30 bg-success/10 text-success"
-              : "border-border bg-card text-muted-foreground hover:text-foreground hover:border-border"
+              ? "border-success/25 bg-success/10 text-success"
+              : "border-border bg-card text-muted-foreground hover:text-foreground"
           }`}
         >
           {showArchived ? <ArchiveRestore className="h-3.5 w-3.5" /> : <Archive className="h-3.5 w-3.5" />}
@@ -771,22 +768,27 @@ const TicketsTab = ({ initialTicketId, onTicketOpened }: { initialTicketId?: str
         </button>
       </div>
 
-      {/* Search & Filter */}
-      <div className="flex gap-2 mb-4 flex-shrink-0">
+      {/* ── Search & Filter ── */}
+      <div className="flex gap-2 mb-3 flex-shrink-0">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/60" />
           <input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Buscar ticket..."
-            className="w-full rounded-lg border border-border bg-card pl-9 pr-4 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-success/50 transition-colors"
+            placeholder="Buscar por nome, email ou ID..."
+            className="w-full rounded-lg border border-border bg-card pl-9 pr-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/40 outline-none focus:border-success/40 focus:ring-1 focus:ring-success/10 transition-all"
           />
+          {searchQuery && (
+            <button onClick={() => setSearchQuery("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground/40 hover:text-foreground transition-colors">
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
         {!showArchived && (
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-foreground outline-none focus:border-success/50 transition-colors"
+            className="rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-foreground outline-none focus:border-success/40 transition-colors cursor-pointer"
           >
             <option value="all">Todos</option>
             {statusOptions.map((s) => (
@@ -796,14 +798,15 @@ const TicketsTab = ({ initialTicketId, onTicketOpened }: { initialTicketId?: str
         )}
       </div>
 
-      {/* Main content */}
-      <div className="flex-1 grid gap-4 lg:grid-cols-[340px_1fr] min-h-0">
-        {/* Ticket list */}
+      {/* ── Main Content ── */}
+      <div className="flex-1 grid gap-3 lg:grid-cols-[320px_1fr] min-h-0">
+
+        {/* ── Ticket List ── */}
         <div className={`flex flex-col min-h-0 ${selectedTicket ? "hidden lg:flex" : "flex"}`}>
-          <div className="flex-1 overflow-y-auto space-y-1.5 pr-1 scrollbar-chat">
+          <div className="flex-1 overflow-y-auto space-y-1 pr-0.5 scrollbar-chat">
             {paginatedTickets.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-                <MessageSquare className="h-10 w-10 mb-3 opacity-20" />
+                <MessageSquare className="h-10 w-10 mb-3 opacity-15" />
                 <p className="text-sm">{showArchived ? "Nenhum ticket arquivado" : "Nenhum ticket encontrado"}</p>
               </div>
             ) : paginatedTickets.map((ticket) => (
@@ -811,45 +814,51 @@ const TicketsTab = ({ initialTicketId, onTicketOpened }: { initialTicketId?: str
                 key={ticket.id}
                 className={`group rounded-lg border p-3 cursor-pointer transition-all ${
                   selectedTicket?.id === ticket.id
-                    ? "border-success/40 bg-success/5 shadow-[0_0_15px_-5px_hsl(var(--success)/0.2)]"
-                    : "border-border bg-card hover:border-muted-foreground/20 hover:bg-accent/30"
+                    ? "border-success/30 bg-success/[0.06]"
+                    : "border-border/60 bg-card hover:border-muted-foreground/20 hover:bg-accent/20"
                 }`}
               >
                 <button onClick={() => selectTicket(ticket)} className="w-full text-left">
-                  <div className="flex items-start justify-between gap-2 mb-1.5">
-                    <span className="text-sm font-semibold text-foreground truncate leading-tight">{ticket.product_name}</span>
-                    <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold ${getStatusBadge(ticket.status)}`}>
+                  <div className="flex items-start justify-between gap-2 mb-1">
+                    <span className="text-sm font-semibold text-foreground truncate leading-tight flex-1">{ticket.product_name}</span>
+                    <span className={`shrink-0 rounded-full border px-2 py-px text-[10px] font-bold ${getStatusBadge(ticket.status)}`}>
                       {getStatusLabel(ticket.status)}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-0.5">
                     <span className="truncate">{ticket.plan_name}</span>
-                    <span>·</span>
-                    <span className="font-medium text-foreground/70">R$ {Number(ticket.plan_price || 0).toFixed(2)}</span>
+                    <span className="text-muted-foreground/30">·</span>
+                    <span className="font-semibold text-foreground/70">R$ {Number(ticket.plan_price || 0).toFixed(2)}</span>
                   </div>
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <User className="h-3 w-3 shrink-0" />
+                    <User className="h-3 w-3 shrink-0 text-muted-foreground/40" />
                     <span className="truncate">{ticket.buyer_username}</span>
-                    <span>·</span>
-                    <span className="truncate">{ticket.buyer_email}</span>
+                    <span className="text-muted-foreground/30">·</span>
+                    <span className="truncate text-muted-foreground/60">{ticket.buyer_email}</span>
                   </div>
-                  <div className="flex items-center gap-1.5 mt-1.5 text-[10px] text-muted-foreground/50">
-                    <Clock className="h-2.5 w-2.5" />
-                    <span>{formatDate(ticket.created_at)} {formatTime(ticket.created_at)}</span>
+                  <div className="flex items-center justify-between mt-1.5">
+                    <div className="flex items-center gap-1 text-[10px] text-muted-foreground/40">
+                      <Clock className="h-2.5 w-2.5" />
+                      <span>{formatDate(ticket.created_at)} {formatTime(ticket.created_at)}</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-[10px] text-muted-foreground/30">
+                      <Hash className="h-2.5 w-2.5" />
+                      <span className="font-mono">{ticket.id.slice(0, 8)}</span>
+                    </div>
                   </div>
                 </button>
-                <div className="flex justify-end mt-2 pt-2 border-t border-border/50">
+                <div className="flex justify-end mt-1.5 pt-1.5 border-t border-border/30">
                   {showArchived ? (
                     <button
                       onClick={(e) => { e.stopPropagation(); unarchiveTicket(ticket.id); }}
-                      className="flex items-center gap-1 rounded-md bg-success/10 px-2.5 py-1 text-[11px] font-semibold text-success hover:bg-success/20 transition-colors"
+                      className="inline-flex items-center gap-1 rounded-md bg-success/10 px-2 py-0.5 text-[11px] font-semibold text-success hover:bg-success/20 transition-colors"
                     >
                       <ArchiveRestore className="h-3 w-3" /> Restaurar
                     </button>
                   ) : (
                     <button
                       onClick={(e) => { e.stopPropagation(); archiveTicket(ticket.id); }}
-                      className="flex items-center gap-1 rounded-md px-2.5 py-1 text-[11px] font-medium text-muted-foreground/60 hover:text-muted-foreground hover:bg-muted/50 transition-colors opacity-0 group-hover:opacity-100"
+                      className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium text-muted-foreground/40 hover:text-muted-foreground hover:bg-muted/40 transition-all opacity-0 group-hover:opacity-100"
                     >
                       <Archive className="h-3 w-3" /> Arquivar
                     </button>
@@ -859,72 +868,75 @@ const TicketsTab = ({ initialTicketId, onTicketOpened }: { initialTicketId?: str
             ))}
           </div>
 
+          {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-1 pt-3 flex-shrink-0 border-t border-border/50 mt-2">
+            <div className="flex items-center justify-center gap-1 pt-2.5 flex-shrink-0 border-t border-border/30 mt-1.5">
               <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}
-                className="rounded-lg border border-border px-2.5 py-1 text-xs font-medium text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors">‹</button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
-                <button key={p} onClick={() => setCurrentPage(p)}
-                  className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all ${p === currentPage ? "bg-success text-success-foreground shadow-[0_0_10px_-3px_hsl(var(--success)/0.4)]" : "border border-border text-muted-foreground hover:text-foreground"}`}>{p}</button>
-              ))}
+                className="rounded-lg border border-border px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground disabled:opacity-20 transition-colors">‹</button>
+              {getPageNumbers().map((p, i) =>
+                p === "..." ? (
+                  <span key={`dots-${i}`} className="px-1.5 text-xs text-muted-foreground/40">…</span>
+                ) : (
+                  <button key={p} onClick={() => setCurrentPage(p as number)}
+                    className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all ${p === currentPage ? "bg-success text-success-foreground" : "border border-border text-muted-foreground hover:text-foreground"}`}>{p}</button>
+                )
+              )}
               <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}
-                className="rounded-lg border border-border px-2.5 py-1 text-xs font-medium text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors">›</button>
+                className="rounded-lg border border-border px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground disabled:opacity-20 transition-colors">›</button>
             </div>
           )}
         </div>
 
-        {/* Chat panel */}
+        {/* ── Chat Panel ── */}
         <div className={`rounded-xl border border-border bg-card overflow-hidden flex flex-col min-h-0 ${!selectedTicket ? "hidden lg:flex" : "flex"}`}>
           {!selectedTicket ? (
-            <div className="flex flex-1 items-center justify-center text-muted-foreground">
+            <div className="flex flex-1 items-center justify-center">
               <div className="text-center">
-                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-muted/50">
-                  <MessageSquare className="h-7 w-7 text-muted-foreground/30" />
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-muted/30">
+                  <MessageSquare className="h-6 w-6 text-muted-foreground/20" />
                 </div>
-                <p className="text-sm font-medium">Selecione um ticket</p>
-                <p className="text-xs text-muted-foreground/60 mt-1">Escolha um ticket ao lado para ver a conversa</p>
+                <p className="text-sm font-medium text-muted-foreground">Selecione um ticket</p>
+                <p className="text-xs text-muted-foreground/50 mt-0.5">Escolha um ticket para ver a conversa</p>
               </div>
             </div>
           ) : (
             <>
-              {/* Chat header */}
+              {/* Chat Header */}
               <div className="border-b border-border bg-card flex-shrink-0">
-                <div className="px-4 sm:px-5 py-3 flex items-center gap-3">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted ring-2 ring-border/50">
-                    <UserCircle className="h-4.5 w-4.5 text-muted-foreground" />
+                <div className="px-4 py-2.5 flex items-center gap-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted ring-1 ring-border/50">
+                    <UserCircle className="h-4 w-4 text-muted-foreground" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex items-center gap-2">
                       <p className="text-sm font-bold text-foreground truncate">{selectedTicket.buyer_username}</p>
-                      <span className="text-[10px] text-muted-foreground truncate hidden sm:inline">({selectedTicket.buyer_email})</span>
+                      <span className="text-[10px] text-muted-foreground/50 truncate hidden sm:inline">{selectedTicket.buyer_email}</span>
                     </div>
-                    <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                      <span className="text-xs text-muted-foreground truncate max-w-[140px]">{selectedTicket.product_name}</span>
-                      <span className="text-xs text-muted-foreground/30">·</span>
-                      <span className="text-xs text-muted-foreground truncate max-w-[100px]">{selectedTicket.plan_name}</span>
-                      <span className="text-xs text-muted-foreground/30">·</span>
-                      <span className="text-xs font-semibold text-foreground/70">R$ {Number(selectedTicket.plan_price || 0).toFixed(2)}</span>
+                    <div className="flex items-center gap-1.5 mt-px">
+                      <span className="text-[11px] text-muted-foreground truncate max-w-[120px]">{selectedTicket.product_name}</span>
+                      <span className="text-muted-foreground/20">·</span>
+                      <span className="text-[11px] font-semibold text-foreground/60">R$ {Number(selectedTicket.plan_price || 0).toFixed(2)}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-1.5 shrink-0">
                     {stockContent && (
                       <button
                         onClick={() => setShowDelivery(!showDelivery)}
-                        className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-bold transition-all ${
+                        className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-[11px] font-bold transition-all ${
                           showDelivery
-                            ? "border-success/30 bg-success/10 text-success"
-                            : "border-border bg-secondary/50 text-muted-foreground hover:text-foreground"
+                            ? "border-success/25 bg-success/10 text-success"
+                            : "border-border bg-secondary/40 text-muted-foreground hover:text-foreground"
                         }`}
                       >
-                        <Package className="h-3.5 w-3.5" />
-                        Entrega
+                        <Package className="h-3 w-3" />
+                        <span className="hidden sm:inline">Entrega</span>
                       </button>
                     )}
                     {selectedTicket.status !== "archived" && (
                       <select
                         value={selectedTicket.status}
                         onChange={(e) => updateStatus(selectedTicket.id, e.target.value)}
-                        className={`rounded-lg border px-3 py-1.5 text-xs font-bold outline-none transition-colors cursor-pointer ${getStatusBadge(selectedTicket.status)}`}
+                        className={`rounded-lg border px-2.5 py-1.5 text-[11px] font-bold outline-none cursor-pointer transition-colors ${getStatusBadge(selectedTicket.status)}`}
                       >
                         {statusOptions.map((s) => (
                           <option key={s.value} value={s.value}>{s.label}</option>
@@ -936,21 +948,18 @@ const TicketsTab = ({ initialTicketId, onTicketOpened }: { initialTicketId?: str
 
                 {/* Delivery panel */}
                 {showDelivery && stockContent && (
-                  <div className="border-t border-border px-5 py-3 bg-secondary/30 space-y-2">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-success/20">
+                  <div className="border-t border-border px-4 py-2.5 bg-secondary/20 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-success/15">
                         <Package className="h-3 w-3 text-success" />
                       </div>
-                      <span className="text-xs font-bold text-foreground">Conteúdo entregue ao usuário</span>
+                      <span className="text-xs font-bold text-foreground">Conteúdo entregue</span>
                     </div>
-                    <div className="rounded-lg border border-border bg-background p-3">
+                    <div className="rounded-lg border border-border bg-background p-2.5">
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-[10px] text-muted-foreground font-medium">Chave / Credenciais</span>
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => setShowStockKey(!showStockKey)}
-                            className="rounded p-1 text-muted-foreground hover:text-foreground transition-colors"
-                          >
+                        <div className="flex items-center gap-0.5">
+                          <button onClick={() => setShowStockKey(!showStockKey)} className="rounded p-1 text-muted-foreground hover:text-foreground transition-colors">
                             {showStockKey ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                           </button>
                           <button
@@ -973,13 +982,11 @@ const TicketsTab = ({ initialTicketId, onTicketOpened }: { initialTicketId?: str
                 )}
               </div>
 
-              {/* Messages — AI chat style */}
-              <div ref={chatContainerRef} className="flex-1 overflow-y-auto px-4 py-5 space-y-4 scrollbar-chat bg-background/50">
+              {/* Messages */}
+              <div ref={chatContainerRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3 scrollbar-chat bg-background/40">
                 {messages.length === 0 && (
-                  <div className="flex flex-col items-center justify-center h-full text-muted-foreground/40">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-muted/30 mb-3">
-                      <Bot className="h-6 w-6" />
-                    </div>
+                  <div className="flex flex-col items-center justify-center h-full text-muted-foreground/30">
+                    <Bot className="h-10 w-10 mb-2" />
                     <p className="text-xs">Nenhuma mensagem ainda</p>
                   </div>
                 )}
@@ -989,41 +996,31 @@ const TicketsTab = ({ initialTicketId, onTicketOpened }: { initialTicketId?: str
                   return (
                     <div key={msg.id}>
                       {showDate && (
-                        <div className="flex items-center justify-center my-4">
-                          <div className="h-px flex-1 bg-border/50" />
-                          <span className="mx-3 rounded-full bg-muted/50 px-3 py-1 text-[10px] font-medium text-muted-foreground/60">
+                        <div className="flex items-center justify-center my-3">
+                          <div className="h-px flex-1 bg-border/30" />
+                          <span className="mx-3 rounded-full bg-muted/30 px-2.5 py-0.5 text-[10px] font-medium text-muted-foreground/50">
                             {formatDate(msg.created_at)}
                           </span>
-                          <div className="h-px flex-1 bg-border/50" />
+                          <div className="h-px flex-1 bg-border/30" />
                         </div>
                       )}
-                      <div className={`flex gap-3 ${isStaff ? "flex-row-reverse" : "flex-row"}`}>
-                        {/* Avatar */}
-                        <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
-                          isStaff
-                            ? "bg-success/20 ring-2 ring-success/10"
-                            : "bg-muted ring-2 ring-border/50"
+                      <div className={`flex gap-2.5 ${isStaff ? "flex-row-reverse" : "flex-row"}`}>
+                        <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
+                          isStaff ? "bg-success/15 ring-1 ring-success/10" : "bg-muted ring-1 ring-border/30"
                         }`}>
-                          {isStaff ? (
-                            <Bot className="h-4 w-4 text-success" />
-                          ) : (
-                            <UserCircle className="h-4 w-4 text-muted-foreground" />
-                          )}
+                          {isStaff ? <Bot className="h-3.5 w-3.5 text-success" /> : <UserCircle className="h-3.5 w-3.5 text-muted-foreground" />}
                         </div>
-                        {/* Bubble */}
-                        <div className={`max-w-[75%] space-y-1`}>
-                          <div className="flex items-center gap-2 mb-0.5">
-                            <span className={`text-[11px] font-bold ${isStaff ? "text-success" : "text-muted-foreground"}`}>
+                        <div className="max-w-[75%] space-y-0.5">
+                          <div className={`flex items-center gap-1.5 ${isStaff ? "justify-end" : ""}`}>
+                            <span className={`text-[10px] font-bold ${isStaff ? "text-success/80" : "text-muted-foreground/70"}`}>
                               {isStaff ? "Staff" : "Usuário"}
                             </span>
-                            <span className="text-[10px] text-muted-foreground/40">
-                              {formatTime(msg.created_at)}
-                            </span>
+                            <span className="text-[10px] text-muted-foreground/30">{formatTime(msg.created_at)}</span>
                           </div>
-                          <div className={`rounded-2xl px-4 py-3 ${
+                          <div className={`rounded-2xl px-3.5 py-2.5 ${
                             isStaff
-                              ? "bg-success/10 border border-success/20 rounded-tr-md"
-                              : "bg-card border border-border rounded-tl-md"
+                              ? "bg-success/[0.08] border border-success/15 rounded-tr-md"
+                              : "bg-card border border-border/60 rounded-tl-md"
                           }`}>
                             {renderMessageContent(msg.message, isStaff)}
                           </div>
@@ -1035,30 +1032,24 @@ const TicketsTab = ({ initialTicketId, onTicketOpened }: { initialTicketId?: str
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Pending files preview */}
+              {/* Pending files */}
               {pendingFiles.length > 0 && (
-                <div className="border-t border-border px-4 py-2 bg-secondary/30 flex gap-2 flex-wrap">
+                <div className="border-t border-border px-3 py-2 bg-secondary/20 flex gap-2 flex-wrap">
                   {pendingFiles.map((file, i) => (
                     <div key={i} className="relative group">
                       {file.type.startsWith("image/") ? (
-                        <img
-                          src={previewUrls[i]}
-                          alt={file.name}
-                          className="h-16 w-16 rounded-lg object-cover border border-border"
-                        />
+                        <img src={previewUrls[i]} alt={file.name} className="h-14 w-14 rounded-lg object-cover border border-border" />
                       ) : (
-                        <div className="h-16 w-16 rounded-lg border border-border bg-muted flex flex-col items-center justify-center gap-1">
-                          <FileText className="h-5 w-5 text-muted-foreground" />
-                          <span className="text-[8px] text-muted-foreground font-bold truncate max-w-[56px]">
+                        <div className="h-14 w-14 rounded-lg border border-border bg-muted flex flex-col items-center justify-center gap-0.5">
+                          <FileText className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-[8px] text-muted-foreground font-bold truncate max-w-[48px]">
                             {file.name.split(".").pop()?.toUpperCase()}
                           </span>
                         </div>
                       )}
-                      <button
-                        onClick={() => removePendingFile(i)}
-                        className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <X className="h-3 w-3" />
+                      <button onClick={() => removePendingFile(i)}
+                        className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow opacity-0 group-hover:opacity-100 transition-opacity">
+                        <X className="h-2.5 w-2.5" />
                       </button>
                     </div>
                   ))}
@@ -1066,69 +1057,55 @@ const TicketsTab = ({ initialTicketId, onTicketOpened }: { initialTicketId?: str
               )}
 
               {/* Quick replies */}
-              <div className="border-t border-border px-3 pt-2 pb-1 bg-card/80 flex gap-1.5 overflow-x-auto scrollbar-hide">
-                {[
-                  "Precisa de ajuda?",
-                  "Qual seu problema?",
-                  "Quer resetar HWID?",
-                  "Qual sua key?",
-                  "Envie seu login e senha",
-                  "Problema resolvido!",
-                  "Aguarde um momento",
-                ].map((text) => (
-                  <button
-                    key={text}
-                    onClick={() => setNewMessage(text)}
-                    className="text-[11px] px-2.5 py-1 rounded-full border border-border bg-secondary/50 text-muted-foreground hover:bg-success/10 hover:text-success hover:border-success/30 transition-all whitespace-nowrap"
-                  >
+              <div className="border-t border-border/50 px-3 pt-1.5 pb-1 bg-card/50 flex gap-1 overflow-x-auto scrollbar-hide">
+                {QUICK_REPLIES.map((text) => (
+                  <button key={text} onClick={() => setNewMessage(text)}
+                    className="text-[10px] px-2 py-1 rounded-full border border-border/60 bg-secondary/30 text-muted-foreground/70 hover:bg-success/10 hover:text-success hover:border-success/25 transition-all whitespace-nowrap shrink-0">
                     {text}
                   </button>
                 ))}
               </div>
 
-              {/* Input — AI chat style */}
-              <div className="border-t border-border/50 p-3 bg-card flex-shrink-0">
+              {/* Input */}
+              <div className="border-t border-border/40 p-2.5 bg-card flex-shrink-0">
                 {isRecording ? (
-                  <div className="flex items-center gap-3 rounded-2xl border border-destructive/40 bg-destructive/5 p-3">
-                    <div className="h-3 w-3 rounded-full bg-destructive animate-pulse" />
+                  <div className="flex items-center gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-2.5">
+                    <div className="h-2.5 w-2.5 rounded-full bg-destructive animate-pulse" />
                     <span className="text-sm font-medium text-foreground flex-1">Gravando... {formatDuration(recordingDuration)}</span>
-                    <button onClick={cancelRecording} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all" title="Cancelar">
+                    <button onClick={cancelRecording} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all" title="Cancelar">
                       <Trash2 className="h-4 w-4" />
                     </button>
-                    <button onClick={handleSendAudio} disabled={sending || uploadingFile} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-success text-success-foreground disabled:opacity-30 hover:brightness-110 transition-all" title="Enviar áudio">
+                    <button onClick={handleSendAudio} disabled={sending || uploadingFile} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-success text-success-foreground disabled:opacity-30 hover:brightness-110 transition-all" title="Enviar áudio">
                       {sending || uploadingFile ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                     </button>
                   </div>
                 ) : (
-                  <div className="flex items-end gap-2 rounded-2xl border border-border bg-background p-2 focus-within:border-success/40 focus-within:shadow-[0_0_0_3px_hsl(var(--success)/0.08)] transition-all">
+                  <div className="flex items-end gap-1.5 rounded-xl border border-border bg-background p-1.5 focus-within:border-success/30 focus-within:ring-1 focus-within:ring-success/10 transition-all">
                     <input ref={fileInputRef} type="file" multiple accept="image/*,.pdf,.txt,.doc,.docx,.zip,.rar,.exe" className="hidden" onChange={handleFileSelect} />
-                    <button onClick={() => fileInputRef.current?.click()} disabled={uploadingFile} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all disabled:opacity-40" title="Anexar arquivo ou imagem">
-                      <Paperclip className="h-[18px] w-[18px]" />
+                    <button onClick={() => fileInputRef.current?.click()} disabled={uploadingFile}
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground/60 hover:text-foreground hover:bg-muted/40 transition-all disabled:opacity-30" title="Anexar">
+                      <Paperclip className="h-4 w-4" />
                     </button>
                     <textarea
                       value={newMessage}
-                      onChange={(e) => { setNewMessage(e.target.value); e.target.style.height = "auto"; e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px"; }}
+                      onChange={(e) => { setNewMessage(e.target.value); e.target.style.height = "auto"; e.target.style.height = Math.min(e.target.scrollHeight, 100) + "px"; }}
                       onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
                       placeholder="Responder como staff..."
                       rows={1}
-                      className="flex-1 resize-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground/50 outline-none py-2 max-h-[120px]"
+                      className="flex-1 resize-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 outline-none py-1.5 max-h-[100px]"
                     />
                     <button
                       onClick={() => startRecording().catch(() => toast({ title: "Erro", description: "Permita o acesso ao microfone", variant: "destructive" }))}
                       disabled={sending || uploadingFile}
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all disabled:opacity-40"
-                      title="Gravar áudio"
-                    >
-                      <Mic className="h-[18px] w-[18px]" />
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground/60 hover:text-foreground hover:bg-muted/40 transition-all disabled:opacity-30" title="Gravar áudio">
+                      <Mic className="h-4 w-4" />
                     </button>
-                    <button onClick={sendMessage} disabled={sending || uploadingFile || (!newMessage.trim() && pendingFiles.length === 0)} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-success text-success-foreground disabled:opacity-30 hover:brightness-110 transition-all">
+                    <button onClick={sendMessage} disabled={sending || uploadingFile || (!newMessage.trim() && pendingFiles.length === 0)}
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-success text-success-foreground disabled:opacity-20 hover:brightness-110 transition-all">
                       {sending || uploadingFile ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                     </button>
                   </div>
                 )}
-                <p className="text-[10px] text-muted-foreground/40 mt-1.5 text-center">
-                  Shift + Enter para nova linha · 📎 anexar · 🎤 gravar áudio
-                </p>
               </div>
             </>
           )}
