@@ -93,7 +93,8 @@ const ResellersTab = () => {
     if (data) setProducts(data);
   };
 
-  useEffect(() => { fetchResellers(); fetchProducts(); }, []);
+  useEffect(() => { fetchProducts(); }, []);
+  useEffect(() => { if (adminUsersData.length > 0) fetchResellers(); }, [adminUsersData]);
 
   const searchUsers = async () => {
     if (searchEmail.trim().length < 2) return;
