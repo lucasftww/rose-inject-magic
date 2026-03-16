@@ -72,10 +72,10 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
     const productIds = [...new Set(rawTickets.map((t) => t.product_id))];
     const planIds = [...new Set(rawTickets.map((t) => t.product_plan_id))];
 
-    const [productsRes, plansRes, profilesRes, lztSalesData] = await Promise.all([
+    const [productsRes, plansRes, profilesData, lztSalesData] = await Promise.all([
       supabase.from("products").select("id, name, image_url").in("id", productIds),
       supabase.from("product_plans").select("id, name, price").in("id", planIds),
-      supabase.from("profiles").select("user_id, username").in("user_id", [...new Set(rawTickets.map((t) => t.user_id))]),
+      fetchAllRows("profiles", { select: "user_id, username" }),
       fetchAllRows("lzt_sales", { select: "lzt_item_id, sell_price" }),
     ]);
 
