@@ -279,7 +279,7 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
                 paginated.map((sale) => (
                 <Fragment key={sale.id}>
                     <tr
-                      className="border-b border-border/50 hover:bg-secondary/20 transition-colors cursor-pointer"
+                      className="border-b border-border/50 hover:bg-secondary/20 cursor-pointer"
                       onClick={() => setExpandedId(expandedId === sale.id ? null : sale.id)}
                     >
                       <td className="px-4 py-3">
