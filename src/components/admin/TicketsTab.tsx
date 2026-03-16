@@ -495,6 +495,7 @@ const TicketsTab = ({
       "mail.ru": "https://e.mail.ru", "bk.ru": "https://e.mail.ru", "inbox.ru": "https://e.mail.ru", "list.ru": "https://e.mail.ru",
       "yandex.ru": "https://mail.yandex.ru", "yandex.com": "https://mail.yandex.com", "ya.ru": "https://mail.yandex.ru",
       "firstmail.ltd": "https://firstmail.ltd/webmail/login/", "ffrmail.com": "https://ffrmail.com/webmail/login/",
+      "hyssopusmail.com": "https://notletters.com/email/login", "notletters.com": "https://notletters.com/email/login",
     };
     return known[domain] || `https://${domain}/webmail/login/`;
   };
