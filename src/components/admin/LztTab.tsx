@@ -517,7 +517,7 @@ const LztTab = () => {
                   );
                 })}
                 <button onClick={() => setSalesPage(p => Math.min(totalPages - 1, p + 1))} disabled={salesPage === totalPages - 1}
-                  className="rounded-lg border border-border p-1.5 text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors">
+                  className="rounded-lg border border-border p-1.5 text-muted-foreground hover:text-foreground disabled:opacity-30">
                   <ChevronRight className="h-4 w-4" />
                 </button>
               </div>
