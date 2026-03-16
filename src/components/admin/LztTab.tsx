@@ -302,7 +302,7 @@ const LztTab = () => {
             </div>
             {allSales.length > 5 && (
               <button onClick={() => { setActiveView("sales"); setSalesPage(0); }}
-                className="mt-3 w-full rounded-lg border border-border py-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-success/30 transition-colors">
+                className="mt-3 w-full rounded-lg border border-border py-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-success/30">
                 Ver todas as {allSales.length} vendas →
               </button>
             )}
