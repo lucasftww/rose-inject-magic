@@ -498,7 +498,7 @@ const ProductsTab = () => {
     const updates = allReordered.map((p, i) => supabase.from("products").update({ sort_order: i }).eq("id", p.id));
     await Promise.all(updates);
     toast({ title: "Ordem atualizada!" });
-    fetchData();
+    fetchData(true);
   };
 
   return (
