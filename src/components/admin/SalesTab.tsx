@@ -32,8 +32,13 @@ const ITEMS_PER_PAGE = 15;
 const statusColors: Record<string, string> = {
   delivered: "bg-success/15 text-success border-success/30",
   open: "bg-warning/15 text-warning border-warning/30",
+  waiting: "bg-info/15 text-info border-info/30",
   waiting_staff: "bg-info/15 text-info border-info/30",
+  resolved: "bg-positive/15 text-positive border-positive/30",
   closed: "bg-muted text-muted-foreground border-border",
+  banned: "bg-destructive/15 text-destructive border-destructive/30",
+  finished: "bg-muted text-muted-foreground border-border",
+  archived: "bg-muted text-muted-foreground border-border",
 };
 
 const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void }) => {
@@ -222,7 +227,7 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
             className="w-full rounded-lg border border-border bg-card pl-10 pr-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-success/50"
           />
         </div>
-        <div className="flex gap-1">
+        <div className="flex gap-1 overflow-x-auto scrollbar-hide">
           {[
             { key: "all", label: "Todos" },
             { key: "delivered", label: "Entregues" },
@@ -233,7 +238,7 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
             <button
               key={f.key}
               onClick={() => setStatusFilter(f.key)}
-              className={`rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
+              className={`rounded-lg px-3 py-2 text-xs font-medium transition-colors whitespace-nowrap ${
                 statusFilter === f.key
                   ? "bg-success/20 text-success border border-success/30"
                   : "bg-secondary/50 text-muted-foreground border border-border hover:text-foreground"
@@ -301,7 +306,7 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
                       </td>
                       <td className="px-4 py-3">
                         <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-semibold ${statusColors[sale.status] || "bg-muted text-muted-foreground border-border"}`}>
-                          {sale.status === "delivered" ? "Entregue" : sale.status === "open" ? "Aberto" : sale.status === "waiting_staff" ? "Aguardando" : sale.status === "closed" ? "Fechado" : sale.status_label || sale.status}
+                          {sale.status === "delivered" ? "Entregue" : sale.status === "open" ? "Aberto" : sale.status === "waiting" ? "Aguardando" : sale.status === "waiting_staff" ? "Aguardando Equipe" : sale.status === "closed" ? "Fechado" : sale.status === "resolved" ? "Resolvido" : sale.status === "archived" ? "Arquivado" : sale.status_label || sale.status}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-muted-foreground text-xs">
