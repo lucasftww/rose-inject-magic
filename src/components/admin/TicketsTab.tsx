@@ -132,7 +132,7 @@ const TicketsTab = ({
       const lztSalesMap = new Map<string, number>();
       productsRes.data?.forEach((p: any) => { productMap[p.id] = p.name; });
       plansRes.data?.forEach((p: any) => { planMap[p.id] = { name: p.name, price: p.price }; });
-      profilesRes.data?.forEach((p: any) => { profileMap[p.user_id] = p.username || "—"; });
+      (profilesData || []).forEach((p: any) => { profileMap[p.user_id] = p.username || "—"; });
       (lztSalesData || []).forEach((s: any) => { lztSalesMap.set(String(s.lzt_item_id), Number(s.sell_price)); });
 
       setTickets(data.map((t: any) => {
