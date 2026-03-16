@@ -74,34 +74,7 @@ const lolRegions = [
   { id: "KR", label: "Coréia" },
 ];
 
-// ─── Valorant rank map ───
-const rankMap: Record<number, { name: string; img: string }> = {
-  3: { name: "Ferro 1", img: rankFerro },
-  4: { name: "Ferro 2", img: rankFerro },
-  5: { name: "Ferro 3", img: rankFerro },
-  6: { name: "Bronze 1", img: rankBronze },
-  7: { name: "Bronze 2", img: rankBronze },
-  8: { name: "Bronze 3", img: rankBronze },
-  9: { name: "Prata 1", img: rankPrata },
-  10: { name: "Prata 2", img: rankPrata },
-  11: { name: "Prata 3", img: rankPrata },
-  12: { name: "Ouro 1", img: rankOuro },
-  13: { name: "Ouro 2", img: rankOuro },
-  14: { name: "Ouro 3", img: rankOuro },
-  15: { name: "Platina 1", img: rankPlatina },
-  16: { name: "Platina 2", img: rankPlatina },
-  17: { name: "Platina 3", img: rankPlatina },
-  18: { name: "Diamante 1", img: rankDiamante },
-  19: { name: "Diamante 2", img: rankDiamante },
-  20: { name: "Diamante 3", img: rankDiamante },
-  21: { name: "Ascendente 1", img: rankAscendente },
-  22: { name: "Ascendente 2", img: rankAscendente },
-  23: { name: "Ascendente 3", img: rankAscendente },
-  24: { name: "Imortal 1", img: rankImortal },
-  25: { name: "Imortal 2", img: rankImortal },
-  26: { name: "Imortal 3", img: rankImortal },
-  27: { name: "Radiante", img: rankRadiante },
-};
+// rankMap imported from @/lib/valorantData
 
 const valorantRankFilters = [
   { id: "todos", name: "Todos", img: rankUnranked, rmin: 0, rmax: 0 },
