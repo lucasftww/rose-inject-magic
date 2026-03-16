@@ -28,7 +28,8 @@ interface Ticket {
 const statusColors: Record<string, string> = {
   open: "bg-warning/20 text-warning border border-warning/20",
   waiting: "bg-warning/20 text-warning border border-warning/20",
-  delivered: "bg-info/20 text-info border border-info/20",
+  waiting_staff: "bg-info/20 text-info border border-info/20",
+  delivered: "bg-success/20 text-success border border-success/20",
   resolved: "bg-positive/20 text-positive border border-positive/20",
   closed: "bg-muted text-muted-foreground border border-border",
   banned: "bg-destructive/20 text-destructive border border-destructive/20",
@@ -36,8 +37,9 @@ const statusColors: Record<string, string> = {
 };
 
 const statusLabels: Record<string, string> = {
-  open: "Aguardando Equipe",
+  open: "Aberto",
   waiting: "Aguardando",
+  waiting_staff: "Aguardando Equipe",
   delivered: "Entregue",
   resolved: "Resolvido",
   closed: "Encerrado",
@@ -48,6 +50,7 @@ const statusLabels: Record<string, string> = {
 const statusIcons: Record<string, React.ReactNode> = {
   open: <Clock className="h-3 w-3" />,
   waiting: <Clock className="h-3 w-3" />,
+  waiting_staff: <Clock className="h-3 w-3" />,
   delivered: <CheckCircle className="h-3 w-3" />,
   resolved: <CheckCircle className="h-3 w-3" />,
   closed: <XCircle className="h-3 w-3" />,
@@ -56,7 +59,7 @@ const statusIcons: Record<string, React.ReactNode> = {
 };
 
 const ITEMS_PER_PAGE = 9;
-const ALL_STATUSES = ["all", "open", "waiting", "delivered", "resolved", "closed"];
+const ALL_STATUSES = ["all", "open", "waiting", "waiting_staff", "delivered", "resolved", "closed"];
 
 const MeusPedidos = () => {
   const { user, loading: authLoading } = useAuth();
