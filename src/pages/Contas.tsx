@@ -17,16 +17,12 @@ import lolRankEsmeraldaImg from "@/assets/lol-rank-esmeralda.png";
 import lolRankDiamanteImg from "@/assets/lol-rank-diamante.webp";
 import lolRankMestreImg from "@/assets/lol-rank-mestre.png";
 
-import rankFerro from "@/assets/rank-ferro.png";
-import rankBronze from "@/assets/rank-bronze.png";
-import rankPrata from "@/assets/rank-prata.png";
-import rankOuro from "@/assets/rank-ouro.png";
-import rankPlatina from "@/assets/rank-platina.png";
-import rankDiamante from "@/assets/rank-diamante.png";
-import rankAscendente from "@/assets/rank-ascendente.png";
-import rankImortal from "@/assets/rank-imortal.png";
-import rankRadiante from "@/assets/rank-radiante-new.png";
-import rankUnranked from "@/assets/rank-unranked.png";
+import {
+  rankFerro, rankBronze, rankPrata, rankOuro, rankPlatina,
+  rankDiamante, rankAscendente, rankImortal, rankRadianteNew as rankRadiante,
+  rankUnranked, rankMap, RARITY_PRIORITY, fetchAllValorantSkins,
+  type SkinEntry,
+} from "@/lib/valorantData";
 
 import weaponAres from "@/assets/weapon-ares.png";
 import weaponBandit from "@/assets/weapon-bandit.png";
