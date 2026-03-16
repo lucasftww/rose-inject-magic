@@ -134,6 +134,7 @@ const SidebarNav = memo(({
 SidebarNav.displayName = "SidebarNav";
 
 const AdminPanel = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [visitedTabs, setVisitedTabs] = useState<Set<TabId>>(new Set(["overview"]));
   const [pendingTicketId, setPendingTicketId] = useState<string | null>(null);
