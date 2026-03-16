@@ -582,7 +582,7 @@ const RobotProjectTab = () => {
                     </thead>
                     <tbody className="divide-y divide-border">
                       {robotSales.map(sale => (
-                        <tr key={sale.id} className="hover:bg-secondary/20 transition-colors">
+                        <tr key={sale.id} className="hover:bg-secondary/20">
                           <td className="px-4 py-2.5 text-muted-foreground whitespace-nowrap">
                             {new Date(sale.created_at).toLocaleDateString("pt-BR")}
                           </td>
