@@ -374,13 +374,21 @@ const RobotProjectTab = () => {
       );
       if (response.ok) {
         const data = await response.json();
+        console.log("[Robot Balance] Full response:", JSON.stringify(data, null, 2));
         if (data.balance !== undefined && data.balance !== null) {
           setRobotBalance(Number(data.balance));
-        } else if (data.raw?.balance !== undefined) {
-          setRobotBalance(Number(data.raw.balance));
+        } else {
+          // Log probe results for debugging
+          console.warn("[Robot Balance] No balance found. Probe results:", data.probeResults);
+          toast({
+            title: "Saldo Robot não encontrado",
+            description: "A API não retornou campo de saldo. Veja o console para detalhes.",
+            variant: "destructive",
+          });
         }
       } else {
-        console.warn("[Robot Balance] HTTP", response.status, await response.text().catch(() => ""));
+        const errText = await response.text().catch(() => "");
+        console.warn("[Robot Balance] HTTP", response.status, errText);
       }
     } catch (err) {
       console.warn("[Robot Balance] Fetch error:", err);
