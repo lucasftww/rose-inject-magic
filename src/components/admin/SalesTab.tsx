@@ -36,7 +36,7 @@ const statusColors: Record<string, string> = {
   closed: "bg-muted text-muted-foreground border-border",
 };
 
-const SalesTab = () => {
+const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void }) => {
   const { session } = useAuth();
   const [loading, setLoading] = useState(true);
   const [tickets, setTickets] = useState<SaleTicket[]>([]);
