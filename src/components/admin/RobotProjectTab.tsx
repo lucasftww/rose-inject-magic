@@ -810,7 +810,7 @@ const RobotProjectTab = () => {
                     <div className="mt-2 flex items-center gap-2">
                       <div className="flex-1 h-1.5 rounded-full bg-secondary overflow-hidden">
                         <div
-                          className={`h-full rounded-full transition-all ${
+                          className={`h-full rounded-full ${
                             slotsAvailable !== null && slotsAvailable <= 5 ? "bg-warning" : "bg-success"
                           }`}
                           style={{ width: `${Math.min(100, ((game.soldKeys || 0) / game.maxKeys) * 100)}%` }}

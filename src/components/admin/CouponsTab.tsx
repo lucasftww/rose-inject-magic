@@ -244,7 +244,7 @@ const CouponsTab = () => {
             <Tag className="h-10 w-10 mb-3 opacity-40" /><p className="font-semibold">Nenhum cupom cadastrado</p>
           </div>
         ) : coupons.map((coupon) => (
-          <div key={coupon.id} className="flex items-center gap-4 rounded-lg border border-border bg-card p-4 transition-all hover:border-success/30">
+          <div key={coupon.id} className="flex items-center gap-4 rounded-lg border border-border bg-card p-4">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-success/10">
               <Tag className="h-5 w-5 text-success" />
             </div>
