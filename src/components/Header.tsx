@@ -25,7 +25,7 @@ const NAV_ITEMS = [
 
 const LOL_BLUE = "hsl(198,100%,45%)";
 
-const Header = () => {
+const Header = ({ hideBanner = false }: { hideBanner?: boolean }) => {
   const [authOpen, setAuthOpen] = useState(false);
   const [authTab, setAuthTab] = useState<"login" | "register">("login");
   const [dropdownOpen, setDropdownOpen] = useState(false);
