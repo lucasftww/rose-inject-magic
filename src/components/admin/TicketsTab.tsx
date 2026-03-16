@@ -47,6 +47,7 @@ const ITEMS_PER_PAGE = 8;
 
 const TicketsTab = ({ initialTicketId, onTicketOpened }: { initialTicketId?: string | null; onTicketOpened?: () => void }) => {
   const { user } = useAuth();
+  const { emailMap: adminEmailMap } = useAdminUsers();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
