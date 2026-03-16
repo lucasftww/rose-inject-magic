@@ -1,32 +1,34 @@
-import { useState } from "react";
+import { useState, lazy, Suspense, useCallback, memo } from "react";
 import Header from "@/components/Header";
 import {
   ShieldAlert, Gamepad2, Mail, Package, Tag, UserCheck, TrendingUp,
   Key, CreditCard, BarChart3, ShoppingBag, Globe, Shield, Users,
-  ChevronRight, Menu, X
+  ChevronRight, Menu, Loader2
 } from "lucide-react";
-import ProductsTab from "@/components/admin/ProductsTab";
-import CouponsTab from "@/components/admin/CouponsTab";
-import StatusTab from "@/components/admin/StatusTab";
-import StockTab from "@/components/admin/StockTab";
-import ResellersTab from "@/components/admin/ResellersTab";
-import TicketsTab from "@/components/admin/TicketsTab";
-import OverviewTab from "@/components/admin/OverviewTab";
-import CredentialsTab from "@/components/admin/CredentialsTab";
-import LztTab from "@/components/admin/LztTab";
-import PaymentsTab from "@/components/admin/PaymentsTab";
-import FinanceTab from "@/components/admin/FinanceTab";
-import ScratchCardTab from "@/components/admin/ScratchCardTab";
-import SalesTab from "@/components/admin/SalesTab";
-import GamesTab from "@/components/admin/GamesTab";
-import RobotProjectTab from "@/components/admin/RobotProjectTab";
-import UsersTab from "@/components/admin/UsersTab";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+
+/* Lazy-load all tabs */
+const OverviewTab = lazy(() => import("@/components/admin/OverviewTab"));
+const FinanceTab = lazy(() => import("@/components/admin/FinanceTab"));
+const GamesTab = lazy(() => import("@/components/admin/GamesTab"));
+const ProductsTab = lazy(() => import("@/components/admin/ProductsTab"));
+const StockTab = lazy(() => import("@/components/admin/StockTab"));
+const LztTab = lazy(() => import("@/components/admin/LztTab"));
+const RobotProjectTab = lazy(() => import("@/components/admin/RobotProjectTab"));
+const SalesTab = lazy(() => import("@/components/admin/SalesTab"));
+const PaymentsTab = lazy(() => import("@/components/admin/PaymentsTab"));
+const CouponsTab = lazy(() => import("@/components/admin/CouponsTab"));
+const ScratchCardTab = lazy(() => import("@/components/admin/ScratchCardTab"));
+const TicketsTab = lazy(() => import("@/components/admin/TicketsTab"));
+const StatusTab = lazy(() => import("@/components/admin/StatusTab"));
+const UsersTab = lazy(() => import("@/components/admin/UsersTab"));
+const ResellersTab = lazy(() => import("@/components/admin/ResellersTab"));
+const CredentialsTab = lazy(() => import("@/components/admin/CredentialsTab"));
 
 type TabId = "overview" | "financeiro" | "jogos" | "produtos" | "estoque" | "lzt" | "robot" | "vendas" | "pagamentos" | "cupons" | "raspadinha" | "tickets" | "status" | "usuarios" | "revendedores" | "credenciais";
 
@@ -77,8 +79,14 @@ const tabGroups: TabGroup[] = [
   },
 ];
 
-/* Shared nav renderer */
-const SidebarNav = ({
+const TabFallback = () => (
+  <div className="flex items-center justify-center py-20">
+    <Loader2 className="h-6 w-6 animate-spin text-success" />
+  </div>
+);
+
+/* Memoized nav to avoid re-renders on tab content changes */
+const SidebarNav = memo(({
   activeTab,
   onSelect,
   collapsed = false,
@@ -104,7 +112,7 @@ const SidebarNav = ({
               key={tab.id}
               onClick={() => onSelect(tab.id)}
               title={collapsed ? tab.label : undefined}
-              className={`group flex w-full items-center gap-2.5 text-sm font-medium transition-all duration-200 relative
+              className={`group flex w-full items-center gap-2.5 text-sm font-medium transition-colors duration-150 relative
                 ${collapsed ? "justify-center px-2 py-2.5" : "px-4 py-2"}
                 ${isActive
                   ? "text-success bg-success/10"
@@ -122,7 +130,8 @@ const SidebarNav = ({
       </div>
     ))}
   </nav>
-);
+));
+SidebarNav.displayName = "SidebarNav";
 
 const AdminPanel = () => {
   const [activeTab, setActiveTab] = useState<TabId>("overview");
@@ -130,15 +139,17 @@ const AdminPanel = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const handleGoToTicket = (ticketId: string) => {
+  const handleGoToTicket = useCallback((ticketId: string) => {
     setPendingTicketId(ticketId);
     setActiveTab("tickets");
-  };
+  }, []);
 
-  const handleTabSelect = (id: TabId) => {
+  const handleTabSelect = useCallback((id: TabId) => {
     setActiveTab(id);
     setMobileOpen(false);
-  };
+  }, []);
+
+  const handleTicketOpened = useCallback(() => setPendingTicketId(null), []);
 
   const activeLabel = tabGroups.flatMap(g => g.tabs).find(t => t.id === activeTab)?.label || "";
 
@@ -164,9 +175,8 @@ const AdminPanel = () => {
       <div className="flex">
         {/* Desktop Sidebar */}
         <aside
-          className={`hidden lg:flex flex-col sticky top-0 h-screen shrink-0 border-r border-border bg-card/50 backdrop-blur-sm transition-all duration-300 overflow-hidden ${sidebarOpen ? "w-56" : "w-14"}`}
+          className={`hidden lg:flex flex-col sticky top-0 h-screen shrink-0 border-r border-border bg-card/50 backdrop-blur-sm transition-[width] duration-200 overflow-hidden ${sidebarOpen ? "w-56" : "w-14"}`}
         >
-          {/* Brand */}
           <div className="flex items-center gap-2 px-3 py-4 border-b border-border min-h-[56px]">
             <ShieldAlert className="h-5 w-5 text-success shrink-0" />
             {sidebarOpen && (
@@ -176,11 +186,9 @@ const AdminPanel = () => {
               onClick={() => setSidebarOpen(v => !v)}
               className="ml-auto rounded-md p-1 text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
             >
-              <ChevronRight className={`h-4 w-4 transition-transform duration-300 ${sidebarOpen ? "rotate-180" : ""}`} />
+              <ChevronRight className={`h-4 w-4 transition-transform duration-200 ${sidebarOpen ? "rotate-180" : ""}`} />
             </button>
           </div>
-
-          {/* Nav */}
           <div className="flex-1 overflow-y-auto scrollbar-hide">
             <SidebarNav activeTab={activeTab} onSelect={handleTabSelect} collapsed={!sidebarOpen} />
           </div>
@@ -190,14 +198,12 @@ const AdminPanel = () => {
         <main className="flex-1 min-w-0">
           {/* Top bar */}
           <div className="sticky top-0 z-10 flex items-center gap-3 px-4 lg:px-8 py-3 border-b border-border bg-background/80 backdrop-blur-sm">
-            {/* Mobile menu trigger */}
             <button
               onClick={() => setMobileOpen(true)}
               className="lg:hidden rounded-md p-1.5 text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
             >
               <Menu className="h-5 w-5" />
             </button>
-
             <div className="flex-1 min-w-0">
               <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Administração</p>
               <h1 className="text-lg sm:text-xl font-bold text-foreground truncate" style={{ fontFamily: "'Valorant', sans-serif" }}>
@@ -206,24 +212,26 @@ const AdminPanel = () => {
             </div>
           </div>
 
-          {/* Tab Content */}
+          {/* Tab Content — each tab lazy-loaded */}
           <div className="px-3 sm:px-4 lg:px-8 py-4 lg:py-6">
-            {activeTab === "overview" && <OverviewTab onGoToTicket={handleGoToTicket} />}
-            {activeTab === "jogos" && <GamesTab />}
-            {activeTab === "produtos" && <ProductsTab />}
-            {activeTab === "estoque" && <StockTab />}
-            {activeTab === "robot" && <RobotProjectTab />}
-            {activeTab === "revendedores" && <ResellersTab />}
-            {activeTab === "tickets" && <TicketsTab initialTicketId={pendingTicketId} onTicketOpened={() => setPendingTicketId(null)} />}
-            {activeTab === "status" && <StatusTab />}
-            {activeTab === "cupons" && <CouponsTab />}
-            {activeTab === "usuarios" && <UsersTab onGoToTicket={handleGoToTicket} />}
-            {activeTab === "credenciais" && <CredentialsTab />}
-            {activeTab === "lzt" && <LztTab />}
-            {activeTab === "vendas" && <SalesTab onGoToTicket={handleGoToTicket} />}
-            {activeTab === "pagamentos" && <PaymentsTab />}
-            {activeTab === "financeiro" && <FinanceTab />}
-            {activeTab === "raspadinha" && <ScratchCardTab />}
+            <Suspense fallback={<TabFallback />}>
+              {activeTab === "overview" && <OverviewTab onGoToTicket={handleGoToTicket} />}
+              {activeTab === "jogos" && <GamesTab />}
+              {activeTab === "produtos" && <ProductsTab />}
+              {activeTab === "estoque" && <StockTab />}
+              {activeTab === "robot" && <RobotProjectTab />}
+              {activeTab === "revendedores" && <ResellersTab />}
+              {activeTab === "tickets" && <TicketsTab initialTicketId={pendingTicketId} onTicketOpened={handleTicketOpened} />}
+              {activeTab === "status" && <StatusTab />}
+              {activeTab === "cupons" && <CouponsTab />}
+              {activeTab === "usuarios" && <UsersTab onGoToTicket={handleGoToTicket} />}
+              {activeTab === "credenciais" && <CredentialsTab />}
+              {activeTab === "lzt" && <LztTab />}
+              {activeTab === "vendas" && <SalesTab onGoToTicket={handleGoToTicket} />}
+              {activeTab === "pagamentos" && <PaymentsTab />}
+              {activeTab === "financeiro" && <FinanceTab />}
+              {activeTab === "raspadinha" && <ScratchCardTab />}
+            </Suspense>
           </div>
         </main>
       </div>
