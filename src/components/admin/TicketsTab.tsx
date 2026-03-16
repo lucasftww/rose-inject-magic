@@ -539,7 +539,7 @@ const TicketsTab = ({ initialTicketId, onTicketOpened }: { initialTicketId?: str
       const cfg = getGameConfig(game);
 
       return (
-        <div className="space-y-3 w-full max-w-sm">
+        <div className="space-y-3 w-full max-w-md">
           <div className="rounded-xl border border-success/30 bg-background p-3 space-y-2.5">
             <div className="flex items-center gap-2 mb-2">
               <div className="flex h-5 w-5 items-center justify-center rounded-full bg-success/20">
