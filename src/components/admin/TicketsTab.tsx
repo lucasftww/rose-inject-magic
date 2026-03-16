@@ -878,7 +878,7 @@ const TicketsTab = ({
                   <span key={`dots-${i}`} className="px-1.5 text-xs text-muted-foreground/40">…</span>
                 ) : (
                   <button key={p} onClick={() => setCurrentPage(p as number)}
-                    className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all ${p === currentPage ? "bg-success text-success-foreground" : "border border-border text-muted-foreground hover:text-foreground"}`}>{p}</button>
+                    className={`rounded-lg px-2.5 py-1 text-xs font-bold ${p === currentPage ? "bg-success text-success-foreground" : "border border-border text-muted-foreground hover:text-foreground"}`}>{p}</button>
                 )
               )}
               <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}
