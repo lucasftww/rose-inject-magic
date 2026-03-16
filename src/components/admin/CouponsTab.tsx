@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useAdminProductsList } from "@/hooks/useAdminData";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Plus, Pencil, Trash2, Loader2, Tag, X } from "lucide-react";
