@@ -197,7 +197,7 @@ const AdminPanel = () => {
         {/* Main Content — offset by sidebar width */}
         <main className={`flex-1 min-w-0 transition-[margin] duration-200 ${sidebarOpen ? "lg:ml-56" : "lg:ml-14"}`}>
           {/* Top bar */}
-          <div className="sticky top-14 sm:top-16 lg:top-[72px] z-20 flex items-center gap-3 px-4 lg:px-8 py-3 border-b border-border bg-background/80 backdrop-blur-md">
+          <div className="sticky top-0 z-20 flex items-center gap-3 px-4 lg:px-8 py-3 border-b border-border bg-background/80 backdrop-blur-md">
             <button
               onClick={() => setMobileOpen(true)}
               className="lg:hidden rounded-md p-1.5 text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
