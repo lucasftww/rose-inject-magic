@@ -102,7 +102,7 @@ const ResellersTab = () => {
       u.email?.toLowerCase().includes(searchEmail.toLowerCase()) ||
       u.username?.toLowerCase().includes(searchEmail.toLowerCase())
     );
-    setSearchResults(users.slice(0, 5));
+    setSearchResults(users.slice(0, 5).map((u: any) => ({ id: u.id, email: u.email, username: u.username || "" })));
     setSearching(false);
   };
 
