@@ -229,7 +229,7 @@ const Produtos = () => {
   useEffect(() => {
     const fetchGames = async () => {
       const [gamesRes, productsRes] = await Promise.all([
-        supabase.from("games").select("*").eq("active", true).order("sort_order", { ascending: true }),
+        supabase.from("games").select("id, name, slug, image_url, active, sort_order").eq("active", true).order("sort_order", { ascending: true }),
         supabase.from("products").select("id, game_id").eq("active", true),
       ]);
 
