@@ -177,7 +177,7 @@ const TicketsTab = ({
         .from("stock_items")
         .select("content")
         .eq("id", ticket.stock_item_id)
-        .single();
+        .maybeSingle();
       if (stockData) {
         const raw = (stockData as any).content;
         setStockContent(typeof raw === "string" ? raw : JSON.stringify(raw));
