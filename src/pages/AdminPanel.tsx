@@ -520,7 +520,7 @@ const AdminPanel = () => {
           {activeTab === "usuarios" && <UsersTab />}
           {activeTab === "credenciais" && <CredentialsTab />}
           {activeTab === "lzt" && <LztTab />}
-          {activeTab === "vendas" && <SalesTab />}
+          {activeTab === "vendas" && <SalesTab onGoToTicket={handleGoToTicket} />}
           {activeTab === "pagamentos" && <PaymentsTab />}
           {activeTab === "financeiro" && <FinanceTab />}
           {activeTab === "raspadinha" && <ScratchCardTab />}
