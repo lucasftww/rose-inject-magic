@@ -216,7 +216,7 @@ const GamesTab = () => {
                     placeholder={formName ? `Ex: ${formName} game cover` : "Descreva a imagem..."}
                     className="w-full rounded-lg border border-border bg-secondary/50 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-success/50" />
                   <button type="button" onClick={handleGenerateAI} disabled={generatingAI}
-                    className="flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-accent-foreground transition-all hover:opacity-90 disabled:opacity-50">
+                    className="flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-accent-foreground hover:opacity-90 disabled:opacity-50">
                     {generatingAI ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                     {generatingAI ? "Gerando..." : "Gerar com IA"}
                   </button>
