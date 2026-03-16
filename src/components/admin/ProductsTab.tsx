@@ -468,7 +468,7 @@ const ProductsTab = () => {
     if (!confirm(`Excluir "${product.name}"?`)) return;
     const { error } = await supabase.from("products").delete().eq("id", product.id);
     if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
-    else { toast({ title: "Excluído!" }); fetchData(); }
+    else { toast({ title: "Excluído!" }); fetchData(true); }
   };
 
   const getGameName = (gameId: string) => games.find(g => g.id === gameId)?.name || "—";
