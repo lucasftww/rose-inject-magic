@@ -146,7 +146,7 @@ const GamesTab = () => {
     if (!confirm(`Excluir "${game.name}"?`)) return;
     const { error } = await supabase.from("games").delete().eq("id", game.id);
     if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
-    else { toast({ title: "Excluído!" }); fetchGames(); }
+    else { toast({ title: "Excluído!" }); fetchGames(true); }
   };
 
   return (
