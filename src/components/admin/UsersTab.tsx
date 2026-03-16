@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-
 import { useAuth } from "@/hooks/useAuth";
+import { useAdminUsers } from "@/hooks/useAdminUsers";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2, Users, Mail, Calendar, Clock, Search, Shield, Ban, ShieldCheck,
