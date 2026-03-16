@@ -16,6 +16,109 @@ function log(level: "INFO" | "WARN" | "ERROR", ctx: string, msg: string, data?: 
   else console.log(JSON.stringify(entry));
 }
 
+type RobotCredentials = { username: string; password: string };
+type RobotGameSnapshot = {
+  game: any | null;
+  balance: number | null;
+  expectedPrice: number | null;
+  availableSlots: number | null;
+  reason?: string;
+};
+
+async function getRobotCredentials(supabaseAdmin: any): Promise<RobotCredentials | null> {
+  const [uRes, pRes] = await Promise.all([
+    supabaseAdmin.from("system_credentials").select("value").eq("env_key", "ROBOT_API_USERNAME").maybeSingle(),
+    supabaseAdmin.from("system_credentials").select("value").eq("env_key", "ROBOT_API_PASSWORD").maybeSingle(),
+  ]);
+
+  const username = uRes.data?.value || Deno.env.get("ROBOT_API_USERNAME");
+  const password = pRes.data?.value || Deno.env.get("ROBOT_API_PASSWORD");
+  if (!username || !password) return null;
+
+  return { username, password };
+}
+
+function robotAuthHeader(creds: RobotCredentials) {
+  return `Basic ${btoa(`${creds.username}:${creds.password}`)}`;
+}
+
+async function fetchRobotGameSnapshot(
+  creds: RobotCredentials,
+  robotGameId: number,
+  duration: number,
+): Promise<RobotGameSnapshot> {
+  const gamesRes = await fetch("https://api.robotproject.com.br/games", {
+    headers: {
+      Authorization: robotAuthHeader(creds),
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!gamesRes.ok) {
+    return {
+      game: null,
+      balance: null,
+      expectedPrice: null,
+      availableSlots: null,
+      reason: `Falha ao consultar o provedor Robot (HTTP ${gamesRes.status}).`,
+    };
+  }
+
+  const gamesData = await gamesRes.json();
+  const games = Array.isArray(gamesData) ? gamesData : gamesData.games || [];
+  const game = games.find((g: any) => Number(g.id) === Number(robotGameId)) || null;
+  const parsedBalance = Number(Array.isArray(gamesData) ? NaN : gamesData?.balance);
+  const balance = Number.isFinite(parsedBalance) ? parsedBalance : null;
+
+  if (!game) {
+    return {
+      game: null,
+      balance,
+      expectedPrice: null,
+      availableSlots: null,
+      reason: "Produto não encontrado na Robot API.",
+    };
+  }
+
+  const expectedRaw = game.prices?.[String(duration)] ?? game.prices?.["1"] ?? null;
+  const parsedExpectedPrice = Number(expectedRaw);
+  const expectedPrice = Number.isFinite(parsedExpectedPrice) ? parsedExpectedPrice : null;
+  const parsedMaxKeys = Number(game.maxKeys);
+  const maxKeys = game.maxKeys == null || !Number.isFinite(parsedMaxKeys) ? null : parsedMaxKeys;
+  const soldKeys = Number(game.soldKeys || 0);
+  const availableSlots = maxKeys === null ? null : Math.max(0, maxKeys - soldKeys);
+
+  if (game.status !== "on") {
+    return { game, balance, expectedPrice, availableSlots, reason: "Produto offline no provedor no momento." };
+  }
+
+  if (!game.is_free && (expectedPrice === null || expectedPrice <= 0)) {
+    return {
+      game,
+      balance,
+      expectedPrice,
+      availableSlots,
+      reason: `A duração de ${duration} dia(s) não está disponível na Robot API.`,
+    };
+  }
+
+  if (!game.is_free && availableSlots !== null && availableSlots <= 0) {
+    return { game, balance, expectedPrice, availableSlots, reason: "Sem slots disponíveis no provedor no momento." };
+  }
+
+  if (!game.is_free && balance !== null && expectedPrice !== null && balance < expectedPrice) {
+    return {
+      game,
+      balance,
+      expectedPrice,
+      availableSlots,
+      reason: `Saldo insuficiente no provedor para entrega automática. Disponível: $${balance.toFixed(2)} • Necessário: $${expectedPrice.toFixed(2)}`,
+    };
+  }
+
+  return { game, balance, expectedPrice, availableSlots };
+}
+
 // ─── Server-side CAPI Purchase (fires when payment is COMPLETED) ────────────
 // This guarantees Meta receives the Purchase event even if the user closes the browser.
 // Uses the same deterministic event_id as the browser Pixel for deduplication.
