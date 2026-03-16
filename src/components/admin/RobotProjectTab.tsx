@@ -198,32 +198,43 @@ const RobotProjectTab = () => {
         dateFilter = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
       }
 
-      // Get tickets for robot products
-      let query = supabase
-        .from("order_tickets")
-        .select("id, created_at, product_id, product_plan_id, status, metadata, user_id")
-        .in("product_id", productIds)
-        .eq("status", "delivered")
-        .order("created_at", { ascending: false });
-
+      // Get tickets for robot products (paginated, no 1000-row limit)
+      let allTickets: any[];
       if (dateFilter) {
-        query = query.gte("created_at", dateFilter);
+        allTickets = await fetchAllRows("order_tickets", {
+          select: "id, created_at, product_id, product_plan_id, status, metadata, user_id",
+          filters: [
+            { column: "status", op: "eq", value: "delivered" },
+            { column: "created_at", op: "gte", value: dateFilter },
+          ],
+          order: { column: "created_at", ascending: false },
+        });
+      } else {
+        allTickets = await fetchAllRows("order_tickets", {
+          select: "id, created_at, product_id, product_plan_id, status, metadata, user_id",
+          filters: [{ column: "status", op: "eq", value: "delivered" }],
+          order: { column: "created_at", ascending: false },
+        });
       }
 
-      const { data: tickets } = await query;
-      if (!tickets || tickets.length === 0) {
+      const tickets = allTickets.filter((t: any) => productIds.includes(t.product_id));
+      if (tickets.length === 0) {
         setRobotSales([]);
         setSalesLoading(false);
         return;
       }
 
       // Get plan names & prices
-      const planIds = [...new Set(tickets.map(t => t.product_plan_id))];
-      const ticketUserIds = [...new Set(tickets.map(t => t.user_id))];
+      const planIds = [...new Set(tickets.map((t: any) => t.product_plan_id))];
+      const ticketUserIds = [...new Set(tickets.map((t: any) => t.user_id))];
       
-      const [plansRes, paymentsRes] = await Promise.all([
+      const [plansRes, robotPayments] = await Promise.all([
         supabase.from("product_plans").select("id, name, price, robot_duration_days").in("id", planIds),
-        supabase.from("payments").select("user_id, amount, cart_snapshot, status").in("user_id", ticketUserIds).in("status", ["COMPLETED", "ACTIVE"]).order("created_at", { ascending: false }).limit(5000),
+        fetchAllRows("payments", {
+          select: "user_id, amount, cart_snapshot, status",
+          filters: [{ column: "status", op: "eq", value: "COMPLETED" }],
+          order: { column: "created_at", ascending: false },
+        }),
       ]);
       
       const planMap = Object.fromEntries((plansRes.data || []).map(p => [p.id, p]));
