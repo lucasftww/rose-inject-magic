@@ -261,7 +261,7 @@ const Checkout = () => {
       } catch { /* silent */ }
       setChecking(false);
     };
-    intervalRef.current = setInterval(checkStatus, 10000);
+    intervalRef.current = setInterval(checkStatus, 3000);
     checkStatus();
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [paymentId, paymentStatus, paymentMethod]);
