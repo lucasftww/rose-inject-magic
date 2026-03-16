@@ -77,7 +77,7 @@ const PaymentsTab = () => {
               }`}
             >
               <div
-                className={`flex h-16 w-16 items-center justify-center rounded-full border transition-colors ${
+                className={`flex h-16 w-16 items-center justify-center rounded-full border ${
                   s.enabled
                     ? "border-success/50 bg-success/10"
                     : "border-border bg-secondary/50"
