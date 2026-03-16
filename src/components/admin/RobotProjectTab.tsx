@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, RefreshCw, Wifi, WifiOff, Gamepad2, AlertTriangle, CheckCircle, Package, DollarSign, Clock, Zap, Wallet, Gift, TrendingUp, BarChart3 } from "lucide-react";
+import { Loader2, RefreshCw, Wifi, WifiOff, Gamepad2, AlertTriangle, CheckCircle, Package, DollarSign, Clock, Zap, Wallet, Gift, TrendingUp, BarChart3, RotateCw } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface RobotGame {
@@ -37,6 +37,17 @@ interface RobotSale {
   duration: number | null;
 }
 
+interface PendingRobotTicket {
+  id: string;
+  created_at: string;
+  status: string;
+  status_label: string;
+  error: string;
+  product_name: string;
+  plan_name: string;
+  user_label: string;
+}
+
 const RobotProjectTab = () => {
   const [loading, setLoading] = useState(true);
   const [pingStatus, setPingStatus] = useState<"online" | "offline" | "loading">("loading");
@@ -50,6 +61,8 @@ const RobotProjectTab = () => {
   const [robotSales, setRobotSales] = useState<RobotSale[]>([]);
   const [salesLoading, setSalesLoading] = useState(false);
   const [salesPeriod, setSalesPeriod] = useState<"7d" | "30d" | "all">("30d");
+  const [pendingRobotTickets, setPendingRobotTickets] = useState<PendingRobotTicket[]>([]);
+  const [retryingTicketId, setRetryingTicketId] = useState<string | null>(null);
 
   const checkPing = async () => {
     setPingStatus("loading");
@@ -267,9 +280,78 @@ const RobotProjectTab = () => {
     setSalesLoading(false);
   };
 
+  const fetchPendingRobotTickets = async () => {
+    const { data: tickets } = await supabase
+      .from("order_tickets")
+      .select("id, created_at, status, status_label, metadata, product_id, product_plan_id, user_id")
+      .eq("status", "open")
+      .order("created_at", { ascending: false })
+      .limit(20);
+
+    const robotTickets = (tickets || []).filter((ticket: any) => ticket.metadata?.type === "robot-project");
+    if (robotTickets.length === 0) {
+      setPendingRobotTickets([]);
+      return;
+    }
+
+    const productIds = [...new Set(robotTickets.map((ticket: any) => ticket.product_id))];
+    const planIds = [...new Set(robotTickets.map((ticket: any) => ticket.product_plan_id))];
+    const userIds = [...new Set(robotTickets.map((ticket: any) => ticket.user_id))];
+
+    const [productsRes, plansRes, profilesRes] = await Promise.all([
+      supabase.from("products").select("id, name").in("id", productIds),
+      supabase.from("product_plans").select("id, name").in("id", planIds),
+      supabase.from("profiles").select("user_id, username").in("user_id", userIds),
+    ]);
+
+    const productMap = Object.fromEntries((productsRes.data || []).map((item) => [item.id, item.name]));
+    const planMap = Object.fromEntries((plansRes.data || []).map((item) => [item.id, item.name]));
+    const profileMap = Object.fromEntries((profilesRes.data || []).map((item) => [item.user_id, item.username || item.user_id.slice(0, 8)]));
+
+    setPendingRobotTickets(robotTickets.map((ticket: any) => ({
+      id: ticket.id,
+      created_at: ticket.created_at || "",
+      status: ticket.status || "open",
+      status_label: ticket.status_label || "Entrega Manual",
+      error: String(ticket.metadata?.error || "Falha não informada"),
+      product_name: productMap[ticket.product_id] || "Produto desconhecido",
+      plan_name: planMap[ticket.product_plan_id] || "Plano desconhecido",
+      user_label: profileMap[ticket.user_id] || ticket.user_id.slice(0, 8),
+    })));
+  };
+
+  const retryRobotDelivery = async (ticketId: string) => {
+    try {
+      setRetryingTicketId(ticketId);
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pix-payment?action=retry-robot`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session?.access_token}`,
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ ticket_id: ticketId }),
+        }
+      );
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Não foi possível reprocessar a entrega");
+      }
+      toast({ title: "Entrega Robot reprocessada", description: result.message || "Verifique o ticket do pedido." });
+      await refreshAll();
+    } catch (error: any) {
+      toast({ title: "Falha ao reprocessar", description: error.message, variant: "destructive" });
+    } finally {
+      setRetryingTicketId(null);
+    }
+  };
+
   const refreshAll = async () => {
     setLoading(true);
-    await Promise.all([checkPing(), fetchRobotGames(), fetchProductsWithRobot(), fetchExchangeRate()]);
+    await Promise.all([checkPing(), fetchRobotGames(), fetchProductsWithRobot(), fetchExchangeRate(), fetchPendingRobotTickets()]);
     await fetchRobotSales();
     setLastRefresh(new Date());
     setLoading(false);
@@ -447,6 +529,36 @@ const RobotProjectTab = () => {
                 )}
               </div>
             </div>
+
+            {pendingRobotTickets.length > 0 && (
+              <div className="mb-6 rounded-lg border border-warning/30 bg-warning/5 p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <AlertTriangle className="h-4 w-4 text-warning" />
+                  <h4 className="text-sm font-semibold text-foreground">Entregas Robot pendentes</h4>
+                </div>
+                <div className="space-y-2">
+                  {pendingRobotTickets.map((ticket) => (
+                    <div key={ticket.id} className="flex flex-col gap-3 rounded-lg border border-border bg-card p-3 lg:flex-row lg:items-center lg:justify-between">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-foreground">{ticket.product_name} • {ticket.plan_name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {ticket.user_label} • {new Date(ticket.created_at).toLocaleString("pt-BR")}
+                        </p>
+                        <p className="text-xs text-warning mt-1">{ticket.error}</p>
+                      </div>
+                      <button
+                        onClick={() => retryRobotDelivery(ticket.id)}
+                        disabled={retryingTicketId === ticket.id}
+                        className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+                      >
+                        {retryingTicketId === ticket.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCw className="h-3.5 w-3.5" />}
+                        Reprocessar entrega
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Sales table */}
             {robotSales.length === 0 ? (
