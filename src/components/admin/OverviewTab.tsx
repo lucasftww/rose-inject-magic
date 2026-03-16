@@ -136,7 +136,6 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
         if (!l.error) {
           setLztProfit(Number(l.total_profit));
           setLztCost(Number(l.total_bought));
-          setLztSold(Number(l.total_sold));
         }
       }
 
