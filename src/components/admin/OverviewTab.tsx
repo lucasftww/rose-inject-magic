@@ -277,7 +277,57 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
         </button>
       </div>
 
-      {/* Today Highlight */}
+      {/* Margin Alert */}
+      {profitMargin < marginThreshold && revenueTotal > 0 && (
+        <div className="rounded-xl border-2 border-destructive/30 bg-destructive/[0.05] p-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-destructive/15 shrink-0">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-destructive">Margem abaixo do limite!</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Sua margem atual é <span className="font-bold text-destructive">{profitMargin.toFixed(1)}%</span>, 
+                abaixo do limite de {marginThreshold}%. Revise seus custos.
+              </p>
+            </div>
+            <div className="shrink-0 flex items-center gap-1.5">
+              {editingThreshold ? (
+                <div className="flex items-center gap-1">
+                  <input
+                    type="number"
+                    value={thresholdInput}
+                    onChange={(e) => setThresholdInput(e.target.value)}
+                    className="w-14 rounded-md border border-border bg-card px-2 py-1 text-xs text-foreground text-center"
+                    min="0"
+                    max="100"
+                  />
+                  <span className="text-xs text-muted-foreground">%</span>
+                  <button
+                    onClick={() => {
+                      const val = Math.min(100, Math.max(0, Number(thresholdInput) || 30));
+                      setMarginThreshold(val);
+                      setThresholdInput(String(val));
+                      setEditingThreshold(false);
+                    }}
+                    className="rounded-md bg-success px-2 py-1 text-[10px] font-bold text-success-foreground"
+                  >
+                    OK
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => { setThresholdInput(String(marginThreshold)); setEditingThreshold(true); }}
+                  className="rounded-md border border-border bg-card px-2.5 py-1 text-[10px] font-medium text-muted-foreground hover:text-foreground"
+                >
+                  Limite: {marginThreshold}%
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="rounded-xl border border-success/20 bg-success/[0.03] p-4">
         <div className="flex items-center gap-2 mb-3">
           <Activity className="h-4 w-4 text-success" />
