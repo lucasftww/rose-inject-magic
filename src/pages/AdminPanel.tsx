@@ -22,7 +22,12 @@ import GamesTab from "@/components/admin/GamesTab";
 import RobotProjectTab from "@/components/admin/RobotProjectTab";
 import UsersTab from "@/components/admin/UsersTab";
 
-const tabGroups = [
+type TabId = "overview" | "financeiro" | "jogos" | "produtos" | "estoque" | "lzt" | "robot" | "vendas" | "pagamentos" | "cupons" | "raspadinha" | "tickets" | "status" | "usuarios" | "revendedores" | "credenciais";
+
+interface TabItem { id: TabId; label: string; icon: React.ComponentType<{ className?: string }>; }
+interface TabGroup { label: string; tabs: TabItem[]; }
+
+const tabGroups: TabGroup[] = [
   {
     label: "Principal",
     tabs: [
@@ -64,9 +69,7 @@ const tabGroups = [
       { id: "credenciais", label: "Credenciais", icon: Key },
     ],
   },
-] as const;
-
-type TabId = "overview" | "financeiro" | "jogos" | "produtos" | "estoque" | "lzt" | "robot" | "vendas" | "pagamentos" | "cupons" | "raspadinha" | "tickets" | "status" | "usuarios" | "revendedores" | "credenciais";
+];
 
 const AdminPanel = () => {
   const [activeTab, setActiveTab] = useState<TabId>("overview");
