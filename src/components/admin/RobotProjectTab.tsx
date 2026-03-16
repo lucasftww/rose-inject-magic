@@ -296,7 +296,7 @@ const RobotProjectTab = () => {
       .select("id, created_at, status, status_label, metadata, product_id, product_plan_id, user_id")
       .eq("status", "open")
       .order("created_at", { ascending: false })
-      .limit(20);
+      .limit(100);
 
     const robotTickets = (tickets || []).filter((ticket: any) => ticket.metadata?.type === "robot-project");
     if (robotTickets.length === 0) {

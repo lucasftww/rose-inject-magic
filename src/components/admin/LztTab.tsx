@@ -387,7 +387,8 @@ const LztTab = () => {
                       <span className="text-sm font-bold text-success">R$ {Number(o.custom_price_brl).toFixed(2)}</span>
                       <button
                         onClick={async () => {
-                          await supabase.from("lzt_price_overrides").delete().eq("lzt_item_id", o.lzt_item_id);
+                          const { error } = await supabase.from("lzt_price_overrides").delete().eq("lzt_item_id", o.lzt_item_id);
+                          if (error) { toast({ title: "Erro ao remover", description: error.message, variant: "destructive" }); return; }
                           toast({ title: "Override removido", description: `Conta #${o.lzt_item_id} voltou ao preço automático.` });
                           fetchOverrides();
                         }}
