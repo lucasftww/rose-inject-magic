@@ -704,7 +704,7 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
       title: item.productName || `Conta ${gameLabelManual} #${itemId}`,
       game: lztGame,
       buyer_user_id: payment.user_id,
-    }).then(({ error: saleErr }) => {
+    }).then(({ error: saleErr }: { error: unknown }) => {
       if (saleErr) console.error("Failed to record manual lzt_sale:", saleErr);
       else console.log("Manual LZT sale recorded:", itemId);
     });
