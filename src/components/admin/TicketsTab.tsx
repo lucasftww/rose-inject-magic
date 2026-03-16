@@ -112,9 +112,9 @@ const TicketsTab = ({
     }).catch(() => null);
 
     if (data) {
-      const productIds = [...new Set(data.map((t: any) => t.product_id))];
-      const planIds = [...new Set(data.map((t: any) => t.product_plan_id))];
-      const userIds = [...new Set(data.map((t: any) => t.user_id))];
+      const productIds = [...new Set(data.map((t: any) => t.product_id))] as string[];
+      const planIds = [...new Set(data.map((t: any) => t.product_plan_id))] as string[];
+      const userIds = [...new Set(data.map((t: any) => t.user_id))] as string[];
 
       const [productsRes, plansRes, profilesRes, lztSalesData] = await Promise.all([
         supabase.from("products").select("id, name").in("id", productIds),
