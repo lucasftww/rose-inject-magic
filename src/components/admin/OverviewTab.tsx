@@ -176,7 +176,7 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
                 <div className={`flex h-9 w-9 items-center justify-center rounded-lg bg-secondary ${stat.accent}`}>
                   <Icon className="h-4 w-4" />
                 </div>
-                <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-muted-foreground transition-colors" />
+                <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground/40" />
               </div>
               <p className="text-2xl font-bold text-foreground tracking-tight">{stat.value}</p>
               <p className="text-xs text-muted-foreground mt-1">{stat.label}</p>
