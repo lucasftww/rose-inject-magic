@@ -225,7 +225,7 @@ const FinanceTab = () => {
             <button
               key={key}
               onClick={() => setPeriod(key)}
-              className={`rounded-lg px-4 py-2 text-xs font-medium transition-colors ${
+              className={`rounded-lg px-4 py-2 text-xs font-medium ${
                 period === key
                   ? "bg-success/20 text-success border border-success/30"
                   : "bg-secondary/50 text-muted-foreground border border-border hover:text-foreground"
