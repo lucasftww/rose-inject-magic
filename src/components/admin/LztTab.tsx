@@ -218,7 +218,7 @@ const LztTab = () => {
           <Settings className="h-4 w-4" /> Configurações
         </button>
         <button onClick={() => setActiveView("price")}
-          className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${activeView === "price" ? "bg-success/20 text-success border border-success/30" : "bg-secondary/50 text-muted-foreground border border-border hover:text-foreground"}`}>
+          className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium ${activeView === "price" ? "bg-success/20 text-success border border-success/30" : "bg-secondary/50 text-muted-foreground border border-border hover:text-foreground"}`}>
           <Tag className="h-4 w-4" /> Alterar Preço
         </button>
         <button onClick={() => { setActiveView("sales"); setSalesPage(0); }}
