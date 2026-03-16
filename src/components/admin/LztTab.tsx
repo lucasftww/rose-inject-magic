@@ -470,9 +470,9 @@ const LztTab = () => {
                     <td className="py-3 pr-3">
                       {sale.buyer_user_id ? (
                         <button onClick={() => copyToClipboard(sale.buyer_user_id!)}
-                          className="font-mono text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors" title="Copiar ID">
+                          className="font-mono text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1" title="Copiar ID">
                           {sale.buyer_user_id.slice(0, 8)}...
-                          <Copy className="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity" />
+                          <Copy className="h-3 w-3 opacity-0 group-hover:opacity-60" />
                         </button>
                       ) : <span className="text-[10px] text-muted-foreground">—</span>}
                     </td>
