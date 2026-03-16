@@ -539,7 +539,7 @@ const ProductsTab = () => {
               <div className="flex gap-1 mb-3">
                 {([["url", Link, "URL"], ["upload", Upload, "Upload"]] as const).map(([mode, Icon, label]) => (
                   <button key={mode} type="button" onClick={() => setImageMode(mode)}
-                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${imageMode === mode ? "bg-success/20 text-success border border-success/30" : "bg-secondary/50 text-muted-foreground border border-border hover:text-foreground"}`}>
+                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium ${imageMode === mode ? "bg-success/20 text-success border border-success/30" : "bg-secondary/50 text-muted-foreground border border-border hover:text-foreground"}`}>
                     <Icon className="h-3 w-3" />{label}
                   </button>
                 ))}
