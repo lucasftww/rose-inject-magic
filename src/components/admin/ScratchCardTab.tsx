@@ -243,7 +243,7 @@ const ScratchCardTab = () => {
                       <span className="text-[10px] text-muted-foreground">Ativo</span>
                     </label>
                     <button onClick={() => handleSavePrize(prize)} disabled={savingPct === prize.id}
-                      className="p-2 rounded-lg bg-success text-success-foreground hover:shadow-lg transition-all disabled:opacity-50">
+                      className="p-2 rounded-lg bg-success text-success-foreground disabled:opacity-50">
                       {savingPct === prize.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                     </button>
                     <button onClick={() => setEditingId(null)} className="p-2 rounded-lg text-muted-foreground hover:text-foreground">
