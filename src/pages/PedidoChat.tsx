@@ -87,8 +87,8 @@ const PedidoChat = () => {
       const isRobot = meta?.type === "robot-project";
 
       const [prodRes, planRes, messagesRes, tutorialRes] = await Promise.all([
-        supabase.from("products").select("name").eq("id", ticketData.product_id).single(),
-        supabase.from("product_plans").select("name, price").eq("id", ticketData.product_plan_id).single(),
+        supabase.from("products").select("name").eq("id", ticketData.product_id).maybeSingle(),
+        supabase.from("product_plans").select("name, price").eq("id", ticketData.product_plan_id).maybeSingle(),
         supabase.from("ticket_messages").select("*").eq("ticket_id", id).order("created_at", { ascending: true }),
         supabase.from("product_tutorials").select("tutorial_text, tutorial_file_url").eq("product_id", ticketData.product_id).maybeSingle(),
       ]);
