@@ -60,17 +60,16 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
   const [totalOrders, setTotalOrders] = useState(0);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [totalPaidPayments, setTotalPaidPayments] = useState(0);
-  const [totalUsers, setTotalUsers] = useState(0);
   const [totalResellers, setTotalResellers] = useState(0);
   const [totalProducts, setTotalProducts] = useState(0);
   const [recentOrders, setRecentOrders] = useState<OrderTicket[]>([]);
   const [recentPayments, setRecentPayments] = useState<Payment[]>([]);
 
+  // Fetch stats and recent data (independent of user list)
   useEffect(() => {
     const fetchAll = async () => {
       setLoading(true);
 
-      // Use DB aggregation function for accurate stats (no 1000-row limit)
       const [
         statsRes,
         recentOrdersRes,
@@ -92,30 +91,28 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
         }
       }
 
-      setTotalUsers(adminUsers.length);
-
       if (recentOrdersRes.data) {
-          const productIds = [...new Set((recentOrdersRes.data as any[]).map((t: any) => t.product_id))];
-          const planIds = [...new Set((recentOrdersRes.data as any[]).map((t: any) => t.product_plan_id))];
-          const [prodsRes, plansRes] = await Promise.all([
-            productIds.length > 0 ? supabase.from("products").select("id, name").in("id", productIds) : { data: [] },
-            planIds.length > 0 ? supabase.from("product_plans").select("id, name").in("id", planIds) : { data: [] },
-          ]);
-          const prodMap: Record<string, string> = {};
-          const planMap: Record<string, string> = {};
-          prodsRes.data?.forEach((p: any) => { prodMap[p.id] = p.name; });
-          plansRes.data?.forEach((p: any) => { planMap[p.id] = p.name; });
+        const productIds = [...new Set((recentOrdersRes.data as any[]).map((t: any) => t.product_id))];
+        const planIds = [...new Set((recentOrdersRes.data as any[]).map((t: any) => t.product_plan_id))];
+        const [prodsRes, plansRes] = await Promise.all([
+          productIds.length > 0 ? supabase.from("products").select("id, name").in("id", productIds) : { data: [] },
+          planIds.length > 0 ? supabase.from("product_plans").select("id, name").in("id", planIds) : { data: [] },
+        ]);
+        const prodMap: Record<string, string> = {};
+        const planMap: Record<string, string> = {};
+        prodsRes.data?.forEach((p: any) => { prodMap[p.id] = p.name; });
+        plansRes.data?.forEach((p: any) => { planMap[p.id] = p.name; });
 
-          setRecentOrders((recentOrdersRes.data as any[]).map((t: any) => {
-            const meta = t.metadata as any;
-            const isLzt = meta?.type === "lzt-account";
-            return {
-              ...t,
-              product_name: isLzt ? (meta?.title || meta?.account_name || "Conta LZT") : (prodMap[t.product_id] || "Produto"),
-              plan_name: isLzt ? "Conta LZT" : (planMap[t.product_plan_id] || "Plano"),
-              username: usernameMap.get(t.user_id) || "?",
-            };
-          }));
+        setRecentOrders((recentOrdersRes.data as any[]).map((t: any) => {
+          const meta = t.metadata as any;
+          const isLzt = meta?.type === "lzt-account";
+          return {
+            ...t,
+            product_name: isLzt ? (meta?.title || meta?.account_name || "Conta LZT") : (prodMap[t.product_id] || "Produto"),
+            plan_name: isLzt ? "Conta LZT" : (planMap[t.product_plan_id] || "Plano"),
+            username: "?", // will be enriched below
+          };
+        }));
       }
 
       if (recentPaymentsRes.data) {
@@ -126,7 +123,16 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
     };
 
     fetchAll();
-  }, [refreshKey, adminUsers, usernameMap]);
+  }, [refreshKey]);
+
+  // Enrich recent orders with usernames when usernameMap updates (separate from data fetch)
+  useEffect(() => {
+    if (usernameMap.size === 0) return;
+    setRecentOrders(prev => prev.map(order => ({
+      ...order,
+      username: usernameMap.get(order.user_id) || "?",
+    })));
+  }, [usernameMap]);
 
   if (loading) {
     return (
@@ -140,7 +146,7 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
     { icon: DollarSign, label: "Receita Total", value: `R$ ${(totalRevenue / 100).toFixed(2)}`, accent: "text-positive" },
     { icon: ShoppingCart, label: "Total de Pedidos", value: String(totalOrders), accent: "text-success" },
     { icon: Receipt, label: "Faturas Pagas", value: String(totalPaidPayments), accent: "text-info" },
-    { icon: Users, label: "Usuários", value: String(totalUsers), accent: "text-success" },
+    { icon: Users, label: "Usuários", value: String(adminUsers.length), accent: "text-success" },
     { icon: UserCheck, label: "Revendedores", value: String(totalResellers), accent: "text-warning" },
     { icon: Package, label: "Produtos", value: String(totalProducts), accent: "text-info" },
   ];

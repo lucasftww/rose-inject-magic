@@ -130,7 +130,7 @@ const UsersTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
           { value: "normal", label: "Normal" },
         ].map((f) => (
           <button key={f.value} onClick={() => setFilterStatus(f.value)}
-            className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${filterStatus === f.value ? "bg-success/20 text-success border border-success/30" : "bg-secondary/50 text-muted-foreground border border-border hover:text-foreground"}`}>
+            className={`rounded-lg px-3 py-1.5 text-xs font-medium ${filterStatus === f.value ? "bg-success/20 text-success border border-success/30" : "bg-secondary/50 text-muted-foreground border border-border hover:text-foreground"}`}>
             {f.label}
           </button>
         ))}
@@ -326,7 +326,7 @@ const UsersTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
           </div>
         ) : filtered.map((u) => (
           <button key={u.id} onClick={() => setSelectedUser(u)}
-            className="flex w-full items-center gap-4 rounded-lg border border-border bg-card p-4 text-left transition-colors hover:border-success/30">
+            className="flex w-full items-center gap-4 rounded-lg border border-border bg-card p-4 text-left hover:border-success/30">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary border border-border">
               {u.avatar_url ? <img src={u.avatar_url} className="h-10 w-10 rounded-full object-cover" /> : <Users className="h-4 w-4 text-muted-foreground" />}
             </div>
@@ -382,7 +382,7 @@ const UsersTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
                     <div
                       key={order.id}
                       onClick={() => onGoToTicket?.(order.id)}
-                      className="rounded-lg border border-border bg-secondary/30 p-4 space-y-2 cursor-pointer hover:border-success/30 transition-colors"
+                      className="rounded-lg border border-border bg-secondary/30 p-4 space-y-2 cursor-pointer hover:border-success/30"
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 min-w-0">
