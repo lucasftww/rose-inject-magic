@@ -505,22 +505,22 @@ const FinanceTab = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header + Period Filter + PDF */}
+    <div className="space-y-5">
+      {/* ═══ Header ═══ */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h2 className="text-lg font-bold text-foreground">Financeiro</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">Visão completa de receita, lucro e métricas</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Receita, custos e lucro do seu negócio</p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex gap-1 bg-secondary/50 rounded-lg p-0.5">
-            {([["24h", "24h"], ["7d", "7 dias"], ["30d", "30 dias"], ["all", "Tudo"]] as const).map(([key, label]) => (
+          <div className="flex gap-0.5 bg-secondary rounded-lg p-0.5">
+            {([["24h", "24h"], ["7d", "7d"], ["30d", "30d"], ["all", "Tudo"]] as const).map(([key, label]) => (
               <button
                 key={key}
                 onClick={() => setPeriod(key)}
-                className={`rounded-md px-3 py-1.5 text-[11px] font-semibold transition-all ${
+                className={`rounded-md px-3 py-1.5 text-[11px] font-semibold ${
                   period === key
-                    ? "bg-success text-success-foreground shadow-sm"
+                    ? "bg-success text-success-foreground"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -528,239 +528,248 @@ const FinanceTab = () => {
               </button>
             ))}
           </div>
-          <button
-            onClick={() => fetchData()}
-            className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-[11px] font-medium text-muted-foreground hover:text-foreground hover:border-success/30 transition-colors"
-          >
+          <button onClick={() => fetchData()} className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1.5 text-muted-foreground hover:text-foreground">
             <RefreshCw className="h-3 w-3" />
           </button>
-          <button
-            onClick={generatePDF}
-            className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-[11px] font-medium text-muted-foreground hover:text-foreground hover:border-success/30 transition-colors"
-          >
+          <button onClick={generatePDF} className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1.5 text-[11px] font-medium text-muted-foreground hover:text-foreground">
             <Download className="h-3 w-3" /> PDF
           </button>
         </div>
       </div>
 
-      {/* ─── Top Stats Row ─── */}
+      {/* ═══ HERO: Lucro Total ═══ */}
+      <div className="rounded-xl border-2 border-success/30 bg-success/[0.04] p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-success/15">
+            <TrendingUp className="h-5 w-5 text-success" />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-success uppercase tracking-wider">Lucro Total</p>
+            <p className="text-[10px] text-muted-foreground">Receita menos todos os custos</p>
+          </div>
+          <div className="ml-auto text-right">
+            <p className="text-3xl font-black text-success tracking-tight">R$ {fmt(netProfit)}</p>
+            <p className="text-xs text-muted-foreground">Margem: <span className="font-bold text-foreground">{profitMargin.toFixed(1)}%</span></p>
+          </div>
+        </div>
+
+        {/* Breakdown: Receita - Custos = Lucro */}
+        <div className="grid grid-cols-4 gap-3">
+          <div className="rounded-lg bg-card border border-border p-3 text-center">
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Receita Bruta</p>
+            <p className="text-lg font-bold text-foreground mt-1">R$ {fmtCompact(totalRevenue)}</p>
+          </div>
+          <div className="rounded-lg bg-card border border-destructive/15 p-3 text-center">
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Custo LZT</p>
+            <p className="text-lg font-bold text-destructive mt-1">-R$ {fmtCompact(lztTotalBought)}</p>
+          </div>
+          <div className="rounded-lg bg-card border border-destructive/15 p-3 text-center">
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Custo Robot</p>
+            <p className="text-lg font-bold text-destructive mt-1">-R$ {fmtCompact(robotTotalCost)}</p>
+          </div>
+          <div className="rounded-lg bg-card border border-destructive/15 p-3 text-center">
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Descontos</p>
+            <p className="text-lg font-bold text-destructive mt-1">-R$ {fmtCompact(totalDiscounts)}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* ═══ Métricas Rápidas ═══ */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard
-          icon={<DollarSign className="h-4 w-4 text-positive" />}
-          label="Receita Total" value={`R$ ${fmtCompact(totalRevenue)}`}
-          change={period !== "all" ? revenueChange : undefined}
-          highlight
-        />
-        <StatCard
-          icon={<TrendingUp className="h-4 w-4 text-success" />}
-          label="Lucro Líquido" value={`R$ ${fmtCompact(netProfit)}`}
-          highlight
-        />
-        <StatCard
-          icon={<Receipt className="h-4 w-4 text-info" />}
-          label="Transações" value={String(fp.length)}
-          change={period !== "all" ? pctChange(fp.length, pp.length) : undefined}
-        />
-        <StatCard
-          icon={<Users className="h-4 w-4 text-warning" />}
-          label="Compradores Únicos" value={String(uniqueBuyers)}
-          change={period !== "all" ? buyersChange : undefined}
-        />
-      </div>
-
-      {/* ─── Revenue by Source ─── */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
-        <StatCard small icon={<Package className="h-3.5 w-3.5 text-info" />}
-          label="Estoque Local" value={`R$ ${fmtCompact(revenueBreakdown.stock)}`} />
-        <StatCard small icon={<Zap className="h-3.5 w-3.5 text-accent-foreground" />}
-          label="Cheats (Robot)" value={`R$ ${fmtCompact(revenueBreakdown.robot)}`} />
-        <StatCard small icon={<Globe className="h-3.5 w-3.5 text-success" />}
-          label="Contas LZT" value={`R$ ${fmtCompact(revenueBreakdown.lzt)}`} />
-        <StatCard small icon={<Wallet className="h-3.5 w-3.5 text-positive" />}
-          label="Ticket Médio" value={`R$ ${fmt(avgTicket)}`}
+        <StatCard icon={<Receipt className="h-4 w-4 text-info" />} label="Transações" value={String(fp.length)}
+          change={period !== "all" ? pctChange(fp.length, pp.length) : undefined} />
+        <StatCard icon={<Users className="h-4 w-4 text-warning" />} label="Compradores" value={String(uniqueBuyers)}
+          change={period !== "all" ? buyersChange : undefined} />
+        <StatCard icon={<Wallet className="h-4 w-4 text-positive" />} label="Ticket Médio" value={`R$ ${fmt(avgTicket)}`}
           change={period !== "all" ? avgTicketChange : undefined} />
-        <StatCard small icon={<Percent className="h-3.5 w-3.5 text-warning" />}
-          label="Margem Lucro" value={`${profitMargin.toFixed(1)}%`} />
-        <StatCard small icon={<TrendingDown className="h-3.5 w-3.5 text-destructive" />}
-          label="Descontos" value={`R$ ${fmtCompact(totalDiscounts)}`} />
+        <StatCard icon={<Globe className="h-4 w-4 text-info" />} label="Câmbio USD→BRL" value={`R$ ${usdToBrl.toFixed(2)}`} />
       </div>
 
-      {/* ─── Robot Project Profit Section ─── */}
-      {fRobot.length > 0 && (
-        <div className="rounded-xl border border-border bg-card overflow-hidden">
-          <div className="px-5 py-3.5 border-b border-border flex items-center gap-2">
-            <Zap className="h-4 w-4 text-accent-foreground" />
-            <h3 className="text-sm font-bold text-foreground">Lucro Cheats (Robot Project)</h3>
-            <span className="text-[10px] text-muted-foreground ml-1">({fRobot.length} vendas)</span>
-            {period !== "all" && robotProfitChange !== 0 && (
-              <span className={`flex items-center gap-0.5 text-[10px] font-bold rounded-full px-1.5 py-0.5 ml-auto ${
-                robotProfitChange > 0 ? "bg-positive/15 text-positive" : "bg-destructive/15 text-destructive"
-              }`}>
-                {robotProfitChange > 0 ? <ArrowUp className="h-2.5 w-2.5" /> : <ArrowDown className="h-2.5 w-2.5" />}
-                {Math.abs(robotProfitChange).toFixed(0)}%
-              </span>
-            )}
+      {/* ═══ Receita por Fonte ═══ */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="rounded-xl border border-border bg-card p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Package className="h-3.5 w-3.5 text-info" />
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Estoque Local</span>
           </div>
-          <div className="p-5">
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 mb-5">
-              <div className="rounded-lg bg-secondary/40 p-3">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Receita Robot</p>
-                <p className="text-lg font-bold text-foreground mt-1">R$ {fmt(robotTotalRevenue)}</p>
-              </div>
-              <div className="rounded-lg bg-destructive/[0.06] border border-destructive/15 p-3">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Custo Robot</p>
-                <p className="text-lg font-bold text-destructive mt-1">R$ {fmt(robotTotalCost)}</p>
-              </div>
-              <div className="rounded-lg bg-positive/[0.08] border border-positive/20 p-3">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Lucro Robot</p>
-                <p className="text-lg font-bold text-positive mt-1">R$ {fmt(robotTotalProfit)}</p>
-              </div>
-              <div className="rounded-lg bg-secondary/40 p-3">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Margem Robot</p>
-                <p className="text-lg font-bold text-foreground mt-1">
-                  {robotTotalRevenue > 0 ? ((robotTotalProfit / robotTotalRevenue) * 100).toFixed(1) : "0"}%
-                </p>
-              </div>
-            </div>
-            {/* Robot by product */}
-            {robotByProduct.length > 0 && (
-              <div className="space-y-1.5">
-                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Por Produto</p>
-                {robotByProduct.map(([name, data]) => (
-                  <div key={name} className="flex items-center justify-between rounded-lg bg-secondary/30 px-4 py-2.5">
-                    <div className="flex items-center gap-2">
-                      <Zap className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span className="text-sm font-medium text-foreground">{name}</span>
-                      <span className="text-[10px] text-muted-foreground">({data.count})</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-xs">
-                      <span className="text-muted-foreground">R$ {fmt(data.revenue)}</span>
-                      <span className="text-destructive">-R$ {fmt(data.cost)}</span>
-                      <span className="font-bold text-positive">+R$ {fmt(data.profit)}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          <p className="text-xl font-bold text-foreground">R$ {fmtCompact(revenueBreakdown.stock)}</p>
         </div>
-      )}
-
-      {/* ─── LZT Profit Section ─── */}
-      {(fLzt.length > 0 || lztSales.length > 0) && (
-        <div className="rounded-xl border border-border bg-card overflow-hidden">
-          <div className="px-5 py-3.5 border-b border-border flex items-center gap-2">
-            <BarChart3 className="h-4 w-4 text-success" />
-            <h3 className="text-sm font-bold text-foreground">Lucro LZT Market</h3>
-            <span className="text-[10px] text-muted-foreground ml-1">({fLzt.length} vendas)</span>
+        <div className="rounded-xl border border-border bg-card p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Zap className="h-3.5 w-3.5 text-warning" />
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Cheats (Robot)</span>
           </div>
-          <div className="p-5">
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 mb-5">
-              <div className="rounded-lg bg-secondary/40 p-3">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Custo Total</p>
-                <p className="text-lg font-bold text-destructive mt-1">R$ {fmt(lztTotalBought)}</p>
-              </div>
-              <div className="rounded-lg bg-secondary/40 p-3">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Receita Venda</p>
-                <p className="text-lg font-bold text-foreground mt-1">R$ {fmt(lztTotalSold)}</p>
-              </div>
-              <div className="rounded-lg bg-positive/[0.08] border border-positive/20 p-3">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Lucro LZT</p>
-                <p className="text-lg font-bold text-positive mt-1">R$ {fmt(lztTotalProfit)}</p>
-              </div>
-              <div className="rounded-lg bg-secondary/40 p-3">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Margem LZT</p>
-                <p className="text-lg font-bold text-foreground mt-1">
-                  {lztTotalSold > 0 ? ((lztTotalProfit / lztTotalSold) * 100).toFixed(1) : "0"}%
-                </p>
-              </div>
-            </div>
-            {lztByGame.length > 0 && (
-              <div className="space-y-1.5">
-                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Por Jogo</p>
-                {lztByGame.map(([game, data]) => (
-                  <div key={game} className="flex items-center justify-between rounded-lg bg-secondary/30 px-4 py-2.5">
-                    <div className="flex items-center gap-2">
-                      <Gamepad2 className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span className="text-sm font-medium text-foreground">{game}</span>
-                      <span className="text-[10px] text-muted-foreground">({data.count})</span>
-                    </div>
-                    <div className="flex items-center gap-4 text-sm">
-                      <span className="text-muted-foreground">R$ {fmt(data.revenue)}</span>
-                      <span className="font-bold text-positive">+R$ {fmt(data.profit)}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          <p className="text-xl font-bold text-foreground">R$ {fmtCompact(revenueBreakdown.robot)}</p>
+          {robotTotalProfit > 0 && <p className="text-[10px] text-positive mt-0.5">Lucro: R$ {fmt(robotTotalProfit)}</p>}
         </div>
-      )}
+        <div className="rounded-xl border border-border bg-card p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <BarChart3 className="h-3.5 w-3.5 text-success" />
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Contas LZT</span>
+          </div>
+          <p className="text-xl font-bold text-foreground">R$ {fmtCompact(revenueBreakdown.lzt)}</p>
+          {lztTotalProfit > 0 && <p className="text-[10px] text-positive mt-0.5">Lucro: R$ {fmt(lztTotalProfit)}</p>}
+        </div>
+      </div>
 
-      {/* ─── Reseller Section ─── */}
-      {fReseller.length > 0 && (
+      {/* ═══ Gráfico Diário ═══ */}
+      {dailyData.length > 1 && (
         <div className="rounded-xl border border-border bg-card p-5">
-          <div className="flex items-center gap-2 mb-4">
+          <h3 className="text-sm font-bold text-foreground flex items-center gap-2 mb-4">
+            <CalendarDays className="h-4 w-4 text-success" />
+            Faturamento Diário
+          </h3>
+          <ResponsiveContainer width="100%" height={260}>
+            <AreaChart data={dailyData}>
+              <defs>
+                <linearGradient id="gradEstoque" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="hsl(220,80%,55%)" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="hsl(220,80%,55%)" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="gradRobot" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="hsl(38,92%,50%)" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="hsl(38,92%,50%)" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="gradContas" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="hsl(197,100%,50%)" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="hsl(197,100%,50%)" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(0,0%,18%)" />
+              <XAxis dataKey="date" tick={{ fill: "hsl(0,0%,55%)", fontSize: 10 }} interval="preserveStartEnd" />
+              <YAxis tick={{ fill: "hsl(0,0%,55%)", fontSize: 10 }} />
+              <Tooltip {...CHART_TOOLTIP} formatter={(value: number) => [`R$ ${fmt(value)}`]} />
+              <Legend wrapperStyle={{ fontSize: 11 }} />
+              <Area type="monotone" dataKey="estoque" name="Estoque" stroke="hsl(220,80%,55%)" fill="url(#gradEstoque)" strokeWidth={2} />
+              <Area type="monotone" dataKey="robot" name="Cheats" stroke="hsl(38,92%,50%)" fill="url(#gradRobot)" strokeWidth={2} />
+              <Area type="monotone" dataKey="contas" name="Contas" stroke="hsl(197,100%,50%)" fill="url(#gradContas)" strokeWidth={2} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* ═══ Detalhes por Fonte ═══ */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+        {/* Robot Details */}
+        {fRobot.length > 0 && (
+          <div className="rounded-xl border border-border bg-card overflow-hidden">
+            <div className="px-5 py-3 border-b border-border flex items-center justify-between">
+              <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                <Zap className="h-4 w-4 text-warning" />
+                Robot Project
+              </h3>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-muted-foreground">{fRobot.length} vendas</span>
+                {period !== "all" && robotProfitChange !== 0 && (
+                  <span className={`flex items-center gap-0.5 text-[10px] font-bold rounded-full px-1.5 py-0.5 ${
+                    robotProfitChange > 0 ? "bg-positive/15 text-positive" : "bg-destructive/15 text-destructive"
+                  }`}>
+                    {robotProfitChange > 0 ? <ArrowUp className="h-2.5 w-2.5" /> : <ArrowDown className="h-2.5 w-2.5" />}
+                    {Math.abs(robotProfitChange).toFixed(0)}%
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="p-4 space-y-3">
+              <div className="grid grid-cols-3 gap-2">
+                <div className="rounded-lg bg-secondary/40 p-2.5 text-center">
+                  <p className="text-[9px] font-semibold text-muted-foreground uppercase">Receita</p>
+                  <p className="text-sm font-bold text-foreground mt-0.5">R$ {fmt(robotTotalRevenue)}</p>
+                </div>
+                <div className="rounded-lg bg-secondary/40 p-2.5 text-center">
+                  <p className="text-[9px] font-semibold text-muted-foreground uppercase">Custo</p>
+                  <p className="text-sm font-bold text-destructive mt-0.5">R$ {fmt(robotTotalCost)}</p>
+                </div>
+                <div className="rounded-lg bg-positive/[0.08] border border-positive/20 p-2.5 text-center">
+                  <p className="text-[9px] font-semibold text-muted-foreground uppercase">Lucro</p>
+                  <p className="text-sm font-bold text-positive mt-0.5">R$ {fmt(robotTotalProfit)}</p>
+                </div>
+              </div>
+              {robotByProduct.length > 0 && (
+                <div className="space-y-1">
+                  {robotByProduct.map(([name, data]) => (
+                    <div key={name} className="flex items-center justify-between rounded-lg bg-secondary/30 px-3 py-2">
+                      <span className="text-xs font-medium text-foreground">{name} <span className="text-muted-foreground">({data.count})</span></span>
+                      <span className="text-xs font-bold text-positive">+R$ {fmt(data.profit)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* LZT Details */}
+        {(fLzt.length > 0 || lztSales.length > 0) && (
+          <div className="rounded-xl border border-border bg-card overflow-hidden">
+            <div className="px-5 py-3 border-b border-border flex items-center justify-between">
+              <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                <BarChart3 className="h-4 w-4 text-success" />
+                LZT Market
+              </h3>
+              <span className="text-[10px] text-muted-foreground">{fLzt.length} vendas</span>
+            </div>
+            <div className="p-4 space-y-3">
+              <div className="grid grid-cols-3 gap-2">
+                <div className="rounded-lg bg-secondary/40 p-2.5 text-center">
+                  <p className="text-[9px] font-semibold text-muted-foreground uppercase">Custo</p>
+                  <p className="text-sm font-bold text-destructive mt-0.5">R$ {fmt(lztTotalBought)}</p>
+                </div>
+                <div className="rounded-lg bg-secondary/40 p-2.5 text-center">
+                  <p className="text-[9px] font-semibold text-muted-foreground uppercase">Receita</p>
+                  <p className="text-sm font-bold text-foreground mt-0.5">R$ {fmt(lztTotalSold)}</p>
+                </div>
+                <div className="rounded-lg bg-positive/[0.08] border border-positive/20 p-2.5 text-center">
+                  <p className="text-[9px] font-semibold text-muted-foreground uppercase">Lucro</p>
+                  <p className="text-sm font-bold text-positive mt-0.5">R$ {fmt(lztTotalProfit)}</p>
+                </div>
+              </div>
+              {lztByGame.length > 0 && (
+                <div className="space-y-1">
+                  {lztByGame.map(([game, data]) => (
+                    <div key={game} className="flex items-center justify-between rounded-lg bg-secondary/30 px-3 py-2">
+                      <span className="text-xs font-medium text-foreground flex items-center gap-1.5">
+                        <Gamepad2 className="h-3 w-3 text-muted-foreground" />
+                        {game} <span className="text-muted-foreground">({data.count})</span>
+                      </span>
+                      <span className="text-xs font-bold text-positive">+R$ {fmt(data.profit)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ═══ Revendedores ═══ */}
+      {fReseller.length > 0 && (
+        <div className="rounded-xl border border-border bg-card p-4">
+          <div className="flex items-center gap-2 mb-3">
             <Users className="h-4 w-4 text-warning" />
             <h3 className="text-sm font-bold text-foreground">Revendedores</h3>
             <span className="text-[10px] text-muted-foreground">({fReseller.length} compras)</span>
           </div>
           <div className="grid grid-cols-3 gap-3">
-            <div className="rounded-lg bg-secondary/40 p-3">
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Valor Original</p>
+            <div className="rounded-lg bg-secondary/40 p-3 text-center">
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Original</p>
               <p className="text-lg font-bold text-foreground mt-1">R$ {fmt(resellerOriginal)}</p>
             </div>
-            <div className="rounded-lg bg-secondary/40 p-3">
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Valor Pago</p>
+            <div className="rounded-lg bg-secondary/40 p-3 text-center">
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Pago</p>
               <p className="text-lg font-bold text-foreground mt-1">R$ {fmt(resellerTotal)}</p>
             </div>
-            <div className="rounded-lg bg-warning/[0.08] border border-warning/20 p-3">
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Desconto Dado</p>
+            <div className="rounded-lg bg-warning/[0.08] border border-warning/20 p-3 text-center">
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Desconto</p>
               <p className="text-lg font-bold text-warning mt-1">R$ {fmt(resellerDiscount)}</p>
             </div>
           </div>
         </div>
       )}
 
-      {/* ─── Charts ─── */}
+      {/* ═══ Gráficos Secundários ═══ */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        {/* Daily Revenue Area Chart */}
-        {dailyData.length > 1 && (
-          <div className="rounded-xl border border-border bg-card p-5 lg:col-span-2">
-            <h3 className="text-sm font-bold text-foreground flex items-center gap-2 mb-4">
-              <CalendarDays className="h-4 w-4 text-success" />
-              Faturamento Diário
-            </h3>
-            <ResponsiveContainer width="100%" height={280}>
-              <AreaChart data={dailyData}>
-                <defs>
-                  <linearGradient id="gradEstoque" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(220,80%,55%)" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="hsl(220,80%,55%)" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="gradRobot" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(38,92%,50%)" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="hsl(38,92%,50%)" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="gradContas" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(197,100%,50%)" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="hsl(197,100%,50%)" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(0,0%,18%)" />
-                <XAxis dataKey="date" tick={{ fill: "hsl(0,0%,55%)", fontSize: 10 }} interval="preserveStartEnd" />
-                <YAxis tick={{ fill: "hsl(0,0%,55%)", fontSize: 10 }} />
-                <Tooltip {...CHART_TOOLTIP} formatter={(value: number) => [`R$ ${fmt(value)}`]} />
-                <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Area type="monotone" dataKey="estoque" name="Estoque" stroke="hsl(220,80%,55%)" fill="url(#gradEstoque)" strokeWidth={2} />
-                <Area type="monotone" dataKey="robot" name="Cheats" stroke="hsl(38,92%,50%)" fill="url(#gradRobot)" strokeWidth={2} />
-                <Area type="monotone" dataKey="contas" name="Contas" stroke="hsl(197,100%,50%)" fill="url(#gradContas)" strokeWidth={2} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        )}
-
-        {/* Revenue Source Pie */}
+        {/* Receita por Fonte Pie */}
         <div className="rounded-xl border border-border bg-card p-5">
           <h3 className="text-sm font-bold text-foreground flex items-center gap-2 mb-4">
             <PieChart className="h-4 w-4 text-success" />
@@ -772,18 +781,10 @@ const FinanceTab = () => {
             <>
               <ResponsiveContainer width="100%" height={200}>
                 <RechartsPie>
-                  <Pie
-                    data={revenuePieData} cx="50%" cy="50%"
-                    innerRadius={55} outerRadius={80}
-                    paddingAngle={4} dataKey="value"
-                  >
-                    {revenuePieData.map((_, i) => (
-                      <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                    ))}
+                  <Pie data={revenuePieData} cx="50%" cy="50%" innerRadius={55} outerRadius={80} paddingAngle={4} dataKey="value">
+                    {revenuePieData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                   </Pie>
-                  <Tooltip {...CHART_TOOLTIP} formatter={(value: number, name: string) => [
-                    `R$ ${fmt(value)}`, name
-                  ]} />
+                  <Tooltip {...CHART_TOOLTIP} formatter={(value: number, name: string) => [`R$ ${fmt(value)}`, name]} />
                 </RechartsPie>
               </ResponsiveContainer>
               <div className="mt-3 space-y-1.5">
@@ -801,7 +802,7 @@ const FinanceTab = () => {
           )}
         </div>
 
-        {/* Payment Method Pie */}
+        {/* Payment Methods Pie */}
         <div className="rounded-xl border border-border bg-card p-5">
           <h3 className="text-sm font-bold text-foreground flex items-center gap-2 mb-4">
             <ShoppingCart className="h-4 w-4 text-success" />
@@ -813,14 +814,8 @@ const FinanceTab = () => {
             <>
               <ResponsiveContainer width="100%" height={200}>
                 <RechartsPie>
-                  <Pie
-                    data={pieData} cx="50%" cy="50%"
-                    innerRadius={55} outerRadius={80}
-                    paddingAngle={4} dataKey="value"
-                  >
-                    {pieData.map((_, i) => (
-                      <Cell key={i} fill={COLORS[(i + 3) % COLORS.length]} />
-                    ))}
+                  <Pie data={pieData} cx="50%" cy="50%" innerRadius={55} outerRadius={80} paddingAngle={4} dataKey="value">
+                    {pieData.map((_, i) => <Cell key={i} fill={COLORS[(i + 3) % COLORS.length]} />)}
                   </Pie>
                   <Tooltip {...CHART_TOOLTIP} formatter={(value: number, name: string, props: any) => [
                     `${value} transações · R$ ${fmt(props.payload.revenue)}`, name
@@ -843,7 +838,7 @@ const FinanceTab = () => {
         </div>
       </div>
 
-      {/* ─── Monthly Breakdown ─── */}
+      {/* ═══ Faturamento Mensal ═══ */}
       {monthlyData.length > 1 && (
         <div className="rounded-xl border border-border bg-card p-5">
           <h3 className="text-sm font-bold text-foreground flex items-center gap-2 mb-4">
@@ -864,64 +859,6 @@ const FinanceTab = () => {
           </ResponsiveContainer>
         </div>
       )}
-
-      {/* ─── Summary Footer ─── */}
-      <div className="rounded-xl border border-success/20 bg-success/[0.03] p-5">
-        <h3 className="text-sm font-bold text-success flex items-center gap-2 mb-3">
-          <TrendingUp className="h-4 w-4" />
-          Resumo do Período
-        </h3>
-        <div className="grid grid-cols-2 gap-x-8 gap-y-2 lg:grid-cols-4 text-sm">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Receita Bruta</span>
-            <span className="font-bold text-foreground">R$ {fmt(totalRevenue)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Custo LZT</span>
-            <span className="font-bold text-destructive">-R$ {fmt(lztTotalBought)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Custo Robot</span>
-            <span className="font-bold text-destructive">-R$ {fmt(robotTotalCost)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Descontos/Cupons</span>
-            <span className="font-bold text-destructive">-R$ {fmt(totalDiscounts)}</span>
-          </div>
-          <div className="flex justify-between border-t border-border pt-2 mt-1">
-            <span className="text-foreground font-semibold">Lucro Líquido</span>
-            <span className="font-bold text-positive">R$ {fmt(netProfit)}</span>
-          </div>
-          <div className="flex justify-between border-t border-border pt-2 mt-1">
-            <span className="text-muted-foreground">Margem</span>
-            <span className="font-bold text-foreground">{profitMargin.toFixed(1)}%</span>
-          </div>
-          <div className="flex justify-between border-t border-border pt-2 mt-1">
-            <span className="text-muted-foreground">Lucro LZT</span>
-            <span className="font-bold text-positive">R$ {fmt(lztTotalProfit)}</span>
-          </div>
-          <div className="flex justify-between border-t border-border pt-2 mt-1">
-            <span className="text-muted-foreground">Lucro Robot</span>
-            <span className="font-bold text-positive">R$ {fmt(robotTotalProfit)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Estoque Local</span>
-            <span className="font-bold text-foreground">R$ {fmt(revenueBreakdown.stock)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Cheats (Robot)</span>
-            <span className="font-bold text-foreground">R$ {fmt(revenueBreakdown.robot)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Contas LZT</span>
-            <span className="font-bold text-foreground">R$ {fmt(revenueBreakdown.lzt)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Câmbio USD→BRL</span>
-            <span className="font-bold text-foreground">R$ {usdToBrl.toFixed(2)}</span>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
