@@ -445,12 +445,12 @@ const LztTab = () => {
                     {salesSearch ? "Nenhuma venda encontrada." : "Nenhuma venda registrada ainda."}
                   </td></tr>
                 ) : paginatedSales.map((sale) => (
-                  <tr key={sale.id} className="group hover:bg-secondary/20 transition-colors">
+                  <tr key={sale.id} className="group hover:bg-secondary/20">
                     <td className="py-3 pr-3">
                       <button onClick={() => copyToClipboard(sale.lzt_item_id)}
-                        className="flex items-center gap-1.5 font-mono text-xs text-foreground hover:text-success transition-colors" title="Copiar ID">
+                        className="flex items-center gap-1.5 font-mono text-xs text-foreground hover:text-success" title="Copiar ID">
                         #{sale.lzt_item_id}
-                        <Copy className="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity" />
+                        <Copy className="h-3 w-3 opacity-0 group-hover:opacity-60" />
                       </button>
                     </td>
                     <td className="py-3 pr-3">
