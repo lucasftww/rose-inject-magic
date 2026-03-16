@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
 import {
   Loader2, DollarSign, ShoppingCart, Users, UserCheck,
-  Package, Receipt, TrendingUp, ChevronRight
+  Package, Receipt, TrendingUp, RefreshCw
 } from "lucide-react";
 
 interface OrderTicket {
