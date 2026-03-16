@@ -209,7 +209,7 @@ const CredentialsTab = () => {
                   <Pencil className="h-3.5 w-3.5" />
                 </button>
                 <button onClick={() => handleDelete(cred)}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:border-destructive hover:text-destructive">
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground hover:border-destructive hover:text-destructive">
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
               </div>
