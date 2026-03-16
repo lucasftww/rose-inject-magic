@@ -214,15 +214,15 @@ const LztTab = () => {
       {/* View Tabs */}
       <div className="flex gap-2">
         <button onClick={() => setActiveView("config")}
-          className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${activeView === "config" ? "bg-success/20 text-success border border-success/30" : "bg-secondary/50 text-muted-foreground border border-border hover:text-foreground"}`}>
+          className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium ${activeView === "config" ? "bg-success/20 text-success border border-success/30" : "bg-secondary/50 text-muted-foreground border border-border hover:text-foreground"}`}>
           <Settings className="h-4 w-4" /> Configurações
         </button>
         <button onClick={() => setActiveView("price")}
-          className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${activeView === "price" ? "bg-success/20 text-success border border-success/30" : "bg-secondary/50 text-muted-foreground border border-border hover:text-foreground"}`}>
+          className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium ${activeView === "price" ? "bg-success/20 text-success border border-success/30" : "bg-secondary/50 text-muted-foreground border border-border hover:text-foreground"}`}>
           <Tag className="h-4 w-4" /> Alterar Preço
         </button>
         <button onClick={() => { setActiveView("sales"); setSalesPage(0); }}
-          className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${activeView === "sales" ? "bg-success/20 text-success border border-success/30" : "bg-secondary/50 text-muted-foreground border border-border hover:text-foreground"}`}>
+          className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium ${activeView === "sales" ? "bg-success/20 text-success border border-success/30" : "bg-secondary/50 text-muted-foreground border border-border hover:text-foreground"}`}>
           <ShoppingCart className="h-4 w-4" /> Todas as Vendas ({allSales.length})
         </button>
       </div>
@@ -302,7 +302,7 @@ const LztTab = () => {
             </div>
             {allSales.length > 5 && (
               <button onClick={() => { setActiveView("sales"); setSalesPage(0); }}
-                className="mt-3 w-full rounded-lg border border-border py-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-success/30 transition-colors">
+                className="mt-3 w-full rounded-lg border border-border py-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-success/30">
                 Ver todas as {allSales.length} vendas →
               </button>
             )}
@@ -445,12 +445,12 @@ const LztTab = () => {
                     {salesSearch ? "Nenhuma venda encontrada." : "Nenhuma venda registrada ainda."}
                   </td></tr>
                 ) : paginatedSales.map((sale) => (
-                  <tr key={sale.id} className="group hover:bg-secondary/20 transition-colors">
+                  <tr key={sale.id} className="group hover:bg-secondary/20">
                     <td className="py-3 pr-3">
                       <button onClick={() => copyToClipboard(sale.lzt_item_id)}
-                        className="flex items-center gap-1.5 font-mono text-xs text-foreground hover:text-success transition-colors" title="Copiar ID">
+                        className="flex items-center gap-1.5 font-mono text-xs text-foreground hover:text-success" title="Copiar ID">
                         #{sale.lzt_item_id}
-                        <Copy className="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity" />
+                        <Copy className="h-3 w-3 opacity-0 group-hover:opacity-60" />
                       </button>
                     </td>
                     <td className="py-3 pr-3">
@@ -470,9 +470,9 @@ const LztTab = () => {
                     <td className="py-3 pr-3">
                       {sale.buyer_user_id ? (
                         <button onClick={() => copyToClipboard(sale.buyer_user_id!)}
-                          className="font-mono text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors" title="Copiar ID">
+                          className="font-mono text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1" title="Copiar ID">
                           {sale.buyer_user_id.slice(0, 8)}...
-                          <Copy className="h-3 w-3 opacity-0 group-hover:opacity-60 transition-opacity" />
+                          <Copy className="h-3 w-3 opacity-0 group-hover:opacity-60" />
                         </button>
                       ) : <span className="text-[10px] text-muted-foreground">—</span>}
                     </td>
@@ -485,7 +485,7 @@ const LztTab = () => {
                     </td>
                     <td className="py-3">
                       <a href={`https://lzt.market/${sale.lzt_item_id}`} target="_blank" rel="noopener noreferrer"
-                        className="text-muted-foreground hover:text-success transition-colors" title="Abrir no LZT Market">
+                        className="text-muted-foreground hover:text-success" title="Abrir no LZT Market">
                         <ExternalLink className="h-3.5 w-3.5" />
                       </a>
                     </td>
@@ -500,7 +500,7 @@ const LztTab = () => {
               <span className="text-xs text-muted-foreground">Página {salesPage + 1} de {totalPages} · {filteredSales.length} vendas</span>
               <div className="flex items-center gap-1">
                 <button onClick={() => setSalesPage(p => Math.max(0, p - 1))} disabled={salesPage === 0}
-                  className="rounded-lg border border-border p-1.5 text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors">
+                  className="rounded-lg border border-border p-1.5 text-muted-foreground hover:text-foreground disabled:opacity-30">
                   <ChevronLeft className="h-4 w-4" />
                 </button>
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
@@ -511,13 +511,13 @@ const LztTab = () => {
                   else page = salesPage - 2 + i;
                   return (
                     <button key={page} onClick={() => setSalesPage(page)}
-                      className={`h-7 w-7 rounded-lg text-xs font-medium transition-colors ${page === salesPage ? "bg-success/20 text-success border border-success/30" : "text-muted-foreground hover:text-foreground"}`}>
+                      className={`h-7 w-7 rounded-lg text-xs font-medium ${page === salesPage ? "bg-success/20 text-success border border-success/30" : "text-muted-foreground hover:text-foreground"}`}>
                       {page + 1}
                     </button>
                   );
                 })}
                 <button onClick={() => setSalesPage(p => Math.min(totalPages - 1, p + 1))} disabled={salesPage === totalPages - 1}
-                  className="rounded-lg border border-border p-1.5 text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors">
+                  className="rounded-lg border border-border p-1.5 text-muted-foreground hover:text-foreground disabled:opacity-30">
                   <ChevronRight className="h-4 w-4" />
                 </button>
               </div>
@@ -537,7 +537,7 @@ const SaleRow = ({ sale, onCopy }: { sale: LztSale; onCopy: (t: string) => void 
       </p>
       <div className="flex items-center gap-2 mt-0.5">
         <button onClick={() => onCopy(sale.lzt_item_id)}
-          className="text-xs text-muted-foreground hover:text-success flex items-center gap-1 font-mono transition-colors">
+          className="text-xs text-muted-foreground hover:text-success flex items-center gap-1 font-mono">
           LZT #{sale.lzt_item_id}
           <Copy className="h-3 w-3 opacity-0 group-hover:opacity-60" />
         </button>

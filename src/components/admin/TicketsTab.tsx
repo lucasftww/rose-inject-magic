@@ -441,7 +441,7 @@ const TicketsTab = ({
         <p className="text-[11px] text-muted-foreground mb-1">{label}:</p>
         <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2">
           <code className="flex-1 text-sm font-mono text-foreground break-all">{value}</code>
-          <button onClick={handleCopy} className="shrink-0 rounded p-1 text-muted-foreground hover:text-foreground transition-colors">
+          <button onClick={handleCopy} className="shrink-0 rounded p-1 text-muted-foreground hover:text-foreground">
             {fieldCopied ? <Check className="h-3.5 w-3.5 text-success" /> : <Copy className="h-3.5 w-3.5" />}
           </button>
         </div>
@@ -569,14 +569,14 @@ const TicketsTab = ({
 
             <div className="flex flex-wrap items-center gap-2 pt-1.5">
               <a href={cfg.loginUrl} target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-secondary/60 px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-success/30 hover:bg-success/5">
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-secondary/60 px-3 py-1.5 text-xs font-medium text-foreground hover:border-success/30 hover:bg-success/5">
                 Login page <ExternalLink className="h-3 w-3" />
               </a>
               {emailLogin && (() => {
                 const url = getEmailWebmailUrl(emailLogin);
                 return url ? (
                   <a href={url} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-secondary/60 px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-success/30 hover:bg-success/5">
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-secondary/60 px-3 py-1.5 text-xs font-medium text-foreground hover:border-success/30 hover:bg-success/5">
                     <Mail className="h-3 w-3" /> Email login <ExternalLink className="h-3 w-3" />
                   </a>
                 ) : null;
@@ -589,7 +589,7 @@ const TicketsTab = ({
             {/* Change data */}
             <div className="rounded-xl border border-border bg-background overflow-hidden">
               <button onClick={() => setExpandedSection(expandedSection === "riot-admin" ? null : "riot-admin")}
-                className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left transition-colors hover:bg-secondary/40">
+                className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left hover:bg-secondary/40">
                 <KeyRound className="h-3.5 w-3.5 text-success shrink-0" />
                 <span className="flex-1 text-xs font-medium text-foreground">{cfg.changeDataTitle}</span>
                 {expandedSection === "riot-admin" ? <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />}
@@ -603,7 +603,7 @@ const TicketsTab = ({
             {/* Change email */}
             <div className="rounded-xl border border-border bg-background overflow-hidden">
               <button onClick={() => setExpandedSection(expandedSection === "email-admin" ? null : "email-admin")}
-                className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left transition-colors hover:bg-secondary/40">
+                className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left hover:bg-secondary/40">
                 <Mail className="h-3.5 w-3.5 text-success shrink-0" />
                 <span className="flex-1 text-xs font-medium text-foreground">Como trocar o email da conta</span>
                 {expandedSection === "email-admin" ? <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />}
@@ -617,7 +617,7 @@ const TicketsTab = ({
             {/* Checklist */}
             <div className="rounded-xl border border-success/20 bg-success/5 overflow-hidden">
               <button onClick={() => setExpandedSection(expandedSection === "done-admin" ? null : "done-admin")}
-                className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left transition-colors hover:bg-success/10">
+                className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left hover:bg-success/10">
                 <CheckCircle className="h-3.5 w-3.5 text-success shrink-0" />
                 <span className="flex-1 text-xs font-bold text-success">Entrega Concluída</span>
                 {expandedSection === "done-admin" ? <ChevronUp className="h-3.5 w-3.5 text-success/60" /> : <ChevronDown className="h-3.5 w-3.5 text-success/60" />}
@@ -686,7 +686,7 @@ const TicketsTab = ({
           if (part.type === "image") {
             return (
               <a key={i} href={part.url} target="_blank" rel="noopener noreferrer" className="block">
-                <img src={part.url} alt="Imagem enviada" className="rounded-lg max-w-[260px] max-h-[180px] object-cover border border-border hover:brightness-110 transition-all cursor-pointer" loading="lazy" />
+                <img src={part.url} alt="Imagem enviada" className="rounded-lg max-w-[260px] max-h-[180px] object-cover border border-border hover:brightness-110 cursor-pointer" loading="lazy" />
               </a>
             );
           }
@@ -696,8 +696,8 @@ const TicketsTab = ({
           const ext = getFileExtension(part.url!);
           return (
             <a key={i} href={part.url} target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-3 rounded-lg border border-border bg-background/80 p-2.5 transition-all hover:border-success/30 hover:bg-success/5 group">
-              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors ${isTutorial ? "bg-info/10 text-info" : "bg-warning/10 text-warning"}`}>
+              className="flex items-center gap-3 rounded-lg border border-border bg-background/80 p-2.5 hover:border-success/30 hover:bg-success/5 group">
+              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${isTutorial ? "bg-info/10 text-info" : "bg-warning/10 text-warning"}`}>
                 <IconComp className="h-4 w-4" />
               </div>
               <div className="flex-1 min-w-0">
@@ -706,7 +706,7 @@ const TicketsTab = ({
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="rounded bg-secondary px-1.5 py-0.5 text-[9px] font-bold text-muted-foreground">.{ext}</span>
-                <Download className="h-3.5 w-3.5 text-muted-foreground group-hover:text-success transition-colors" />
+                <Download className="h-3.5 w-3.5 text-muted-foreground group-hover:text-success" />
               </div>
             </a>
           );
@@ -745,7 +745,7 @@ const TicketsTab = ({
           {selectedTicket && (
             <button
               onClick={() => setSelectedTicket(null)}
-              className="lg:hidden inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+              className="lg:hidden inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
             </button>
@@ -757,7 +757,7 @@ const TicketsTab = ({
         </div>
         <button
           onClick={() => { setShowArchived(!showArchived); setSelectedTicket(null); }}
-          className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-all ${
+          className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold ${
             showArchived
               ? "border-success/25 bg-success/10 text-success"
               : "border-border bg-card text-muted-foreground hover:text-foreground"
@@ -776,10 +776,10 @@ const TicketsTab = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Buscar por nome, email ou ID..."
-            className="w-full rounded-lg border border-border bg-card pl-9 pr-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/40 outline-none focus:border-success/40 focus:ring-1 focus:ring-success/10 transition-all"
+            className="w-full rounded-lg border border-border bg-card pl-9 pr-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/40 outline-none focus:border-success/40 focus:ring-1 focus:ring-success/10"
           />
           {searchQuery && (
-            <button onClick={() => setSearchQuery("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground/40 hover:text-foreground transition-colors">
+            <button onClick={() => setSearchQuery("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground/40 hover:text-foreground">
               <X className="h-3.5 w-3.5" />
             </button>
           )}
@@ -788,7 +788,7 @@ const TicketsTab = ({
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-foreground outline-none focus:border-success/40 transition-colors cursor-pointer"
+            className="rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-foreground outline-none focus:border-success/40 cursor-pointer"
           >
             <option value="all">Todos</option>
             {statusOptions.map((s) => (
@@ -812,7 +812,7 @@ const TicketsTab = ({
             ) : paginatedTickets.map((ticket) => (
               <div
                 key={ticket.id}
-                className={`group rounded-lg border p-3 cursor-pointer transition-all ${
+                className={`group rounded-lg border p-3 cursor-pointer ${
                   selectedTicket?.id === ticket.id
                     ? "border-success/30 bg-success/[0.06]"
                     : "border-border/60 bg-card hover:border-muted-foreground/20 hover:bg-accent/20"
@@ -851,14 +851,14 @@ const TicketsTab = ({
                   {showArchived ? (
                     <button
                       onClick={(e) => { e.stopPropagation(); unarchiveTicket(ticket.id); }}
-                      className="inline-flex items-center gap-1 rounded-md bg-success/10 px-2 py-0.5 text-[11px] font-semibold text-success hover:bg-success/20 transition-colors"
+                      className="inline-flex items-center gap-1 rounded-md bg-success/10 px-2 py-0.5 text-[11px] font-semibold text-success hover:bg-success/20"
                     >
                       <ArchiveRestore className="h-3 w-3" /> Restaurar
                     </button>
                   ) : (
                     <button
                       onClick={(e) => { e.stopPropagation(); archiveTicket(ticket.id); }}
-                      className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium text-muted-foreground/40 hover:text-muted-foreground hover:bg-muted/40 transition-all opacity-0 group-hover:opacity-100"
+                      className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium text-muted-foreground/40 hover:text-muted-foreground hover:bg-muted/40 opacity-0 group-hover:opacity-100"
                     >
                       <Archive className="h-3 w-3" /> Arquivar
                     </button>
@@ -872,17 +872,17 @@ const TicketsTab = ({
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-1 pt-2.5 flex-shrink-0 border-t border-border/30 mt-1.5">
               <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}
-                className="rounded-lg border border-border px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground disabled:opacity-20 transition-colors">‹</button>
+                className="rounded-lg border border-border px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground disabled:opacity-20">‹</button>
               {getPageNumbers().map((p, i) =>
                 p === "..." ? (
                   <span key={`dots-${i}`} className="px-1.5 text-xs text-muted-foreground/40">…</span>
                 ) : (
                   <button key={p} onClick={() => setCurrentPage(p as number)}
-                    className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all ${p === currentPage ? "bg-success text-success-foreground" : "border border-border text-muted-foreground hover:text-foreground"}`}>{p}</button>
+                    className={`rounded-lg px-2.5 py-1 text-xs font-bold ${p === currentPage ? "bg-success text-success-foreground" : "border border-border text-muted-foreground hover:text-foreground"}`}>{p}</button>
                 )
               )}
               <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}
-                className="rounded-lg border border-border px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground disabled:opacity-20 transition-colors">›</button>
+                className="rounded-lg border border-border px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground disabled:opacity-20">›</button>
             </div>
           )}
         </div>
@@ -922,7 +922,7 @@ const TicketsTab = ({
                     {stockContent && (
                       <button
                         onClick={() => setShowDelivery(!showDelivery)}
-                        className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-[11px] font-bold transition-all ${
+                        className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-[11px] font-bold ${
                           showDelivery
                             ? "border-success/25 bg-success/10 text-success"
                             : "border-border bg-secondary/40 text-muted-foreground hover:text-foreground"
@@ -936,7 +936,7 @@ const TicketsTab = ({
                       <select
                         value={selectedTicket.status}
                         onChange={(e) => updateStatus(selectedTicket.id, e.target.value)}
-                        className={`rounded-lg border px-2.5 py-1.5 text-[11px] font-bold outline-none cursor-pointer transition-colors ${getStatusBadge(selectedTicket.status)}`}
+                        className={`rounded-lg border px-2.5 py-1.5 text-[11px] font-bold outline-none cursor-pointer ${getStatusBadge(selectedTicket.status)}`}
                       >
                         {statusOptions.map((s) => (
                           <option key={s.value} value={s.value}>{s.label}</option>
@@ -959,7 +959,7 @@ const TicketsTab = ({
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-[10px] text-muted-foreground font-medium">Chave / Credenciais</span>
                         <div className="flex items-center gap-0.5">
-                          <button onClick={() => setShowStockKey(!showStockKey)} className="rounded p-1 text-muted-foreground hover:text-foreground transition-colors">
+                          <button onClick={() => setShowStockKey(!showStockKey)} className="rounded p-1 text-muted-foreground hover:text-foreground">
                             {showStockKey ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                           </button>
                           <button
@@ -968,7 +968,7 @@ const TicketsTab = ({
                               setStockCopied(true);
                               setTimeout(() => setStockCopied(false), 2000);
                             }}
-                            className="rounded p-1 text-muted-foreground hover:text-foreground transition-colors"
+                            className="rounded p-1 text-muted-foreground hover:text-foreground"
                           >
                             {stockCopied ? <Check className="h-3.5 w-3.5 text-success" /> : <Copy className="h-3.5 w-3.5" />}
                           </button>
@@ -1048,7 +1048,7 @@ const TicketsTab = ({
                         </div>
                       )}
                       <button onClick={() => removePendingFile(i)}
-                        className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow opacity-0 group-hover:opacity-100 transition-opacity">
+                        className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow opacity-0 group-hover:opacity-100">
                         <X className="h-2.5 w-2.5" />
                       </button>
                     </div>
@@ -1060,7 +1060,7 @@ const TicketsTab = ({
               <div className="border-t border-border/50 px-3 pt-1.5 pb-1 bg-card/50 flex gap-1 overflow-x-auto scrollbar-hide">
                 {QUICK_REPLIES.map((text) => (
                   <button key={text} onClick={() => setNewMessage(text)}
-                    className="text-[10px] px-2 py-1 rounded-full border border-border/60 bg-secondary/30 text-muted-foreground/70 hover:bg-success/10 hover:text-success hover:border-success/25 transition-all whitespace-nowrap shrink-0">
+                    className="text-[10px] px-2 py-1 rounded-full border border-border/60 bg-secondary/30 text-muted-foreground/70 hover:bg-success/10 hover:text-success hover:border-success/25 whitespace-nowrap shrink-0">
                     {text}
                   </button>
                 ))}
@@ -1072,18 +1072,18 @@ const TicketsTab = ({
                   <div className="flex items-center gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-2.5">
                     <div className="h-2.5 w-2.5 rounded-full bg-destructive animate-pulse" />
                     <span className="text-sm font-medium text-foreground flex-1">Gravando... {formatDuration(recordingDuration)}</span>
-                    <button onClick={cancelRecording} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all" title="Cancelar">
+                    <button onClick={cancelRecording} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10" title="Cancelar">
                       <Trash2 className="h-4 w-4" />
                     </button>
-                    <button onClick={handleSendAudio} disabled={sending || uploadingFile} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-success text-success-foreground disabled:opacity-30 hover:brightness-110 transition-all" title="Enviar áudio">
+                    <button onClick={handleSendAudio} disabled={sending || uploadingFile} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-success text-success-foreground disabled:opacity-30" title="Enviar áudio">
                       {sending || uploadingFile ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                     </button>
                   </div>
                 ) : (
-                  <div className="flex items-end gap-1.5 rounded-xl border border-border bg-background p-1.5 focus-within:border-success/30 focus-within:ring-1 focus-within:ring-success/10 transition-all">
+                  <div className="flex items-end gap-1.5 rounded-xl border border-border bg-background p-1.5 focus-within:border-success/30 focus-within:ring-1 focus-within:ring-success/10">
                     <input ref={fileInputRef} type="file" multiple accept="image/*,.pdf,.txt,.doc,.docx,.zip,.rar,.exe" className="hidden" onChange={handleFileSelect} />
                     <button onClick={() => fileInputRef.current?.click()} disabled={uploadingFile}
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground/60 hover:text-foreground hover:bg-muted/40 transition-all disabled:opacity-30" title="Anexar">
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground/60 hover:text-foreground hover:bg-muted/40 disabled:opacity-30" title="Anexar">
                       <Paperclip className="h-4 w-4" />
                     </button>
                     <textarea
@@ -1097,11 +1097,11 @@ const TicketsTab = ({
                     <button
                       onClick={() => startRecording().catch(() => toast({ title: "Erro", description: "Permita o acesso ao microfone", variant: "destructive" }))}
                       disabled={sending || uploadingFile}
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground/60 hover:text-foreground hover:bg-muted/40 transition-all disabled:opacity-30" title="Gravar áudio">
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground/60 hover:text-foreground hover:bg-muted/40 disabled:opacity-30" title="Gravar áudio">
                       <Mic className="h-4 w-4" />
                     </button>
                     <button onClick={sendMessage} disabled={sending || uploadingFile || (!newMessage.trim() && pendingFiles.length === 0)}
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-success text-success-foreground disabled:opacity-20 hover:brightness-110 transition-all">
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-success text-success-foreground disabled:opacity-20">
                       {sending || uploadingFile ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                     </button>
                   </div>

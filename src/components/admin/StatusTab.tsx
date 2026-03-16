@@ -147,7 +147,7 @@ const StatusTab = () => {
                   return (
                     <div
                       key={product.id}
-                      className={`flex flex-wrap items-center gap-3 rounded-xl border p-4 transition-all ${
+                      className={`flex flex-wrap items-center gap-3 rounded-xl border p-4 ${
                         hasChange ? "border-success/50 bg-success/5" : "border-border bg-card"
                       }`}
                     >
@@ -175,7 +175,7 @@ const StatusTab = () => {
                               key={so.value}
                               onClick={() => handleStatusChange(product.id, so.value)}
                               title={so.label}
-                              className={`flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-[10px] font-bold transition-all ${
+                              className={`flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-[10px] font-bold ${
                                 active
                                   ? `${so.color} border-current bg-current/10`
                                   : "text-muted-foreground/40 border-transparent hover:text-muted-foreground"
@@ -201,7 +201,7 @@ const StatusTab = () => {
                         <button
                           onClick={() => handleSave(product.id)}
                           disabled={saving === product.id}
-                          className="flex h-8 w-8 items-center justify-center rounded-lg bg-success text-success-foreground transition-all hover:shadow-md disabled:opacity-50"
+                          className="flex h-8 w-8 items-center justify-center rounded-lg bg-success text-success-foreground disabled:opacity-50"
                         >
                           {saving === product.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
                         </button>
