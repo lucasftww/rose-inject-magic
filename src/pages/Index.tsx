@@ -424,26 +424,16 @@ const ProductsSection = () => {
                   onClick={() => navigate(`/produto/${product.id}`)}
                   className="group flex flex-col cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-success/40 hover:shadow-[0_0_20px_hsl(197,100%,50%,0.1)]"
                 >
-                  <div className="relative aspect-square w-full overflow-hidden bg-card">
+                  <div className="relative aspect-square w-full overflow-hidden">
                     {product.image_url ? (
-                      <>
-                        <img
-                          src={product.image_url}
-                          alt=""
-                          aria-hidden="true"
-                          className="absolute inset-0 h-full w-full scale-110 object-cover opacity-20 blur-2xl"
-                        />
-                        <div className="absolute inset-0 flex items-center justify-center p-3">
-                          <img
-                            src={product.image_url}
-                            alt={product.name}
-                            loading="lazy"
-                            className="max-h-full max-w-full object-contain"
-                          />
-                        </div>
-                      </>
+                      <img
+                        src={product.image_url}
+                        alt={product.name}
+                        loading="lazy"
+                        className="absolute inset-0 block h-full w-full object-cover object-center"
+                      />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center">
+                      <div className="flex h-full w-full items-center justify-center bg-card">
                         <Package className="h-6 w-6 sm:h-10 sm:w-10 text-muted-foreground/20" />
                       </div>
                     )}
