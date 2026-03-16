@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAdminProductsStatus } from "@/hooks/useAdminData";
 import { Loader2, ShieldCheck, ShieldAlert, RefreshCw, Clock, Save } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
@@ -20,33 +21,22 @@ const statusOptions = [
 ];
 
 const StatusTab = () => {
+  const { data: fetchedProducts, isLoading: queryLoading, refetch } = useAdminProductsStatus();
   const [products, setProducts] = useState<ProductRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
   const [edits, setEdits] = useState<Record<string, { status: string; status_label: string }>>({});
 
-  const fetchProducts = async () => {
-    const { data } = await supabase
-      .from("products")
-      .select("id, name, image_url, status, status_label, games(name)")
-      .order("sort_order");
-
-    if (data) {
-      setProducts(
-        data.map((p: any) => ({
-          id: p.id,
-          name: p.name,
-          image_url: p.image_url,
-          status: p.status,
-          status_label: p.status_label,
-          game_name: p.games?.name || "",
-        }))
-      );
+  useEffect(() => {
+    if (fetchedProducts) {
+      setProducts(fetchedProducts);
+      setLoading(false);
     }
-    setLoading(false);
-  };
+  }, [fetchedProducts]);
 
-  useEffect(() => { fetchProducts(); }, []);
+  useEffect(() => {
+    if (!queryLoading) setLoading(false);
+  }, [queryLoading]);
 
   const handleStatusChange = (productId: string, newStatus: string) => {
     const opt = statusOptions.find(o => o.value === newStatus);
@@ -84,7 +74,7 @@ const StatusTab = () => {
     } else {
       toast({ title: "Status atualizado!" });
       setEdits(prev => { const n = { ...prev }; delete n[productId]; return n; });
-      fetchProducts();
+      refetch();
     }
     setSaving(null);
   };
@@ -102,7 +92,7 @@ const StatusTab = () => {
     }
     toast({ title: `${ids.length} produto(s) atualizado(s)!` });
     setEdits({});
-    fetchProducts();
+    refetch();
     setSaving(null);
   };
 
