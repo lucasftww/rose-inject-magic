@@ -140,18 +140,16 @@ const RobotProjectTab = () => {
 
     let stockCounts: Record<string, number> = {};
     if (planIds.length > 0) {
-      const { data: stockData } = await supabase
-        .from("stock_items")
-        .select("product_plan_id")
-        .in("product_plan_id", planIds)
-        .eq("used", false);
-
-      (stockData || []).forEach(s => {
-        const productId = planToProduct[s.product_plan_id];
-        if (productId) {
-          stockCounts[productId] = (stockCounts[productId] || 0) + 1;
-        }
+      const stockPromises = planIds.map(async (planId: string) => {
+        const { count } = await supabase
+          .from("stock_items")
+          .select("id", { count: "exact", head: true })
+          .eq("product_plan_id", planId)
+          .eq("used", false);
+        const productId = planToProduct[planId];
+        if (productId) stockCounts[productId] = (stockCounts[productId] || 0) + (count || 0);
       });
+      await Promise.all(stockPromises);
     }
 
     setProductsWithRobot(products.map(p => ({
