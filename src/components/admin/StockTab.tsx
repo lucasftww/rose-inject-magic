@@ -187,7 +187,7 @@ const StockTab = () => {
                 {/* Product header */}
                 <button
                   onClick={() => toggleProduct(product.id)}
-                  className="flex w-full items-center gap-4 p-4 text-left hover:bg-secondary/30 transition-colors"
+                  className="flex w-full items-center gap-4 p-4 text-left hover:bg-secondary/30"
                 >
                   {isExpanded ? <ChevronDown className="h-4 w-4 text-success shrink-0" /> : <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />}
                   {product.image_url ? (
