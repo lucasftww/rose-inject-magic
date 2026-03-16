@@ -271,9 +271,8 @@ const Raspadinha = () => {
   const cellId = (cell: GridCell) => cell.type === "prize" ? cell.prizeId! : `nothing-${cell.nothingIcon}`;
 
   const rollWin = (prizesPool: Prize[], forceWin = false): Prize | null => {
-    const winChance = pendingModeRef.current === "contas"
-      ? HIDDEN_WIN_CHANCE_CONTAS
-      : HIDDEN_WIN_CHANCE_PRODUTOS;
+    // Win chance is determined server-side; client uses a placeholder for grid preview only
+    const winChance = pendingModeRef.current === "contas" ? 0.667 : 1.0;
     const roll = Math.random() * 100;
     if (!forceWin && roll >= winChance) return null;
     if (prizesPool.length === 0) return null;
