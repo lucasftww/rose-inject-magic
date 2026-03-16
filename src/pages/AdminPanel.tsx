@@ -166,7 +166,10 @@ const AdminPanel = () => {
           <SheetHeader className="px-4 py-4 border-b border-border">
             <SheetTitle className="flex items-center gap-2 text-sm">
               <ShieldAlert className="h-4 w-4 text-success" />
-              <span className="text-xs font-bold uppercase tracking-[0.2em] text-success">Admin</span>
+              <span className="text-xs font-bold uppercase tracking-[0.2em] text-success flex-1">Admin</span>
+              <button onClick={() => { setMobileOpen(false); navigate("/"); }} className="rounded-md p-1 text-muted-foreground hover:text-foreground">
+                <Home className="h-4 w-4" />
+              </button>
             </SheetTitle>
           </SheetHeader>
           <div className="overflow-y-auto h-[calc(100%-60px)] scrollbar-hide">
