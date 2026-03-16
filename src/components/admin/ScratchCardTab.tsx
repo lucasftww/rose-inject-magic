@@ -191,7 +191,7 @@ const ScratchCardTab = () => {
             </p>
           </div>
           <button onClick={handleSyncProducts} disabled={syncing}
-            className="flex items-center gap-2 rounded-lg border border-border px-4 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:border-success/30 transition-colors disabled:opacity-50">
+            className="flex items-center gap-2 rounded-lg border border-border px-4 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:border-success/30 disabled:opacity-50">
             <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
             Sincronizar Produtos
           </button>
