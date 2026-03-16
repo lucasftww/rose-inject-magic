@@ -26,14 +26,7 @@ const fetchAccountDetail = async (itemId: string) => {
   return res.json();
 };
 
-// Rarity priority for sorting (keys must be lowercase for comparison)
-const RARITY_PRIORITY: Record<string, number> = {
-  "411e4a55-4e59-7757-41f0-86a53f101bb5": 5, // Exclusive
-  "e046854e-406c-37f4-6571-7a8baeeb93ab": 4, // Ultra
-  "60bca009-4182-7998-dee7-b8a2558dc369": 3, // Premium
-  "12683d76-48d7-84a3-4e09-6985794f0445": 2, // Deluxe
-  "0cebb8be-46d7-c12a-d306-e9907bfc5a25": 1 // Select / Battle Pass
-};
+// RARITY_PRIORITY imported from @/lib/valorantData
 
 // Permissive UUID pattern (Valorant UUIDs don't strictly follow RFC 4122)
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
