@@ -254,20 +254,6 @@ const Raspadinha = () => {
     setQuantity(1);
   };
 
-  const makeNothingCell = (): GridCell => ({
-    type: "nothing",
-    name: "Nada",
-    nothingIcon: NOTHING_ICONS[Math.floor(Math.random() * NOTHING_ICONS.length)],
-  });
-
-  const makePrizeCell = (prize: Prize): GridCell => ({
-    type: "prize",
-    prizeId: prize.id,
-    name: prize.name,
-    image_url: prize.image_url,
-    nothingIcon: "x",
-  });
-
   const cellId = (cell: GridCell) => cell.type === "prize" ? cell.prizeId! : `nothing-${cell.nothingIcon}`;
 
   // Grid generation and win determination are handled server-side only.
