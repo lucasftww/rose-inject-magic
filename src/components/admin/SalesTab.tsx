@@ -154,6 +154,8 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
       };
     });
 
+    _cachedSales = enriched;
+    _salesCacheTs = Date.now();
     setTickets(enriched);
     setDataLoaded(true);
     setLoading(false);

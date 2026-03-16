@@ -47,19 +47,27 @@ const StockTab = () => {
 
   const fetchStockCounts = async (prods: Product[]) => {
     const planIds = prods.flatMap((p) => p.product_plans.map((pl) => pl.id));
-    if (planIds.length > 0) {
-      const stockData = await fetchAllRows("stock_items", {
-        select: "product_plan_id, used",
-        filters: [{ column: "product_plan_id", op: "in", value: planIds }],
-      });
-      const counts: Record<string, { total: number; available: number }> = {};
-      stockData.forEach((s: any) => {
+    if (planIds.length === 0) return;
+
+    // Use per-plan count queries (head:true) instead of fetching all rows
+    const counts: Record<string, { total: number; available: number }> = {};
+    const CHUNK = 50;
+    for (let i = 0; i < planIds.length; i += CHUNK) {
+      const chunk = planIds.slice(i, i + CHUNK);
+      const [totalRes, availRes] = await Promise.all([
+        supabase.from("stock_items").select("product_plan_id").in("product_plan_id", chunk),
+        supabase.from("stock_items").select("product_plan_id").in("product_plan_id", chunk).eq("used", false),
+      ]);
+      (totalRes.data || []).forEach((s: any) => {
         if (!counts[s.product_plan_id]) counts[s.product_plan_id] = { total: 0, available: 0 };
         counts[s.product_plan_id].total++;
-        if (!s.used) counts[s.product_plan_id].available++;
       });
-      setStockCounts(counts);
+      (availRes.data || []).forEach((s: any) => {
+        if (!counts[s.product_plan_id]) counts[s.product_plan_id] = { total: 0, available: 0 };
+        counts[s.product_plan_id].available++;
+      });
     }
+    setStockCounts(counts);
   };
 
   useEffect(() => {

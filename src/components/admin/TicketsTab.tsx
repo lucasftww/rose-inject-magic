@@ -152,7 +152,7 @@ const TicketsTab = ({
       (profilesData.data || []).forEach((p: any) => { profileMap[p.user_id] = p.username || "—"; });
       (lztSalesData.data || []).forEach((s: any) => { lztSalesMap.set(String(s.lzt_item_id), Number(s.sell_price)); });
 
-      setTickets(data.map((t: any) => {
+      const mapped = data.map((t: any) => {
         const meta = t.metadata as any;
         const isLzt = meta?.type === "lzt-account";
         const lztItemId = meta?.lzt_item_id;
@@ -166,7 +166,10 @@ const TicketsTab = ({
           buyer_email: "—",
           buyer_username: profileMap[t.user_id] || "—",
         };
-      }));
+      });
+      _cachedTickets = mapped;
+      _ticketsCacheTs = Date.now();
+      setTickets(mapped);
     }
     setLoading(false);
   }, []);
