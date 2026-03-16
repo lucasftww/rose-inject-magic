@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
 import {
   Loader2, DollarSign, ShoppingCart, Users, UserCheck,
-  Package, Receipt, TrendingUp, ChevronRight
+  Package, Receipt, TrendingUp, RefreshCw
 } from "lucide-react";
 
 interface OrderTicket {
@@ -33,6 +32,7 @@ interface Payment {
 const statusColors: Record<string, string> = {
   open: "bg-success/20 text-success",
   delivered: "bg-info/20 text-info",
+  waiting_staff: "bg-warning/20 text-warning",
   resolved: "bg-positive/20 text-positive",
   closed: "bg-muted text-muted-foreground",
   banned: "bg-destructive/20 text-destructive",
@@ -41,6 +41,7 @@ const statusColors: Record<string, string> = {
 const statusLabels: Record<string, string> = {
   open: "Aberto",
   delivered: "Entregue",
+  waiting_staff: "Aguardando",
   resolved: "Resolvido",
   closed: "Encerrado",
   banned: "Banido",
@@ -48,7 +49,7 @@ const statusLabels: Record<string, string> = {
 };
 
 const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void }) => {
-  const navigate = useNavigate();
+  const [refreshKey, setRefreshKey] = useState(0);
   const [loading, setLoading] = useState(true);
   const [totalOrders, setTotalOrders] = useState(0);
   const [totalRevenue, setTotalRevenue] = useState(0);
@@ -137,7 +138,11 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
     };
 
     fetchAll();
-  }, []);
+  }, [refreshKey]);
+
+  const handleRefresh = () => {
+    setRefreshKey(k => k + 1);
+  };
 
   if (loading) {
     return (
@@ -149,6 +154,14 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
 
   return (
     <div className="space-y-8">
+      {/* Header with refresh */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold text-foreground">Visão Geral</h2>
+        <button onClick={handleRefresh} className="flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-xs font-medium text-muted-foreground hover:border-success hover:text-success transition-colors">
+          <RefreshCw className="h-3 w-3" /> Atualizar
+        </button>
+      </div>
+
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
         <StatCard icon={<DollarSign className="h-5 w-5 text-success" />} label="Receita Total" value={`R$ ${(totalRevenue / 100).toFixed(2)}`} />
