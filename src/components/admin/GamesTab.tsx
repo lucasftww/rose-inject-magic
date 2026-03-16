@@ -150,7 +150,7 @@ const GamesTab = () => {
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-foreground">Gerenciar Jogos</h2>
         <button onClick={() => { resetForm(); setShowForm(true); }}
-          className="flex items-center gap-2 rounded-lg bg-success px-5 py-2.5 text-sm font-semibold text-success-foreground transition-all hover:shadow-[0_0_24px_hsl(var(--success)/0.35)]">
+          className="flex items-center gap-2 rounded-lg bg-success px-5 py-2.5 text-sm font-semibold text-success-foreground">
           <Plus className="h-4 w-4" /> Novo Jogo
         </button>
       </div>
@@ -182,7 +182,7 @@ const GamesTab = () => {
               <div className="flex gap-1 mb-3">
                 {([["url", Link, "URL"], ["upload", Upload, "Upload"], ["ai", Sparkles, "Gerar IA"]] as const).map(([mode, Icon, label]) => (
                   <button key={mode} type="button" onClick={() => setImageMode(mode)}
-                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${imageMode === mode ? "bg-success/20 text-success border border-success/30" : "bg-secondary/50 text-muted-foreground border border-border hover:text-foreground"}`}>
+                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium ${imageMode === mode ? "bg-success/20 text-success border border-success/30" : "bg-secondary/50 text-muted-foreground border border-border hover:text-foreground"}`}>
                     <Icon className="h-3 w-3" />{label}
                   </button>
                 ))}
@@ -199,7 +199,7 @@ const GamesTab = () => {
                   onDragLeave={() => setDragOver(false)}
                   onDrop={handleDrop}
                   onClick={() => fileInputRef.current?.click()}
-                  className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 transition-colors ${dragOver ? "border-success bg-success/5" : "border-border hover:border-success/40"}`}
+                  className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 ${dragOver ? "border-success bg-success/5" : "border-border hover:border-success/40"}`}
                 >
                   <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadFile(f); }} />
                   {uploading ? (
@@ -216,7 +216,7 @@ const GamesTab = () => {
                     placeholder={formName ? `Ex: ${formName} game cover` : "Descreva a imagem..."}
                     className="w-full rounded-lg border border-border bg-secondary/50 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-success/50" />
                   <button type="button" onClick={handleGenerateAI} disabled={generatingAI}
-                    className="flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-accent-foreground transition-all hover:opacity-90 disabled:opacity-50">
+                    className="flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-accent-foreground hover:opacity-90 disabled:opacity-50">
                     {generatingAI ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                     {generatingAI ? "Gerando..." : "Gerar com IA"}
                   </button>
@@ -226,15 +226,15 @@ const GamesTab = () => {
             <label className="flex cursor-pointer items-center gap-3">
               <div className="relative">
                 <input type="checkbox" checked={formActive} onChange={(e) => setFormActive(e.target.checked)} className="peer sr-only" />
-                <div className="h-5 w-9 rounded-full border border-border bg-secondary transition-colors peer-checked:border-success peer-checked:bg-success" />
-                <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-foreground/60 transition-all peer-checked:left-[18px] peer-checked:bg-success-foreground" />
+                <div className="h-5 w-9 rounded-full border border-border bg-secondary peer-checked:border-success peer-checked:bg-success" />
+                <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-foreground/60 peer-checked:left-[18px] peer-checked:bg-success-foreground" />
               </div>
               <span className="text-xs font-medium text-muted-foreground">Ativo</span>
             </label>
           </div>
           <div className="mt-6 flex gap-3">
             <button onClick={handleSave} disabled={saving}
-              className="flex items-center gap-2 rounded-lg bg-success px-6 py-2.5 text-sm font-semibold text-success-foreground hover:shadow-[0_0_24px_hsl(var(--success)/0.35)] disabled:opacity-50">
+              className="flex items-center gap-2 rounded-lg bg-success px-6 py-2.5 text-sm font-semibold text-success-foreground disabled:opacity-50">
               {saving && <Loader2 className="h-4 w-4 animate-spin" />} {editingGame ? "Salvar" : "Criar"}
             </button>
             <button onClick={resetForm} className="rounded-lg border border-border px-6 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground">Cancelar</button>
@@ -255,7 +255,7 @@ const GamesTab = () => {
             onDragEnter={() => handleDragEnter(index)}
             onDragOver={(e) => e.preventDefault()}
             onDragEnd={handleDragEnd}
-            className={`flex items-center gap-4 rounded-lg border p-4 transition-all cursor-grab active:cursor-grabbing ${
+            className={`flex items-center gap-4 rounded-lg border p-4 cursor-grab active:cursor-grabbing ${
               dragOverIndex === index ? "border-success bg-success/5" : "border-border bg-card hover:border-success/30"
             } ${dragIndex === index ? "opacity-50" : ""}`}>
             <GripVertical className="h-4 w-4 shrink-0 text-muted-foreground/40" />

@@ -187,7 +187,7 @@ const StockTab = () => {
                 {/* Product header */}
                 <button
                   onClick={() => toggleProduct(product.id)}
-                  className="flex w-full items-center gap-4 p-4 text-left hover:bg-secondary/30 transition-colors"
+                  className="flex w-full items-center gap-4 p-4 text-left hover:bg-secondary/30"
                 >
                   {isExpanded ? <ChevronDown className="h-4 w-4 text-success shrink-0" /> : <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />}
                   {product.image_url ? (
@@ -235,7 +235,7 @@ const StockTab = () => {
                           {/* Plan header */}
                           <button
                             onClick={() => togglePlan(plan.id)}
-                            className="flex w-full items-center gap-3 px-6 py-3 text-left hover:bg-secondary/20 transition-colors"
+                            className="flex w-full items-center gap-3 px-6 py-3 text-left hover:bg-secondary/20"
                           >
                             {planExpanded ? <ChevronDown className="h-3.5 w-3.5 text-success shrink-0" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
                             <span className="text-sm font-semibold text-foreground">{plan.name}</span>
@@ -286,7 +286,7 @@ const StockTab = () => {
                                   <button
                                     onClick={() => handleAddStock(plan.id)}
                                     disabled={addingStock || !newStockText.trim()}
-                                    className="flex items-center gap-2 rounded-lg bg-success px-4 py-2 text-xs font-semibold text-success-foreground hover:shadow-[0_0_24px_hsl(var(--success)/0.35)] disabled:opacity-50"
+                                    className="flex items-center gap-2 rounded-lg bg-success px-4 py-2 text-xs font-semibold text-success-foreground disabled:opacity-50"
                                   >
                                     {addingStock ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
                                     Adicionar
@@ -352,7 +352,7 @@ const StockTab = () => {
                 className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground disabled:opacity-30">‹</button>
               {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
                 <button key={p} onClick={() => setCurrentPage(p)}
-                  className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${p === currentPage ? "bg-success text-success-foreground" : "border border-border text-muted-foreground hover:text-foreground"}`}>{p}</button>
+                  className={`rounded-lg px-3 py-1.5 text-xs font-bold ${p === currentPage ? "bg-success text-success-foreground" : "border border-border text-muted-foreground hover:text-foreground"}`}>{p}</button>
               ))}
               <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}
                 className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground disabled:opacity-30">›</button>

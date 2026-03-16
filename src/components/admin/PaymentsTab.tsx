@@ -70,14 +70,14 @@ const PaymentsTab = () => {
           return (
             <div
               key={s.id}
-              className={`relative flex flex-col items-center gap-4 rounded-xl border-2 p-8 transition-all ${
+              className={`relative flex flex-col items-center gap-4 rounded-xl border-2 p-8 ${
                 s.enabled
                   ? "border-success/40 bg-success/5"
                   : "border-border bg-card opacity-60"
               }`}
             >
               <div
-                className={`flex h-16 w-16 items-center justify-center rounded-full border transition-colors ${
+                className={`flex h-16 w-16 items-center justify-center rounded-full border ${
                   s.enabled
                     ? "border-success/50 bg-success/10"
                     : "border-border bg-secondary/50"
@@ -102,10 +102,10 @@ const PaymentsTab = () => {
               <button
                 onClick={() => toggleMethod(s)}
                 disabled={toggling === s.id}
-                className={`mt-2 w-full rounded-lg px-4 py-2.5 text-sm font-semibold transition-all ${
+                className={`mt-2 w-full rounded-lg px-4 py-2.5 text-sm font-semibold ${
                   s.enabled
                     ? "border border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20"
-                    : "bg-success px-6 text-success-foreground hover:shadow-[0_0_24px_hsl(var(--success)/0.35)]"
+                    : "bg-success px-6 text-success-foreground"
                 }`}
               >
                 {toggling === s.id ? (

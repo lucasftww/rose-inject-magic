@@ -160,7 +160,7 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
         </div>
         <button
           onClick={() => setRefreshKey(k => k + 1)}
-          className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-xs font-medium text-muted-foreground hover:border-success/50 hover:text-success transition-all duration-200"
+          className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-xs font-medium text-muted-foreground hover:border-success/50 hover:text-success"
         >
           <RefreshCw className="h-3.5 w-3.5" /> Atualizar
         </button>
@@ -171,12 +171,12 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
         {stats.map((stat) => {
           const Icon = stat.icon;
           return (
-            <div key={stat.label} className="group rounded-xl border border-border bg-card p-5 transition-all duration-200 hover:border-border/80 hover:shadow-lg hover:shadow-black/10">
+            <div key={stat.label} className="group rounded-xl border border-border bg-card p-5">
               <div className="flex items-center justify-between mb-3">
                 <div className={`flex h-9 w-9 items-center justify-center rounded-lg bg-secondary ${stat.accent}`}>
                   <Icon className="h-4 w-4" />
                 </div>
-                <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-muted-foreground transition-colors" />
+                <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground/40" />
               </div>
               <p className="text-2xl font-bold text-foreground tracking-tight">{stat.value}</p>
               <p className="text-xs text-muted-foreground mt-1">{stat.label}</p>
@@ -203,7 +203,7 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
               <div
                 key={order.id}
                 onClick={() => onGoToTicket?.(order.id)}
-                className="flex cursor-pointer items-center gap-3 px-5 py-3.5 transition-colors hover:bg-secondary/30"
+                className="flex cursor-pointer items-center gap-3 px-5 py-3.5 hover:bg-secondary/30"
               >
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary shrink-0">
                   <Package className="h-3.5 w-3.5 text-muted-foreground" />

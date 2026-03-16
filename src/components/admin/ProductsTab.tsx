@@ -489,7 +489,7 @@ const ProductsTab = () => {
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-foreground">Gerenciar Produtos</h2>
         <button onClick={() => { resetForm(); setShowForm(true); }}
-          className="flex items-center gap-2 rounded-lg bg-success px-5 py-2.5 text-sm font-semibold text-success-foreground transition-all hover:shadow-[0_0_24px_hsl(var(--success)/0.35)]">
+          className="flex items-center gap-2 rounded-lg bg-success px-5 py-2.5 text-sm font-semibold text-success-foreground">
           <Plus className="h-4 w-4" /> Novo Produto
         </button>
       </div>
@@ -539,7 +539,7 @@ const ProductsTab = () => {
               <div className="flex gap-1 mb-3">
                 {([["url", Link, "URL"], ["upload", Upload, "Upload"]] as const).map(([mode, Icon, label]) => (
                   <button key={mode} type="button" onClick={() => setImageMode(mode)}
-                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${imageMode === mode ? "bg-success/20 text-success border border-success/30" : "bg-secondary/50 text-muted-foreground border border-border hover:text-foreground"}`}>
+                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium ${imageMode === mode ? "bg-success/20 text-success border border-success/30" : "bg-secondary/50 text-muted-foreground border border-border hover:text-foreground"}`}>
                     <Icon className="h-3 w-3" />{label}
                   </button>
                 ))}
@@ -554,7 +554,7 @@ const ProductsTab = () => {
                   onDragLeave={() => setDragOver(false)}
                   onDrop={handleDrop}
                   onClick={() => fileInputRef.current?.click()}
-                  className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition-colors ${dragOver ? "border-success bg-success/5" : "border-border hover:border-success/40"}`}>
+                  className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 ${dragOver ? "border-success bg-success/5" : "border-border hover:border-success/40"}`}>
                   <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadFile(f); }} />
                   {uploading ? (
                     <><Loader2 className="h-6 w-6 animate-spin text-success mb-2" /><p className="text-xs text-muted-foreground">Enviando...</p></>
@@ -638,8 +638,8 @@ const ProductsTab = () => {
                           </div>
                         )}
                         <label className="flex items-center gap-1.5 cursor-pointer" onClick={() => updatePlan(index, "active", !plan.active)}>
-                          <div className={`h-4 w-7 rounded-full border transition-colors relative ${plan.active ? "border-success bg-success" : "border-border bg-secondary"}`}>
-                            <div className={`absolute top-0.5 h-3 w-3 rounded-full transition-all ${plan.active ? "left-[12px] bg-white" : "left-0.5 bg-foreground/60"}`} />
+                         <div className={`h-4 w-7 rounded-full border relative ${plan.active ? "border-success bg-success" : "border-border bg-secondary"}`}>
+                            <div className={`absolute top-0.5 h-3 w-3 rounded-full ${plan.active ? "left-[12px] bg-white" : "left-0.5 bg-foreground/60"}`} />
                           </div>
                         </label>
                         <button type="button" onClick={() => removePlan(index)}
@@ -684,8 +684,8 @@ const ProductsTab = () => {
                     if (robotEnabled) { setRobotEnabled(false); setFormRobotGameId(null); setFormRobotMarkup(null); }
                     else { setRobotEnabled(true); fetchRobotGames(); }
                   }}>
-                    <div className={`h-4 w-7 rounded-full border transition-colors relative ${robotEnabled ? "border-accent bg-accent" : "border-border bg-secondary"}`}>
-                      <div className={`absolute top-0.5 h-3 w-3 rounded-full transition-all ${robotEnabled ? "left-[12px] bg-white" : "left-0.5 bg-foreground/60"}`} />
+                    <div className={`h-4 w-7 rounded-full border relative ${robotEnabled ? "border-accent bg-accent" : "border-border bg-secondary"}`}>
+                      <div className={`absolute top-0.5 h-3 w-3 rounded-full ${robotEnabled ? "left-[12px] bg-white" : "left-0.5 bg-foreground/60"}`} />
                     </div>
                     <span className="text-xs text-muted-foreground">Produto fornecido via Robot Project</span>
                   </label>
@@ -781,7 +781,7 @@ const ProductsTab = () => {
                           </div>
                         )}
                         <button onClick={() => removeMedia(idx)}
-                          className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground text-xs opacity-0 group-hover:opacity-100 transition-opacity">
+                          className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground text-xs opacity-0 group-hover:opacity-100">
                           <X className="h-3 w-3" />
                         </button>
                         <span className="absolute bottom-0.5 left-0.5 rounded bg-background/80 px-1 text-[8px] font-bold text-foreground">{idx + 1}</span>
@@ -811,7 +811,7 @@ const ProductsTab = () => {
               {/* Upload button */}
               <button type="button" onClick={() => mediaFileInputRef.current?.click()}
                 disabled={uploadingMedia}
-                className="flex items-center gap-2 rounded-lg border border-dashed border-border px-4 py-2.5 text-xs font-medium text-muted-foreground hover:border-success/40 hover:text-foreground transition-colors">
+                className="flex items-center gap-2 rounded-lg border border-dashed border-border px-4 py-2.5 text-xs font-medium text-muted-foreground hover:border-success/40 hover:text-foreground">
                 {uploadingMedia ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
                 {uploadingMedia ? "Enviando..." : "Upload de arquivo"}
               </button>
@@ -901,7 +901,7 @@ const ProductsTab = () => {
                     placeholder="https://link-do-arquivo..."
                     className="flex-1 rounded-lg border border-border bg-secondary/50 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-success/50" />
                   <button type="button" onClick={() => tutorialFileInputRef.current?.click()} disabled={uploadingTutorial}
-                    className="flex items-center gap-1.5 rounded-lg border border-dashed border-border px-3 py-2 text-xs font-medium text-muted-foreground hover:border-success/40 hover:text-foreground transition-colors">
+                    className="flex items-center gap-1.5 rounded-lg border border-dashed border-border px-3 py-2 text-xs font-medium text-muted-foreground hover:border-success/40 hover:text-foreground">
                     {uploadingTutorial ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
                     {uploadingTutorial ? "Enviando..." : "Upload"}
                   </button>
@@ -929,8 +929,8 @@ const ProductsTab = () => {
             <label className="flex cursor-pointer items-center gap-3">
               <div className="relative">
                 <input type="checkbox" checked={formActive} onChange={(e) => setFormActive(e.target.checked)} className="peer sr-only" />
-                <div className="h-5 w-9 rounded-full border border-border bg-secondary transition-colors peer-checked:border-success peer-checked:bg-success" />
-                <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-foreground/60 transition-all peer-checked:left-[18px] peer-checked:bg-success-foreground" />
+                <div className="h-5 w-9 rounded-full border border-border bg-secondary peer-checked:border-success peer-checked:bg-success" />
+                <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-foreground/60 peer-checked:left-[18px] peer-checked:bg-success-foreground" />
               </div>
               <span className="text-xs font-medium text-muted-foreground">Ativo</span>
             </label>
@@ -938,7 +938,7 @@ const ProductsTab = () => {
 
           <div className="mt-6 flex gap-3">
             <button onClick={handleSave} disabled={saving}
-              className="flex items-center gap-2 rounded-lg bg-success px-6 py-2.5 text-sm font-semibold text-success-foreground hover:shadow-[0_0_24px_hsl(var(--success)/0.35)] disabled:opacity-50">
+              className="flex items-center gap-2 rounded-lg bg-success px-6 py-2.5 text-sm font-semibold text-success-foreground disabled:opacity-50">
               {saving && <Loader2 className="h-4 w-4 animate-spin" />} {editing ? "Salvar" : "Criar"}
             </button>
             <button onClick={resetForm} className="rounded-lg border border-border px-6 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground">Cancelar</button>
@@ -972,7 +972,7 @@ const ProductsTab = () => {
             onDragEnter={() => handleDragEnter(index)}
             onDragOver={(e) => e.preventDefault()}
             onDragEnd={handleDragEnd}
-            className={`rounded-lg border bg-card overflow-hidden transition-all cursor-grab active:cursor-grabbing ${
+            className={`rounded-lg border bg-card overflow-hidden cursor-grab active:cursor-grabbing ${
               dragOverIndex === index ? "border-success bg-success/5" : "border-border hover:border-success/30"
             } ${dragIndex === index ? "opacity-50" : ""}`}>
             <div className="flex items-center gap-4 p-4">
@@ -1022,7 +1022,7 @@ const ProductsTab = () => {
               className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground disabled:opacity-30">‹</button>
             {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
               <button key={p} onClick={() => setCurrentPage(p)}
-                className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${p === currentPage ? "bg-success text-success-foreground" : "border border-border text-muted-foreground hover:text-foreground"}`}>{p}</button>
+                className={`rounded-lg px-3 py-1.5 text-xs font-bold ${p === currentPage ? "bg-success text-success-foreground" : "border border-border text-muted-foreground hover:text-foreground"}`}>{p}</button>
             ))}
             <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}
               className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground disabled:opacity-30">›</button>

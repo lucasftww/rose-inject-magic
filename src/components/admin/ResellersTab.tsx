@@ -240,7 +240,7 @@ const ResellersTab = () => {
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-foreground">Revendedores</h2>
         <button onClick={() => { resetForm(); setShowForm(true); }}
-          className="flex items-center gap-2 rounded-lg bg-success px-5 py-2.5 text-sm font-semibold text-success-foreground transition-all hover:shadow-[0_0_24px_hsl(var(--success)/0.35)]">
+          className="flex items-center gap-2 rounded-lg bg-success px-5 py-2.5 text-sm font-semibold text-success-foreground">
           <Plus className="h-4 w-4" /> Novo Revendedor
         </button>
       </div>
@@ -303,8 +303,8 @@ const ResellersTab = () => {
             <label className="flex cursor-pointer items-center gap-3 self-end pb-2.5">
               <div className="relative">
                 <input type="checkbox" checked={formActive} onChange={e => setFormActive(e.target.checked)} className="peer sr-only" />
-                <div className="h-5 w-9 rounded-full border border-border bg-secondary transition-colors peer-checked:border-success peer-checked:bg-success" />
-                <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-foreground/60 transition-all peer-checked:left-[18px] peer-checked:bg-success-foreground" />
+                <div className="h-5 w-9 rounded-full border border-border bg-secondary peer-checked:border-success peer-checked:bg-success" />
+                <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-foreground/60 peer-checked:left-[18px] peer-checked:bg-success-foreground" />
               </div>
               <span className="text-xs font-medium text-muted-foreground">Ativo</span>
             </label>
@@ -318,7 +318,7 @@ const ResellersTab = () => {
             <div className="flex flex-wrap gap-2">
               {products.map(p => (
                 <button key={p.id} onClick={() => toggleProductId(p.id, formProductIds, setFormProductIds)}
-                  className={`rounded-lg px-3 py-1.5 text-xs font-medium border transition-colors ${
+                  className={`rounded-lg px-3 py-1.5 text-xs font-medium border ${
                     formProductIds.includes(p.id)
                       ? "border-success/30 bg-success/10 text-success"
                       : "border-border bg-secondary/50 text-muted-foreground hover:text-foreground"
@@ -332,7 +332,7 @@ const ResellersTab = () => {
 
           <div className="flex gap-3">
             <button onClick={handleAddReseller} disabled={saving || !selectedUserId}
-              className="flex items-center gap-2 rounded-lg bg-success px-6 py-2.5 text-sm font-semibold text-success-foreground hover:shadow-[0_0_24px_hsl(var(--success)/0.35)] disabled:opacity-50">
+              className="flex items-center gap-2 rounded-lg bg-success px-6 py-2.5 text-sm font-semibold text-success-foreground disabled:opacity-50">
               {saving && <Loader2 className="h-4 w-4 animate-spin" />} Adicionar
             </button>
             <button onClick={resetForm} className="rounded-lg border border-border px-6 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground">Cancelar</button>
@@ -357,7 +357,7 @@ const ResellersTab = () => {
           return (
             <div key={reseller.id} className="rounded-lg border border-border bg-card overflow-hidden">
               <button onClick={() => toggleExpand(reseller)}
-                className="flex w-full items-center gap-4 p-4 text-left hover:bg-secondary/30 transition-colors">
+                className="flex w-full items-center gap-4 p-4 text-left hover:bg-secondary/30">
                 {isExpanded ? <ChevronDown className="h-4 w-4 text-success shrink-0" /> : <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />}
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-success/10 shrink-0">
                   <UserCheck className="h-4 w-4 text-success" />
@@ -408,8 +408,8 @@ const ResellersTab = () => {
                             <label className="flex cursor-pointer items-center gap-3 self-end pb-2.5">
                               <div className="relative">
                                 <input type="checkbox" checked={editActive} onChange={e => setEditActive(e.target.checked)} className="peer sr-only" />
-                                <div className="h-5 w-9 rounded-full border border-border bg-secondary transition-colors peer-checked:border-success peer-checked:bg-success" />
-                                <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-foreground/60 transition-all peer-checked:left-[18px] peer-checked:bg-success-foreground" />
+                                <div className="h-5 w-9 rounded-full border border-border bg-secondary peer-checked:border-success peer-checked:bg-success" />
+                                <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-foreground/60 peer-checked:left-[18px] peer-checked:bg-success-foreground" />
                               </div>
                               <span className="text-xs font-medium text-muted-foreground">Ativo</span>
                             </label>
@@ -420,7 +420,7 @@ const ResellersTab = () => {
                             <div className="flex flex-wrap gap-2">
                               {products.map(p => (
                                 <button key={p.id} onClick={() => toggleProductId(p.id, editProductIds, setEditProductIds)}
-                                  className={`rounded-lg px-3 py-1.5 text-xs font-medium border transition-colors ${
+                                  className={`rounded-lg px-3 py-1.5 text-xs font-medium border ${
                                     editProductIds.includes(p.id)
                                       ? "border-success/30 bg-success/10 text-success"
                                       : "border-border bg-secondary/50 text-muted-foreground hover:text-foreground"
