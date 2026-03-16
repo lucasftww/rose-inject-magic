@@ -242,8 +242,9 @@ const Checkout = () => {
         const data = await res.json();
         if (data.status && data.status !== "ACTIVE") {
           setPaymentStatus(data.status);
+          // Stop polling on any terminal status (COMPLETED, EXPIRED, CANCELLED, etc.)
+          if (intervalRef.current) clearInterval(intervalRef.current);
           if (data.status === "COMPLETED") {
-            if (intervalRef.current) clearInterval(intervalRef.current);
             // Fire Purchase event using refs (not stale closure values)
             const cartItem = cartSnapshotRef.current[0];
             if (cartItem) {

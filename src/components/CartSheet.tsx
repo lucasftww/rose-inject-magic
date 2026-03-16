@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
@@ -30,6 +30,13 @@ const CartSheet = ({ open, onOpenChange }: CartSheetProps) => {
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
   const [couponLoading, setCouponLoading] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
+
+  // Reset coupon when items change (prevents stale discount calculations)
+  const itemsKey = items.map(i => `${i.productId}:${i.planId}:${i.quantity}`).join(",");
+  useEffect(() => {
+    setAppliedCoupon(null);
+    setCouponCode("");
+  }, [itemsKey]);
 
   const applyCoupon = async () => {
     const code = couponCode.trim().toUpperCase();
