@@ -4,7 +4,7 @@ import { fetchAllRows } from "@/lib/supabaseAllRows";
 import {
   Loader2, DollarSign, ShoppingCart, Globe, TrendingUp, TrendingDown,
   Download, PieChart, Wallet, Users, ArrowUp, ArrowDown, Minus, Gamepad2,
-  Receipt, BarChart3, CalendarDays, Package, Percent
+  Receipt, BarChart3, CalendarDays, Package, Percent, Zap, RefreshCw
 } from "lucide-react";
 import {
   PieChart as RechartsPie, Pie, Cell, Tooltip, ResponsiveContainer,
@@ -34,6 +34,21 @@ interface ResellerPurchase {
   original_price: number;
   paid_price: number;
   created_at: string;
+}
+
+interface RobotTicket {
+  id: string;
+  created_at: string;
+  product_id: string;
+  product_plan_id: string;
+  user_id: string;
+  metadata: any;
+  // enriched
+  product_name: string;
+  plan_name: string;
+  revenue: number;
+  cost: number;
+  profit: number;
 }
 
 type Period = "24h" | "7d" | "30d" | "all";
@@ -134,13 +149,21 @@ const FinanceTab = () => {
   const [payments, setPayments] = useState<PaymentRow[]>([]);
   const [lztSales, setLztSales] = useState<LztSale[]>([]);
   const [resellerPurchases, setResellerPurchases] = useState<ResellerPurchase[]>([]);
+  const [robotTickets, setRobotTickets] = useState<RobotTicket[]>([]);
   const [period, setPeriod] = useState<Period>("30d");
-  const [dbStats, setDbStats] = useState<any>(null);
+  const [usdToBrl, setUsdToBrl] = useState(5.5);
 
   const fetchData = async () => {
     setLoading(true);
-    const [statsRes, paymentsData, lztData, resellerData] = await Promise.all([
-      supabase.rpc("admin_finance_summary"),
+
+    // Fetch USD exchange rate
+    try {
+      const res = await fetch("https://open.er-api.com/v6/latest/USD");
+      const json = await res.json();
+      if (json?.rates?.BRL) setUsdToBrl(json.rates.BRL);
+    } catch { /* use fallback */ }
+
+    const [paymentsData, lztData, resellerData, robotProductsRes] = await Promise.all([
       fetchAllRows<PaymentRow>("payments", {
         select: "amount, status, created_at, paid_at, cart_snapshot, payment_method, discount_amount, user_id",
         filters: [{ column: "status", op: "eq", value: "COMPLETED" }],
@@ -154,12 +177,80 @@ const FinanceTab = () => {
         select: "original_price, paid_price, created_at",
         order: { column: "created_at", ascending: false },
       }),
+      supabase.from("products").select("id, name, robot_game_id, robot_markup_percent").not("robot_game_id", "is", null),
     ]);
 
-    if (statsRes.data) setDbStats(statsRes.data);
     setPayments(paymentsData);
     setLztSales(lztData);
     setResellerPurchases(resellerData);
+
+    // Fetch Robot tickets
+    const robotProducts = robotProductsRes.data || [];
+    if (robotProducts.length > 0) {
+      const productIds = robotProducts.map(p => p.id);
+      const productMap = Object.fromEntries(robotProducts.map(p => [p.id, p]));
+
+      const [ticketsRes, plansRes, robotPaymentsRes] = await Promise.all([
+        fetchAllRows("order_tickets", {
+          select: "id, created_at, product_id, product_plan_id, user_id, metadata, status",
+          filters: [{ column: "status", op: "eq", value: "delivered" }],
+          order: { column: "created_at", ascending: false },
+        }),
+        supabase.from("product_plans").select("id, name, price, robot_duration_days").in("product_id", productIds),
+        supabase.from("payments").select("user_id, amount, cart_snapshot, status")
+          .eq("status", "COMPLETED").order("created_at", { ascending: false }).limit(5000),
+      ]);
+
+      const robotTicketsRaw = (ticketsRes || []).filter((t: any) => productIds.includes(t.product_id));
+      const planMap = Object.fromEntries((plansRes.data || []).map((p: any) => [p.id, p]));
+
+      // Build paid price map from cart_snapshot
+      const paidPriceMap = new Map<string, number>();
+      for (const pay of (robotPaymentsRes.data || [])) {
+        const snapshot = pay.cart_snapshot as any[];
+        if (!Array.isArray(snapshot)) continue;
+        for (const item of snapshot) {
+          const key = `${pay.user_id}|${item.productId}|${item.planId}`;
+          if (!paidPriceMap.has(key) && item.price != null) {
+            paidPriceMap.set(key, Number(item.price));
+          }
+        }
+      }
+
+      const enriched: RobotTicket[] = robotTicketsRaw.map((t: any) => {
+        const product = productMap[t.product_id];
+        const plan = planMap[t.product_plan_id];
+        const meta = (t.metadata || {}) as Record<string, any>;
+
+        const revenue = paidPriceMap.get(`${t.user_id}|${t.product_id}|${t.product_plan_id}`) ?? plan?.price ?? 0;
+
+        let cost = 0;
+        if (meta.amount_spent && Number(meta.amount_spent) > 0) {
+          cost = Number(meta.amount_spent) * usdToBrl;
+        } else if (meta.is_free) {
+          cost = 0;
+        } else if (product?.robot_markup_percent) {
+          cost = revenue / (1 + (product.robot_markup_percent || 50) / 100);
+        }
+
+        return {
+          id: t.id,
+          created_at: t.created_at || "",
+          product_id: t.product_id,
+          product_plan_id: t.product_plan_id,
+          user_id: t.user_id,
+          metadata: meta,
+          product_name: product?.name || "Produto Robot",
+          plan_name: plan?.name || "—",
+          revenue,
+          cost: Math.round(cost * 100) / 100,
+          profit: Math.round((revenue - cost) * 100) / 100,
+        };
+      });
+
+      setRobotTickets(enriched);
+    }
+
     setLoading(false);
   };
 
@@ -171,30 +262,55 @@ const FinanceTab = () => {
   const fLzt = useMemo(() => filterByPeriod(lztSales, period, "created_at"), [lztSales, period]);
   const pLzt = useMemo(() => getPreviousPeriodItems(lztSales, period, "created_at"), [lztSales, period]);
   const fReseller = useMemo(() => filterByPeriod(resellerPurchases, period, "created_at"), [resellerPurchases, period]);
+  const fRobot = useMemo(() => filterByPeriod(robotTickets, period, "created_at"), [robotTickets, period]);
+  const pRobot = useMemo(() => getPreviousPeriodItems(robotTickets, period, "created_at"), [robotTickets, period]);
 
   // ─── Revenue metrics ───
   const totalRevenue = useMemo(() => fp.reduce((s, p) => s + p.amount / 100, 0), [fp]);
   const prevRevenue = useMemo(() => pp.reduce((s, p) => s + p.amount / 100, 0), [pp]);
   const revenueChange = pctChange(totalRevenue, prevRevenue);
 
-  const productRevenue = useMemo(() => fp.reduce((s, p) => {
-    const cart = p.cart_snapshot as any[];
-    const isLzt = Array.isArray(cart) && cart.some((i: any) => i.type === "lzt-account");
-    return isLzt ? s : s + p.amount / 100;
-  }, 0), [fp]);
-
-  const accountRevenue = useMemo(() => fp.reduce((s, p) => {
-    const cart = p.cart_snapshot as any[];
-    const isLzt = Array.isArray(cart) && cart.some((i: any) => i.type === "lzt-account");
-    return isLzt ? s + p.amount / 100 : s;
-  }, 0), [fp]);
+  // Separate product revenue: Robot vs Stock vs LZT
+  const revenueBreakdown = useMemo(() => {
+    let lzt = 0, robot = 0, stock = 0;
+    fp.forEach(p => {
+      const cart = p.cart_snapshot as any[];
+      if (!Array.isArray(cart)) { stock += p.amount / 100; return; }
+      const isLzt = cart.some((i: any) => i.type === "lzt-account");
+      if (isLzt) lzt += p.amount / 100;
+      else stock += p.amount / 100;
+    });
+    // Robot revenue comes from stock pool — we know the exact amount from robotTickets
+    const robotRev = fRobot.reduce((s, r) => s + r.revenue, 0);
+    const pureStock = Math.max(0, stock - robotRev);
+    return { lzt, robot: robotRev, stock: pureStock };
+  }, [fp, fRobot]);
 
   // ─── LZT Profit ───
   const lztTotalBought = useMemo(() => fLzt.reduce((s, l) => s + Number(l.buy_price), 0), [fLzt]);
   const lztTotalSold = useMemo(() => fLzt.reduce((s, l) => s + Number(l.sell_price), 0), [fLzt]);
   const lztTotalProfit = useMemo(() => fLzt.reduce((s, l) => s + Number(l.profit), 0), [fLzt]);
   const prevLztProfit = useMemo(() => pLzt.reduce((s, l) => s + Number(l.profit), 0), [pLzt]);
-  const lztProfitChange = pctChange(lztTotalProfit, prevLztProfit);
+
+  // ─── Robot Profit ───
+  const robotTotalRevenue = useMemo(() => fRobot.reduce((s, r) => s + r.revenue, 0), [fRobot]);
+  const robotTotalCost = useMemo(() => fRobot.reduce((s, r) => s + r.cost, 0), [fRobot]);
+  const robotTotalProfit = useMemo(() => fRobot.reduce((s, r) => s + r.profit, 0), [fRobot]);
+  const prevRobotProfit = useMemo(() => pRobot.reduce((s, r) => s + r.profit, 0), [pRobot]);
+  const robotProfitChange = pctChange(robotTotalProfit, prevRobotProfit);
+
+  // Robot by product
+  const robotByProduct = useMemo(() => {
+    const prods: Record<string, { count: number; revenue: number; cost: number; profit: number }> = {};
+    fRobot.forEach(r => {
+      if (!prods[r.product_name]) prods[r.product_name] = { count: 0, revenue: 0, cost: 0, profit: 0 };
+      prods[r.product_name].count++;
+      prods[r.product_name].revenue += r.revenue;
+      prods[r.product_name].cost += r.cost;
+      prods[r.product_name].profit += r.profit;
+    });
+    return Object.entries(prods).sort((a, b) => b[1].revenue - a[1].revenue);
+  }, [fRobot]);
 
   // ─── Reseller metrics ───
   const resellerTotal = useMemo(() => fReseller.reduce((s, r) => s + Number(r.paid_price), 0), [fReseller]);
@@ -214,8 +330,9 @@ const FinanceTab = () => {
   const prevAvgTicket = pp.length > 0 ? prevRevenue / pp.length : 0;
   const avgTicketChange = pctChange(avgTicket, prevAvgTicket);
 
-  // ─── Net Profit (revenue - LZT cost - reseller discounts - coupon discounts) ───
-  const netProfit = totalRevenue - lztTotalBought - totalDiscounts;
+  // ─── Net Profit = revenue - LZT cost - Robot cost - discounts ───
+  const totalCosts = lztTotalBought + robotTotalCost + totalDiscounts;
+  const netProfit = totalRevenue - totalCosts;
   const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
 
   // ─── Payment method breakdown ───
@@ -236,35 +353,47 @@ const FinanceTab = () => {
     .filter(([, v]) => v.count > 0)
     .map(([key, v]) => ({ name: methodLabels[key] || key, value: v.count, revenue: v.revenue }));
 
+  // ─── Revenue breakdown pie ───
+  const revenuePieData = useMemo(() => {
+    const data = [];
+    if (revenueBreakdown.stock > 0) data.push({ name: "Estoque Local", value: revenueBreakdown.stock });
+    if (revenueBreakdown.robot > 0) data.push({ name: "Cheats (Robot)", value: revenueBreakdown.robot });
+    if (revenueBreakdown.lzt > 0) data.push({ name: "Contas LZT", value: revenueBreakdown.lzt });
+    return data;
+  }, [revenueBreakdown]);
+
   // ─── Daily revenue chart ───
   const dailyData = useMemo(() => {
-    const days: Record<string, { date: string; produtos: number; contas: number; lzt_profit: number }> = {};
+    const days: Record<string, { date: string; estoque: number; robot: number; contas: number }> = {};
     const numDays = period === "24h" ? 1 : period === "7d" ? 7 : period === "30d" ? 30 : 90;
     
-    // Init days
     for (let i = numDays - 1; i >= 0; i--) {
       const d = new Date(Date.now() - i * 86400000);
       const key = d.toISOString().slice(0, 10);
       const label = d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
-      days[key] = { date: label, produtos: 0, contas: 0, lzt_profit: 0 };
+      days[key] = { date: label, estoque: 0, robot: 0, contas: 0 };
     }
+
+    // Robot product IDs for categorization
+    const robotProductIds = new Set(robotTickets.map(r => r.product_id));
 
     fp.forEach(p => {
       const d = (p.paid_at || p.created_at).slice(0, 10);
       if (!days[d]) return;
       const cart = p.cart_snapshot as any[];
       const isLzt = Array.isArray(cart) && cart.some((i: any) => i.type === "lzt-account");
-      if (isLzt) days[d].contas += p.amount / 100;
-      else days[d].produtos += p.amount / 100;
-    });
-
-    fLzt.forEach(l => {
-      const d = l.created_at.slice(0, 10);
-      if (days[d]) days[d].lzt_profit += Number(l.profit);
+      if (isLzt) {
+        days[d].contas += p.amount / 100;
+      } else {
+        // Check if any cart item is a robot product
+        const isRobot = Array.isArray(cart) && cart.some((i: any) => robotProductIds.has(i.productId));
+        if (isRobot) days[d].robot += p.amount / 100;
+        else days[d].estoque += p.amount / 100;
+      }
     });
 
     return Object.values(days);
-  }, [fp, fLzt, period]);
+  }, [fp, robotTickets, period]);
 
   // ─── LZT by game ───
   const lztByGame = useMemo(() => {
@@ -282,20 +411,25 @@ const FinanceTab = () => {
   // ─── Monthly breakdown ───
   const monthlyData = useMemo(() => {
     if (period !== "all" && period !== "30d") return [];
-    const months: Record<string, { name: string; produtos: number; contas: number; total: number }> = {};
+    const months: Record<string, { name: string; estoque: number; robot: number; contas: number; total: number }> = {};
+    const robotProductIds = new Set(robotTickets.map(r => r.product_id));
     payments.forEach(p => {
       if (p.status !== "COMPLETED" || !p.paid_at) return;
       const key = new Date(p.paid_at).toLocaleDateString("pt-BR", { month: "short", year: "2-digit" });
-      if (!months[key]) months[key] = { name: key, produtos: 0, contas: 0, total: 0 };
+      if (!months[key]) months[key] = { name: key, estoque: 0, robot: 0, contas: 0, total: 0 };
       const cart = p.cart_snapshot as any[];
       const isLzt = Array.isArray(cart) && cart.some((i: any) => i.type === "lzt-account");
       const val = p.amount / 100;
       if (isLzt) months[key].contas += val;
-      else months[key].produtos += val;
+      else {
+        const isRobot = Array.isArray(cart) && cart.some((i: any) => robotProductIds.has(i.productId));
+        if (isRobot) months[key].robot += val;
+        else months[key].estoque += val;
+      }
       months[key].total += val;
     });
     return Object.values(months);
-  }, [payments, period]);
+  }, [payments, robotTickets, period]);
 
   // ─── PDF Export ───
   const generatePDF = () => {
@@ -310,7 +444,7 @@ const FinanceTab = () => {
       .card{padding:16px;border:1px solid #e0e0e0;border-radius:10px}
       .card-label{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:1px}
       .card-value{font-size:22px;font-weight:700;margin-top:2px}
-      .green{color:#00c853}.red{color:#e53935}
+      .green{color:#00c853}.red{color:#e53935}.blue{color:#2196f3}
       table{width:100%;border-collapse:collapse;margin-top:12px}
       th,td{padding:8px 12px;text-align:left;border-bottom:1px solid #eee;font-size:12px}
       th{background:#f8f8f8;font-weight:600;color:#555}
@@ -322,19 +456,31 @@ const FinanceTab = () => {
       <div class="grid">
         <div class="card"><p class="card-label">Receita Total</p><p class="card-value green">R$ ${fmt(totalRevenue)}</p></div>
         <div class="card"><p class="card-label">Lucro Líquido</p><p class="card-value green">R$ ${fmt(netProfit)}</p></div>
-        <div class="card"><p class="card-label">Produtos</p><p class="card-value">R$ ${fmt(productRevenue)}</p></div>
-        <div class="card"><p class="card-label">Contas LZT</p><p class="card-value">R$ ${fmt(accountRevenue)}</p></div>
-      </div>
-      <div class="grid">
-        <div class="card"><p class="card-label">LZT Custo</p><p class="card-value red">R$ ${fmt(lztTotalBought)}</p></div>
-        <div class="card"><p class="card-label">LZT Lucro</p><p class="card-value green">R$ ${fmt(lztTotalProfit)}</p></div>
-        <div class="card"><p class="card-label">Descontos</p><p class="card-value red">R$ ${fmt(totalDiscounts)}</p></div>
+        <div class="card"><p class="card-label">Margem</p><p class="card-value">${profitMargin.toFixed(1)}%</p></div>
         <div class="card"><p class="card-label">Transações</p><p class="card-value">${fp.length}</p></div>
+      </div>
+      <p class="section">Receita por Categoria</p>
+      <div class="grid">
+        <div class="card"><p class="card-label">Estoque Local</p><p class="card-value">R$ ${fmt(revenueBreakdown.stock)}</p></div>
+        <div class="card"><p class="card-label">Cheats (Robot)</p><p class="card-value blue">R$ ${fmt(revenueBreakdown.robot)}</p></div>
+        <div class="card"><p class="card-label">Contas LZT</p><p class="card-value">R$ ${fmt(revenueBreakdown.lzt)}</p></div>
+        <div class="card"><p class="card-label">Descontos</p><p class="card-value red">-R$ ${fmt(totalDiscounts)}</p></div>
+      </div>
+      <p class="section">Custos e Lucros</p>
+      <div class="grid">
+        <div class="card"><p class="card-label">Custo LZT</p><p class="card-value red">R$ ${fmt(lztTotalBought)}</p></div>
+        <div class="card"><p class="card-label">Lucro LZT</p><p class="card-value green">R$ ${fmt(lztTotalProfit)}</p></div>
+        <div class="card"><p class="card-label">Custo Robot</p><p class="card-value red">R$ ${fmt(robotTotalCost)}</p></div>
+        <div class="card"><p class="card-label">Lucro Robot</p><p class="card-value green">R$ ${fmt(robotTotalProfit)}</p></div>
       </div>
       <p class="section">Métodos de Pagamento</p>
       <table><tr><th>Método</th><th>Transações</th><th>Receita</th></tr>
       ${Object.entries(methodStats).map(([k, v]) => `<tr><td>${methodLabels[k] || k}</td><td>${v.count}</td><td>R$ ${fmt(v.revenue)}</td></tr>`).join("")}
       </table>
+      ${robotByProduct.length > 0 ? `<p class="section">Lucro Robot por Produto</p>
+      <table><tr><th>Produto</th><th>Vendas</th><th>Receita</th><th>Custo</th><th>Lucro</th></tr>
+      ${robotByProduct.map(([name, d]) => `<tr><td>${name}</td><td>${d.count}</td><td>R$ ${fmt(d.revenue)}</td><td>R$ ${fmt(d.cost)}</td><td>R$ ${fmt(d.profit)}</td></tr>`).join("")}
+      </table>` : ""}
       ${lztByGame.length > 0 ? `<p class="section">Lucro LZT por Jogo</p>
       <table><tr><th>Jogo</th><th>Vendas</th><th>Receita</th><th>Lucro</th></tr>
       ${lztByGame.map(([g, d]) => `<tr><td>${g}</td><td>${d.count}</td><td>R$ ${fmt(d.revenue)}</td><td>R$ ${fmt(d.profit)}</td></tr>`).join("")}
@@ -379,6 +525,12 @@ const FinanceTab = () => {
             ))}
           </div>
           <button
+            onClick={() => fetchData()}
+            className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-[11px] font-medium text-muted-foreground hover:text-foreground hover:border-success/30 transition-colors"
+          >
+            <RefreshCw className="h-3 w-3" />
+          </button>
+          <button
             onClick={generatePDF}
             className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-[11px] font-medium text-muted-foreground hover:text-foreground hover:border-success/30 transition-colors"
           >
@@ -412,30 +564,83 @@ const FinanceTab = () => {
         />
       </div>
 
-      {/* ─── Revenue Breakdown ─── */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-        <StatCard small
-          icon={<Package className="h-3.5 w-3.5 text-info" />}
-          label="Receita Produtos" value={`R$ ${fmtCompact(productRevenue)}`}
-        />
-        <StatCard small
-          icon={<Globe className="h-3.5 w-3.5 text-success" />}
-          label="Receita Contas" value={`R$ ${fmtCompact(accountRevenue)}`}
-        />
-        <StatCard small
-          icon={<Wallet className="h-3.5 w-3.5 text-positive" />}
+      {/* ─── Revenue by Source ─── */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
+        <StatCard small icon={<Package className="h-3.5 w-3.5 text-info" />}
+          label="Estoque Local" value={`R$ ${fmtCompact(revenueBreakdown.stock)}`} />
+        <StatCard small icon={<Zap className="h-3.5 w-3.5 text-accent-foreground" />}
+          label="Cheats (Robot)" value={`R$ ${fmtCompact(revenueBreakdown.robot)}`} />
+        <StatCard small icon={<Globe className="h-3.5 w-3.5 text-success" />}
+          label="Contas LZT" value={`R$ ${fmtCompact(revenueBreakdown.lzt)}`} />
+        <StatCard small icon={<Wallet className="h-3.5 w-3.5 text-positive" />}
           label="Ticket Médio" value={`R$ ${fmt(avgTicket)}`}
-          change={period !== "all" ? avgTicketChange : undefined}
-        />
-        <StatCard small
-          icon={<Percent className="h-3.5 w-3.5 text-warning" />}
-          label="Margem Lucro" value={`${profitMargin.toFixed(1)}%`}
-        />
-        <StatCard small
-          icon={<TrendingDown className="h-3.5 w-3.5 text-destructive" />}
-          label="Descontos" value={`R$ ${fmtCompact(totalDiscounts)}`}
-        />
+          change={period !== "all" ? avgTicketChange : undefined} />
+        <StatCard small icon={<Percent className="h-3.5 w-3.5 text-warning" />}
+          label="Margem Lucro" value={`${profitMargin.toFixed(1)}%`} />
+        <StatCard small icon={<TrendingDown className="h-3.5 w-3.5 text-destructive" />}
+          label="Descontos" value={`R$ ${fmtCompact(totalDiscounts)}`} />
       </div>
+
+      {/* ─── Robot Project Profit Section ─── */}
+      {fRobot.length > 0 && (
+        <div className="rounded-xl border border-border bg-card overflow-hidden">
+          <div className="px-5 py-3.5 border-b border-border flex items-center gap-2">
+            <Zap className="h-4 w-4 text-accent-foreground" />
+            <h3 className="text-sm font-bold text-foreground">Lucro Cheats (Robot Project)</h3>
+            <span className="text-[10px] text-muted-foreground ml-1">({fRobot.length} vendas)</span>
+            {period !== "all" && robotProfitChange !== 0 && (
+              <span className={`flex items-center gap-0.5 text-[10px] font-bold rounded-full px-1.5 py-0.5 ml-auto ${
+                robotProfitChange > 0 ? "bg-positive/15 text-positive" : "bg-destructive/15 text-destructive"
+              }`}>
+                {robotProfitChange > 0 ? <ArrowUp className="h-2.5 w-2.5" /> : <ArrowDown className="h-2.5 w-2.5" />}
+                {Math.abs(robotProfitChange).toFixed(0)}%
+              </span>
+            )}
+          </div>
+          <div className="p-5">
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 mb-5">
+              <div className="rounded-lg bg-secondary/40 p-3">
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Receita Robot</p>
+                <p className="text-lg font-bold text-foreground mt-1">R$ {fmt(robotTotalRevenue)}</p>
+              </div>
+              <div className="rounded-lg bg-destructive/[0.06] border border-destructive/15 p-3">
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Custo Robot</p>
+                <p className="text-lg font-bold text-destructive mt-1">R$ {fmt(robotTotalCost)}</p>
+              </div>
+              <div className="rounded-lg bg-positive/[0.08] border border-positive/20 p-3">
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Lucro Robot</p>
+                <p className="text-lg font-bold text-positive mt-1">R$ {fmt(robotTotalProfit)}</p>
+              </div>
+              <div className="rounded-lg bg-secondary/40 p-3">
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Margem Robot</p>
+                <p className="text-lg font-bold text-foreground mt-1">
+                  {robotTotalRevenue > 0 ? ((robotTotalProfit / robotTotalRevenue) * 100).toFixed(1) : "0"}%
+                </p>
+              </div>
+            </div>
+            {/* Robot by product */}
+            {robotByProduct.length > 0 && (
+              <div className="space-y-1.5">
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Por Produto</p>
+                {robotByProduct.map(([name, data]) => (
+                  <div key={name} className="flex items-center justify-between rounded-lg bg-secondary/30 px-4 py-2.5">
+                    <div className="flex items-center gap-2">
+                      <Zap className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span className="text-sm font-medium text-foreground">{name}</span>
+                      <span className="text-[10px] text-muted-foreground">({data.count})</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs">
+                      <span className="text-muted-foreground">R$ {fmt(data.revenue)}</span>
+                      <span className="text-destructive">-R$ {fmt(data.cost)}</span>
+                      <span className="font-bold text-positive">+R$ {fmt(data.profit)}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ─── LZT Profit Section ─── */}
       {(fLzt.length > 0 || lztSales.length > 0) && (
@@ -466,7 +671,6 @@ const FinanceTab = () => {
                 </p>
               </div>
             </div>
-            {/* LZT by game */}
             {lztByGame.length > 0 && (
               <div className="space-y-1.5">
                 <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Por Jogo</p>
@@ -523,12 +727,16 @@ const FinanceTab = () => {
               <CalendarDays className="h-4 w-4 text-success" />
               Faturamento Diário
             </h3>
-            <ResponsiveContainer width="100%" height={260}>
+            <ResponsiveContainer width="100%" height={280}>
               <AreaChart data={dailyData}>
                 <defs>
-                  <linearGradient id="gradProd" x1="0" y1="0" x2="0" y2="1">
+                  <linearGradient id="gradEstoque" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="hsl(220,80%,55%)" stopOpacity={0.3} />
                     <stop offset="95%" stopColor="hsl(220,80%,55%)" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="gradRobot" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(38,92%,50%)" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="hsl(38,92%,50%)" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="gradContas" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="hsl(197,100%,50%)" stopOpacity={0.3} />
@@ -540,17 +748,59 @@ const FinanceTab = () => {
                 <YAxis tick={{ fill: "hsl(0,0%,55%)", fontSize: 10 }} />
                 <Tooltip {...CHART_TOOLTIP} formatter={(value: number) => [`R$ ${fmt(value)}`]} />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Area type="monotone" dataKey="produtos" name="Produtos" stroke="hsl(220,80%,55%)" fill="url(#gradProd)" strokeWidth={2} />
+                <Area type="monotone" dataKey="estoque" name="Estoque" stroke="hsl(220,80%,55%)" fill="url(#gradEstoque)" strokeWidth={2} />
+                <Area type="monotone" dataKey="robot" name="Cheats" stroke="hsl(38,92%,50%)" fill="url(#gradRobot)" strokeWidth={2} />
                 <Area type="monotone" dataKey="contas" name="Contas" stroke="hsl(197,100%,50%)" fill="url(#gradContas)" strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         )}
 
-        {/* Pie Chart */}
+        {/* Revenue Source Pie */}
         <div className="rounded-xl border border-border bg-card p-5">
           <h3 className="text-sm font-bold text-foreground flex items-center gap-2 mb-4">
             <PieChart className="h-4 w-4 text-success" />
+            Receita por Fonte
+          </h3>
+          {revenuePieData.length === 0 ? (
+            <p className="py-8 text-center text-sm text-muted-foreground">Sem dados</p>
+          ) : (
+            <>
+              <ResponsiveContainer width="100%" height={200}>
+                <RechartsPie>
+                  <Pie
+                    data={revenuePieData} cx="50%" cy="50%"
+                    innerRadius={55} outerRadius={80}
+                    paddingAngle={4} dataKey="value"
+                  >
+                    {revenuePieData.map((_, i) => (
+                      <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip {...CHART_TOOLTIP} formatter={(value: number, name: string) => [
+                    `R$ ${fmt(value)}`, name
+                  ]} />
+                </RechartsPie>
+              </ResponsiveContainer>
+              <div className="mt-3 space-y-1.5">
+                {revenuePieData.map((d, i) => (
+                  <div key={d.name} className="flex items-center justify-between text-xs">
+                    <span className="flex items-center gap-2">
+                      <span className="h-2.5 w-2.5 rounded-full" style={{ background: COLORS[i % COLORS.length] }} />
+                      <span className="text-muted-foreground">{d.name}</span>
+                    </span>
+                    <span className="font-bold text-foreground">R$ {fmt(d.value)}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Payment Method Pie */}
+        <div className="rounded-xl border border-border bg-card p-5">
+          <h3 className="text-sm font-bold text-foreground flex items-center gap-2 mb-4">
+            <ShoppingCart className="h-4 w-4 text-success" />
             Métodos de Pagamento
           </h3>
           {pieData.length === 0 ? (
@@ -565,7 +815,7 @@ const FinanceTab = () => {
                     paddingAngle={4} dataKey="value"
                   >
                     {pieData.map((_, i) => (
-                      <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                      <Cell key={i} fill={COLORS[(i + 3) % COLORS.length]} />
                     ))}
                   </Pie>
                   <Tooltip {...CHART_TOOLTIP} formatter={(value: number, name: string, props: any) => [
@@ -577,7 +827,7 @@ const FinanceTab = () => {
                 {pieData.map((d, i) => (
                   <div key={d.name} className="flex items-center justify-between text-xs">
                     <span className="flex items-center gap-2">
-                      <span className="h-2.5 w-2.5 rounded-full" style={{ background: COLORS[i % COLORS.length] }} />
+                      <span className="h-2.5 w-2.5 rounded-full" style={{ background: COLORS[(i + 3) % COLORS.length] }} />
                       <span className="text-muted-foreground">{d.name}</span>
                     </span>
                     <span className="font-bold text-foreground">R$ {fmt(d.revenue)}</span>
@@ -585,27 +835,6 @@ const FinanceTab = () => {
                 ))}
               </div>
             </>
-          )}
-        </div>
-
-        {/* Revenue by Method Bar */}
-        <div className="rounded-xl border border-border bg-card p-5">
-          <h3 className="text-sm font-bold text-foreground flex items-center gap-2 mb-4">
-            <DollarSign className="h-4 w-4 text-success" />
-            Receita por Método
-          </h3>
-          {pieData.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">Sem dados</p>
-          ) : (
-            <ResponsiveContainer width="100%" height={230}>
-              <BarChart data={pieData.map(d => ({ name: d.name, valor: d.revenue }))}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(0,0%,18%)" />
-                <XAxis dataKey="name" tick={{ fill: "hsl(0,0%,55%)", fontSize: 11 }} />
-                <YAxis tick={{ fill: "hsl(0,0%,55%)", fontSize: 11 }} />
-                <Tooltip {...CHART_TOOLTIP} formatter={(value: number) => [`R$ ${fmt(value)}`, "Receita"]} />
-                <Bar dataKey="valor" fill="hsl(197,100%,50%)" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
           )}
         </div>
       </div>
@@ -624,7 +853,8 @@ const FinanceTab = () => {
               <YAxis tick={{ fill: "hsl(0,0%,55%)", fontSize: 11 }} />
               <Tooltip {...CHART_TOOLTIP} formatter={(value: number) => [`R$ ${fmt(value)}`]} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar dataKey="produtos" name="Produtos" fill="hsl(220,80%,55%)" radius={[4, 4, 0, 0]} stackId="a" />
+              <Bar dataKey="estoque" name="Estoque" fill="hsl(220,80%,55%)" radius={[4, 4, 0, 0]} stackId="a" />
+              <Bar dataKey="robot" name="Cheats" fill="hsl(38,92%,50%)" radius={[4, 4, 0, 0]} stackId="a" />
               <Bar dataKey="contas" name="Contas" fill="hsl(197,100%,50%)" radius={[4, 4, 0, 0]} stackId="a" />
             </BarChart>
           </ResponsiveContainer>
@@ -647,28 +877,44 @@ const FinanceTab = () => {
             <span className="font-bold text-destructive">-R$ {fmt(lztTotalBought)}</span>
           </div>
           <div className="flex justify-between">
+            <span className="text-muted-foreground">Custo Robot</span>
+            <span className="font-bold text-destructive">-R$ {fmt(robotTotalCost)}</span>
+          </div>
+          <div className="flex justify-between">
             <span className="text-muted-foreground">Descontos/Cupons</span>
             <span className="font-bold text-destructive">-R$ {fmt(totalDiscounts)}</span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Lucro Líquido</span>
+          <div className="flex justify-between border-t border-border pt-2 mt-1">
+            <span className="text-foreground font-semibold">Lucro Líquido</span>
             <span className="font-bold text-positive">R$ {fmt(netProfit)}</span>
           </div>
-          <div className="flex justify-between">
+          <div className="flex justify-between border-t border-border pt-2 mt-1">
+            <span className="text-muted-foreground">Margem</span>
+            <span className="font-bold text-foreground">{profitMargin.toFixed(1)}%</span>
+          </div>
+          <div className="flex justify-between border-t border-border pt-2 mt-1">
             <span className="text-muted-foreground">Lucro LZT</span>
             <span className="font-bold text-positive">R$ {fmt(lztTotalProfit)}</span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Receita Produtos</span>
-            <span className="font-bold text-foreground">R$ {fmt(productRevenue)}</span>
+          <div className="flex justify-between border-t border-border pt-2 mt-1">
+            <span className="text-muted-foreground">Lucro Robot</span>
+            <span className="font-bold text-positive">R$ {fmt(robotTotalProfit)}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Receita Contas</span>
-            <span className="font-bold text-foreground">R$ {fmt(accountRevenue)}</span>
+            <span className="text-muted-foreground">Estoque Local</span>
+            <span className="font-bold text-foreground">R$ {fmt(revenueBreakdown.stock)}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Margem</span>
-            <span className="font-bold text-foreground">{profitMargin.toFixed(1)}%</span>
+            <span className="text-muted-foreground">Cheats (Robot)</span>
+            <span className="font-bold text-foreground">R$ {fmt(revenueBreakdown.robot)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Contas LZT</span>
+            <span className="font-bold text-foreground">R$ {fmt(revenueBreakdown.lzt)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Câmbio USD→BRL</span>
+            <span className="font-bold text-foreground">R$ {usdToBrl.toFixed(2)}</span>
           </div>
         </div>
       </div>
