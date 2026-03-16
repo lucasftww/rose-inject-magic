@@ -869,13 +869,17 @@ const ProductsTab = () => {
               </div>
             </div>
 
-            {/* Tutorial - hidden when Robot is enabled (Robot delivers everything automatically) */}
-            {!robotEnabled && (
+            {/* Tutorial / Loader */}
             <div className="sm:col-span-2">
               <label className="text-xs font-medium text-muted-foreground flex items-center gap-2 mb-3">
                 <FileText className="h-3.5 w-3.5 text-success" />
-                Tutorial (enviado no chat após compra)
+                Tutorial / Loader (enviado no chat após compra)
               </label>
+              {robotEnabled && (
+                <p className="text-[10px] text-muted-foreground/60 mb-3">
+                  💡 Para produtos Robot, o tutorial e loader configurados aqui são exibidos como banner no chat do pedido.
+                </p>
+              )}
               
               {/* Tutorial text */}
               <div className="mb-3">
@@ -888,7 +892,7 @@ const ProductsTab = () => {
 
               {/* Tutorial file */}
               <div>
-                <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Arquivo do Tutorial (URL ou Upload)</label>
+                <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Arquivo do Tutorial / Loader (URL ou Upload)</label>
                 {formTutorialFileUrl && (
                   <div className="mt-1 mb-2 flex items-center gap-2 rounded-lg border border-border bg-secondary/30 px-3 py-2">
                     <FileText className="h-4 w-4 text-success shrink-0" />
@@ -920,10 +924,13 @@ const ProductsTab = () => {
                   toast({ title: "Arquivo enviado!" });
                   setUploadingTutorial(false);
                 }} />
-                <p className="text-[10px] text-muted-foreground/60 mt-1">O texto e/ou arquivo serão enviados automaticamente no chat do ticket quando o cliente comprar.</p>
+                <p className="text-[10px] text-muted-foreground/60 mt-1">
+                  {robotEnabled
+                    ? "O texto e/ou arquivo serão exibidos como banner no chat do pedido do cliente."
+                    : "O texto e/ou arquivo serão enviados automaticamente no chat do ticket quando o cliente comprar."}
+                </p>
               </div>
             </div>
-            )}
 
 
             <label className="flex cursor-pointer items-center gap-3">
