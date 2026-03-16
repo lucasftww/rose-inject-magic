@@ -203,7 +203,7 @@ const CouponsTab = () => {
               <div className="flex flex-wrap gap-2">
                 {products.map((p) => (
                   <button key={p.id} onClick={() => toggleProduct(p.id)}
-                    className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+                    className={`rounded-lg border px-3 py-1.5 text-xs font-medium ${
                       formProductIds.includes(p.id)
                         ? "border-success bg-success/10 text-success"
                         : "border-border text-muted-foreground hover:text-foreground"
