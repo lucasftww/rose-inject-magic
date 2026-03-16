@@ -479,7 +479,7 @@ const RobotProjectTab = () => {
               <button
                 key={p}
                 onClick={() => { setSalesPeriod(p); fetchRobotSales(p); }}
-                className={`rounded-md px-3 py-1 text-[11px] font-medium transition-colors ${
+                className={`rounded-md px-3 py-1 text-[11px] font-medium ${
                   salesPeriod === p ? "bg-success text-success-foreground" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
