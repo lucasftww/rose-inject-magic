@@ -240,9 +240,6 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
     })));
   }, [usernameMap]);
 
-  const openTickets = useMemo(() =>
-    recentOrders.filter(o => o.status === "open" || o.status === "waiting" || o.status === "waiting_staff").length
-  , [recentOrders]);
 
   // Computed profits
   const revenueTotal = totalRevenue / 100;
