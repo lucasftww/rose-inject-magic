@@ -66,7 +66,7 @@ const tabGroups = [
   },
 ] as const;
 
-type TabId = typeof tabGroups[number]["tabs"][number]["id"];
+type TabId = "overview" | "financeiro" | "jogos" | "produtos" | "estoque" | "lzt" | "robot" | "vendas" | "pagamentos" | "cupons" | "raspadinha" | "tickets" | "status" | "usuarios" | "revendedores" | "credenciais";
 
 const AdminPanel = () => {
   const [activeTab, setActiveTab] = useState<TabId>("overview");
