@@ -66,6 +66,24 @@ serve(async (req) => {
 
     // If no action, list users
     if (!action) {
+      // Helper to fetch all rows with pagination (bypasses 1000-row limit)
+      async function fetchAllRows(table: string, select: string, orderCol?: string, orderAsc?: boolean) {
+        let allData: any[] = [];
+        let from = 0;
+        const PAGE_SIZE = 1000;
+        while (true) {
+          let query = supabase.from(table).select(select).range(from, from + PAGE_SIZE - 1);
+          if (orderCol) query = query.order(orderCol, { ascending: orderAsc ?? false });
+          const { data, error } = await query;
+          if (error) throw error;
+          if (!data || data.length === 0) break;
+          allData = allData.concat(data);
+          if (data.length < PAGE_SIZE) break;
+          from += PAGE_SIZE;
+        }
+        return allData;
+      }
+
       // Paginate listUsers to handle >1000 users
       let users: any[] = [];
       let page = 1;
@@ -78,29 +96,31 @@ serve(async (req) => {
         page++;
       }
 
-      const { data: profiles } = await supabase.from("profiles").select("user_id, username, avatar_url, banned, banned_at, banned_reason");
-      const { data: roles } = await supabase.from("user_roles").select("user_id, role");
-      const { data: ips } = await supabase.from("user_login_ips").select("user_id, ip_address, logged_at").order("logged_at", { ascending: false });
-      const { data: payments } = await supabase.from("payments").select("user_id, amount, status, created_at, cart_snapshot").order("created_at", { ascending: false });
-      const { data: tickets } = await supabase.from("order_tickets").select("id, user_id, product_id, product_plan_id, stock_item_id, status, status_label, created_at").order("created_at", { ascending: false });
-      const { data: products } = await supabase.from("products").select("id, name, image_url");
-      const { data: plans } = await supabase.from("product_plans").select("id, name, price");
-      const { data: stockItems } = await supabase.from("stock_items").select("id, content");
+      const [profiles, roles, ips, payments, tickets, products, plans, stockItems] = await Promise.all([
+        fetchAllRows("profiles", "user_id, username, avatar_url, banned, banned_at, banned_reason"),
+        fetchAllRows("user_roles", "user_id, role"),
+        fetchAllRows("user_login_ips", "user_id, ip_address, logged_at", "logged_at", false),
+        fetchAllRows("payments", "user_id, amount, status, created_at, cart_snapshot", "created_at", false),
+        fetchAllRows("order_tickets", "id, user_id, product_id, product_plan_id, stock_item_id, status, status_label, created_at", "created_at", false),
+        fetchAllRows("products", "id, name, image_url"),
+        fetchAllRows("product_plans", "id, name, price"),
+        fetchAllRows("stock_items", "id, content"),
+      ]);
 
-      const productMap = new Map((products || []).map((p: any) => [p.id, p]));
-      const planMap = new Map((plans || []).map((p: any) => [p.id, p]));
-      const stockMap = new Map((stockItems || []).map((s: any) => [s.id, s]));
+      const productMap = new Map(products.map((p: any) => [p.id, p]));
+      const planMap = new Map(plans.map((p: any) => [p.id, p]));
+      const stockMap = new Map(stockItems.map((s: any) => [s.id, s]));
 
-      const profileMap = new Map((profiles || []).map((p: any) => [p.user_id, p]));
+      const profileMap = new Map(profiles.map((p: any) => [p.user_id, p]));
       const roleMap = new Map<string, string[]>();
-      (roles || []).forEach((r: any) => {
+      roles.forEach((r: any) => {
         const existing = roleMap.get(r.user_id) || [];
         existing.push(r.role);
         roleMap.set(r.user_id, existing);
       });
 
       const ipMap = new Map<string, { ip_address: string; logged_at: string }[]>();
-      (ips || []).forEach((ip: any) => {
+      ips.forEach((ip: any) => {
         const existing = ipMap.get(ip.user_id) || [];
         if (existing.length < 1) existing.push({ ip_address: ip.ip_address, logged_at: ip.logged_at });
         ipMap.set(ip.user_id, existing);
@@ -110,7 +130,7 @@ serve(async (req) => {
       const spentMap = new Map<string, number>();
       const ordersMap = new Map<string, number>();
       const recentPaymentsMap = new Map<string, any[]>();
-      (payments || []).forEach((p: any) => {
+      payments.forEach((p: any) => {
         // Only count COMPLETED payments for total spent
         if (p.status === "COMPLETED") {
           spentMap.set(p.user_id, (spentMap.get(p.user_id) || 0) + p.amount);
@@ -120,7 +140,7 @@ serve(async (req) => {
         recentPaymentsMap.set(p.user_id, existing);
       });
       const userOrdersMap = new Map<string, any[]>();
-      (tickets || []).forEach((t: any) => {
+      tickets.forEach((t: any) => {
         ordersMap.set(t.user_id, (ordersMap.get(t.user_id) || 0) + 1);
         const existing = userOrdersMap.get(t.user_id) || [];
         const prod = productMap.get(t.product_id);
@@ -140,7 +160,7 @@ serve(async (req) => {
         userOrdersMap.set(t.user_id, existing);
       });
 
-      const result = (users || []).map((u: any) => {
+      const result = users.map((u: any) => {
         const profile = profileMap.get(u.id);
         return {
           id: u.id,
