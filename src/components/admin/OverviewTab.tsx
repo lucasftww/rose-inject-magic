@@ -5,7 +5,7 @@ import { useAdminUsers } from "@/hooks/useAdminUsers";
 import {
   Loader2, DollarSign, ShoppingCart, Users, UserCheck,
   Package, Receipt, RefreshCw, TrendingUp, Clock, Activity,
-  Zap, BarChart3, ArrowUp, ArrowDown
+  Zap, BarChart3, ArrowDown
 } from "lucide-react";
 
 interface OrderTicket {
@@ -86,10 +86,8 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
   // Profit data
   const [lztProfit, setLztProfit] = useState(0);
   const [lztCost, setLztCost] = useState(0);
-  const [lztSold, setLztSold] = useState(0);
   const [robotProfit, setRobotProfit] = useState(0);
   const [robotCost, setRobotCost] = useState(0);
-  const [robotRevenue, setRobotRevenue] = useState(0);
   const [totalDiscounts, setTotalDiscounts] = useState(0);
 
   useEffect(() => {
@@ -138,7 +136,6 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
         if (!l.error) {
           setLztProfit(Number(l.total_profit));
           setLztCost(Number(l.total_bought));
-          setLztSold(Number(l.total_sold));
         }
       }
 
@@ -188,7 +185,6 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
           rCost += Math.round(cost * 100) / 100;
         });
 
-        setRobotRevenue(rRev);
         setRobotCost(rCost);
         setRobotProfit(Math.round((rRev - rCost) * 100) / 100);
       }
