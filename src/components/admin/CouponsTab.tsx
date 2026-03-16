@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useAdminProductsList } from "@/hooks/useAdminData";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Plus, Pencil, Trash2, Loader2, Tag, X } from "lucide-react";
@@ -33,7 +34,7 @@ const CouponsTab = () => {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Coupon | null>(null);
   const [saving, setSaving] = useState(false);
-  const [products, setProducts] = useState<Product[]>([]);
+  const { data: products = [] } = useAdminProductsList();
 
   // Form state
   const [formCode, setFormCode] = useState("");
@@ -51,12 +52,7 @@ const CouponsTab = () => {
     setLoading(false);
   };
 
-  const fetchProducts = async () => {
-    const { data } = await supabase.from("products").select("id, name").order("name");
-    if (data) setProducts(data);
-  };
-
-  useEffect(() => { fetchCoupons(); fetchProducts(); }, []);
+  useEffect(() => { fetchCoupons(); }, []);
 
   const resetForm = () => {
     setFormCode(""); setFormType("percentage"); setFormValue(""); setFormMaxUses("");
