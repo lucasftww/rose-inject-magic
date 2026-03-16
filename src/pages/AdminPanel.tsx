@@ -138,14 +138,15 @@ const AdminPanel = () => {
   const [pendingTicketId, setPendingTicketId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [, startTransition] = useTransition();
 
   const handleGoToTicket = useCallback((ticketId: string) => {
     setPendingTicketId(ticketId);
-    setActiveTab("tickets");
+    startTransition(() => setActiveTab("tickets"));
   }, []);
 
   const handleTabSelect = useCallback((id: TabId) => {
-    setActiveTab(id);
+    startTransition(() => setActiveTab(id));
     setMobileOpen(false);
   }, []);
 
