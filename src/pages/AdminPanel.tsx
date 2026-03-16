@@ -156,10 +156,6 @@ const AdminPanel = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header hideBanner />
-
-      {/* Spacer for fixed header */}
-      <div className="h-14 sm:h-16 lg:h-[72px]" />
 
       {/* Mobile Sheet Sidebar */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
