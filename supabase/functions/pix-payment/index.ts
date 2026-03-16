@@ -819,7 +819,7 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
 
     let email = loginData?.login || loginData?.email || boughtItem?.email || "";
     let password = loginData?.password || boughtItem?.password || "";
-    let rawCredentials = loginData?.raw || "";
+    const rawCredentials = loginData?.raw || "";
     // Preserve full email login data (login + password) if available
     let accountEmail: any = boughtItem?.emailLoginData || loginData?.emailLoginData || loginData?.email || boughtItem?.email || "";
 

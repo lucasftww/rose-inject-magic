@@ -111,7 +111,7 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
       .filter((t) => t.stock_item_id)
       .map((t) => t.stock_item_id as string);
 
-    let stockMap = new Map<string, string>();
+    const stockMap = new Map<string, string>();
     if (stockIds.length > 0) {
       try {
         // Batch stock fetches in chunks of 100 to avoid unbounded queries
@@ -391,7 +391,7 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
 
                             {sale.stock_content && (() => {
                               let parsed: Record<string, string> | null = null;
-                              try { parsed = JSON.parse(sale.stock_content); } catch {}
+                              try { parsed = JSON.parse(sale.stock_content); } catch { /* ignore */ }
 
                               const fieldLabels: Record<string, string> = {
                                 login: "Login",

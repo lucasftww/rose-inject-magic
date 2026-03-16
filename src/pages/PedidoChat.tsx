@@ -300,7 +300,7 @@ const PedidoChat = () => {
     setSending(true);
     
     try {
-      let messageParts: string[] = [];
+      const messageParts: string[] = [];
 
       if (pendingFiles.length > 0) {
         setUploadingFile(true);
