@@ -70,28 +70,24 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
     const fetchAll = async () => {
       setLoading(true);
 
+      // Use DB aggregation function for accurate stats (no 1000-row limit)
       const [
-        ordersRes,
-        paymentsRes,
+        statsRes,
         recentOrdersRes,
         recentPaymentsRes,
-        resellersRes,
-        productsRes,
       ] = await Promise.all([
-        supabase.from("order_tickets").select("id", { count: "exact", head: true }),
-        supabase.from("payments").select("id, amount, status").eq("status", "COMPLETED"),
+        supabase.rpc("admin_overview_stats"),
         supabase.from("order_tickets").select("*").order("created_at", { ascending: false }).limit(5),
         supabase.from("payments").select("*").eq("status", "COMPLETED").order("paid_at", { ascending: false }).limit(5),
-        supabase.from("resellers").select("id", { count: "exact", head: true }).eq("active", true),
-        supabase.from("products").select("id", { count: "exact", head: true }),
       ]);
 
-      setTotalOrders(ordersRes.count || 0);
-
-      if (paymentsRes.data) {
-        const paidPayments = paymentsRes.data as any[];
-        setTotalRevenue(paidPayments.reduce((s: number, p: any) => s + Number(p.amount), 0));
-        setTotalPaidPayments(paidPayments.length);
+      if (statsRes.data && !statsRes.data.error) {
+        const s = statsRes.data;
+        setTotalOrders(Number(s.total_orders));
+        setTotalRevenue(Number(s.total_revenue));
+        setTotalPaidPayments(Number(s.total_paid_payments));
+        setTotalResellers(Number(s.total_resellers));
+        setTotalProducts(Number(s.total_products));
       }
 
       setTotalUsers(adminUsers.length);
@@ -119,9 +115,6 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
             };
           }));
       }
-
-      setTotalResellers(resellersRes.count || 0);
-      setTotalProducts(productsRes.count || 0);
 
       if (recentPaymentsRes.data) {
         setRecentPayments(recentPaymentsRes.data as Payment[]);

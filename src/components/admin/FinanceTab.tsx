@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAllRows } from "@/lib/supabaseAllRows";
 import { Loader2, DollarSign, ShoppingCart, Globe, TrendingUp, Download, PieChart } from "lucide-react";
 import { PieChart as RechartsPie, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 
@@ -12,52 +13,49 @@ interface PaymentRow {
   payment_method: string | null;
 }
 
-interface LztSaleRow {
-  sell_price: number;
-  created_at: string;
-}
-
 const COLORS = ["hsl(197,100%,50%)", "hsl(220,80%,55%)", "hsl(45,100%,55%)", "hsl(0,80%,55%)"];
 
 const FinanceTab = () => {
   const [loading, setLoading] = useState(true);
   const [payments, setPayments] = useState<PaymentRow[]>([]);
-  const [lztSales, setLztSales] = useState<LztSaleRow[]>([]);
   const [period, setPeriod] = useState<"7d" | "30d" | "all">("30d");
+  // Aggregated stats from DB function
+  const [dbStats, setDbStats] = useState<any>(null);
 
   const fetchData = async () => {
     setLoading(true);
 
-    let paymentsQuery = supabase
-      .from("payments")
-      .select("amount, status, created_at, paid_at, cart_snapshot, payment_method")
-      .eq("status", "COMPLETED");
+    const since = period !== "all"
+      ? new Date(Date.now() - (period === "7d" ? 7 : 30) * 86400000).toISOString()
+      : null;
 
-    let lztQuery = supabase
-      .from("lzt_sales")
-      .select("sell_price, created_at");
+    // Fetch aggregated stats from DB function (no row limit)
+    const { data: statsData } = await supabase.rpc("admin_finance_summary", {
+      _since: since,
+    });
+    if (statsData) setDbStats(statsData);
 
-    if (period !== "all") {
-      const days = period === "7d" ? 7 : 30;
-      const since = new Date(Date.now() - days * 86400000).toISOString();
-      paymentsQuery = paymentsQuery.gte("paid_at", since);
-      lztQuery = lztQuery.gte("created_at", since);
-    }
+    // Fetch payments for charts (monthly breakdown needs cart_snapshot)
+    const filters: any[] = [{ column: "status", op: "eq", value: "COMPLETED" }];
+    if (since) filters.push({ column: "paid_at", op: "gte", value: since });
 
-    const [pRes, lRes] = await Promise.all([
-      paymentsQuery.order("paid_at", { ascending: false }),
-      lztQuery.order("created_at", { ascending: false }),
-    ]);
+    const allPayments = await fetchAllRows<PaymentRow>("payments", {
+      select: "amount, status, created_at, paid_at, cart_snapshot, payment_method",
+      filters,
+      order: { column: "paid_at", ascending: false },
+    });
 
-    if (pRes.data) setPayments(pRes.data as any);
-    if (lRes.data) setLztSales(lRes.data as any);
+    setPayments(allPayments);
     setLoading(false);
   };
 
   useEffect(() => { fetchData(); }, [period]);
 
-  // Calculate totals — payments already filtered to COMPLETED
-  // Split revenue: products (non-LZT) vs accounts (LZT)
+  // Use DB aggregated stats for totals (accurate even with >1000 rows)
+  const totalRevenue = dbStats ? Number(dbStats.total_revenue) / 100 : 0;
+  const totalCount = dbStats ? Number(dbStats.total_count) : 0;
+
+  // Calculate product vs account split from fetched payments
   const totalProducts = payments.reduce((sum, p) => {
     const cart = p.cart_snapshot as any[];
     if (!Array.isArray(cart)) return sum + p.amount / 100;
@@ -65,8 +63,6 @@ const FinanceTab = () => {
     return hasLzt ? sum : sum + p.amount / 100;
   }, 0);
 
-  // For LZT accounts, use the payment amount (which is what the customer paid)
-  // Don't add lzt_sales.sell_price to avoid double-counting
   const totalAccounts = payments.reduce((sum, p) => {
     const cart = p.cart_snapshot as any[];
     if (!Array.isArray(cart)) return sum;
@@ -76,19 +72,17 @@ const FinanceTab = () => {
 
   const totalGeneral = totalProducts + totalAccounts;
 
-  // Payment method breakdown
-  const methodCounts: Record<string, number> = { pix: 0, card: 0, crypto: 0 };
-  const methodRevenue: Record<string, number> = { pix: 0, card: 0, crypto: 0 };
-
-  payments.forEach((p) => {
-    const method = p.payment_method || "pix";
-    if (!methodCounts[method]) {
-      methodCounts[method] = 0;
-      methodRevenue[method] = 0;
-    }
-    methodCounts[method]++;
-    methodRevenue[method] += p.amount / 100;
-  });
+  // Payment method breakdown from DB stats (accurate)
+  const methodCounts: Record<string, number> = {
+    pix: dbStats?.method_pix_count || 0,
+    card: dbStats?.method_card_count || 0,
+    crypto: dbStats?.method_crypto_count || 0,
+  };
+  const methodRevenue: Record<string, number> = {
+    pix: (dbStats?.method_pix_revenue || 0) / 100,
+    card: (dbStats?.method_card_revenue || 0) / 100,
+    crypto: (dbStats?.method_crypto_revenue || 0) / 100,
+  };
 
   const pieData = Object.entries(methodCounts)
     .filter(([, v]) => v > 0)
@@ -117,9 +111,6 @@ const FinanceTab = () => {
       if (isLzt) months[key].contas += p.amount / 100;
       else months[key].produtos += p.amount / 100;
     });
-
-    // NOTE: lzt_sales are NOT added here to avoid double-counting.
-    // LZT revenue is already included via COMPLETED payments above.
 
     return Object.entries(months).map(([name, data]) => ({ name, ...data }));
   };
@@ -268,7 +259,7 @@ const FinanceTab = () => {
             <span className="text-xs font-medium text-muted-foreground">Total Geral</span>
           </div>
           <p className="text-2xl font-bold text-success">R$ {totalGeneral.toFixed(2)}</p>
-          <p className="text-[10px] text-muted-foreground mt-1">{payments.length} transações</p>
+          <p className="text-[10px] text-muted-foreground mt-1">{totalCount} transações (DB)</p>
         </div>
       </div>
 
