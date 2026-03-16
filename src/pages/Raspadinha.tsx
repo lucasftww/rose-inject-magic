@@ -39,8 +39,7 @@ type RaspadinhaMode = "produtos" | "contas";
 
 
 const NOTHING_ICONS = ["x", "flower", "skull"] as const;
-const HIDDEN_WIN_CHANCE_PRODUTOS = 1.0;   // ~1 em 100
-const HIDDEN_WIN_CHANCE_CONTAS  = 0.667; // ~1 em 150
+// Win chances are determined server-side only
 const CONTAS_PRICE = 5.50;
 const MAX_QUANTITY = 10;
 

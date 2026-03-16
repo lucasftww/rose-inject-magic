@@ -52,70 +52,7 @@ interface LztItem {
   price_brl?: number;
 }
 
-// Rarity priority: higher = rarer/better
-const RARITY_PRIORITY: Record<string, number> = {
-  "411e4a55-4e59-7757-41f0-86a53f101bb5": 5, // Exclusive
-  "e046854e-406c-37f4-6571-7a8baeeb93ab": 4, // Ultra
-  "60bca009-4182-7998-dee7-b8a2558dc369": 3, // Premium
-  "12683d76-48d7-84a3-4e09-6985794f0445": 2, // Deluxe
-  "0cebb8be-46d7-c12a-d306-e9907bfc5a25": 1, // Select
-};
-
-type SkinEntry = { name: string; image: string; rarity: number };
-
-const fetchAllValorantSkins = async (): Promise<Map<string, SkinEntry>> => {
-  const map = new Map<string, SkinEntry>();
-
-  try {
-    const res = await fetch("https://valorant-api.com/v1/weapons/skins?language=pt-BR");
-    if (res.ok) {
-      const data = await res.json();
-      for (const s of (data.data || [])) {
-        const image = s.levels?.[0]?.displayIcon || s.displayIcon || s.chromas?.[0]?.fullRender;
-        if (!image) continue;
-        const rarity = RARITY_PRIORITY[s.contentTierUuid?.toLowerCase()] || 0;
-        const entry: SkinEntry = { name: s.displayName, image, rarity };
-        if (s.uuid) map.set(s.uuid.toLowerCase(), entry);
-        for (const level of (s.levels || [])) {
-          if (level.uuid) map.set(level.uuid.toLowerCase(), entry);
-        }
-        for (const chroma of (s.chromas || [])) {
-          if (chroma.uuid) map.set(chroma.uuid.toLowerCase(), entry);
-        }
-      }
-    }
-  } catch { /* ignore */ }
-
-  try {
-    const res = await fetch("https://valorant-api.com/v1/agents?isPlayableCharacter=true&language=pt-BR");
-    if (res.ok) {
-      const data = await res.json();
-      for (const a of (data.data || [])) {
-        const image = a.displayIcon || a.fullPortrait || a.bustPortrait;
-        if (!image || !a.uuid) continue;
-        map.set(a.uuid.toLowerCase(), { name: a.displayName, image, rarity: 0 });
-      }
-    }
-  } catch { /* ignore */ }
-
-  try {
-    const res = await fetch("https://valorant-api.com/v1/buddies?language=pt-BR");
-    if (res.ok) {
-      const data = await res.json();
-      for (const b of (data.data || [])) {
-        const image = b.displayIcon;
-        if (!image || !b.uuid) continue;
-        const entry: SkinEntry = { name: b.displayName, image, rarity: 0 };
-        if (b.uuid) map.set(b.uuid.toLowerCase(), entry);
-        for (const level of (b.levels || [])) {
-          if (level.uuid) map.set(level.uuid.toLowerCase(), entry);
-        }
-      }
-    }
-  } catch { /* ignore */ }
-
-  return map;
-};
+// RARITY_PRIORITY, SkinEntry, fetchAllValorantSkins imported from @/lib/valorantData
 
 const fetchLztAccounts = async (): Promise<LztItem[]> => {
   const projectUrl = import.meta.env.VITE_SUPABASE_URL;
