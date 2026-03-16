@@ -51,6 +51,7 @@ const sha256 = async (message: string): Promise<string> => {
 // In-memory + localStorage so it survives page reloads during checkout
 
 let _cachedUserData: { em?: string; external_id?: string } = {};
+let _pixelInitWithAM = false; // guard against duplicate fbq('init') calls
 
 const persistUserData = () => {
   try {
