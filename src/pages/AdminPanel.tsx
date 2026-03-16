@@ -144,6 +144,7 @@ const AdminPanel = () => {
 
   const handleGoToTicket = useCallback((ticketId: string) => {
     setPendingTicketId(ticketId);
+    setVisitedTabs(prev => new Set(prev).add("tickets"));
     startTransition(() => setActiveTab("tickets"));
   }, []);
 
