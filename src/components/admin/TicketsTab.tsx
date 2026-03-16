@@ -441,7 +441,7 @@ const TicketsTab = ({
         <p className="text-[11px] text-muted-foreground mb-1">{label}:</p>
         <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2">
           <code className="flex-1 text-sm font-mono text-foreground break-all">{value}</code>
-          <button onClick={handleCopy} className="shrink-0 rounded p-1 text-muted-foreground hover:text-foreground transition-colors">
+          <button onClick={handleCopy} className="shrink-0 rounded p-1 text-muted-foreground hover:text-foreground">
             {fieldCopied ? <Check className="h-3.5 w-3.5 text-success" /> : <Copy className="h-3.5 w-3.5" />}
           </button>
         </div>
