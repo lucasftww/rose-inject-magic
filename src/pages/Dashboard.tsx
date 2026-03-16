@@ -100,7 +100,7 @@ const Dashboard = () => {
     finished: "Finalizado",
   };
 
-  // Fetch user payments/invoices
+  // Fetch user payments/invoices (all, not limited — needed for accurate stats)
   useEffect(() => {
     if (!user) return;
     const fetchPayments = async () => {
@@ -109,8 +109,7 @@ const Dashboard = () => {
         .from("payments")
         .select("*")
         .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(5);
+        .order("created_at", { ascending: false });
       if (data) setPayments(data as Payment[]);
       setLoadingPayments(false);
     };
