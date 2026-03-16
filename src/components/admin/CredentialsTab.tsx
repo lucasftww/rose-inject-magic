@@ -173,7 +173,7 @@ const CredentialsTab = () => {
             <p className="mt-1 text-sm">Clique em "Nova Credencial" para começar</p>
           </div>
         ) : credentials.map((cred) => (
-          <div key={cred.id} className="rounded-xl border border-border bg-card p-5 transition-all hover:border-success/30">
+          <div key={cred.id} className="rounded-xl border border-border bg-card p-5">
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-start gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-success/10 text-success">
