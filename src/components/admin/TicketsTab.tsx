@@ -745,7 +745,7 @@ const TicketsTab = ({
           {selectedTicket && (
             <button
               onClick={() => setSelectedTicket(null)}
-              className="lg:hidden inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+              className="lg:hidden inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
             </button>
