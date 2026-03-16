@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAdminUsers } from "@/hooks/useAdminUsers";
 import {
   Loader2, DollarSign, ShoppingCart, Users, UserCheck,
-  Package, Receipt, RefreshCw, ArrowUpRight
+  Package, Receipt, RefreshCw
 } from "lucide-react";
 
 interface OrderTicket {
@@ -173,11 +173,10 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
           const Icon = stat.icon;
           return (
             <div key={stat.label} className="group rounded-xl border border-border bg-card p-5">
-              <div className="flex items-center justify-between mb-3">
+              <div className="mb-3">
                 <div className={`flex h-9 w-9 items-center justify-center rounded-lg bg-secondary ${stat.accent}`}>
                   <Icon className="h-4 w-4" />
                 </div>
-                <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground/40" />
               </div>
               <p className="text-2xl font-bold text-foreground tracking-tight">{stat.value}</p>
               <p className="text-xs text-muted-foreground mt-1">{stat.label}</p>
