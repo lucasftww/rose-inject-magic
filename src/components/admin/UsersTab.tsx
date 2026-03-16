@@ -359,6 +359,26 @@ const UsersTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
         ))}
       </div>
 
+      {/* Pagination */}
+      {totalUserPages > 1 && (
+        <div className="flex items-center justify-between mt-4">
+          <p className="text-xs text-muted-foreground">
+            Mostrando {((userPage - 1) * USERS_PER_PAGE) + 1}–{Math.min(userPage * USERS_PER_PAGE, filtered.length)} de {filtered.length}
+          </p>
+          <div className="flex gap-1">
+            <button onClick={() => setUserPage(p => Math.max(1, p - 1))} disabled={userPage === 1}
+              className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground disabled:opacity-40">
+              Anterior
+            </button>
+            <span className="flex items-center px-3 text-xs text-muted-foreground">{userPage}/{totalUserPages}</span>
+            <button onClick={() => setUserPage(p => Math.min(totalUserPages, p + 1))} disabled={userPage === totalUserPages}
+              className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground disabled:opacity-40">
+              Próximo
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Orders Modal */}
       {showOrdersUser && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowOrdersUser(null)}>
