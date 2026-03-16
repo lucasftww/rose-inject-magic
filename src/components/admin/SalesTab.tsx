@@ -92,18 +92,8 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
         }
       }
     }
-    // 3. Get user emails via admin-users edge function
-    let emailsMap = new Map<string, string>();
-    if (session?.access_token) {
-      try {
-        const { data: usersData } = await supabase.functions.invoke("admin-users", {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        });
-        if (Array.isArray(usersData)) {
-          usersData.forEach((u: any) => emailsMap.set(u.id, u.email));
-        }
-      } catch {}
-    }
+    // 3. Use cached admin-users data
+    const emailsMap = adminEmailMap;
 
     // 4. Load stock content for delivered items
     const stockIds = rawTickets
