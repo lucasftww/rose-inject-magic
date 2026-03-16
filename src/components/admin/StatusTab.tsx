@@ -117,7 +117,7 @@ const StatusTab = () => {
           <button
             onClick={handleSaveAll}
             disabled={saving === "all"}
-            className="flex items-center gap-2 rounded-lg bg-success px-5 py-2.5 text-sm font-semibold text-success-foreground transition-all hover:shadow-[0_0_24px_hsl(130,99%,41%,0.45)] disabled:opacity-50"
+            className="flex items-center gap-2 rounded-lg bg-success px-5 py-2.5 text-sm font-semibold text-success-foreground transition-all hover:shadow-[0_0_24px_hsl(var(--success)/0.35)] disabled:opacity-50"
           >
             {saving === "all" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             Salvar Todos ({Object.keys(edits).length})

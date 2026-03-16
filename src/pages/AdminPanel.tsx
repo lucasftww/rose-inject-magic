@@ -95,15 +95,15 @@ const SidebarNav = memo(({
   onSelect: (id: TabId) => void;
   collapsed?: boolean;
 }) => (
-  <nav className="py-2 space-y-0.5">
+  <nav className="py-3 space-y-0.5">
     {tabGroups.map((group) => (
       <div key={group.label}>
         {!collapsed && (
-          <p className="px-4 pt-4 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/60 select-none">
+          <p className="px-4 pt-5 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/50 select-none">
             {group.label}
           </p>
         )}
-        {collapsed && <div className="pt-2" />}
+        {collapsed && <div className="pt-3" />}
         {group.tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -112,17 +112,17 @@ const SidebarNav = memo(({
               key={tab.id}
               onClick={() => onSelect(tab.id)}
               title={collapsed ? tab.label : undefined}
-              className={`group flex w-full items-center gap-2.5 text-sm font-medium transition-colors duration-150 relative
-                ${collapsed ? "justify-center px-2 py-2.5" : "px-4 py-2"}
+              className={`group flex w-full items-center gap-2.5 text-sm font-medium transition-all duration-150 relative
+                ${collapsed ? "justify-center px-2 py-2.5 mx-auto" : "px-4 py-2"}
                 ${isActive
-                  ? "text-success bg-success/10"
-                  : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                  ? "text-success bg-success/8"
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary/40"
                 }`}
             >
               {isActive && (
                 <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-success" />
               )}
-              <Icon className={`h-4 w-4 shrink-0 ${isActive ? "text-success" : "text-muted-foreground group-hover:text-foreground"}`} />
+              <Icon className={`h-4 w-4 shrink-0 transition-colors ${isActive ? "text-success" : "text-muted-foreground group-hover:text-foreground"}`} />
               {!collapsed && <span className="truncate">{tab.label}</span>}
             </button>
           );
@@ -158,6 +158,9 @@ const AdminPanel = () => {
     <div className="min-h-screen bg-background">
       <Header hideBanner />
 
+      {/* Spacer for fixed header */}
+      <div className="h-14 sm:h-16 lg:h-[72px]" />
+
       {/* Mobile Sheet Sidebar */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetContent side="left" className="w-64 p-0 bg-card border-r border-border">
@@ -176,18 +179,18 @@ const AdminPanel = () => {
       <div className="flex">
         {/* Desktop Sidebar */}
         <aside
-          className={`hidden lg:flex flex-col sticky top-0 h-screen shrink-0 border-r border-border bg-card/50 backdrop-blur-sm transition-[width] duration-200 overflow-hidden ${sidebarOpen ? "w-56" : "w-14"}`}
+          className={`hidden lg:flex flex-col fixed top-14 sm:top-16 lg:top-[72px] left-0 bottom-0 shrink-0 border-r border-border bg-card/60 backdrop-blur-md transition-[width] duration-200 overflow-hidden z-30 ${sidebarOpen ? "w-56" : "w-14"}`}
         >
-          <div className="flex items-center gap-2 px-3 py-4 border-b border-border min-h-[56px]">
-            <ShieldAlert className="h-5 w-5 text-success shrink-0" />
+          <div className="flex items-center gap-2 px-3 py-3 border-b border-border min-h-[48px]">
+            <ShieldAlert className="h-4 w-4 text-success shrink-0" />
             {sidebarOpen && (
-              <span className="text-xs font-bold uppercase tracking-[0.2em] text-success truncate">Admin</span>
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-success truncate">Painel Admin</span>
             )}
             <button
               onClick={() => setSidebarOpen(v => !v)}
               className="ml-auto rounded-md p-1 text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
             >
-              <ChevronRight className={`h-4 w-4 transition-transform duration-200 ${sidebarOpen ? "rotate-180" : ""}`} />
+              <ChevronRight className={`h-3.5 w-3.5 transition-transform duration-200 ${sidebarOpen ? "rotate-180" : ""}`} />
             </button>
           </div>
           <div className="flex-1 overflow-y-auto scrollbar-hide">
@@ -195,10 +198,10 @@ const AdminPanel = () => {
           </div>
         </aside>
 
-        {/* Main Content */}
-        <main className="flex-1 min-w-0">
+        {/* Main Content — offset by sidebar width */}
+        <main className={`flex-1 min-w-0 transition-[margin] duration-200 ${sidebarOpen ? "lg:ml-56" : "lg:ml-14"}`}>
           {/* Top bar */}
-          <div className="sticky top-0 z-10 flex items-center gap-3 px-4 lg:px-8 py-3 border-b border-border bg-background/80 backdrop-blur-sm">
+          <div className="sticky top-14 sm:top-16 lg:top-[72px] z-20 flex items-center gap-3 px-4 lg:px-8 py-3 border-b border-border bg-background/80 backdrop-blur-md">
             <button
               onClick={() => setMobileOpen(true)}
               className="lg:hidden rounded-md p-1.5 text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
@@ -206,15 +209,15 @@ const AdminPanel = () => {
               <Menu className="h-5 w-5" />
             </button>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Administração</p>
-              <h1 className="text-lg sm:text-xl font-bold text-foreground truncate" style={{ fontFamily: "'Valorant', sans-serif" }}>
+              <p className="text-[10px] font-medium text-muted-foreground/60 uppercase tracking-wider">Administração</p>
+              <h1 className="text-base sm:text-lg font-bold text-foreground truncate" style={{ fontFamily: "'Valorant', sans-serif" }}>
                 {activeLabel.toUpperCase()}
               </h1>
             </div>
           </div>
 
           {/* Tab Content — each tab lazy-loaded */}
-          <div className="px-3 sm:px-4 lg:px-8 py-4 lg:py-6">
+          <div className="px-3 sm:px-5 lg:px-8 py-5 lg:py-6">
             <Suspense fallback={<TabFallback />}>
               {activeTab === "overview" && <OverviewTab onGoToTicket={handleGoToTicket} />}
               {activeTab === "jogos" && <GamesTab />}

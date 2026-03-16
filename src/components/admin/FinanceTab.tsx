@@ -17,7 +17,7 @@ interface LztSaleRow {
   created_at: string;
 }
 
-const COLORS = ["hsl(130,99%,41%)", "hsl(220,80%,55%)", "hsl(45,100%,55%)", "hsl(0,80%,55%)"];
+const COLORS = ["hsl(197,100%,50%)", "hsl(220,80%,55%)", "hsl(45,100%,55%)", "hsl(0,80%,55%)"];
 
 const FinanceTab = () => {
   const [loading, setLoading] = useState(true);
@@ -326,7 +326,7 @@ const FinanceTab = () => {
                   contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }}
                   formatter={(value: number) => [`R$ ${value.toFixed(2)}`, "Receita"]}
                 />
-                <Bar dataKey="valor" fill="hsl(130,99%,41%)" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="valor" fill="hsl(197,100%,50%)" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -350,7 +350,7 @@ const FinanceTab = () => {
                 formatter={(value: number) => [`R$ ${value.toFixed(2)}`]}
               />
               <Bar dataKey="produtos" name="Produtos" fill="hsl(220,80%,55%)" radius={[4, 4, 0, 0]} stackId="a" />
-              <Bar dataKey="contas" name="Contas" fill="hsl(130,99%,41%)" radius={[4, 4, 0, 0]} stackId="a" />
+              <Bar dataKey="contas" name="Contas" fill="hsl(197,100%,50%)" radius={[4, 4, 0, 0]} stackId="a" />
             </BarChart>
           </ResponsiveContainer>
         </div>
