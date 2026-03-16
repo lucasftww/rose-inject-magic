@@ -889,23 +889,21 @@ const TicketsTab = ({ initialTicketId, onTicketOpened }: { initialTicketId?: str
             <>
               {/* Chat header */}
               <div className="border-b border-border bg-card flex-shrink-0">
-                <div className="px-5 py-3.5 flex items-center justify-between">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted ring-2 ring-border/50">
-                        <UserCircle className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-bold text-foreground truncate">{selectedTicket.buyer_username}</p>
-                        <p className="text-[11px] text-muted-foreground truncate">{selectedTicket.buyer_email}</p>
-                      </div>
+                <div className="px-4 sm:px-5 py-3 flex items-center gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted ring-2 ring-border/50">
+                    <UserCircle className="h-4.5 w-4.5 text-muted-foreground" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-sm font-bold text-foreground truncate">{selectedTicket.buyer_username}</p>
+                      <span className="text-[10px] text-muted-foreground truncate hidden sm:inline">({selectedTicket.buyer_email})</span>
                     </div>
-                    <div className="flex items-center gap-2 mt-1.5 ml-10">
-                      <span className="text-xs text-muted-foreground">{selectedTicket.product_name}</span>
-                      <span className="text-xs text-muted-foreground/40">·</span>
-                      <span className="text-xs text-muted-foreground">{selectedTicket.plan_name}</span>
-                      <span className="text-xs text-muted-foreground/40">·</span>
-                      <span className="text-xs font-medium text-foreground/70">R$ {Number(selectedTicket.plan_price || 0).toFixed(2)}</span>
+                    <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                      <span className="text-xs text-muted-foreground truncate max-w-[140px]">{selectedTicket.product_name}</span>
+                      <span className="text-xs text-muted-foreground/30">·</span>
+                      <span className="text-xs text-muted-foreground truncate max-w-[100px]">{selectedTicket.plan_name}</span>
+                      <span className="text-xs text-muted-foreground/30">·</span>
+                      <span className="text-xs font-semibold text-foreground/70">R$ {Number(selectedTicket.plan_price || 0).toFixed(2)}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
