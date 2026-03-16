@@ -360,7 +360,7 @@ const MeusPedidos = () => {
                         {new Date(ticket.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
                       </span>
                       <span className="flex items-center gap-1 text-xs font-semibold text-success group-hover:underline">
-                        Ver detalhes <ChevronRightIcon className="h-3.5 w-3.5" />
+                        Ver detalhes <ChevronRight className="h-3.5 w-3.5" />
                       </span>
                     </div>
                   </div>
