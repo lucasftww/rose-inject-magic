@@ -318,7 +318,7 @@ const ResellersTab = () => {
             <div className="flex flex-wrap gap-2">
               {products.map(p => (
                 <button key={p.id} onClick={() => toggleProductId(p.id, formProductIds, setFormProductIds)}
-                  className={`rounded-lg px-3 py-1.5 text-xs font-medium border transition-colors ${
+                  className={`rounded-lg px-3 py-1.5 text-xs font-medium border ${
                     formProductIds.includes(p.id)
                       ? "border-success/30 bg-success/10 text-success"
                       : "border-border bg-secondary/50 text-muted-foreground hover:text-foreground"
