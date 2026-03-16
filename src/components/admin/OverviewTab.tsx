@@ -90,17 +90,9 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
         setTotalPaidPayments(paidPayments.length);
       }
 
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const res = await supabase.functions.invoke("admin-users", {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        });
-        setTotalUsers((res.data || []).length);
+      setTotalUsers(adminUsers.length);
 
-        const usersMap: Record<string, string> = {};
-        (res.data || []).forEach((u: any) => { usersMap[u.id] = u.username || u.email?.split("@")[0] || "?"; });
-
-        if (recentOrdersRes.data) {
+      if (recentOrdersRes.data) {
           const productIds = [...new Set((recentOrdersRes.data as any[]).map((t: any) => t.product_id))];
           const planIds = [...new Set((recentOrdersRes.data as any[]).map((t: any) => t.product_plan_id))];
           const [prodsRes, plansRes] = await Promise.all([
@@ -119,10 +111,9 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
               ...t,
               product_name: isLzt ? (meta?.title || meta?.account_name || "Conta LZT") : (prodMap[t.product_id] || "Produto"),
               plan_name: isLzt ? "Conta LZT" : (planMap[t.product_plan_id] || "Plano"),
-              username: usersMap[t.user_id] || "?",
+              username: usernameMap.get(t.user_id) || "?",
             };
           }));
-        }
       }
 
       setTotalResellers(resellersRes.count || 0);
