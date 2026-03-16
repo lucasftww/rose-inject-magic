@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, Fragment } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useAdminUsers } from "@/hooks/useAdminUsers";
 import {
   Loader2, Search, ShoppingBag, Package, DollarSign, Users,
   ChevronLeft, ChevronRight, Eye, Copy, Check
