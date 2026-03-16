@@ -554,7 +554,7 @@ const ProductsTab = () => {
                   onDragLeave={() => setDragOver(false)}
                   onDrop={handleDrop}
                   onClick={() => fileInputRef.current?.click()}
-                  className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition-colors ${dragOver ? "border-success bg-success/5" : "border-border hover:border-success/40"}`}>
+                  className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 ${dragOver ? "border-success bg-success/5" : "border-border hover:border-success/40"}`}>
                   <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadFile(f); }} />
                   {uploading ? (
                     <><Loader2 className="h-6 w-6 animate-spin text-success mb-2" /><p className="text-xs text-muted-foreground">Enviando...</p></>
