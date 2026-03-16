@@ -108,6 +108,12 @@ const UsersTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
     return true;
   });
 
+  const totalUserPages = Math.max(1, Math.ceil(filtered.length / USERS_PER_PAGE));
+  const paginatedUsers = filtered.slice((userPage - 1) * USERS_PER_PAGE, userPage * USERS_PER_PAGE);
+
+  // Reset page when filters change
+  useEffect(() => { setUserPage(1); }, [searchQuery, filterStatus]);
+
   return (
     <div>
       <div className="flex items-center justify-between">
