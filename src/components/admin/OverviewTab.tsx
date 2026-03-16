@@ -122,9 +122,11 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
         setRecentOrders((recentOrdersRes.data as any[]).map((t: any) => {
           const meta = t.metadata as any;
           const isLzt = meta?.type === "lzt-account";
+          const prod = prodMap[t.product_id];
           return {
             ...t,
-            product_name: isLzt ? (meta?.title || meta?.account_name || "Conta LZT") : (prodMap[t.product_id] || "Produto"),
+            product_name: isLzt ? (meta?.title || meta?.account_name || "Conta LZT") : (prod?.name || "Produto"),
+            product_image: isLzt ? null : (prod?.image_url || null),
             plan_name: isLzt ? "Conta LZT" : (planMap[t.product_plan_id] || "Plano"),
             username: "?",
           };
