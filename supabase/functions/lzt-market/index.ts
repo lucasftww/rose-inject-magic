@@ -295,9 +295,39 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Enforce effective pmax (max_fetch_price / markup) as ceiling
-      const currentPmax = params.get("pmax");
-      if (!currentPmax || Number(currentPmax) > effectivePmax) {
+      // Convert user-provided BRL price filters to API currency (RUB)
+      // The frontend UI shows "R$" so pmin/pmax arrive as BRL values
+      const RUB_TO_BRL_FILTER = 0.055;
+      const userPmin = params.get("pmin");
+      if (userPmin) {
+        const brlMin = Number(userPmin);
+        if (brlMin > 0) {
+          // If user's BRL min is at or below the floor (R$20), don't filter by pmin
+          // since many accounts get floored to R$20 regardless of RUB price
+          const MIN_PRICE_BRL_FILTER = 20;
+          if (brlMin <= MIN_PRICE_BRL_FILTER) {
+            params.delete("pmin");
+          } else {
+            // Convert BRL → RUB: rub = brl / markup / RUB_TO_BRL
+            const rubMin = Math.floor(brlMin / activeMarkup / RUB_TO_BRL_FILTER);
+            params.set("pmin", String(rubMin));
+          }
+        }
+      }
+
+      const userPmax = params.get("pmax");
+      if (userPmax) {
+        const brlMax = Number(userPmax);
+        if (brlMax > 0) {
+          // Convert BRL → RUB, add 10% buffer for rounding differences
+          const rubMax = Math.ceil((brlMax / activeMarkup / RUB_TO_BRL_FILTER) * 1.1);
+          // Don't exceed the admin-configured ceiling
+          params.set("pmax", String(Math.min(rubMax, effectivePmax)));
+        } else {
+          params.set("pmax", String(effectivePmax));
+        }
+      } else {
+        // Enforce effective pmax (max_fetch_price / markup) as ceiling
         params.set("pmax", String(effectivePmax));
       }
 
