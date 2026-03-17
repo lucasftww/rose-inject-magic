@@ -333,7 +333,7 @@ const FinanceTab = () => {
 
   // ─── PDF Export ───
   const generatePDF = () => {
-    const periodLabel = period === "7d" ? "Últimos 7 dias" : period === "30d" ? "Últimos 30 dias" : "Todo período";
+    const periodLabel = period === "24h" ? "Últimas 24 horas" : period === "7d" ? "Últimos 7 dias" : period === "30d" ? "Últimos 30 dias" : "Todo período";
     const now = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
     const html = `<!DOCTYPE html><html><head><title>Relatório Financeiro</title>
     <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',sans-serif;padding:40px;color:#1a1a2e;background:#fff}
