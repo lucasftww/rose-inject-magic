@@ -1,0 +1,1 @@
+UPDATE lzt_config SET markup_fortnite = 3.0 WHERE id = '131a9568-2318-4026-a676-afa32805cfe9';
