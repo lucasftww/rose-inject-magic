@@ -320,8 +320,8 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
             <ShoppingCart className="h-4 w-4 text-info" />
             <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Pedidos</span>
           </div>
-          <p className="text-2xl font-bold text-foreground tracking-tight">{totalOrders}</p>
-          <p className="text-[11px] text-muted-foreground mt-0.5">{totalPaidPayments} faturas pagas</p>
+          <p className="text-2xl font-bold text-foreground tracking-tight">{periodOrderCount}</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">{periodPaidCount} faturas pagas</p>
         </div>
 
         <div className="rounded-xl border border-border bg-card p-4">
