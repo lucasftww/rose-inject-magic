@@ -144,7 +144,7 @@ const FinanceTab = () => {
   const [lztSales, setLztSales] = useState<LztSale[]>([]);
   const [resellerPurchases, setResellerPurchases] = useState<ResellerPurchase[]>([]);
   const [robotTickets, setRobotTickets] = useState<RobotTicket[]>([]);
-  const [period, setPeriod] = useState<Period>("30d");
+  const [period, setPeriod] = useState<Period>("24h");
   const [usdToBrl, setUsdToBrl] = useState(5.5);
 
   const fetchData = async () => {
