@@ -308,17 +308,19 @@ const FinanceTab = () => {
   // ─── Daily/Hourly revenue chart ───
   const dailyData = useMemo(() => {
     if (period === "24h") {
-      // Show hourly data for 24h
-      const hours: Record<string, { date: string; receita: number }> = {};
+      // Show hourly data for 24h — use local-time keys for consistency
+      const hours: Record<number, { date: string; receita: number }> = {};
       for (let i = 23; i >= 0; i--) {
         const d = new Date(Date.now() - i * 3600000);
-        const key = `${d.toISOString().slice(0, 13)}`;
-        const label = `${d.getHours().toString().padStart(2, "0")}h`;
-        hours[key] = { date: label, receita: 0 };
+        const localHour = d.getHours();
+        // Use a numeric key based on the epoch-hour to avoid UTC/local mismatch
+        const epochHourKey = Math.floor(d.getTime() / 3600000);
+        hours[epochHourKey] = { date: `${localHour.toString().padStart(2, "0")}h`, receita: 0 };
       }
       fp.forEach(p => {
-        const d = (p.paid_at || p.created_at).slice(0, 13);
-        if (hours[d]) hours[d].receita += p.amount / 100;
+        const t = new Date(p.paid_at || p.created_at).getTime();
+        const epochHourKey = Math.floor(t / 3600000);
+        if (hours[epochHourKey]) hours[epochHourKey].receita += p.amount / 100;
       });
       return Object.values(hours);
     }
