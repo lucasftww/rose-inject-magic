@@ -69,18 +69,30 @@ const timeAgo = (dateStr: string) => {
 
 const fmt = (v: number) => v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+type Period = "24h" | "7d" | "30d" | "all";
+
+const filterByPeriod = <T extends { created_at?: string; paid_at?: string | null }>(
+  items: T[], period: Period, dateField: "created_at" | "paid_at" = "paid_at"
+): T[] => {
+  if (period === "all") return items;
+  const ms = period === "24h" ? 86400000 : period === "7d" ? 7 * 86400000 : 30 * 86400000;
+  const cutoff = Date.now() - ms;
+  return items.filter(i => {
+    const d = dateField === "paid_at" ? ((i as any).paid_at || (i as any).created_at) : (i as any).created_at;
+    return new Date(d).getTime() >= cutoff;
+  });
+};
+
 const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void }) => {
   const { users: adminUsers, usernameMap } = useAdminUsers();
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [period, setPeriod] = useState<Period>("24h");
   const [openTickets, setOpenTickets] = useState(0);
-  const [totalOrders, setTotalOrders] = useState(0);
-  const [totalRevenue, setTotalRevenue] = useState(0);
-  const [totalPaidPayments, setTotalPaidPayments] = useState(0);
+  const [allOrders, setAllOrders] = useState<OrderTicket[]>([]);
+  const [allPayments, setAllPayments] = useState<Payment[]>([]);
   const [recentOrders, setRecentOrders] = useState<OrderTicket[]>([]);
   const [recentPayments, setRecentPayments] = useState<Payment[]>([]);
-  const [todayRevenue, setTodayRevenue] = useState(0);
-  const [todayOrders, setTodayOrders] = useState(0);
 
   // Profit data
   const [lztCost, setLztCost] = useState(0);
