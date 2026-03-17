@@ -501,6 +501,8 @@ const Raspadinha = () => {
       [0, 4, 8], [2, 4, 6],
     ];
     return patterns.some(([a, b, c]) => {
+      // Only highlight prize matches — never "nothing" cells
+      if (grid[a].type !== "prize" || grid[b].type !== "prize" || grid[c].type !== "prize") return false;
       const idA = cellId(grid[a]);
       const idB = cellId(grid[b]);
       const idC = cellId(grid[c]);
