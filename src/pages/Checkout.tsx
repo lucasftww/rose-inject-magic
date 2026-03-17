@@ -46,8 +46,9 @@ const Checkout = () => {
   const [cartSnapshot, setCartSnapshot] = useState<typeof items>([]);
   // Price is calculated from cart items — never trust URL params
   const cartTotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
-  const discountAmount = parseFloat(searchParams.get("discount") || "0");
-  const cartFinalPrice = Math.max(0, cartTotal - discountAmount);
+  // Discount is always 0 until the server validates the coupon and returns the real value
+  const discountAmount = 0;
+  const cartFinalPrice = cartTotal;
   // Store the display price so it survives cart clearing
   const [displayPrice, setDisplayPrice] = useState<{ total: number; final: number; discount: number } | null>(null);
   const totalPrice = displayPrice?.total ?? cartTotal;

@@ -37,7 +37,18 @@ const CentralAjuda = lazy(() => import("./pages/CentralAjuda"));
 // Admin panel — lazy-loaded INSIDE AdminGuard so the bundle never downloads for non-admins
 const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 
-const queryClient = new QueryClient({});
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60 * 1000,       // 1 minute — avoid redundant refetches on mount
+      retry: 2,                    // retry failed queries twice before giving up
+      refetchOnWindowFocus: false, // don't refetch when user returns to the tab
+    },
+    mutations: {
+      retry: 1,
+    },
+  },
+});
 
 const LazyFallback = () => (
   <div className="min-h-screen flex items-center justify-center bg-background">

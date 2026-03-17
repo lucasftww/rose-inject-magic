@@ -1,12 +1,11 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") || "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -104,7 +103,7 @@ serve(async (req) => {
         fetchAllRows("order_tickets", "id, user_id, product_id, product_plan_id, stock_item_id, status, status_label, created_at", "created_at", false),
         fetchAllRows("products", "id, name, image_url"),
         fetchAllRows("product_plans", "id, name, price"),
-        fetchAllRows("stock_items", "id, content"),
+        fetchAllRows("stock_items", "id"),
       ]);
 
       const productMap = new Map(products.map((p: any) => [p.id, p]));
@@ -155,7 +154,7 @@ serve(async (req) => {
           status: t.status,
           status_label: t.status_label,
           created_at: t.created_at,
-          stock_content: stock?.content ? (typeof stock.content === "string" ? stock.content : JSON.stringify(stock.content)) : null,
+          stock_content: null, // content omitted from listing for security
         });
         userOrdersMap.set(t.user_id, existing);
       });

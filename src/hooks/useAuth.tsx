@@ -34,8 +34,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .eq("user_id", userId)
         .single();
       if (isMountedRef.current) setProfile(data);
-    } catch {
-      // silently fail
+    } catch (err) {
+      console.error("[useAuth] fetchProfile failed:", err);
     }
   };
 
@@ -49,8 +49,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (!error) {
         setIsAdmin(!!data);
       }
-    } catch {
-      // Network error — don't change isAdmin state
+    } catch (err) {
+      console.error("[useAuth] checkAdmin failed:", err);
     }
   };
 
