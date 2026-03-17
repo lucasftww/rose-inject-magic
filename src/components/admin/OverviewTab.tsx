@@ -112,30 +112,24 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
         if (json?.rates?.BRL) usdToBrl = json.rates.BRL;
       } catch { /* fallback */ }
 
-      const [statsRes, recentOrdersRes, recentPaymentsRes, todayPayRes, lztRes, allPaymentsRes, robotProductsRes, openTicketsRes] = await Promise.all([
-        supabase.rpc("admin_overview_stats"),
+      const [recentOrdersRes, recentPaymentsRes, lztRes, allPaymentsRes, robotProductsRes, openTicketsRes, allOrdersRes] = await Promise.all([
         supabase.from("order_tickets").select("*").order("created_at", { ascending: false }).limit(6),
         supabase.from("payments").select("*").eq("status", "COMPLETED").order("paid_at", { ascending: false }).limit(6),
-        fetchAllRows("payments", { select: "amount", filters: [{ column: "status", op: "eq", value: "COMPLETED" }, { column: "paid_at", op: "gte", value: new Date(new Date().setHours(0, 0, 0, 0)).toISOString() }] }),
         supabase.rpc("admin_lzt_stats"),
         fetchAllRows("payments", {
-          select: "amount, discount_amount, user_id, cart_snapshot, status",
+          select: "amount, discount_amount, user_id, cart_snapshot, status, created_at, paid_at",
           filters: [{ column: "status", op: "eq", value: "COMPLETED" }],
         }),
         supabase.from("products").select("id, name, robot_game_id, robot_markup_percent").not("robot_game_id", "is", null),
         supabase.from("order_tickets").select("id", { count: "exact", head: true }).in("status", ["open", "waiting", "waiting_staff"]),
+        fetchAllRows("order_tickets", {
+          select: "id, product_id, product_plan_id, user_id, metadata, status, created_at, status_label",
+        }),
       ]);
 
-      if (statsRes.data) {
-        const s = statsRes.data as any;
-        if (!s.error) {
-          setTotalOrders(Number(s.total_orders));
-          setTotalRevenue(Number(s.total_revenue));
-          setTotalPaidPayments(Number(s.total_paid_payments));
-        }
-      }
-
       setOpenTickets(openTicketsRes.count ?? 0);
+      setAllPayments(allPaymentsRes || []);
+      setAllOrders(allOrdersRes || []);
 
       const discTotal = (allPaymentsRes || []).reduce((s: number, p: any) => s + (Number(p.discount_amount) || 0), 0);
       setTotalDiscounts(discTotal);
@@ -197,12 +191,6 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
         setRobotProfit(Math.round((rRev - rCost) * 100) / 100);
       }
 
-      if (todayPayRes && todayPayRes.length > 0) {
-        const todayTotal = todayPayRes.reduce((s: number, p: any) => s + Number(p.amount), 0);
-        setTodayRevenue(todayTotal / 100);
-        setTodayOrders(todayPayRes.length);
-      }
-
       if (recentOrdersRes.data) {
         const productIds = [...new Set((recentOrdersRes.data as any[]).map((t: any) => t.product_id))];
         const planIds = [...new Set((recentOrdersRes.data as any[]).map((t: any) => t.product_plan_id))];
@@ -247,10 +235,19 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
     })));
   }, [usernameMap]);
 
-  const revenueTotal = totalRevenue / 100;
+  // Period-filtered metrics
+  const filteredPayments = filterByPeriod(allPayments as any[], period);
+  const filteredOrders = filterByPeriod(allOrders as any[], period, "created_at");
+  const periodRevenue = filteredPayments.reduce((s: number, p: any) => s + Number(p.amount) / 100, 0);
+  const periodOrderCount = filteredOrders.length;
+  const periodPaidCount = filteredPayments.length;
+
+  const revenueTotal = periodRevenue;
   const totalCosts = lztCost + robotCost + totalDiscounts;
   const netProfit = revenueTotal - totalCosts;
   const profitMargin = revenueTotal > 0 ? (netProfit / revenueTotal) * 100 : 0;
+
+  const periodLabel = period === "24h" ? "24h" : period === "7d" ? "7 dias" : period === "30d" ? "30 dias" : "Total";
 
   if (loading) {
     return (
