@@ -896,28 +896,28 @@ const OverviewStats = ({
       label: "Total de Pedidos",
       value: String(tickets.length),
       color: "hsl(var(--success))",
-      sparkline: generateSparkline(12, "up"),
+      sparkline: generateSparkline(12, "up", 42),
     },
     {
       icon: <DollarSign className="h-4 w-4" />,
       label: "Total Gasto",
       value: `R$ ${totalSpent.toFixed(2)}`,
       color: "hsl(var(--success))",
-      sparkline: generateSparkline(12, "up"),
+      sparkline: generateSparkline(12, "up", 73),
     },
     {
       icon: <CheckCircle className="h-4 w-4" />,
       label: "Faturas Pagas",
       value: String(paidPayments.length),
       color: "hsl(var(--success))",
-      sparkline: generateSparkline(12, "flat"),
+      sparkline: generateSparkline(12, "flat", 101),
     },
     {
       icon: <UserCheck className="h-4 w-4" />,
       label: "Status Revenda",
       value: isReseller ? `Ativo · -${discountPercent}%` : "Inativo",
       color: "hsl(var(--success))",
-      sparkline: generateSparkline(12, isReseller ? "up" : "flat"),
+      sparkline: generateSparkline(12, isReseller ? "up" : "flat", 157),
     },
   ], [tickets.length, totalSpent, paidPayments.length, isReseller, discountPercent]);
 
