@@ -916,6 +916,7 @@ const PedidoChat = () => {
                         </div>
                       </div>
                     </div>
+                    )}
 
                     {/* Tutorial Text */}
                     {tutorialText && (
