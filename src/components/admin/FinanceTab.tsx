@@ -380,7 +380,7 @@ const FinanceTab = () => {
         <h2 className="text-lg font-bold text-foreground">Financeiro</h2>
         <div className="flex items-center gap-2">
           <div className="flex gap-0.5 bg-secondary rounded-lg p-0.5">
-            {([["7d", "7d"], ["30d", "30d"], ["all", "Tudo"]] as const).map(([key, label]) => (
+            {([["24h", "24h"], ["7d", "7d"], ["30d", "30d"], ["all", "Tudo"]] as const).map(([key, label]) => (
               <button
                 key={key}
                 onClick={() => setPeriod(key)}
