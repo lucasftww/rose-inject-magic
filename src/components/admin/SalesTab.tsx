@@ -5,7 +5,7 @@ import { useAdminUsers } from "@/hooks/useAdminUsers";
 import {
   Loader2, Search, ShoppingBag, Package, DollarSign, Users,
   ChevronLeft, ChevronRight, Eye, Copy, Check, Clock, Globe,
-  Bot, RefreshCw, Hash, User, ExternalLink
+  Bot, RefreshCw, User, ExternalLink
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
