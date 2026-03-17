@@ -403,6 +403,7 @@ const ContaDetalhes = () => {
     queryFn: () => fetchAccountDetail(id!),
     enabled: !!id,
     staleTime: 1000 * 60 * 5,
+    retry: false,
   });
 
   const item = data?.item;
