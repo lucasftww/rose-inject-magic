@@ -69,18 +69,30 @@ const timeAgo = (dateStr: string) => {
 
 const fmt = (v: number) => v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+type Period = "24h" | "7d" | "30d" | "all";
+
+const filterByPeriod = <T extends { created_at?: string; paid_at?: string | null }>(
+  items: T[], period: Period, dateField: "created_at" | "paid_at" = "paid_at"
+): T[] => {
+  if (period === "all") return items;
+  const ms = period === "24h" ? 86400000 : period === "7d" ? 7 * 86400000 : 30 * 86400000;
+  const cutoff = Date.now() - ms;
+  return items.filter(i => {
+    const d = dateField === "paid_at" ? ((i as any).paid_at || (i as any).created_at) : (i as any).created_at;
+    return new Date(d).getTime() >= cutoff;
+  });
+};
+
 const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void }) => {
   const { users: adminUsers, usernameMap } = useAdminUsers();
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [period, setPeriod] = useState<Period>("24h");
   const [openTickets, setOpenTickets] = useState(0);
-  const [totalOrders, setTotalOrders] = useState(0);
-  const [totalRevenue, setTotalRevenue] = useState(0);
-  const [totalPaidPayments, setTotalPaidPayments] = useState(0);
+  const [allOrders, setAllOrders] = useState<OrderTicket[]>([]);
+  const [allPayments, setAllPayments] = useState<Payment[]>([]);
   const [recentOrders, setRecentOrders] = useState<OrderTicket[]>([]);
   const [recentPayments, setRecentPayments] = useState<Payment[]>([]);
-  const [todayRevenue, setTodayRevenue] = useState(0);
-  const [todayOrders, setTodayOrders] = useState(0);
 
   // Profit data
   const [lztCost, setLztCost] = useState(0);
@@ -100,30 +112,24 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
         if (json?.rates?.BRL) usdToBrl = json.rates.BRL;
       } catch { /* fallback */ }
 
-      const [statsRes, recentOrdersRes, recentPaymentsRes, todayPayRes, lztRes, allPaymentsRes, robotProductsRes, openTicketsRes] = await Promise.all([
-        supabase.rpc("admin_overview_stats"),
+      const [recentOrdersRes, recentPaymentsRes, lztRes, allPaymentsRes, robotProductsRes, openTicketsRes, allOrdersRes] = await Promise.all([
         supabase.from("order_tickets").select("*").order("created_at", { ascending: false }).limit(6),
         supabase.from("payments").select("*").eq("status", "COMPLETED").order("paid_at", { ascending: false }).limit(6),
-        fetchAllRows("payments", { select: "amount", filters: [{ column: "status", op: "eq", value: "COMPLETED" }, { column: "paid_at", op: "gte", value: new Date(new Date().setHours(0, 0, 0, 0)).toISOString() }] }),
         supabase.rpc("admin_lzt_stats"),
         fetchAllRows("payments", {
-          select: "amount, discount_amount, user_id, cart_snapshot, status",
+          select: "amount, discount_amount, user_id, cart_snapshot, status, created_at, paid_at",
           filters: [{ column: "status", op: "eq", value: "COMPLETED" }],
         }),
         supabase.from("products").select("id, name, robot_game_id, robot_markup_percent").not("robot_game_id", "is", null),
         supabase.from("order_tickets").select("id", { count: "exact", head: true }).in("status", ["open", "waiting", "waiting_staff"]),
+        fetchAllRows("order_tickets", {
+          select: "id, product_id, product_plan_id, user_id, metadata, status, created_at, status_label",
+        }),
       ]);
 
-      if (statsRes.data) {
-        const s = statsRes.data as any;
-        if (!s.error) {
-          setTotalOrders(Number(s.total_orders));
-          setTotalRevenue(Number(s.total_revenue));
-          setTotalPaidPayments(Number(s.total_paid_payments));
-        }
-      }
-
       setOpenTickets(openTicketsRes.count ?? 0);
+      setAllPayments(allPaymentsRes || []);
+      setAllOrders(allOrdersRes || []);
 
       const discTotal = (allPaymentsRes || []).reduce((s: number, p: any) => s + (Number(p.discount_amount) || 0), 0);
       setTotalDiscounts(discTotal);
@@ -185,12 +191,6 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
         setRobotProfit(Math.round((rRev - rCost) * 100) / 100);
       }
 
-      if (todayPayRes && todayPayRes.length > 0) {
-        const todayTotal = todayPayRes.reduce((s: number, p: any) => s + Number(p.amount), 0);
-        setTodayRevenue(todayTotal / 100);
-        setTodayOrders(todayPayRes.length);
-      }
-
       if (recentOrdersRes.data) {
         const productIds = [...new Set((recentOrdersRes.data as any[]).map((t: any) => t.product_id))];
         const planIds = [...new Set((recentOrdersRes.data as any[]).map((t: any) => t.product_plan_id))];
@@ -235,10 +235,19 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
     })));
   }, [usernameMap]);
 
-  const revenueTotal = totalRevenue / 100;
+  // Period-filtered metrics
+  const filteredPayments = filterByPeriod(allPayments as any[], period);
+  const filteredOrders = filterByPeriod(allOrders as any[], period, "created_at");
+  const periodRevenue = filteredPayments.reduce((s: number, p: any) => s + Number(p.amount) / 100, 0);
+  const periodOrderCount = filteredOrders.length;
+  const periodPaidCount = filteredPayments.length;
+
+  const revenueTotal = periodRevenue;
   const totalCosts = lztCost + robotCost + totalDiscounts;
   const netProfit = revenueTotal - totalCosts;
   const profitMargin = revenueTotal > 0 ? (netProfit / revenueTotal) * 100 : 0;
+
+  const periodLabel = period === "24h" ? "24h" : period === "7d" ? "7 dias" : period === "30d" ? "30 dias" : "Total";
 
   if (loading) {
     return (
@@ -251,14 +260,29 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <h2 className="text-lg font-bold text-foreground">Visão Geral</h2>
-        <button
-          onClick={() => setRefreshKey(k => k + 1)}
-          className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5 text-[11px] font-medium text-muted-foreground hover:border-success/50 hover:text-success"
-        >
-          <RefreshCw className="h-3 w-3" /> Atualizar
-        </button>
+        <div className="flex items-center gap-2">
+          <div className="flex gap-0.5 bg-secondary rounded-lg p-0.5">
+            {([["24h", "24h"], ["7d", "7d"], ["30d", "30d"], ["all", "Tudo"]] as const).map(([key, label]) => (
+              <button
+                key={key}
+                onClick={() => setPeriod(key as Period)}
+                className={`rounded-md px-3 py-1.5 text-[11px] font-semibold ${
+                  period === key ? "bg-success text-success-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={() => setRefreshKey(k => k + 1)}
+            className="rounded-lg border border-border bg-card p-1.5 text-muted-foreground hover:text-foreground"
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+          </button>
+        </div>
       </div>
 
       {/* Margin Alert — simplified, no editable threshold */}
@@ -276,10 +300,10 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
         <div className="rounded-xl border border-success/20 bg-success/[0.04] p-4">
           <div className="flex items-center gap-2 mb-2">
             <DollarSign className="h-4 w-4 text-success" />
-            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Hoje</span>
+            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Receita</span>
           </div>
-          <p className="text-2xl font-bold text-success tracking-tight">R$ {todayRevenue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
-          <p className="text-[11px] text-muted-foreground mt-0.5">{todayOrders} vendas</p>
+          <p className="text-2xl font-bold text-success tracking-tight">R$ {periodRevenue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">{periodPaidCount} vendas · {periodLabel}</p>
         </div>
 
         <div className="rounded-xl border border-border bg-card p-4">
@@ -296,8 +320,8 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
             <ShoppingCart className="h-4 w-4 text-info" />
             <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Pedidos</span>
           </div>
-          <p className="text-2xl font-bold text-foreground tracking-tight">{totalOrders}</p>
-          <p className="text-[11px] text-muted-foreground mt-0.5">{totalPaidPayments} faturas pagas</p>
+          <p className="text-2xl font-bold text-foreground tracking-tight">{periodOrderCount}</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">{periodPaidCount} faturas pagas</p>
         </div>
 
         <div className="rounded-xl border border-border bg-card p-4">

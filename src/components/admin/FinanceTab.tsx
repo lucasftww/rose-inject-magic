@@ -50,7 +50,7 @@ interface RobotTicket {
   profit: number;
 }
 
-type Period = "7d" | "30d" | "all";
+type Period = "24h" | "7d" | "30d" | "all";
 
 const COLORS = [
   "hsl(197,100%,50%)", "hsl(142,71%,45%)", "hsl(38,92%,50%)",
@@ -83,7 +83,7 @@ const filterByPeriod = <T extends { created_at: string; paid_at?: string | null 
   items: T[], period: Period, dateField: "created_at" | "paid_at" = "paid_at"
 ): T[] => {
   if (period === "all") return items;
-  const ms = period === "7d" ? 7 * 86400000 : 30 * 86400000;
+  const ms = period === "24h" ? 86400000 : period === "7d" ? 7 * 86400000 : 30 * 86400000;
   const cutoff = Date.now() - ms;
   return items.filter(i => {
     const d = dateField === "paid_at" ? (i.paid_at || i.created_at) : i.created_at;
@@ -95,7 +95,7 @@ const getPreviousPeriodItems = <T extends { created_at: string; paid_at?: string
   items: T[], period: Period, dateField: "created_at" | "paid_at" = "paid_at"
 ): T[] => {
   if (period === "all") return [];
-  const ms = period === "7d" ? 7 * 86400000 : 30 * 86400000;
+  const ms = period === "24h" ? 86400000 : period === "7d" ? 7 * 86400000 : 30 * 86400000;
   const start = Date.now() - ms * 2;
   const end = Date.now() - ms;
   return items.filter(i => {
@@ -144,7 +144,7 @@ const FinanceTab = () => {
   const [lztSales, setLztSales] = useState<LztSale[]>([]);
   const [resellerPurchases, setResellerPurchases] = useState<ResellerPurchase[]>([]);
   const [robotTickets, setRobotTickets] = useState<RobotTicket[]>([]);
-  const [period, setPeriod] = useState<Period>("30d");
+  const [period, setPeriod] = useState<Period>("24h");
   const [usdToBrl, setUsdToBrl] = useState(5.5);
 
   const fetchData = async () => {
@@ -308,7 +308,7 @@ const FinanceTab = () => {
   // ─── Daily revenue chart ───
   const dailyData = useMemo(() => {
     const days: Record<string, { date: string; receita: number }> = {};
-    const numDays = period === "7d" ? 7 : period === "30d" ? 30 : 90;
+    const numDays = period === "24h" ? 1 : period === "7d" ? 7 : period === "30d" ? 30 : 90;
     for (let i = numDays - 1; i >= 0; i--) {
       const d = new Date(Date.now() - i * 86400000);
       const key = d.toISOString().slice(0, 10);
@@ -333,7 +333,7 @@ const FinanceTab = () => {
 
   // ─── PDF Export ───
   const generatePDF = () => {
-    const periodLabel = period === "7d" ? "Últimos 7 dias" : period === "30d" ? "Últimos 30 dias" : "Todo período";
+    const periodLabel = period === "24h" ? "Últimas 24 horas" : period === "7d" ? "Últimos 7 dias" : period === "30d" ? "Últimos 30 dias" : "Todo período";
     const now = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
     const html = `<!DOCTYPE html><html><head><title>Relatório Financeiro</title>
     <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',sans-serif;padding:40px;color:#1a1a2e;background:#fff}
@@ -380,7 +380,7 @@ const FinanceTab = () => {
         <h2 className="text-lg font-bold text-foreground">Financeiro</h2>
         <div className="flex items-center gap-2">
           <div className="flex gap-0.5 bg-secondary rounded-lg p-0.5">
-            {([["7d", "7d"], ["30d", "30d"], ["all", "Tudo"]] as const).map(([key, label]) => (
+            {([["24h", "24h"], ["7d", "7d"], ["30d", "30d"], ["all", "Tudo"]] as const).map(([key, label]) => (
               <button
                 key={key}
                 onClick={() => setPeriod(key)}
