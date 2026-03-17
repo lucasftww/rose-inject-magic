@@ -497,17 +497,17 @@ const Dashboard = () => {
                     <ChevronRight className="h-5 w-5 text-muted-foreground/40 group-hover:text-success transition-colors mt-0.5 shrink-0" />
                   </div>
 
-                  {tickets.filter(t => !t.metadata?.type).length > 0 && (
+                  {tickets.filter(t => !t.metadata?.type || t.metadata?.type === "robot-project").length > 0 && (
                     <div className="border-t border-border px-6 py-3 bg-secondary/20">
                       <div className="flex gap-2 overflow-hidden">
-                        {tickets.filter(t => !t.metadata?.type).slice(0, 4).map((t) => (
+                        {tickets.filter(t => !t.metadata?.type || t.metadata?.type === "robot-project").slice(0, 4).map((t) => (
                           <div key={t.id} className="relative shrink-0 h-8 w-8 rounded-lg overflow-hidden border border-border bg-secondary">
                             {t.image_url ? <img src={t.image_url} alt="" className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center"><Package className="h-3.5 w-3.5 text-muted-foreground/40" /></div>}
                           </div>
                         ))}
-                        {tickets.filter(t => !t.metadata?.type).length > 4 && (
+                        {tickets.filter(t => !t.metadata?.type || t.metadata?.type === "robot-project").length > 4 && (
                           <div className="shrink-0 h-8 w-8 rounded-lg border border-border bg-secondary flex items-center justify-center">
-                            <span className="text-[10px] font-bold text-muted-foreground">+{tickets.filter(t => !t.metadata?.type).length - 4}</span>
+                            <span className="text-[10px] font-bold text-muted-foreground">+{tickets.filter(t => !t.metadata?.type || t.metadata?.type === "robot-project").length - 4}</span>
                           </div>
                         )}
                       </div>

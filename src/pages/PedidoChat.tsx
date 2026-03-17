@@ -194,7 +194,7 @@ const PedidoChat = () => {
       })
       .subscribe();
 
-    // Polling fallback every 5s to catch missed realtime events
+    // Polling fallback every 10s to catch missed realtime events
     const pollInterval = setInterval(async () => {
       if (cancelled) return;
       const { data } = await supabase
