@@ -1057,19 +1057,30 @@ const Contas = () => {
   };
 
   const allItems = useMemo(() => {
-    const sorted = [...streamedItems];
+    // Post-filter by BRL price range (the API filter uses RUB approximation, so we refine here)
+    let filtered = [...streamedItems];
+    const brlMin = priceMin ? Number(priceMin) : 0;
+    const brlMax = priceMax ? Number(priceMax) : 0;
+    if (brlMin > 0 || brlMax > 0) {
+      filtered = filtered.filter(item => {
+        const p = getBrlPrice(item);
+        if (brlMin > 0 && p < brlMin) return false;
+        if (brlMax > 0 && p > brlMax) return false;
+        return true;
+      });
+    }
 
     // If user explicitly chose a price sort, use BRL display price for accurate ordering
     if (sortBy === "price_asc") {
-      return sorted.sort((a, b) => getBrlPrice(a) - getBrlPrice(b));
+      return filtered.sort((a, b) => getBrlPrice(a) - getBrlPrice(b));
     }
     if (sortBy === "price_desc") {
-      return sorted.sort((a, b) => getBrlPrice(b) - getBrlPrice(a));
+      return filtered.sort((a, b) => getBrlPrice(b) - getBrlPrice(a));
     }
 
     // Default sort (pdate_desc): apply game-specific "best quality" sorting
     if (gameTab === "lol") {
-      return sorted.sort((a, b) => {
+      return filtered.sort((a, b) => {
         const scoreA = (a.riot_lol_level ?? 0) > 0 && (a.riot_lol_skin_count ?? 0) > 0 ? 2
           : (a.riot_lol_level ?? 0) > 0 || (a.riot_lol_skin_count ?? 0) > 0 ? 1 : 0;
         const scoreB = (b.riot_lol_level ?? 0) > 0 && (b.riot_lol_skin_count ?? 0) > 0 ? 2
@@ -1079,7 +1090,7 @@ const Contas = () => {
       });
     }
     if (gameTab === "fortnite") {
-      return sorted.sort((a, b) => {
+      return filtered.sort((a, b) => {
         const skinsA = (a as any).fortnite_skin_count ?? a.riot_valorant_skin_count ?? 0;
         const skinsB = (b as any).fortnite_skin_count ?? b.riot_valorant_skin_count ?? 0;
         const hasSkinA = skinsA > 0;
@@ -1094,10 +1105,10 @@ const Contas = () => {
       });
     }
     if (gameTab === "minecraft") {
-      return sorted.sort((a, b) => getBrlPrice(a) - getBrlPrice(b));
+      return filtered.sort((a, b) => getBrlPrice(a) - getBrlPrice(b));
     }
-    return sorted;
-  }, [streamedItems, sortBy, gameTab]);
+    return filtered;
+  }, [streamedItems, sortBy, gameTab, priceMin, priceMax]);
   const totalDisplayPages = Math.ceil(allItems.length / ITEMS_PER_PAGE);
   const items = allItems.slice((displayPage - 1) * ITEMS_PER_PAGE, displayPage * ITEMS_PER_PAGE);
 
