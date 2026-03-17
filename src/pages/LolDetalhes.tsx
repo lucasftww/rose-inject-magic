@@ -108,6 +108,7 @@ const LolDetalhes = () => {
     queryFn: () => fetchAccountDetail(id!),
     enabled: !!id,
     staleTime: 1000 * 60 * 5,
+    retry: false,
   });
 
   // Fetch champ key map from DDragon
