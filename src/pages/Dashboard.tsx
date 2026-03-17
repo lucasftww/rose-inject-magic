@@ -485,7 +485,7 @@ const Dashboard = () => {
                       <p className="mt-1 text-sm text-muted-foreground">Cheats, softwares e licenças digitais</p>
                       <div className="mt-4 flex items-center gap-3">
                         <span className="flex items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-xs font-semibold text-success">
-                          <Package className="h-3 w-3" />{tickets.filter(t => !t.metadata?.type).length} pedido(s)
+                          <Package className="h-3 w-3" />{tickets.filter(t => !t.metadata?.type || t.metadata?.type === "robot-project").length} pedido(s)
                         </span>
                         {tickets.filter(t => !t.metadata?.type && t.status === "open").length > 0 && (
                            <span className="flex items-center gap-1.5 rounded-full bg-warning/10 px-3 py-1 text-xs font-semibold text-warning">
