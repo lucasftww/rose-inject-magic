@@ -25,7 +25,6 @@ interface Ticket {
   status: string;
   status_label: string;
   created_at: string;
-  created_at: string;
   product_name?: string;
   plan_name?: string;
   plan_price?: number;

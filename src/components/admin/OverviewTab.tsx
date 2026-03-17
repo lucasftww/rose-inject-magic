@@ -292,7 +292,7 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
       </div>
 
       {/* Margin Alert — simplified, no editable threshold */}
-      {profitMargin < 30 && revenueTotal > 0 && (
+      {profitMargin < 30 && revenueForProfit > 0 && (
         <div className="flex items-center gap-3 rounded-xl border border-destructive/20 bg-destructive/[0.04] px-4 py-3">
           <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
           <p className="text-xs text-muted-foreground">
