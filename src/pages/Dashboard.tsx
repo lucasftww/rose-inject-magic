@@ -858,12 +858,17 @@ const Dashboard = () => {
   );
 };
 
-/* ── Mini sparkline data generator ── */
-const generateSparkline = (count: number, trend: "up" | "down" | "flat" = "up") => {
+/* ── Mini sparkline data generator (seeded for stability) ── */
+const generateSparkline = (count: number, trend: "up" | "down" | "flat" = "up", seed: number = 0) => {
   const data = [];
   let val = trend === "up" ? 20 : trend === "down" ? 80 : 50;
+  let s = seed || 1;
+  const pseudoRandom = () => {
+    s = (s * 16807 + 0) % 2147483647;
+    return s / 2147483647;
+  };
   for (let i = 0; i < count; i++) {
-    const change = (Math.random() - (trend === "up" ? 0.3 : trend === "down" ? 0.7 : 0.5)) * 15;
+    const change = (pseudoRandom() - (trend === "up" ? 0.3 : trend === "down" ? 0.7 : 0.5)) * 15;
     val = Math.max(5, Math.min(95, val + change));
     data.push({ v: val });
   }
@@ -891,28 +896,28 @@ const OverviewStats = ({
       label: "Total de Pedidos",
       value: String(tickets.length),
       color: "hsl(var(--success))",
-      sparkline: generateSparkline(12, "up"),
+      sparkline: generateSparkline(12, "up", 42),
     },
     {
       icon: <DollarSign className="h-4 w-4" />,
       label: "Total Gasto",
       value: `R$ ${totalSpent.toFixed(2)}`,
       color: "hsl(var(--success))",
-      sparkline: generateSparkline(12, "up"),
+      sparkline: generateSparkline(12, "up", 73),
     },
     {
       icon: <CheckCircle className="h-4 w-4" />,
       label: "Faturas Pagas",
       value: String(paidPayments.length),
       color: "hsl(var(--success))",
-      sparkline: generateSparkline(12, "flat"),
+      sparkline: generateSparkline(12, "flat", 101),
     },
     {
       icon: <UserCheck className="h-4 w-4" />,
       label: "Status Revenda",
       value: isReseller ? `Ativo · -${discountPercent}%` : "Inativo",
       color: "hsl(var(--success))",
-      sparkline: generateSparkline(12, isReseller ? "up" : "flat"),
+      sparkline: generateSparkline(12, isReseller ? "up" : "flat", 157),
     },
   ], [tickets.length, totalSpent, paidPayments.length, isReseller, discountPercent]);
 
