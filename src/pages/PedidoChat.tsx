@@ -847,7 +847,7 @@ const PedidoChat = () => {
         {/* Chat - Full Width */}
         <div className="flex max-h-[700px] min-h-[450px] flex-col rounded-xl border border-border bg-card overflow-hidden">
           {/* Delivery banner inside chat */}
-          {stockContent && (
+          {(stockContent || isFreeNoKey) && (
             <>
               <button
                 onClick={() => setExpandedSection(expandedSection === "delivery" ? null : "delivery")}
@@ -858,7 +858,7 @@ const PedidoChat = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-foreground">Parabéns! Seu produto foi entregue 🎉</p>
-                  <p className="text-[10px] text-muted-foreground">Clique para ver sua chave, tutorial e arquivos</p>
+                  <p className="text-[10px] text-muted-foreground">{isFreeNoKey && !stockContent ? "Clique para ver instruções de download" : "Clique para ver sua chave, tutorial e arquivos"}</p>
                 </div>
                 <div className={`flex h-7 w-7 items-center justify-center rounded-lg border border-success/30 bg-success/10 transition-transform duration-300 shrink-0 ${expandedSection === "delivery" ? "rotate-180" : ""}`}>
                   <ChevronDown className="h-3.5 w-3.5 text-success" />
