@@ -308,7 +308,7 @@ const FinanceTab = () => {
   // ─── Daily revenue chart ───
   const dailyData = useMemo(() => {
     const days: Record<string, { date: string; receita: number }> = {};
-    const numDays = period === "7d" ? 7 : period === "30d" ? 30 : 90;
+    const numDays = period === "24h" ? 1 : period === "7d" ? 7 : period === "30d" ? 30 : 90;
     for (let i = numDays - 1; i >= 0; i--) {
       const d = new Date(Date.now() - i * 86400000);
       const key = d.toISOString().slice(0, 10);
