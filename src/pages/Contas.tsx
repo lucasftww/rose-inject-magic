@@ -437,10 +437,17 @@ const LolCard = ({ item, champKeyMap, formatPrice }: { item: LztItem; champKeyMa
 
   // Resolve LoL skin IDs via lolInventory (não valorantInventory!)
   // skinId = champKey * 1000 + skinNum
-  const lolInventory = (item as any).lolInventory as { Champion?: number[]; Skin?: number[] } | null | undefined;
+  const lolInventory = (item as any).lolInventory as { Champion?: number[]; Skin?: number[] | Record<string, number> } | null | undefined;
   const skinPreviews = useMemo(() => {
     // Tenta skins primeiro; se vazio, mostra campeões como preview
-    const skinIds = Array.isArray(lolInventory?.Skin) ? lolInventory!.Skin! : [];
+    // Skin pode vir como array ou objeto {"0": 555016, ...} — normaliza para array
+    const rawSkin = lolInventory?.Skin;
+    let skinIds: number[] = [];
+    if (Array.isArray(rawSkin)) {
+      skinIds = rawSkin.map(Number);
+    } else if (rawSkin && typeof rawSkin === "object") {
+      skinIds = Object.values(rawSkin).map(Number);
+    }
     const champIds = Array.isArray(lolInventory?.Champion) ? lolInventory!.Champion! : [];
     const results: { name: string; image: string }[] = [];
 
