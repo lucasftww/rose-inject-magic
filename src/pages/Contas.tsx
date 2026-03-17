@@ -1022,16 +1022,23 @@ const Contas = () => {
   const loadMorePages = async () => {
     if (loadingMore || !hasNextPage) return;
     setLoadingMore(true);
+    // Abort any previous in-flight request before starting a new one
+    abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
     try {
       const nextPageNum = currentPage + 1;
-      const data = await fetchAccountsRaw(buildParams(nextPageNum));
+      const data = await fetchWithRetry(buildParams(nextPageNum), controller);
       if (controller.signal.aborted) return;
       const pageItems: LztItem[] = data?.items ?? [];
       setHasNextPage(data?.hasNextPage ?? false);
       setCurrentPage(nextPageNum);
-      setStreamedItems(prev => [...prev, ...pageItems]);
+      // Deduplicate by item_id to prevent duplicates from race conditions
+      setStreamedItems(prev => {
+        const existingIds = new Set(prev.map(i => i.item_id));
+        const newItems = pageItems.filter(i => !existingIds.has(i.item_id));
+        return [...prev, ...newItems];
+      });
     } catch (err: any) {
       if (!controller.signal.aborted) setStreamError(err);
     }

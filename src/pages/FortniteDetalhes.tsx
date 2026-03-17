@@ -93,7 +93,7 @@ const FortniteDetalhes = () => {
   const { addItem } = useCart();
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["lzt-account-detail", id],
+    queryKey: ["lzt-account-detail", "fortnite", id],
     queryFn: () => fetchAccountDetail(id!),
     enabled: !!id,
     staleTime: 1000 * 60 * 5,

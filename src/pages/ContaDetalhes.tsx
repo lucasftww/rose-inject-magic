@@ -399,7 +399,7 @@ const ContaDetalhes = () => {
   };
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["lzt-account-detail", id],
+    queryKey: ["lzt-account-detail", "valorant", id],
     queryFn: () => fetchAccountDetail(id!),
     enabled: !!id,
     staleTime: 1000 * 60 * 5,
