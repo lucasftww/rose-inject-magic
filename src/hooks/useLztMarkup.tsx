@@ -12,8 +12,8 @@ export const useLztMarkup = () => {
     if (currency === "rub" || !currency) {
       brl = price * RUB_TO_BRL;
     }
-    // Generic 1.5x fallback — should rarely be used since API provides price_brl
-    const final = brl * 1.5;
+    // Generic 3.0x fallback — should rarely be used since API provides price_brl
+    const final = brl * 3.0;
     return final < MIN_PRICE_BRL ? MIN_PRICE_BRL : final;
   };
 
