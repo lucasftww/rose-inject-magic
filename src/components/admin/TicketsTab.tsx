@@ -391,16 +391,15 @@ const TicketsTab = ({
   // ─── Status Management ──────────────────────────────────────────────────
 
   const updateStatus = async (ticketId: string, status: string) => {
-    const finalStatus = status === "closed" ? "archived" : status;
-    const finalLabel = status === "closed" ? "Arquivado" : (statusOptions.find(s => s.value === status)?.label || status);
-    const { error } = await supabase.from("order_tickets").update({ status: finalStatus, status_label: finalLabel }).eq("id", ticketId);
+    const label = statusOptions.find(s => s.value === status)?.label || status;
+    const { error } = await supabase.from("order_tickets").update({ status, status_label: label }).eq("id", ticketId);
     if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: `Status: ${finalLabel}` });
-      fetchTickets();
+      toast({ title: `Status: ${label}` });
+      fetchTickets(true);
       if (selectedTicket?.id === ticketId) {
-        setSelectedTicket(prev => prev ? { ...prev, status: finalStatus, status_label: finalLabel } : null);
+        setSelectedTicket(prev => prev ? { ...prev, status, status_label: label } : null);
       }
     }
   };
