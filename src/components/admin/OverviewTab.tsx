@@ -242,8 +242,6 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
   const periodOrderCount = filteredOrders.length;
   const periodPaidCount = filteredPayments.length;
 
-  // Period-filtered discounts (fix: was using all-time before)
-  const periodDiscounts = filteredPayments.reduce((s: number, p: any) => s + (Number(p.discount_amount) || 0), 0);
 
   // Note: lzt/robot costs come from RPC totals (all-time only)
   // Profit is always shown as "Geral" since we can't period-filter lzt/robot costs
