@@ -1044,15 +1044,27 @@ const Contas = () => {
 
   const isLoading = !firstPageLoaded && !streamingDone && !streamError;
   const isStreaming = firstPageLoaded && !streamingDone;
-  const allItems = (() => {
+
+  // Helper: get BRL price for sorting (matches what user sees on screen)
+  const getBrlPrice = (item: LztItem): number => {
+    if (item.price_brl && item.price_brl > 0) return item.price_brl;
+    // Fallback: use markup calculation (same as useLztMarkup.calcPrice)
+    const RUB_TO_BRL = 0.055;
+    let brl = item.price;
+    if (item.price_currency === "rub" || !item.price_currency) brl = item.price * RUB_TO_BRL;
+    const final = brl * 1.5;
+    return final < 20 ? 20 : final;
+  };
+
+  const allItems = useMemo(() => {
     const sorted = [...streamedItems];
 
-    // If user explicitly chose a price sort, respect it across all games
+    // If user explicitly chose a price sort, use BRL display price for accurate ordering
     if (sortBy === "price_asc") {
-      return sorted.sort((a, b) => a.price - b.price);
+      return sorted.sort((a, b) => getBrlPrice(a) - getBrlPrice(b));
     }
     if (sortBy === "price_desc") {
-      return sorted.sort((a, b) => b.price - a.price);
+      return sorted.sort((a, b) => getBrlPrice(b) - getBrlPrice(a));
     }
 
     // Default sort (pdate_desc): apply game-specific "best quality" sorting
@@ -1074,18 +1086,18 @@ const Contas = () => {
         const hasSkinB = skinsB > 0;
         if (hasSkinA && !hasSkinB) return -1;
         if (!hasSkinA && hasSkinB) return 1;
-        if (!hasSkinA && !hasSkinB) return a.price - b.price;
-        const valueA = skinsA / (a.price || 1);
-        const valueB = skinsB / (b.price || 1);
+        if (!hasSkinA && !hasSkinB) return getBrlPrice(a) - getBrlPrice(b);
+        const valueA = skinsA / (getBrlPrice(a) || 1);
+        const valueB = skinsB / (getBrlPrice(b) || 1);
         if (Math.abs(valueB - valueA) > 0.0001) return valueB - valueA;
-        return a.price - b.price;
+        return getBrlPrice(a) - getBrlPrice(b);
       });
     }
     if (gameTab === "minecraft") {
-      return sorted.sort((a, b) => a.price - b.price);
+      return sorted.sort((a, b) => getBrlPrice(a) - getBrlPrice(b));
     }
     return sorted;
-  })();
+  }, [streamedItems, sortBy, gameTab]);
   const totalDisplayPages = Math.ceil(allItems.length / ITEMS_PER_PAGE);
   const items = allItems.slice((displayPage - 1) * ITEMS_PER_PAGE, displayPage * ITEMS_PER_PAGE);
 
