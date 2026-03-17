@@ -50,7 +50,7 @@ interface RobotTicket {
   profit: number;
 }
 
-type Period = "7d" | "30d" | "all";
+type Period = "24h" | "7d" | "30d" | "all";
 
 const COLORS = [
   "hsl(197,100%,50%)", "hsl(142,71%,45%)", "hsl(38,92%,50%)",
