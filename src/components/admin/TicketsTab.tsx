@@ -865,11 +865,32 @@ const TicketsTab = ({
                       {getStatusLabel(ticket.status)}
                     </span>
                   </div>
+                  {/* Purchase type + plan + price */}
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-0.5">
+                    {ticket.metadata?.type === "lzt-account" ? (
+                      <span className="inline-flex items-center gap-1 text-blue-400 text-[10px] font-medium">
+                        <Globe className="h-2.5 w-2.5" />LZT
+                      </span>
+                    ) : ticket.metadata?.type === "robot-project" ? (
+                      <span className="inline-flex items-center gap-1 text-purple-400 text-[10px] font-medium">
+                        <Bot className="h-2.5 w-2.5" />Robot
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-success text-[10px] font-medium">
+                        <Package className="h-2.5 w-2.5" />Estoque
+                      </span>
+                    )}
+                    <span className="text-muted-foreground/30">·</span>
                     <span className="truncate">{ticket.plan_name}</span>
                     <span className="text-muted-foreground/30">·</span>
                     <span className="font-semibold text-foreground/70">R$ {Number(ticket.plan_price || 0).toFixed(2)}</span>
                   </div>
+                  {/* LZT item ID if applicable */}
+                  {ticket.metadata?.lzt_item_id && (
+                    <div className="flex items-center gap-1 text-[10px] text-muted-foreground/50 font-mono mb-0.5">
+                      <span>LZT #{ticket.metadata.lzt_item_id}</span>
+                    </div>
+                  )}
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <User className="h-3 w-3 shrink-0 text-muted-foreground/40" />
                     <span className="truncate">{ticket.buyer_username}</span>
