@@ -905,7 +905,8 @@ const Contas = () => {
       }
 
       if (selectedWeapon !== "todos") {
-        params.title = selectedWeapon;
+        // Combine weapon filter with search query if both are set
+        params.title = searchQuery ? `${searchQuery} ${selectedWeapon}` : selectedWeapon;
       }
     } else if (gameTab === "lol") {
       // LoL-specific — hide empty accounts, require at least 1 skin and 10 champions
