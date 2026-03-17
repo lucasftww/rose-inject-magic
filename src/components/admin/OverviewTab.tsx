@@ -300,10 +300,10 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
         <div className="rounded-xl border border-success/20 bg-success/[0.04] p-4">
           <div className="flex items-center gap-2 mb-2">
             <DollarSign className="h-4 w-4 text-success" />
-            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Hoje</span>
+            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Receita</span>
           </div>
-          <p className="text-2xl font-bold text-success tracking-tight">R$ {todayRevenue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
-          <p className="text-[11px] text-muted-foreground mt-0.5">{todayOrders} vendas</p>
+          <p className="text-2xl font-bold text-success tracking-tight">R$ {periodRevenue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">{periodPaidCount} vendas · {periodLabel}</p>
         </div>
 
         <div className="rounded-xl border border-border bg-card p-4">
