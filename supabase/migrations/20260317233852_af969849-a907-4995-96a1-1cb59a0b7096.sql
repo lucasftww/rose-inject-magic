@@ -1,0 +1,1 @@
+UPDATE lzt_config SET markup_valorant = 3.0, markup_lol = 3.0, markup_minecraft = 3.0, markup_multiplier = 3.0 WHERE id = '131a9568-2318-4026-a676-afa32805cfe9';
