@@ -973,10 +973,39 @@ const TicketsTab = ({
                       <p className="text-sm font-bold text-foreground truncate">{selectedTicket.buyer_username}</p>
                       <span className="text-[10px] text-muted-foreground/50 truncate hidden sm:inline">{selectedTicket.buyer_email}</span>
                     </div>
-                    <div className="flex items-center gap-1.5 mt-px">
+                    <div className="flex items-center gap-1.5 mt-px flex-wrap">
+                      {/* Purchase type badge */}
+                      {selectedTicket.metadata?.type === "lzt-account" ? (
+                        <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-blue-400">
+                          <Globe className="h-2.5 w-2.5" />LZT
+                        </span>
+                      ) : selectedTicket.metadata?.type === "robot-project" ? (
+                        <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-purple-400">
+                          <Bot className="h-2.5 w-2.5" />Robot
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-success">
+                          <Package className="h-2.5 w-2.5" />Estoque
+                        </span>
+                      )}
+                      <span className="text-muted-foreground/20">·</span>
                       <span className="text-[11px] text-muted-foreground truncate max-w-[120px]">{selectedTicket.product_name}</span>
                       <span className="text-muted-foreground/20">·</span>
                       <span className="text-[11px] font-semibold text-foreground/60">R$ {Number(selectedTicket.plan_price || 0).toFixed(2)}</span>
+                      {selectedTicket.metadata?.lzt_item_id && (
+                        <>
+                          <span className="text-muted-foreground/20">·</span>
+                          <a
+                            href={`https://lzt.market/${selectedTicket.metadata.lzt_item_id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground hover:text-success font-mono"
+                          >
+                            #{selectedTicket.metadata.lzt_item_id}
+                            <ExternalLink className="h-2.5 w-2.5" />
+                          </a>
+                        </>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
