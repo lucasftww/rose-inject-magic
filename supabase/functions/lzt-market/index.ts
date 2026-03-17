@@ -13,7 +13,7 @@ function log(level: "INFO" | "WARN" | "ERROR", ctx: string, msg: string, data?: 
   else console.log(JSON.stringify(entry));
 }
 
-Deno.serve(async (req) => {
+Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
