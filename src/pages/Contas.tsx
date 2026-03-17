@@ -1109,7 +1109,13 @@ const Contas = () => {
     }
     return filtered;
   }, [streamedItems, sortBy, gameTab, priceMin, priceMax]);
-  const totalDisplayPages = Math.ceil(allItems.length / ITEMS_PER_PAGE);
+  const totalDisplayPages = Math.max(1, Math.ceil(allItems.length / ITEMS_PER_PAGE));
+
+  // Clamp displayPage when allItems shrinks (e.g. after price filtering)
+  useEffect(() => {
+    if (displayPage > totalDisplayPages) setDisplayPage(totalDisplayPages);
+  }, [totalDisplayPages, displayPage]);
+
   const items = allItems.slice((displayPage - 1) * ITEMS_PER_PAGE, displayPage * ITEMS_PER_PAGE);
 
   const refetch = () => {
