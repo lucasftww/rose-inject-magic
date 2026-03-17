@@ -47,6 +47,7 @@ const PedidoChat = () => {
   const [copied, setCopied] = useState(false);
   const [tutorialText, setTutorialText] = useState<string | null>(null);
   const [tutorialFileUrl, setTutorialFileUrl] = useState<string | null>(null);
+  const [isFreeNoKey, setIsFreeNoKey] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadingFile, setUploadingFile] = useState(false);
