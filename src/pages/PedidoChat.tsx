@@ -109,6 +109,7 @@ const PedidoChat = () => {
           setPlanPrice((planRes.data as any).price);
         }
         // If key is in metadata, use it directly as stock content
+        // Free games may not have a key (API change: no more APIF-000 keys)
         if (meta?.key && !ticketData.stock_item_id) {
           setStockContent(`Key: ${meta.key}`);
         }
