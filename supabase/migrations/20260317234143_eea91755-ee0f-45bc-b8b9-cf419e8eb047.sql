@@ -1,0 +1,1 @@
+UPDATE lzt_config SET max_fetch_price = 1500 WHERE id = '131a9568-2318-4026-a676-afa32805cfe9';
