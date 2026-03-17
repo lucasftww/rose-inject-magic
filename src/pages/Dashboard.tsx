@@ -487,9 +487,9 @@ const Dashboard = () => {
                         <span className="flex items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-xs font-semibold text-success">
                           <Package className="h-3 w-3" />{tickets.filter(t => !t.metadata?.type || t.metadata?.type === "robot-project").length} pedido(s)
                         </span>
-                        {tickets.filter(t => !t.metadata?.type && t.status === "open").length > 0 && (
+                        {tickets.filter(t => (!t.metadata?.type || t.metadata?.type === "robot-project") && t.status === "open").length > 0 && (
                            <span className="flex items-center gap-1.5 rounded-full bg-warning/10 px-3 py-1 text-xs font-semibold text-warning">
-                             <Clock className="h-3 w-3" />{tickets.filter(t => !t.metadata?.type && t.status === "open").length} aberto(s)
+                             <Clock className="h-3 w-3" />{tickets.filter(t => (!t.metadata?.type || t.metadata?.type === "robot-project") && t.status === "open").length} aberto(s)
                           </span>
                         )}
                       </div>
