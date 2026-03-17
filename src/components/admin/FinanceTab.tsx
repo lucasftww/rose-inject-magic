@@ -83,7 +83,7 @@ const filterByPeriod = <T extends { created_at: string; paid_at?: string | null 
   items: T[], period: Period, dateField: "created_at" | "paid_at" = "paid_at"
 ): T[] => {
   if (period === "all") return items;
-  const ms = period === "7d" ? 7 * 86400000 : 30 * 86400000;
+  const ms = period === "24h" ? 86400000 : period === "7d" ? 7 * 86400000 : 30 * 86400000;
   const cutoff = Date.now() - ms;
   return items.filter(i => {
     const d = dateField === "paid_at" ? (i.paid_at || i.created_at) : i.created_at;
