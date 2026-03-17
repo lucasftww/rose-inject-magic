@@ -47,6 +47,7 @@ const PedidoChat = () => {
   const [copied, setCopied] = useState(false);
   const [tutorialText, setTutorialText] = useState<string | null>(null);
   const [tutorialFileUrl, setTutorialFileUrl] = useState<string | null>(null);
+  const [isFreeNoKey, setIsFreeNoKey] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadingFile, setUploadingFile] = useState(false);
@@ -109,8 +110,13 @@ const PedidoChat = () => {
           setPlanPrice((planRes.data as any).price);
         }
         // If key is in metadata, use it directly as stock content
+        // Free games may not have a key (API change: no more APIF-000 keys)
         if (meta?.key && !ticketData.stock_item_id) {
           setStockContent(`Key: ${meta.key}`);
+        }
+        // Detect free game without key — show download/loader instructions instead
+        if (meta?.is_free && !meta?.key && !ticketData.stock_item_id) {
+          setIsFreeNoKey(true);
         }
       } else {
         if (prodRes.data) setProductName((prodRes.data as any).name);
@@ -841,7 +847,7 @@ const PedidoChat = () => {
         {/* Chat - Full Width */}
         <div className="flex max-h-[700px] min-h-[450px] flex-col rounded-xl border border-border bg-card overflow-hidden">
           {/* Delivery banner inside chat */}
-          {stockContent && (
+          {(stockContent || isFreeNoKey) && (
             <>
               <button
                 onClick={() => setExpandedSection(expandedSection === "delivery" ? null : "delivery")}
@@ -852,7 +858,7 @@ const PedidoChat = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-foreground">Parabéns! Seu produto foi entregue 🎉</p>
-                  <p className="text-[10px] text-muted-foreground">Clique para ver sua chave, tutorial e arquivos</p>
+                  <p className="text-[10px] text-muted-foreground">{isFreeNoKey && !stockContent ? "Clique para ver instruções de download" : "Clique para ver sua chave, tutorial e arquivos"}</p>
                 </div>
                 <div className={`flex h-7 w-7 items-center justify-center rounded-lg border border-success/30 bg-success/10 transition-transform duration-300 shrink-0 ${expandedSection === "delivery" ? "rotate-180" : ""}`}>
                   <ChevronDown className="h-3.5 w-3.5 text-success" />
@@ -867,7 +873,22 @@ const PedidoChat = () => {
                   className="border-b border-success/20 bg-background/50 shrink-0 overflow-y-auto max-h-[300px]"
                 >
                   <div className="p-4 space-y-4">
-                    {/* Product Key */}
+                    {/* Free game without key — loader instructions */}
+                    {isFreeNoKey && !stockContent && (
+                      <div>
+                        <p className="text-[11px] font-bold uppercase tracking-wider text-success mb-2 flex items-center gap-1.5">
+                          <Download className="h-3.5 w-3.5" />
+                          Produto Gratuito
+                        </p>
+                        <div className="rounded-xl border border-success/20 bg-card p-4 text-sm text-foreground space-y-2">
+                          <p>📥 Faça o download do programa abaixo e crie sua conta diretamente no loader.</p>
+                          <p className="text-muted-foreground text-xs">Não é necessário ativação de chave — basta criar conta e logar!</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Product Key — only show if there's an actual key */}
+                    {stockContent && (
                     <div>
                       <p className="text-[11px] font-bold uppercase tracking-wider text-success mb-2 flex items-center gap-1.5">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4"/><path d="m21 2-9.6 9.6"/><circle cx="7.5" cy="15.5" r="5.5"/></svg>
@@ -895,6 +916,7 @@ const PedidoChat = () => {
                         </div>
                       </div>
                     </div>
+                    )}
 
                     {/* Tutorial Text */}
                     {tutorialText && (

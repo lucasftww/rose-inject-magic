@@ -1060,9 +1060,11 @@ async function fulfillRobotProduct(supabaseAdmin: any, payment: any, item: any, 
       return;
     }
 
-    // Success! Deliver the key
+    // Success! Deliver the key (or keyless for free games)
     // Robot API returns keys without dashes (e.g. "APIBF6A6FBEB89A8")
     // but they should be formatted as "APIB-F6A6-FBEB-89A8" (groups of 4)
+    // NOTE: Since API update, free games no longer return keys — clients create
+    // an account in the loader and log in without key activation.
     const rawKey = buyData.data?.key || "";
     const key = rawKey.length >= 8 && !rawKey.includes("-")
       ? rawKey.match(/.{1,4}/g)?.join("-") || rawKey
@@ -1073,18 +1075,23 @@ async function fulfillRobotProduct(supabaseAdmin: any, payment: any, item: any, 
     const isFreeGame = buyData.data?.game?.free === true || buyData.data?.finalAmount === 0;
     const downloadUrl = buyData.data?.game?.downloadUrl || buyData.data?.downloadUrl || null;
     const fileName = buyData.data?.game?.fileName || buyData.data?.fileName || null;
+    const hasKey = key.length > 0;
 
-    // Store key as stock item
-    const { data: stockItem } = await supabaseAdmin
-      .from("stock_items")
-      .insert({
-        product_plan_id: item.planId,
-        content: `Key: ${key}`,
-        used: true,
-        used_at: new Date().toISOString(),
-      })
-      .select("id")
-      .single();
+    // Store stock item only if there's an actual key
+    let stockItem: { id: string } | null = null;
+    if (hasKey) {
+      const { data } = await supabaseAdmin
+        .from("stock_items")
+        .insert({
+          product_plan_id: item.planId,
+          content: `Key: ${key}`,
+          used: true,
+          used_at: new Date().toISOString(),
+        })
+        .select("id")
+        .single();
+      stockItem = data;
+    }
 
     // Create delivered ticket
     const { data: ticket } = await supabaseAdmin
@@ -1100,7 +1107,7 @@ async function fulfillRobotProduct(supabaseAdmin: any, payment: any, item: any, 
           type: "robot-project",
           robot_game_id: robotGameId,
           duration,
-          key,
+          key: hasKey ? key : null,
           amount_spent: amountSpent,
           game_name: gameName,
           robot_balance: robotBalance,
@@ -1114,9 +1121,14 @@ async function fulfillRobotProduct(supabaseAdmin: any, payment: any, item: any, 
 
     if (ticket) {
       // Build delivery message
-      let deliveryMsg = `✅ Seu produto foi entregue automaticamente!\n\n🔑 **Key:** \`${key}\`\n⏱️ Duração: ${duration} dias`;
-      if (isFreeGame) {
-        deliveryMsg = `✅ Produto gratuito ativado automaticamente!\n\n🔑 **Key:** \`${key}\``;
+      let deliveryMsg: string;
+      if (isFreeGame && !hasKey) {
+        // Free game without key — user must create account in the loader
+        deliveryMsg = `✅ Produto gratuito liberado!\n\n📥 Faça o download do programa e crie sua conta no loader para começar a usar. Não é necessário ativação de chave.`;
+      } else if (hasKey) {
+        deliveryMsg = `✅ Seu produto foi entregue automaticamente!\n\n🔑 **Key:** \`${key}\`\n⏱️ Duração: ${duration} dias`;
+      } else {
+        deliveryMsg = `✅ Seu produto foi entregue automaticamente!`;
       }
       if (downloadUrl) {
         deliveryMsg += `\n\n📥 **Download:** ${downloadUrl}`;
@@ -1124,7 +1136,9 @@ async function fulfillRobotProduct(supabaseAdmin: any, payment: any, item: any, 
           deliveryMsg += `\n📄 Arquivo: ${fileName}`;
         }
       }
-      deliveryMsg += `\n\nVeja a chave acima para ativar.`;
+      if (hasKey) {
+        deliveryMsg += `\n\nVeja a chave acima para ativar.`;
+      }
 
       await supabaseAdmin.from("ticket_messages").insert({
         ticket_id: ticket.id,
