@@ -983,6 +983,7 @@ const Contas = () => {
       // Fetch remaining pages in background, batch by page
       if (hasMore) {
         let allItems = [...firstPageItems];
+        const seenIds = new Set(firstPageItems.map(i => i.item_id));
         let nextPage = hasMore;
         let pageNum = 2;
 
@@ -991,7 +992,11 @@ const Contas = () => {
             const pageData = await fetchWithRetry(buildParams(pageNum), controller);
           if (controller.signal.aborted) return;
 
-          const pageItems: LztItem[] = pageData?.items ?? [];
+          const pageItems: LztItem[] = (pageData?.items ?? []).filter((i: LztItem) => {
+            if (seenIds.has(i.item_id)) return false;
+            seenIds.add(i.item_id);
+            return true;
+          });
           allItems = [...allItems, ...pageItems];
           setStreamedItems(allItems);
           nextPage = pageData?.hasNextPage ?? false;
@@ -1055,11 +1060,11 @@ const Contas = () => {
   // Helper: get BRL price for sorting (matches what user sees on screen)
   const getBrlPrice = (item: LztItem): number => {
     if (item.price_brl && item.price_brl > 0) return item.price_brl;
-    // Fallback: use markup calculation (same as useLztMarkup.calcPrice)
+    // Fallback: use markup calculation (same as server 3.0x)
     const RUB_TO_BRL = 0.055;
     let brl = item.price;
     if (item.price_currency === "rub" || !item.price_currency) brl = item.price * RUB_TO_BRL;
-    const final = brl * 1.5;
+    const final = brl * 3.0;
     return final < 20 ? 20 : final;
   };
 
