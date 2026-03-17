@@ -107,6 +107,13 @@ const TicketsTab = ({
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const { isRecording, recordingDuration, startRecording, stopRecording, cancelRecording } = useAudioRecorder();
 
+  // Cleanup preview URLs on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      previewUrls.forEach(url => { if (url) URL.revokeObjectURL(url); });
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ─── Data Fetching ──────────────────────────────────────────────────────
 
   const fetchTickets = useCallback(async (force = false) => {
