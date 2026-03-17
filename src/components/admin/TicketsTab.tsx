@@ -10,7 +10,7 @@ import {
   Clock, User, Copy, Check, ShieldCheck, ExternalLink, KeyRound, Mail,
   ChevronDown, ChevronUp, CheckCircle, BookOpen, FolderDown, Download,
   Package, Eye, EyeOff, Paperclip, Image, X, FileText, Bot, UserCircle,
-  Mic, Square, Trash2, Hash, Globe, Info,
+  Mic, Square, Trash2, Hash, Globe,
 } from "lucide-react";
 import { useAudioRecorder, formatDuration } from "@/hooks/useAudioRecorder";
 
