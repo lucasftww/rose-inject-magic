@@ -858,12 +858,17 @@ const Dashboard = () => {
   );
 };
 
-/* ── Mini sparkline data generator ── */
-const generateSparkline = (count: number, trend: "up" | "down" | "flat" = "up") => {
+/* ── Mini sparkline data generator (seeded for stability) ── */
+const generateSparkline = (count: number, trend: "up" | "down" | "flat" = "up", seed: number = 0) => {
   const data = [];
   let val = trend === "up" ? 20 : trend === "down" ? 80 : 50;
+  let s = seed || 1;
+  const pseudoRandom = () => {
+    s = (s * 16807 + 0) % 2147483647;
+    return s / 2147483647;
+  };
   for (let i = 0; i < count; i++) {
-    const change = (Math.random() - (trend === "up" ? 0.3 : trend === "down" ? 0.7 : 0.5)) * 15;
+    const change = (pseudoRandom() - (trend === "up" ? 0.3 : trend === "down" ? 0.7 : 0.5)) * 15;
     val = Math.max(5, Math.min(95, val + change));
     data.push({ v: val });
   }

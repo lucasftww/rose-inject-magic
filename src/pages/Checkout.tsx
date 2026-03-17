@@ -46,7 +46,10 @@ const Checkout = () => {
   const [cartSnapshot, setCartSnapshot] = useState<typeof items>([]);
   // Price is calculated from cart items — never trust URL params
   const cartTotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
-  const discountAmount = parseFloat(searchParams.get("discount") || "0");
+  // Discount is only trusted from server response; URL param is used as a hint for display
+  const urlDiscount = parseFloat(searchParams.get("discount") || "0");
+  // Cap URL discount to never exceed cart total and never be negative
+  const discountAmount = Math.max(0, Math.min(urlDiscount, cartTotal));
   const cartFinalPrice = Math.max(0, cartTotal - discountAmount);
   // Store the display price so it survives cart clearing
   const [displayPrice, setDisplayPrice] = useState<{ total: number; final: number; discount: number } | null>(null);
