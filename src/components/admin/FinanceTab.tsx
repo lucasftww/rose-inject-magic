@@ -305,10 +305,25 @@ const FinanceTab = () => {
     return Object.entries(games).sort((a, b) => b[1].revenue - a[1].revenue);
   }, [fLzt]);
 
-  // ─── Daily revenue chart ───
+  // ─── Daily/Hourly revenue chart ───
   const dailyData = useMemo(() => {
+    if (period === "24h") {
+      // Show hourly data for 24h
+      const hours: Record<string, { date: string; receita: number }> = {};
+      for (let i = 23; i >= 0; i--) {
+        const d = new Date(Date.now() - i * 3600000);
+        const key = `${d.toISOString().slice(0, 13)}`;
+        const label = `${d.getHours().toString().padStart(2, "0")}h`;
+        hours[key] = { date: label, receita: 0 };
+      }
+      fp.forEach(p => {
+        const d = (p.paid_at || p.created_at).slice(0, 13);
+        if (hours[d]) hours[d].receita += p.amount / 100;
+      });
+      return Object.values(hours);
+    }
     const days: Record<string, { date: string; receita: number }> = {};
-    const numDays = period === "24h" ? 1 : period === "7d" ? 7 : period === "30d" ? 30 : 90;
+    const numDays = period === "7d" ? 7 : period === "30d" ? 30 : 90;
     for (let i = numDays - 1; i >= 0; i--) {
       const d = new Date(Date.now() - i * 86400000);
       const key = d.toISOString().slice(0, 10);
@@ -455,11 +470,11 @@ const FinanceTab = () => {
       </div>
 
       {/* Daily Revenue Chart */}
-      {dailyData.length > 1 && (
+      {dailyData.length > 0 && (
         <div className="rounded-xl border border-border bg-card p-5">
           <h3 className="text-sm font-bold text-foreground flex items-center gap-2 mb-4">
             <CalendarDays className="h-4 w-4 text-success" />
-            Faturamento Diário
+            {period === "24h" ? "Faturamento por Hora" : "Faturamento Diário"}
           </h3>
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={dailyData}>

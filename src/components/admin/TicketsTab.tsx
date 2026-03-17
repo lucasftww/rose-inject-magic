@@ -10,7 +10,7 @@ import {
   Clock, User, Copy, Check, ShieldCheck, ExternalLink, KeyRound, Mail,
   ChevronDown, ChevronUp, CheckCircle, BookOpen, FolderDown, Download,
   Package, Eye, EyeOff, Paperclip, Image, X, FileText, Bot, UserCircle,
-  Mic, Square, Trash2, Hash, Globe, Info,
+  Mic, Square, Trash2, Hash, Globe,
 } from "lucide-react";
 import { useAudioRecorder, formatDuration } from "@/hooks/useAudioRecorder";
 
@@ -25,7 +25,6 @@ interface Ticket {
   status: string;
   status_label: string;
   created_at: string;
-  created_at_sort: string;
   product_name?: string;
   plan_name?: string;
   plan_price?: number;
