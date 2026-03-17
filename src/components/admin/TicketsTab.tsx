@@ -411,7 +411,7 @@ const TicketsTab = ({
     } else {
       toast({ title: "Ticket arquivado" });
       if (selectedTicket?.id === ticketId) setSelectedTicket(null);
-      fetchTickets();
+      fetchTickets(true);
     }
   };
 
@@ -421,7 +421,7 @@ const TicketsTab = ({
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Ticket restaurado" });
-      fetchTickets();
+      fetchTickets(true);
     }
   };
 
