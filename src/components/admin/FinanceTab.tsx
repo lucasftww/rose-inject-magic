@@ -470,11 +470,11 @@ const FinanceTab = () => {
       </div>
 
       {/* Daily Revenue Chart */}
-      {dailyData.length > 1 && (
+      {dailyData.length > 0 && (
         <div className="rounded-xl border border-border bg-card p-5">
           <h3 className="text-sm font-bold text-foreground flex items-center gap-2 mb-4">
             <CalendarDays className="h-4 w-4 text-success" />
-            Faturamento Diário
+            {period === "24h" ? "Faturamento por Hora" : "Faturamento Diário"}
           </h3>
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={dailyData}>
