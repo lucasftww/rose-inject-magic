@@ -1022,16 +1022,23 @@ const Contas = () => {
   const loadMorePages = async () => {
     if (loadingMore || !hasNextPage) return;
     setLoadingMore(true);
+    // Abort any previous in-flight request before starting a new one
+    abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
     try {
       const nextPageNum = currentPage + 1;
-      const data = await fetchAccountsRaw(buildParams(nextPageNum));
+      const data = await fetchWithRetry(buildParams(nextPageNum), controller);
       if (controller.signal.aborted) return;
       const pageItems: LztItem[] = data?.items ?? [];
       setHasNextPage(data?.hasNextPage ?? false);
       setCurrentPage(nextPageNum);
-      setStreamedItems(prev => [...prev, ...pageItems]);
+      // Deduplicate by item_id to prevent duplicates from race conditions
+      setStreamedItems(prev => {
+        const existingIds = new Set(prev.map(i => i.item_id));
+        const newItems = pageItems.filter(i => !existingIds.has(i.item_id));
+        return [...prev, ...newItems];
+      });
     } catch (err: any) {
       if (!controller.signal.aborted) setStreamError(err);
     }
@@ -1109,7 +1116,13 @@ const Contas = () => {
     }
     return filtered;
   }, [streamedItems, sortBy, gameTab, priceMin, priceMax]);
-  const totalDisplayPages = Math.ceil(allItems.length / ITEMS_PER_PAGE);
+  const totalDisplayPages = Math.max(1, Math.ceil(allItems.length / ITEMS_PER_PAGE));
+
+  // Clamp displayPage when allItems shrinks (e.g. after price filtering)
+  useEffect(() => {
+    if (displayPage > totalDisplayPages) setDisplayPage(totalDisplayPages);
+  }, [totalDisplayPages, displayPage]);
+
   const items = allItems.slice((displayPage - 1) * ITEMS_PER_PAGE, displayPage * ITEMS_PER_PAGE);
 
   const refetch = () => {
@@ -1161,7 +1174,7 @@ const Contas = () => {
     gameTab === "lol" && lolSkinsMin !== "",
     gameTab === "lol" && lolRegion !== "BR1",
     gameTab === "fortnite" && fnVbMin !== "",
-    gameTab === "fortnite" && fnSkinsMin !== "",
+    gameTab === "fortnite" && fnSkinsMin !== "" && fnSkinsMin !== "1",
     isMinecraft && mcJava,
     isMinecraft && mcBedrock,
     isMinecraft && mcHypixelLvlMin !== "",

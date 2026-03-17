@@ -46,7 +46,7 @@ const MinecraftDetalhes = () => {
   const { addItem } = useCart();
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["lzt-account-detail", id],
+    queryKey: ["lzt-account-detail", "minecraft", id],
     queryFn: () => fetchAccountDetail(id!),
     enabled: !!id,
     staleTime: 1000 * 60 * 5,

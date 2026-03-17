@@ -104,7 +104,7 @@ const LolDetalhes = () => {
 
   // Fetch account detail
   const { data, isLoading, error } = useQuery({
-    queryKey: ["lzt-account-detail", id],
+    queryKey: ["lzt-account-detail", "lol", id],
     queryFn: () => fetchAccountDetail(id!),
     enabled: !!id,
     staleTime: 1000 * 60 * 5,
