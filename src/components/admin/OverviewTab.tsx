@@ -260,14 +260,29 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <h2 className="text-lg font-bold text-foreground">Visão Geral</h2>
-        <button
-          onClick={() => setRefreshKey(k => k + 1)}
-          className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5 text-[11px] font-medium text-muted-foreground hover:border-success/50 hover:text-success"
-        >
-          <RefreshCw className="h-3 w-3" /> Atualizar
-        </button>
+        <div className="flex items-center gap-2">
+          <div className="flex gap-0.5 bg-secondary rounded-lg p-0.5">
+            {([["24h", "24h"], ["7d", "7d"], ["30d", "30d"], ["all", "Tudo"]] as const).map(([key, label]) => (
+              <button
+                key={key}
+                onClick={() => setPeriod(key as Period)}
+                className={`rounded-md px-3 py-1.5 text-[11px] font-semibold ${
+                  period === key ? "bg-success text-success-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={() => setRefreshKey(k => k + 1)}
+            className="rounded-lg border border-border bg-card p-1.5 text-muted-foreground hover:text-foreground"
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+          </button>
+        </div>
       </div>
 
       {/* Margin Alert — simplified, no editable threshold */}
