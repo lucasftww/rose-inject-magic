@@ -10,7 +10,7 @@ import {
   Clock, User, Copy, Check, ShieldCheck, ExternalLink, KeyRound, Mail,
   ChevronDown, ChevronUp, CheckCircle, BookOpen, FolderDown, Download,
   Package, Eye, EyeOff, Paperclip, Image, X, FileText, Bot, UserCircle,
-  Mic, Square, Trash2, Hash,
+  Mic, Square, Trash2, Hash, Globe, Info,
 } from "lucide-react";
 import { useAudioRecorder, formatDuration } from "@/hooks/useAudioRecorder";
 
@@ -391,16 +391,15 @@ const TicketsTab = ({
   // ─── Status Management ──────────────────────────────────────────────────
 
   const updateStatus = async (ticketId: string, status: string) => {
-    const finalStatus = status === "closed" ? "archived" : status;
-    const finalLabel = status === "closed" ? "Arquivado" : (statusOptions.find(s => s.value === status)?.label || status);
-    const { error } = await supabase.from("order_tickets").update({ status: finalStatus, status_label: finalLabel }).eq("id", ticketId);
+    const label = statusOptions.find(s => s.value === status)?.label || status;
+    const { error } = await supabase.from("order_tickets").update({ status, status_label: label }).eq("id", ticketId);
     if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: `Status: ${finalLabel}` });
-      fetchTickets();
+      toast({ title: `Status: ${label}` });
+      fetchTickets(true);
       if (selectedTicket?.id === ticketId) {
-        setSelectedTicket(prev => prev ? { ...prev, status: finalStatus, status_label: finalLabel } : null);
+        setSelectedTicket(prev => prev ? { ...prev, status, status_label: label } : null);
       }
     }
   };
@@ -412,7 +411,7 @@ const TicketsTab = ({
     } else {
       toast({ title: "Ticket arquivado" });
       if (selectedTicket?.id === ticketId) setSelectedTicket(null);
-      fetchTickets();
+      fetchTickets(true);
     }
   };
 
@@ -422,7 +421,7 @@ const TicketsTab = ({
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Ticket restaurado" });
-      fetchTickets();
+      fetchTickets(true);
     }
   };
 
@@ -865,11 +864,32 @@ const TicketsTab = ({
                       {getStatusLabel(ticket.status)}
                     </span>
                   </div>
+                  {/* Purchase type + plan + price */}
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-0.5">
+                    {ticket.metadata?.type === "lzt-account" ? (
+                      <span className="inline-flex items-center gap-1 text-blue-400 text-[10px] font-medium">
+                        <Globe className="h-2.5 w-2.5" />LZT
+                      </span>
+                    ) : ticket.metadata?.type === "robot-project" ? (
+                      <span className="inline-flex items-center gap-1 text-purple-400 text-[10px] font-medium">
+                        <Bot className="h-2.5 w-2.5" />Robot
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-success text-[10px] font-medium">
+                        <Package className="h-2.5 w-2.5" />Estoque
+                      </span>
+                    )}
+                    <span className="text-muted-foreground/30">·</span>
                     <span className="truncate">{ticket.plan_name}</span>
                     <span className="text-muted-foreground/30">·</span>
                     <span className="font-semibold text-foreground/70">R$ {Number(ticket.plan_price || 0).toFixed(2)}</span>
                   </div>
+                  {/* LZT item ID if applicable */}
+                  {ticket.metadata?.lzt_item_id && (
+                    <div className="flex items-center gap-1 text-[10px] text-muted-foreground/50 font-mono mb-0.5">
+                      <span>LZT #{ticket.metadata.lzt_item_id}</span>
+                    </div>
+                  )}
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <User className="h-3 w-3 shrink-0 text-muted-foreground/40" />
                     <span className="truncate">{ticket.buyer_username}</span>
@@ -952,10 +972,39 @@ const TicketsTab = ({
                       <p className="text-sm font-bold text-foreground truncate">{selectedTicket.buyer_username}</p>
                       <span className="text-[10px] text-muted-foreground/50 truncate hidden sm:inline">{selectedTicket.buyer_email}</span>
                     </div>
-                    <div className="flex items-center gap-1.5 mt-px">
+                    <div className="flex items-center gap-1.5 mt-px flex-wrap">
+                      {/* Purchase type badge */}
+                      {selectedTicket.metadata?.type === "lzt-account" ? (
+                        <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-blue-400">
+                          <Globe className="h-2.5 w-2.5" />LZT
+                        </span>
+                      ) : selectedTicket.metadata?.type === "robot-project" ? (
+                        <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-purple-400">
+                          <Bot className="h-2.5 w-2.5" />Robot
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-success">
+                          <Package className="h-2.5 w-2.5" />Estoque
+                        </span>
+                      )}
+                      <span className="text-muted-foreground/20">·</span>
                       <span className="text-[11px] text-muted-foreground truncate max-w-[120px]">{selectedTicket.product_name}</span>
                       <span className="text-muted-foreground/20">·</span>
                       <span className="text-[11px] font-semibold text-foreground/60">R$ {Number(selectedTicket.plan_price || 0).toFixed(2)}</span>
+                      {selectedTicket.metadata?.lzt_item_id && (
+                        <>
+                          <span className="text-muted-foreground/20">·</span>
+                          <a
+                            href={`https://lzt.market/${selectedTicket.metadata.lzt_item_id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground hover:text-success font-mono"
+                          >
+                            #{selectedTicket.metadata.lzt_item_id}
+                            <ExternalLink className="h-2.5 w-2.5" />
+                          </a>
+                        </>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
