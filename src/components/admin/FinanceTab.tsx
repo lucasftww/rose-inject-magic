@@ -95,7 +95,7 @@ const getPreviousPeriodItems = <T extends { created_at: string; paid_at?: string
   items: T[], period: Period, dateField: "created_at" | "paid_at" = "paid_at"
 ): T[] => {
   if (period === "all") return [];
-  const ms = period === "7d" ? 7 * 86400000 : 30 * 86400000;
+  const ms = period === "24h" ? 86400000 : period === "7d" ? 7 * 86400000 : 30 * 86400000;
   const start = Date.now() - ms * 2;
   const end = Date.now() - ms;
   return items.filter(i => {
