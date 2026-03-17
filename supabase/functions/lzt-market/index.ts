@@ -456,6 +456,20 @@ Deno.serve(async (req) => {
 
     // For detail action, also add price_brl (keep full data)
     if (action === "detail" && data.item) {
+      // SECURITY: reject sold/unavailable accounts on detail too
+      if (data.item.buyer) {
+        return new Response(
+          JSON.stringify({ error: "Account already sold", item: null }),
+          { status: 410, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      if (data.item.canBuyItem === false) {
+        return new Response(
+          JSON.stringify({ error: "Account unavailable", item: null }),
+          { status: 410, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       // Check for price override first
       const detailItemId = String(data.item.item_id);
       const { data: overrideRow } = await supabaseAdmin

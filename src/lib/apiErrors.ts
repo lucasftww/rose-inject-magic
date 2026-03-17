@@ -2,6 +2,9 @@ export function throwApiError(status: number): never {
   if (status === 403) {
     throw new Error("Esta conta não está mais disponível. Ela pode ter sido vendida ou removida pelo vendedor.");
   }
+  if (status === 410) {
+    throw new Error("Esta conta já foi vendida. Escolha outra conta disponível.");
+  }
   if (status === 502 || status === 503) {
     throw new Error("O serviço de contas está temporariamente instável. Tente novamente em alguns segundos.");
   }
