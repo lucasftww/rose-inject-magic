@@ -114,6 +114,10 @@ const PedidoChat = () => {
         if (meta?.key && !ticketData.stock_item_id) {
           setStockContent(`Key: ${meta.key}`);
         }
+        // Detect free game without key — show download/loader instructions instead
+        if (meta?.is_free && !meta?.key && !ticketData.stock_item_id) {
+          setIsFreeNoKey(true);
+        }
       } else {
         if (prodRes.data) setProductName((prodRes.data as any).name);
         if (planRes.data) {
