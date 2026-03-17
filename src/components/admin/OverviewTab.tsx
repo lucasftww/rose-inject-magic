@@ -3,9 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { fetchAllRows } from "@/lib/supabaseAllRows";
 import { useAdminUsers } from "@/hooks/useAdminUsers";
 import {
-  Loader2, DollarSign, ShoppingCart, Users, UserCheck,
-  Package, Receipt, RefreshCw, TrendingUp, Clock, Activity,
-  Zap, BarChart3, ArrowDown, AlertTriangle
+  Loader2, DollarSign, ShoppingCart, Users,
+  Package, Receipt, RefreshCw, TrendingUp, Clock,
+  AlertTriangle
 } from "lucide-react";
 
 interface OrderTicket {
@@ -73,32 +73,26 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
   const { users: adminUsers, usernameMap } = useAdminUsers();
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [marginThreshold, setMarginThreshold] = useState(30);
-  const [editingThreshold, setEditingThreshold] = useState(false);
-  const [thresholdInput, setThresholdInput] = useState("30");
   const [openTickets, setOpenTickets] = useState(0);
   const [totalOrders, setTotalOrders] = useState(0);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [totalPaidPayments, setTotalPaidPayments] = useState(0);
-  const [totalResellers, setTotalResellers] = useState(0);
-  const [totalProducts, setTotalProducts] = useState(0);
   const [recentOrders, setRecentOrders] = useState<OrderTicket[]>([]);
   const [recentPayments, setRecentPayments] = useState<Payment[]>([]);
   const [todayRevenue, setTodayRevenue] = useState(0);
   const [todayOrders, setTodayOrders] = useState(0);
 
   // Profit data
-  const [lztProfit, setLztProfit] = useState(0);
   const [lztCost, setLztCost] = useState(0);
-  const [robotProfit, setRobotProfit] = useState(0);
+  const [lztProfit, setLztProfit] = useState(0);
   const [robotCost, setRobotCost] = useState(0);
+  const [robotProfit, setRobotProfit] = useState(0);
   const [totalDiscounts, setTotalDiscounts] = useState(0);
 
   useEffect(() => {
     const fetchAll = async () => {
       setLoading(true);
 
-      // Fetch USD rate
       let usdToBrl = 5.5;
       try {
         const res = await fetch("https://open.er-api.com/v6/latest/USD");
@@ -108,8 +102,8 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
 
       const [statsRes, recentOrdersRes, recentPaymentsRes, todayPayRes, lztRes, allPaymentsRes, robotProductsRes, openTicketsRes] = await Promise.all([
         supabase.rpc("admin_overview_stats"),
-        supabase.from("order_tickets").select("*").order("created_at", { ascending: false }).limit(8),
-        supabase.from("payments").select("*").eq("status", "COMPLETED").order("paid_at", { ascending: false }).limit(8),
+        supabase.from("order_tickets").select("*").order("created_at", { ascending: false }).limit(6),
+        supabase.from("payments").select("*").eq("status", "COMPLETED").order("paid_at", { ascending: false }).limit(6),
         fetchAllRows("payments", { select: "amount", filters: [{ column: "status", op: "eq", value: "COMPLETED" }, { column: "paid_at", op: "gte", value: new Date(new Date().setHours(0, 0, 0, 0)).toISOString() }] }),
         supabase.rpc("admin_lzt_stats"),
         fetchAllRows("payments", {
@@ -126,18 +120,14 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
           setTotalOrders(Number(s.total_orders));
           setTotalRevenue(Number(s.total_revenue));
           setTotalPaidPayments(Number(s.total_paid_payments));
-          setTotalResellers(Number(s.total_resellers));
-          setTotalProducts(Number(s.total_products));
         }
       }
 
-      // Open tickets count (real count, not just from recent 8)
       setOpenTickets(openTicketsRes.count ?? 0);
 
       const discTotal = (allPaymentsRes || []).reduce((s: number, p: any) => s + (Number(p.discount_amount) || 0), 0);
       setTotalDiscounts(discTotal);
 
-      // LZT profit
       if (lztRes.data) {
         const l = lztRes.data as any;
         if (!l.error) {
@@ -163,7 +153,6 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
         const robotTickets = (ticketsRes || []).filter((t: any) => productIds.includes(t.product_id));
         const planMap = Object.fromEntries((plansRes.data || []).map((p: any) => [p.id, p]));
 
-        // Build paid price map
         const paidPriceMap = new Map<string, number>();
         for (const pay of (allPaymentsRes || [])) {
           const snapshot = pay.cart_snapshot as any[];
@@ -246,8 +235,6 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
     })));
   }, [usernameMap]);
 
-
-  // Computed profits
   const revenueTotal = totalRevenue / 100;
   const totalCosts = lztCost + robotCost + totalDiscounts;
   const netProfit = revenueTotal - totalCosts;
@@ -262,172 +249,78 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-bold text-foreground">Visão Geral</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">Resumo do seu negócio em tempo real</p>
-        </div>
+        <h2 className="text-lg font-bold text-foreground">Visão Geral</h2>
         <button
           onClick={() => setRefreshKey(k => k + 1)}
-          className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5 text-[11px] font-medium text-muted-foreground hover:border-success/50 hover:text-success transition-colors"
+          className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5 text-[11px] font-medium text-muted-foreground hover:border-success/50 hover:text-success"
         >
           <RefreshCw className="h-3 w-3" /> Atualizar
         </button>
       </div>
 
-      {/* Margin Alert */}
-      {profitMargin < marginThreshold && revenueTotal > 0 && (
-        <div className="rounded-xl border-2 border-destructive/30 bg-destructive/[0.05] p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-destructive/15 shrink-0">
-              <AlertTriangle className="h-5 w-5 text-destructive" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-destructive">Margem abaixo do limite!</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Sua margem atual é <span className="font-bold text-destructive">{profitMargin.toFixed(1)}%</span>, 
-                abaixo do limite de {marginThreshold}%. Revise seus custos.
-              </p>
-            </div>
-            <div className="shrink-0 flex items-center gap-1.5">
-              {editingThreshold ? (
-                <div className="flex items-center gap-1">
-                  <input
-                    type="number"
-                    value={thresholdInput}
-                    onChange={(e) => setThresholdInput(e.target.value)}
-                    className="w-14 rounded-md border border-border bg-card px-2 py-1 text-xs text-foreground text-center"
-                    min="0"
-                    max="100"
-                  />
-                  <span className="text-xs text-muted-foreground">%</span>
-                  <button
-                    onClick={() => {
-                      const val = Math.min(100, Math.max(0, Number(thresholdInput) || 30));
-                      setMarginThreshold(val);
-                      setThresholdInput(String(val));
-                      setEditingThreshold(false);
-                    }}
-                    className="rounded-md bg-success px-2 py-1 text-[10px] font-bold text-success-foreground"
-                  >
-                    OK
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => { setThresholdInput(String(marginThreshold)); setEditingThreshold(true); }}
-                  className="rounded-md border border-border bg-card px-2.5 py-1 text-[10px] font-medium text-muted-foreground hover:text-foreground"
-                >
-                  Limite: {marginThreshold}%
-                </button>
-              )}
-            </div>
-          </div>
+      {/* Margin Alert — simplified, no editable threshold */}
+      {profitMargin < 30 && revenueTotal > 0 && (
+        <div className="flex items-center gap-3 rounded-xl border border-destructive/20 bg-destructive/[0.04] px-4 py-3">
+          <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
+          <p className="text-xs text-muted-foreground">
+            Margem atual: <span className="font-bold text-destructive">{profitMargin.toFixed(1)}%</span> — Revise seus custos.
+          </p>
         </div>
       )}
 
-      <div className="rounded-xl border border-success/20 bg-success/[0.03] p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <Activity className="h-4 w-4 text-success" />
-          <span className="text-xs font-bold text-success uppercase tracking-wider">Hoje</span>
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="rounded-xl border border-success/20 bg-success/[0.04] p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <DollarSign className="h-4 w-4 text-success" />
+            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Hoje</span>
+          </div>
+          <p className="text-2xl font-bold text-success tracking-tight">R$ {todayRevenue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">{todayOrders} vendas</p>
         </div>
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <div>
-            <p className="text-2xl font-bold text-success tracking-tight">R$ {todayRevenue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Faturado Hoje</p>
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-foreground tracking-tight">{todayOrders}</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Vendas Hoje</p>
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-foreground tracking-tight">{adminUsers.length}</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Usuários Totais</p>
-          </div>
-          <div>
-            <p className={`text-2xl font-bold tracking-tight ${openTickets > 0 ? "text-warning" : "text-foreground"}`}>{openTickets}</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Tickets Abertos</p>
-          </div>
-        </div>
-      </div>
 
-      {/* Profit Summary */}
-      <div className="rounded-xl border border-positive/20 bg-positive/[0.03] p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <TrendingUp className="h-4 w-4 text-positive" />
-          <span className="text-xs font-bold text-positive uppercase tracking-wider">Lucro Total</span>
-          <span className="text-[10px] text-muted-foreground ml-auto">Margem: {profitMargin.toFixed(1)}%</span>
+        <div className="rounded-xl border border-border bg-card p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <TrendingUp className="h-4 w-4 text-positive" />
+            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Lucro</span>
+          </div>
+          <p className="text-2xl font-bold text-positive tracking-tight">R$ {fmt(netProfit)}</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">Margem {profitMargin.toFixed(1)}%</p>
         </div>
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
-          <div>
-            <p className="text-2xl font-bold text-positive tracking-tight">R$ {fmt(netProfit)}</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Lucro Líquido</p>
-          </div>
-          <div>
-            <p className="text-lg font-bold text-foreground tracking-tight">R$ {fmt(revenueTotal)}</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Receita Bruta</p>
-          </div>
-          <div>
-            <p className="text-lg font-bold text-foreground tracking-tight flex items-center gap-1.5">
-              <BarChart3 className="h-3.5 w-3.5 text-success" />
-              R$ {fmt(lztProfit)}
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Lucro LZT</p>
-          </div>
-          <div>
-            <p className="text-lg font-bold text-foreground tracking-tight flex items-center gap-1.5">
-              <Zap className="h-3.5 w-3.5 text-warning" />
-              R$ {fmt(robotProfit)}
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Lucro Robot</p>
-          </div>
-          <div>
-            <p className="text-lg font-bold text-destructive tracking-tight flex items-center gap-1.5">
-              <ArrowDown className="h-3.5 w-3.5" />
-              R$ {fmt(totalCosts)}
-            </p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Custos Totais</p>
-          </div>
-        </div>
-      </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-        {[
-          { icon: DollarSign, label: "Receita Total", value: `R$ ${fmt(revenueTotal)}`, accent: "text-positive", bg: "bg-positive/10" },
-          { icon: ShoppingCart, label: "Total de Pedidos", value: String(totalOrders), accent: "text-success", bg: "bg-success/10" },
-          { icon: Receipt, label: "Faturas Pagas", value: String(totalPaidPayments), accent: "text-info", bg: "bg-info/10" },
-          { icon: Users, label: "Usuários", value: String(adminUsers.length), accent: "text-success", bg: "bg-success/10" },
-          { icon: UserCheck, label: "Revendedores", value: String(totalResellers), accent: "text-warning", bg: "bg-warning/10" },
-          { icon: Package, label: "Produtos", value: String(totalProducts), accent: "text-info", bg: "bg-info/10" },
-        ].map((stat) => {
-          const Icon = stat.icon;
-          return (
-            <div key={stat.label} className="group rounded-xl border border-border bg-card p-4 hover:border-border/80 transition-colors">
-              <div className="flex items-center gap-3 mb-3">
-                <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${stat.bg} ${stat.accent}`}>
-                  <Icon className="h-4 w-4" />
-                </div>
-                <p className="text-[11px] font-medium text-muted-foreground">{stat.label}</p>
-              </div>
-              <p className="text-xl font-bold text-foreground tracking-tight">{stat.value}</p>
-            </div>
-          );
-        })}
+        <div className="rounded-xl border border-border bg-card p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <ShoppingCart className="h-4 w-4 text-info" />
+            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Pedidos</span>
+          </div>
+          <p className="text-2xl font-bold text-foreground tracking-tight">{totalOrders}</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">{totalPaidPayments} faturas pagas</p>
+        </div>
+
+        <div className="rounded-xl border border-border bg-card p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Users className="h-4 w-4 text-warning" />
+            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Status</span>
+          </div>
+          <p className="text-2xl font-bold text-foreground tracking-tight">{adminUsers.length}</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">
+            {openTickets > 0 ? <span className="text-warning font-semibold">{openTickets} tickets abertos</span> : "Nenhum ticket aberto"}
+          </p>
+        </div>
       </div>
 
       {/* Recent Sections */}
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* Recent Orders */}
         <div className="rounded-xl border border-border bg-card overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-3.5 border-b border-border">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
               <Package className="h-4 w-4 text-success" />
               Últimos Pedidos
             </h3>
-            <span className="text-[10px] font-medium text-muted-foreground bg-secondary rounded-full px-2 py-0.5">{recentOrders.length}</span>
           </div>
           <div className="divide-y divide-border">
             {recentOrders.length === 0 ? (
@@ -436,30 +329,30 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
               <div
                 key={order.id}
                 onClick={() => onGoToTicket?.(order.id)}
-                className="flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-secondary/40 transition-colors group"
+                className="flex cursor-pointer items-center gap-3 px-4 py-2.5 hover:bg-secondary/40 group"
               >
                 <div className="relative shrink-0">
                   {order.product_image ? (
                     <img
                       src={order.product_image}
                       alt={order.product_name}
-                      className="h-10 w-10 rounded-lg object-cover border border-border group-hover:border-success/30 transition-colors"
+                      className="h-9 w-9 rounded-lg object-cover border border-border"
                     />
                   ) : (
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary border border-border group-hover:border-success/30 transition-colors">
-                      <Package className="h-4 w-4 text-muted-foreground" />
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary border border-border">
+                      <Package className="h-3.5 w-3.5 text-muted-foreground" />
                     </div>
                   )}
-                  <span className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-card ${
+                  <span className={`absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full border-2 border-card ${
                     order.status === "delivered" ? "bg-success" :
                     order.status === "open" || order.status === "waiting" || order.status === "waiting_staff" ? "bg-warning" :
                     "bg-muted-foreground"
                   }`} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-semibold text-foreground truncate group-hover:text-success transition-colors">{order.product_name}</p>
+                  <p className="text-[13px] font-medium text-foreground truncate">{order.product_name}</p>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="text-[11px] text-muted-foreground truncate max-w-[100px]">{order.username !== "?" ? order.username : "..."}</span>
+                    <span className="text-[11px] text-muted-foreground truncate max-w-[80px]">{order.username !== "?" ? order.username : "..."}</span>
                     <span className="text-muted-foreground/30 text-[10px]">•</span>
                     <span className="text-[10px] text-muted-foreground/70 flex items-center gap-0.5">
                       <Clock className="h-2.5 w-2.5" />
@@ -467,7 +360,7 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
                     </span>
                   </div>
                 </div>
-                <span className={`shrink-0 rounded-md border px-2.5 py-1 text-[10px] font-bold tracking-wide ${statusColors[order.status] || "bg-muted/50 text-muted-foreground border-border"}`}>
+                <span className={`shrink-0 rounded-md border px-2 py-0.5 text-[10px] font-bold ${statusColors[order.status] || "bg-muted/50 text-muted-foreground border-border"}`}>
                   {statusLabels[order.status] || order.status_label}
                 </span>
               </div>
@@ -477,12 +370,11 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
 
         {/* Recent Payments */}
         <div className="rounded-xl border border-border bg-card overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-3.5 border-b border-border">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
               <Receipt className="h-4 w-4 text-positive" />
               Últimas Vendas
             </h3>
-            <span className="text-[10px] font-medium text-muted-foreground bg-secondary rounded-full px-2 py-0.5">{recentPayments.length}</span>
           </div>
           <div className="divide-y divide-border">
             {recentPayments.length === 0 ? (
@@ -492,27 +384,18 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
               const productName = cartItems[0]?.productName || "—";
 
               return (
-                <div key={p.id} className="flex items-center gap-3 px-5 py-3">
+                <div key={p.id} className="flex items-center gap-3 px-4 py-2.5">
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-positive/10 shrink-0">
                     <DollarSign className="h-3.5 w-3.5 text-positive" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">{productName}</p>
+                    <p className="text-[13px] font-medium text-foreground truncate">{productName}</p>
                     <p className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">
                       <Clock className="h-2.5 w-2.5 inline opacity-50" />
-                      <span>
-                        {p.paid_at
-                          ? timeAgo(p.paid_at) + " · " + new Date(p.paid_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })
-                          : new Date(p.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })
-                        }
-                      </span>
-                      {p.discount_amount > 0 && <span className="text-success">(-R$ {Number(p.discount_amount).toFixed(2)})</span>}
+                      {p.paid_at ? timeAgo(p.paid_at) : timeAgo(p.created_at)}
                     </p>
                   </div>
-                  <div className="flex flex-col items-end gap-0.5 shrink-0">
-                    <span className="text-sm font-bold text-foreground">R$ {(Number(p.amount) / 100).toFixed(2)}</span>
-                    <span className="text-[10px] font-semibold text-positive">Pago ✓</span>
-                  </div>
+                  <span className="text-sm font-bold text-foreground shrink-0">R$ {(Number(p.amount) / 100).toFixed(2)}</span>
                 </div>
               );
             })}
