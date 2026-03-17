@@ -1703,17 +1703,16 @@ Deno.serve(async (req) => {
     global: { headers: { Authorization: authHeader } },
   });
 
-  const token = authHeader.replace("Bearer ", "");
-  const { data: claimsData, error: claimsError } = await supabaseUser.auth.getClaims(token);
-  console.log("Auth result:", { userId: claimsData?.claims?.sub, error: claimsError?.message, authHeader: authHeader?.substring(0, 30) });
-  if (claimsError || !claimsData?.claims) {
-    return new Response(JSON.stringify({ error: "Unauthorized", detail: claimsError?.message || "Auth session missing!" }), {
+  const { data: { user: authedUser }, error: authError } = await supabaseUser.auth.getUser();
+  console.log("Auth result:", { userId: authedUser?.id, error: authError?.message });
+  if (authError || !authedUser) {
+    return new Response(JSON.stringify({ error: "Unauthorized", detail: authError?.message || "Auth session missing!" }), {
       status: 401,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
-  const userId = claimsData.claims.sub;
+  const userId = authedUser.id;
   const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
   // ==================== USER RATE LIMIT (20/min) ====================

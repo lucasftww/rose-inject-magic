@@ -71,10 +71,21 @@ Deno.serve(async (req) => {
       }
 
       // SECURITY: Only allow proxying from known LZT domains
+      // Use exact match OR strict subdomain match (must end with ".domain")
       const allowedDomains = ["lzt.market", "api.lzt.market", "s.lzt.market", "img.lzt.market"];
       try {
         const parsedUrl = new URL(imageUrl);
-        if (!allowedDomains.some(d => parsedUrl.hostname.endsWith(d))) {
+        // Enforce HTTPS to block file://, data:, etc.
+        if (parsedUrl.protocol !== "https:") {
+          return new Response(JSON.stringify({ error: "Only HTTPS URLs are allowed" }), {
+            status: 403,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const isAllowed = allowedDomains.some(d =>
+          parsedUrl.hostname === d || parsedUrl.hostname.endsWith("." + d)
+        );
+        if (!isAllowed) {
           return new Response(JSON.stringify({ error: "Domain not allowed" }), {
             status: 403,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
