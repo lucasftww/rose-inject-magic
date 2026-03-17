@@ -242,10 +242,16 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
   const periodOrderCount = filteredOrders.length;
   const periodPaidCount = filteredPayments.length;
 
-  const revenueTotal = periodRevenue;
-  const totalCosts = lztCost + robotCost + totalDiscounts;
-  const netProfit = revenueTotal - totalCosts;
-  const profitMargin = revenueTotal > 0 ? (netProfit / revenueTotal) * 100 : 0;
+  // Period-filtered discounts (fix: was using all-time before)
+  const periodDiscounts = filteredPayments.reduce((s: number, p: any) => s + (Number(p.discount_amount) || 0), 0);
+
+  // Note: lzt/robot costs come from RPC totals — only accurate for "all" period
+  // For sub-periods, show revenue-only metrics and mark profit as "Geral"
+  const isAllPeriod = period === "all";
+  const totalCosts = lztCost + robotCost + (isAllPeriod ? totalDiscounts : periodDiscounts);
+  const revenueForProfit = isAllPeriod ? periodRevenue : allPayments.reduce((s: number, p: any) => s + Number(p.amount) / 100, 0);
+  const netProfit = revenueForProfit - (lztCost + robotCost + totalDiscounts);
+  const profitMargin = revenueForProfit > 0 ? (netProfit / revenueForProfit) * 100 : 0;
 
   const periodLabel = period === "24h" ? "24h" : period === "7d" ? "7 dias" : period === "30d" ? "30 dias" : "Total";
 
