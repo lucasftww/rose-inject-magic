@@ -983,6 +983,7 @@ const Contas = () => {
       // Fetch remaining pages in background, batch by page
       if (hasMore) {
         let allItems = [...firstPageItems];
+        const seenIds = new Set(firstPageItems.map(i => i.item_id));
         let nextPage = hasMore;
         let pageNum = 2;
 
@@ -991,7 +992,11 @@ const Contas = () => {
             const pageData = await fetchWithRetry(buildParams(pageNum), controller);
           if (controller.signal.aborted) return;
 
-          const pageItems: LztItem[] = pageData?.items ?? [];
+          const pageItems: LztItem[] = (pageData?.items ?? []).filter((i: LztItem) => {
+            if (seenIds.has(i.item_id)) return false;
+            seenIds.add(i.item_id);
+            return true;
+          });
           allItems = [...allItems, ...pageItems];
           setStreamedItems(allItems);
           nextPage = pageData?.hasNextPage ?? false;

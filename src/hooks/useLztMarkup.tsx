@@ -49,5 +49,5 @@ export const useLztMarkup = () => {
     return calcPrice(item.price, item.price_currency, game);
   };
 
-  return { calcPrice, formatPrice, formatPriceBrl, getDisplayPrice, getPrice, getMarkupForGame: () => 1.5, config: null, markup: 1.5 };
+  return { calcPrice, formatPrice, formatPriceBrl, getDisplayPrice, getPrice, getMarkupForGame: () => 3.0, config: null, markup: 3.0 };
 };
