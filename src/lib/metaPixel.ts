@@ -266,8 +266,8 @@ export const getUserData = (): Record<string, string> => {
   return data;
 };
 
-// Pre-hash the tracking ID on module load
-getHashedTrackingId();
+// Eagerly reconstruct fbc from storage on module load
+getFbc();
 
 /** Fire-and-forget server-side event via Edge Function */
 const sendCAPI = (
