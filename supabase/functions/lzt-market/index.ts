@@ -246,9 +246,9 @@ Deno.serve(async (req) => {
       // LIST: accounts with filters
       const maxFetchPrice = lztConfig?.max_fetch_price || 500;
 
-      // Use minimum markup tier (1.5x) for pmax to fetch the widest range of accounts.
+      // Flat 3.0x markup for all games.
       // max_fetch_price is stored in BRL, while the LZT API expects pmax in RUB.
-      const activeMarkup = 1.5;
+      const activeMarkup = 3.0;
       const RUB_TO_BRL_FILTER = 0.055;
       const effectivePmax = Math.ceil(maxFetchPrice / activeMarkup / RUB_TO_BRL_FILTER);
 
