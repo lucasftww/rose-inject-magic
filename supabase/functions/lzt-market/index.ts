@@ -108,25 +108,26 @@ function getValorantFairPriceCeiling(item: LztItem) {
   const knifeCount = Number(item.riot_valorant_knife_count || 0);
   const level = Math.min(Number(item.riot_valorant_level || 0), 500);
   const vp = Math.min(Number(item.riot_valorant_vp || 0), 20000);
-  const rank = String(item.riot_valorant_rank || "").toLowerCase();
+  const rankNum = Number(item.riot_valorant_rank || 0);
 
+  // Rank bonus based on numeric rank ID (more precise than string matching)
   let rankBonus = 0;
-  if (rank.includes("radiant")) rankBonus = 1500;
-  else if (rank.includes("immortal")) rankBonus = 800;
-  else if (rank.includes("ascendant")) rankBonus = 400;
-  else if (rank.includes("diamond")) rankBonus = 250;
-  else if (rank.includes("platinum")) rankBonus = 150;
-  else if (rank.includes("gold")) rankBonus = 80;
-  else if (rank.includes("silver")) rankBonus = 40;
+  if (rankNum >= 27) rankBonus = 1500;       // Radiant
+  else if (rankNum >= 24) rankBonus = 800;    // Immortal
+  else if (rankNum >= 21) rankBonus = 400;    // Ascendant
+  else if (rankNum >= 18) rankBonus = 250;    // Diamond
+  else if (rankNum >= 15) rankBonus = 150;    // Platinum
+  else if (rankNum >= 12) rankBonus = 80;     // Gold
+  else if (rankNum >= 9) rankBonus = 40;      // Silver
 
   const estimatedValue =
-    skinCount * 25 +
-    knifeCount * 200 +
-    level * 1.5 +
-    vp * 0.02 +
+    skinCount * 12 +
+    knifeCount * 80 +
+    level * 0.8 +
+    vp * 0.01 +
     rankBonus;
 
-  return Math.max(Math.round(estimatedValue), 80);
+  return Math.max(Math.round(estimatedValue), 60);
 }
 
 function getFortniteFairPriceCeiling(item: LztItem) {
