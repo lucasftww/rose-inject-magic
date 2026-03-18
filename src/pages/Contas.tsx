@@ -1154,6 +1154,7 @@ const Contas = () => {
     setInvMin(""); setInvMax("");
     setLvlMin(""); setLvlMax("");
     setPage(1);
+    setDisplayPage(1);
   };
 
   const switchTab = (tab: GameTab) => {
