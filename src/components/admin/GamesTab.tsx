@@ -143,6 +143,12 @@ const GamesTab = () => {
   };
 
   const handleDelete = async (game: Game) => {
+    // Check if any products reference this game
+    const { count } = await supabase.from("products").select("id", { count: "exact", head: true }).eq("game_id", game.id);
+    if (count && count > 0) {
+      toast({ title: "Não é possível excluir", description: `${count} produto(s) ainda usam este jogo. Remova-os primeiro.`, variant: "destructive" });
+      return;
+    }
     if (!confirm(`Excluir "${game.name}"?`)) return;
     const { error } = await supabase.from("games").delete().eq("id", game.id);
     if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
