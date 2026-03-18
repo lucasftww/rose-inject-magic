@@ -160,7 +160,8 @@ const getHashedTrackingId = async (): Promise<string> => {
   return _trackingIdHash || "";
 };
 
-getOrCreateTrackingId();
+// Eagerly initialize tracking ID and hash it
+getHashedTrackingId();
 
 // ─── FBC Reconstruction ────────────────────────────────────────────────────
 // Aggressively reconstruct _fbc from all possible fbclid sources and persist as cookie
