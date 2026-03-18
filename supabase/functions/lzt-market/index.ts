@@ -428,9 +428,14 @@ Deno.serve(async (req) => {
       // LIST: accounts with filters
       const maxFetchPrice = lztConfig?.max_fetch_price || 500;
 
-      // Flat 3.0x markup for all games.
-      // max_fetch_price is stored in BRL, while the LZT API expects pmax in BRL-equivalent seller price.
-      const activeMarkup = MARKUP;
+      // Use per-game markup from DB, falling back to markup_multiplier, then DEFAULT_MARKUP
+      let activeMarkup = DEFAULT_MARKUP;
+      if (gameType === "fortnite" && lztConfig?.markup_fortnite) activeMarkup = Number(lztConfig.markup_fortnite);
+      else if (gameType === "lol" && lztConfig?.markup_lol) activeMarkup = Number(lztConfig.markup_lol);
+      else if (gameType === "minecraft" && lztConfig?.markup_minecraft) activeMarkup = Number(lztConfig.markup_minecraft);
+      else if ((gameType === "riot" || gameType === "valorant") && lztConfig?.markup_valorant) activeMarkup = Number(lztConfig.markup_valorant);
+      else if (lztConfig?.markup_multiplier) activeMarkup = Number(lztConfig.markup_multiplier);
+
       const effectivePmax = Math.ceil(maxFetchPrice / activeMarkup);
 
       const params = new URLSearchParams();
