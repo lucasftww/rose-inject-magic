@@ -152,9 +152,10 @@ const FinanceTab = () => {
 
     let currentRate = usdToBrl;
     try {
-      const res = await fetch("https://open.er-api.com/v6/latest/USD");
-      const json = await res.json();
-      if (json?.rates?.BRL) { currentRate = json.rates.BRL; setUsdToBrl(currentRate); }
+      const res = await fetch("https://economia.awesomeapi.com.br/json/last/USD-BRL");
+      const data = await res.json();
+      const bid = Number(data?.USDBRL?.bid);
+      if (bid > 0) { currentRate = bid; setUsdToBrl(currentRate); }
     } catch { /* use fallback */ }
 
     const [paymentsData, lztData, resellerData, robotProductsRes] = await Promise.all([
