@@ -501,6 +501,8 @@ const Raspadinha = () => {
       [0, 4, 8], [2, 4, 6],
     ];
     return patterns.some(([a, b, c]) => {
+      // Only highlight prize matches — never "nothing" cells
+      if (grid[a].type !== "prize" || grid[b].type !== "prize" || grid[c].type !== "prize") return false;
       const idA = cellId(grid[a]);
       const idB = cellId(grid[b]);
       const idC = cellId(grid[c]);
@@ -582,21 +584,36 @@ const Raspadinha = () => {
 
     setScratching(true);
     setTimeout(() => {
-      canvasRefs.current.forEach((canvas, i) => {
-        if (canvas) {
-          const ctx = canvas.getContext("2d");
-          if (ctx) {
-            canvas.width = canvas.offsetWidth;
-            canvas.height = canvas.offsetHeight;
-            ctx.fillStyle = "#1a1a2e";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.font = "bold 22px sans-serif";
-            ctx.fillStyle = "#9b87f5";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.fillText("?", canvas.width / 2, canvas.height / 2);
+      const currentMode = pendingPayment.mode;
+      canvasRefs.current.forEach((canvas) => {
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        const w = canvas.width;
+        const h = canvas.height;
+        const grad = ctx.createLinearGradient(0, 0, w, h);
+        if (currentMode === "contas") {
+          grad.addColorStop(0, "hsl(220, 80%, 30%)");
+          grad.addColorStop(0.5, "hsl(220, 100%, 47%)");
+          grad.addColorStop(1, "hsl(220, 80%, 30%)");
+        } else {
+          grad.addColorStop(0, "hsl(197, 80%, 30%)");
+          grad.addColorStop(0.5, "hsl(197, 100%, 50%)");
+          grad.addColorStop(1, "hsl(197, 80%, 30%)");
+        }
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+        ctx.fillStyle = "rgba(255,255,255,0.08)";
+        for (let x = 0; x < w; x += 20) {
+          for (let y = 0; y < h; y += 20) {
+            if ((x + y) % 40 === 0) ctx.fillRect(x, y, 10, 10);
           }
         }
+        ctx.fillStyle = "rgba(255,255,255,0.3)";
+        ctx.font = `bold ${Math.floor(w * 0.4)}px sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("?", w / 2, h / 2);
       });
     }, 100);
   };
