@@ -520,13 +520,13 @@ Deno.serve(async (req) => {
       } else {
         const RUB_TO_BRL = 0.055;
         const MIN_PRICE_BRL = 20;
-        const detailGameType = url.searchParams.get("game_type") || "";
-        let detailMarkup = lztConfig?.markup_multiplier || 1.5;
-        if (detailGameType === "valorant" || detailGameType === "riot") detailMarkup = lztConfig?.markup_valorant || detailMarkup;
-        else if (detailGameType === "lol") detailMarkup = lztConfig?.markup_lol || detailMarkup;
-        else if (detailGameType === "fortnite") detailMarkup = lztConfig?.markup_fortnite || detailMarkup;
-        else if (detailGameType === "minecraft") detailMarkup = lztConfig?.markup_minecraft || detailMarkup;
-        else detailMarkup = lztConfig?.markup_valorant || detailMarkup;
+        // Tiered markup for detail view
+        const invValue = Number(data.item.riot_valorant_inventory_value || 0);
+        let detailMarkup: number;
+        if (invValue < 5000) detailMarkup = 1.5;
+        else if (invValue < 15000) detailMarkup = 2.0;
+        else detailMarkup = 2.5;
+
         const currency = data.item.price_currency || "rub";
         const brl = currency === "rub" ? data.item.price * RUB_TO_BRL : data.item.price;
         const final = brl * detailMarkup;
