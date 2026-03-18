@@ -46,7 +46,7 @@ function getContentFloorBrl(item: LztItem, gameType?: string) {
   }
   // Valorant
   const skins = Number(item.riot_valorant_skin_count || 0);
-  const knives = Number(item.riot_valorant_knife_count || 0);
+  const knives = Number(item.riot_valorant_knife || item.riot_valorant_knife_count || 0);
   const level = Math.min(Number(item.riot_valorant_level || 0), 500);
   return skins * 0.6 + knives * 5 + level * 0.08;
 }
