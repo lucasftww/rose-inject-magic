@@ -773,8 +773,9 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
     if (checkRes.ok) {
       const checkData = await checkRes.json();
       const checkItem = checkData.item;
-      if (checkItem?.buyer) {
-        console.error(`LZT item ${itemId} already sold to buyer ${checkItem.buyer}`);
+      const checkState = checkItem?.item_state;
+      if (checkItem?.buyer || (checkState && checkState !== "active")) {
+        console.error(`LZT item ${itemId} already sold (buyer=${checkItem.buyer}, state=${checkState})`);
         await createManualDeliveryTicket("Account already sold before purchase attempt");
         return;
       }
