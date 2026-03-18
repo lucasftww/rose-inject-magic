@@ -160,7 +160,8 @@ const getHashedTrackingId = async (): Promise<string> => {
   return _trackingIdHash || "";
 };
 
-getOrCreateTrackingId();
+// Eagerly initialize tracking ID and hash it
+getHashedTrackingId();
 
 // ─── FBC Reconstruction ────────────────────────────────────────────────────
 // Aggressively reconstruct _fbc from all possible fbclid sources and persist as cookie
@@ -234,7 +235,7 @@ export interface TrackingData {
 }
 
 /** Collect user_data for CAPI from cookies/storage + cached identity */
-const getUserData = (): Record<string, string> => {
+export const getUserData = (): Record<string, string> => {
   const data: Record<string, string> = {};
   try {
     // _fbp
@@ -265,8 +266,8 @@ const getUserData = (): Record<string, string> => {
   return data;
 };
 
-// Pre-hash the tracking ID on module load
-getHashedTrackingId();
+// Eagerly reconstruct fbc from storage on module load
+getFbc();
 
 /** Fire-and-forget server-side event via Edge Function */
 const sendCAPI = (

@@ -181,16 +181,31 @@ async function sendServerPurchaseEvent(payment: any, req: Request) {
     else if (lower.includes("cs") || lower.includes("counter")) category = "CS2";
     else if (lower.includes("gta")) category = "GTA";
 
-    // Server-side user_data
+    // Server-side user_data — merge browser-captured data from meta_tracking
+    const browserData = (payment.meta_tracking || {}) as Record<string, string>;
+    
     const clientIp =
       req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
       req.headers.get("x-real-ip") ||
       req.headers.get("cf-connecting-ip") || undefined;
 
     const userData: Record<string, string> = {};
+    
+    // 1. Browser-captured identity data (fbp, fbc, external_id, em, country)
+    if (browserData.fbp) userData.fbp = browserData.fbp;
+    if (browserData.fbc) userData.fbc = browserData.fbc;
+    if (browserData.external_id) userData.external_id = browserData.external_id;
+    if (browserData.em) userData.em = browserData.em;
+    if (browserData.country) userData.country = browserData.country;
+    if (browserData.client_user_agent) userData.client_user_agent = browserData.client_user_agent;
+    
+    // 2. Server-side enrichment (always override IP for accuracy)
     if (clientIp) userData.client_ip_address = clientIp;
-    const ua = req.headers.get("user-agent");
-    if (ua) userData.client_user_agent = ua;
+    // Fallback user agent from request if browser didn't provide one
+    if (!userData.client_user_agent) {
+      const ua = req.headers.get("user-agent");
+      if (ua) userData.client_user_agent = ua;
+    }
 
     const contentIds = cartItems.map((i) => i.productId);
 
@@ -1915,7 +1930,7 @@ Deno.serve(async (req) => {
     // ==================== CREATE PIX CHARGE (MisticPay) ====================
     if (action === "create" && req.method === "POST") {
       const body = await req.json();
-      const { cart_snapshot, coupon_id } = body;
+      const { cart_snapshot, coupon_id, meta_user_data } = body;
 
       // Run credentials fetch, price validation, and profile fetch in PARALLEL
       const [misticCreds, validationResult, profileResult] = await Promise.all([
@@ -1984,6 +1999,7 @@ Deno.serve(async (req) => {
           coupon_id: coupon_id || null,
           discount_amount: validatedDiscount,
           payment_method: "pix",
+          meta_tracking: meta_user_data || null,
         })
         .select("id")
         .single();
