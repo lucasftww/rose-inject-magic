@@ -135,7 +135,7 @@ const ScratchCardTab = () => {
     setSavingConfig(false);
   };
 
-  const totalPct = prizes.reduce((s, p) => s + p.win_percentage, 0);
+  const totalPct = prizes.filter(p => p.active).reduce((s, p) => s + p.win_percentage, 0);
 
   if (loading) return <div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-success" /></div>;
 
