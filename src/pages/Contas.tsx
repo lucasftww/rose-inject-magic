@@ -1175,7 +1175,7 @@ const Contas = () => {
     if (tab !== "valorant") params.game = tab;
     setSearchParams(params);
     clearFilters();
-    setSortBy("price_desc");
+    setSortBy("pdate_desc");
   };
 
   const isMinecraft = gameTab === "minecraft";
