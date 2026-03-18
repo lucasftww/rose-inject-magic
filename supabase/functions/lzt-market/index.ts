@@ -9,6 +9,7 @@ const corsHeaders = {
 const LZT_ALLOWED_IMAGE_DOMAINS = ["lzt.market", "api.lzt.market", "s.lzt.market", "img.lzt.market"];
 const RETRYABLE_STATUSES = [429, 502, 503, 504];
 const RUB_TO_BRL = 0.055;
+const USD_TO_BRL = 5.50;
 const MIN_PRICE_BRL = 20;
 const MARKUP = 3.0;
 const LOL_MIN_SKINS = 8;
@@ -28,9 +29,12 @@ function log(level: "INFO" | "WARN" | "ERROR", ctx: string, msg: string, data?: 
 function getDisplayedPriceBrl(item: LztItem, overridePrice?: number) {
   if (typeof overridePrice === "number" && overridePrice > 0) return overridePrice;
 
-  const currency = item.price_currency || "rub";
+  const currency = String(item.price_currency || "rub").toLowerCase();
   const rawPrice = Number(item.price || 0);
-  const brl = currency === "rub" ? rawPrice * RUB_TO_BRL : rawPrice;
+  let brl = rawPrice;
+  if (currency === "rub") brl = rawPrice * RUB_TO_BRL;
+  else if (currency === "usd") brl = rawPrice * USD_TO_BRL;
+  // else assume already BRL
   const final = brl * MARKUP;
 
   return final < MIN_PRICE_BRL ? MIN_PRICE_BRL : Math.round(final * 100) / 100;
@@ -113,10 +117,6 @@ function shouldKeepItem(item: LztItem, gameType: string, displayedPriceBrl: numb
   if (item.buyer) return false;
   if (item.canBuyItem === false) return false;
 
-  const thirtyDaysAgo = Math.floor(Date.now() / 1000) - (30 * 24 * 60 * 60);
-  const lastActivity = Number(item.account_last_activity || 0);
-  if (lastActivity !== 0 && lastActivity > thirtyDaysAgo) return false;
-
   if (gameType === "lol") {
     const skinCount = Number(item.riot_lol_skin_count || 0);
     if (skinCount < LOL_MIN_SKINS) return false;
@@ -134,12 +134,11 @@ function shouldKeepItem(item: LztItem, gameType: string, displayedPriceBrl: numb
   }
 
   if (gameType === "minecraft") {
-    // Minecraft: cap price at R$300 max for basic accounts
     if (displayedPriceBrl > 300) return false;
     return true;
   }
 
-  // Valorant (riot)
+  // Valorant (riot or valorant)
   const valSkins = Number(item.riot_valorant_skin_count || 0);
   if (valSkins < VAL_MIN_SKINS) return false;
   const fairCeiling = getValorantFairPriceCeiling(item) * PRICE_BUFFER;
