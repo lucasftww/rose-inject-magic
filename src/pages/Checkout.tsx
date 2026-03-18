@@ -191,6 +191,7 @@ const Checkout = () => {
             body: JSON.stringify({
               cart_snapshot: buildCartSnapshot(),
               coupon_id: couponId,
+              meta_user_data: getUserData(),
             }),
         }
       );
