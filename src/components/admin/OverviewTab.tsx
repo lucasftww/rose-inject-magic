@@ -104,9 +104,10 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
 
       let usdToBrl = 5.5;
       try {
-        const res = await fetch("https://open.er-api.com/v6/latest/USD");
-        const json = await res.json();
-        if (json?.rates?.BRL) usdToBrl = json.rates.BRL;
+        const res = await fetch("https://economia.awesomeapi.com.br/json/last/USD-BRL");
+        const data = await res.json();
+        const bid = Number(data?.USDBRL?.bid);
+        if (bid > 0) usdToBrl = bid;
       } catch { /* fallback */ }
 
       const [recentOrdersRes, recentPaymentsRes, allPaymentsRes, robotProductsRes, openTicketsRes, allOrdersRes, lztSalesRes] = await Promise.all([
