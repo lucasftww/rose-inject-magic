@@ -414,15 +414,11 @@ Deno.serve(async (req) => {
         "pending_deletion_date", "update_stat_date",
       ];
 
-      // Filter out already-sold accounts (buyer is set) and inactive < 30 days
-      const thirtyDaysAgo = Math.floor(Date.now() / 1000) - (30 * 24 * 60 * 60);
+      // Filter out already-sold accounts (buyer is set)
       data.items = data.items.filter((item: any) => {
-        // Remove sold accounts
         if (item.buyer) return false;
         if (item.canBuyItem === false) return false;
-        // Remove accounts with less than 30 days of inactivity
-        const lastActivity = item.riot_last_activity || item.account_last_activity || 0;
-        return lastActivity === 0 || lastActivity <= thirtyDaysAgo;
+        return true;
       });
 
       // Add price_brl and strip heavy fields
