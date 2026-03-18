@@ -1281,7 +1281,8 @@ async function validateAndCalculatePrice(
       else if (gameCategory === "minecraft" && lztConfig?.markup_minecraft) markup = lztConfig.markup_minecraft;
       
       const RUB_TO_BRL = 0.055;
-      const costBrl = realLztCurrency === "rub" ? realLztPrice * RUB_TO_BRL : realLztPrice;
+      const USD_TO_BRL = 5.50;
+      const costBrl = realLztCurrency === "rub" ? realLztPrice * RUB_TO_BRL : realLztCurrency === "usd" ? realLztPrice * USD_TO_BRL : realLztPrice;
       
       // The price the customer saw (sent from frontend)
       const clientDisplayPrice = Number(item.price) || 0;
