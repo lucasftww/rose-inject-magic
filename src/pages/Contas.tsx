@@ -913,10 +913,10 @@ const Contas = () => {
         params.title = searchQuery ? `${searchQuery} ${selectedWeapon}` : selectedWeapon;
       }
     } else if (gameTab === "lol") {
-      // LoL-specific — hide empty accounts, require at least 1 skin and 10 champions
+      // LoL-specific — match server-side LOL_MIN_SKINS=8
       params.game_type = "lol";
-      params.lol_smin = "1";
-      params.champion_min = "10";
+      params.lol_smin = lolSkinsMin && Number(lolSkinsMin) >= 8 ? lolSkinsMin : "8";
+      params.champion_min = lolChampMin && Number(lolChampMin) >= 10 ? lolChampMin : "10";
       if (lvlMin) params.lol_level_min = lvlMin;
       if (lvlMax) params.lol_level_max = lvlMax;
       if (lolChampMin) params.champion_min = lolChampMin;
