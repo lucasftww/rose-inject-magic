@@ -567,9 +567,9 @@ const LolCard = ({ item, champKeyMap, formatPrice }: { item: LztItem; champKeyMa
 const FortniteCard = ({ item, skinsDb, formatPrice }: { item: LztItem; skinsDb: Map<string, { name: string; image: string }>; formatPrice: (price: number, currency?: string) => string }) => {
   const navigate = useNavigate();
   const raw = item as any;
-  const vbucks = raw.fortnite_balance ?? raw.fortnite_vbucks ?? item.riot_valorant_wallet_vp ?? 0;
-  const skinCount = raw.fortnite_skin_count ?? item.riot_valorant_skin_count ?? 0;
-  const level = raw.fortnite_level ?? item.riot_valorant_level ?? 0;
+  const vbucks = raw.fortnite_balance ?? raw.fortnite_vbucks ?? 0;
+  const skinCount = raw.fortnite_skin_count ?? 0;
+  const level = raw.fortnite_level ?? 0;
 
   // fortniteSkins is an array of { id, title, rarity } from LZT API
   const skinPreviews = useMemo(() => {
