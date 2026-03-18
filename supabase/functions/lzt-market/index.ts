@@ -596,7 +596,7 @@ Deno.serve(async (req) => {
       });
 
       for (const item of data.items) {
-        item.price_brl = getDisplayedPriceBrl(item, overrideMap.get(String(item.item_id)));
+        item.price_brl = getDisplayedPriceBrl(item, overrideMap.get(String(item.item_id)), gameType);
 
         // Strip heavy fields
         for (const field of STRIP_FIELDS) delete item[field];
