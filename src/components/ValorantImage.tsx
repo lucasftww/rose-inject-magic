@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, memo } from "react";
+import { useState, useEffect, useRef, memo, forwardRef } from "react";
 import { Crosshair } from "lucide-react";
 
 interface ValorantImageProps {
@@ -12,7 +12,7 @@ interface ValorantImageProps {
  * Image component with timeout fallback for external APIs (valorant-api.com).
  * Shows a placeholder icon if the image fails or takes too long to load.
  */
-const ValorantImage = memo(({ src, alt, className = "", timeout = 8000 }: ValorantImageProps) => {
+const ValorantImage = memo(forwardRef<HTMLImageElement, ValorantImageProps>(({ src, alt, className = "", timeout = 8000 }, ref) => {
   const [status, setStatus] = useState<"loading" | "loaded" | "error">("loading");
   const timerRef = useRef<ReturnType<typeof setTimeout>>();
 
@@ -48,6 +48,7 @@ const ValorantImage = memo(({ src, alt, className = "", timeout = 8000 }: Valora
         </div>
       )}
       <img
+        ref={ref}
         src={src}
         alt={alt}
         className={`${className} ${status === "loading" ? "sr-only" : ""}`}
@@ -57,7 +58,7 @@ const ValorantImage = memo(({ src, alt, className = "", timeout = 8000 }: Valora
       />
     </>
   );
-});
+}));
 
 ValorantImage.displayName = "ValorantImage";
 
