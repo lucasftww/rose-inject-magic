@@ -162,7 +162,6 @@ const MeusPedidos = () => {
   // Stats
   const delivered = byType.filter(t => t.status === "delivered").length;
   const pending = byType.filter(t => t.status === "open").length;
-  const totalSpent = byType.reduce((s, t) => s + Number(t.plan_price || 0), 0);
 
   if (authLoading || loading) {
     return (
