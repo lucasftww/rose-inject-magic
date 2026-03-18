@@ -1147,7 +1147,7 @@ const Contas = () => {
     setMcHypixelLvlMin("");
     setMcCapesMin("");
     setMcNoBan(false);
-    setValRegion("br");
+    setValRegion("all");
     setLolRegion("BR1");
     setPriceMin(""); setPriceMax("");
     setSearchQuery(""); setOnlyKnife(false);
