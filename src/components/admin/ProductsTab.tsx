@@ -286,7 +286,7 @@ const ProductsTab = () => {
   };
 
   const addPlan = () => {
-    setFormPlans([...formPlans, { name: "", price: 0, active: true, sort_order: formPlans.length, _key: crypto.randomUUID() }]);
+    setFormPlans([...formPlans, { name: "", price: 0, active: true, sort_order: formPlans.length, robot_duration_days: null, _key: crypto.randomUUID() }]);
   };
 
   const removePlan = (index: number) => {

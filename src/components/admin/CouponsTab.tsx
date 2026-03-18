@@ -121,6 +121,12 @@ const CouponsTab = () => {
 
   const handleDelete = async (coupon: Coupon) => {
     if (!confirm(`Excluir cupom "${coupon.code}"?`)) return;
+    // Delete FK references first to avoid constraint violations
+    await Promise.all([
+      supabase.from("coupon_products").delete().eq("coupon_id", coupon.id),
+      supabase.from("coupon_usage").delete().eq("coupon_id", coupon.id),
+      supabase.from("coupon_users").delete().eq("coupon_id", coupon.id),
+    ]);
     const { error } = await supabase.from("coupons").delete().eq("id", coupon.id);
     if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
     else { toast({ title: "Cupom excluído!" }); fetchCoupons(); }
