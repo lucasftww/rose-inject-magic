@@ -408,13 +408,27 @@ Deno.serve(async (req) => {
         "pending_deletion_date", "update_stat_date",
       ];
 
-      // Filter out already-sold accounts and only keep accounts with 30+ days of inactivity
+      // Filter out sold, active, and worthless accounts
       const thirtyDaysAgo = Math.floor(Date.now() / 1000) - (30 * 24 * 60 * 60);
       data.items = data.items.filter((item: any) => {
         if (item.buyer) return false;
         if (item.canBuyItem === false) return false;
         const lastActivity = Number(item.account_last_activity || 0);
-        return lastActivity === 0 || lastActivity <= thirtyDaysAgo;
+        if (lastActivity !== 0 && lastActivity > thirtyDaysAgo) return false;
+
+        // Remove garbage accounts: no skins = no value for buyers
+        if (gameType === "riot" || gameType === "lol") {
+          const valSkins = Number(item.riot_valorant_skin_count || 0);
+          const lolSkins = Number(item.riot_lol_skin_count || 0);
+          // If it's clearly a Valorant account (has valorant data) require skins
+          if (valSkins === 0 && lolSkins === 0) return false;
+        }
+        if (gameType === "fortnite") {
+          const ftSkins = Number(item.fortnite_skin_count || item.fortnite_outfit_count || 0);
+          if (ftSkins === 0) return false;
+        }
+
+        return true;
       });
 
       // Add price_brl and strip heavy fields
