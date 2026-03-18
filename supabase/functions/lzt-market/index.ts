@@ -601,7 +601,7 @@ Deno.serve(async (req) => {
 
       const beforeCount = data.items.length;
       data.items = data.items.filter((item: LztItem) => {
-        const displayedPriceBrl = getDisplayedPriceBrl(item, overrideMap.get(String(item.item_id)), gameType);
+        const displayedPriceBrl = getDisplayedPriceBrl(item, overrideMap.get(String(item.item_id)), gameType, activeMarkup);
         return shouldKeepItem(item, gameType, displayedPriceBrl);
       });
 
