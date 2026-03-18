@@ -1110,8 +1110,8 @@ const Contas = () => {
     }
     if (gameTab === "fortnite") {
       return filtered.sort((a, b) => {
-        const skinsA = (a as any).fortnite_skin_count ?? a.riot_valorant_skin_count ?? 0;
-        const skinsB = (b as any).fortnite_skin_count ?? b.riot_valorant_skin_count ?? 0;
+        const skinsA = (a as any).fortnite_skin_count ?? 0;
+        const skinsB = (b as any).fortnite_skin_count ?? 0;
         const hasSkinA = skinsA > 0;
         const hasSkinB = skinsB > 0;
         if (hasSkinA && !hasSkinB) return -1;
