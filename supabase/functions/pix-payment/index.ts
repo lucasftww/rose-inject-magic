@@ -1915,7 +1915,7 @@ Deno.serve(async (req) => {
     // ==================== CREATE PIX CHARGE (MisticPay) ====================
     if (action === "create" && req.method === "POST") {
       const body = await req.json();
-      const { cart_snapshot, coupon_id } = body;
+      const { cart_snapshot, coupon_id, meta_user_data } = body;
 
       // Run credentials fetch, price validation, and profile fetch in PARALLEL
       const [misticCreds, validationResult, profileResult] = await Promise.all([
