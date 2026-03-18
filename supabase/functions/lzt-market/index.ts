@@ -420,6 +420,14 @@ Deno.serve(async (req) => {
       .limit(1)
       .maybeSingle();
 
+    // Compute per-game markup from DB (used for both list and detail)
+    let activeMarkup = DEFAULT_MARKUP;
+    if (gameType === "fortnite" && lztConfig?.markup_fortnite) activeMarkup = Number(lztConfig.markup_fortnite);
+    else if (gameType === "lol" && lztConfig?.markup_lol) activeMarkup = Number(lztConfig.markup_lol);
+    else if (gameType === "minecraft" && lztConfig?.markup_minecraft) activeMarkup = Number(lztConfig.markup_minecraft);
+    else if ((gameType === "riot" || gameType === "valorant") && lztConfig?.markup_valorant) activeMarkup = Number(lztConfig.markup_valorant);
+    else if (lztConfig?.markup_multiplier) activeMarkup = Number(lztConfig.markup_multiplier);
+
     // DETAIL: Get single item
     let apiUrl: string;
     if (action === "detail" && itemId) {
@@ -427,15 +435,6 @@ Deno.serve(async (req) => {
     } else {
       // LIST: accounts with filters
       const maxFetchPrice = lztConfig?.max_fetch_price || 500;
-
-      // Use per-game markup from DB, falling back to markup_multiplier, then DEFAULT_MARKUP
-      let activeMarkup = DEFAULT_MARKUP;
-      if (gameType === "fortnite" && lztConfig?.markup_fortnite) activeMarkup = Number(lztConfig.markup_fortnite);
-      else if (gameType === "lol" && lztConfig?.markup_lol) activeMarkup = Number(lztConfig.markup_lol);
-      else if (gameType === "minecraft" && lztConfig?.markup_minecraft) activeMarkup = Number(lztConfig.markup_minecraft);
-      else if ((gameType === "riot" || gameType === "valorant") && lztConfig?.markup_valorant) activeMarkup = Number(lztConfig.markup_valorant);
-      else if (lztConfig?.markup_multiplier) activeMarkup = Number(lztConfig.markup_multiplier);
-
       const effectivePmax = Math.ceil(maxFetchPrice / activeMarkup);
 
       const params = new URLSearchParams();
