@@ -1337,10 +1337,11 @@ async function validateAndCalculatePrice(
       const realLztCurrency = lztItem?.price_currency || "rub";
 
       // Check if item is still available for purchase
-      // canBuyItem === false or buyer !== null means it's already sold
-      const isSold = lztItem?.buyer != null || lztItem?.canBuyItem === false;
+      // canBuyItem === false, buyer !== null, or item_state !== "active" means unavailable
+      const itemState = lztItem?.item_state;
+      const isSold = lztItem?.buyer != null || lztItem?.canBuyItem === false || (itemState && itemState !== "active");
       if (realLztPrice <= 0 || isSold) {
-        console.warn(`LZT item ${lztItemId} unavailable: price=${realLztPrice}, buyer=${lztItem?.buyer}, canBuyItem=${lztItem?.canBuyItem}`);
+        console.warn(`LZT item ${lztItemId} unavailable: price=${realLztPrice}, buyer=${lztItem?.buyer}, canBuyItem=${lztItem?.canBuyItem}, item_state=${itemState}`);
         return { validatedAmount: 0, validatedDiscount: 0, validatedCart: [], error: `Esta conta já foi vendida ou não está mais disponível. Por favor, escolha outra conta.` };
       }
 
