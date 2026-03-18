@@ -261,8 +261,8 @@ const RobotProjectTab = () => {
         // Cost estimation: if metadata has amount_spent use it, otherwise estimate from markup
         let cost = 0;
         if (meta.amount_spent && Number(meta.amount_spent) > 0) {
-          // amount_spent is in USD from Robot API
-          cost = Number(meta.amount_spent) * usdToBrl;
+          // Real cost = 60% of amount_spent (40% cashback from Robot Project)
+          cost = Number(meta.amount_spent) * 0.6 * usdToBrl;
         } else if (meta.is_free) {
           cost = 0;
         } else if (product?.robot_markup_percent) {
