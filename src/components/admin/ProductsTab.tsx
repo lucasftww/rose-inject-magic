@@ -468,7 +468,24 @@ const ProductsTab = () => {
   };
 
   const handleDelete = async (product: Product) => {
-    if (!confirm(`Excluir "${product.name}"?`)) return;
+    if (!confirm(`Excluir "${product.name}"? Isso removerá todos os planos, mídias, features e tutoriais associados.`)) return;
+    // Delete related rows first to avoid FK constraint violations
+    await Promise.all([
+      supabase.from("product_media").delete().eq("product_id", product.id),
+      supabase.from("product_features").delete().eq("product_id", product.id),
+      supabase.from("product_tutorials").delete().eq("product_id", product.id),
+      supabase.from("coupon_products").delete().eq("product_id", product.id),
+      supabase.from("reseller_products").delete().eq("product_id", product.id),
+    ]);
+    // Delete plans (may fail if referenced by order_tickets — those are preserved)
+    const { data: plans } = await supabase.from("product_plans").select("id").eq("product_id", product.id);
+    if (plans) {
+      for (const plan of plans) {
+        // Delete stock items first, then plan
+        await supabase.from("stock_items").delete().eq("product_plan_id", plan.id);
+        await supabase.from("product_plans").delete().eq("id", plan.id);
+      }
+    }
     const { error } = await supabase.from("products").delete().eq("id", product.id);
     if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
     else { toast({ title: "Excluído!" }); fetchData(true); }

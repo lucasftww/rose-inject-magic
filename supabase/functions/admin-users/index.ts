@@ -122,7 +122,7 @@ serve(async (req) => {
       const ipMap = new Map<string, { ip_address: string; logged_at: string }[]>();
       ips.forEach((ip: any) => {
         const existing = ipMap.get(ip.user_id) || [];
-        if (existing.length < 1) existing.push({ ip_address: ip.ip_address, logged_at: ip.logged_at });
+        if (existing.length < 5) existing.push({ ip_address: ip.ip_address, logged_at: ip.logged_at });
         ipMap.set(ip.user_id, existing);
       });
 
