@@ -325,7 +325,7 @@ Deno.serve(async (req) => {
         params.set("pmax", String(effectivePmax));
       }
 
-      // gameType already determined above
+      const gameType = url.searchParams.get("game_type") || "riot";
       if (gameType === "fortnite") {
         // Fortnite-specific params
         const fortniteParams = ["vbmin", "vbmax", "smin", "smax", "eg"];
