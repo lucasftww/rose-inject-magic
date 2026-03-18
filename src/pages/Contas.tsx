@@ -1137,7 +1137,7 @@ const Contas = () => {
       return filtered.sort((a, b) => getBrlPrice(a) - getBrlPrice(b));
     }
     return filtered;
-  }, [streamedItems, sortBy, gameTab, priceMin, priceMax]);
+  }, [streamedItems, sortBy, gameTab, priceMin, priceMax, valRegion]);
   const totalDisplayPages = Math.max(1, Math.ceil(allItems.length / ITEMS_PER_PAGE));
 
   // Clamp displayPage when allItems shrinks (e.g. after price filtering)
