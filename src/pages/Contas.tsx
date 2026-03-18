@@ -890,15 +890,12 @@ const Contas = () => {
 
     if (gameTab === "valorant") {
       params.game_type = "riot";
-      // Valorant-specific — require 10+ skins only when sorting by highest price
-      params.valorant_smin = sortBy === "price_desc" ? "10" : "1";
-      params.inv_min = "1000";
-      params.valorant_level_min = "20";
+      // Minimum inventory value 2000 VP
+      params.inv_min = invMin || "2000";
+      if (invMax) params.inv_max = invMax;
       if (onlyKnife) params.knife = "true";
       if (lvlMin) params.valorant_level_min = lvlMin;
       if (lvlMax) params.valorant_level_max = lvlMax;
-      if (invMin) params.inv_min = invMin;
-      if (invMax) params.inv_max = invMax;
 
       const rankFilter = valorantRankFilters.find((r) => r.id === selectedRank);
       if (rankFilter && rankFilter.id !== "todos") {
