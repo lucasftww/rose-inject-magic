@@ -8,7 +8,7 @@ import { toast } from "@/hooks/use-toast";
 import { Loader2, Copy, Check, Clock, ArrowLeft, Package, ShieldCheck, Zap, CreditCard, Wallet, Sparkles, ChevronRight, ExternalLink } from "lucide-react";
 import logoRoyal from "@/assets/logo-royal.png";
 import { motion } from "framer-motion";
-import { trackPurchase, resolveCategory } from "@/lib/metaPixel";
+import { trackPurchase, resolveCategory, getUserData } from "@/lib/metaPixel";
 
 type PaymentMethod = "pix" | "card" | "crypto" | null;
 
