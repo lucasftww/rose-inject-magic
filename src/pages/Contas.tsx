@@ -902,9 +902,10 @@ const Contas = () => {
         params.rmax = String(rankFilter.rmax);
       }
 
-      // Use the actual LZT Valorant region filter instead of country[]
+      // Use country[] because it matches the LZT API results for Valorant reliably
       if (valRegion !== "all") {
-        params["valorant_region[]"] = valRegion;
+        const countries = REGION_COUNTRY_MAP[valRegion];
+        if (countries) params["country[]"] = countries;
       }
 
       if (selectedWeapon !== "todos") {
