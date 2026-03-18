@@ -246,15 +246,9 @@ Deno.serve(async (req) => {
       // LIST: accounts with filters
       const maxFetchPrice = lztConfig?.max_fetch_price || 500;
 
-      // Determine which markup applies based on game_type to calculate real pmax
-      const gameType = url.searchParams.get("game_type") || "riot";
-      let activeMarkup = lztConfig?.markup_multiplier || 1.5;
-      if (gameType === "riot") activeMarkup = lztConfig?.markup_valorant || activeMarkup;
-      else if (gameType === "lol") activeMarkup = lztConfig?.markup_lol || activeMarkup;
-      else if (gameType === "fortnite") activeMarkup = lztConfig?.markup_fortnite || activeMarkup;
-      else if (gameType === "minecraft") activeMarkup = lztConfig?.markup_minecraft || activeMarkup;
-
-      // The admin sets the max FINAL price (after markup). Divide by markup to get LZT pmax.
+      // Use minimum markup tier (1.5x) for pmax to fetch widest range of accounts
+      // Actual markup is applied per-item based on inventory value
+      const activeMarkup = 1.5;
       const effectivePmax = Math.floor(maxFetchPrice / activeMarkup);
 
       const params = new URLSearchParams();
