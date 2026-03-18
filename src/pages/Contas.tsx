@@ -890,7 +890,7 @@ const Contas = () => {
 
     if (gameTab === "valorant") {
       params.game_type = "riot";
-      params.valorant_smin = "3"; // match server-side VAL_MIN_SKINS=3
+      params.valorant_smin = "10"; // match server-side VAL_MIN_SKINS=10
       if (invMin) params.inv_min = invMin;
       if (invMax) params.inv_max = invMax;
       if (onlyKnife) params.knife = "true";
