@@ -246,10 +246,11 @@ Deno.serve(async (req) => {
       // LIST: accounts with filters
       const maxFetchPrice = lztConfig?.max_fetch_price || 500;
 
-      // Use minimum markup tier (1.5x) for pmax to fetch widest range of accounts
-      // Actual markup is applied per-item based on inventory value
+      // Use minimum markup tier (1.5x) for pmax to fetch the widest range of accounts.
+      // max_fetch_price is stored in BRL, while the LZT API expects pmax in RUB.
       const activeMarkup = 1.5;
-      const effectivePmax = Math.floor(maxFetchPrice / activeMarkup);
+      const RUB_TO_BRL_FILTER = 0.055;
+      const effectivePmax = Math.ceil(maxFetchPrice / activeMarkup / RUB_TO_BRL_FILTER);
 
       const params = new URLSearchParams();
       const allowedParams = [
@@ -291,7 +292,6 @@ Deno.serve(async (req) => {
 
       // Convert user-provided BRL price filters to API currency (RUB)
       // The frontend UI shows "R$" so pmin/pmax arrive as BRL values
-      const RUB_TO_BRL_FILTER = 0.055;
       const userPmin = params.get("pmin");
       if (userPmin) {
         const brlMin = Number(userPmin);
@@ -321,7 +321,7 @@ Deno.serve(async (req) => {
           params.set("pmax", String(effectivePmax));
         }
       } else {
-        // Enforce effective pmax (max_fetch_price / markup) as ceiling
+        // Enforce the admin-configured BRL ceiling after converting it correctly to RUB
         params.set("pmax", String(effectivePmax));
       }
 

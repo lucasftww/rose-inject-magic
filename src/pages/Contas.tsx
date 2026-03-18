@@ -890,8 +890,7 @@ const Contas = () => {
 
     if (gameTab === "valorant") {
       params.game_type = "riot";
-      // Minimum inventory value 2000 VP
-      params.inv_min = invMin || "2000";
+      if (invMin) params.inv_min = invMin;
       if (invMax) params.inv_max = invMax;
       if (onlyKnife) params.knife = "true";
       if (lvlMin) params.valorant_level_min = lvlMin;
@@ -903,12 +902,9 @@ const Contas = () => {
         params.rmax = String(rankFilter.rmax);
       }
 
-      // Region filter: use country[] API param for server-side filtering
+      // Use the actual LZT Valorant region filter instead of country[]
       if (valRegion !== "all") {
-        const countries = REGION_COUNTRY_MAP[valRegion];
-        if (countries) {
-          params["country[]"] = countries;
-        }
+        params["valorant_region[]"] = valRegion;
       }
 
       if (selectedWeapon !== "todos") {
