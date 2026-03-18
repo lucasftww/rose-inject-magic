@@ -666,7 +666,7 @@ Deno.serve(async (req) => {
         ? Number(overrideRow.custom_price_brl)
         : undefined;
 
-      data.item.price_brl = getDisplayedPriceBrl(data.item, overridePrice, gameType);
+      data.item.price_brl = getDisplayedPriceBrl(data.item, overridePrice, gameType, activeMarkup);
 
       if (!shouldKeepItem(data.item, gameType, data.item.price_brl)) {
         return new Response(
