@@ -251,16 +251,21 @@ const FinanceTab = () => {
   const revenueChange = pctChange(totalRevenue, prevRevenue);
 
   const revenueBreakdown = useMemo(() => {
-    let lzt = 0, stock = 0;
+    let lzt = 0, stock = 0, robot = 0;
+    // Build a set of robot product IDs for fast lookup
+    const robotProductIds = new Set(robotTickets.map(r => r.product_id));
     fp.forEach(p => {
       const cart = p.cart_snapshot as any[];
       if (!Array.isArray(cart)) { stock += p.amount / 100; return; }
-      if (cart.some((i: any) => i.type === "lzt-account")) lzt += p.amount / 100;
+      // Classify each payment by its cart items
+      const hasLzt = cart.some((i: any) => i.type === "lzt-account");
+      const hasRobot = cart.some((i: any) => robotProductIds.has(i.productId));
+      if (hasLzt) lzt += p.amount / 100;
+      else if (hasRobot) robot += p.amount / 100;
       else stock += p.amount / 100;
     });
-    const robotRev = fRobot.reduce((s, r) => s + r.revenue, 0);
-    return { lzt, robot: robotRev, stock: Math.max(0, stock - robotRev) };
-  }, [fp, fRobot]);
+    return { lzt, robot, stock };
+  }, [fp, robotTickets]);
 
   const lztTotalBought = useMemo(() => fLzt.reduce((s, l) => s + Number(l.buy_price), 0), [fLzt]);
   const lztTotalProfit = useMemo(() => fLzt.reduce((s, l) => s + Number(l.profit), 0), [fLzt]);
