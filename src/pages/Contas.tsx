@@ -59,6 +59,16 @@ const valorantRegions = [
   { id: "latam", label: "LATAM" },
 ];
 
+// Map region filter IDs to riot_country codes (3-letter) returned by LZT API
+const REGION_COUNTRY_MAP: Record<string, string[]> = {
+  br: ["Bra"],
+  eu: ["Ger", "Fra", "Gbr", "Ita", "Esp", "Pol", "Tur", "Swe", "Nor", "Fin", "Dnk", "Nld", "Bel", "Aut", "Che", "Prt", "Cze", "Rou", "Bgr", "Hrv", "Svk", "Hun", "Grc", "Ukr", "Rus", "Srb", "Ltu", "Lva", "Est"],
+  na: ["Usa", "Can"],
+  ap: ["Jpn", "Kor", "Aus", "Sgp", "Twn", "Hkg", "Tha", "Phl", "Idn", "Mys", "Vnm", "Ind", "Nzl"],
+  kr: ["Kor"],
+  latam: ["Mex", "Arg", "Chl", "Col", "Per", "Ven", "Ecu", "Ury", "Pry", "Bol", "Cri", "Pan", "Dom"],
+};
+
 const lolRegions = [
   { id: "all", label: "Todas as regiões" },
   { id: "BR1", label: "Brasil" },
