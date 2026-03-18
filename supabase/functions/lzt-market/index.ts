@@ -29,9 +29,12 @@ function log(level: "INFO" | "WARN" | "ERROR", ctx: string, msg: string, data?: 
 function getDisplayedPriceBrl(item: LztItem, overridePrice?: number) {
   if (typeof overridePrice === "number" && overridePrice > 0) return overridePrice;
 
-  const currency = item.price_currency || "rub";
+  const currency = String(item.price_currency || "rub").toLowerCase();
   const rawPrice = Number(item.price || 0);
-  const brl = currency === "rub" ? rawPrice * RUB_TO_BRL : rawPrice;
+  let brl = rawPrice;
+  if (currency === "rub") brl = rawPrice * RUB_TO_BRL;
+  else if (currency === "usd") brl = rawPrice * USD_TO_BRL;
+  // else assume already BRL
   const final = brl * MARKUP;
 
   return final < MIN_PRICE_BRL ? MIN_PRICE_BRL : Math.round(final * 100) / 100;
