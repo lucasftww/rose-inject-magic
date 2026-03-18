@@ -13,9 +13,9 @@ const USD_TO_BRL = 5.50;
 const MIN_PRICE_BRL = 20;
 const MARKUP = 3.0;
 const LOL_MIN_SKINS = 8;
-const VAL_MIN_SKINS = 10;
+const VAL_MIN_SKINS = 15;
 const FT_MIN_SKINS = 3;
-const PRICE_BUFFER = 1.35;
+const PRICE_BUFFER = 1.15;
 
 type LztItem = Record<string, any>;
 
@@ -121,10 +121,10 @@ function getValorantFairPriceCeiling(item: LztItem) {
   else if (rankNum >= 9) rankBonus = 40;      // Silver
 
   const estimatedValue =
-    skinCount * 12 +
-    knifeCount * 80 +
-    level * 0.8 +
-    vp * 0.01 +
+    skinCount * 6 +
+    knifeCount * 30 +
+    level * 0.4 +
+    vp * 0.005 +
     rankBonus;
 
   return Math.max(Math.round(estimatedValue), 60);
