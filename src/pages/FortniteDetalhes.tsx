@@ -24,7 +24,13 @@ const fetchAccountDetail = async (itemId: string) => {
     `${projectUrl}/functions/v1/lzt-market?action=detail&item_id=${encodeURIComponent(itemId)}&game_type=fortnite`,
     { headers: { "Content-Type": "application/json", apikey: anonKey } }
   );
-  if (!res.ok) throwApiError(res.status);
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    if (res.status === 410) {
+      throw new Error(body?.error === "Account already sold" ? "Esta conta já foi vendida." : "Esta conta não está mais disponível.");
+    }
+    throwApiError(res.status);
+  }
   return res.json();
 };
 
