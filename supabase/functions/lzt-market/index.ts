@@ -11,7 +11,7 @@ const RETRYABLE_STATUSES = [429, 502, 503, 504];
 const RUB_TO_BRL = 0.055;
 const USD_TO_BRL = 5.50;
 const MIN_PRICE_BRL = 20;
-const MARKUP = 3.0;
+const DEFAULT_MARKUP = 3.0;
 const LOL_MIN_SKINS = 8;
 const VAL_MIN_SKINS = 15;
 const FT_MIN_SKINS = 3;
@@ -51,16 +51,17 @@ function getContentFloorBrl(item: LztItem, gameType?: string) {
   return skins * 0.6 + knives * 5 + level * 0.08;
 }
 
-function getDisplayedPriceBrl(item: LztItem, overridePrice?: number, gameType?: string) {
+function getDisplayedPriceBrl(item: LztItem, overridePrice?: number, gameType?: string, markup?: number) {
   if (typeof overridePrice === "number" && overridePrice > 0) return overridePrice;
 
+  const activeMarkup = markup || DEFAULT_MARKUP;
   const currency = String(item.price_currency || "rub").toLowerCase();
   const rawPrice = Number(item.price || 0);
   let brl = rawPrice;
   if (currency === "rub") brl = rawPrice * RUB_TO_BRL;
   else if (currency === "usd") brl = rawPrice * USD_TO_BRL;
   // else assume already BRL
-  let final = brl * MARKUP;
+  let final = brl * activeMarkup;
 
   // Enforce content-based floor so cheap listings with lots of content get a fair price
   const contentFloor = getContentFloorBrl(item, gameType);
@@ -419,6 +420,14 @@ Deno.serve(async (req) => {
       .limit(1)
       .maybeSingle();
 
+    // Compute per-game markup from DB (used for both list and detail)
+    let activeMarkup = DEFAULT_MARKUP;
+    if (gameType === "fortnite" && lztConfig?.markup_fortnite) activeMarkup = Number(lztConfig.markup_fortnite);
+    else if (gameType === "lol" && lztConfig?.markup_lol) activeMarkup = Number(lztConfig.markup_lol);
+    else if (gameType === "minecraft" && lztConfig?.markup_minecraft) activeMarkup = Number(lztConfig.markup_minecraft);
+    else if ((gameType === "riot" || gameType === "valorant") && lztConfig?.markup_valorant) activeMarkup = Number(lztConfig.markup_valorant);
+    else if (lztConfig?.markup_multiplier) activeMarkup = Number(lztConfig.markup_multiplier);
+
     // DETAIL: Get single item
     let apiUrl: string;
     if (action === "detail" && itemId) {
@@ -426,10 +435,6 @@ Deno.serve(async (req) => {
     } else {
       // LIST: accounts with filters
       const maxFetchPrice = lztConfig?.max_fetch_price || 500;
-
-      // Flat 3.0x markup for all games.
-      // max_fetch_price is stored in BRL, while the LZT API expects pmax in BRL-equivalent seller price.
-      const activeMarkup = MARKUP;
       const effectivePmax = Math.ceil(maxFetchPrice / activeMarkup);
 
       const params = new URLSearchParams();
@@ -596,7 +601,7 @@ Deno.serve(async (req) => {
 
       const beforeCount = data.items.length;
       data.items = data.items.filter((item: LztItem) => {
-        const displayedPriceBrl = getDisplayedPriceBrl(item, overrideMap.get(String(item.item_id)), gameType);
+        const displayedPriceBrl = getDisplayedPriceBrl(item, overrideMap.get(String(item.item_id)), gameType, activeMarkup);
         return shouldKeepItem(item, gameType, displayedPriceBrl);
       });
 
@@ -607,7 +612,7 @@ Deno.serve(async (req) => {
       });
 
       for (const item of data.items) {
-        item.price_brl = getDisplayedPriceBrl(item, overrideMap.get(String(item.item_id)), gameType);
+        item.price_brl = getDisplayedPriceBrl(item, overrideMap.get(String(item.item_id)), gameType, activeMarkup);
 
         // Strip heavy fields
         for (const field of STRIP_FIELDS) delete item[field];
@@ -661,7 +666,7 @@ Deno.serve(async (req) => {
         ? Number(overrideRow.custom_price_brl)
         : undefined;
 
-      data.item.price_brl = getDisplayedPriceBrl(data.item, overridePrice, gameType);
+      data.item.price_brl = getDisplayedPriceBrl(data.item, overridePrice, gameType, activeMarkup);
 
       if (!shouldKeepItem(data.item, gameType, data.item.price_brl)) {
         return new Response(
