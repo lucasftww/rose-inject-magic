@@ -142,9 +142,19 @@ function getFortniteFairPriceCeiling(item: LztItem) {
   return Math.max(Math.round(estimatedValue), 60);
 }
 
+const MIN_INACTIVE_DAYS = 30;
+
 function shouldKeepItem(item: LztItem, gameType: string, displayedPriceBrl: number) {
   if (item.buyer) return false;
   if (item.canBuyItem === false) return false;
+
+  // Reject accounts with recent activity (less than 30 days inactive)
+  const nowSec = Math.floor(Date.now() / 1000);
+  const minInactiveSec = MIN_INACTIVE_DAYS * 86400;
+  const lastActivity = Number(
+    item.account_last_activity || item.riot_last_activity || item.fortnite_last_activity || 0
+  );
+  if (lastActivity > 0 && (nowSec - lastActivity) < minInactiveSec) return false;
 
   if (gameType === "lol") {
     const skinCount = Number(item.riot_lol_skin_count || 0);
