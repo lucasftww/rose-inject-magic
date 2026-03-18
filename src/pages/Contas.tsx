@@ -59,6 +59,16 @@ const valorantRegions = [
   { id: "latam", label: "LATAM" },
 ];
 
+// Map region filter IDs to riot_country codes (3-letter) returned by LZT API
+const REGION_COUNTRY_MAP: Record<string, string[]> = {
+  br: ["Bra"],
+  eu: ["Ger", "Fra", "Gbr", "Ita", "Esp", "Pol", "Tur", "Swe", "Nor", "Fin", "Dnk", "Nld", "Bel", "Aut", "Che", "Prt", "Cze", "Rou", "Bgr", "Hrv", "Svk", "Hun", "Grc", "Ukr", "Rus", "Srb", "Ltu", "Lva", "Est"],
+  na: ["Usa", "Can"],
+  ap: ["Jpn", "Kor", "Aus", "Sgp", "Twn", "Hkg", "Tha", "Phl", "Idn", "Mys", "Vnm", "Ind", "Nzl"],
+  kr: ["Kor"],
+  latam: ["Mex", "Arg", "Chl", "Col", "Per", "Ven", "Ecu", "Ury", "Pry", "Bol", "Cri", "Pan", "Dom"],
+};
+
 const lolRegions = [
   { id: "all", label: "Todas as regiões" },
   { id: "BR1", label: "Brasil" },
@@ -788,7 +798,7 @@ const Contas = () => {
   const [selectedRank, setSelectedRank] = useState("todos");
   const [selectedWeapon, setSelectedWeapon] = useState("todos");
   const [onlyKnife, setOnlyKnife] = useState(false);
-  const [valRegion, setValRegion] = useState("all");
+  const [valRegion, setValRegion] = useState("br");
 
   // ─── LoL filters ───
   const [lolRank, setLolRank] = useState("todos");
@@ -896,10 +906,8 @@ const Contas = () => {
         params.rmax = String(rankFilter.rmax);
       }
 
-      // Region filter
-      if (valRegion !== "all") {
-        params["valorant_region[]"] = valRegion;
-      }
+      // Region filter: done client-side via riot_country, NOT via valorant_region[] API param
+      // (LZT API's valorant_region[] filter returns empty results for most regions)
 
       if (selectedWeapon !== "todos") {
         // Combine weapon filter with search query if both are set
@@ -938,7 +946,7 @@ const Contas = () => {
     }
 
     return params;
-  }, [page, sortBy, priceMin, priceMax, searchQuery, onlyKnife, selectedRank, selectedWeapon, invMin, invMax, lvlMin, lvlMax, gameTab, lolRank, lolChampMin, lolSkinsMin, fnVbMin, fnSkinsMin, mcJava, mcBedrock, mcHypixelLvlMin, mcCapesMin, mcNoBan, valRegion, lolRegion]);
+  }, [page, sortBy, priceMin, priceMax, searchQuery, onlyKnife, selectedRank, selectedWeapon, invMin, invMax, lvlMin, lvlMax, gameTab, lolRank, lolChampMin, lolSkinsMin, fnVbMin, fnSkinsMin, mcJava, mcBedrock, mcHypixelLvlMin, mcCapesMin, mcNoBan, lolRegion]);
 
   const paramsKey = JSON.stringify(buildParams(1)) + gameTab;
 
@@ -1066,8 +1074,20 @@ const Contas = () => {
   };
 
   const allItems = useMemo(() => {
-    // Post-filter by BRL price range (the API filter uses RUB approximation, so we refine here)
     let filtered = [...streamedItems];
+
+    // Valorant region filter (client-side via riot_country)
+    if (gameTab === "valorant" && valRegion !== "all") {
+      const allowedCountries = REGION_COUNTRY_MAP[valRegion];
+      if (allowedCountries) {
+        filtered = filtered.filter(item => {
+          const country = item.riot_country || "";
+          return allowedCountries.some(c => c.toLowerCase() === country.toLowerCase());
+        });
+      }
+    }
+
+    // Post-filter by BRL price range
     const brlMin = priceMin ? Number(priceMin) : 0;
     const brlMax = priceMax ? Number(priceMax) : 0;
     if (brlMin > 0 || brlMax > 0) {
@@ -1117,7 +1137,7 @@ const Contas = () => {
       return filtered.sort((a, b) => getBrlPrice(a) - getBrlPrice(b));
     }
     return filtered;
-  }, [streamedItems, sortBy, gameTab, priceMin, priceMax]);
+  }, [streamedItems, sortBy, gameTab, priceMin, priceMax, valRegion]);
   const totalDisplayPages = Math.max(1, Math.ceil(allItems.length / ITEMS_PER_PAGE));
 
   // Clamp displayPage when allItems shrinks (e.g. after price filtering)
@@ -1147,7 +1167,7 @@ const Contas = () => {
     setMcHypixelLvlMin("");
     setMcCapesMin("");
     setMcNoBan(false);
-    setValRegion("all");
+    setValRegion("br");
     setLolRegion("BR1");
     setPriceMin(""); setPriceMax("");
     setSearchQuery(""); setOnlyKnife(false);
@@ -1171,7 +1191,7 @@ const Contas = () => {
     gameTab === "valorant" && selectedRank !== "todos",
     gameTab === "valorant" && selectedWeapon !== "todos",
     gameTab === "valorant" && onlyKnife,
-    gameTab === "valorant" && valRegion !== "all",
+    gameTab === "valorant" && valRegion !== "br",
     gameTab === "lol" && lolRank !== "todos",
     gameTab === "lol" && lolChampMin !== "",
     gameTab === "lol" && lolSkinsMin !== "",

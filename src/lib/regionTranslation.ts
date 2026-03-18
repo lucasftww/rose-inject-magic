@@ -3,6 +3,7 @@ const regionMap: Record<string, string> = {
   "Европа": "Europa",
   "Северная Америка": "América do Norte",
   "Латинская Америка": "América Latina",
+  "Азиатско-Тихоокеанский": "Ásia-Pacífico",
   "Азия": "Ásia",
   "Корея": "Coreia",
   "Япония": "Japão",
