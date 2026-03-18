@@ -716,9 +716,8 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
     }
 
     // Record sale even for manual delivery so admin can track revenue
-    const RUB_TO_BRL_MD = 0.055;
-    const USD_TO_BRL_MD = 5.50;
-    const buyPriceMd = currency === "rub" ? Number(price || 0) * RUB_TO_BRL_MD : currency === "usd" ? Number(price || 0) * USD_TO_BRL_MD : Number(price || 0);
+    const ratesMd = await getLiveRates();
+    const buyPriceMd = currency === "rub" ? Number(price || 0) * ratesMd.rub : currency === "usd" ? Number(price || 0) * ratesMd.usd : Number(price || 0);
     const sellPriceMd = Number(item.price) || 0;
     await supabaseAdmin.from("lzt_sales").insert({
       lzt_item_id: String(itemId),
