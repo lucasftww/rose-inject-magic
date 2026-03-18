@@ -15,6 +15,7 @@
  *   client_ip_address      — server-side only (x-forwarded-for)
  *   em                     — SHA-256 hashed email
  *   external_id            — SHA-256 hashed user ID (or hashed first-party tracking ID for anonymous)
+ *   country                — "br" (hashed) for all users
  *
  * Deduplication:
  *   ViewContent/InitiateCheckout → random event_id shared by Pixel+CAPI
@@ -47,11 +48,14 @@ const sha256 = async (message: string): Promise<string> => {
   }
 };
 
+// Pre-compute country hash (all users are BR)
+let _countryHash = "";
+sha256("br").then((h) => { _countryHash = h; });
+
 // ─── Cached user identity ───────────────────────────────────────────────────
-// In-memory + localStorage so it survives page reloads during checkout
 
 let _cachedUserData: { em?: string; external_id?: string } = {};
-let _pixelInitWithAM = false; // guard against duplicate fbq('init') calls
+let _pixelInitWithAM = false;
 
 const persistUserData = () => {
   try {
@@ -69,16 +73,10 @@ const restoreUserData = () => {
   } catch (_) { /* ignore */ }
 };
 
-// Restore on module load
 restoreUserData();
 
 // ─── Advanced Matching ──────────────────────────────────────────────────────
 
-/**
- * Update pixel with Advanced Matching data.
- * Call after login AND on session restore.
- * Caches hashed email + external_id for CAPI calls (persisted to localStorage).
- */
 export const setAdvancedMatching = async (userData: {
   email?: string | null;
   phone?: string | null;
@@ -99,28 +97,25 @@ export const setAdvancedMatching = async (userData: {
     if (hashed) matchData.ph = hashed;
   }
   if (userData.externalId) {
-    // Browser Advanced Matching: unhashed external_id (Meta hashes it)
     matchData.external_id = userData.externalId;
-    // CAPI: hash it ourselves (Meta requires pre-hashed for server events)
     const hashed = await sha256(userData.externalId);
     if (hashed) _cachedUserData.external_id = hashed;
   }
 
+  // Always include country for Advanced Matching
+  matchData.country = "br";
+
   persistUserData();
 
-  // Only re-init pixel once per session to avoid duplicate events
   if (typeof window !== "undefined" && window.fbq && Object.keys(matchData).length > 0 && !_pixelInitWithAM) {
     _pixelInitWithAM = true;
     window.fbq("init", PIXEL_ID, matchData);
   }
 };
 
-/**
- * Clear cached identity on sign-out.
- */
 export const clearAdvancedMatching = () => {
   _cachedUserData = {};
-  _pixelInitWithAM = false; // allow re-init on next login
+  _pixelInitWithAM = false;
   try {
     localStorage.removeItem(STORAGE_KEY_EM);
     localStorage.removeItem(STORAGE_KEY_EID);
@@ -128,8 +123,6 @@ export const clearAdvancedMatching = () => {
 };
 
 // ─── First-Party Tracking ID ────────────────────────────────────────────────
-// Persistent first-party identifier (cookie + localStorage).
-// Used as external_id fallback for anonymous users — improves EMQ by ~20%.
 
 const TRACKING_ID_KEY = "_store_trk_id";
 const TRACKING_COOKIE_DAYS = 365;
@@ -138,11 +131,9 @@ let _trackingIdHash: string | null = null;
 
 const getOrCreateTrackingId = (): string => {
   try {
-    // Check localStorage first (survives cookie clearing)
     let id = localStorage.getItem(TRACKING_ID_KEY);
     if (id) return id;
 
-    // Check cookie
     const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${TRACKING_ID_KEY}=([^;]*)`));
     if (match) {
       id = match[1];
@@ -150,7 +141,6 @@ const getOrCreateTrackingId = (): string => {
       return id;
     }
 
-    // Generate new tracking ID
     id = `trk_${Date.now()}_${Math.random().toString(36).substring(2, 11)}${Math.random().toString(36).substring(2, 11)}`;
     localStorage.setItem(TRACKING_ID_KEY, id);
     const expires = new Date(Date.now() + TRACKING_COOKIE_DAYS * 86400000).toUTCString();
@@ -161,7 +151,6 @@ const getOrCreateTrackingId = (): string => {
   }
 };
 
-/** Get hashed tracking ID (cached after first call) */
 const getHashedTrackingId = async (): Promise<string> => {
   if (_trackingIdHash) return _trackingIdHash;
   const id = getOrCreateTrackingId();
@@ -171,8 +160,50 @@ const getHashedTrackingId = async (): Promise<string> => {
   return _trackingIdHash || "";
 };
 
-// Initialize tracking ID on module load
 getOrCreateTrackingId();
+
+// ─── FBC Reconstruction ────────────────────────────────────────────────────
+// Aggressively reconstruct _fbc from all possible fbclid sources
+
+const getFbc = (): string => {
+  try {
+    // 1. Check _fbc cookie first
+    const fbcMatch = document.cookie.match(/(?:^|;\s*)_fbc=([^;]*)/);
+    if (fbcMatch?.[1]) return fbcMatch[1];
+
+    // 2. Check URL params (current page)
+    const urlParams = new URLSearchParams(window.location.search);
+    const fbclidFromUrl = urlParams.get("fbclid");
+    if (fbclidFromUrl) {
+      const fbc = `fb.1.${Date.now()}.${fbclidFromUrl}`;
+      // Persist for future events
+      try {
+        localStorage.setItem("fbclid", fbclidFromUrl);
+        sessionStorage.setItem("_ck_fbclid", fbclidFromUrl);
+      } catch (_) {}
+      return fbc;
+    }
+
+    // 3. Check localStorage/sessionStorage (persisted from landing)
+    const fbclid =
+      localStorage.getItem("fbclid") ||
+      sessionStorage.getItem("_ck_fbclid");
+    if (fbclid) return `fb.1.${Date.now()}.${fbclid}`;
+  } catch (_) {}
+  return "";
+};
+
+// ─── FBP with retry ─────────────────────────────────────────────────────────
+// _fbp cookie may not be set immediately on first page load
+
+const getFbp = (): string => {
+  try {
+    const fbpMatch = document.cookie.match(/(?:^|;\s*)_fbp=([^;]*)/);
+    return fbpMatch?.[1] || "";
+  } catch (_) {
+    return "";
+  }
+};
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -193,25 +224,18 @@ export interface TrackingData {
 const getUserData = (): Record<string, string> => {
   const data: Record<string, string> = {};
   try {
-    // _fbp cookie (set by Meta Pixel)
-    const fbpMatch = document.cookie.match(/(?:^|;\s*)_fbp=([^;]*)/);
-    if (fbpMatch) data.fbp = fbpMatch[1];
+    // _fbp
+    const fbp = getFbp();
+    if (fbp) data.fbp = fbp;
 
-    // _fbc: prefer cookie, reconstruct from fbclid if absent
-    const fbcMatch = document.cookie.match(/(?:^|;\s*)_fbc=([^;]*)/);
-    if (fbcMatch) {
-      data.fbc = fbcMatch[1];
-    } else {
-      const fbclid =
-        localStorage.getItem("fbclid") ||
-        sessionStorage.getItem("_ck_fbclid");
-      if (fbclid) data.fbc = `fb.1.${Date.now()}.${fbclid}`;
-    }
+    // _fbc (aggressive reconstruction)
+    const fbc = getFbc();
+    if (fbc) data.fbc = fbc;
 
     // User agent
     data.client_user_agent = navigator.userAgent;
 
-    // Hashed email + external_id (restored from localStorage if needed)
+    // Hashed email + external_id
     if (!_cachedUserData.em && !_cachedUserData.external_id) restoreUserData();
     if (_cachedUserData.em) data.em = _cachedUserData.em;
 
@@ -221,11 +245,14 @@ const getUserData = (): Record<string, string> => {
     } else if (_trackingIdHash) {
       data.external_id = _trackingIdHash;
     }
+
+    // Country — always "br" (hashed for CAPI)
+    if (_countryHash) data.country = _countryHash;
   } catch (_) { /* ignore */ }
   return data;
 };
 
-// Pre-hash the tracking ID on module load (async, non-blocking)
+// Pre-hash the tracking ID on module load
 getHashedTrackingId();
 
 /** Fire-and-forget server-side event via Edge Function */
@@ -239,17 +266,20 @@ const sendCAPI = (
     if (!projectId) return;
 
     const url = `https://${projectId}.supabase.co/functions/v1/meta-capi`;
+
+    // Collect user data, if fbp is missing schedule a retry
+    let userData = getUserData();
+
     const body = JSON.stringify({
       event_name: eventName,
       event_id: eventId,
       event_time: Math.floor(Date.now() / 1000),
       event_source_url: window.location.href,
       action_source: "website",
-      user_data: getUserData(),
+      user_data: userData,
       custom_data: customData,
     });
 
-    // Use fetch with credentials:'omit' to avoid CORS issues with sendBeacon
     fetch(url, {
       method: "POST",
       headers: {
@@ -260,14 +290,39 @@ const sendCAPI = (
       keepalive: true,
       credentials: "omit",
     }).catch(() => { /* ignore */ });
+
+    // If fbp was missing, retry after 1.5s (Meta Pixel may need time to set cookie)
+    if (!userData.fbp) {
+      setTimeout(() => {
+        const retryData = getUserData();
+        if (retryData.fbp) {
+          const retryBody = JSON.stringify({
+            event_name: eventName,
+            event_id: eventId, // same event_id = Meta deduplicates
+            event_time: Math.floor(Date.now() / 1000),
+            event_source_url: window.location.href,
+            action_source: "website",
+            user_data: retryData,
+            custom_data: customData,
+          });
+          fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || "",
+            },
+            body: retryBody,
+            keepalive: true,
+            credentials: "omit",
+          }).catch(() => {});
+        }
+      }, 1500);
+    }
   } catch (_) { /* ignore */ }
 };
 
 // ─── Event Tracking ─────────────────────────────────────────────────────────
 
-/**
- * Track ViewContent — fires when user views a product page
- */
 export const trackViewContent = (data: TrackingData) => {
   if (typeof window === "undefined") return;
 
@@ -290,10 +345,6 @@ export const trackViewContent = (data: TrackingData) => {
   return eventId;
 };
 
-
-/**
- * Track InitiateCheckout — fires when user enters checkout page
- */
 export const trackInitiateCheckout = (data: TrackingData) => {
   if (typeof window === "undefined") return;
 
@@ -316,19 +367,13 @@ export const trackInitiateCheckout = (data: TrackingData) => {
   return eventId;
 };
 
-/**
- * Track Purchase — fires ONLY on confirmed payment (COMPLETED status)
- * Never on page load. Deterministic event_id for deduplication.
- */
 export const trackPurchase = (
   data: TrackingData & { transactionId: string }
 ) => {
   if (typeof window === "undefined") return;
 
-  // Deterministic event_id — must match server-side for deduplication
   const eventId = `purchase_${data.transactionId}`;
 
-  // Guard against double-firing (polling, re-renders, etc.)
   const storageKey = `_meta_purchase_${data.transactionId}`;
   try {
     if (sessionStorage.getItem(storageKey)) return;
@@ -356,10 +401,6 @@ export const trackPurchase = (
 
 // ─── Category Resolution ────────────────────────────────────────────────────
 
-/**
- * Resolve game category from game name or slug.
- * Used for content_category — enables remarketing audiences by game.
- */
 export const resolveCategory = (gameName?: string | null): string => {
   if (!gameName) return "Outros";
   const lower = gameName.toLowerCase();
