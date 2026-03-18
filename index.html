@@ -44,7 +44,7 @@
       fbq('track', 'PageView');
     </script>
 
-    <!-- Click ID Tracker: captura fbclid, gclid, ttclid e UTMs -->
+    <!-- Click ID Tracker: captura fbclid, gclid, ttclid e UTMs + sets _fbc cookie -->
     <script>
       (function(){
         try {
@@ -57,6 +57,13 @@
               try { sessionStorage.setItem('_ck_'+key, val); } catch(e){}
             }
           });
+          // Set _fbc cookie from fbclid so Meta Pixel can read it
+          var fbclid = params.get('fbclid');
+          if(fbclid) {
+            var fbc = 'fb.1.' + Date.now() + '.' + fbclid;
+            var expires = new Date(Date.now() + 90*86400000).toUTCString();
+            document.cookie = '_fbc=' + fbc + '; path=/; expires=' + expires + '; SameSite=Lax; Secure';
+          }
         } catch(e){}
       })();
     </script>
