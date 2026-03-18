@@ -99,6 +99,7 @@ const Raspadinha = () => {
   const [scratching, setScratching] = useState(false);
   const canvasRefs = useRef<(HTMLCanvasElement | null)[]>(Array(9).fill(null));
   const isDrawing = useRef(false);
+  const pendingCanvasPaintRef = useRef<string | null>(null);
 
   // Payment state
   const [paymentPhase, setPaymentPhase] = useState<PaymentPhase>("idle");
