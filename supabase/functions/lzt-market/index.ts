@@ -6,11 +6,97 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const LZT_ALLOWED_IMAGE_DOMAINS = ["lzt.market", "api.lzt.market", "s.lzt.market", "img.lzt.market"];
+const RETRYABLE_STATUSES = [429, 502, 503, 504];
+const RUB_TO_BRL = 0.055;
+const MIN_PRICE_BRL = 20;
+const MARKUP = 3.0;
+const LOL_MIN_SKINS = 8;
+const LOL_PRICE_BUFFER = 1.35;
+
+type LztItem = Record<string, any>;
+
 function log(level: "INFO" | "WARN" | "ERROR", ctx: string, msg: string, data?: Record<string, unknown>) {
   const entry = { ts: new Date().toISOString(), level, ctx, msg, ...(data || {}) };
   if (level === "ERROR") console.error(JSON.stringify(entry));
   else if (level === "WARN") console.warn(JSON.stringify(entry));
   else console.log(JSON.stringify(entry));
+}
+
+function getDisplayedPriceBrl(item: LztItem, overridePrice?: number) {
+  if (typeof overridePrice === "number" && overridePrice > 0) return overridePrice;
+
+  const currency = item.price_currency || "rub";
+  const rawPrice = Number(item.price || 0);
+  const brl = currency === "rub" ? rawPrice * RUB_TO_BRL : rawPrice;
+  const final = brl * MARKUP;
+
+  return final < MIN_PRICE_BRL ? MIN_PRICE_BRL : Math.round(final * 100) / 100;
+}
+
+function getLolFairPriceCeiling(item: LztItem) {
+  const skinCount = Number(item.riot_lol_skin_count || 0);
+  const champCount = Number(item.riot_lol_champion_count || 0);
+  const level = Math.min(Number(item.riot_lol_level || 0), 350);
+  const blueEssence = Math.min(Number(item.riot_lol_wallet_blue || 0), 50000);
+  const orangeEssence = Math.min(Number(item.riot_lol_wallet_orange || 0), 5000);
+  const mythicEssence = Math.min(Number(item.riot_lol_wallet_mythic || 0), 200);
+  const riotPoints = Math.min(Number(item.riot_lol_wallet_riot || 0), 10000);
+  const rank = String(item.riot_lol_rank || "").toLowerCase();
+
+  let rankBonus = 0;
+  if (rank.includes("challenger")) rankBonus = 1200;
+  else if (rank.includes("grandmaster")) rankBonus = 900;
+  else if (rank.includes("master")) rankBonus = 700;
+  else if (rank.includes("diamond")) rankBonus = 400;
+  else if (rank.includes("emerald")) rankBonus = 250;
+  else if (rank.includes("platinum")) rankBonus = 180;
+  else if (rank.includes("gold")) rankBonus = 120;
+  else if (rank.includes("silver")) rankBonus = 80;
+  else if (rank.includes("bronze")) rankBonus = 40;
+
+  const estimatedValue =
+    skinCount * 70 +
+    champCount * 5 +
+    level * 2 +
+    blueEssence * 0.01 +
+    orangeEssence * 0.08 +
+    mythicEssence * 6 +
+    riotPoints * 0.03 +
+    rankBonus;
+
+  return Math.max(Math.round(estimatedValue), 120);
+}
+
+function shouldKeepItem(item: LztItem, gameType: string, displayedPriceBrl: number) {
+  if (item.buyer) return false;
+  if (item.canBuyItem === false) return false;
+
+  const thirtyDaysAgo = Math.floor(Date.now() / 1000) - (30 * 24 * 60 * 60);
+  const lastActivity = Number(item.account_last_activity || 0);
+  if (lastActivity !== 0 && lastActivity > thirtyDaysAgo) return false;
+
+  if (gameType === "lol") {
+    const skinCount = Number(item.riot_lol_skin_count || 0);
+    if (skinCount < LOL_MIN_SKINS) return false;
+
+    const fairCeiling = getLolFairPriceCeiling(item) * LOL_PRICE_BUFFER;
+    if (displayedPriceBrl > fairCeiling) return false;
+
+    return true;
+  }
+
+  if (gameType === "fortnite") {
+    const ftSkins = Number(item.fortnite_skin_count || item.fortnite_outfit_count || 0);
+    return ftSkins > 0;
+  }
+
+  if (gameType === "minecraft") {
+    return true;
+  }
+
+  const valSkins = Number(item.riot_valorant_skin_count || 0);
+  return valSkins > 0;
 }
 
 Deno.serve(async (req) => {
@@ -30,7 +116,10 @@ Deno.serve(async (req) => {
       const supabaseUser = createClient(supabaseUrl, anonKey, {
         global: { headers: { Authorization: authHeader } },
       });
-      const { data: { user }, error } = await supabaseUser.auth.getUser();
+      const {
+        data: { user },
+        error,
+      } = await supabaseUser.auth.getUser();
       return error ? null : user;
     };
 
@@ -53,13 +142,15 @@ Deno.serve(async (req) => {
     const url = new URL(req.url);
     const action = url.searchParams.get("action") || "list";
     const itemId = url.searchParams.get("item_id");
+    const gameType = url.searchParams.get("game_type") || "riot";
 
     // IMAGE PROXY: Proxy image requests to bypass CORS (requires auth)
     if (action === "image-proxy") {
       const user = await getAuthUser();
       if (!user) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
-          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       const imageUrl = url.searchParams.get("url");
@@ -71,10 +162,9 @@ Deno.serve(async (req) => {
       }
 
       // SECURITY: Only allow proxying from known LZT domains
-      const allowedDomains = ["lzt.market", "api.lzt.market", "s.lzt.market", "img.lzt.market"];
       try {
         const parsedUrl = new URL(imageUrl);
-        if (!allowedDomains.some(d => parsedUrl.hostname.endsWith(d))) {
+        if (!LZT_ALLOWED_IMAGE_DOMAINS.some((domain) => parsedUrl.hostname.endsWith(domain))) {
           return new Response(JSON.stringify({ error: "Domain not allowed" }), {
             status: 403,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -118,7 +208,8 @@ Deno.serve(async (req) => {
       const user = await getAuthUser();
       if (!user) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
-          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       // SECURITY: admin only
@@ -166,7 +257,7 @@ Deno.serve(async (req) => {
           {
             status: response.status,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
-          }
+          },
         );
       }
 
@@ -180,7 +271,8 @@ Deno.serve(async (req) => {
       const user = await getAuthUser();
       if (!user) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
-          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       const { data: adminRole } = await supabaseAdmin
@@ -192,7 +284,8 @@ Deno.serve(async (req) => {
 
       if (!adminRole) {
         return new Response(JSON.stringify({ error: "Forbidden: admin only" }), {
-          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
@@ -201,7 +294,8 @@ Deno.serve(async (req) => {
 
       if (!priceItemId || !newPrice) {
         return new Response(JSON.stringify({ error: "item_id and price required" }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
@@ -222,7 +316,7 @@ Deno.serve(async (req) => {
       if (!editResponse.ok) {
         return new Response(
           JSON.stringify({ error: "LZT change-price failed", status: editResponse.status, detail: editData }),
-          { status: editResponse.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: editResponse.status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
 
@@ -247,10 +341,9 @@ Deno.serve(async (req) => {
       const maxFetchPrice = lztConfig?.max_fetch_price || 500;
 
       // Flat 3.0x markup for all games.
-      // max_fetch_price is stored in BRL, while the LZT API expects pmax in RUB.
-      const activeMarkup = 3.0;
-      const RUB_TO_BRL_FILTER = 0.055;
-      const effectivePmax = Math.ceil(maxFetchPrice / activeMarkup / RUB_TO_BRL_FILTER);
+      // max_fetch_price is stored in BRL, while the LZT API expects pmax in BRL-equivalent seller price.
+      const activeMarkup = MARKUP;
+      const effectivePmax = Math.ceil(maxFetchPrice / activeMarkup);
 
       const params = new URLSearchParams();
       const allowedParams = [
@@ -290,21 +383,16 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Convert user-provided BRL price filters to API currency (RUB)
-      // The frontend UI shows "R$" so pmin/pmax arrive as BRL values
+      // Convert user-provided BRL price filters to API currency (seller BRL on LZT)
       const userPmin = params.get("pmin");
       if (userPmin) {
         const brlMin = Number(userPmin);
         if (brlMin > 0) {
-          // If user's BRL min is at or below the floor (R$20), don't filter by pmin
-          // since many accounts get floored to R$20 regardless of RUB price
           const MIN_PRICE_BRL_FILTER = 20;
           if (brlMin <= MIN_PRICE_BRL_FILTER) {
             params.delete("pmin");
           } else {
-            // Convert BRL → RUB: rub = brl / markup / RUB_TO_BRL
-            const rubMin = Math.floor(brlMin / activeMarkup / RUB_TO_BRL_FILTER);
-            params.set("pmin", String(rubMin));
+            params.set("pmin", String(Math.floor(brlMin / activeMarkup)));
           }
         }
       }
@@ -313,19 +401,15 @@ Deno.serve(async (req) => {
       if (userPmax) {
         const brlMax = Number(userPmax);
         if (brlMax > 0) {
-          // Convert BRL → RUB, add 10% buffer for rounding differences
-          const rubMax = Math.ceil((brlMax / activeMarkup / RUB_TO_BRL_FILTER) * 1.1);
-          // Don't exceed the admin-configured ceiling
-          params.set("pmax", String(Math.min(rubMax, effectivePmax)));
+          const sellerMax = Math.ceil((brlMax / activeMarkup) * 1.1);
+          params.set("pmax", String(Math.min(sellerMax, effectivePmax)));
         } else {
           params.set("pmax", String(effectivePmax));
         }
       } else {
-        // Enforce the admin-configured BRL ceiling after converting it correctly to RUB
         params.set("pmax", String(effectivePmax));
       }
 
-      const gameType = url.searchParams.get("game_type") || "riot";
       if (gameType === "fortnite") {
         // Fortnite-specific params
         const fortniteParams = ["vbmin", "vbmax", "smin", "smax", "eg"];
@@ -359,13 +443,12 @@ Deno.serve(async (req) => {
 
     console.log("Fetching:", apiUrl);
 
-    const RETRYABLE_STATUSES = [429, 502, 503, 504];
     let response: Response | null = null;
     for (let attempt = 0; attempt < 3; attempt++) {
       if (attempt > 0) {
         const delay = 1000 * Math.pow(2, attempt - 1); // 1s, 2s
         console.log(`LZT retry attempt ${attempt + 1} after ${delay}ms...`);
-        await new Promise(r => setTimeout(r, delay));
+        await new Promise((r) => setTimeout(r, delay));
       }
       response = await fetch(apiUrl, {
         headers: {
@@ -386,7 +469,7 @@ Deno.serve(async (req) => {
         {
           status,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+        },
       );
     }
 
@@ -408,59 +491,36 @@ Deno.serve(async (req) => {
         "pending_deletion_date", "update_stat_date",
       ];
 
-      // Filter out sold, active, and worthless accounts
-      const thirtyDaysAgo = Math.floor(Date.now() / 1000) - (30 * 24 * 60 * 60);
-      data.items = data.items.filter((item: any) => {
-        if (item.buyer) return false;
-        if (item.canBuyItem === false) return false;
-        const lastActivity = Number(item.account_last_activity || 0);
-        if (lastActivity !== 0 && lastActivity > thirtyDaysAgo) return false;
-
-        // Remove garbage accounts: no skins = no value for buyers
-        if (gameType === "riot" || gameType === "lol") {
-          const valSkins = Number(item.riot_valorant_skin_count || 0);
-          const lolSkins = Number(item.riot_lol_skin_count || 0);
-          // If it's clearly a Valorant account (has valorant data) require skins
-          if (valSkins === 0 && lolSkins === 0) return false;
-        }
-        if (gameType === "fortnite") {
-          const ftSkins = Number(item.fortnite_skin_count || item.fortnite_outfit_count || 0);
-          if (ftSkins === 0) return false;
-        }
-
-        return true;
-      });
-
-      // Add price_brl and strip heavy fields
-      // Fetch price overrides for these items
-      const itemIds = data.items.map((item: any) => String(item.item_id));
-      const { data: overridesData } = await supabaseAdmin
-        .from("lzt_price_overrides")
-        .select("lzt_item_id, custom_price_brl")
-        .in("lzt_item_id", itemIds);
+      const itemIds = data.items.map((item: LztItem) => String(item.item_id)).filter(Boolean);
       const overrideMap = new Map<string, number>();
-      if (overridesData) {
-        for (const o of overridesData) overrideMap.set(o.lzt_item_id, Number(o.custom_price_brl));
+
+      if (itemIds.length > 0) {
+        const { data: overridesData } = await supabaseAdmin
+          .from("lzt_price_overrides")
+          .select("lzt_item_id, custom_price_brl")
+          .in("lzt_item_id", itemIds);
+
+        if (overridesData) {
+          for (const override of overridesData) {
+            overrideMap.set(override.lzt_item_id, Number(override.custom_price_brl));
+          }
+        }
       }
 
-      const RUB_TO_BRL = 0.055;
-      const MIN_PRICE_BRL = 20;
-      const gameType = url.searchParams.get("game_type") || "riot";
+      const beforeCount = data.items.length;
+      data.items = data.items.filter((item: LztItem) => {
+        const displayedPriceBrl = getDisplayedPriceBrl(item, overrideMap.get(String(item.item_id)));
+        return shouldKeepItem(item, gameType, displayedPriceBrl);
+      });
 
-      // Flat 3.0x markup for all games — simple, fair, predictable
-      const MARKUP = 3.0;
+      log("INFO", "lzt-market", "Filtered market items", {
+        gameType,
+        beforeCount,
+        afterCount: data.items.length,
+      });
 
       for (const item of data.items) {
-        // Check for price override first
-        const override = overrideMap.get(String(item.item_id));
-        if (override && override > 0) {
-          item.price_brl = override;
-        } else {
-          const currency = item.price_currency || "rub";
-          const brl = currency === "rub" ? item.price * RUB_TO_BRL : item.price;
-          const final = brl * MARKUP;
-          item.price_brl = final < MIN_PRICE_BRL ? MIN_PRICE_BRL : Math.round(final * 100) / 100;
-        }
+        item.price_brl = getDisplayedPriceBrl(item, overrideMap.get(String(item.item_id)));
 
         // Strip heavy fields
         for (const field of STRIP_FIELDS) delete item[field];
@@ -484,8 +544,6 @@ Deno.serve(async (req) => {
           item.valorantInventory = trimmed;
         }
       }
-    } else if (data.items && Array.isArray(data.items)) {
-      // Non-detail but no special processing needed
     }
 
     // For detail action, also add price_brl (keep full data)
@@ -494,13 +552,13 @@ Deno.serve(async (req) => {
       if (data.item.buyer) {
         return new Response(
           JSON.stringify({ error: "Account already sold", item: null }),
-          { status: 410, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 410, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
       if (data.item.canBuyItem === false) {
         return new Response(
           JSON.stringify({ error: "Account unavailable", item: null }),
-          { status: 410, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 410, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
 
@@ -512,17 +570,17 @@ Deno.serve(async (req) => {
         .eq("lzt_item_id", detailItemId)
         .maybeSingle();
 
-      if (overrideRow && Number(overrideRow.custom_price_brl) > 0) {
-        data.item.price_brl = Number(overrideRow.custom_price_brl);
-      } else {
-        const RUB_TO_BRL = 0.055;
-        const MIN_PRICE_BRL = 20;
-        const MARKUP = 3.0;
+      const overridePrice = overrideRow && Number(overrideRow.custom_price_brl) > 0
+        ? Number(overrideRow.custom_price_brl)
+        : undefined;
 
-        const currency = data.item.price_currency || "rub";
-        const brl = currency === "rub" ? data.item.price * RUB_TO_BRL : data.item.price;
-        const final = brl * MARKUP;
-        data.item.price_brl = final < MIN_PRICE_BRL ? MIN_PRICE_BRL : Math.round(final * 100) / 100;
+      data.item.price_brl = getDisplayedPriceBrl(data.item, overridePrice);
+
+      if (!shouldKeepItem(data.item, gameType, data.item.price_brl)) {
+        return new Response(
+          JSON.stringify({ error: "Account does not meet quality filters", item: null }),
+          { status: 410, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
       }
     }
 
