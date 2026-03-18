@@ -1081,16 +1081,7 @@ const Contas = () => {
   const allItems = useMemo(() => {
     let filtered = [...streamedItems];
 
-    // Valorant region filter (client-side via riot_country)
-    if (gameTab === "valorant" && valRegion !== "all") {
-      const allowedCountries = REGION_COUNTRY_MAP[valRegion];
-      if (allowedCountries) {
-        filtered = filtered.filter(item => {
-          const country = item.riot_country || "";
-          return allowedCountries.some(c => c.toLowerCase() === country.toLowerCase());
-        });
-      }
-    }
+    // Region filter is now done server-side via country[] API param
 
     // Post-filter by BRL price range
     const brlMin = priceMin ? Number(priceMin) : 0;
