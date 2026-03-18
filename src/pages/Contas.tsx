@@ -906,8 +906,13 @@ const Contas = () => {
         params.rmax = String(rankFilter.rmax);
       }
 
-      // Region filter: done client-side via riot_country, NOT via valorant_region[] API param
-      // (LZT API's valorant_region[] filter returns empty results for most regions)
+      // Region filter: use country[] API param for server-side filtering
+      if (valRegion !== "all") {
+        const countries = REGION_COUNTRY_MAP[valRegion];
+        if (countries) {
+          params["country[]"] = countries;
+        }
+      }
 
       if (selectedWeapon !== "todos") {
         // Combine weapon filter with search query if both are set
@@ -946,7 +951,7 @@ const Contas = () => {
     }
 
     return params;
-  }, [page, sortBy, priceMin, priceMax, searchQuery, onlyKnife, selectedRank, selectedWeapon, invMin, invMax, lvlMin, lvlMax, gameTab, lolRank, lolChampMin, lolSkinsMin, fnVbMin, fnSkinsMin, mcJava, mcBedrock, mcHypixelLvlMin, mcCapesMin, mcNoBan, lolRegion]);
+  }, [page, sortBy, priceMin, priceMax, searchQuery, onlyKnife, selectedRank, selectedWeapon, invMin, invMax, lvlMin, lvlMax, gameTab, lolRank, lolChampMin, lolSkinsMin, fnVbMin, fnSkinsMin, mcJava, mcBedrock, mcHypixelLvlMin, mcCapesMin, mcNoBan, lolRegion, valRegion]);
 
   const paramsKey = JSON.stringify(buildParams(1)) + gameTab;
 
@@ -1076,16 +1081,7 @@ const Contas = () => {
   const allItems = useMemo(() => {
     let filtered = [...streamedItems];
 
-    // Valorant region filter (client-side via riot_country)
-    if (gameTab === "valorant" && valRegion !== "all") {
-      const allowedCountries = REGION_COUNTRY_MAP[valRegion];
-      if (allowedCountries) {
-        filtered = filtered.filter(item => {
-          const country = item.riot_country || "";
-          return allowedCountries.some(c => c.toLowerCase() === country.toLowerCase());
-        });
-      }
-    }
+    // Region filter is now done server-side via country[] API param
 
     // Post-filter by BRL price range
     const brlMin = priceMin ? Number(priceMin) : 0;
@@ -1137,7 +1133,7 @@ const Contas = () => {
       return filtered.sort((a, b) => getBrlPrice(a) - getBrlPrice(b));
     }
     return filtered;
-  }, [streamedItems, sortBy, gameTab, priceMin, priceMax, valRegion]);
+  }, [streamedItems, sortBy, gameTab, priceMin, priceMax]);
   const totalDisplayPages = Math.max(1, Math.ceil(allItems.length / ITEMS_PER_PAGE));
 
   // Clamp displayPage when allItems shrinks (e.g. after price filtering)
