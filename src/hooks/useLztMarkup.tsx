@@ -8,11 +8,11 @@ export const useLztMarkup = () => {
    */
   const calcPrice = (price: number, currency?: string, _game?: GameCategory): number => {
     const RUB_TO_BRL = 0.055;
+    const USD_TO_BRL = 5.50;
+    const cur = String(currency || "rub").toLowerCase();
     let brl = price;
-    if (currency === "rub" || !currency) {
-      brl = price * RUB_TO_BRL;
-    }
-    // Generic 3.0x fallback — should rarely be used since API provides price_brl
+    if (cur === "rub") brl = price * RUB_TO_BRL;
+    else if (cur === "usd") brl = price * USD_TO_BRL;
     const final = brl * 3.0;
     return final < MIN_PRICE_BRL ? MIN_PRICE_BRL : final;
   };

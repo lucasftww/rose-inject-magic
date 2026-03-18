@@ -694,7 +694,8 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
 
     // Record sale even for manual delivery so admin can track revenue
     const RUB_TO_BRL_MD = 0.055;
-    const buyPriceMd = currency === "rub" ? Number(price || 0) * RUB_TO_BRL_MD : Number(price || 0);
+    const USD_TO_BRL_MD = 5.50;
+    const buyPriceMd = currency === "rub" ? Number(price || 0) * RUB_TO_BRL_MD : currency === "usd" ? Number(price || 0) * USD_TO_BRL_MD : Number(price || 0);
     const sellPriceMd = Number(item.price) || 0;
     await supabaseAdmin.from("lzt_sales").insert({
       lzt_item_id: String(itemId),
@@ -910,7 +911,8 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
     }
 
     const RUB_TO_BRL = 0.055;
-    const buyPriceBrl = currency === "rub" ? Number(price) * RUB_TO_BRL : Number(price);
+    const USD_TO_BRL = 5.50;
+    const buyPriceBrl = currency === "rub" ? Number(price) * RUB_TO_BRL : currency === "usd" ? Number(price) * USD_TO_BRL : Number(price);
     const sellPriceBrl = Number(item.price) || 0;
     const { error: saleErr } = await supabaseAdmin.from("lzt_sales").insert({
       lzt_item_id: String(itemId),
@@ -1279,7 +1281,8 @@ async function validateAndCalculatePrice(
       else if (gameCategory === "minecraft" && lztConfig?.markup_minecraft) markup = lztConfig.markup_minecraft;
       
       const RUB_TO_BRL = 0.055;
-      const costBrl = realLztCurrency === "rub" ? realLztPrice * RUB_TO_BRL : realLztPrice;
+      const USD_TO_BRL = 5.50;
+      const costBrl = realLztCurrency === "rub" ? realLztPrice * RUB_TO_BRL : realLztCurrency === "usd" ? realLztPrice * USD_TO_BRL : realLztPrice;
       
       // The price the customer saw (sent from frontend)
       const clientDisplayPrice = Number(item.price) || 0;

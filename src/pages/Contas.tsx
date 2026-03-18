@@ -1064,13 +1064,15 @@ const Contas = () => {
   // Helper: get BRL price for sorting (matches what user sees on screen)
   const getBrlPrice = (item: LztItem): number => {
     if (item.price_brl && item.price_brl > 0) return item.price_brl;
-    // Fallback: tiered markup (matches server logic)
+    // Fallback: flat 3.0x markup (matches server logic)
     const RUB_TO_BRL = 0.055;
+    const USD_TO_BRL = 5.50;
+    const MARKUP = 3.0;
+    const currency = String(item.price_currency || "rub").toLowerCase();
     let brl = item.price;
-    if (item.price_currency === "rub" || !item.price_currency) brl = item.price * RUB_TO_BRL;
-    const invValue = (item as any).riot_valorant_inventory_value || 0;
-    const markup = invValue < 5000 ? 1.5 : invValue < 15000 ? 2.0 : 2.5;
-    const final = brl * markup;
+    if (currency === "rub") brl = item.price * RUB_TO_BRL;
+    else if (currency === "usd") brl = item.price * USD_TO_BRL;
+    const final = brl * MARKUP;
     return final < 20 ? 20 : final;
   };
 
