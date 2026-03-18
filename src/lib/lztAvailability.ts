@@ -22,6 +22,11 @@ export const checkLztAvailability = async (itemId: string, gameType: string): Pr
       toast({ title: "Conta indisponível", description: "Esta conta não está mais disponível para compra.", variant: "destructive" });
       return false;
     }
+    // Check item_state (closed = sold, deleted = removed)
+    if (item.item_state && item.item_state !== "active") {
+      toast({ title: "Conta indisponível", description: "Esta conta não está mais disponível para compra.", variant: "destructive" });
+      return false;
+    }
     if (item.buyer) {
       toast({ title: "Conta já vendida", description: "Esta conta foi vendida recentemente. Escolha outra.", variant: "destructive" });
       return false;

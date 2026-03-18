@@ -773,8 +773,9 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
     if (checkRes.ok) {
       const checkData = await checkRes.json();
       const checkItem = checkData.item;
-      if (checkItem?.buyer) {
-        console.error(`LZT item ${itemId} already sold to buyer ${checkItem.buyer}`);
+      const checkState = checkItem?.item_state;
+      if (checkItem?.buyer || (checkState && checkState !== "active")) {
+        console.error(`LZT item ${itemId} already sold (buyer=${checkItem.buyer}, state=${checkState})`);
         await createManualDeliveryTicket("Account already sold before purchase attempt");
         return;
       }
@@ -1337,10 +1338,11 @@ async function validateAndCalculatePrice(
       const realLztCurrency = lztItem?.price_currency || "rub";
 
       // Check if item is still available for purchase
-      // canBuyItem === false or buyer !== null means it's already sold
-      const isSold = lztItem?.buyer != null || lztItem?.canBuyItem === false;
+      // canBuyItem === false, buyer !== null, or item_state !== "active" means unavailable
+      const itemState = lztItem?.item_state;
+      const isSold = lztItem?.buyer != null || lztItem?.canBuyItem === false || (itemState && itemState !== "active");
       if (realLztPrice <= 0 || isSold) {
-        console.warn(`LZT item ${lztItemId} unavailable: price=${realLztPrice}, buyer=${lztItem?.buyer}, canBuyItem=${lztItem?.canBuyItem}`);
+        console.warn(`LZT item ${lztItemId} unavailable: price=${realLztPrice}, buyer=${lztItem?.buyer}, canBuyItem=${lztItem?.canBuyItem}, item_state=${itemState}`);
         return { validatedAmount: 0, validatedDiscount: 0, validatedCart: [], error: `Esta conta já foi vendida ou não está mais disponível. Por favor, escolha outra conta.` };
       }
 
