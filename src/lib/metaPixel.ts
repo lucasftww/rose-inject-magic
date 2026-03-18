@@ -163,7 +163,14 @@ const getHashedTrackingId = async (): Promise<string> => {
 getOrCreateTrackingId();
 
 // ─── FBC Reconstruction ────────────────────────────────────────────────────
-// Aggressively reconstruct _fbc from all possible fbclid sources
+// Aggressively reconstruct _fbc from all possible fbclid sources and persist as cookie
+
+const setFbcCookie = (fbc: string) => {
+  try {
+    const expires = new Date(Date.now() + 90 * 86400000).toUTCString();
+    document.cookie = `_fbc=${fbc}; path=/; expires=${expires}; SameSite=Lax; Secure`;
+  } catch (_) {}
+};
 
 const getFbc = (): string => {
   try {
@@ -176,11 +183,12 @@ const getFbc = (): string => {
     const fbclidFromUrl = urlParams.get("fbclid");
     if (fbclidFromUrl) {
       const fbc = `fb.1.${Date.now()}.${fbclidFromUrl}`;
-      // Persist for future events
       try {
         localStorage.setItem("fbclid", fbclidFromUrl);
         sessionStorage.setItem("_ck_fbclid", fbclidFromUrl);
       } catch (_) {}
+      // Persist as cookie so Meta Pixel can read it
+      setFbcCookie(fbc);
       return fbc;
     }
 
@@ -188,7 +196,12 @@ const getFbc = (): string => {
     const fbclid =
       localStorage.getItem("fbclid") ||
       sessionStorage.getItem("_ck_fbclid");
-    if (fbclid) return `fb.1.${Date.now()}.${fbclid}`;
+    if (fbclid) {
+      const fbc = `fb.1.${Date.now()}.${fbclid}`;
+      // Set cookie so subsequent events have it
+      setFbcCookie(fbc);
+      return fbc;
+    }
   } catch (_) {}
   return "";
 };
