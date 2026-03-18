@@ -380,7 +380,7 @@ const FinanceTab = () => {
     <p class="section">Custos</p><div class="grid">
       <div class="card"><p class="card-label">Custo LZT</p><p class="card-value red">R$ ${fmt(lztTotalBought)}</p></div>
       <div class="card"><p class="card-label">Custo Robot</p><p class="card-value red">R$ ${fmt(robotTotalCost)}</p></div>
-      <div class="card"><p class="card-label">Descontos</p><p class="card-value red">R$ ${fmt(totalDiscounts)}</p></div>
+      <div class="card"><p class="card-label">Descontos (informativo)</p><p class="card-value">R$ ${fmt(totalDiscounts)}</p></div>
     </div>
     <p class="footer">Royal Store · Relatório gerado automaticamente</p></body></html>`;
     const w = window.open("", "_blank");
