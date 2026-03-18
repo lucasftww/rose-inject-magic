@@ -59,7 +59,7 @@ const fetchLztAccounts = async (): Promise<LztItem[]> => {
   const projectUrl = import.meta.env.VITE_SUPABASE_URL;
   const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
   const res = await fetch(
-    `${projectUrl}/functions/v1/lzt-market?order_by=pdate_desc&valorant_smin=20&valorant_region[]=br`,
+    `${projectUrl}/functions/v1/lzt-market?order_by=pdate_desc&game_type=riot&country[]=Bra`,
     { headers: { "Content-Type": "application/json", apikey: anonKey } }
   );
   if (!res.ok) return [];
