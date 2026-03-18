@@ -1192,7 +1192,7 @@ const Contas = () => {
     gameTab === "lol" && lolSkinsMin !== "",
     gameTab === "lol" && lolRegion !== "BR1",
     gameTab === "fortnite" && fnVbMin !== "",
-    gameTab === "fortnite" && fnSkinsMin !== "" && fnSkinsMin !== "1",
+    gameTab === "fortnite" && fnSkinsMin !== "" && fnSkinsMin !== "3",
     isMinecraft && mcJava,
     isMinecraft && mcBedrock,
     isMinecraft && mcHypixelLvlMin !== "",
