@@ -278,7 +278,10 @@ const FinanceTab = () => {
   const prevAvgTicket = pp.length > 0 ? prevRevenue / pp.length : 0;
   const avgTicketChange = pctChange(avgTicket, prevAvgTicket);
 
-  const totalCosts = lztTotalBought + robotTotalCost + totalDiscounts;
+  // Note: discount_amount is NOT included in costs because payments.amount
+  // already stores the post-discount value (the actual money received).
+  // Including it would double-count discounts and artificially lower margins.
+  const totalCosts = lztTotalBought + robotTotalCost;
   const netProfit = totalRevenue - totalCosts;
   const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
 
@@ -377,7 +380,7 @@ const FinanceTab = () => {
     <p class="section">Custos</p><div class="grid">
       <div class="card"><p class="card-label">Custo LZT</p><p class="card-value red">R$ ${fmt(lztTotalBought)}</p></div>
       <div class="card"><p class="card-label">Custo Robot</p><p class="card-value red">R$ ${fmt(robotTotalCost)}</p></div>
-      <div class="card"><p class="card-label">Descontos</p><p class="card-value red">R$ ${fmt(totalDiscounts)}</p></div>
+      <div class="card"><p class="card-label">Descontos (informativo)</p><p class="card-value">R$ ${fmt(totalDiscounts)}</p></div>
     </div>
     <p class="footer">Royal Store · Relatório gerado automaticamente</p></body></html>`;
     const w = window.open("", "_blank");
@@ -455,9 +458,10 @@ const FinanceTab = () => {
             <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Custo Robot</p>
             <p className="text-lg font-bold text-destructive mt-1">-R$ {fmtCompact(robotTotalCost)}</p>
           </div>
-          <div className="rounded-lg bg-card border border-destructive/10 p-3 text-center">
+          <div className="rounded-lg bg-card border border-border p-3 text-center">
             <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Descontos</p>
-            <p className="text-lg font-bold text-destructive mt-1">-R$ {fmtCompact(totalDiscounts)}</p>
+            <p className="text-lg font-bold text-muted-foreground mt-1">R$ {fmtCompact(totalDiscounts)}</p>
+            <p className="text-[9px] text-muted-foreground/60 mt-0.5">já refletido na receita</p>
           </div>
         </div>
       </div>
