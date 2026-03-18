@@ -352,6 +352,7 @@ export type Database = {
           discount_amount: number | null
           external_id: string | null
           id: string
+          meta_tracking: Json | null
           paid_at: string | null
           payment_method: string | null
           status: string | null
@@ -366,6 +367,7 @@ export type Database = {
           discount_amount?: number | null
           external_id?: string | null
           id?: string
+          meta_tracking?: Json | null
           paid_at?: string | null
           payment_method?: string | null
           status?: string | null
@@ -380,6 +382,7 @@ export type Database = {
           discount_amount?: number | null
           external_id?: string | null
           id?: string
+          meta_tracking?: Json | null
           paid_at?: string | null
           payment_method?: string | null
           status?: string | null

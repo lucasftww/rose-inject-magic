@@ -234,7 +234,7 @@ export interface TrackingData {
 }
 
 /** Collect user_data for CAPI from cookies/storage + cached identity */
-const getUserData = (): Record<string, string> => {
+export const getUserData = (): Record<string, string> => {
   const data: Record<string, string> = {};
   try {
     // _fbp
