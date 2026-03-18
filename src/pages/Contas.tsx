@@ -1074,8 +1074,20 @@ const Contas = () => {
   };
 
   const allItems = useMemo(() => {
-    // Post-filter by BRL price range (the API filter uses RUB approximation, so we refine here)
     let filtered = [...streamedItems];
+
+    // Valorant region filter (client-side via riot_country)
+    if (gameTab === "valorant" && valRegion !== "all") {
+      const allowedCountries = REGION_COUNTRY_MAP[valRegion];
+      if (allowedCountries) {
+        filtered = filtered.filter(item => {
+          const country = item.riot_country || "";
+          return allowedCountries.some(c => c.toLowerCase() === country.toLowerCase());
+        });
+      }
+    }
+
+    // Post-filter by BRL price range
     const brlMin = priceMin ? Number(priceMin) : 0;
     const brlMax = priceMax ? Number(priceMax) : 0;
     if (brlMin > 0 || brlMax > 0) {
