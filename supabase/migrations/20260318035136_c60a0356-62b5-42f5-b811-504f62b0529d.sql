@@ -1,0 +1,1 @@
+UPDATE products SET robot_markup_percent = 100 WHERE id IN ('3eee2124-17f1-4c35-a6c2-daf9ae930376', 'caf50d9c-b7d2-4efe-8d84-9ab2220b5182', 'e033ecbd-c240-455d-906d-39e18f95615c')
