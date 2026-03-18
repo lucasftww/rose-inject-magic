@@ -305,7 +305,7 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
             <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Lucro</span>
           </div>
           <p className="text-2xl font-bold text-positive tracking-tight">R$ {fmt(netProfit)}</p>
-          <p className="text-[11px] text-muted-foreground mt-0.5">Margem {profitMargin.toFixed(1)}% · Geral</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">Margem {profitMargin.toFixed(1)}% · {periodLabel}</p>
         </div>
 
         <div className="rounded-xl border border-border bg-card p-4">
