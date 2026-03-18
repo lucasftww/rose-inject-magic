@@ -911,7 +911,8 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
     }
 
     const RUB_TO_BRL = 0.055;
-    const buyPriceBrl = currency === "rub" ? Number(price) * RUB_TO_BRL : Number(price);
+    const USD_TO_BRL = 5.50;
+    const buyPriceBrl = currency === "rub" ? Number(price) * RUB_TO_BRL : currency === "usd" ? Number(price) * USD_TO_BRL : Number(price);
     const sellPriceBrl = Number(item.price) || 0;
     const { error: saleErr } = await supabaseAdmin.from("lzt_sales").insert({
       lzt_item_id: String(itemId),
