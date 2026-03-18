@@ -8,6 +8,29 @@ const corsHeaders = {
 
 const MISTICPAY_BASE_URL = "https://api.misticpay.com/api";
 
+// ─── Live exchange rate helper ────────────────────────────────────────────────
+const FALLBACK_RUB_TO_BRL = 0.055;
+const FALLBACK_USD_TO_BRL = 5.50;
+let cachedRates: { rub: number; usd: number; fetchedAt: number } | null = null;
+
+async function getLiveRates(): Promise<{ rub: number; usd: number }> {
+  // Cache for 10 minutes to avoid hammering the API during fulfillment bursts
+  if (cachedRates && Date.now() - cachedRates.fetchedAt < 10 * 60 * 1000) {
+    return { rub: cachedRates.rub, usd: cachedRates.usd };
+  }
+  try {
+    const res = await fetch("https://economia.awesomeapi.com.br/json/last/USD-BRL,RUB-BRL");
+    if (res.ok) {
+      const data = await res.json();
+      const usd = Number(data?.USDBRL?.bid) || FALLBACK_USD_TO_BRL;
+      const rub = Number(data?.RUBBRL?.bid) || FALLBACK_RUB_TO_BRL;
+      cachedRates = { rub, usd, fetchedAt: Date.now() };
+      return { rub, usd };
+    }
+  } catch (_) { /* use fallback */ }
+  return { rub: FALLBACK_RUB_TO_BRL, usd: FALLBACK_USD_TO_BRL };
+}
+
 // ─── Structured Logger ────────────────────────────────────────────────────────
 function log(level: "INFO" | "WARN" | "ERROR", ctx: string, msg: string, data?: Record<string, unknown>) {
   const entry = { ts: new Date().toISOString(), level, ctx, msg, ...(data || {}) };
