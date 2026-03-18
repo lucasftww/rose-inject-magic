@@ -89,17 +89,7 @@ const valorantRankFilters = [
   { id: "radiante", name: "Radiante", img: rankRadiante, rmin: 27, rmax: 27 },
 ];
 
-// LoL rank ordering (text rank from API)
-const lolRankOrder = [
-  "Unranked","IRON IV","IRON III","IRON II","IRON I",
-  "BRONZE IV","BRONZE III","BRONZE II","BRONZE I",
-  "SILVER IV","SILVER III","SILVER II","SILVER I",
-  "GOLD IV","GOLD III","GOLD II","GOLD I",
-  "PLATINUM IV","PLATINUM III","PLATINUM II","PLATINUM I",
-  "EMERALD IV","EMERALD III","EMERALD II","EMERALD I",
-  "DIAMOND IV","DIAMOND III","DIAMOND II","DIAMOND I",
-  "MASTER I","GRANDMASTER I","CHALLENGER I",
-];
+// LoL rank ordering (text rank from API) — used by lolRankFilters below
 
 const lolRankFilters = [
   { id: "todos", name: "Todos", color: "hsl(var(--muted-foreground))", img: null as string | null },
