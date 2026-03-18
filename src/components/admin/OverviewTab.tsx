@@ -234,11 +234,14 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
     return filtered.reduce((s, r) => s + r.cost, 0);
   }, [robotCosts, period]);
 
+  // Note: discount_amount is NOT subtracted from profit because payments.amount
+  // already stores the post-discount value (the actual money received).
+  // Subtracting it again would double-count discounts.
   const periodDiscounts = useMemo(() => {
     return filteredPayments.reduce((s: number, p: any) => s + (Number(p.discount_amount) || 0), 0);
   }, [filteredPayments]);
 
-  const netProfit = periodRevenue - (periodLztCost + periodRobotCost + periodDiscounts);
+  const netProfit = periodRevenue - (periodLztCost + periodRobotCost);
   const profitMargin = periodRevenue > 0 ? (netProfit / periodRevenue) * 100 : 0;
 
   const periodLabel = period === "24h" ? "24h" : period === "7d" ? "7 dias" : period === "30d" ? "30 dias" : "Total";

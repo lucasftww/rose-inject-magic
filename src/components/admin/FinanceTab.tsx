@@ -278,7 +278,10 @@ const FinanceTab = () => {
   const prevAvgTicket = pp.length > 0 ? prevRevenue / pp.length : 0;
   const avgTicketChange = pctChange(avgTicket, prevAvgTicket);
 
-  const totalCosts = lztTotalBought + robotTotalCost + totalDiscounts;
+  // Note: discount_amount is NOT included in costs because payments.amount
+  // already stores the post-discount value (the actual money received).
+  // Including it would double-count discounts and artificially lower margins.
+  const totalCosts = lztTotalBought + robotTotalCost;
   const netProfit = totalRevenue - totalCosts;
   const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
 
