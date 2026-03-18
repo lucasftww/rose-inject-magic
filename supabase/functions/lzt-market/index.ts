@@ -246,9 +246,9 @@ Deno.serve(async (req) => {
       // LIST: accounts with filters
       const maxFetchPrice = lztConfig?.max_fetch_price || 500;
 
-      // Use minimum markup tier (1.5x) for pmax to fetch the widest range of accounts.
+      // Flat 3.0x markup for all games.
       // max_fetch_price is stored in BRL, while the LZT API expects pmax in RUB.
-      const activeMarkup = 1.5;
+      const activeMarkup = 3.0;
       const RUB_TO_BRL_FILTER = 0.055;
       const effectivePmax = Math.ceil(maxFetchPrice / activeMarkup / RUB_TO_BRL_FILTER);
 
@@ -433,18 +433,8 @@ Deno.serve(async (req) => {
       const MIN_PRICE_BRL = 20;
       const gameType = url.searchParams.get("game_type") || "riot";
 
-      // Tiered markup based on inventory value (VP) — cheap accounts get lower markup
-      const getTieredMarkup = (item: any, game: string): number => {
-        let invValue = 0;
-        if (game === "riot") invValue = Number(item.riot_valorant_inventory_value || 0);
-        else if (game === "lol") invValue = Number(item.riot_lol_skin_count || 0) * 500; // estimate
-        else if (game === "fortnite") invValue = Number((item as any).fortnite_skin_count || 0) * 300;
-        else if (game === "minecraft") invValue = 5000; // flat mid-tier
-
-        if (invValue < 5000) return 1.5;
-        if (invValue < 15000) return 2.0;
-        return 2.5;
-      };
+      // Flat 3.0x markup for all games — simple, fair, predictable
+      const MARKUP = 3.0;
 
       for (const item of data.items) {
         // Check for price override first
@@ -452,10 +442,9 @@ Deno.serve(async (req) => {
         if (override && override > 0) {
           item.price_brl = override;
         } else {
-          const markup = getTieredMarkup(item, gameType);
           const currency = item.price_currency || "rub";
           const brl = currency === "rub" ? item.price * RUB_TO_BRL : item.price;
-          const final = brl * markup;
+          const final = brl * MARKUP;
           item.price_brl = final < MIN_PRICE_BRL ? MIN_PRICE_BRL : Math.round(final * 100) / 100;
         }
 
@@ -514,16 +503,11 @@ Deno.serve(async (req) => {
       } else {
         const RUB_TO_BRL = 0.055;
         const MIN_PRICE_BRL = 20;
-        // Tiered markup for detail view
-        const invValue = Number(data.item.riot_valorant_inventory_value || 0);
-        let detailMarkup: number;
-        if (invValue < 5000) detailMarkup = 1.5;
-        else if (invValue < 15000) detailMarkup = 2.0;
-        else detailMarkup = 2.5;
+        const MARKUP = 3.0;
 
         const currency = data.item.price_currency || "rub";
         const brl = currency === "rub" ? data.item.price * RUB_TO_BRL : data.item.price;
-        const final = brl * detailMarkup;
+        const final = brl * MARKUP;
         data.item.price_brl = final < MIN_PRICE_BRL ? MIN_PRICE_BRL : Math.round(final * 100) / 100;
       }
     }
