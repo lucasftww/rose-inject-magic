@@ -788,7 +788,7 @@ const Contas = () => {
   const [selectedRank, setSelectedRank] = useState("todos");
   const [selectedWeapon, setSelectedWeapon] = useState("todos");
   const [onlyKnife, setOnlyKnife] = useState(false);
-  const [valRegion, setValRegion] = useState("br");
+  const [valRegion, setValRegion] = useState("all");
 
   // ─── LoL filters ───
   const [lolRank, setLolRank] = useState("todos");
@@ -1147,7 +1147,7 @@ const Contas = () => {
     setMcHypixelLvlMin("");
     setMcCapesMin("");
     setMcNoBan(false);
-    setValRegion("br");
+    setValRegion("all");
     setLolRegion("BR1");
     setPriceMin(""); setPriceMax("");
     setSearchQuery(""); setOnlyKnife(false);
@@ -1171,7 +1171,7 @@ const Contas = () => {
     gameTab === "valorant" && selectedRank !== "todos",
     gameTab === "valorant" && selectedWeapon !== "todos",
     gameTab === "valorant" && onlyKnife,
-    gameTab === "valorant" && valRegion !== "br",
+    gameTab === "valorant" && valRegion !== "all",
     gameTab === "lol" && lolRank !== "todos",
     gameTab === "lol" && lolChampMin !== "",
     gameTab === "lol" && lolSkinsMin !== "",
