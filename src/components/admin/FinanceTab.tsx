@@ -214,7 +214,8 @@ const FinanceTab = () => {
         const revenue = paidPriceMap.get(`${t.user_id}|${t.product_id}|${t.product_plan_id}`) ?? plan?.price ?? 0;
         let cost = 0;
         if (meta.amount_spent && Number(meta.amount_spent) > 0) {
-          cost = Number(meta.amount_spent) * currentRate;
+          // Real cost = 60% of amount_spent (40% cashback from Robot Project)
+          cost = Number(meta.amount_spent) * 0.6 * currentRate;
         } else if (meta.is_free) {
           cost = 0;
         } else if (product?.robot_markup_percent) {
