@@ -304,32 +304,36 @@ const sendCAPI = (
       credentials: "omit",
     }).catch(() => { /* ignore */ });
 
-    // If fbp was missing, retry after 1.5s (Meta Pixel may need time to set cookie)
-    if (!userData.fbp) {
-      setTimeout(() => {
-        const retryData = getUserData();
-        if (retryData.fbp) {
-          const retryBody = JSON.stringify({
-            event_name: eventName,
-            event_id: eventId, // same event_id = Meta deduplicates
-            event_time: Math.floor(Date.now() / 1000),
-            event_source_url: window.location.href,
-            action_source: "website",
-            user_data: retryData,
-            custom_data: customData,
-          });
-          fetch(url, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || "",
-            },
-            body: retryBody,
-            keepalive: true,
-            credentials: "omit",
-          }).catch(() => {});
-        }
-      }, 1500);
+    // If fbp or fbc was missing, retry at 1s and 3s (Meta Pixel may need time to set cookies)
+    if (!userData.fbp || !userData.fbc) {
+      const retryDelays = [1000, 3000];
+      for (const delay of retryDelays) {
+        setTimeout(() => {
+          const retryData = getUserData();
+          // Only retry if we gained new data
+          if ((!userData.fbp && retryData.fbp) || (!userData.fbc && retryData.fbc)) {
+            const retryBody = JSON.stringify({
+              event_name: eventName,
+              event_id: eventId, // same event_id = Meta deduplicates
+              event_time: Math.floor(Date.now() / 1000),
+              event_source_url: window.location.href,
+              action_source: "website",
+              user_data: retryData,
+              custom_data: customData,
+            });
+            fetch(url, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || "",
+              },
+              body: retryBody,
+              keepalive: true,
+              credentials: "omit",
+            }).catch(() => {});
+          }
+        }, delay);
+      }
     }
   } catch (_) { /* ignore */ }
 };
