@@ -142,7 +142,7 @@ const LztContaCard = forwardRef<HTMLDivElement, { item: LztItem; skinsMap: Map<s
     return (premium.length >= 4 ? premium : results.filter(s => s.rarity > 0).length >= 4 ? results.filter(s => s.rarity > 0) : results).slice(0, 6);
   }, [item.valorantInventory, skinsMap]);
 
-  const SkinImg = ({ skin }: { skin: SkinEntry }) => (
+  const renderSkin = (skin: SkinEntry) => (
     <ValorantImage src={skin.image} alt={skin.name} className="w-full h-full object-contain" />
   );
 
