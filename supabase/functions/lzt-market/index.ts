@@ -105,7 +105,7 @@ function getLolFairPriceCeiling(item: LztItem) {
 
 function getValorantFairPriceCeiling(item: LztItem) {
   const skinCount = Number(item.riot_valorant_skin_count || 0);
-  const knifeCount = Number(item.riot_valorant_knife_count || 0);
+  const knifeCount = Number(item.riot_valorant_knife || item.riot_valorant_knife_count || 0);
   const level = Math.min(Number(item.riot_valorant_level || 0), 500);
   const vp = Math.min(Number(item.riot_valorant_vp || 0), 20000);
   const rankNum = Number(item.riot_valorant_rank || 0);
