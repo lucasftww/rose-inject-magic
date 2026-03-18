@@ -988,6 +988,62 @@ async function fulfillRobotProduct(supabaseAdmin: any, payment: any, item: any, 
         duration,
         reason: robotSnapshot.reason,
       });
+
+      // CRITICAL: Do NOT proceed to buy — create manual delivery ticket instead
+      const { data: ticket } = await supabaseAdmin
+        .from("order_tickets")
+        .insert({
+          user_id: payment.user_id,
+          product_id: item.productId,
+          product_plan_id: item.planId,
+          stock_item_id: null,
+          status: "open",
+          status_label: "Entrega Manual",
+          metadata: { type: "robot-project", robot_game_id: robotGameId, duration, error: robotSnapshot.reason },
+        })
+        .select("id")
+        .single();
+      if (ticket) {
+        await supabaseAdmin.from("ticket_messages").insert({
+          ticket_id: ticket.id,
+          sender_id: payment.user_id,
+          sender_role: "staff",
+          message: `✅ Pagamento confirmado! ⚠️ ${robotSnapshot.reason} Nossa equipe irá entregar manualmente em breve.`,
+        });
+      }
+
+      // Alert admin via Discord
+      try {
+        const { data: webhookCred } = await supabaseAdmin
+          .from("system_credentials")
+          .select("value")
+          .eq("env_key", "DISCORD_WEBHOOK_URL")
+          .maybeSingle();
+        const wh = webhookCred?.value;
+        if (wh) {
+          await fetch(wh, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              content: "@everyone",
+              embeds: [{
+                title: "⚠️ Robot pre-check bloqueou entrega automática",
+                color: 0xFF8800,
+                fields: [
+                  { name: "Produto", value: item.productName || "?", inline: true },
+                  { name: "Plano", value: item.planName || "?", inline: true },
+                  { name: "Motivo", value: robotSnapshot.reason.substring(0, 200) },
+                  { name: "Ticket", value: ticket?.id?.substring(0, 8).toUpperCase() || "—", inline: true },
+                ],
+                footer: { text: "Entrega manual necessária" },
+                timestamp: new Date().toISOString(),
+              }],
+            }),
+          });
+        }
+      } catch (_) { /* ignore webhook errors */ }
+
+      return;
     }
 
     const buyRes = await fetch(`https://api.robotproject.com.br/buy/${encodeURIComponent(robotGameId)}`, {
