@@ -1,7 +1,8 @@
+import { forwardRef } from "react";
 import { Link } from "react-router-dom";
 
-const StickyMobileCTA = () => (
-  <div className="fixed bottom-0 left-0 right-0 z-40 sm:hidden">
+const StickyMobileCTA = forwardRef<HTMLDivElement>((_, ref) => (
+  <div ref={ref} className="fixed bottom-0 left-0 right-0 z-40 sm:hidden">
     <div className="bg-card/95 backdrop-blur-xl border-t border-border px-5 py-3 safe-area-bottom">
       <div className="flex gap-2.5">
         <Link
@@ -21,6 +22,8 @@ const StickyMobileCTA = () => (
       </div>
     </div>
   </div>
-);
+));
+
+StickyMobileCTA.displayName = "StickyMobileCTA";
 
 export default StickyMobileCTA;
