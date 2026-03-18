@@ -70,6 +70,45 @@ function getLolFairPriceCeiling(item: LztItem) {
   return Math.max(Math.round(estimatedValue), 120);
 }
 
+function getValorantFairPriceCeiling(item: LztItem) {
+  const skinCount = Number(item.riot_valorant_skin_count || 0);
+  const knifeCount = Number(item.riot_valorant_knife_count || 0);
+  const level = Math.min(Number(item.riot_valorant_level || 0), 500);
+  const vp = Math.min(Number(item.riot_valorant_vp || 0), 20000);
+  const rank = String(item.riot_valorant_rank || "").toLowerCase();
+
+  let rankBonus = 0;
+  if (rank.includes("radiant")) rankBonus = 1500;
+  else if (rank.includes("immortal")) rankBonus = 800;
+  else if (rank.includes("ascendant")) rankBonus = 400;
+  else if (rank.includes("diamond")) rankBonus = 250;
+  else if (rank.includes("platinum")) rankBonus = 150;
+  else if (rank.includes("gold")) rankBonus = 80;
+  else if (rank.includes("silver")) rankBonus = 40;
+
+  const estimatedValue =
+    skinCount * 25 +
+    knifeCount * 200 +
+    level * 1.5 +
+    vp * 0.02 +
+    rankBonus;
+
+  return Math.max(Math.round(estimatedValue), 80);
+}
+
+function getFortniteFairPriceCeiling(item: LztItem) {
+  const skinCount = Number(item.fortnite_skin_count || item.fortnite_outfit_count || 0);
+  const vbucks = Math.min(Number(item.fortnite_vbucks || 0), 50000);
+  const level = Math.min(Number(item.fortnite_level || 0), 500);
+
+  const estimatedValue =
+    skinCount * 15 +
+    vbucks * 0.02 +
+    level * 1;
+
+  return Math.max(Math.round(estimatedValue), 60);
+}
+
 function shouldKeepItem(item: LztItem, gameType: string, displayedPriceBrl: number) {
   if (item.buyer) return false;
   if (item.canBuyItem === false) return false;
@@ -81,24 +120,31 @@ function shouldKeepItem(item: LztItem, gameType: string, displayedPriceBrl: numb
   if (gameType === "lol") {
     const skinCount = Number(item.riot_lol_skin_count || 0);
     if (skinCount < LOL_MIN_SKINS) return false;
-
-    const fairCeiling = getLolFairPriceCeiling(item) * LOL_PRICE_BUFFER;
+    const fairCeiling = getLolFairPriceCeiling(item) * PRICE_BUFFER;
     if (displayedPriceBrl > fairCeiling) return false;
-
     return true;
   }
 
   if (gameType === "fortnite") {
     const ftSkins = Number(item.fortnite_skin_count || item.fortnite_outfit_count || 0);
-    return ftSkins > 0;
-  }
-
-  if (gameType === "minecraft") {
+    if (ftSkins < FT_MIN_SKINS) return false;
+    const fairCeiling = getFortniteFairPriceCeiling(item) * PRICE_BUFFER;
+    if (displayedPriceBrl > fairCeiling) return false;
     return true;
   }
 
+  if (gameType === "minecraft") {
+    // Minecraft: cap price at R$300 max for basic accounts
+    if (displayedPriceBrl > 300) return false;
+    return true;
+  }
+
+  // Valorant (riot)
   const valSkins = Number(item.riot_valorant_skin_count || 0);
-  return valSkins > 0;
+  if (valSkins < VAL_MIN_SKINS) return false;
+  const fairCeiling = getValorantFairPriceCeiling(item) * PRICE_BUFFER;
+  if (displayedPriceBrl > fairCeiling) return false;
+  return true;
 }
 
 Deno.serve(async (req) => {
