@@ -26,7 +26,32 @@ function log(level: "INFO" | "WARN" | "ERROR", ctx: string, msg: string, data?: 
   else console.log(JSON.stringify(entry));
 }
 
-function getDisplayedPriceBrl(item: LztItem, overridePrice?: number) {
+/**
+ * Content-based minimum price: ensures accounts with lots of skins/content
+ * are never sold below a fair floor, even if listed cheap on LZT.
+ */
+function getContentFloorBrl(item: LztItem, gameType?: string) {
+  if (gameType === "fortnite") {
+    const skins = Number(item.fortnite_skin_count || item.fortnite_outfit_count || 0);
+    const vbucks = Math.min(Number(item.fortnite_vbucks || 0), 50000);
+    const level = Math.min(Number(item.fortnite_level || 0), 500);
+    // ~R$0.35/skin + vbucks value + level bonus
+    return skins * 0.35 + vbucks * 0.005 + level * 0.1;
+  }
+  if (gameType === "lol") {
+    const skins = Number(item.riot_lol_skin_count || 0);
+    const champs = Number(item.riot_lol_champion_count || 0);
+    const level = Math.min(Number(item.riot_lol_level || 0), 350);
+    return skins * 0.5 + champs * 0.15 + level * 0.1;
+  }
+  // Valorant
+  const skins = Number(item.riot_valorant_skin_count || 0);
+  const knives = Number(item.riot_valorant_knife_count || 0);
+  const level = Math.min(Number(item.riot_valorant_level || 0), 500);
+  return skins * 0.6 + knives * 5 + level * 0.08;
+}
+
+function getDisplayedPriceBrl(item: LztItem, overridePrice?: number, gameType?: string) {
   if (typeof overridePrice === "number" && overridePrice > 0) return overridePrice;
 
   const currency = String(item.price_currency || "rub").toLowerCase();
@@ -35,7 +60,11 @@ function getDisplayedPriceBrl(item: LztItem, overridePrice?: number) {
   if (currency === "rub") brl = rawPrice * RUB_TO_BRL;
   else if (currency === "usd") brl = rawPrice * USD_TO_BRL;
   // else assume already BRL
-  const final = brl * MARKUP;
+  let final = brl * MARKUP;
+
+  // Enforce content-based floor so cheap listings with lots of content get a fair price
+  const contentFloor = getContentFloorBrl(item, gameType);
+  if (final < contentFloor) final = contentFloor;
 
   return final < MIN_PRICE_BRL ? MIN_PRICE_BRL : Math.round(final * 100) / 100;
 }
@@ -556,7 +585,7 @@ Deno.serve(async (req) => {
 
       const beforeCount = data.items.length;
       data.items = data.items.filter((item: LztItem) => {
-        const displayedPriceBrl = getDisplayedPriceBrl(item, overrideMap.get(String(item.item_id)));
+        const displayedPriceBrl = getDisplayedPriceBrl(item, overrideMap.get(String(item.item_id)), gameType);
         return shouldKeepItem(item, gameType, displayedPriceBrl);
       });
 
@@ -567,7 +596,7 @@ Deno.serve(async (req) => {
       });
 
       for (const item of data.items) {
-        item.price_brl = getDisplayedPriceBrl(item, overrideMap.get(String(item.item_id)));
+        item.price_brl = getDisplayedPriceBrl(item, overrideMap.get(String(item.item_id)), gameType);
 
         // Strip heavy fields
         for (const field of STRIP_FIELDS) delete item[field];
@@ -621,7 +650,7 @@ Deno.serve(async (req) => {
         ? Number(overrideRow.custom_price_brl)
         : undefined;
 
-      data.item.price_brl = getDisplayedPriceBrl(data.item, overridePrice);
+      data.item.price_brl = getDisplayedPriceBrl(data.item, overridePrice, gameType);
 
       if (!shouldKeepItem(data.item, gameType, data.item.price_brl)) {
         return new Response(
