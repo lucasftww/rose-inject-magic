@@ -641,13 +641,14 @@ Deno.serve(async (req) => {
     // For detail action, also add price_brl (keep full data)
     if (action === "detail" && data.item) {
       // SECURITY: reject sold/unavailable accounts on detail too
-      if (data.item.buyer) {
+      const itemState = data.item.item_state;
+      if (data.item.buyer || itemState === "closed" || itemState === "deleted") {
         return new Response(
           JSON.stringify({ error: "Account already sold", item: null }),
           { status: 410, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
-      if (data.item.canBuyItem === false) {
+      if (data.item.canBuyItem === false || (itemState && itemState !== "active")) {
         return new Response(
           JSON.stringify({ error: "Account unavailable", item: null }),
           { status: 410, headers: { ...corsHeaders, "Content-Type": "application/json" } },
