@@ -328,13 +328,14 @@ const FinanceTab = () => {
     const numDays = period === "7d" ? 7 : period === "30d" ? 30 : 90;
     for (let i = numDays - 1; i >= 0; i--) {
       const d = new Date(Date.now() - i * 86400000);
-      const key = d.toISOString().slice(0, 10);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
       const label = d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
       days[key] = { date: label, receita: 0 };
     }
     fp.forEach(p => {
-      const d = (p.paid_at || p.created_at).slice(0, 10);
-      if (days[d]) days[d].receita += p.amount / 100;
+      const dt = new Date(p.paid_at || p.created_at);
+      const key = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+      if (days[key]) days[key].receita += p.amount / 100;
     });
     return Object.values(days);
   }, [fp, period]);

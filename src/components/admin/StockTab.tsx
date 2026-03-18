@@ -51,20 +51,19 @@ const StockTab = () => {
 
     // Use head:true count queries per plan to avoid 1000-row cap
     const counts: Record<string, { total: number; available: number }> = {};
-    const promises = planIds.map(async (planId) => {
-      const [totalRes, availRes] = await Promise.all([
-        supabase.from("stock_items").select("id", { count: "exact", head: true }).eq("product_plan_id", planId),
-        supabase.from("stock_items").select("id", { count: "exact", head: true }).eq("product_plan_id", planId).eq("used", false),
-      ]);
-      counts[planId] = {
-        total: totalRes.count ?? 0,
-        available: availRes.count ?? 0,
-      };
-    });
-    // Process in batches of 10 to avoid overwhelming the API
     const BATCH = 10;
-    for (let i = 0; i < promises.length; i += BATCH) {
-      await Promise.all(promises.slice(i, i + BATCH));
+    for (let i = 0; i < planIds.length; i += BATCH) {
+      const batch = planIds.slice(i, i + BATCH);
+      await Promise.all(batch.map(async (planId) => {
+        const [totalRes, availRes] = await Promise.all([
+          supabase.from("stock_items").select("id", { count: "exact", head: true }).eq("product_plan_id", planId),
+          supabase.from("stock_items").select("id", { count: "exact", head: true }).eq("product_plan_id", planId).eq("used", false),
+        ]);
+        counts[planId] = {
+          total: totalRes.count ?? 0,
+          available: availRes.count ?? 0,
+        };
+      }));
     }
     setStockCounts(counts);
   };
