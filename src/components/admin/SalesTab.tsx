@@ -92,7 +92,6 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
       rawTickets = await fetchAllRows("order_tickets", {
         select: "*",
         order: { column: "created_at", ascending: false },
-        limit: 500,
       });
     } catch (err) {
       console.error("fetchSales order_tickets error:", err);
