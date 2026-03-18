@@ -246,15 +246,9 @@ Deno.serve(async (req) => {
       // LIST: accounts with filters
       const maxFetchPrice = lztConfig?.max_fetch_price || 500;
 
-      // Determine which markup applies based on game_type to calculate real pmax
-      const gameType = url.searchParams.get("game_type") || "riot";
-      let activeMarkup = lztConfig?.markup_multiplier || 1.5;
-      if (gameType === "riot") activeMarkup = lztConfig?.markup_valorant || activeMarkup;
-      else if (gameType === "lol") activeMarkup = lztConfig?.markup_lol || activeMarkup;
-      else if (gameType === "fortnite") activeMarkup = lztConfig?.markup_fortnite || activeMarkup;
-      else if (gameType === "minecraft") activeMarkup = lztConfig?.markup_minecraft || activeMarkup;
-
-      // The admin sets the max FINAL price (after markup). Divide by markup to get LZT pmax.
+      // Use minimum markup tier (1.5x) for pmax to fetch widest range of accounts
+      // Actual markup is applied per-item based on inventory value
+      const activeMarkup = 1.5;
       const effectivePmax = Math.floor(maxFetchPrice / activeMarkup);
 
       const params = new URLSearchParams();
@@ -438,11 +432,19 @@ Deno.serve(async (req) => {
       const RUB_TO_BRL = 0.055;
       const MIN_PRICE_BRL = 20;
       const gameType = url.searchParams.get("game_type") || "riot";
-      let itemMarkup = lztConfig?.markup_multiplier || 1.5;
-      if (gameType === "riot") itemMarkup = lztConfig?.markup_valorant || itemMarkup;
-      else if (gameType === "lol") itemMarkup = lztConfig?.markup_lol || itemMarkup;
-      else if (gameType === "fortnite") itemMarkup = lztConfig?.markup_fortnite || itemMarkup;
-      else if (gameType === "minecraft") itemMarkup = lztConfig?.markup_minecraft || itemMarkup;
+
+      // Tiered markup based on inventory value (VP) — cheap accounts get lower markup
+      const getTieredMarkup = (item: any, game: string): number => {
+        let invValue = 0;
+        if (game === "riot") invValue = Number(item.riot_valorant_inventory_value || 0);
+        else if (game === "lol") invValue = Number(item.riot_lol_skin_count || 0) * 500; // estimate
+        else if (game === "fortnite") invValue = Number((item as any).fortnite_skin_count || 0) * 300;
+        else if (game === "minecraft") invValue = 5000; // flat mid-tier
+
+        if (invValue < 5000) return 1.5;
+        if (invValue < 15000) return 2.0;
+        return 2.5;
+      };
 
       for (const item of data.items) {
         // Check for price override first
@@ -450,9 +452,10 @@ Deno.serve(async (req) => {
         if (override && override > 0) {
           item.price_brl = override;
         } else {
+          const markup = getTieredMarkup(item, gameType);
           const currency = item.price_currency || "rub";
           const brl = currency === "rub" ? item.price * RUB_TO_BRL : item.price;
-          const final = brl * itemMarkup;
+          const final = brl * markup;
           item.price_brl = final < MIN_PRICE_BRL ? MIN_PRICE_BRL : Math.round(final * 100) / 100;
         }
 
@@ -511,13 +514,13 @@ Deno.serve(async (req) => {
       } else {
         const RUB_TO_BRL = 0.055;
         const MIN_PRICE_BRL = 20;
-        const detailGameType = url.searchParams.get("game_type") || "";
-        let detailMarkup = lztConfig?.markup_multiplier || 1.5;
-        if (detailGameType === "valorant" || detailGameType === "riot") detailMarkup = lztConfig?.markup_valorant || detailMarkup;
-        else if (detailGameType === "lol") detailMarkup = lztConfig?.markup_lol || detailMarkup;
-        else if (detailGameType === "fortnite") detailMarkup = lztConfig?.markup_fortnite || detailMarkup;
-        else if (detailGameType === "minecraft") detailMarkup = lztConfig?.markup_minecraft || detailMarkup;
-        else detailMarkup = lztConfig?.markup_valorant || detailMarkup;
+        // Tiered markup for detail view
+        const invValue = Number(data.item.riot_valorant_inventory_value || 0);
+        let detailMarkup: number;
+        if (invValue < 5000) detailMarkup = 1.5;
+        else if (invValue < 15000) detailMarkup = 2.0;
+        else detailMarkup = 2.5;
+
         const currency = data.item.price_currency || "rub";
         const brl = currency === "rub" ? data.item.price * RUB_TO_BRL : data.item.price;
         const final = brl * detailMarkup;
