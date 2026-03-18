@@ -1984,6 +1984,7 @@ Deno.serve(async (req) => {
           coupon_id: coupon_id || null,
           discount_amount: validatedDiscount,
           payment_method: "pix",
+          meta_tracking: meta_user_data || null,
         })
         .select("id")
         .single();
