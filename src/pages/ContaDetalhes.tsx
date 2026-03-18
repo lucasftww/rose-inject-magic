@@ -21,7 +21,15 @@ const fetchAccountDetail = async (itemId: string) => {
     `${projectUrl}/functions/v1/lzt-market?action=detail&item_id=${encodeURIComponent(itemId)}&game_type=valorant`,
     { headers: { "Content-Type": "application/json", apikey: anonKey } }
   );
-  if (!res.ok) throwApiError(res.status);
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    if (res.status === 410) {
+      throw new Error(body?.error === "Account already sold" 
+        ? "Esta conta já foi vendida." 
+        : "Esta conta não está mais disponível.");
+    }
+    throwApiError(res.status);
+  }
   return res.json();
 };
 
@@ -517,8 +525,15 @@ const ContaDetalhes = () => {
 
         {error &&
         <div className="flex flex-col items-center justify-center py-32">
-            <p className="text-lg font-semibold text-destructive">Erro ao carregar conta</p>
+            <Shield className="h-10 w-10 text-muted-foreground mb-3" />
+            <p className="text-lg font-semibold text-foreground">Conta indisponível</p>
             <p className="mt-1 text-sm text-muted-foreground">{(error as Error).message}</p>
+            <button
+              onClick={() => navigate("/contas")}
+              className="mt-5 flex items-center gap-2 rounded-xl border border-border bg-card/50 px-5 py-2.5 text-sm text-muted-foreground transition-all hover:border-success/40 hover:text-success">
+              <ArrowLeft className="h-4 w-4" />
+              Ver outras contas
+            </button>
           </div>
         }
 
