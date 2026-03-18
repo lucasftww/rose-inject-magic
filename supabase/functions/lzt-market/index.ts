@@ -51,16 +51,17 @@ function getContentFloorBrl(item: LztItem, gameType?: string) {
   return skins * 0.6 + knives * 5 + level * 0.08;
 }
 
-function getDisplayedPriceBrl(item: LztItem, overridePrice?: number, gameType?: string) {
+function getDisplayedPriceBrl(item: LztItem, overridePrice?: number, gameType?: string, markup?: number) {
   if (typeof overridePrice === "number" && overridePrice > 0) return overridePrice;
 
+  const activeMarkup = markup || DEFAULT_MARKUP;
   const currency = String(item.price_currency || "rub").toLowerCase();
   const rawPrice = Number(item.price || 0);
   let brl = rawPrice;
   if (currency === "rub") brl = rawPrice * RUB_TO_BRL;
   else if (currency === "usd") brl = rawPrice * USD_TO_BRL;
   // else assume already BRL
-  let final = brl * MARKUP;
+  let final = brl * activeMarkup;
 
   // Enforce content-based floor so cheap listings with lots of content get a fair price
   const contentFloor = getContentFloorBrl(item, gameType);
