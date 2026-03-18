@@ -438,11 +438,19 @@ Deno.serve(async (req) => {
       const RUB_TO_BRL = 0.055;
       const MIN_PRICE_BRL = 20;
       const gameType = url.searchParams.get("game_type") || "riot";
-      let itemMarkup = lztConfig?.markup_multiplier || 1.5;
-      if (gameType === "riot") itemMarkup = lztConfig?.markup_valorant || itemMarkup;
-      else if (gameType === "lol") itemMarkup = lztConfig?.markup_lol || itemMarkup;
-      else if (gameType === "fortnite") itemMarkup = lztConfig?.markup_fortnite || itemMarkup;
-      else if (gameType === "minecraft") itemMarkup = lztConfig?.markup_minecraft || itemMarkup;
+
+      // Tiered markup based on inventory value (VP) — cheap accounts get lower markup
+      const getTieredMarkup = (item: any, game: string): number => {
+        let invValue = 0;
+        if (game === "riot") invValue = Number(item.riot_valorant_inventory_value || 0);
+        else if (game === "lol") invValue = Number(item.riot_lol_skin_count || 0) * 500; // estimate
+        else if (game === "fortnite") invValue = Number((item as any).fortnite_skin_count || 0) * 300;
+        else if (game === "minecraft") invValue = 5000; // flat mid-tier
+
+        if (invValue < 5000) return 1.5;
+        if (invValue < 15000) return 2.0;
+        return 2.5;
+      };
 
       for (const item of data.items) {
         // Check for price override first
@@ -450,9 +458,10 @@ Deno.serve(async (req) => {
         if (override && override > 0) {
           item.price_brl = override;
         } else {
+          const markup = getTieredMarkup(item, gameType);
           const currency = item.price_currency || "rub";
           const brl = currency === "rub" ? item.price * RUB_TO_BRL : item.price;
-          const final = brl * itemMarkup;
+          const final = brl * markup;
           item.price_brl = final < MIN_PRICE_BRL ? MIN_PRICE_BRL : Math.round(final * 100) / 100;
         }
 
