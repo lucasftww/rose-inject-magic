@@ -503,16 +503,11 @@ Deno.serve(async (req) => {
       } else {
         const RUB_TO_BRL = 0.055;
         const MIN_PRICE_BRL = 20;
-        // Tiered markup for detail view
-        const invValue = Number(data.item.riot_valorant_inventory_value || 0);
-        let detailMarkup: number;
-        if (invValue < 5000) detailMarkup = 1.5;
-        else if (invValue < 15000) detailMarkup = 2.0;
-        else detailMarkup = 2.5;
+        const MARKUP = 3.0;
 
         const currency = data.item.price_currency || "rub";
         const brl = currency === "rub" ? data.item.price * RUB_TO_BRL : data.item.price;
-        const final = brl * detailMarkup;
+        const final = brl * MARKUP;
         data.item.price_brl = final < MIN_PRICE_BRL ? MIN_PRICE_BRL : Math.round(final * 100) / 100;
       }
     }
