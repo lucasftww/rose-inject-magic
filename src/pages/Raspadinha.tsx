@@ -362,6 +362,54 @@ const Raspadinha = () => {
     check();
   };
 
+  // Paint scratch overlay on canvases after React renders them (replaces unreliable setTimeout)
+  const paintCanvasOverlay = useCallback(() => {
+    const paintMode = pendingCanvasPaintRef.current;
+    if (!paintMode) return;
+    const painted = canvasRefs.current.every((canvas, i) => {
+      if (revealed[i]) return true; // no canvas needed
+      if (!canvas) return false; // canvas not mounted yet
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return false;
+      const w = canvas.width;
+      const h = canvas.height;
+      const grad = ctx.createLinearGradient(0, 0, w, h);
+      if (paintMode === "contas") {
+        grad.addColorStop(0, "hsl(220, 80%, 30%)");
+        grad.addColorStop(0.5, "hsl(220, 100%, 47%)");
+        grad.addColorStop(1, "hsl(220, 80%, 30%)");
+      } else {
+        grad.addColorStop(0, "hsl(197, 80%, 30%)");
+        grad.addColorStop(0.5, "hsl(197, 100%, 50%)");
+        grad.addColorStop(1, "hsl(197, 80%, 30%)");
+      }
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = "rgba(255,255,255,0.08)";
+      for (let x = 0; x < w; x += 20) {
+        for (let y = 0; y < h; y += 20) {
+          if ((x + y) % 40 === 0) ctx.fillRect(x, y, 10, 10);
+        }
+      }
+      ctx.fillStyle = "rgba(255,255,255,0.3)";
+      ctx.font = `bold ${Math.floor(w * 0.4)}px sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("?", w / 2, h / 2);
+      return true;
+    });
+    if (painted) pendingCanvasPaintRef.current = null;
+  }, [revealed]);
+
+  // Run paint after scratching state causes canvases to mount
+  useEffect(() => {
+    if (scratching && pendingCanvasPaintRef.current) {
+      // Use requestAnimationFrame to ensure DOM has updated
+      const raf = requestAnimationFrame(() => paintCanvasOverlay());
+      return () => cancelAnimationFrame(raf);
+    }
+  }, [scratching, paintCanvasOverlay]);
+
 
 
 
