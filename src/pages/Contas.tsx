@@ -906,8 +906,13 @@ const Contas = () => {
         params.rmax = String(rankFilter.rmax);
       }
 
-      // Region filter: done client-side via riot_country, NOT via valorant_region[] API param
-      // (LZT API's valorant_region[] filter returns empty results for most regions)
+      // Region filter: use country[] API param for server-side filtering
+      if (valRegion !== "all") {
+        const countries = REGION_COUNTRY_MAP[valRegion];
+        if (countries) {
+          params["country[]"] = countries;
+        }
+      }
 
       if (selectedWeapon !== "todos") {
         // Combine weapon filter with search query if both are set
