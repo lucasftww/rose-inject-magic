@@ -920,8 +920,6 @@ const Contas = () => {
       params.champion_min = lolChampMin && Number(lolChampMin) >= 10 ? lolChampMin : "10";
       if (lvlMin) params.lol_level_min = lvlMin;
       if (lvlMax) params.lol_level_max = lvlMax;
-      if (lolChampMin) params.champion_min = lolChampMin;
-      if (lolSkinsMin) params.lol_smin = lolSkinsMin;
 
       if (lolRank !== "todos" && lolRankApiValues[lolRank]) {
         params["lol_rank[]"] = lolRankApiValues[lolRank];
