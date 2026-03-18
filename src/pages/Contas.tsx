@@ -808,7 +808,7 @@ const Contas = () => {
 
   // ─── Fortnite filters ───
   const [fnVbMin, setFnVbMin] = useState("");
-  const [fnSkinsMin, setFnSkinsMin] = useState("1");
+  const [fnSkinsMin, setFnSkinsMin] = useState("3");
 
   // ─── Minecraft filters ───
   const [mcJava, setMcJava] = useState(false);
@@ -890,6 +890,7 @@ const Contas = () => {
 
     if (gameTab === "valorant") {
       params.game_type = "riot";
+      params.valorant_smin = "3"; // match server-side VAL_MIN_SKINS=3
       if (invMin) params.inv_min = invMin;
       if (invMax) params.inv_max = invMax;
       if (onlyKnife) params.knife = "true";
@@ -913,14 +914,12 @@ const Contas = () => {
         params.title = searchQuery ? `${searchQuery} ${selectedWeapon}` : selectedWeapon;
       }
     } else if (gameTab === "lol") {
-      // LoL-specific — hide empty accounts, require at least 1 skin and 10 champions
+      // LoL-specific — match server-side LOL_MIN_SKINS=8
       params.game_type = "lol";
-      params.lol_smin = "1";
-      params.champion_min = "10";
+      params.lol_smin = lolSkinsMin && Number(lolSkinsMin) >= 8 ? lolSkinsMin : "8";
+      params.champion_min = lolChampMin && Number(lolChampMin) >= 10 ? lolChampMin : "10";
       if (lvlMin) params.lol_level_min = lvlMin;
       if (lvlMax) params.lol_level_max = lvlMax;
-      if (lolChampMin) params.champion_min = lolChampMin;
-      if (lolSkinsMin) params.lol_smin = lolSkinsMin;
 
       if (lolRank !== "todos" && lolRankApiValues[lolRank]) {
         params["lol_rank[]"] = lolRankApiValues[lolRank];
@@ -1155,7 +1154,7 @@ const Contas = () => {
     setLolChampMin("");
     setLolSkinsMin("");
     setFnVbMin("");
-    setFnSkinsMin("1");
+    setFnSkinsMin("3");
     setMcJava(false);
     setMcBedrock(false);
     setMcHypixelLvlMin("");
@@ -1191,7 +1190,7 @@ const Contas = () => {
     gameTab === "lol" && lolSkinsMin !== "",
     gameTab === "lol" && lolRegion !== "BR1",
     gameTab === "fortnite" && fnVbMin !== "",
-    gameTab === "fortnite" && fnSkinsMin !== "" && fnSkinsMin !== "1",
+    gameTab === "fortnite" && fnSkinsMin !== "" && fnSkinsMin !== "3",
     isMinecraft && mcJava,
     isMinecraft && mcBedrock,
     isMinecraft && mcHypixelLvlMin !== "",
