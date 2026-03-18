@@ -117,10 +117,6 @@ function shouldKeepItem(item: LztItem, gameType: string, displayedPriceBrl: numb
   if (item.buyer) return false;
   if (item.canBuyItem === false) return false;
 
-  const thirtyDaysAgo = Math.floor(Date.now() / 1000) - (30 * 24 * 60 * 60);
-  const lastActivity = Number(item.account_last_activity || 0);
-  if (lastActivity !== 0 && lastActivity > thirtyDaysAgo) return false;
-
   if (gameType === "lol") {
     const skinCount = Number(item.riot_lol_skin_count || 0);
     if (skinCount < LOL_MIN_SKINS) return false;
@@ -138,12 +134,11 @@ function shouldKeepItem(item: LztItem, gameType: string, displayedPriceBrl: numb
   }
 
   if (gameType === "minecraft") {
-    // Minecraft: cap price at R$300 max for basic accounts
     if (displayedPriceBrl > 300) return false;
     return true;
   }
 
-  // Valorant (riot)
+  // Valorant (riot or valorant)
   const valSkins = Number(item.riot_valorant_skin_count || 0);
   if (valSkins < VAL_MIN_SKINS) return false;
   const fairCeiling = getValorantFairPriceCeiling(item) * PRICE_BUFFER;
