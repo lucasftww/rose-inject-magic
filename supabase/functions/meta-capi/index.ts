@@ -1,5 +1,3 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -9,7 +7,7 @@ const corsHeaders = {
 const PIXEL_ID = "4378225905838577";
 const GRAPH_API_VERSION = "v21.0";
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -35,7 +33,6 @@ serve(async (req) => {
 
     // ─── Build user_data with server-side enrichment ───
 
-    // Only allow Meta-accepted user_data fields (reject unknown fields)
     const ALLOWED_USER_DATA = new Set([
       "em", "ph", "fn", "ln", "ge", "db", "ct", "st", "zp", "country",
       "external_id", "client_ip_address", "client_user_agent",
@@ -45,7 +42,6 @@ serve(async (req) => {
     const rawUserData = user_data || {};
     const userData: Record<string, any> = {};
 
-    // Filter to only Meta-accepted fields
     for (const key of Object.keys(rawUserData)) {
       if (ALLOWED_USER_DATA.has(key) && rawUserData[key]) {
         userData[key] = rawUserData[key];
@@ -67,7 +63,18 @@ serve(async (req) => {
       userData.client_user_agent = req.headers.get("user-agent") || undefined;
     }
 
-    // 3. Remove empty/undefined values
+    // 3. Country — always set to hashed "br" if not provided (all users are Brazilian)
+    if (!userData.country) {
+      // SHA-256 of "br"
+      const encoder = new TextEncoder();
+      const data = encoder.encode("br");
+      const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+      userData.country = Array.from(new Uint8Array(hashBuffer))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+    }
+
+    // 4. Remove empty/undefined values
     for (const key of Object.keys(userData)) {
       if (userData[key] === undefined || userData[key] === null || userData[key] === "") {
         delete userData[key];
@@ -89,7 +96,6 @@ serve(async (req) => {
     const url = `https://graph.facebook.com/${GRAPH_API_VERSION}/${PIXEL_ID}/events?access_token=${ACCESS_TOKEN}`;
     const bodyStr = JSON.stringify(payload);
 
-    // Retry up to 3 times on transient failures
     let lastError: any = null;
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
@@ -108,7 +114,6 @@ serve(async (req) => {
           });
         }
 
-        // Non-retryable errors (bad params, auth) — return immediately
         if (metaRes.status >= 400 && metaRes.status < 500) {
           console.error("Meta CAPI error:", JSON.stringify(metaData));
           return new Response(JSON.stringify({ error: "Meta API error", details: metaData }), {
@@ -117,7 +122,6 @@ serve(async (req) => {
           });
         }
 
-        // Server error (5xx) — retry
         lastError = metaData;
         console.error(`Meta CAPI attempt ${attempt}/3 failed (${metaRes.status}):`, JSON.stringify(metaData));
       } catch (fetchErr) {
@@ -127,7 +131,6 @@ serve(async (req) => {
       if (attempt < 3) await new Promise((r) => setTimeout(r, 1000 * attempt));
     }
 
-    // All retries exhausted
     return new Response(JSON.stringify({ error: "Meta API failed after 3 attempts", details: lastError }), {
       status: 502,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
