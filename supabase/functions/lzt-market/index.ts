@@ -9,6 +9,7 @@ const corsHeaders = {
 const LZT_ALLOWED_IMAGE_DOMAINS = ["lzt.market", "api.lzt.market", "s.lzt.market", "img.lzt.market"];
 const RETRYABLE_STATUSES = [429, 502, 503, 504];
 const RUB_TO_BRL = 0.055;
+const USD_TO_BRL = 5.50;
 const MIN_PRICE_BRL = 20;
 const MARKUP = 3.0;
 const LOL_MIN_SKINS = 8;
