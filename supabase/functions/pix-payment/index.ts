@@ -1273,8 +1273,18 @@ async function validateAndCalculatePrice(
         .limit(1)
         .single();
       
+      // Check for admin price override
+      const { data: priceOverride } = await supabaseAdmin
+        .from("lzt_price_overrides")
+        .select("custom_price_brl")
+        .eq("lzt_item_id", String(lztItemId))
+        .maybeSingle();
+      
+      const hasOverride = priceOverride && Number(priceOverride.custom_price_brl) > 0;
+      const overridePrice = hasOverride ? Number(priceOverride.custom_price_brl) : null;
+
       const gameCategory = item.lztGame || item.gameCategory || "";
-      let markup = lztConfig?.markup_multiplier || 1.5;
+      let markup = lztConfig?.markup_multiplier || 3.0;
       if (gameCategory === "valorant" && lztConfig?.markup_valorant) markup = lztConfig.markup_valorant;
       else if (gameCategory === "lol" && lztConfig?.markup_lol) markup = lztConfig.markup_lol;
       else if (gameCategory === "fortnite" && lztConfig?.markup_fortnite) markup = lztConfig.markup_fortnite;
@@ -1290,24 +1300,31 @@ async function validateAndCalculatePrice(
       // Recalculate what the price SHOULD be now (for reference)
       const currentCalcPrice = Math.round(costBrl * markup * 100) / 100;
       const MIN_PRICE = 20;
-      const currentFairPrice = currentCalcPrice < MIN_PRICE ? MIN_PRICE : currentCalcPrice;
+      const currentFairPrice = overridePrice || (currentCalcPrice < MIN_PRICE ? MIN_PRICE : currentCalcPrice);
       
       // PRICE LOCK STRATEGY:
       // - Use the price the customer saw (clientDisplayPrice) if it covers our cost
-      // - If cost went up so much we'd lose money, reject the purchase
+      // - If admin set an override, allow it even if below cost (intentional discount)
+      // - If cost went up so much we'd lose money (and no override), reject the purchase
       // - If client didn't send a price, use current calculated price
       let finalPrice: number;
       
       if (clientDisplayPrice > 0) {
-        // Check if we're still profitable: client price must be >= cost
-        // Allow a small 5% tolerance for edge cases
-        if (clientDisplayPrice < costBrl * 0.95) {
-          console.error(`LZT PRICE LOCK REJECTED: clientPrice=${clientDisplayPrice}, cost=${costBrl.toFixed(2)}, would lose money`);
-          return { validatedAmount: 0, validatedDiscount: 0, validatedCart: [], error: "O preço desta conta mudou. Por favor, volte e tente novamente." };
+        // If admin set an override, trust it — don't reject intentional discounts
+        if (hasOverride) {
+          finalPrice = clientDisplayPrice;
+          console.log(`LZT PRICE LOCKED (override active): itemId=${lztItemId}, lockedPrice=${finalPrice}, overridePrice=${overridePrice}, cost=${costBrl.toFixed(2)}`);
+        } else {
+          // Check if we're still profitable: client price must be >= cost
+          // Allow a small 5% tolerance for edge cases
+          if (clientDisplayPrice < costBrl * 0.95) {
+            console.error(`LZT PRICE LOCK REJECTED: clientPrice=${clientDisplayPrice}, cost=${costBrl.toFixed(2)}, would lose money`);
+            return { validatedAmount: 0, validatedDiscount: 0, validatedCart: [], error: "O preço desta conta mudou. Por favor, volte e tente novamente." };
+          }
+          // Lock to the price the customer saw
+          finalPrice = clientDisplayPrice;
+          console.log(`LZT PRICE LOCKED: itemId=${lztItemId}, lockedPrice=${finalPrice}, cost=${costBrl.toFixed(2)}, currentFair=${currentFairPrice}, margin=${((finalPrice - costBrl) / finalPrice * 100).toFixed(1)}%`);
         }
-        // Lock to the price the customer saw
-        finalPrice = clientDisplayPrice;
-        console.log(`LZT PRICE LOCKED: itemId=${lztItemId}, lockedPrice=${finalPrice}, cost=${costBrl.toFixed(2)}, currentFair=${currentFairPrice}, margin=${((finalPrice - costBrl) / finalPrice * 100).toFixed(1)}%`);
       } else {
         // No client price sent — use current calculated price (backwards compat)
         finalPrice = currentFairPrice;
