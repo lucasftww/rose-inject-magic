@@ -8,6 +8,29 @@ const corsHeaders = {
 
 const MISTICPAY_BASE_URL = "https://api.misticpay.com/api";
 
+// ─── Live exchange rate helper ────────────────────────────────────────────────
+const FALLBACK_RUB_TO_BRL = 0.055;
+const FALLBACK_USD_TO_BRL = 5.50;
+let cachedRates: { rub: number; usd: number; fetchedAt: number } | null = null;
+
+async function getLiveRates(): Promise<{ rub: number; usd: number }> {
+  // Cache for 10 minutes to avoid hammering the API during fulfillment bursts
+  if (cachedRates && Date.now() - cachedRates.fetchedAt < 10 * 60 * 1000) {
+    return { rub: cachedRates.rub, usd: cachedRates.usd };
+  }
+  try {
+    const res = await fetch("https://economia.awesomeapi.com.br/json/last/USD-BRL,RUB-BRL");
+    if (res.ok) {
+      const data = await res.json();
+      const usd = Number(data?.USDBRL?.bid) || FALLBACK_USD_TO_BRL;
+      const rub = Number(data?.RUBBRL?.bid) || FALLBACK_RUB_TO_BRL;
+      cachedRates = { rub, usd, fetchedAt: Date.now() };
+      return { rub, usd };
+    }
+  } catch (_) { /* use fallback */ }
+  return { rub: FALLBACK_RUB_TO_BRL, usd: FALLBACK_USD_TO_BRL };
+}
+
 // ─── Structured Logger ────────────────────────────────────────────────────────
 function log(level: "INFO" | "WARN" | "ERROR", ctx: string, msg: string, data?: Record<string, unknown>) {
   const entry = { ts: new Date().toISOString(), level, ctx, msg, ...(data || {}) };
@@ -693,9 +716,8 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
     }
 
     // Record sale even for manual delivery so admin can track revenue
-    const RUB_TO_BRL_MD = 0.055;
-    const USD_TO_BRL_MD = 5.50;
-    const buyPriceMd = currency === "rub" ? Number(price || 0) * RUB_TO_BRL_MD : currency === "usd" ? Number(price || 0) * USD_TO_BRL_MD : Number(price || 0);
+    const ratesMd = await getLiveRates();
+    const buyPriceMd = currency === "rub" ? Number(price || 0) * ratesMd.rub : currency === "usd" ? Number(price || 0) * ratesMd.usd : Number(price || 0);
     const sellPriceMd = Number(item.price) || 0;
     await supabaseAdmin.from("lzt_sales").insert({
       lzt_item_id: String(itemId),
@@ -910,9 +932,8 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
       });
     }
 
-    const RUB_TO_BRL = 0.055;
-    const USD_TO_BRL = 5.50;
-    const buyPriceBrl = currency === "rub" ? Number(price) * RUB_TO_BRL : currency === "usd" ? Number(price) * USD_TO_BRL : Number(price);
+    const ratesFulfill = await getLiveRates();
+    const buyPriceBrl = currency === "rub" ? Number(price) * ratesFulfill.rub : currency === "usd" ? Number(price) * ratesFulfill.usd : Number(price);
     const sellPriceBrl = Number(item.price) || 0;
     const { error: saleErr } = await supabaseAdmin.from("lzt_sales").insert({
       lzt_item_id: String(itemId),
@@ -988,6 +1009,62 @@ async function fulfillRobotProduct(supabaseAdmin: any, payment: any, item: any, 
         duration,
         reason: robotSnapshot.reason,
       });
+
+      // CRITICAL: Do NOT proceed to buy — create manual delivery ticket instead
+      const { data: ticket } = await supabaseAdmin
+        .from("order_tickets")
+        .insert({
+          user_id: payment.user_id,
+          product_id: item.productId,
+          product_plan_id: item.planId,
+          stock_item_id: null,
+          status: "open",
+          status_label: "Entrega Manual",
+          metadata: { type: "robot-project", robot_game_id: robotGameId, duration, error: robotSnapshot.reason },
+        })
+        .select("id")
+        .single();
+      if (ticket) {
+        await supabaseAdmin.from("ticket_messages").insert({
+          ticket_id: ticket.id,
+          sender_id: payment.user_id,
+          sender_role: "staff",
+          message: `✅ Pagamento confirmado! ⚠️ ${robotSnapshot.reason} Nossa equipe irá entregar manualmente em breve.`,
+        });
+      }
+
+      // Alert admin via Discord
+      try {
+        const { data: webhookCred } = await supabaseAdmin
+          .from("system_credentials")
+          .select("value")
+          .eq("env_key", "DISCORD_WEBHOOK_URL")
+          .maybeSingle();
+        const wh = webhookCred?.value;
+        if (wh) {
+          await fetch(wh, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              content: "@everyone",
+              embeds: [{
+                title: "⚠️ Robot pre-check bloqueou entrega automática",
+                color: 0xFF8800,
+                fields: [
+                  { name: "Produto", value: item.productName || "?", inline: true },
+                  { name: "Plano", value: item.planName || "?", inline: true },
+                  { name: "Motivo", value: robotSnapshot.reason.substring(0, 200) },
+                  { name: "Ticket", value: ticket?.id?.substring(0, 8).toUpperCase() || "—", inline: true },
+                ],
+                footer: { text: "Entrega manual necessária" },
+                timestamp: new Date().toISOString(),
+              }],
+            }),
+          });
+        }
+      } catch (_) { /* ignore webhook errors */ }
+
+      return;
     }
 
     const buyRes = await fetch(`https://api.robotproject.com.br/buy/${encodeURIComponent(robotGameId)}`, {
