@@ -94,12 +94,9 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
   const [recentOrders, setRecentOrders] = useState<OrderTicket[]>([]);
   const [recentPayments, setRecentPayments] = useState<Payment[]>([]);
 
-  // Profit data
-  const [lztCost, setLztCost] = useState(0);
-  const [lztProfit, setLztProfit] = useState(0);
-  const [robotCost, setRobotCost] = useState(0);
-  const [robotProfit, setRobotProfit] = useState(0);
-  const [totalDiscounts, setTotalDiscounts] = useState(0);
+  // Granular cost data for period filtering
+  const [lztSales, setLztSales] = useState<{ buy_price: number; created_at: string }[]>([]);
+  const [robotCosts, setRobotCosts] = useState<{ cost: number; created_at: string }[]>([]);
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -112,10 +109,9 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
         if (json?.rates?.BRL) usdToBrl = json.rates.BRL;
       } catch { /* fallback */ }
 
-      const [recentOrdersRes, recentPaymentsRes, lztRes, allPaymentsRes, robotProductsRes, openTicketsRes, allOrdersRes] = await Promise.all([
+      const [recentOrdersRes, recentPaymentsRes, allPaymentsRes, robotProductsRes, openTicketsRes, allOrdersRes, lztSalesRes] = await Promise.all([
         supabase.from("order_tickets").select("*").order("created_at", { ascending: false }).limit(6),
         supabase.from("payments").select("*").eq("status", "COMPLETED").order("paid_at", { ascending: false }).limit(6),
-        supabase.rpc("admin_lzt_stats"),
         fetchAllRows("payments", {
           select: "amount, discount_amount, user_id, cart_snapshot, status, created_at, paid_at",
           filters: [{ column: "status", op: "eq", value: "COMPLETED" }],
@@ -125,38 +121,25 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
         fetchAllRows("order_tickets", {
           select: "id, product_id, product_plan_id, user_id, metadata, status, created_at, status_label",
         }),
+        fetchAllRows("lzt_sales", {
+          select: "buy_price, created_at",
+        }),
       ]);
 
       setOpenTickets(openTicketsRes.count ?? 0);
       setAllPayments(allPaymentsRes || []);
       setAllOrders(allOrdersRes || []);
+      setLztSales((lztSalesRes || []).map((s: any) => ({ buy_price: Number(s.buy_price) || 0, created_at: s.created_at })));
 
-      const discTotal = (allPaymentsRes || []).reduce((s: number, p: any) => s + (Number(p.discount_amount) || 0), 0);
-      setTotalDiscounts(discTotal);
-
-      if (lztRes.data) {
-        const l = lztRes.data as any;
-        if (!l.error) {
-          setLztProfit(Number(l.total_profit));
-          setLztCost(Number(l.total_bought));
-        }
-      }
-
-      // Robot profit
+      // Robot costs with timestamps
       const robotProducts = robotProductsRes.data || [];
       if (robotProducts.length > 0) {
         const productIds = robotProducts.map((p: any) => p.id);
         const productMap = Object.fromEntries(robotProducts.map((p: any) => [p.id, p]));
 
-        const [ticketsRes, plansRes] = await Promise.all([
-          fetchAllRows("order_tickets", {
-            select: "id, product_id, product_plan_id, user_id, metadata, status",
-            filters: [{ column: "status", op: "eq", value: "delivered" }],
-          }),
-          supabase.from("product_plans").select("id, name, price").in("product_id", productIds),
-        ]);
+        const plansRes = await supabase.from("product_plans").select("id, name, price").in("product_id", productIds);
 
-        const robotTickets = (ticketsRes || []).filter((t: any) => productIds.includes(t.product_id));
+        const robotTickets = (allOrdersRes || []).filter((t: any) => t.status === "delivered" && productIds.includes(t.product_id));
         const planMap = Object.fromEntries((plansRes.data || []).map((p: any) => [p.id, p]));
 
         const paidPriceMap = new Map<string, number>();
@@ -171,7 +154,7 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
           }
         }
 
-        let rRev = 0, rCost = 0;
+        const costs: { cost: number; created_at: string }[] = [];
         robotTickets.forEach((t: any) => {
           const product = productMap[t.product_id];
           const plan = planMap[t.product_plan_id];
@@ -183,12 +166,9 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
           } else if (!meta.is_free && product?.robot_markup_percent) {
             cost = revenue / (1 + (product.robot_markup_percent || 50) / 100);
           }
-          rRev += revenue;
-          rCost += Math.round(cost * 100) / 100;
+          costs.push({ cost: Math.round(cost * 100) / 100, created_at: t.created_at || "" });
         });
-
-        setRobotCost(rCost);
-        setRobotProfit(Math.round((rRev - rCost) * 100) / 100);
+        setRobotCosts(costs);
       }
 
       if (recentOrdersRes.data) {
@@ -242,12 +222,23 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
   const periodOrderCount = filteredOrders.length;
   const periodPaidCount = filteredPayments.length;
 
+  // Period-filtered costs — consistent with revenue period
+  const periodLztCost = useMemo(() => {
+    const filtered = filterByPeriod(lztSales.map(s => ({ ...s, paid_at: null })), period, "created_at");
+    return filtered.reduce((s, l) => s + l.buy_price, 0);
+  }, [lztSales, period]);
 
-  // Note: lzt/robot costs come from RPC totals (all-time only)
-  // Profit is always shown as "Geral" since we can't period-filter lzt/robot costs
-  const allTimeRevenue = allPayments.reduce((s: number, p: any) => s + Number(p.amount) / 100, 0);
-  const netProfit = allTimeRevenue - (lztCost + robotCost + totalDiscounts);
-  const profitMargin = allTimeRevenue > 0 ? (netProfit / allTimeRevenue) * 100 : 0;
+  const periodRobotCost = useMemo(() => {
+    const filtered = filterByPeriod(robotCosts.map(r => ({ ...r, paid_at: null })), period, "created_at");
+    return filtered.reduce((s, r) => s + r.cost, 0);
+  }, [robotCosts, period]);
+
+  const periodDiscounts = useMemo(() => {
+    return filteredPayments.reduce((s: number, p: any) => s + (Number(p.discount_amount) || 0), 0);
+  }, [filteredPayments]);
+
+  const netProfit = periodRevenue - (periodLztCost + periodRobotCost + periodDiscounts);
+  const profitMargin = periodRevenue > 0 ? (netProfit / periodRevenue) * 100 : 0;
 
   const periodLabel = period === "24h" ? "24h" : period === "7d" ? "7 dias" : period === "30d" ? "30 dias" : "Total";
 
