@@ -414,11 +414,13 @@ Deno.serve(async (req) => {
         "pending_deletion_date", "update_stat_date",
       ];
 
-      // Filter out already-sold accounts (buyer is set)
+      // Filter out already-sold accounts and only keep accounts with 30+ days of inactivity
+      const thirtyDaysAgo = Math.floor(Date.now() / 1000) - (30 * 24 * 60 * 60);
       data.items = data.items.filter((item: any) => {
         if (item.buyer) return false;
         if (item.canBuyItem === false) return false;
-        return true;
+        const lastActivity = Number(item.account_last_activity || 0);
+        return lastActivity === 0 || lastActivity <= thirtyDaysAgo;
       });
 
       // Add price_brl and strip heavy fields
