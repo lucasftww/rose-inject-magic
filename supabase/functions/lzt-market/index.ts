@@ -12,7 +12,9 @@ const RUB_TO_BRL = 0.055;
 const MIN_PRICE_BRL = 20;
 const MARKUP = 3.0;
 const LOL_MIN_SKINS = 8;
-const LOL_PRICE_BUFFER = 1.35;
+const VAL_MIN_SKINS = 3;
+const FT_MIN_SKINS = 3;
+const PRICE_BUFFER = 1.35;
 
 type LztItem = Record<string, any>;
 
