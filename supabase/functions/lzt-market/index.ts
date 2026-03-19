@@ -154,7 +154,13 @@ function shouldKeepItem(item: LztItem, gameType: string, displayedPriceBrl: numb
   if (item.buyer) return false;
   if (item.canBuyItem === false) return false;
 
-  // Reject accounts with recent activity
+  const isValorant = gameType === "riot" || gameType === "valorant";
+
+  // Valorant should mirror the raw LZT search filters as closely as possible.
+  // Keep only availability checks here and let explicit query params do the filtering.
+  if (isValorant) return true;
+
+  // Reject accounts with recent activity for non-Valorant categories only.
   const nowSec = Math.floor(Date.now() / 1000);
   const minInactiveSec = MIN_INACTIVE_DAYS * 86400;
   const lastActivity = Number(
@@ -183,11 +189,6 @@ function shouldKeepItem(item: LztItem, gameType: string, displayedPriceBrl: numb
     return true;
   }
 
-  // Valorant (riot or valorant)
-  const valSkins = Number(item.riot_valorant_skin_count || 0);
-  if (valSkins < VAL_MIN_SKINS) return false;
-  const fairCeiling = getValorantFairPriceCeiling(item) * PRICE_BUFFER;
-  if (displayedPriceBrl > fairCeiling) return false;
   return true;
 }
 
