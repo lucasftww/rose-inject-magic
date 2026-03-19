@@ -975,41 +975,53 @@ const Contas = () => {
       const data = await fetchWithRetry(buildParams(1), controller);
       if (controller.signal.aborted) return;
 
+      const shouldProbeValorantPages = gameTab === "valorant";
       setFirstPageLoaded(true);
       const firstPageItems: LztItem[] = data?.items ?? [];
-      setTotalItems(data?.totalItems ?? 0);
+      setTotalItems(data?.totalItems ?? firstPageItems.length ?? 0);
       const hasMore = data?.hasNextPage ?? false;
-      setHasNextPage(hasMore);
+      setHasNextPage(shouldProbeValorantPages ? firstPageItems.length > 0 : hasMore);
       setCurrentPage(1);
       setStreamedItems(firstPageItems);
 
-      // Fetch remaining pages in background, batch by page
-      if (hasMore) {
-        let allItems = [...firstPageItems];
-        const seenIds = new Set(firstPageItems.map(i => i.item_id));
-        let nextPage = hasMore;
-        let pageNum = 2;
+      let allItems = [...firstPageItems];
+      const seenIds = new Set(firstPageItems.map(i => i.item_id));
+      let nextPage = hasMore;
+      let pageNum = 2;
 
-          while (nextPage && pageNum <= MAX_PAGES) {
-            if (controller.signal.aborted) return;
-            const pageData = await fetchWithRetry(buildParams(pageNum), controller);
-          if (controller.signal.aborted) return;
+      while (pageNum <= MAX_PAGES && (shouldProbeValorantPages || nextPage)) {
+        if (controller.signal.aborted) return;
+        const pageData = await fetchWithRetry(buildParams(pageNum), controller);
+        if (controller.signal.aborted) return;
 
-          const pageItems: LztItem[] = (pageData?.items ?? []).filter((i: LztItem) => {
-            if (seenIds.has(i.item_id)) return false;
-            seenIds.add(i.item_id);
-            return true;
-          });
-          allItems = [...allItems, ...pageItems];
-          setStreamedItems(allItems);
-          nextPage = pageData?.hasNextPage ?? false;
-          setHasNextPage(nextPage);
-          setCurrentPage(pageNum);
-          pageNum++;
+        const rawPageItems: LztItem[] = pageData?.items ?? [];
+        const pageItems: LztItem[] = rawPageItems.filter((i: LztItem) => {
+          if (seenIds.has(i.item_id)) return false;
+          seenIds.add(i.item_id);
+          return true;
+        });
+
+        if (pageItems.length === 0) {
+          nextPage = false;
+          setHasNextPage(false);
+          break;
         }
+
+        allItems = [...allItems, ...pageItems];
+        setStreamedItems(allItems);
+        setCurrentPage(pageNum);
+        nextPage = pageData?.hasNextPage ?? false;
+        setHasNextPage(shouldProbeValorantPages ? pageNum < MAX_PAGES : nextPage);
+        pageNum++;
       }
 
-      if (!controller.signal.aborted) setStreamingDone(true);
+      if (!controller.signal.aborted) {
+        if (shouldProbeValorantPages) {
+          setTotalItems(allItems.length);
+          setHasNextPage(false);
+        }
+        setStreamingDone(true);
+      }
     } catch (err: any) {
       if (!controller.signal.aborted) {
         setFirstPageLoaded(true);
@@ -1017,7 +1029,7 @@ const Contas = () => {
         setStreamingDone(true);
       }
     }
-  }, [buildParams, fetchWithRetry]);
+  }, [buildParams, fetchWithRetry, gameTab]);
 
   useEffect(() => {
     abortRef.current?.abort();
@@ -1028,7 +1040,9 @@ const Contas = () => {
   }, [paramsKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadMorePages = async () => {
-    if (loadingMore || !hasNextPage) return;
+    const shouldProbeValorantPages = gameTab === "valorant";
+    if (loadingMore || (!hasNextPage && !shouldProbeValorantPages)) return;
+    if (currentPage >= MAX_PAGES) return;
     setLoadingMore(true);
     // Abort any previous in-flight request before starting a new one
     abortRef.current?.abort();
@@ -1039,7 +1053,7 @@ const Contas = () => {
       const data = await fetchWithRetry(buildParams(nextPageNum), controller);
       if (controller.signal.aborted) return;
       const pageItems: LztItem[] = data?.items ?? [];
-      setHasNextPage(data?.hasNextPage ?? false);
+      setHasNextPage(shouldProbeValorantPages ? nextPageNum < MAX_PAGES && pageItems.length > 0 : (data?.hasNextPage ?? false));
       setCurrentPage(nextPageNum);
       // Deduplicate by item_id to prevent duplicates from race conditions
       setStreamedItems(prev => {
