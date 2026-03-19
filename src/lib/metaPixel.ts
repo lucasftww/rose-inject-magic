@@ -97,9 +97,12 @@ export const setAdvancedMatching = async (userData: {
     if (hashed) matchData.ph = hashed;
   }
   if (userData.externalId) {
-    matchData.external_id = userData.externalId;
     const hashed = await sha256(userData.externalId);
-    if (hashed) _cachedUserData.external_id = hashed;
+    if (hashed) {
+      // Use hashed value for both fbq and CAPI — Meta requires hashed external_id
+      matchData.external_id = hashed;
+      _cachedUserData.external_id = hashed;
+    }
   }
 
   // Always include country for Advanced Matching
