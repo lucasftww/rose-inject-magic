@@ -9,12 +9,13 @@ export const useLztMarkup = () => {
   const calcPrice = (price: number, currency?: string, _game?: GameCategory): number => {
     const RUB_TO_BRL = 0.055;
     const USD_TO_BRL = 5.50;
+    const MARKUP = 3.0;
     const cur = String(currency || "rub").toLowerCase();
     let brl = price;
-    if (cur === "rub") brl = price * RUB_TO_BRL;
-    else if (cur === "usd") brl = price * USD_TO_BRL;
-    const final = brl * 3.0;
-    return final < MIN_PRICE_BRL ? MIN_PRICE_BRL : final;
+    if (cur === "rub") brl = price * RUB_TO_BRL * MARKUP;
+    else if (cur === "usd") brl = price * USD_TO_BRL * MARKUP;
+    else brl = price * 1.30; // BRL: small margin only
+    return brl < MIN_PRICE_BRL ? MIN_PRICE_BRL : brl;
   };
 
   const formatPrice = (price: number, currency?: string, game?: GameCategory): string => {

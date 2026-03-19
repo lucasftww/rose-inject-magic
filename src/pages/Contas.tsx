@@ -1077,16 +1077,16 @@ const Contas = () => {
   // Helper: get BRL price for sorting (matches what user sees on screen)
   const getBrlPrice = (item: LztItem): number => {
     if (item.price_brl && item.price_brl > 0) return item.price_brl;
-    // Fallback: flat 3.0x markup (matches server logic)
+    // Fallback: must match server-side logic
     const RUB_TO_BRL = 0.055;
     const USD_TO_BRL = 5.50;
     const MARKUP = 3.0;
     const currency = String(item.price_currency || "rub").toLowerCase();
     let brl = item.price;
-    if (currency === "rub") brl = item.price * RUB_TO_BRL;
-    else if (currency === "usd") brl = item.price * USD_TO_BRL;
-    const final = brl * MARKUP;
-    return final < 20 ? 20 : final;
+    if (currency === "rub") brl = item.price * RUB_TO_BRL * MARKUP;
+    else if (currency === "usd") brl = item.price * USD_TO_BRL * MARKUP;
+    else brl = item.price * 1.30; // BRL: small margin only
+    return brl < 20 ? 20 : brl;
   };
 
   const allItems = useMemo(() => {
