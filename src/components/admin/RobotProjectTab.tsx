@@ -156,21 +156,25 @@ const RobotProjectTab = () => {
     })));
   };
 
-  const fetchExchangeRate = async () => {
+  const fetchExchangeRate = async (): Promise<number> => {
     try {
       const res = await fetch("https://economia.awesomeapi.com.br/json/last/USD-BRL");
       if (res.ok) {
         const data = await res.json();
         const bid = Number(data?.USDBRL?.bid);
-        if (bid > 0) setUsdToBrl(bid);
+        if (bid > 0) {
+          setUsdToBrl(bid);
+          return bid;
+        }
       }
     } catch (err) {
       console.error("fetchExchangeRate error:", err);
-      /* use fallback */
     }
+    return usdToBrl;
   };
 
-  const fetchRobotSales = async (period: "7d" | "30d" | "all" = salesPeriod) => {
+  const fetchRobotSales = async (period: "7d" | "30d" | "all" = salesPeriod, currentRate?: number) => {
+    const rate = currentRate ?? usdToBrl;
     setSalesLoading(true);
     try {
       // Get all products with robot_game_id
@@ -224,7 +228,6 @@ const RobotProjectTab = () => {
 
       // Get plan names & prices
       const planIds = [...new Set(tickets.map((t: any) => t.product_plan_id))];
-      const ticketUserIds = [...new Set(tickets.map((t: any) => t.user_id))];
       
       const [plansRes, robotPayments] = await Promise.all([
         supabase.from("product_plans").select("id, name, price, robot_duration_days").in("id", planIds),
@@ -262,7 +265,7 @@ const RobotProjectTab = () => {
         let cost = 0;
         if (meta.amount_spent && Number(meta.amount_spent) > 0) {
           // Real cost = 60% of amount_spent (40% cashback from Robot Project)
-          cost = Number(meta.amount_spent) * 0.6 * usdToBrl;
+          cost = Number(meta.amount_spent) * 0.6 * rate;
         } else if (meta.is_free) {
           cost = 0;
         } else if (product?.robot_markup_percent) {
@@ -362,8 +365,8 @@ const RobotProjectTab = () => {
 
   const refreshAll = async () => {
     setLoading(true);
-    await Promise.all([checkPing(), fetchRobotGames(), fetchProductsWithRobot(), fetchExchangeRate(), fetchPendingRobotTickets()]);
-    await fetchRobotSales();
+    const [,,,rate] = await Promise.all([checkPing(), fetchRobotGames(), fetchProductsWithRobot(), fetchExchangeRate(), fetchPendingRobotTickets()]);
+    await fetchRobotSales(salesPeriod, rate);
     setLastRefresh(new Date());
     setLoading(false);
   };

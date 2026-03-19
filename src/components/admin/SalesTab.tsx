@@ -60,8 +60,8 @@ const SALES_CACHE_TTL = 3 * 60 * 1000;
 
 /** Get purchase type label */
 const getPurchaseType = (meta: any): { label: string; icon: typeof Package; color: string } => {
-  if (meta?.type === "lzt-account") return { label: "Conta LZT", icon: Globe, color: "text-blue-400" };
-  if (meta?.type === "robot-project") return { label: "Robot", icon: Bot, color: "text-purple-400" };
+  if (meta?.type === "lzt-account") return { label: "Conta LZT", icon: Globe, color: "text-info" };
+  if (meta?.type === "robot-project") return { label: "Robot", icon: Bot, color: "text-accent-foreground" };
   return { label: "Estoque", icon: Package, color: "text-success" };
 };
 
@@ -266,8 +266,8 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
           { icon: <Check className="h-4 w-4 text-success" />, label: "Entregues", value: String(stats.delivered) },
           { icon: <Clock className="h-4 w-4 text-warning" />, label: "Pendentes", value: String(stats.pending) },
           { icon: <DollarSign className="h-4 w-4 text-success" />, label: "Receita", value: `R$ ${stats.revenue.toFixed(0)}` },
-          { icon: <Globe className="h-4 w-4 text-blue-400" />, label: "Contas LZT", value: String(stats.lztCount) },
-          { icon: <Bot className="h-4 w-4 text-purple-400" />, label: "Robot", value: String(stats.robotCount) },
+          { icon: <Globe className="h-4 w-4 text-info" />, label: "Contas LZT", value: String(stats.lztCount) },
+          { icon: <Bot className="h-4 w-4 text-accent-foreground" />, label: "Robot", value: String(stats.robotCount) },
         ].map((s, i) => (
           <div key={i} className="rounded-lg border border-border bg-card p-3">
             <div className="flex items-center gap-1.5 mb-1">{s.icon}<span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{s.label}</span></div>
