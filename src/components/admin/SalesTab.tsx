@@ -60,8 +60,8 @@ const SALES_CACHE_TTL = 3 * 60 * 1000;
 
 /** Get purchase type label */
 const getPurchaseType = (meta: any): { label: string; icon: typeof Package; color: string } => {
-  if (meta?.type === "lzt-account") return { label: "Conta LZT", icon: Globe, color: "text-blue-400" };
-  if (meta?.type === "robot-project") return { label: "Robot", icon: Bot, color: "text-purple-400" };
+  if (meta?.type === "lzt-account") return { label: "Conta LZT", icon: Globe, color: "text-info" };
+  if (meta?.type === "robot-project") return { label: "Robot", icon: Bot, color: "text-accent-foreground" };
   return { label: "Estoque", icon: Package, color: "text-success" };
 };
 
