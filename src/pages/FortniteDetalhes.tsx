@@ -145,9 +145,9 @@ const FortniteDetalhes = () => {
 
   const currentPreviews = tabPreviews[activeTab];
 
-  const vbucks = raw?.fortnite_balance ?? raw?.fortnite_vbucks ?? item?.riot_valorant_wallet_vp ?? 0;
-  const skinCount = raw?.fortnite_skin_count ?? item?.riot_valorant_skin_count ?? 0;
-  const level = raw?.fortnite_level ?? item?.riot_valorant_level ?? 0;
+  const vbucks = raw?.fortnite_balance ?? raw?.fortnite_vbucks ?? 0;
+  const skinCount = raw?.fortnite_skin_count ?? 0;
+  const level = raw?.fortnite_level ?? 0;
 
   // Gallery uses skins, fallback to pickaxes
   const galleryPreviews = skinPreviews.length > 0 ? skinPreviews : pickaxePreviews;
@@ -366,14 +366,15 @@ const FortniteDetalhes = () => {
 
                   <button
                     onClick={handleBuyNow}
-                    className="group relative flex w-full items-center justify-center gap-2 border-2 px-5 py-3 text-xs font-bold uppercase tracking-[0.25em] rounded-lg transition-all hover:shadow-lg"
+                    disabled={checkingAvailability}
+                    className="group relative flex w-full items-center justify-center gap-2 border-2 px-5 py-3 text-xs font-bold uppercase tracking-[0.25em] rounded-lg transition-all hover:shadow-lg disabled:opacity-60"
                     style={{
                       borderColor: "rgba(255,255,255,0.2)",
                       color: "hsl(var(--foreground))",
                     }}
                   >
-                    <Zap className="h-4 w-4" />
-                    COMPRAR AGORA
+                    {checkingAvailability ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+                    {checkingAvailability ? "VERIFICANDO..." : "COMPRAR AGORA"}
                   </button>
 
                   {item.item_id && (
@@ -576,11 +577,12 @@ const FortniteDetalhes = () => {
               </div>
               <button
                 onClick={handleBuyNow}
-                className="flex flex-1 items-center justify-center gap-2 rounded-lg py-3 text-sm font-bold uppercase tracking-wider text-white transition-all active:scale-[0.98]"
+                disabled={checkingAvailability}
+                className="flex flex-1 items-center justify-center gap-2 rounded-lg py-3 text-sm font-bold uppercase tracking-wider text-white transition-all active:scale-[0.98] disabled:opacity-60"
                 style={{ background: FN_PURPLE, fontFamily: "'Valorant', sans-serif" }}
               >
-                <ShoppingCart className="h-4 w-4" />
-                Comprar Agora
+                {checkingAvailability ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShoppingCart className="h-4 w-4" />}
+                {checkingAvailability ? "Verificando..." : "Comprar Agora"}
               </button>
             </div>
           </div>
