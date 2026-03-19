@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -7,9 +7,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import logoRoyal from "@/assets/logo-royal.png";
-import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
-
-const TURNSTILE_SITE_KEY = "0x4AAAAAAClS1zHIEKz4wE9_";
 
 interface AuthModalProps {
   open: boolean;
@@ -38,8 +35,6 @@ const AuthModal = ({ open, onOpenChange, defaultTab = "login" }: AuthModalProps)
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotSent, setForgotSent] = useState(false);
-  const [captchaToken, setCaptchaToken] = useState<string | undefined>();
-  const captchaRef = useRef<TurnstileInstance>(null);
   const { signIn, signUp, resetPassword } = useAuth();
 
   return (
@@ -234,15 +229,7 @@ const AuthModal = ({ open, onOpenChange, defaultTab = "login" }: AuthModalProps)
                   </div>
 
                   {tab === "login" && (
-                    <div className="flex items-center justify-between -mt-1 sm:-mt-2">
-                      <label className="flex items-center gap-2 cursor-pointer group">
-                        <div className="relative h-4 w-4">
-                          <input type="checkbox" className="peer sr-only" />
-                          <div className="h-4 w-4 rounded border border-muted-foreground/40 bg-secondary transition-colors peer-checked:border-success peer-checked:bg-success" />
-                          <svg className="absolute inset-0 h-4 w-4 text-success-foreground opacity-0 peer-checked:opacity-100 pointer-events-none" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8.5L6.5 11L12 5" /></svg>
-                        </div>
-                        <span className="text-xs sm:text-sm text-muted-foreground group-hover:text-foreground transition-colors">Lembrar-me</span>
-                      </label>
+                    <div className="flex items-center justify-end -mt-1 sm:-mt-2">
                       <button type="button" onClick={() => { setShowForgot(true); setForgotEmail(email); }} className="text-xs sm:text-sm text-success hover:underline">Esqueceu a senha?</button>
                     </div>
                   )}
