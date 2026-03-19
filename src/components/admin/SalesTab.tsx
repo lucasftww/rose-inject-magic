@@ -154,7 +154,7 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
     const enriched: SaleTicket[] = rawTickets.map((t) => {
       const product = productsMap.get(t.product_id);
       const plan = plansMap.get(t.product_plan_id);
-      const profile = profilesMap.get(t.user_id);
+      const profile = profilesMap.get(t.user_id) as any;
       const meta = t.metadata as any;
       const isLzt = meta?.type === "lzt-account";
       const lztItemId = meta?.lzt_item_id;
