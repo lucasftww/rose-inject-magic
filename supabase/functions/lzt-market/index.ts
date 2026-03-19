@@ -643,19 +643,22 @@ Deno.serve(async (req) => {
         
         const displayedPriceBrl = getDisplayedPriceBrl(item, overrideMap.get(String(item.item_id)), gameType, activeMarkup);
         
-        // Track filter reasons for Valorant
+        // shouldKeepItem handles inactivity, fair-price, and quality checks for all games
         const isValorant = gameType === "riot" || gameType === "valorant";
-        if (isValorant) {
-          const nowSec = Math.floor(Date.now() / 1000);
-          const lastActivity = Number(item.account_last_activity || item.riot_last_activity || 0);
-          const daysSinceActivity = lastActivity > 0 ? Math.floor((nowSec - lastActivity) / 86400) : 999;
-          if (daysSinceActivity < MIN_INACTIVE_DAYS) { filteredByInactivity++; return false; }
-          // Must also check fair price ceiling and hard cap via shouldKeepItem
-          if (!shouldKeepItem(item, gameType, displayedPriceBrl)) { filteredByPrice++; return false; }
-          return true;
+        if (!shouldKeepItem(item, gameType, displayedPriceBrl)) {
+          // Track filter reason for diagnostics
+          if (isValorant) {
+            const nowSec = Math.floor(Date.now() / 1000);
+            const lastActivity = Number(item.account_last_activity || item.riot_last_activity || 0);
+            if (lastActivity > 0 && (nowSec - lastActivity) < MIN_INACTIVE_DAYS * 86400) {
+              filteredByInactivity++;
+            } else {
+              filteredByPrice++;
+            }
+          }
+          return false;
         }
-        
-        return shouldKeepItem(item, gameType, displayedPriceBrl);
+        return true;
       });
 
       log("INFO", "lzt-market", "Filtered market items", {
