@@ -476,6 +476,8 @@ const ProductsTab = () => {
       supabase.from("product_tutorials").delete().eq("product_id", product.id),
       supabase.from("coupon_products").delete().eq("product_id", product.id),
       supabase.from("reseller_products").delete().eq("product_id", product.id),
+      supabase.from("scratch_card_prizes").delete().eq("product_id", product.id),
+      supabase.from("product_reviews").delete().eq("product_id", product.id),
     ]);
     // Delete plans (may fail if referenced by order_tickets — those are preserved)
     const { data: plans } = await supabase.from("product_plans").select("id").eq("product_id", product.id);

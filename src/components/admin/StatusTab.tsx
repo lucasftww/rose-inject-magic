@@ -85,14 +85,20 @@ const StatusTab = () => {
     const ids = Object.keys(edits);
     if (!ids.length) return;
     setSaving("all");
+    let failCount = 0;
     for (const id of ids) {
       const edit = edits[id];
-      await supabase
+      const { error } = await supabase
         .from("products")
         .update({ status: edit.status, status_label: edit.status_label, status_updated_at: new Date().toISOString() })
         .eq("id", id);
+      if (error) failCount++;
     }
-    toast({ title: `${ids.length} produto(s) atualizado(s)!` });
+    if (failCount > 0) {
+      toast({ title: `${failCount} produto(s) falharam ao salvar`, variant: "destructive" });
+    } else {
+      toast({ title: `${ids.length} produto(s) atualizado(s)!` });
+    }
     setEdits({});
     invalidateAdmin();
     refetch();

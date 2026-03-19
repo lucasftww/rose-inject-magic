@@ -101,25 +101,37 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
 
     const productIds = [...new Set(rawTickets.map((t) => t.product_id))];
     const planIds = [...new Set(rawTickets.map((t) => t.product_plan_id))];
-    const userIds = [...new Set(rawTickets.map((t) => t.user_id))];
 
     const lztItemIds = rawTickets
       .filter((t) => t.metadata?.type === "lzt-account" && t.metadata?.lzt_item_id)
       .map((t) => String(t.metadata.lzt_item_id));
 
-    const [productsRes, plansRes, profilesData, lztSalesData] = await Promise.all([
-      supabase.from("products").select("id, name, image_url").in("id", productIds),
-      supabase.from("product_plans").select("id, name, price").in("id", planIds),
-      supabase.from("profiles").select("user_id, username").in("user_id", userIds),
+    // Chunk large .in() queries to avoid Supabase 1000-row response limit
+    const CHUNK = 500;
+    const fetchInChunks = async <R,>(table: string, select: string, column: string, ids: string[]): Promise<R[]> => {
+      if (ids.length === 0) return [];
+      const results: R[] = [];
+      for (let i = 0; i < ids.length; i += CHUNK) {
+        const chunk = ids.slice(i, i + CHUNK);
+        const { data } = await (supabase.from as any)(table).select(select).in(column, chunk);
+        if (data) results.push(...data);
+      }
+      return results;
+    };
+
+    const [productsData, plansData, lztSalesRaw] = await Promise.all([
+      fetchInChunks<any>("products", "id, name, image_url", "id", productIds),
+      fetchInChunks<any>("product_plans", "id, name, price", "id", planIds),
       lztItemIds.length > 0
-        ? supabase.from("lzt_sales").select("lzt_item_id, sell_price").in("lzt_item_id", lztItemIds)
-        : Promise.resolve({ data: [] }),
+        ? fetchInChunks<any>("lzt_sales", "lzt_item_id, sell_price", "lzt_item_id", lztItemIds)
+        : Promise.resolve([]),
     ]);
 
-    const productsMap = new Map((productsRes.data || []).map((p) => [p.id, p]));
-    const plansMap = new Map((plansRes.data || []).map((p) => [p.id, p]));
-    const profilesMap = new Map((profilesData.data || []).map((p: any) => [p.user_id, p]));
-    const lztSalesMap = new Map(((lztSalesData as any).data || []).map((s: any) => [s.lzt_item_id, Number(s.sell_price)]));
+    const productsMap = new Map(productsData.map((p: any) => [p.id, p]));
+    const plansMap = new Map(plansData.map((p: any) => [p.id, p]));
+    // Profiles are loaded via useAdminUsers hook — no need for separate query that hits 1000-row limit
+    const profilesMap = new Map<string, any>();
+    const lztSalesMap = new Map((lztSalesRaw || []).map((s: any) => [s.lzt_item_id, Number(s.sell_price)]));
 
     const stockIds = rawTickets.filter((t) => t.stock_item_id).map((t) => t.stock_item_id as string);
     const stockMap = new Map<string, string>();
@@ -142,7 +154,7 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
     const enriched: SaleTicket[] = rawTickets.map((t) => {
       const product = productsMap.get(t.product_id);
       const plan = plansMap.get(t.product_plan_id);
-      const profile = profilesMap.get(t.user_id);
+      const profile = profilesMap.get(t.user_id) as any;
       const meta = t.metadata as any;
       const isLzt = meta?.type === "lzt-account";
       const lztItemId = meta?.lzt_item_id;
