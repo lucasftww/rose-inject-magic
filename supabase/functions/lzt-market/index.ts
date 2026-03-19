@@ -148,7 +148,8 @@ function getFortniteFairPriceCeiling(item: LztItem) {
   return Math.max(Math.round(estimatedValue), 60);
 }
 
-const MIN_INACTIVE_DAYS = 7;
+const MIN_INACTIVE_DAYS = 30;
+const MAX_DISPLAYED_PRICE_BRL = 500;
 
 function shouldKeepItem(item: LztItem, gameType: string, displayedPriceBrl: number) {
   if (item.buyer) return false;
@@ -156,17 +157,21 @@ function shouldKeepItem(item: LztItem, gameType: string, displayedPriceBrl: numb
 
   const isValorant = gameType === "riot" || gameType === "valorant";
 
-  // Valorant should mirror the raw LZT search filters as closely as possible.
-  // Keep only availability checks here and let explicit query params do the filtering.
-  if (isValorant) return true;
-
-  // Reject accounts with recent activity for non-Valorant categories only.
+  // All games: reject accounts with recent activity (30 days minimum inactivity)
   const nowSec = Math.floor(Date.now() / 1000);
   const minInactiveSec = MIN_INACTIVE_DAYS * 86400;
   const lastActivity = Number(
     item.account_last_activity || item.riot_last_activity || item.fortnite_last_activity || 0
   );
   if (lastActivity > 0 && (nowSec - lastActivity) < minInactiveSec) return false;
+
+  // Valorant: only enforce inactivity + max price cap, no fair-price ceiling
+  if (isValorant) {
+    if (displayedPriceBrl > MAX_DISPLAYED_PRICE_BRL) return false;
+    return true;
+  }
+
+  // Non-Valorant games: additional quality filters
 
   if (gameType === "lol") {
     const skinCount = Number(item.riot_lol_skin_count || 0);
@@ -619,11 +624,26 @@ Deno.serve(async (req) => {
       }
 
       const beforeCount = data.items.length;
+      let filteredByInactivity = 0, filteredByPrice = 0, filteredByOther = 0;
       data.items = data.items.filter((item: LztItem) => {
         // Skip sold/closed/deleted items
-        if (item.item_state && item.item_state !== "active") return false;
-        if (item.buyer) return false;
+        if (item.item_state && item.item_state !== "active") { filteredByOther++; return false; }
+        if (item.buyer) { filteredByOther++; return false; }
+        if (item.canBuyItem === false) { filteredByOther++; return false; }
+        
         const displayedPriceBrl = getDisplayedPriceBrl(item, overrideMap.get(String(item.item_id)), gameType, activeMarkup);
+        
+        // Track filter reasons for Valorant
+        const isValorant = gameType === "riot" || gameType === "valorant";
+        if (isValorant) {
+          const nowSec = Math.floor(Date.now() / 1000);
+          const lastActivity = Number(item.account_last_activity || item.riot_last_activity || 0);
+          const daysSinceActivity = lastActivity > 0 ? Math.floor((nowSec - lastActivity) / 86400) : 999;
+          if (daysSinceActivity < MIN_INACTIVE_DAYS) { filteredByInactivity++; return false; }
+          if (displayedPriceBrl > MAX_DISPLAYED_PRICE_BRL) { filteredByPrice++; return false; }
+          return true;
+        }
+        
         return shouldKeepItem(item, gameType, displayedPriceBrl);
       });
 
@@ -631,6 +651,7 @@ Deno.serve(async (req) => {
         gameType,
         beforeCount,
         afterCount: data.items.length,
+        ...(gameType === "riot" || gameType === "valorant" ? { filteredByInactivity, filteredByPrice, filteredByOther } : {}),
       });
 
       for (const item of data.items) {
