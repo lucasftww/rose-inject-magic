@@ -70,7 +70,6 @@ const ProductCard = ({ product }: { product: ProductFromDB }) => {
   }, [product.product_plans]);
 
   const isRobot = !!product.robot_game_id;
-  const noStock = false; // Robot products generate keys on-demand via API, never "out of stock"
 
   const isResellerProduct = isReseller && isResellerForProduct(product.id);
   const discountedPrice = lowestPrice !== null && isResellerProduct ? getDiscountedPrice(product.id, lowestPrice) : null;
