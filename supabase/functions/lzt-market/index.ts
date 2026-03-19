@@ -624,11 +624,27 @@ Deno.serve(async (req) => {
       }
 
       const beforeCount = data.items.length;
+      const filterReasons: Record<string, number> = {};
       data.items = data.items.filter((item: LztItem) => {
         // Skip sold/closed/deleted items
-        if (item.item_state && item.item_state !== "active") return false;
-        if (item.buyer) return false;
+        if (item.item_state && item.item_state !== "active") { filterReasons["state"] = (filterReasons["state"] || 0) + 1; return false; }
+        if (item.buyer) { filterReasons["buyer"] = (filterReasons["buyer"] || 0) + 1; return false; }
         const displayedPriceBrl = getDisplayedPriceBrl(item, overrideMap.get(String(item.item_id)), gameType, activeMarkup);
+        
+        // Debug: check why items are filtered for Valorant
+        const isValorant = gameType === "riot" || gameType === "valorant";
+        if (isValorant) {
+          const nowSec = Math.floor(Date.now() / 1000);
+          const lastActivity = Number(item.account_last_activity || item.riot_last_activity || 0);
+          const daysSinceActivity = lastActivity > 0 ? Math.floor((nowSec - lastActivity) / 86400) : -1;
+          if (daysSinceActivity >= 0 && daysSinceActivity < MIN_INACTIVE_DAYS) {
+            filterReasons["inactive_" + daysSinceActivity + "d"] = (filterReasons["inactive_" + daysSinceActivity + "d"] || 0) + 1;
+          }
+          if (displayedPriceBrl > MAX_DISPLAYED_PRICE_BRL) {
+            filterReasons["price_" + Math.round(displayedPriceBrl)] = (filterReasons["price_" + Math.round(displayedPriceBrl)] || 0) + 1;
+          }
+        }
+        
         return shouldKeepItem(item, gameType, displayedPriceBrl);
       });
 
@@ -636,6 +652,7 @@ Deno.serve(async (req) => {
         gameType,
         beforeCount,
         afterCount: data.items.length,
+        filterReasons,
       });
 
       for (const item of data.items) {
