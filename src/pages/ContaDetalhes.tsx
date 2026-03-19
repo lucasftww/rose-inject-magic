@@ -910,11 +910,12 @@ const ContaDetalhes = () => {
               </div>
               <button
               onClick={handleBuyNow}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-success py-3.5 text-sm font-bold uppercase tracking-wider text-success-foreground transition-all active:scale-[0.98]"
+              disabled={checkingAvailability}
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-success py-3.5 text-sm font-bold uppercase tracking-wider text-success-foreground transition-all active:scale-[0.98] disabled:opacity-60"
               style={{ fontFamily: "'Valorant', sans-serif" }}>
               
-                <ShoppingCart className="h-4 w-4" />
-                Comprar Agora
+                {checkingAvailability ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShoppingCart className="h-4 w-4" />}
+                {checkingAvailability ? "Verificando..." : "Comprar Agora"}
               </button>
             </div>
           </div>
