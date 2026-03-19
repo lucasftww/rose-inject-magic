@@ -228,7 +228,6 @@ const RobotProjectTab = () => {
 
       // Get plan names & prices
       const planIds = [...new Set(tickets.map((t: any) => t.product_plan_id))];
-      const ticketUserIds = [...new Set(tickets.map((t: any) => t.user_id))];
       
       const [plansRes, robotPayments] = await Promise.all([
         supabase.from("product_plans").select("id, name, price, robot_duration_days").in("id", planIds),
