@@ -826,7 +826,7 @@ const Contas = () => {
   const [lvlMax, setLvlMax] = useState("");
   const [invMin, setInvMin] = useState("");
   const [invMax, setInvMax] = useState("");
-  const [page, setPage] = useState(1);
+  
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   // ─── Sidebar collapse ───
