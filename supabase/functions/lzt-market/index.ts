@@ -15,7 +15,7 @@ const DEFAULT_MARKUP = 3.0;
 const LOL_MIN_SKINS = 8;
 const VAL_MIN_SKINS = 15;
 const FT_MIN_SKINS = 3;
-const PRICE_BUFFER = 1.15;
+const PRICE_BUFFER = 1.30;
 
 type LztItem = Record<string, any>;
 
@@ -108,27 +108,31 @@ function getValorantFairPriceCeiling(item: LztItem) {
   const skinCount = Number(item.riot_valorant_skin_count || 0);
   const knifeCount = Number(item.riot_valorant_knife || item.riot_valorant_knife_count || 0);
   const level = Math.min(Number(item.riot_valorant_level || 0), 500);
-  const vp = Math.min(Number(item.riot_valorant_vp || 0), 20000);
+  const vp = Math.min(Number(item.riot_valorant_wallet_vp || item.riot_valorant_vp || 0), 20000);
+  const rp = Math.min(Number(item.riot_valorant_wallet_rp || 0), 10000);
   const rankNum = Number(item.riot_valorant_rank || 0);
+  const lastRank = Number(item.riot_valorant_last_rank || 0);
+  const effectiveRank = Math.max(rankNum, lastRank);
 
-  // Rank bonus based on numeric rank ID (more precise than string matching)
+  // Rank bonus — more generous to reflect real market value
   let rankBonus = 0;
-  if (rankNum >= 27) rankBonus = 1500;       // Radiant
-  else if (rankNum >= 24) rankBonus = 800;    // Immortal
-  else if (rankNum >= 21) rankBonus = 400;    // Ascendant
-  else if (rankNum >= 18) rankBonus = 250;    // Diamond
-  else if (rankNum >= 15) rankBonus = 150;    // Platinum
-  else if (rankNum >= 12) rankBonus = 80;     // Gold
-  else if (rankNum >= 9) rankBonus = 40;      // Silver
+  if (effectiveRank >= 27) rankBonus = 2000;       // Radiant
+  else if (effectiveRank >= 24) rankBonus = 1200;   // Immortal
+  else if (effectiveRank >= 21) rankBonus = 600;    // Ascendant
+  else if (effectiveRank >= 18) rankBonus = 350;    // Diamond
+  else if (effectiveRank >= 15) rankBonus = 200;    // Platinum
+  else if (effectiveRank >= 12) rankBonus = 120;    // Gold
+  else if (effectiveRank >= 9) rankBonus = 60;      // Silver
 
   const estimatedValue =
-    skinCount * 6 +
-    knifeCount * 30 +
-    level * 0.4 +
-    vp * 0.005 +
+    skinCount * 12 +
+    knifeCount * 60 +
+    level * 0.6 +
+    vp * 0.01 +
+    rp * 0.02 +
     rankBonus;
 
-  return Math.max(Math.round(estimatedValue), 60);
+  return Math.max(Math.round(estimatedValue), 80);
 }
 
 function getFortniteFairPriceCeiling(item: LztItem) {
@@ -144,7 +148,7 @@ function getFortniteFairPriceCeiling(item: LztItem) {
   return Math.max(Math.round(estimatedValue), 60);
 }
 
-const MIN_INACTIVE_DAYS = 30;
+const MIN_INACTIVE_DAYS = 20;
 
 function shouldKeepItem(item: LztItem, gameType: string, displayedPriceBrl: number) {
   if (item.buyer) return false;
