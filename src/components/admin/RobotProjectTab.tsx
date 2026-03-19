@@ -173,7 +173,8 @@ const RobotProjectTab = () => {
     return usdToBrl;
   };
 
-  const fetchRobotSales = async (period: "7d" | "30d" | "all" = salesPeriod) => {
+  const fetchRobotSales = async (period: "7d" | "30d" | "all" = salesPeriod, currentRate?: number) => {
+    const rate = currentRate ?? usdToBrl;
     setSalesLoading(true);
     try {
       // Get all products with robot_game_id
