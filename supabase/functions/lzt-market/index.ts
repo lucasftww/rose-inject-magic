@@ -150,44 +150,54 @@ function getFortniteFairPriceCeiling(item: LztItem) {
 
 const MIN_INACTIVE_DAYS = 20;
 
-function shouldKeepItem(item: LztItem, gameType: string, displayedPriceBrl: number) {
-  if (item.buyer) return false;
-  if (item.canBuyItem === false) return false;
+function shouldKeepItem(item: LztItem, gameType: string, displayedPriceBrl: number, debug = false) {
+  const id = item.item_id;
+  if (item.buyer) { if (debug) log("INFO", "filter", `${id} REJECTED: has buyer`); return false; }
+  if (item.canBuyItem === false) { if (debug) log("INFO", "filter", `${id} REJECTED: canBuyItem=false`); return false; }
 
-  // Reject accounts with recent activity (less than 30 days inactive)
+  // Reject accounts with recent activity
   const nowSec = Math.floor(Date.now() / 1000);
   const minInactiveSec = MIN_INACTIVE_DAYS * 86400;
   const lastActivity = Number(
     item.account_last_activity || item.riot_last_activity || item.fortnite_last_activity || 0
   );
-  if (lastActivity > 0 && (nowSec - lastActivity) < minInactiveSec) return false;
+  if (lastActivity > 0 && (nowSec - lastActivity) < minInactiveSec) {
+    if (debug) {
+      const daysSince = Math.round((nowSec - lastActivity) / 86400);
+      log("INFO", "filter", `${id} REJECTED: active ${daysSince}d ago (min ${MIN_INACTIVE_DAYS}d)`);
+    }
+    return false;
+  }
 
   if (gameType === "lol") {
     const skinCount = Number(item.riot_lol_skin_count || 0);
-    if (skinCount < LOL_MIN_SKINS) return false;
+    if (skinCount < LOL_MIN_SKINS) { if (debug) log("INFO", "filter", `${id} REJECTED: lol skins ${skinCount} < ${LOL_MIN_SKINS}`); return false; }
     const fairCeiling = getLolFairPriceCeiling(item) * PRICE_BUFFER;
-    if (displayedPriceBrl > fairCeiling) return false;
+    if (displayedPriceBrl > fairCeiling) { if (debug) log("INFO", "filter", `${id} REJECTED: lol price ${displayedPriceBrl} > ceiling ${fairCeiling}`); return false; }
     return true;
   }
 
   if (gameType === "fortnite") {
     const ftSkins = Number(item.fortnite_skin_count || item.fortnite_outfit_count || 0);
-    if (ftSkins < FT_MIN_SKINS) return false;
+    if (ftSkins < FT_MIN_SKINS) { if (debug) log("INFO", "filter", `${id} REJECTED: ft skins ${ftSkins} < ${FT_MIN_SKINS}`); return false; }
     const fairCeiling = getFortniteFairPriceCeiling(item) * PRICE_BUFFER;
-    if (displayedPriceBrl > fairCeiling) return false;
+    if (displayedPriceBrl > fairCeiling) { if (debug) log("INFO", "filter", `${id} REJECTED: ft price ${displayedPriceBrl} > ceiling ${fairCeiling}`); return false; }
     return true;
   }
 
   if (gameType === "minecraft") {
-    if (displayedPriceBrl > 300) return false;
+    if (displayedPriceBrl > 300) { if (debug) log("INFO", "filter", `${id} REJECTED: mc price ${displayedPriceBrl} > 300`); return false; }
     return true;
   }
 
   // Valorant (riot or valorant)
   const valSkins = Number(item.riot_valorant_skin_count || 0);
-  if (valSkins < VAL_MIN_SKINS) return false;
+  if (valSkins < VAL_MIN_SKINS) { if (debug) log("INFO", "filter", `${id} REJECTED: val skins ${valSkins} < ${VAL_MIN_SKINS}`); return false; }
   const fairCeiling = getValorantFairPriceCeiling(item) * PRICE_BUFFER;
-  if (displayedPriceBrl > fairCeiling) return false;
+  if (displayedPriceBrl > fairCeiling) {
+    if (debug) log("INFO", "filter", `${id} REJECTED: val price R$${displayedPriceBrl.toFixed(0)} > ceiling R$${fairCeiling.toFixed(0)}`, { skins: valSkins, knives: Number(item.riot_valorant_knife_count||0), level: Number(item.riot_valorant_level||0) });
+    return false;
+  }
   return true;
 }
 
