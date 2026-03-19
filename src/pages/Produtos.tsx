@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
-import { Search, SlidersHorizontal, DollarSign, ArrowLeft, Loader2, Package, Tag, ArrowUpDown, UserCheck, X, AlertTriangle } from "lucide-react";
+import { Search, SlidersHorizontal, DollarSign, ArrowLeft, Loader2, Package, Tag, ArrowUpDown, UserCheck, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useReseller } from "@/hooks/useReseller";
