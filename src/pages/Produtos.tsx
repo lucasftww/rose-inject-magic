@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
-import { Search, SlidersHorizontal, DollarSign, ArrowLeft, Loader2, Package, Tag, ArrowUpDown, UserCheck, X, AlertTriangle } from "lucide-react";
+import { Search, SlidersHorizontal, DollarSign, ArrowLeft, Loader2, Package, Tag, ArrowUpDown, UserCheck, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useReseller } from "@/hooks/useReseller";
@@ -70,7 +70,6 @@ const ProductCard = ({ product }: { product: ProductFromDB }) => {
   }, [product.product_plans]);
 
   const isRobot = !!product.robot_game_id;
-  const noStock = false; // Robot products generate keys on-demand via API, never "out of stock"
 
   const isResellerProduct = isReseller && isResellerForProduct(product.id);
   const discountedPrice = lowestPrice !== null && isResellerProduct ? getDiscountedPrice(product.id, lowestPrice) : null;
@@ -78,7 +77,7 @@ const ProductCard = ({ product }: { product: ProductFromDB }) => {
   return (
     <div
       onClick={() => navigate(`/produto/${product.id}`)}
-      className="group cursor-pointer overflow-hidden rounded-lg border border-border bg-card transition-all hover:border-success/40 hover:shadow-[0_0_20px_hsl(130,99%,41%,0.1)]"
+      className="group cursor-pointer overflow-hidden rounded-lg border border-border bg-card transition-all hover:border-success/40 hover:shadow-[0_0_20px_hsl(var(--success)/0.1)]"
     >
       <div className="relative flex h-72 items-center justify-center overflow-hidden bg-secondary/50">
         {product.image_url ? (
@@ -89,11 +88,6 @@ const ProductCard = ({ product }: { product: ProductFromDB }) => {
         {isResellerProduct && (
           <span className="absolute top-3 left-3 flex items-center gap-1 rounded-full bg-accent px-2.5 py-1 text-[10px] font-bold text-accent-foreground shadow-lg">
             <UserCheck className="h-3 w-3" /> Revendedor
-          </span>
-        )}
-        {noStock && (
-          <span className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-warning/90 px-2.5 py-1 text-[10px] font-bold text-warning-foreground shadow-lg">
-            <AlertTriangle className="h-3 w-3" /> Sem Estoque
           </span>
         )}
       </div>
@@ -249,44 +243,13 @@ const Produtos = () => {
   useEffect(() => {
     if (!selectedGame) { setProducts([]); return; }
     const fetchProducts = async () => {
-      setLoadingProducts(true);
       const { data } = await supabase
         .from("products")
         .select("id, name, description, image_url, active, sort_order, game_id, created_at, status, status_label, status_updated_at, features_text, robot_game_id, product_plans(*)")
         .eq("game_id", selectedGame)
         .eq("active", true)
         .order("sort_order", { ascending: true });
-      if (data) {
-        // Check stock for robot products
-        const robotProducts = (data as any[]).filter(p => p.robot_game_id);
-        if (robotProducts.length > 0) {
-          const allPlanIds = robotProducts.flatMap(p => (p.product_plans || []).filter((pl: any) => pl.active).map((pl: any) => pl.id));
-          const planToProduct: Record<string, string> = {};
-          robotProducts.forEach(p => (p.product_plans || []).forEach((pl: any) => { planToProduct[pl.id] = p.id; }));
-
-          if (allPlanIds.length > 0) {
-            // Use count query instead of fetching all rows (avoids 1000-row limit)
-            const stockCounts: Record<string, number> = {};
-            const stockPromises = allPlanIds.map(async (planId: string) => {
-              const { count } = await supabase
-                .from("stock_items")
-                .select("id", { count: "exact", head: true })
-                .eq("product_plan_id", planId)
-                .eq("used", false);
-              const pid = planToProduct[planId];
-              if (pid) stockCounts[pid] = (stockCounts[pid] || 0) + (count || 0);
-            });
-            await Promise.all(stockPromises);
-
-            data.forEach((p: any) => {
-              if (p.robot_game_id) p._stockCount = stockCounts[p.id] || 0;
-            });
-          } else {
-            robotProducts.forEach(p => (p as any)._stockCount = 0);
-          }
-        }
-        setProducts(data as any);
-      }
+      if (data) setProducts(data as any);
       setLoadingProducts(false);
     };
     fetchProducts();
