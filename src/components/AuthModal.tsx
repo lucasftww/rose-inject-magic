@@ -35,8 +35,6 @@ const AuthModal = ({ open, onOpenChange, defaultTab = "login" }: AuthModalProps)
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotSent, setForgotSent] = useState(false);
-  const [captchaToken, setCaptchaToken] = useState<string | undefined>();
-  const captchaRef = useRef<TurnstileInstance>(null);
   const { signIn, signUp, resetPassword } = useAuth();
 
   return (
