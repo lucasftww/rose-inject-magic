@@ -173,7 +173,7 @@ const setFbcCookie = (fbc: string) => {
   try {
     const expires = new Date(Date.now() + 90 * 86400000).toUTCString();
     document.cookie = `_fbc=${fbc}; path=/; expires=${expires}; SameSite=Lax; Secure`;
-  } catch (_) {}
+  } catch { /* cookie write failed */ }
 };
 
 const getFbc = (): string => {
