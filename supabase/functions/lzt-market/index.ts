@@ -619,7 +619,7 @@ Deno.serve(async (req) => {
         if (item.item_state && item.item_state !== "active") return false;
         if (item.buyer) return false;
         const displayedPriceBrl = getDisplayedPriceBrl(item, overrideMap.get(String(item.item_id)), gameType, activeMarkup);
-        return shouldKeepItem(item, gameType, displayedPriceBrl);
+        return shouldKeepItem(item, gameType, displayedPriceBrl, true);
       });
 
       log("INFO", "lzt-market", "Filtered market items", {
