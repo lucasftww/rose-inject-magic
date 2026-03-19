@@ -699,11 +699,12 @@ const ContaDetalhes = () => {
 
                   <button
                   onClick={handleBuyNow}
-                  className="btn-shine group relative flex w-full items-center justify-center gap-2 rounded-xl bg-success py-3.5 text-sm font-bold uppercase tracking-[0.2em] text-success-foreground transition-all hover:shadow-[0_0_30px_hsl(var(--success)/0.4)] active:scale-[0.98]"
+                  disabled={checkingAvailability}
+                  className="btn-shine group relative flex w-full items-center justify-center gap-2 rounded-xl bg-success py-3.5 text-sm font-bold uppercase tracking-[0.2em] text-success-foreground transition-all hover:shadow-[0_0_30px_hsl(var(--success)/0.4)] active:scale-[0.98] disabled:opacity-60"
                   style={{ fontFamily: "'Valorant', sans-serif" }}>
                   
-                    <Zap className="h-4 w-4" />
-                    COMPRAR AGORA
+                    {checkingAvailability ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+                    {checkingAvailability ? "VERIFICANDO..." : "COMPRAR AGORA"}
                   </button>
 
                   {item.item_id &&

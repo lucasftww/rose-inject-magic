@@ -366,14 +366,15 @@ const FortniteDetalhes = () => {
 
                   <button
                     onClick={handleBuyNow}
-                    className="group relative flex w-full items-center justify-center gap-2 border-2 px-5 py-3 text-xs font-bold uppercase tracking-[0.25em] rounded-lg transition-all hover:shadow-lg"
+                    disabled={checkingAvailability}
+                    className="group relative flex w-full items-center justify-center gap-2 border-2 px-5 py-3 text-xs font-bold uppercase tracking-[0.25em] rounded-lg transition-all hover:shadow-lg disabled:opacity-60"
                     style={{
                       borderColor: "rgba(255,255,255,0.2)",
                       color: "hsl(var(--foreground))",
                     }}
                   >
-                    <Zap className="h-4 w-4" />
-                    COMPRAR AGORA
+                    {checkingAvailability ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+                    {checkingAvailability ? "VERIFICANDO..." : "COMPRAR AGORA"}
                   </button>
 
                   {item.item_id && (
