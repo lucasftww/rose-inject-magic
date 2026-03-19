@@ -1,0 +1,1 @@
+UPDATE lzt_config SET max_fetch_price = 1500;
