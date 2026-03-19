@@ -171,13 +171,7 @@ function shouldKeepItem(item: LztItem, gameType: string, displayedPriceBrl: numb
     return true;
   }
 
-  // Reject accounts with recent activity for non-Valorant categories only.
-  const nowSec = Math.floor(Date.now() / 1000);
-  const minInactiveSec = MIN_INACTIVE_DAYS * 86400;
-  const lastActivity = Number(
-    item.account_last_activity || item.riot_last_activity || item.fortnite_last_activity || 0
-  );
-  if (lastActivity > 0 && (nowSec - lastActivity) < minInactiveSec) return false;
+  // Non-Valorant games: additional quality filters
 
   if (gameType === "lol") {
     const skinCount = Number(item.riot_lol_skin_count || 0);
