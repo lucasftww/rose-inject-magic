@@ -440,6 +440,7 @@ Deno.serve(async (req) => {
       // LIST: accounts with filters
       const maxFetchPrice = lztConfig?.max_fetch_price || 500;
       const effectivePmax = Math.ceil(maxFetchPrice / activeMarkup);
+      const shouldAutoApplyConfiguredPmax = gameType !== "riot" && gameType !== "valorant";
 
       const params = new URLSearchParams();
       const allowedParams = [
@@ -498,11 +499,13 @@ Deno.serve(async (req) => {
         const brlMax = Number(userPmax);
         if (brlMax > 0) {
           const sellerMax = Math.ceil((brlMax / activeMarkup) * 1.1);
-          params.set("pmax", String(Math.min(sellerMax, effectivePmax)));
-        } else {
+          params.set("pmax", String(shouldAutoApplyConfiguredPmax ? Math.min(sellerMax, effectivePmax) : sellerMax));
+        } else if (shouldAutoApplyConfiguredPmax) {
           params.set("pmax", String(effectivePmax));
+        } else {
+          params.delete("pmax");
         }
-      } else {
+      } else if (shouldAutoApplyConfiguredPmax) {
         params.set("pmax", String(effectivePmax));
       }
 
