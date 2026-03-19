@@ -190,7 +190,7 @@ const getFbc = (): string => {
       try {
         localStorage.setItem("fbclid", fbclidFromUrl);
         sessionStorage.setItem("_ck_fbclid", fbclidFromUrl);
-      } catch (_) {}
+      } catch { /* storage write failed */ }
       // Persist as cookie so Meta Pixel can read it
       setFbcCookie(fbc);
       return fbc;
