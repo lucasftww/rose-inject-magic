@@ -206,7 +206,7 @@ const getFbc = (): string => {
       setFbcCookie(fbc);
       return fbc;
     }
-  } catch (_) {}
+  } catch { /* cookie/storage read failed */ }
   return "";
 };
 
