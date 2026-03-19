@@ -286,12 +286,14 @@ const sendCAPI = (
 
     // Collect user data, if fbp is missing schedule a retry
     let userData = getUserData();
+    const eventTime = Math.floor(Date.now() / 1000);
+    const sourceUrl = window.location.href;
 
     const body = JSON.stringify({
       event_name: eventName,
       event_id: eventId,
-      event_time: Math.floor(Date.now() / 1000),
-      event_source_url: window.location.href,
+      event_time: eventTime,
+      event_source_url: sourceUrl,
       action_source: "website",
       user_data: userData,
       custom_data: customData,
@@ -319,8 +321,8 @@ const sendCAPI = (
             const retryBody = JSON.stringify({
               event_name: eventName,
               event_id: eventId, // same event_id = Meta deduplicates
-              event_time: Math.floor(Date.now() / 1000),
-              event_source_url: window.location.href,
+              event_time: eventTime, // use original event_time to ensure proper deduplication
+              event_source_url: sourceUrl,
               action_source: "website",
               user_data: retryData,
               custom_data: customData,
