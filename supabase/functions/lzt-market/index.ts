@@ -148,7 +148,7 @@ function getFortniteFairPriceCeiling(item: LztItem) {
   return Math.max(Math.round(estimatedValue), 60);
 }
 
-const MIN_INACTIVE_DAYS = 20;
+const MIN_INACTIVE_DAYS = 7;
 
 function shouldKeepItem(item: LztItem, gameType: string, displayedPriceBrl: number, debug = false) {
   const id = item.item_id;
