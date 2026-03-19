@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import { useAuth } from "@/hooks/useAuth";
@@ -16,9 +16,6 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { AreaChart, Area, ResponsiveContainer } from "recharts";
-import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
-
-const TURNSTILE_SITE_KEY = "0x4AAAAAAClS1zHIEKz4wE9_";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -45,8 +42,6 @@ const Dashboard = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showNewPass, setShowNewPass] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
-  const [verifyCaptchaToken, setVerifyCaptchaToken] = useState<string | undefined>();
-  const verifyCaptchaRef = useRef<TurnstileInstance>(null);
 
   // Tickets (pedidos) state
   interface Ticket {
