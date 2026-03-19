@@ -15,7 +15,7 @@ const DEFAULT_MARKUP = 3.0;
 const LOL_MIN_SKINS = 8;
 const VAL_MIN_SKINS = 15;
 const FT_MIN_SKINS = 3;
-const PRICE_BUFFER = 1.15;
+const PRICE_BUFFER = 1.30;
 
 type LztItem = Record<string, any>;
 
