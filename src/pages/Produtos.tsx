@@ -90,11 +90,6 @@ const ProductCard = ({ product }: { product: ProductFromDB }) => {
             <UserCheck className="h-3 w-3" /> Revendedor
           </span>
         )}
-        {noStock && (
-          <span className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-warning/90 px-2.5 py-1 text-[10px] font-bold text-warning-foreground shadow-lg">
-            <AlertTriangle className="h-3 w-3" /> Sem Estoque
-          </span>
-        )}
       </div>
       <div className="p-5">
         <h3 className="text-base font-bold text-foreground">{product.name}</h3>
