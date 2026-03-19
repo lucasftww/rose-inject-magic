@@ -77,7 +77,7 @@ const ProductCard = ({ product }: { product: ProductFromDB }) => {
   return (
     <div
       onClick={() => navigate(`/produto/${product.id}`)}
-      className="group cursor-pointer overflow-hidden rounded-lg border border-border bg-card transition-all hover:border-success/40 hover:shadow-[0_0_20px_hsl(130,99%,41%,0.1)]"
+      className="group cursor-pointer overflow-hidden rounded-lg border border-border bg-card transition-all hover:border-success/40 hover:shadow-[0_0_20px_hsl(var(--success)/0.1)]"
     >
       <div className="relative flex h-72 items-center justify-center overflow-hidden bg-secondary/50">
         {product.image_url ? (
