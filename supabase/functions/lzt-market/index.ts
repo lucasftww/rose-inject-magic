@@ -58,10 +58,17 @@ function getDisplayedPriceBrl(item: LztItem, overridePrice?: number, gameType?: 
   const currency = String(item.price_currency || "rub").toLowerCase();
   const rawPrice = Number(item.price || 0);
   let brl = rawPrice;
-  if (currency === "rub") brl = rawPrice * RUB_TO_BRL;
-  else if (currency === "usd") brl = rawPrice * USD_TO_BRL;
-  // else assume already BRL
-  let final = brl * activeMarkup;
+  if (currency === "rub") {
+    brl = rawPrice * RUB_TO_BRL;
+    brl = brl * activeMarkup;
+  } else if (currency === "usd") {
+    brl = rawPrice * USD_TO_BRL;
+    brl = brl * activeMarkup;
+  } else {
+    // Already BRL — apply a smaller margin (30%) since seller set BRL price directly
+    brl = rawPrice * 1.30;
+  }
+  let final = brl;
 
   // Enforce content-based floor so cheap listings with lots of content get a fair price
   const contentFloor = getContentFloorBrl(item, gameType);
