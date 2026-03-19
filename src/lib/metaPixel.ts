@@ -285,7 +285,7 @@ const sendCAPI = (
     const url = `https://${projectId}.supabase.co/functions/v1/meta-capi`;
 
     // Collect user data, if fbp is missing schedule a retry
-    let userData = getUserData();
+    const userData = getUserData();
     const eventTime = Math.floor(Date.now() / 1000);
     const sourceUrl = window.location.href;
 
