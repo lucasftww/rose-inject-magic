@@ -574,6 +574,17 @@ Deno.serve(async (req) => {
 
     const data = await response.json();
 
+    if (action !== "detail") {
+      const currentPage = Math.max(1, Number(data.page || url.searchParams.get("page") || 1));
+      const perPage = Math.max(1, Number(data.perPage || (Array.isArray(data.items) ? data.items.length : 0) || 1));
+      const totalItems = Math.max(0, Number(data.totalItems || 0));
+
+      data.page = currentPage;
+      data.perPage = perPage;
+      data.totalItems = totalItems;
+      data.hasNextPage = totalItems > currentPage * perPage;
+    }
+ 
     // For LIST responses, strip heavy fields to reduce egress (~80% reduction per item)
     if (action !== "detail" && data.items && Array.isArray(data.items)) {
       const STRIP_FIELDS = [
