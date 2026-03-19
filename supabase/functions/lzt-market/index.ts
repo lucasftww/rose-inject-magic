@@ -177,7 +177,7 @@ function shouldKeepItem(item: LztItem, gameType: string, displayedPriceBrl: numb
     if (skinCount < VAL_MIN_SKINS) return false;
     const fairCeiling = getValorantFairPriceCeiling(item) * PRICE_BUFFER;
     if (displayedPriceBrl > fairCeiling) return false;
-    if (displayedPriceBrl > 600) return false;
+    if (displayedPriceBrl > 900) return false;
     return true;
   }
 

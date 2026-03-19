@@ -858,7 +858,7 @@ const Contas = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
-  const MAX_PAGES = 5;
+  const MAX_PAGES = gameTab === "valorant" ? 8 : 5;
 
   // ─── Asset maps ───
   const { data: skinsMap = new Map() } = useQuery({
@@ -970,62 +970,77 @@ const Contas = () => {
     setDisplayPage(1);
     setFirstPageLoaded(false);
 
+    const maxPages = gameTab === "valorant" ? 8 : 5;
+
     try {
       // Fetch first page immediately
       const data = await fetchWithRetry(buildParams(1), controller);
       if (controller.signal.aborted) return;
 
-      const shouldProbeValorantPages = gameTab === "valorant";
+      const shouldProbe = gameTab === "valorant";
       setFirstPageLoaded(true);
       const firstPageItems: LztItem[] = data?.items ?? [];
       setTotalItems(data?.totalItems ?? firstPageItems.length ?? 0);
       const hasMore = data?.hasNextPage ?? false;
-      setHasNextPage(shouldProbeValorantPages ? firstPageItems.length > 0 : hasMore);
+      setHasNextPage(shouldProbe ? firstPageItems.length > 0 : hasMore);
       setCurrentPage(1);
       setStreamedItems(firstPageItems);
 
-      // If no more pages expected and not probing, stop here
-      if (!shouldProbeValorantPages && !hasMore) {
-        setStreamingDone(true);
-        return;
-      }
-      if (firstPageItems.length === 0) {
-        setStreamingDone(true);
-        return;
-      }
-
-      // Fetch remaining pages IN PARALLEL (major performance boost: ~15s → ~5s)
-      const pagesToFetch: number[] = [];
-      for (let p = 2; p <= MAX_PAGES; p++) pagesToFetch.push(p);
+      // Early exit if nothing to fetch
+      if (!shouldProbe && !hasMore) { setStreamingDone(true); return; }
+      if (firstPageItems.length === 0) { setStreamingDone(true); return; }
 
       const seenIds = new Set(firstPageItems.map(i => i.item_id));
       let allItems = [...firstPageItems];
 
-      const pagePromises = pagesToFetch.map(p =>
-        fetchWithRetry(buildParams(p), controller).catch(() => null)
-      );
-      const pageResults = await Promise.all(pagePromises);
-      if (controller.signal.aborted) return;
+      // Fetch remaining pages in batches of 2-3 for balanced speed + rate-limit safety
+      // Batch 1: pages 2-4, Batch 2: pages 5-8 (Valorant only)
+      const batches: number[][] = [];
+      const remaining: number[] = [];
+      for (let p = 2; p <= maxPages; p++) remaining.push(p);
+      while (remaining.length > 0) batches.push(remaining.splice(0, 3));
 
-      for (let i = 0; i < pageResults.length; i++) {
-        const pageData = pageResults[i];
-        if (!pageData) continue;
+      let stopProbing = false;
 
-        const rawPageItems: LztItem[] = pageData?.items ?? [];
-        const pageItems: LztItem[] = rawPageItems.filter((item: LztItem) => {
-          if (seenIds.has(item.item_id)) return false;
-          seenIds.add(item.item_id);
-          return true;
-        });
+      for (const batch of batches) {
+        if (controller.signal.aborted || stopProbing) break;
 
-        if (pageItems.length > 0) {
-          allItems = [...allItems, ...pageItems];
+        const batchPromises = batch.map(p =>
+          fetchWithRetry(buildParams(p), controller).catch(() => null)
+        );
+        const batchResults = await Promise.all(batchPromises);
+        if (controller.signal.aborted) return;
+
+        let batchHadItems = false;
+        for (const pageData of batchResults) {
+          if (!pageData) continue;
+          const rawItems: LztItem[] = pageData?.items ?? [];
+          const newItems = rawItems.filter((item: LztItem) => {
+            if (seenIds.has(item.item_id)) return false;
+            seenIds.add(item.item_id);
+            return true;
+          });
+          if (newItems.length > 0) {
+            allItems = [...allItems, ...newItems];
+            batchHadItems = true;
+          }
+        }
+
+        // Stream results after each batch so user sees items appear progressively
+        setStreamedItems([...allItems]);
+        setCurrentPage(batch[batch.length - 1]);
+
+        // Stop probing if an entire batch returned zero new items
+        if (!batchHadItems && shouldProbe) stopProbing = true;
+        // For non-Valorant, stop if API says no more pages
+        if (!shouldProbe) {
+          const lastResult = batchResults[batchResults.length - 1];
+          if (!lastResult?.hasNextPage) break;
         }
       }
 
       if (!controller.signal.aborted) {
-        setStreamedItems(allItems);
-        setCurrentPage(Math.min(MAX_PAGES, pagesToFetch[pagesToFetch.length - 1]));
+        setStreamedItems([...allItems]);
         setTotalItems(allItems.length);
         setHasNextPage(false);
         setStreamingDone(true);
