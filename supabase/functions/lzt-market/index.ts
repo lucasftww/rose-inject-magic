@@ -164,9 +164,8 @@ function shouldKeepItem(item: LztItem, gameType: string, displayedPriceBrl: numb
   );
   if (lastActivity > 0 && (nowSec - lastActivity) < minInactiveSec) return false;
 
-  // Valorant: only enforce inactivity + max price cap, no fair-price ceiling
+  // Valorant: only enforce inactivity, no fair-price ceiling or price cap
   if (isValorant) {
-    if (displayedPriceBrl > MAX_DISPLAYED_PRICE_BRL) return false;
     return true;
   }
 
