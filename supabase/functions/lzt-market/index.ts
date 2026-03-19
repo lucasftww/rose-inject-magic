@@ -148,13 +148,13 @@ function getFortniteFairPriceCeiling(item: LztItem) {
   return Math.max(Math.round(estimatedValue), 60);
 }
 
-const MIN_INACTIVE_DAYS = 20;
+const MIN_INACTIVE_DAYS = 7;
 
 function shouldKeepItem(item: LztItem, gameType: string, displayedPriceBrl: number) {
   if (item.buyer) return false;
   if (item.canBuyItem === false) return false;
 
-  // Reject accounts with recent activity (less than 30 days inactive)
+  // Reject accounts with recent activity
   const nowSec = Math.floor(Date.now() / 1000);
   const minInactiveSec = MIN_INACTIVE_DAYS * 86400;
   const lastActivity = Number(
