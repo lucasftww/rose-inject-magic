@@ -173,7 +173,7 @@ const setFbcCookie = (fbc: string) => {
   try {
     const expires = new Date(Date.now() + 90 * 86400000).toUTCString();
     document.cookie = `_fbc=${fbc}; path=/; expires=${expires}; SameSite=Lax; Secure`;
-  } catch (_) {}
+  } catch { /* cookie write failed */ }
 };
 
 const getFbc = (): string => {
@@ -190,7 +190,7 @@ const getFbc = (): string => {
       try {
         localStorage.setItem("fbclid", fbclidFromUrl);
         sessionStorage.setItem("_ck_fbclid", fbclidFromUrl);
-      } catch (_) {}
+      } catch { /* storage write failed */ }
       // Persist as cookie so Meta Pixel can read it
       setFbcCookie(fbc);
       return fbc;
@@ -206,7 +206,7 @@ const getFbc = (): string => {
       setFbcCookie(fbc);
       return fbc;
     }
-  } catch (_) {}
+  } catch { /* cookie/storage read failed */ }
   return "";
 };
 
@@ -285,7 +285,7 @@ const sendCAPI = (
     const url = `https://${projectId}.supabase.co/functions/v1/meta-capi`;
 
     // Collect user data, if fbp is missing schedule a retry
-    let userData = getUserData();
+    const userData = getUserData();
     const eventTime = Math.floor(Date.now() / 1000);
     const sourceUrl = window.location.href;
 
