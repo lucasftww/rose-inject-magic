@@ -265,7 +265,7 @@ const RobotProjectTab = () => {
         let cost = 0;
         if (meta.amount_spent && Number(meta.amount_spent) > 0) {
           // Real cost = 60% of amount_spent (40% cashback from Robot Project)
-          cost = Number(meta.amount_spent) * 0.6 * usdToBrl;
+          cost = Number(meta.amount_spent) * 0.6 * rate;
         } else if (meta.is_free) {
           cost = 0;
         } else if (product?.robot_markup_percent) {
