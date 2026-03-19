@@ -149,7 +149,6 @@ function getFortniteFairPriceCeiling(item: LztItem) {
 }
 
 const MIN_INACTIVE_DAYS = 30;
-const MAX_DISPLAYED_PRICE_BRL = 500;
 
 function shouldKeepItem(item: LztItem, gameType: string, displayedPriceBrl: number) {
   if (item.buyer) return false;
@@ -165,9 +164,8 @@ function shouldKeepItem(item: LztItem, gameType: string, displayedPriceBrl: numb
   );
   if (lastActivity > 0 && (nowSec - lastActivity) < minInactiveSec) return false;
 
-  // Valorant: only enforce inactivity + max price cap, no fair-price ceiling
+  // Valorant: only enforce inactivity, no fair-price ceiling or price cap
   if (isValorant) {
-    if (displayedPriceBrl > MAX_DISPLAYED_PRICE_BRL) return false;
     return true;
   }
 
@@ -640,7 +638,6 @@ Deno.serve(async (req) => {
           const lastActivity = Number(item.account_last_activity || item.riot_last_activity || 0);
           const daysSinceActivity = lastActivity > 0 ? Math.floor((nowSec - lastActivity) / 86400) : 999;
           if (daysSinceActivity < MIN_INACTIVE_DAYS) { filteredByInactivity++; return false; }
-          if (displayedPriceBrl > MAX_DISPLAYED_PRICE_BRL) { filteredByPrice++; return false; }
           return true;
         }
         
