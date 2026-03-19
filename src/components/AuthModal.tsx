@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -7,9 +7,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import logoRoyal from "@/assets/logo-royal.png";
-import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
-
-const TURNSTILE_SITE_KEY = "0x4AAAAAAClS1zHIEKz4wE9_";
 
 interface AuthModalProps {
   open: boolean;
