@@ -650,6 +650,8 @@ Deno.serve(async (req) => {
           const lastActivity = Number(item.account_last_activity || item.riot_last_activity || 0);
           const daysSinceActivity = lastActivity > 0 ? Math.floor((nowSec - lastActivity) / 86400) : 999;
           if (daysSinceActivity < MIN_INACTIVE_DAYS) { filteredByInactivity++; return false; }
+          // Must also check fair price ceiling and hard cap via shouldKeepItem
+          if (!shouldKeepItem(item, gameType, displayedPriceBrl)) { filteredByPrice++; return false; }
           return true;
         }
         
