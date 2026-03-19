@@ -149,7 +149,6 @@ function getFortniteFairPriceCeiling(item: LztItem) {
 }
 
 const MIN_INACTIVE_DAYS = 30;
-const MAX_DISPLAYED_PRICE_BRL = 500;
 
 function shouldKeepItem(item: LztItem, gameType: string, displayedPriceBrl: number) {
   if (item.buyer) return false;
