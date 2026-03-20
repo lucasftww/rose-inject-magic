@@ -452,8 +452,8 @@ const Header = () => {
         )}
       </AnimatePresence>
 
-      {/* Spacer */}
-      <div className={`${bannerVisible ? 'h-[86px] sm:h-[100px] lg:h-[100px]' : 'h-[68px] sm:h-[72px] lg:h-[76px]'} transition-all duration-300`} />
+      {/* Spacer for floating navbar */}
+      <div className="h-[76px] sm:h-[80px]" />
     </>
   );
 };
