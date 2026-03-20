@@ -33,6 +33,7 @@ const PoliticaPrivacidade = lazy(() => import("./pages/PoliticaPrivacidade"));
 const PoliticaReembolso = lazy(() => import("./pages/PoliticaReembolso"));
 const Garantia = lazy(() => import("./pages/Garantia"));
 const CentralAjuda = lazy(() => import("./pages/CentralAjuda"));
+const Auth = lazy(() => import("./pages/Auth"));
 
 // Admin panel — lazy-loaded INSIDE AdminGuard so the bundle never downloads for non-admins
 const AdminPanel = lazy(() => import("./pages/AdminPanel"));
