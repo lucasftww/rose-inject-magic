@@ -115,7 +115,7 @@ const SidebarNav = memo(({
               className={`group flex w-full items-center gap-2.5 text-sm font-medium relative
                 ${collapsed ? "justify-center px-2 py-2.5 mx-auto" : "px-4 py-2"}
                 ${isActive
-                  ? "text-success bg-success/8"
+                  ? "text-success bg-success/[0.08]"
                   : "text-muted-foreground hover:text-foreground hover:bg-secondary/40"
                 }`}
             >

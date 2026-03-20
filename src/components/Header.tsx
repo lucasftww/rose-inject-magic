@@ -356,7 +356,7 @@ const Header = () => {
                       to={item.href}
                       onClick={() => setMobileMenuOpen(false)}
                       className={`flex items-center gap-3.5 px-4 py-3 rounded-xl text-[15px] font-medium transition-all ${
-                        active ? "text-success bg-success/8" : "text-foreground/60 hover:text-foreground hover:bg-foreground/[0.04]"
+                        active ? "text-success bg-success/[0.08]" : "text-foreground/60 hover:text-foreground hover:bg-foreground/[0.04]"
                       }`}
                     >
                       <Icon className={`w-[18px] h-[18px] ${active ? "text-success" : "text-foreground/30"}`} />
@@ -387,7 +387,7 @@ const Header = () => {
                 {isAdmin && (
                   <motion.div initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.34 }}>
                     <Link to="/admin" onClick={() => setMobileMenuOpen(false)}
-                      className="flex w-full items-center gap-3.5 px-4 py-3 rounded-xl text-[15px] font-medium text-success hover:bg-success/8 transition-all">
+                      className="flex w-full items-center gap-3.5 px-4 py-3 rounded-xl text-[15px] font-medium text-success hover:bg-success/[0.08] transition-all">
                       <ShieldAlert className="w-[18px] h-[18px]" />
                       Painel Admin
                     </Link>
@@ -395,7 +395,7 @@ const Header = () => {
                 )}
                 <div className="pt-1.5">
                   <button onClick={() => { signOut(); setMobileMenuOpen(false); }}
-                    className="flex w-full items-center gap-3.5 px-4 py-3 rounded-xl text-[15px] text-destructive/70 hover:bg-destructive/8 transition-all">
+                    className="flex w-full items-center gap-3.5 px-4 py-3 rounded-xl text-[15px] text-destructive/70 hover:bg-destructive/[0.08] transition-all">
                     <LogOut className="w-[18px] h-[18px]" />
                     Sair
                   </button>
