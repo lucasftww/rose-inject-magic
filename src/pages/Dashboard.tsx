@@ -11,7 +11,7 @@ import {
   ShoppingCart, ChevronRight,
   Smartphone, MessageSquare, Receipt, Clock,
   CheckCircle, XCircle, DollarSign, Key, LogOut, Mail,
-  TrendingUp,
+  TrendingUp, ShieldAlert,
   Info,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
