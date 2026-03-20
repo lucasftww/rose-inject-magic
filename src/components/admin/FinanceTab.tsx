@@ -522,7 +522,7 @@ const FinanceTab = () => {
         <div className="rounded-xl border border-border bg-card p-5">
           <h3 className="text-sm font-bold text-foreground flex items-center gap-2 mb-4">
             <Package className="h-4 w-4 text-success" />
-            Receita por Fonte
+            Distribuição por Fonte
           </h3>
           {revenuePieData.length === 0 ? (
             <p className="py-8 text-center text-sm text-muted-foreground">Sem dados</p>
