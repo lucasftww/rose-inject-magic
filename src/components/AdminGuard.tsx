@@ -40,9 +40,6 @@ const AdminGuard = ({ children }: { children: ReactNode }) => {
           supabase.rpc("admin_verify"),
         ]);
 
-        console.log("AdminGuard: roleCheck", JSON.stringify(roleCheck));
-        console.log("AdminGuard: adminVerify", JSON.stringify(adminVerify));
-
         if (roleCheck.error) {
           console.error("AdminGuard: has_role check failed:", roleCheck.error.message);
         }
@@ -56,8 +53,6 @@ const AdminGuard = ({ children }: { children: ReactNode }) => {
           adminVerify.data !== null &&
           (adminVerify.data as any).verified === true &&
           (adminVerify.data as any).uid === user.id;
-
-        console.log("AdminGuard: layer1=", layer1, "layer2=", layer2);
 
         if (!cancelled) {
           setServerVerified(layer1 && layer2);
