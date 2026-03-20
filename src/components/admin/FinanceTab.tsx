@@ -282,11 +282,8 @@ const FinanceTab = () => {
   const lztTotalBought = useMemo(() => fLzt.reduce((s, l) => s + Number(l.buy_price), 0), [fLzt]);
   const lztTotalProfit = useMemo(() => fLzt.reduce((s, l) => s + Number(l.profit), 0), [fLzt]);
 
-  const robotTotalRevenue = useMemo(() => fRobot.reduce((s, r) => s + r.revenue, 0), [fRobot]);
   const robotTotalCost = useMemo(() => fRobot.reduce((s, r) => s + r.cost, 0), [fRobot]);
   const robotTotalProfit = useMemo(() => fRobot.reduce((s, r) => s + r.profit, 0), [fRobot]);
-
-  const totalDiscounts = useMemo(() => fp.reduce((s, p) => s + (Number(p.discount_amount) || 0), 0), [fp]);
   const uniqueBuyers = useMemo(() => new Set(fp.map(p => p.user_id)).size, [fp]);
   const prevBuyers = useMemo(() => new Set(pp.map(p => p.user_id)).size, [pp]);
   const buyersChange = pctChange(uniqueBuyers, prevBuyers);

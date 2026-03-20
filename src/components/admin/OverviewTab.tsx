@@ -240,9 +240,6 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
   // Note: discount_amount is NOT subtracted from profit because payments.amount
   // already stores the post-discount value (the actual money received).
   // Subtracting it again would double-count discounts.
-  const periodDiscounts = useMemo(() => {
-    return filteredPayments.reduce((s: number, p: any) => s + (Number(p.discount_amount) || 0), 0);
-  }, [filteredPayments]);
 
   const netProfit = periodRevenue - (periodLztCost + periodRobotCost);
   const profitMargin = periodRevenue > 0 ? (netProfit / periodRevenue) * 100 : 0;
