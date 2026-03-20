@@ -387,7 +387,7 @@ const Header = () => {
                 {isAdmin && (
                   <motion.div initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.34 }}>
                     <Link to="/admin" onClick={() => setMobileMenuOpen(false)}
-                      className="flex w-full items-center gap-3.5 px-4 py-3 rounded-xl text-[15px] font-medium text-success hover:bg-success/8 transition-all">
+                      className="flex w-full items-center gap-3.5 px-4 py-3 rounded-xl text-[15px] font-medium text-success hover:bg-success/[0.08] transition-all">
                       <ShieldAlert className="w-[18px] h-[18px]" />
                       Painel Admin
                     </Link>
