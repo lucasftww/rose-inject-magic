@@ -397,8 +397,8 @@ const FinanceTab = () => {
       <div class="card"><p class="card-label">Transações</p><p class="card-value">${fp.length}</p></div>
     </div>
     <p class="section">Custos</p><div class="grid">
-      <div class="card"><p class="card-label">Custo LZT</p><p class="card-value red">R$ ${fmt(lztTotalBought)}</p></div>
-      <div class="card"><p class="card-label">Custo Robot</p><p class="card-value red">R$ ${fmt(robotTotalCost)}</p></div>
+      <div class="card"><p class="card-label">Custo LZT</p><p class="card-value">R$ ${fmt(lztTotalBought)}</p></div>
+      <div class="card"><p class="card-label">Custo Robot</p><p class="card-value">R$ ${fmt(robotTotalCost)}</p></div>
       
     </div>
     <p class="footer">Royal Store · Relatório gerado automaticamente</p></body></html>`;
