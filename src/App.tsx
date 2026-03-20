@@ -33,6 +33,7 @@ const PoliticaPrivacidade = lazy(() => import("./pages/PoliticaPrivacidade"));
 const PoliticaReembolso = lazy(() => import("./pages/PoliticaReembolso"));
 const Garantia = lazy(() => import("./pages/Garantia"));
 const CentralAjuda = lazy(() => import("./pages/CentralAjuda"));
+const Auth = lazy(() => import("./pages/Auth"));
 
 // Admin panel — lazy-loaded INSIDE AdminGuard so the bundle never downloads for non-admins
 const AdminPanel = lazy(() => import("./pages/AdminPanel"));
@@ -79,6 +80,7 @@ const App = () => (
                 <Route path="/reembolso" element={<PoliticaReembolso />} />
                 <Route path="/garantia" element={<Garantia />} />
                 <Route path="/ajuda" element={<CentralAjuda />} />
+                <Route path="/auth" element={<Auth />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
