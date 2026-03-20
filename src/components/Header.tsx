@@ -223,7 +223,7 @@ const Header = () => {
                 )}
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-foreground truncate">{profile?.username || user.email?.split("@")[0]}</p>
-                  <p className="text-[11px] text-muted-foreground/60 truncate">{user.email ? maskEmail(user.email) : ""}</p>
+                  <p className="text-[11px] text-muted-foreground/60 truncate">{user.email || ""}</p>
                 </div>
               </motion.div>
             )}
