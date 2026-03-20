@@ -25,7 +25,7 @@ const fadeUp = {
 type Tab = "overview" | "purchases" | "security" | "settings";
 
 const Dashboard = () => {
-  const { user, profile, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading, isAdmin } = useAuth();
   const { isReseller, discountPercent, reseller } = useReseller();
   const { toast } = useToast();
   const navigate = useNavigate();
