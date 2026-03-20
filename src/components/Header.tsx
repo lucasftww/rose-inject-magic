@@ -28,7 +28,7 @@ const Header = () => {
   const [authTab, setAuthTab] = useState<"login" | "register">("login");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
+  
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { user, profile, isAdmin, signOut } = useAuth();
   const { requiresAuth, clearRequiresAuth } = useCart();
