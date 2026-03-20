@@ -31,7 +31,7 @@ const Header = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const bannerVisible = false;
+  
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { user, profile, isAdmin, signOut } = useAuth();
   const { requiresAuth, clearRequiresAuth } = useCart();
@@ -87,7 +87,7 @@ const Header = () => {
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ type: "spring", damping: 22, stiffness: 180 }}
-        className={`fixed left-0 right-0 z-50 transition-all duration-500 ${bannerVisible ? 'top-[30px] sm:top-[32px]' : 'top-0'}`}
+        className="fixed left-0 right-0 z-50 top-0"
       >
         {/* Glassmorphic bar — centered with max-width, floating feel */}
         <div className="mx-auto max-w-5xl px-3 sm:px-4 lg:px-5 pt-3">
@@ -452,8 +452,8 @@ const Header = () => {
         )}
       </AnimatePresence>
 
-      {/* Spacer */}
-      <div className={`${bannerVisible ? 'h-[86px] sm:h-[100px] lg:h-[100px]' : 'h-[68px] sm:h-[72px] lg:h-[76px]'} transition-all duration-300`} />
+      {/* Spacer for floating navbar */}
+      <div className="h-[76px] sm:h-[80px]" />
     </>
   );
 };
