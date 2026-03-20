@@ -84,20 +84,9 @@ const Header = () => {
         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         className="fixed left-0 right-0 z-50 top-0"
       >
-        <div className="mx-auto max-w-6xl px-3 sm:px-5 pt-3 sm:pt-4">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div
-            className="flex h-[52px] sm:h-14 items-center rounded-2xl px-3 sm:px-5 transition-all duration-500"
-            style={{
-              background: scrolled
-                ? "hsla(0,0%,6%,0.82)"
-                : "hsla(0,0%,6%,0.45)",
-              backdropFilter: "blur(28px) saturate(1.5)",
-              WebkitBackdropFilter: "blur(28px) saturate(1.5)",
-              border: `1px solid ${scrolled ? "hsla(0,0%,100%,0.1)" : "hsla(0,0%,100%,0.05)"}`,
-              boxShadow: scrolled
-                ? "0 8px 40px hsla(0,0%,0%,0.45), inset 0 1px 0 hsla(0,0%,100%,0.05)"
-                : "0 2px 16px hsla(0,0%,0%,0.12)",
-            }}
+            className="flex h-14 sm:h-16 items-center px-0 transition-all duration-500"
           >
             {/* ── Logo ── */}
             <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
