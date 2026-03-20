@@ -247,7 +247,7 @@ const Header = () => {
                 /* ── Login button ── */
                 <button
                   onClick={() => { setAuthTab("login"); setAuthOpen(true); }}
-                  className="flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-lg text-[11px] sm:text-[12px] font-semibold tracking-wide transition-all duration-200 active:scale-[0.96]"
+                  className="flex items-center gap-2 px-4 sm:px-4.5 py-2 rounded-lg text-xs sm:text-[13px] font-semibold tracking-wide transition-all duration-200 active:scale-[0.96]"
                   style={{
                     background: `linear-gradient(135deg, ${accentColor}, ${accentColor}cc)`,
                     color: "hsl(var(--success-foreground))",
