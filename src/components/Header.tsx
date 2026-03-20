@@ -107,7 +107,7 @@ const Header = () => {
             </Link>
 
             {/* ── Separator ── */}
-            <div className="hidden lg:block h-5 w-px mx-5 bg-foreground/[0.08]" />
+            <div className="hidden lg:block h-6 w-px mx-5 bg-foreground/[0.08]" />
 
             {/* ── Desktop nav ── */}
             <nav className="hidden lg:flex items-center gap-0.5 flex-1">
