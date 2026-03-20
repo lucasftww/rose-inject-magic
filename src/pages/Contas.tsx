@@ -880,7 +880,7 @@ const Contas = () => {
     enabled: gameTab === "fortnite",
   });
 
-  const buildParams = useCallback((pageNum: number = page): Record<string, string | string[]> => {
+  const buildParams = useCallback((pageNum: number = currentPage): Record<string, string | string[]> => {
     const params: Record<string, string | string[]> = {};
     params.page = String(pageNum);
     if (sortBy) params.order_by = sortBy;
@@ -944,7 +944,7 @@ const Contas = () => {
     }
 
     return params;
-  }, [page, sortBy, priceMin, priceMax, searchQuery, onlyKnife, selectedRank, selectedWeapon, invMin, invMax, lvlMin, lvlMax, gameTab, lolRank, lolChampMin, lolSkinsMin, fnVbMin, fnSkinsMin, mcJava, mcBedrock, mcHypixelLvlMin, mcCapesMin, mcNoBan, lolRegion, valRegion]);
+  }, [currentPage, sortBy, priceMin, priceMax, searchQuery, onlyKnife, selectedRank, selectedWeapon, invMin, invMax, lvlMin, lvlMax, gameTab, lolRank, lolChampMin, lolSkinsMin, fnVbMin, fnSkinsMin, mcJava, mcBedrock, mcHypixelLvlMin, mcCapesMin, mcNoBan, lolRegion, valRegion]);
 
   const paramsKey = JSON.stringify(buildParams(1)) + gameTab;
 
