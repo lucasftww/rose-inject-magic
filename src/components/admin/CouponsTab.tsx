@@ -79,6 +79,12 @@ const CouponsTab = () => {
     if (!formCode.trim() || !formValue) {
       toast({ title: "Preencha código e valor", variant: "destructive" }); return;
     }
+    if (Number(formValue) <= 0) {
+      toast({ title: "Valor deve ser maior que zero", variant: "destructive" }); return;
+    }
+    if (formType === "percentage" && Number(formValue) > 100) {
+      toast({ title: "Porcentagem máxima é 100%", variant: "destructive" }); return;
+    }
     setSaving(true);
 
     const payload = {

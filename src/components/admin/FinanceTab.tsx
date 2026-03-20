@@ -149,6 +149,7 @@ const FinanceTab = () => {
 
   const fetchData = async () => {
     setLoading(true);
+    try {
 
     let currentRate = usdToBrl;
     try {
@@ -156,7 +157,7 @@ const FinanceTab = () => {
       const data = await res.json();
       const bid = Number(data?.USDBRL?.bid);
       if (bid > 0) { currentRate = bid; setUsdToBrl(currentRate); }
-    } catch { /* use fallback */ }
+    } catch (err) { console.warn("FinanceTab: failed to fetch USD-BRL rate", err); }
 
     const [paymentsData, lztData, resellerData, robotProductsRes] = await Promise.all([
       fetchAllRows<PaymentRow>("payments", {
@@ -232,7 +233,11 @@ const FinanceTab = () => {
       setRobotTickets(enriched);
     }
 
-    setLoading(false);
+    } catch (err) {
+      console.error("FinanceTab fetchData error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { fetchData(); }, []);

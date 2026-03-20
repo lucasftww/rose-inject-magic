@@ -67,7 +67,7 @@ const UsersTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
   const executeAction = async (action: string, targetUserId: string, reason?: string) => {
     setActionLoading(action + targetUserId);
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
+    if (!session) { setActionLoading(null); toast({ title: "Sessão expirada", description: "Faça login novamente.", variant: "destructive" }); return; }
     const res = await supabase.functions.invoke("admin-users", {
       method: "POST",
       headers: { Authorization: `Bearer ${session.access_token}` },

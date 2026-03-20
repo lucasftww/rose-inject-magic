@@ -101,6 +101,7 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
   useEffect(() => {
     const fetchAll = async () => {
       setLoading(true);
+      try {
 
       let usdToBrl = 5.5;
       try {
@@ -108,7 +109,7 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
         const data = await res.json();
         const bid = Number(data?.USDBRL?.bid);
         if (bid > 0) usdToBrl = bid;
-      } catch { /* fallback */ }
+      } catch (err) { console.warn("OverviewTab: failed to fetch USD-BRL rate, using fallback", err); }
 
       const [recentOrdersRes, recentPaymentsRes, allPaymentsRes, robotProductsRes, openTicketsRes, allOrdersRes, lztSalesRes] = await Promise.all([
         supabase.from("order_tickets").select("*").order("created_at", { ascending: false }).limit(6),
@@ -203,7 +204,11 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
         setRecentPayments(recentPaymentsRes.data as Payment[]);
       }
 
-      setLoading(false);
+      } catch (err) {
+        console.error("OverviewTab fetchAll error:", err);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchAll();

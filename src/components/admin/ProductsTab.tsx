@@ -273,11 +273,11 @@ const ProductsTab = () => {
     setUploading(false);
   };
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
+  const handleDrop = (e: React.DragEvent) => {
     e.preventDefault(); setDragOver(false);
     const file = e.dataTransfer.files[0];
     if (file) uploadFile(file);
-  }, []);
+  };
 
   const updatePlan = (index: number, field: keyof ProductPlan, value: any) => {
     const updated = [...formPlans];

@@ -30,8 +30,10 @@ const AdminGuard = ({ children }: { children: ReactNode }) => {
           _user_id: user.id,
           _role: "admin" as const,
         });
+        if (error) console.error("AdminGuard: role check failed:", error.message);
         if (!cancelled) setServerVerified(!error && !!data);
-      } catch {
+      } catch (err) {
+        console.error("AdminGuard: unexpected error during role check:", err);
         if (!cancelled) setServerVerified(false);
       }
     };

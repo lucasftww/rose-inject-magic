@@ -105,9 +105,9 @@ const StockTab = () => {
   const togglePlan = (planId: string) => {
     if (expandedPlan !== planId) {
       fetchStockForPlan(planId);
+      setNewStockText("");
     }
     setExpandedPlan(prev => prev === planId ? null : planId);
-    setNewStockText("");
   };
 
   const handleAddStock = async (planId: string) => {
