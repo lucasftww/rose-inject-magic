@@ -278,7 +278,6 @@ const Header = () => {
               </button>
             </div>
           </div>
-        </div>
       </motion.header>
 
       {/* ── Mobile menu overlay ── */}
