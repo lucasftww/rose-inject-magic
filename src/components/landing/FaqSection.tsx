@@ -46,7 +46,7 @@ const FaqItem = ({ question, answer, index }: { question: string; answer: string
         </svg>
       </button>
       <div className={`grid transition-all duration-300 ${open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
-        <div className="overflow-hidden">
+        <div className="overflow-hidden min-h-0">
           <p className="px-6 pb-5 text-sm leading-relaxed text-muted-foreground">{answer}</p>
         </div>
       </div>
