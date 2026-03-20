@@ -139,106 +139,32 @@ const Header = () => {
               </div>
 
               {user ? (
-                /* ── Logged-in bubble ── */
-                <div className="relative" ref={dropdownRef}>
-                  <button
-                    onClick={() => setDropdownOpen(!dropdownOpen)}
-                    className="flex items-center gap-1.5 pl-1 pr-2 py-1 rounded-xl transition-all duration-200 active:scale-[0.97]"
-                    style={{
-                      background: dropdownOpen ? "hsla(0,0%,100%,0.1)" : "hsla(0,0%,100%,0.05)",
-                      border: `1px solid ${dropdownOpen ? "hsla(0,0%,100%,0.14)" : "hsla(0,0%,100%,0.07)"}`,
-                    }}
-                  >
-                    {profile?.avatar_url ? (
-                      <img src={profile.avatar_url} alt="" className="w-7 h-7 rounded-lg object-cover" />
-                    ) : (
-                      <div
-                        className="w-7 h-7 rounded-lg flex items-center justify-center text-[11px] font-bold"
-                        style={{
-                          background: `linear-gradient(135deg, ${accentColor}35, ${accentColor}12)`,
-                          color: accentColor,
-                        }}
-                      >
-                        {userInitial}
-                      </div>
-                    )}
-                    <span className="text-[11px] font-medium text-foreground/70 max-w-[72px] truncate hidden xl:block">
-                      {profile?.username || user.email?.split("@")[0]}
-                    </span>
-                    <motion.div animate={{ rotate: dropdownOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
-                      <ChevronDown className="w-3 h-3 text-foreground/30" />
-                    </motion.div>
-                  </button>
-
-                  <AnimatePresence>
-                    {dropdownOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 6, scale: 0.96 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 6, scale: 0.96 }}
-                        transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-                        className="absolute right-0 top-full mt-2 w-52 rounded-xl overflow-hidden z-[60]"
-                        style={{
-                          background: "hsla(0,0%,8%,0.96)",
-                          backdropFilter: "blur(24px)",
-                          border: "1px solid hsla(0,0%,100%,0.08)",
-                          boxShadow: "0 16px 48px hsla(0,0%,0%,0.55), 0 0 0 1px hsla(0,0%,100%,0.03)",
-                        }}
-                      >
-                        {/* User header */}
-                        <div className="px-3.5 py-3 flex items-center gap-2.5" style={{ borderBottom: "1px solid hsla(0,0%,100%,0.06)" }}>
-                          {profile?.avatar_url ? (
-                            <img src={profile.avatar_url} alt="" className="w-8 h-8 rounded-lg object-cover" />
-                          ) : (
-                            <div className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0"
-                              style={{ background: `${accentColor}18`, color: accentColor }}>
-                              {userInitial}
-                            </div>
-                          )}
-                          <div className="min-w-0">
-                            <p className="text-[13px] font-semibold text-foreground truncate">{profile?.username || "Usuário"}</p>
-                            <p className="text-[10px] text-muted-foreground/70 truncate">{user.email ? maskEmail(user.email) : ""}</p>
-                          </div>
-                        </div>
-
-                        <div className="p-1">
-                          {[
-                            { icon: User, label: "Meu Perfil", action: () => navigate("/dashboard") },
-                            { icon: Package, label: "Meus Pedidos", action: () => navigate("/dashboard?tab=purchases") },
-                            { icon: Settings, label: "Configurações", action: () => navigate("/dashboard?tab=settings") },
-                          ].map(({ icon: Icon, label, action }) => (
-                            <button
-                              key={label}
-                              onClick={() => { action(); setDropdownOpen(false); }}
-                              className="flex w-full items-center gap-2.5 px-3 py-2 rounded-lg text-[12px] text-foreground/55 hover:bg-foreground/[0.06] hover:text-foreground transition-colors"
-                            >
-                              <Icon className="w-3.5 h-3.5" />
-                              {label}
-                            </button>
-                          ))}
-                        </div>
-
-                        {isAdmin && (
-                          <div className="px-1 py-0.5" style={{ borderTop: "1px solid hsla(0,0%,100%,0.06)" }}>
-                            <Link to="/admin" onClick={() => setDropdownOpen(false)}
-                              className="flex w-full items-center gap-2.5 px-3 py-2 rounded-lg text-[12px] font-medium text-success hover:bg-success/10 transition-colors">
-                              <ShieldAlert className="w-3.5 h-3.5" />
-                              Painel Admin
-                            </Link>
-                          </div>
-                        )}
-
-                        <div className="px-1 py-0.5" style={{ borderTop: "1px solid hsla(0,0%,100%,0.06)" }}>
-                          <button onClick={() => { signOut(); setDropdownOpen(false); }}
-                            className="flex w-full items-center gap-2.5 px-3 py-2 rounded-lg text-[12px] text-destructive/80 hover:bg-destructive/10 transition-colors">
-                            <LogOut className="w-3.5 h-3.5" />
-                            Sair
-                          </button>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
+                /* ── Logged-in — direct link to profile ── */
+                <Link
+                  to="/dashboard"
+                  className="flex items-center gap-1.5 pl-1 pr-2.5 py-1 rounded-xl transition-all duration-200 active:scale-[0.97]"
+                  style={{
+                    background: "hsla(0,0%,100%,0.05)",
+                    border: "1px solid hsla(0,0%,100%,0.07)",
+                  }}
+                >
+                  {profile?.avatar_url ? (
+                    <img src={profile.avatar_url} alt="" className="w-7 h-7 rounded-lg object-cover" />
+                  ) : (
+                    <div
+                      className="w-7 h-7 rounded-lg flex items-center justify-center text-[11px] font-bold"
+                      style={{
+                        background: `linear-gradient(135deg, ${accentColor}35, ${accentColor}12)`,
+                        color: accentColor,
+                      }}
+                    >
+                      {userInitial}
+                    </div>
+                  )}
+                  <span className="text-[11px] font-medium text-foreground/70 max-w-[72px] truncate hidden xl:block">
+                    {profile?.username || user.email?.split("@")[0]}
+                  </span>
+                </Link>
               ) : (
                 /* ── Login button ── */
                 <Link
