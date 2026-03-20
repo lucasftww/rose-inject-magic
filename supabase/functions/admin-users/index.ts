@@ -205,11 +205,16 @@ serve(async (req) => {
 
       switch (action) {
         case "ban": {
+          // 1. Update profiles table
           await supabase.from("profiles").update({
             banned: true,
             banned_at: new Date().toISOString(),
             banned_reason: reason || "Banido pelo admin",
           }).eq("user_id", target_user_id);
+
+          // 2. Suspend Auth account (invalidates JWTs and prevents new logins)
+          const { error: banError } = await supabase.auth.admin.updateUserById(target_user_id, { ban_duration: '87600h' });
+          if (banError) console.error("Error setting ban_duration in Auth:", banError);
 
           return new Response(JSON.stringify({ ok: true, message: "Usuário banido" }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -217,11 +222,16 @@ serve(async (req) => {
         }
 
         case "unban": {
+          // 1. Update profiles table
           await supabase.from("profiles").update({
             banned: false,
             banned_at: null,
             banned_reason: null,
           }).eq("user_id", target_user_id);
+
+          // 2. Restore Auth account
+          const { error: unbanError } = await supabase.auth.admin.updateUserById(target_user_id, { ban_duration: 'none' });
+          if (unbanError) console.error("Error removing ban_duration in Auth:", unbanError);
 
           return new Response(JSON.stringify({ ok: true, message: "Usuário desbanido" }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },

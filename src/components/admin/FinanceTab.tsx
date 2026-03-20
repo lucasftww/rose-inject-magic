@@ -201,10 +201,15 @@ const FinanceTab = () => {
       for (const pay of paymentsData) {
         const snapshot = pay.cart_snapshot as any[];
         if (!Array.isArray(snapshot)) continue;
+        
+        const cartTotal = snapshot.reduce((sum, item) => sum + (Number(item.price) || 0), 0);
+        const actualPaid = pay.amount / 100;
+
         for (const item of snapshot) {
           const key = `${pay.user_id}|${item.productId}|${item.planId}`;
           if (!paidPriceMap.has(key) && item.price != null) {
-            paidPriceMap.set(key, Number(item.price));
+            const proportion = cartTotal > 0 ? (Number(item.price) / cartTotal) : 0;
+            paidPriceMap.set(key, actualPaid * proportion);
           }
         }
       }
@@ -213,7 +218,10 @@ const FinanceTab = () => {
         const product = productMap[t.product_id];
         const plan = planMap[t.product_plan_id];
         const meta = (t.metadata || {}) as Record<string, any>;
-        const revenue = paidPriceMap.get(`${t.user_id}|${t.product_id}|${t.product_plan_id}`) ?? plan?.price ?? 0;
+        
+        const revenue = paidPriceMap.has(`${t.user_id}|${t.product_id}|${t.product_plan_id}`) 
+          ? paidPriceMap.get(`${t.user_id}|${t.product_id}|${t.product_plan_id}`)! 
+          : 0;
         let cost = 0;
         if (meta.amount_spent && Number(meta.amount_spent) > 0) {
           // Real cost = 60% of amount_spent (40% cashback from Robot Project)

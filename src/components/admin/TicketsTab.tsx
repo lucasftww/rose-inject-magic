@@ -107,6 +107,44 @@ const TicketsTab = ({
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const { isRecording, recordingDuration, startRecording, stopRecording, cancelRecording } = useAudioRecorder();
 
+  // Dynamic signed URLs for attachments
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
+
+  // Fetch signed URLs for new attachments dynamically
+  useEffect(() => {
+    if (messages.length === 0) return;
+    
+    const pathsToSign: string[] = [];
+    messages.forEach(msg => {
+      const regex = /\[STORAGE_PATH\]([^\s\]\n]+)/g;
+      let match;
+      while ((match = regex.exec(msg.message)) !== null) {
+        if (!signedUrls[match[1]]) {
+          pathsToSign.push(match[1]);
+        }
+      }
+    });
+
+    if (pathsToSign.length > 0 && selectedTicket) {
+      const uniquePaths = [...new Set(pathsToSign)];
+      const fetchSignedUrls = async () => {
+        const { data } = await supabase.storage.from("ticket-files").createSignedUrls(uniquePaths, 7 * 24 * 3600);
+        if (data) {
+          setSignedUrls(prev => {
+            const next = { ...prev };
+            data.forEach(item => {
+              if (item.signedUrl) {
+                next[item.path] = item.signedUrl;
+              }
+            });
+            return next;
+          });
+        }
+      };
+      fetchSignedUrls();
+    }
+  }, [messages, signedUrls, selectedTicket]);
+
   // Cleanup preview URLs on unmount to prevent memory leaks
   useEffect(() => {
     return () => {
@@ -315,8 +353,7 @@ const TicketsTab = ({
     const path = `${selectedTicket.user_id}/${selectedTicket.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
     const { error } = await supabase.storage.from("ticket-files").upload(path, file, { upsert: false });
     if (error) return null;
-    const { data: urlData } = await supabase.storage.from("ticket-files").createSignedUrl(path, 7 * 24 * 3600);
-    return urlData?.signedUrl || null;
+    return `[STORAGE_PATH]${path}`;
   };
 
   const handleSendAudio = async () => {
@@ -334,12 +371,11 @@ const TicketsTab = ({
         setSending(false);
         return;
       }
-      const { data: urlData } = await supabase.storage.from("ticket-files").createSignedUrl(path, 7 * 24 * 3600);
       const { data: insertedMsg, error } = await supabase.from("ticket_messages").insert({
         ticket_id: selectedTicket.id,
         sender_id: user.id,
         sender_role: "staff",
-        message: `[AUDIO]${urlData?.signedUrl || ""}`,
+        message: `[AUDIO][STORAGE_PATH]${path}`,
       }).select().single();
       if (error) {
         toast({ title: "Erro", description: error.message, variant: "destructive" });
@@ -690,7 +726,19 @@ const TicketsTab = ({
   };
 
   const renderMessageContent = (message: string, isStaff: boolean = false) => {
-    const trimmed = message.trim();
+    // First, resolve any [STORAGE_PATH] to signed URL
+    let resolvedMessage = message;
+    const pathRegex = /\[STORAGE_PATH\]([^\s\]\n]+)/g;
+    let pathMatch;
+    while ((pathMatch = pathRegex.exec(message)) !== null) {
+      const path = pathMatch[1];
+      const signedUrl = signedUrls[path];
+      if (signedUrl) {
+        resolvedMessage = resolvedMessage.replace(`[STORAGE_PATH]${path}`, signedUrl);
+      }
+    }
+
+    const trimmed = resolvedMessage.trim();
     if (trimmed.startsWith("[CREDENTIALS]") || trimmed.includes("[CREDENTIALS]")) {
       const jsonStr = trimmed.replace("[CREDENTIALS]", "").trim();
       if (jsonStr.startsWith("{")) return renderCredentialCard(jsonStr);
@@ -701,9 +749,9 @@ const TicketsTab = ({
     let lastIndex = 0;
     let match;
 
-    while ((match = combinedPattern.exec(message)) !== null) {
+    while ((match = combinedPattern.exec(resolvedMessage)) !== null) {
       if (match.index > lastIndex) {
-        const text = message.slice(lastIndex, match.index).trim();
+        const text = resolvedMessage.slice(lastIndex, match.index).trim();
         if (text) parts.push({ type: "text", content: text });
       }
       if (match[1]) parts.push({ type: "image", content: match[1], url: match[2] });
@@ -715,8 +763,8 @@ const TicketsTab = ({
       lastIndex = match.index + match[0].length;
     }
 
-    if (lastIndex < message.length) {
-      const remaining = message.slice(lastIndex).trim();
+    if (lastIndex < resolvedMessage.length) {
+      const remaining = resolvedMessage.slice(lastIndex).trim();
       if (remaining) parts.push({ type: "text", content: remaining });
     }
 

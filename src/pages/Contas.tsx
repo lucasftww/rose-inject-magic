@@ -888,8 +888,6 @@ const Contas = () => {
     const params: Record<string, string | string[]> = {};
     params.page = String(pageNum);
     if (sortBy) params.order_by = sortBy;
-    if (priceMin) params.pmin = priceMin;
-    if (priceMax) params.pmax = priceMax;
     if (searchQuery) params.title = searchQuery;
 
     if (gameTab === "valorant") {
@@ -948,9 +946,16 @@ const Contas = () => {
     }
 
     return params;
-  }, [currentPage, sortBy, priceMin, priceMax, searchQuery, onlyKnife, selectedRank, selectedWeapon, invMin, invMax, lvlMin, lvlMax, gameTab, lolRank, lolChampMin, lolSkinsMin, fnVbMin, fnSkinsMin, mcJava, mcBedrock, mcHypixelLvlMin, mcCapesMin, mcNoBan, lolRegion, valRegion]);
+  }, [currentPage, sortBy, searchQuery, onlyKnife, selectedRank, selectedWeapon, invMin, invMax, lvlMin, lvlMax, gameTab, lolRank, lolChampMin, lolSkinsMin, fnVbMin, fnSkinsMin, mcJava, mcBedrock, mcHypixelLvlMin, mcCapesMin, mcNoBan, lolRegion, valRegion]);
 
   const paramsKey = JSON.stringify(buildParams(1)) + gameTab;
+  const [debouncedParamsKey, setDebouncedParamsKey] = useState(paramsKey);
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedParamsKey(paramsKey);
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [paramsKey]);
 
   const fetchWithRetry = useCallback(async (params: Record<string, string | string[]>, controller: AbortController, retries = 3): Promise<any> => {
     for (let attempt = 0; attempt <= retries; attempt++) {
@@ -1064,7 +1069,7 @@ const Contas = () => {
     abortRef.current = controller;
     fetchMultiplePages(controller);
     return () => controller.abort();
-  }, [paramsKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [debouncedParamsKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadMorePages = async () => {
     const shouldProbeValorantPages = gameTab === "valorant";

@@ -240,15 +240,20 @@ const RobotProjectTab = () => {
       
       const planMap = Object.fromEntries((plansRes.data || []).map(p => [p.id, p]));
       
-      // Build paid price map from cart_snapshot (historical prices)
+      // Build paid price map from cart_snapshot (historical prices apportioned by discount)
       const paidPriceMap = new Map<string, number>();
       for (const pay of (robotPayments || [])) {
         const snapshot = pay.cart_snapshot as any[];
         if (!Array.isArray(snapshot)) continue;
+        
+        const cartTotal = snapshot.reduce((sum, item) => sum + (Number(item.price) || 0), 0);
+        const actualPaid = pay.amount / 100;
+
         for (const item of snapshot) {
           const key = `${pay.user_id}|${item.productId}|${item.planId}`;
           if (!paidPriceMap.has(key) && item.price != null) {
-            paidPriceMap.set(key, Number(item.price));
+            const proportion = cartTotal > 0 ? (Number(item.price) / cartTotal) : 0;
+            paidPriceMap.set(key, actualPaid * proportion);
           }
         }
       }
@@ -258,8 +263,10 @@ const RobotProjectTab = () => {
         const plan = planMap[t.product_plan_id];
         const meta = (t.metadata || {}) as Record<string, any>;
         
-        // Revenue = historical paid price from cart_snapshot, fallback to current plan price
-        const revenue = paidPriceMap.get(`${t.user_id}|${t.product_id}|${t.product_plan_id}`) ?? plan?.price ?? 0;
+        // Revenue = apportioned actual paid price. If missing (manual creation), revenue is 0.
+        const revenue = paidPriceMap.has(`${t.user_id}|${t.product_id}|${t.product_plan_id}`) 
+          ? paidPriceMap.get(`${t.user_id}|${t.product_id}|${t.product_plan_id}`)! 
+          : 0;
         
         // Cost estimation: if metadata has amount_spent use it, otherwise estimate from markup
         let cost = 0;
@@ -619,7 +626,8 @@ const RobotProjectTab = () => {
             )}
 
             <p className="mt-2 text-[10px] text-muted-foreground">
-              * Custo estimado via markup do produto. Vendas com cashback registrado usam o valor real.
+              * Custo estimado via markup do produto. Vendas com cashback registrado usam o valor real.<br/>
+              * A Receita reflete o valor exato pago via Pix (após descontos). Entregas manuais têm receita R$ 0,00.
             </p>
           </>
         )}

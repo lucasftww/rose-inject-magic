@@ -214,13 +214,7 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
     fetchAll();
   }, [refreshKey]);
 
-  useEffect(() => {
-    if (usernameMap.size === 0) return;
-    setRecentOrders(prev => prev.map(order => ({
-      ...order,
-      username: usernameMap.get(order.user_id) || "?",
-    })));
-  }, [usernameMap]);
+  // Removed usernameMap useEffect to prevent race condition
 
   // Period-filtered metrics
   const filteredPayments = filterByPeriod(allPayments as any[], period);
@@ -379,7 +373,7 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
                 <div className="flex-1 min-w-0">
                   <p className="text-[13px] font-medium text-foreground truncate">{order.product_name}</p>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="text-[11px] text-muted-foreground truncate max-w-[80px]">{order.username !== "?" ? order.username : "..."}</span>
+                    <span className="text-[11px] text-muted-foreground truncate max-w-[80px]">{usernameMap.get(order.user_id) || "..."}</span>
                     <span className="text-muted-foreground/30 text-[10px]">•</span>
                     <span className="text-[10px] text-muted-foreground/70 flex items-center gap-0.5">
                       <Clock className="h-2.5 w-2.5" />
