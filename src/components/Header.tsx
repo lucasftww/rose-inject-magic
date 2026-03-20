@@ -311,10 +311,9 @@ const Header = ({ hideBanner = false }: { hideBanner?: boolean }) => {
               )}
 
               {/* Mobile hamburger */}
-              <motion.button
+              <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="lg:hidden relative p-1.5 rounded-lg text-foreground/50 hover:text-foreground transition-colors"
-                whileTap={{ scale: 0.9 }}
+                className="lg:hidden relative p-1.5 rounded-lg text-foreground/50 hover:text-foreground transition-colors active:scale-90"
               >
                 <AnimatePresence mode="wait">
                   {mobileMenuOpen ? (
@@ -327,7 +326,7 @@ const Header = ({ hideBanner = false }: { hideBanner?: boolean }) => {
                     </motion.div>
                   )}
                 </AnimatePresence>
-              </motion.button>
+              </button>
             </div>
           </div>
         </div>
