@@ -88,21 +88,3 @@ export function initErrorTracker() {
   console.log(`[ErrorTracker] Ativo — erros serão salvos em localStorage("${STORAGE_KEY}")`);
 }
 
-export function logReactError(error: Error, componentStack?: string) {
-  saveError({
-    id: crypto.randomUUID(),
-    timestamp: new Date().toISOString(),
-    type: 'react-error',
-    message: error.message,
-    stack: error.stack,
-    componentStack: componentStack,
-  });
-}
-
-export function getTrackedErrors(): TrackedError[] {
-  return getErrors();
-}
-
-export function clearTrackedErrors() {
-  localStorage.removeItem(STORAGE_KEY);
-}
