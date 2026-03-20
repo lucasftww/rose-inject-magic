@@ -132,7 +132,7 @@ const Header = () => {
             </nav>
 
             {/* ── Right side ── */}
-            <div className="flex items-center gap-1.5 sm:gap-2 ml-auto">
+            <div className="flex items-center gap-2 sm:gap-3 ml-auto">
               {/* Language pill */}
               <div
                 className="hidden md:flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold uppercase tracking-widest cursor-default select-none text-foreground/30"
