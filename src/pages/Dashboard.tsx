@@ -11,7 +11,7 @@ import {
   ShoppingCart, ChevronRight,
   Smartphone, MessageSquare, Receipt, Clock,
   CheckCircle, XCircle, DollarSign, Key, LogOut, Mail,
-  TrendingUp,
+  TrendingUp, ShieldAlert,
   Info,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -25,7 +25,7 @@ const fadeUp = {
 type Tab = "overview" | "purchases" | "security" | "settings";
 
 const Dashboard = () => {
-  const { user, profile, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading, isAdmin } = useAuth();
   const { isReseller, discountPercent, reseller } = useReseller();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -811,6 +811,30 @@ const Dashboard = () => {
                       {reseller.expires_at && (
                         <InfoRow label="Expira em" value={new Date(reseller.expires_at).toLocaleDateString("pt-BR")} />
                       )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Painel Admin */}
+                {isAdmin && (
+                  <div className="border-b border-border p-5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-md bg-success/10 border border-success/20">
+                          <ShieldAlert className="h-4 w-4 text-success" />
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-bold text-foreground">Painel Administrativo</h3>
+                          <p className="text-[11px] text-muted-foreground">Acesso ao painel de administração.</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => navigate("/admin")}
+                        className="flex items-center gap-2 rounded-md border border-success/30 bg-success/10 px-4 py-2 text-xs font-semibold text-success transition-all hover:bg-success hover:text-success-foreground"
+                      >
+                        <ShieldAlert className="h-3.5 w-3.5" />
+                        Acessar
+                      </button>
                     </div>
                   </div>
                 )}

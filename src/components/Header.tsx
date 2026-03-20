@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Menu, X, Home, ShoppingBag, Gamepad2, Activity, Star, Ticket, Globe, LogIn, ShieldAlert, User, Package, Settings, LogOut } from "lucide-react";
+import { Menu, X, Home, ShoppingBag, Gamepad2, Activity, Star, Ticket, Globe, LogIn, User, Package, Settings, LogOut } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import logoRoyal from "@/assets/logo-royal.png";
 import { useAuth } from "@/hooks/useAuth";
@@ -263,15 +263,6 @@ const Header = () => {
                     {label}
                   </motion.button>
                 ))}
-                {isAdmin && (
-                  <motion.div initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.34 }}>
-                    <Link to="/admin" onClick={() => setMobileMenuOpen(false)}
-                      className="flex w-full items-center gap-3.5 px-4 py-3 rounded-xl text-[15px] font-medium text-success hover:bg-success/[0.08] transition-all">
-                      <ShieldAlert className="w-[18px] h-[18px]" />
-                      {t("nav.adminPanel")}
-                    </Link>
-                  </motion.div>
-                )}
                 <div className="pt-1.5">
                   <button onClick={() => { signOut(); setMobileMenuOpen(false); }}
                     className="flex w-full items-center gap-3.5 px-4 py-3 rounded-xl text-[15px] text-destructive/70 hover:bg-destructive/[0.08] transition-all">
