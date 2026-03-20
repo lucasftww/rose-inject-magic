@@ -106,11 +106,8 @@ const Header = () => {
               </span>
             </Link>
 
-            {/* ── Separator ── */}
-            <div className="hidden lg:block h-6 w-px mx-5 bg-foreground/[0.08]" />
-
-            {/* ── Desktop nav ── */}
-            <nav className="hidden lg:flex items-center gap-0.5 flex-1">
+            {/* ── Desktop nav (centered) ── */}
+            <nav className="hidden lg:flex items-center justify-center gap-1 absolute left-1/2 -translate-x-1/2">
               {NAV_ITEMS.map((item) => {
                 const active = isActive(item.href);
                 const Icon = item.icon;
