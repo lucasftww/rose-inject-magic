@@ -82,7 +82,7 @@ const App = () => (
                 <Route path="/garantia" element={<Garantia />} />
                 <Route path="/ajuda" element={<CentralAjuda />} />
                 <Route path="/auth" element={<Auth />} />
-                <Route path="/login" element={<Login />} />
+                <Route path="/login" element={<Auth />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
