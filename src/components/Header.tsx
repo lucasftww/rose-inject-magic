@@ -82,11 +82,6 @@ const Header = () => {
     <>
       <AuthModal open={authOpen} onOpenChange={setAuthOpen} defaultTab={authTab} />
 
-      {!hideBanner && (
-        <div className="fixed top-0 left-0 right-0 z-50">
-          <DiscordBanner onVisibilityChange={setBannerVisible} />
-        </div>
-      )}
 
       <motion.header
         initial={{ y: -100 }}
