@@ -1,9 +1,9 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { LogOut, User, ChevronDown, Settings, ShieldAlert, Package, Menu, X, Home, ShoppingBag, Gamepad2, Activity, Star, Ticket, Globe, LogIn } from "lucide-react";
+import { Menu, X, Home, ShoppingBag, Gamepad2, Activity, Star, Ticket, Globe, LogIn, ShieldAlert } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import logoRoyal from "@/assets/logo-royal.png";
-import AuthModal from "@/components/AuthModal";
+import { useAuth } from "@/hooks/useAuth";
 import { useAuth } from "@/hooks/useAuth";
 import { AnimatePresence, motion } from "framer-motion";
 
