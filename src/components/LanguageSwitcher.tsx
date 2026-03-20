@@ -1,12 +1,12 @@
 import { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Globe } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
 const languages = [
-  { code: "pt", label: "PT", flag: "🇧🇷" },
-  { code: "en", label: "EN", flag: "🇺🇸" },
-  { code: "es", label: "ES", flag: "🇪🇸" },
+  { code: "pt", label: "Português", short: "PT", flag: "🇧🇷" },
+  { code: "en", label: "English", short: "EN", flag: "🇺🇸" },
+  { code: "es", label: "Español", short: "ES", flag: "🇪🇸" },
 ];
 
 interface Props {
@@ -35,19 +35,19 @@ const LanguageSwitcher = ({ variant = "desktop" }: Props) => {
 
   if (variant === "mobile") {
     return (
-      <div className="flex gap-1.5 px-4 py-2">
+      <div className="flex items-center gap-2 px-4 py-2">
         {languages.map((lang) => (
           <button
             key={lang.code}
             onClick={() => switchLang(lang.code)}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all active:scale-[0.95] ${
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-medium transition-all active:scale-[0.95] ${
               current.code === lang.code
-                ? "bg-success/10 text-success border border-success/30"
-                : "text-foreground/40 hover:text-foreground/70 hover:bg-foreground/[0.04]"
+                ? "bg-success/10 text-success ring-1 ring-success/30"
+                : "text-foreground/40 hover:text-foreground/70 hover:bg-foreground/[0.05]"
             }`}
           >
-            <span>{lang.flag}</span>
-            <span>{lang.label}</span>
+            <span className="text-base leading-none">{lang.flag}</span>
+            <span>{lang.short}</span>
           </button>
         ))}
       </div>
@@ -58,40 +58,48 @@ const LanguageSwitcher = ({ variant = "desktop" }: Props) => {
     <div ref={ref} className="relative hidden md:block">
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-semibold uppercase tracking-widest select-none text-foreground/30 hover:text-foreground/60 transition-colors active:scale-[0.95]"
-        style={{ background: "hsla(0,0%,100%,0.03)" }}
+        className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium select-none text-foreground/50 hover:text-foreground/80 transition-all active:scale-[0.97]"
+        style={{ background: "hsla(0,0%,100%,0.04)" }}
       >
-        <Globe className="w-3 h-3" />
-        {current.flag} {current.label}
+        <span className="text-base leading-none">{current.flag}</span>
+        <span className="uppercase tracking-wider font-semibold">{current.short}</span>
+        <ChevronDown
+          className={`w-3 h-3 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+        />
       </button>
 
       <AnimatePresence>
         {open && (
           <motion.div
-            initial={{ opacity: 0, y: -4, scale: 0.95 }}
+            initial={{ opacity: 0, y: -6, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -4, scale: 0.95 }}
-            transition={{ duration: 0.15 }}
-            className="absolute right-0 top-full mt-1.5 rounded-lg overflow-hidden z-50"
+            exit={{ opacity: 0, y: -6, scale: 0.96 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+            className="absolute right-0 top-full mt-2 rounded-xl overflow-hidden z-50 shadow-xl"
             style={{
-              background: "hsla(0,0%,8%,0.97)",
+              background: "hsla(0,0%,8%,0.98)",
               border: "1px solid hsla(0,0%,100%,0.08)",
-              backdropFilter: "blur(16px)",
-              minWidth: "110px",
+              backdropFilter: "blur(20px)",
+              minWidth: "150px",
             }}
           >
-            {languages.map((lang) => (
+            {languages.map((lang, i) => (
               <button
                 key={lang.code}
                 onClick={() => switchLang(lang.code)}
-                className={`flex items-center gap-2 w-full px-3.5 py-2.5 text-[12px] font-medium tracking-wide transition-colors ${
+                className={`flex items-center gap-3 w-full px-4 py-2.5 text-sm font-medium transition-all ${
+                  i < languages.length - 1 ? "border-b border-foreground/[0.04]" : ""
+                } ${
                   current.code === lang.code
-                    ? "text-success bg-success/[0.08]"
-                    : "text-foreground/50 hover:text-foreground hover:bg-foreground/[0.04]"
+                    ? "text-success bg-success/[0.07]"
+                    : "text-foreground/60 hover:text-foreground hover:bg-foreground/[0.05]"
                 }`}
               >
-                <span className="text-sm">{lang.flag}</span>
-                {lang.label}
+                <span className="text-lg leading-none">{lang.flag}</span>
+                <span className="flex-1 text-left">{lang.label}</span>
+                {current.code === lang.code && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-success" />
+                )}
               </button>
             ))}
           </motion.div>
