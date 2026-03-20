@@ -39,11 +39,6 @@ const Header = () => {
     location.pathname.startsWith("/lol/") ||
     (location.pathname === "/contas" && new URLSearchParams(location.search).get("game") === "lol");
 
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 10);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
 
   useEffect(() => { setMobileMenuOpen(false); }, [location.pathname]);
 
