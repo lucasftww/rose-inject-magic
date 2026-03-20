@@ -1,33 +1,54 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { fadeUp, staggerContainer, slideInLeft } from "./animations";
+import { useTranslation } from "react-i18next";
 
-const faqItems = [
-  {
-    q: "Como funciona a entrega dos produtos?",
-    a: "Após a confirmação do pagamento, a entrega é feita de forma instantânea. Você receberá os dados de acesso diretamente no seu e-mail e também poderá acessá-los pelo painel da sua conta.",
-  },
-  {
-    q: "Os softwares são seguros e indetectáveis?",
-    a: "Sim! Nossos softwares utilizam tecnologia de ponta com atualizações constantes para garantir total segurança. Trabalhamos com sistemas anti-detecção avançados que são atualizados diariamente.",
-  },
-  {
-    q: "Quais formas de pagamento são aceitas?",
-    a: "Aceitamos PIX, cartão de crédito, boleto bancário e criptomoedas. O PIX é processado instantaneamente, enquanto outras formas podem levar até 24 horas para confirmação.",
-  },
-  {
-    q: "As contas Valorant possuem garantia?",
-    a: "Sim! Todas as contas possuem garantia de 7 dias. Caso ocorra qualquer problema com a conta adquirida dentro desse período, realizamos a troca ou reembolso integral.",
-  },
-  {
-    q: "Como entro em contato com o suporte?",
-    a: "Nosso suporte está disponível 24/7 pelo Discord. Basta entrar no nosso servidor e abrir um ticket. O tempo médio de resposta é de até 15 minutos.",
-  },
-  {
-    q: "Posso usar os produtos em qualquer região?",
-    a: "Sim, nossos softwares funcionam em todas as regiões. As contas Valorant são específicas por região (BR, NA, EU), e você pode escolher a região desejada na hora da compra.",
-  },
-];
+const FaqSection = () => {
+  const { t } = useTranslation();
+
+  const faqItems = [
+    { q: t("faq.q1"), a: t("faq.a1") },
+    { q: t("faq.q2"), a: t("faq.a2") },
+    { q: t("faq.q3"), a: t("faq.a3") },
+    { q: t("faq.q4"), a: t("faq.a4") },
+    { q: t("faq.q5"), a: t("faq.a5") },
+    { q: t("faq.q6"), a: t("faq.a6") },
+  ];
+
+  return (
+    <section id="faq" className="border-t border-border bg-background px-5 sm:px-6 py-12 sm:py-24">
+      <div className="mx-auto max-w-3xl">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-80px" }}
+          variants={slideInLeft}
+          className="text-center"
+        >
+          <p className="text-sm font-medium uppercase tracking-[0.3em] text-success">{t("faq.subtitle")}</p>
+          <h2
+            className="mt-2 sm:mt-3 text-2xl sm:text-5xl font-bold tracking-tight text-foreground md:text-7xl"
+            style={{ fontFamily: "'Valorant', sans-serif" }}
+          >
+            {t("faq.title")}
+          </h2>
+        </motion.div>
+
+        <motion.div
+          className="mt-8 sm:mt-14 space-y-3 sm:space-y-4"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-60px" }}
+          variants={staggerContainer}
+        >
+          {faqItems.map((item, idx) => (
+            <FaqItem key={idx} question={item.q} answer={item.a} index={idx} />
+          ))}
+        </motion.div>
+      </div>
+    </section>
+  );
+};
 
 const FaqItem = ({ question, answer, index }: { question: string; answer: string; index: number }) => {
   const [open, setOpen] = useState(false);
@@ -54,39 +75,5 @@ const FaqItem = ({ question, answer, index }: { question: string; answer: string
     </motion.div>
   );
 };
-
-const FaqSection = () => (
-  <section id="faq" className="border-t border-border bg-background px-5 sm:px-6 py-12 sm:py-24">
-    <div className="mx-auto max-w-3xl">
-      <motion.div
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-80px" }}
-        variants={slideInLeft}
-        className="text-center"
-      >
-        <p className="text-sm font-medium uppercase tracking-[0.3em] text-success">Dúvidas Frequentes</p>
-        <h2
-          className="mt-2 sm:mt-3 text-2xl sm:text-5xl font-bold tracking-tight text-foreground md:text-7xl"
-          style={{ fontFamily: "'Valorant', sans-serif" }}
-        >
-          FAQ
-        </h2>
-      </motion.div>
-
-      <motion.div
-        className="mt-8 sm:mt-14 space-y-3 sm:space-y-4"
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-60px" }}
-        variants={staggerContainer}
-      >
-        {faqItems.map((item, idx) => (
-          <FaqItem key={idx} question={item.q} answer={item.a} index={idx} />
-        ))}
-      </motion.div>
-    </div>
-  </section>
-);
 
 export default FaqSection;

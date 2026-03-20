@@ -5,31 +5,32 @@ import { useCart } from "@/hooks/useCart";
 import logoRoyal from "@/assets/logo-royal.png";
 import { useAuth } from "@/hooks/useAuth";
 import { AnimatePresence, motion } from "framer-motion";
-
-
-const NAV_ITEMS = [
-  { label: "Início", href: "/", icon: Home },
-  { label: "Contas", href: "/contas", icon: Gamepad2 },
-  { label: "Softwares", href: "/produtos", icon: ShoppingBag },
-  { label: "Status", href: "/status", icon: Activity },
-  { label: "Avaliações", href: "/avaliacoes", icon: Star },
-  { label: "Raspadinha", href: "/raspadinha", icon: Ticket },
-];
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 const LOL_BLUE = "hsl(198,100%,45%)";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { t } = useTranslation();
   
   const { user, profile, isAdmin, signOut } = useAuth();
   const { requiresAuth, clearRequiresAuth } = useCart();
   const navigate = useNavigate();
   const location = useLocation();
 
+  const NAV_ITEMS = [
+    { label: t("nav.home"), href: "/", icon: Home },
+    { label: t("nav.accounts"), href: "/contas", icon: Gamepad2 },
+    { label: t("nav.software"), href: "/produtos", icon: ShoppingBag },
+    { label: t("nav.status"), href: "/status", icon: Activity },
+    { label: t("nav.reviews"), href: "/avaliacoes", icon: Star },
+    { label: t("nav.scratchCard"), href: "/raspadinha", icon: Ticket },
+  ];
+
   const isLolContext =
     location.pathname.startsWith("/lol/") ||
     (location.pathname === "/contas" && new URLSearchParams(location.search).get("game") === "lol");
-
 
   useEffect(() => { setMobileMenuOpen(false); }, [location.pathname]);
 
@@ -39,7 +40,6 @@ const Header = () => {
       navigate("/auth?redirect=/checkout");
     }
   }, [requiresAuth, clearRequiresAuth, navigate]);
-
 
   useEffect(() => {
     document.body.style.overflow = mobileMenuOpen ? "hidden" : "";
@@ -54,7 +54,6 @@ const Header = () => {
 
   return (
     <>
-
       <motion.header
         initial={{ y: -80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -95,7 +94,7 @@ const Header = () => {
                 const Icon = item.icon;
                 return (
                   <Link
-                    key={item.label}
+                    key={item.href}
                     to={item.href}
                     className={`relative flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium tracking-[0.02em] transition-colors duration-150 ${
                       active
@@ -112,17 +111,10 @@ const Header = () => {
 
             {/* ── Right side ── */}
             <div className="flex items-center gap-2 sm:gap-3 ml-auto">
-              {/* Language pill */}
-              <div
-                className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-semibold uppercase tracking-widest cursor-default select-none text-foreground/30"
-                style={{ background: "hsla(0,0%,100%,0.03)" }}
-              >
-                <Globe className="w-3 h-3" />
-                PT
-              </div>
+              {/* Language switcher */}
+              <LanguageSwitcher />
 
               {user ? (
-                /* ── Logged-in — direct link to profile ── */
                 <Link
                   to="/dashboard"
                   className="flex items-center gap-1.5 pl-1 pr-2.5 py-1 rounded-xl transition-all duration-200 active:scale-[0.97]"
@@ -149,7 +141,6 @@ const Header = () => {
                   </span>
                 </Link>
               ) : (
-                /* ── Login button ── */
                 <Link
                   to="/auth"
                   className="flex items-center gap-2 px-4 sm:px-4.5 py-2 rounded-lg text-xs sm:text-[13px] font-semibold tracking-wide transition-all duration-200 active:scale-[0.96]"
@@ -160,7 +151,7 @@ const Header = () => {
                   }}
                 >
                   <LogIn className="w-4 h-4" />
-                  <span className="hidden sm:inline">Entrar</span>
+                  <span className="hidden sm:inline">{t("nav.login")}</span>
                 </Link>
               )}
 
@@ -234,7 +225,7 @@ const Header = () => {
                 const active = isActive(item.href);
                 const Icon = item.icon;
                 return (
-                  <motion.div key={item.label} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.06 + i * 0.035 }}>
+                  <motion.div key={item.href} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.06 + i * 0.035 }}>
                     <Link
                       to={item.href}
                       onClick={() => setMobileMenuOpen(false)}
@@ -251,14 +242,19 @@ const Header = () => {
               })}
             </nav>
 
+            {/* Language switcher mobile */}
+            <div className="mx-5 mt-3">
+              <LanguageSwitcher variant="mobile" />
+            </div>
+
             <div className="mx-5 mt-3 h-px" style={{ background: "hsla(0,0%,100%,0.05)" }} />
 
             {user ? (
               <div className="px-5 mt-2 space-y-0.5">
                 {[
-                  { icon: User, label: "Meu Perfil", action: () => navigate("/dashboard") },
-                  { icon: Package, label: "Meus Pedidos", action: () => navigate("/dashboard?tab=purchases") },
-                  { icon: Settings, label: "Configurações", action: () => navigate("/dashboard?tab=settings") },
+                  { icon: User, label: t("nav.myProfile"), action: () => navigate("/dashboard") },
+                  { icon: Package, label: t("nav.myOrders"), action: () => navigate("/dashboard?tab=purchases") },
+                  { icon: Settings, label: t("nav.settings"), action: () => navigate("/dashboard?tab=settings") },
                 ].map(({ icon: Icon, label, action }, i) => (
                   <motion.button key={label} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.22 + i * 0.035 }}
                     onClick={() => { action(); setMobileMenuOpen(false); }}
@@ -272,7 +268,7 @@ const Header = () => {
                     <Link to="/admin" onClick={() => setMobileMenuOpen(false)}
                       className="flex w-full items-center gap-3.5 px-4 py-3 rounded-xl text-[15px] font-medium text-success hover:bg-success/[0.08] transition-all">
                       <ShieldAlert className="w-[18px] h-[18px]" />
-                      Painel Admin
+                      {t("nav.adminPanel")}
                     </Link>
                   </motion.div>
                 )}
@@ -280,7 +276,7 @@ const Header = () => {
                   <button onClick={() => { signOut(); setMobileMenuOpen(false); }}
                     className="flex w-full items-center gap-3.5 px-4 py-3 rounded-xl text-[15px] text-destructive/70 hover:bg-destructive/[0.08] transition-all">
                     <LogOut className="w-[18px] h-[18px]" />
-                    Sair
+                    {t("nav.logout")}
                   </button>
                 </div>
               </div>
@@ -289,12 +285,12 @@ const Header = () => {
                 <Link to="/auth" onClick={() => setMobileMenuOpen(false)}
                   className="block w-full py-3 text-[14px] font-semibold text-success-foreground rounded-xl transition-all btn-shine text-center"
                   style={{ background: accentColor, boxShadow: `0 0 20px ${accentColor}20` }}>
-                  Criar Conta
+                  {t("nav.createAccount")}
                 </Link>
                 <Link to="/auth" onClick={() => setMobileMenuOpen(false)}
                   className="block w-full py-3 text-[14px] font-medium text-foreground/50 rounded-xl transition-colors hover:text-foreground text-center"
                   style={{ background: "hsla(0,0%,100%,0.03)", border: "1px solid hsla(0,0%,100%,0.07)" }}>
-                  Já tenho conta
+                  {t("nav.alreadyHaveAccount")}
                 </Link>
               </motion.div>
             )}
