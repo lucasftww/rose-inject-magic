@@ -93,7 +93,7 @@ const Header = () => {
               <motion.img
                 src={logoRoyal}
                 alt="Royal Store"
-                className="h-7 w-7 sm:h-8 sm:w-8 object-contain shrink-0"
+                className="h-8 w-8 sm:h-9 sm:w-9 object-contain shrink-0"
                 whileHover={{ rotate: [0, -5, 5, 0] }}
                 transition={{ duration: 0.35 }}
               />
