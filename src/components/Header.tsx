@@ -54,7 +54,6 @@ const Header = () => {
 
   return (
     <>
-      <AuthModal open={authOpen} onOpenChange={setAuthOpen} defaultTab={authTab} />
 
       <motion.header
         initial={{ y: -80, opacity: 0 }}
