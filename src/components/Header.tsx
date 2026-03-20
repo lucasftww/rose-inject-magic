@@ -7,7 +7,7 @@ import AuthModal from "@/components/AuthModal";
 
 import { useAuth } from "@/hooks/useAuth";
 import { AnimatePresence, motion } from "framer-motion";
-import DiscordBanner from "@/components/DiscordBanner";
+
 
 const maskEmail = (email: string) => {
   const [name, domain] = email.split("@");
