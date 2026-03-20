@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { LogOut, User, ChevronDown, Settings, ShieldAlert, Package, Menu, X, Home, ShoppingBag, Gamepad2, Activity, Star, Ticket } from "lucide-react";
+import { LogOut, User, ChevronDown, Settings, ShieldAlert, Package, Menu, X, Home, ShoppingBag, Gamepad2, Activity, Star, Ticket, Globe } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import logoRoyal from "@/assets/logo-royal.png";
 import AuthModal from "@/components/AuthModal";
@@ -16,8 +16,8 @@ const maskEmail = (email: string) => {
 
 const NAV_ITEMS = [
   { label: "Início", href: "/", icon: Home },
-  { label: "Produtos", href: "/produtos", icon: ShoppingBag },
   { label: "Contas", href: "/contas", icon: Gamepad2 },
+  { label: "Softwares", href: "/produtos", icon: ShoppingBag },
   { label: "Status", href: "/status", icon: Activity },
   { label: "Avaliações", href: "/avaliacoes", icon: Star },
   { label: "Raspadinha", href: "/raspadinha", icon: Ticket },
@@ -42,16 +42,13 @@ const Header = ({ hideBanner = false }: { hideBanner?: boolean }) => {
     location.pathname.startsWith("/lol/") ||
     (location.pathname === "/contas" && new URLSearchParams(location.search).get("game") === "lol");
 
-  // Detect scroll for header elevation
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  useEffect(() => {
-    setMobileMenuOpen(false);
-  }, [location.pathname]);
+  useEffect(() => { setMobileMenuOpen(false); }, [location.pathname]);
 
   useEffect(() => {
     if (requiresAuth) {
@@ -63,20 +60,14 @@ const Header = ({ hideBanner = false }: { hideBanner?: boolean }) => {
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setDropdownOpen(false);
-      }
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setDropdownOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
   useEffect(() => {
-    if (mobileMenuOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
+    document.body.style.overflow = mobileMenuOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
   }, [mobileMenuOpen]);
 
@@ -84,6 +75,8 @@ const Header = ({ hideBanner = false }: { hideBanner?: boolean }) => {
     href === "/" ? location.pathname === "/" : location.pathname.startsWith(href);
 
   const accentColor = isLolContext ? LOL_BLUE : "hsl(var(--success))";
+
+  const userInitial = (profile?.username || user?.email?.split("@")[0] || "U").charAt(0).toUpperCase();
 
   return (
     <>
@@ -98,152 +91,162 @@ const Header = ({ hideBanner = false }: { hideBanner?: boolean }) => {
       <motion.header
         initial={{ y: -100 }}
         animate={{ y: 0 }}
-        transition={{ type: "spring", damping: 20, stiffness: 200 }}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${bannerVisible ? 'mt-[30px] sm:mt-[32px]' : 'mt-0'}`}
-        style={{
-          borderBottom: `1px solid ${scrolled ? (isLolContext ? `${LOL_BLUE}20` : "hsl(var(--border))") : "transparent"}`,
-          background: scrolled
-            ? isLolContext
-              ? "hsla(220,30%,8%,0.92)"
-              : "hsla(0,0%,7.5%,0.85)"
-            : "transparent",
-          backdropFilter: scrolled ? "blur(20px) saturate(1.5)" : "none",
-          boxShadow: scrolled ? "0 4px 30px hsla(0,0%,0%,0.3)" : "none",
-        }}
+        transition={{ type: "spring", damping: 22, stiffness: 180 }}
+        className={`fixed left-0 right-0 z-50 transition-all duration-500 ${bannerVisible ? 'top-[30px] sm:top-[32px]' : 'top-0'}`}
       >
-        <div className="mx-auto flex h-14 sm:h-16 lg:h-[72px] max-w-7xl items-center justify-between px-4 sm:px-5 lg:px-6">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2.5 lg:gap-3 shrink-0 group">
-            <motion.img
-              src={logoRoyal}
-              alt="Royal Store"
-              className="h-9 w-9 lg:h-11 lg:w-11 object-contain shrink-0"
-              whileHover={{ rotate: [0, -8, 8, 0] }}
-              transition={{ duration: 0.5 }}
-            />
-            <span
-              className="text-lg sm:text-xl lg:text-2xl tracking-[0.15em] sm:tracking-[0.2em] whitespace-nowrap"
-              style={{ fontFamily: "'Valorant', sans-serif" }}
-            >
-              <span className="inline-block bg-gradient-to-r from-success via-[hsl(197,100%,70%)] to-success bg-[length:200%_100%] bg-clip-text text-transparent animate-[text-shine_3s_ease-in-out_infinite]">
-                ROYAL
+        {/* Glassmorphic bar — centered with max-width, floating feel */}
+        <div className="mx-auto max-w-5xl px-3 sm:px-4 lg:px-5 pt-3">
+          <div
+            className="flex h-14 items-center rounded-2xl px-4 sm:px-5 transition-all duration-500"
+            style={{
+              background: scrolled
+                ? "hsla(0,0%,8%,0.75)"
+                : "hsla(0,0%,8%,0.35)",
+              backdropFilter: "blur(24px) saturate(1.4)",
+              border: `1px solid ${scrolled ? "hsla(0,0%,100%,0.08)" : "hsla(0,0%,100%,0.04)"}`,
+              boxShadow: scrolled
+                ? "0 8px 32px hsla(0,0%,0%,0.4), inset 0 1px 0 hsla(0,0%,100%,0.04)"
+                : "0 4px 20px hsla(0,0%,0%,0.15), inset 0 1px 0 hsla(0,0%,100%,0.02)",
+            }}
+          >
+            {/* Logo */}
+            <Link to="/" className="flex items-center gap-2 shrink-0 group mr-6">
+              <motion.img
+                src={logoRoyal}
+                alt="Royal Store"
+                className="h-8 w-8 object-contain shrink-0"
+                whileHover={{ rotate: [0, -6, 6, 0] }}
+                transition={{ duration: 0.4 }}
+              />
+              <span
+                className="text-base sm:text-lg tracking-[0.15em] whitespace-nowrap hidden sm:inline"
+                style={{ fontFamily: "'Valorant', sans-serif" }}
+              >
+                <span className="text-success">ROYAL</span>
+                <span className="text-foreground/70"> STORE</span>
               </span>
-              <span className="text-foreground/80"> STORE</span>
-            </span>
-          </Link>
+            </Link>
 
-          {/* Desktop nav */}
-          <nav className="hidden items-center gap-1 lg:flex">
-            {NAV_ITEMS.map((item) => {
-              const active = isActive(item.href);
-              return (
-                <Link
-                  key={item.label}
-                  to={item.href}
-                  className="relative px-4 py-2 text-sm font-medium tracking-wide transition-colors duration-200 group"
-                  style={{
-                    color: active ? accentColor : "hsl(var(--muted-foreground))",
-                  }}
-                  onMouseEnter={e => {
-                    if (!active) (e.currentTarget as HTMLElement).style.color = "hsl(var(--foreground))";
-                  }}
-                  onMouseLeave={e => {
-                    if (!active) (e.currentTarget as HTMLElement).style.color = "hsl(var(--muted-foreground))";
-                  }}
-                >
-                  {item.label}
-                  {/* Active indicator line */}
-                  {active && (
-                    <motion.span
-                      layoutId="nav-indicator"
-                      className="absolute bottom-0 left-2 right-2 h-[2px] rounded-full"
-                      style={{ background: accentColor }}
-                      transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                    />
-                  )}
-                </Link>
-              );
-            })}
-          </nav>
+            {/* Desktop nav — centered */}
+            <nav className="hidden lg:flex items-center gap-0.5 flex-1 justify-center">
+              {NAV_ITEMS.map((item) => {
+                const active = isActive(item.href);
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.label}
+                    to={item.href}
+                    className="relative flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[13px] font-medium uppercase tracking-[0.08em] transition-all duration-200 group"
+                    style={{
+                      color: active ? accentColor : "hsla(0,0%,100%,0.5)",
+                      background: active ? `${accentColor}12` : "transparent",
+                    }}
+                    onMouseEnter={e => {
+                      if (!active) {
+                        (e.currentTarget as HTMLElement).style.color = "hsla(0,0%,100%,0.85)";
+                        (e.currentTarget as HTMLElement).style.background = "hsla(0,0%,100%,0.05)";
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      if (!active) {
+                        (e.currentTarget as HTMLElement).style.color = "hsla(0,0%,100%,0.5)";
+                        (e.currentTarget as HTMLElement).style.background = "transparent";
+                      }
+                    }}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    {item.label}
+                    {active && (
+                      <motion.span
+                        layoutId="nav-active-pill"
+                        className="absolute -bottom-0.5 left-3 right-3 h-[2px] rounded-full"
+                        style={{ background: accentColor }}
+                        transition={{ type: "spring", stiffness: 350, damping: 28 }}
+                      />
+                    )}
+                  </Link>
+                );
+              })}
+            </nav>
 
-          {/* Right actions */}
-          <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2.5">
-            {user ? (
-              <>
+            {/* Right side — lang + user */}
+            <div className="flex items-center gap-2 ml-auto">
+              {/* Language badge (decorative) */}
+              <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold uppercase tracking-wider cursor-default select-none"
+                style={{
+                  color: "hsla(0,0%,100%,0.45)",
+                  background: "hsla(0,0%,100%,0.04)",
+                  border: "1px solid hsla(0,0%,100%,0.06)",
+                }}
+              >
+                <Globe className="w-3 h-3" />
+                PT
+              </div>
 
-                {/* Desktop user dropdown */}
-                <div className="relative hidden lg:block" ref={dropdownRef}>
+              {user ? (
+                /* Logged-in user bubble */
+                <div className="relative" ref={dropdownRef}>
                   <motion.button
                     onClick={() => setDropdownOpen(!dropdownOpen)}
-                    className="flex items-center gap-2 px-2 py-1.5 rounded-lg border transition-all duration-200 hover:border-muted-foreground/30"
+                    className="flex items-center gap-2 pl-1.5 pr-2.5 py-1 rounded-xl transition-all duration-200 active:scale-[0.97]"
                     style={{
-                      borderColor: dropdownOpen ? `${accentColor}50` : "hsl(var(--border))",
-                      background: dropdownOpen ? "hsl(var(--accent))" : "hsl(var(--secondary))",
+                      background: dropdownOpen ? "hsla(0,0%,100%,0.1)" : "hsla(0,0%,100%,0.05)",
+                      border: `1px solid ${dropdownOpen ? "hsla(0,0%,100%,0.12)" : "hsla(0,0%,100%,0.06)"}`,
                     }}
                     whileTap={{ scale: 0.97 }}
                   >
                     {profile?.avatar_url ? (
-                      <img src={profile.avatar_url} alt="Avatar" className="w-8 h-8 rounded-md object-cover ring-2 ring-border" />
+                      <img src={profile.avatar_url} alt="" className="w-7 h-7 rounded-lg object-cover" />
                     ) : (
                       <div
-                        className="w-8 h-8 rounded-md flex items-center justify-center font-bold text-sm"
+                        className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold"
                         style={{
-                          background: `linear-gradient(135deg, ${accentColor}30, ${accentColor}10)`,
+                          background: `linear-gradient(135deg, ${accentColor}40, ${accentColor}15)`,
                           color: accentColor,
-                          border: `1px solid ${accentColor}25`,
                         }}
                       >
-                        {(profile?.username || user.email?.split("@")[0] || "U").charAt(0).toUpperCase()}
+                        {userInitial}
                       </div>
                     )}
-                    <div className="text-left hidden xl:block max-w-[120px]">
-                      <p className="text-sm font-semibold text-foreground leading-tight truncate">
-                        {profile?.username || user.email?.split("@")[0]}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground leading-tight">
-                        {user.email ? maskEmail(user.email) : ""}
-                      </p>
-                    </div>
-                    <motion.div
-                      animate={{ rotate: dropdownOpen ? 180 : 0 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-xs font-medium text-foreground/80 max-w-[80px] truncate hidden xl:block">
+                      {profile?.username || user.email?.split("@")[0]}
+                    </span>
+                    <motion.div animate={{ rotate: dropdownOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                      <ChevronDown className="w-3.5 h-3.5 text-foreground/40" />
                     </motion.div>
                   </motion.button>
 
                   <AnimatePresence>
                     {dropdownOpen && (
                       <motion.div
-                        initial={{ opacity: 0, y: 6, scale: 0.95 }}
+                        initial={{ opacity: 0, y: 8, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 6, scale: 0.95 }}
+                        exit={{ opacity: 0, y: 8, scale: 0.95 }}
                         transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-                        className="absolute right-0 top-full mt-2.5 w-60 rounded-lg border border-border bg-card shadow-[0_20px_60px_hsla(0,0%,0%,0.5),0_0_0_1px_hsla(0,0%,100%,0.03)] z-[60] overflow-hidden"
+                        className="absolute right-0 top-full mt-2.5 w-56 rounded-xl overflow-hidden z-[60]"
+                        style={{
+                          background: "hsla(0,0%,10%,0.95)",
+                          backdropFilter: "blur(20px)",
+                          border: "1px solid hsla(0,0%,100%,0.08)",
+                          boxShadow: "0 20px 60px hsla(0,0%,0%,0.5)",
+                        }}
                       >
                         {/* User header */}
-                        <div className="px-4 py-3.5 border-b border-border flex items-center gap-3">
+                        <div className="px-4 py-3.5 flex items-center gap-3" style={{ borderBottom: "1px solid hsla(0,0%,100%,0.06)" }}>
                           {profile?.avatar_url ? (
-                            <img src={profile.avatar_url} alt="Avatar" className="w-10 h-10 rounded-md object-cover ring-2 ring-border" />
+                            <img src={profile.avatar_url} alt="" className="w-9 h-9 rounded-lg object-cover" />
                           ) : (
-                            <div
-                              className="w-10 h-10 rounded-md flex items-center justify-center font-bold text-base shrink-0"
-                              style={{
-                                background: `linear-gradient(135deg, ${accentColor}30, ${accentColor}10)`,
-                                color: accentColor,
-                                border: `1px solid ${accentColor}25`,
-                              }}
-                            >
-                              {(profile?.username || user.email?.split("@")[0] || "U").charAt(0).toUpperCase()}
+                            <div className="w-9 h-9 rounded-lg flex items-center justify-center font-bold text-sm shrink-0"
+                              style={{ background: `${accentColor}20`, color: accentColor }}>
+                              {userInitial}
                             </div>
                           )}
                           <div className="min-w-0">
                             <p className="text-sm font-semibold text-foreground truncate">{profile?.username || "Usuário"}</p>
-                            <p className="text-xs text-muted-foreground truncate mt-0.5">{user.email ? maskEmail(user.email) : ""}</p>
+                            <p className="text-[10px] text-muted-foreground truncate mt-0.5">{user.email ? maskEmail(user.email) : ""}</p>
                           </div>
                         </div>
 
-                        {/* Menu items */}
                         <div className="p-1.5">
                           {[
                             { icon: User, label: "Meu Perfil", action: () => navigate("/dashboard") },
@@ -252,36 +255,31 @@ const Header = ({ hideBanner = false }: { hideBanner?: boolean }) => {
                           ].map(({ icon: Icon, label, action }, i) => (
                             <motion.button
                               key={label}
-                              initial={{ opacity: 0, x: -8 }}
+                              initial={{ opacity: 0, x: -6 }}
                               animate={{ opacity: 1, x: 0 }}
                               transition={{ delay: i * 0.03 }}
                               onClick={() => { action(); setDropdownOpen(false); }}
-                              className="flex w-full items-center gap-3 px-3 py-2.5 rounded-md text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors group"
+                              className="flex w-full items-center gap-2.5 px-3 py-2.5 rounded-lg text-[13px] text-foreground/60 hover:bg-accent hover:text-foreground transition-colors"
                             >
-                              <Icon className="w-4 h-4 group-hover:text-foreground transition-colors" />
+                              <Icon className="w-4 h-4" />
                               {label}
                             </motion.button>
                           ))}
                         </div>
 
                         {isAdmin && (
-                          <div className="border-t border-border px-1.5 py-1.5">
-                            <Link
-                              to="/admin"
-                              onClick={() => setDropdownOpen(false)}
-                              className="flex w-full items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-success hover:bg-success/10 transition-colors"
-                            >
+                          <div className="px-1.5 py-1" style={{ borderTop: "1px solid hsla(0,0%,100%,0.06)" }}>
+                            <Link to="/admin" onClick={() => setDropdownOpen(false)}
+                              className="flex w-full items-center gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-medium text-success hover:bg-success/10 transition-colors">
                               <ShieldAlert className="w-4 h-4" />
                               Painel Admin
                             </Link>
                           </div>
                         )}
 
-                        <div className="border-t border-border px-1.5 py-1.5">
-                          <button
-                            onClick={() => { signOut(); setDropdownOpen(false); }}
-                            className="flex w-full items-center gap-3 px-3 py-2.5 rounded-md text-sm text-destructive hover:bg-destructive/10 transition-colors"
-                          >
+                        <div className="px-1.5 py-1" style={{ borderTop: "1px solid hsla(0,0%,100%,0.06)" }}>
+                          <button onClick={() => { signOut(); setDropdownOpen(false); }}
+                            className="flex w-full items-center gap-2.5 px-3 py-2.5 rounded-lg text-[13px] text-destructive hover:bg-destructive/10 transition-colors">
                             <LogOut className="w-4 h-4" />
                             Sair
                           </button>
@@ -290,50 +288,47 @@ const Header = ({ hideBanner = false }: { hideBanner?: boolean }) => {
                     )}
                   </AnimatePresence>
                 </div>
-              </>
-            ) : (
-              <>
+              ) : (
+                /* Not logged in — avatar bubble style */
                 <motion.button
                   onClick={() => { setAuthTab("login"); setAuthOpen(true); }}
-                  className="hidden sm:inline-flex border border-border/60 px-4 lg:px-5 py-1.5 text-[13px] font-medium tracking-wide text-muted-foreground rounded-md transition-all duration-200 hover:border-success/40 hover:text-foreground"
-                  whileTap={{ scale: 0.97 }}
-                >
-                  Entrar
-                </motion.button>
-                <motion.button
-                  onClick={() => { setAuthTab("register"); setAuthOpen(true); }}
-                  className="inline-flex px-3 sm:px-4 lg:px-5 py-1.5 text-[11px] sm:text-[13px] font-semibold tracking-wide whitespace-nowrap rounded-md transition-all duration-200 btn-shine"
+                  className="flex items-center gap-2 pl-1.5 pr-3 py-1 rounded-xl transition-all duration-200 active:scale-[0.97]"
                   style={{
-                    background: isLolContext ? LOL_BLUE : "hsl(var(--success))",
-                    color: "white",
-                    boxShadow: `0 0 16px ${isLolContext ? LOL_BLUE : "hsl(var(--success))"}20`,
+                    background: "hsla(0,0%,100%,0.05)",
+                    border: "1px solid hsla(0,0%,100%,0.06)",
                   }}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.97 }}
                 >
-                  Criar Conta
+                  <div
+                    className="w-7 h-7 rounded-lg flex items-center justify-center"
+                    style={{ background: `${accentColor}20` }}
+                  >
+                    <User className="w-3.5 h-3.5" style={{ color: accentColor }} />
+                  </div>
+                  <span className="text-xs font-medium text-foreground/70 hidden sm:inline">Entrar</span>
                 </motion.button>
-              </>
-            )}
+              )}
 
-            {/* Mobile hamburger */}
-            <motion.button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden relative p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors flex items-center justify-center"
-              whileTap={{ scale: 0.9 }}
-            >
-              <AnimatePresence mode="wait">
-                {mobileMenuOpen ? (
-                  <motion.div key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.15 }}>
-                    <X className="h-6 w-6" />
-                  </motion.div>
-                ) : (
-                  <motion.div key="menu" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.15 }}>
-                    <Menu className="h-6 w-6" />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.button>
+              {/* Mobile hamburger */}
+              <motion.button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="lg:hidden relative p-1.5 rounded-lg text-foreground/50 hover:text-foreground transition-colors"
+                whileTap={{ scale: 0.9 }}
+              >
+                <AnimatePresence mode="wait">
+                  {mobileMenuOpen ? (
+                    <motion.div key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.15 }}>
+                      <X className="h-5 w-5" />
+                    </motion.div>
+                  ) : (
+                    <motion.div key="menu" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.15 }}>
+                      <Menu className="h-5 w-5" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.button>
+            </div>
           </div>
         </div>
       </motion.header>
@@ -349,25 +344,24 @@ const Header = ({ hideBanner = false }: { hideBanner?: boolean }) => {
             className="fixed inset-0 z-[60] lg:hidden"
             style={{ background: "hsla(0,0%,5%,0.97)", backdropFilter: "blur(24px)" }}
           >
-            {/* Close button */}
             <div className="flex items-center justify-between px-5 pt-5 pb-2">
               <Link to="/" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2">
                 <img src={logoRoyal} alt="Royal Store" className="h-8 w-8 object-contain" />
                 <span className="text-lg tracking-[0.15em]" style={{ fontFamily: "'Valorant', sans-serif" }}>
-                  <span className="bg-gradient-to-r from-success via-[hsl(197,100%,70%)] to-success bg-[length:200%_100%] bg-clip-text text-transparent">ROYAL</span>
+                  <span className="text-success">ROYAL</span>
                   <span className="text-foreground/80"> STORE</span>
                 </span>
               </Link>
               <motion.button
                 onClick={() => setMobileMenuOpen(false)}
-                className="p-2 rounded-full bg-secondary/80 text-muted-foreground hover:text-foreground transition-colors"
+                className="p-2 rounded-full text-muted-foreground hover:text-foreground transition-colors"
+                style={{ background: "hsla(0,0%,100%,0.06)" }}
                 whileTap={{ scale: 0.9 }}
               >
                 <X className="h-5 w-5" />
               </motion.button>
             </div>
 
-            {/* User card */}
             {user && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -377,60 +371,43 @@ const Header = ({ hideBanner = false }: { hideBanner?: boolean }) => {
                 style={{ background: "hsla(0,0%,100%,0.04)", border: "1px solid hsla(0,0%,100%,0.06)" }}
               >
                 {profile?.avatar_url ? (
-                  <img src={profile.avatar_url} alt="Avatar" className="w-10 h-10 rounded-full object-cover ring-2 ring-border/30" />
+                  <img src={profile.avatar_url} alt="" className="w-10 h-10 rounded-xl object-cover" />
                 ) : (
-                  <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0"
-                    style={{ background: `${accentColor}15`, color: accentColor }}
-                  >
-                    {(profile?.username || user.email?.split("@")[0] || "U").charAt(0).toUpperCase()}
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm shrink-0"
+                    style={{ background: `${accentColor}15`, color: accentColor }}>
+                    {userInitial}
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-foreground truncate">
-                    {profile?.username || user.email?.split("@")[0]}
-                  </p>
-                  <p className="text-[11px] text-muted-foreground truncate">
-                    {user.email ? maskEmail(user.email) : ""}
-                  </p>
+                  <p className="text-sm font-semibold text-foreground truncate">{profile?.username || user.email?.split("@")[0]}</p>
+                  <p className="text-[11px] text-muted-foreground truncate">{user.email ? maskEmail(user.email) : ""}</p>
                 </div>
               </motion.div>
             )}
 
-            {/* Nav links */}
             <nav className="mt-6 px-5 space-y-1">
               {NAV_ITEMS.map((item, i) => {
                 const active = isActive(item.href);
                 const Icon = item.icon;
                 return (
-                  <motion.div
-                    key={item.label}
-                    initial={{ opacity: 0, x: -16 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.06 + i * 0.04 }}
-                  >
+                  <motion.div key={item.label} initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.06 + i * 0.04 }}>
                     <Link
                       to={item.href}
                       onClick={() => setMobileMenuOpen(false)}
                       className={`flex items-center gap-3.5 px-4 py-3 rounded-xl text-[15px] font-medium transition-all ${
-                        active
-                          ? "text-success bg-success/10"
-                          : "text-foreground/70 hover:text-foreground hover:bg-secondary/60"
+                        active ? "text-success bg-success/10" : "text-foreground/70 hover:text-foreground hover:bg-secondary/60"
                       }`}
                     >
                       <Icon className={`w-[18px] h-[18px] ${active ? "text-success" : "text-muted-foreground"}`} />
                       {item.label}
-                      {active && (
-                        <div className="ml-auto w-1.5 h-1.5 rounded-full bg-success" />
-                      )}
+                      {active && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-success" />}
                     </Link>
                   </motion.div>
                 );
               })}
             </nav>
 
-            {/* Divider + account actions */}
-            <div className="mx-5 mt-4 border-t border-border/20" />
+            <div className="mx-5 mt-4" style={{ borderTop: "1px solid hsla(0,0%,100%,0.06)" }} />
 
             {user ? (
               <div className="px-5 mt-3 space-y-1">
@@ -439,63 +416,40 @@ const Header = ({ hideBanner = false }: { hideBanner?: boolean }) => {
                   { icon: Package, label: "Meus Pedidos", action: () => navigate("/dashboard?tab=purchases") },
                   { icon: Settings, label: "Configurações", action: () => navigate("/dashboard?tab=settings") },
                 ].map(({ icon: Icon, label, action }, i) => (
-                  <motion.button
-                    key={label}
-                    initial={{ opacity: 0, x: -16 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.25 + i * 0.04 }}
+                  <motion.button key={label} initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.25 + i * 0.04 }}
                     onClick={() => { action(); setMobileMenuOpen(false); }}
-                    className="flex w-full items-center gap-3.5 px-4 py-3 rounded-xl text-[15px] text-foreground/60 hover:text-foreground hover:bg-secondary/60 transition-all"
-                  >
+                    className="flex w-full items-center gap-3.5 px-4 py-3 rounded-xl text-[15px] text-foreground/60 hover:text-foreground hover:bg-secondary/60 transition-all">
                     <Icon className="w-[18px] h-[18px] text-muted-foreground" />
                     {label}
                   </motion.button>
                 ))}
                 {isAdmin && (
                   <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.37 }}>
-                    <Link
-                      to="/admin"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="flex w-full items-center gap-3.5 px-4 py-3 rounded-xl text-[15px] font-medium text-success hover:bg-success/10 transition-all"
-                    >
+                    <Link to="/admin" onClick={() => setMobileMenuOpen(false)}
+                      className="flex w-full items-center gap-3.5 px-4 py-3 rounded-xl text-[15px] font-medium text-success hover:bg-success/10 transition-all">
                       <ShieldAlert className="w-[18px] h-[18px]" />
                       Painel Admin
                     </Link>
                   </motion.div>
                 )}
-
                 <div className="pt-2">
-                  <button
-                    onClick={() => { signOut(); setMobileMenuOpen(false); }}
-                    className="flex w-full items-center gap-3.5 px-4 py-3 rounded-xl text-[15px] text-destructive/80 hover:bg-destructive/10 transition-all"
-                  >
+                  <button onClick={() => { signOut(); setMobileMenuOpen(false); }}
+                    className="flex w-full items-center gap-3.5 px-4 py-3 rounded-xl text-[15px] text-destructive/80 hover:bg-destructive/10 transition-all">
                     <LogOut className="w-[18px] h-[18px]" />
                     Sair
                   </button>
                 </div>
               </div>
             ) : (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="px-5 mt-5 space-y-2.5"
-              >
-                <button
-                  onClick={() => { setAuthTab("register"); setAuthOpen(true); setMobileMenuOpen(false); }}
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="px-5 mt-5 space-y-2.5">
+                <button onClick={() => { setAuthTab("register"); setAuthOpen(true); setMobileMenuOpen(false); }}
                   className="w-full py-3 text-[15px] font-semibold text-success-foreground rounded-xl transition-all btn-shine"
-                  style={{
-                    background: isLolContext ? LOL_BLUE : "hsl(var(--success))",
-                    boxShadow: `0 0 24px ${isLolContext ? LOL_BLUE : "hsl(var(--success))"}25`,
-                  }}
-                >
+                  style={{ background: accentColor, boxShadow: `0 0 24px ${accentColor}25` }}>
                   Criar Conta
                 </button>
-                <button
-                  onClick={() => { setAuthTab("login"); setAuthOpen(true); setMobileMenuOpen(false); }}
+                <button onClick={() => { setAuthTab("login"); setAuthOpen(true); setMobileMenuOpen(false); }}
                   className="w-full py-3 text-[15px] font-medium text-muted-foreground rounded-xl transition-colors"
-                  style={{ background: "hsla(0,0%,100%,0.04)", border: "1px solid hsla(0,0%,100%,0.08)" }}
-                >
+                  style={{ background: "hsla(0,0%,100%,0.04)", border: "1px solid hsla(0,0%,100%,0.08)" }}>
                   Já tenho conta
                 </button>
               </motion.div>
@@ -504,8 +458,8 @@ const Header = ({ hideBanner = false }: { hideBanner?: boolean }) => {
         )}
       </AnimatePresence>
 
-      {/* Spacer to prevent content from being hidden behind fixed header */}
-      <div className={`${bannerVisible ? 'h-[86px] sm:h-[100px] lg:h-[104px]' : 'h-14 sm:h-16 lg:h-[72px]'} transition-all duration-300`} />
+      {/* Spacer */}
+      <div className={`${bannerVisible ? 'h-[86px] sm:h-[100px] lg:h-[100px]' : 'h-[68px] sm:h-[72px] lg:h-[76px]'} transition-all duration-300`} />
     </>
   );
 };
