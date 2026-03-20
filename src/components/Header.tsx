@@ -98,7 +98,7 @@ const Header = () => {
                 transition={{ duration: 0.35 }}
               />
               <span
-                className="text-[15px] sm:text-base tracking-[0.14em] whitespace-nowrap hidden sm:inline"
+                className="text-base sm:text-lg tracking-[0.14em] whitespace-nowrap hidden sm:inline"
                 style={{ fontFamily: "'Valorant', sans-serif" }}
               >
                 <span className="text-success">ROYAL</span>
