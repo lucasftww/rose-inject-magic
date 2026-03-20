@@ -148,10 +148,13 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
         for (const pay of (allPaymentsRes || [])) {
           const snapshot = pay.cart_snapshot as any[];
           if (!Array.isArray(snapshot)) continue;
+          const cartTotal = snapshot.reduce((sum: number, item: any) => sum + (Number(item.price) || 0), 0);
+          const actualPaid = Number(pay.amount) / 100;
           for (const item of snapshot) {
             const key = `${pay.user_id}|${item.productId}|${item.planId}`;
             if (!paidPriceMap.has(key) && item.price != null) {
-              paidPriceMap.set(key, Number(item.price));
+              const proportion = cartTotal > 0 ? (Number(item.price) / cartTotal) : 0;
+              paidPriceMap.set(key, actualPaid * proportion);
             }
           }
         }
@@ -237,9 +240,6 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
   // Note: discount_amount is NOT subtracted from profit because payments.amount
   // already stores the post-discount value (the actual money received).
   // Subtracting it again would double-count discounts.
-  const periodDiscounts = useMemo(() => {
-    return filteredPayments.reduce((s: number, p: any) => s + (Number(p.discount_amount) || 0), 0);
-  }, [filteredPayments]);
 
   const netProfit = periodRevenue - (periodLztCost + periodRobotCost);
   const profitMargin = periodRevenue > 0 ? (netProfit / periodRevenue) * 100 : 0;
