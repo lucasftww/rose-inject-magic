@@ -123,18 +123,20 @@ const ProductCard = ({ product }: { product: ProductFromDB }) => {
 const GameSelectScreen = ({ onSelect, games, loading }: { onSelect: (gameId: string) => void; games: GameFromDB[]; loading: boolean }) => (
   <div className="min-h-screen bg-background">
     <Header />
-    <div className="mx-auto max-w-5xl px-4 sm:px-6 pt-4 pb-20">
+    <div className="mx-auto max-w-6xl px-4 sm:px-6 pt-6 pb-20">
       <motion.div
         className="text-center"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
-        <p className="text-xs sm:text-sm font-medium uppercase tracking-[0.3em] text-success">Selecione o Jogo</p>
-        <h1 className="mt-2 sm:mt-3 text-2xl sm:text-4xl font-bold tracking-tight text-foreground md:text-6xl" style={{ fontFamily: "'Valorant', sans-serif" }}>
+        <p className="text-xs sm:text-sm font-medium uppercase tracking-[0.3em] text-success">Nossos Jogos</p>
+        <h1 className="mt-2 sm:mt-3 text-2xl sm:text-4xl font-bold tracking-tight text-foreground md:text-5xl" style={{ fontFamily: "'Valorant', sans-serif" }}>
           ESCOLHA SEU JOGO
         </h1>
-        <p className="mt-2 sm:mt-4 text-sm sm:text-base text-muted-foreground">Selecione o jogo para ver os produtos disponíveis</p>
+        <p className="mt-2 sm:mt-4 text-sm sm:text-base text-muted-foreground max-w-xl mx-auto">
+          Cheats premium e contas para seus jogos favoritos. Domine as lobbies com confiança e segurança.
+        </p>
       </motion.div>
 
       {loading ? (
@@ -143,7 +145,7 @@ const GameSelectScreen = ({ onSelect, games, loading }: { onSelect: (gameId: str
         <div className="mt-14 sm:mt-20 text-center text-muted-foreground">Nenhum jogo disponível no momento.</div>
       ) : (
         <motion.div
-          className="mt-8 sm:mt-14 grid grid-cols-2 gap-3 sm:gap-6 sm:grid-cols-3"
+          className="mt-8 sm:mt-12 grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4"
           initial="hidden"
           animate="visible"
           variants={staggerContainer}
@@ -154,14 +156,15 @@ const GameSelectScreen = ({ onSelect, games, loading }: { onSelect: (gameId: str
               variants={fadeUp}
               custom={idx}
               onClick={() => onSelect(game.id)}
-              className="group relative overflow-hidden rounded-2xl border border-border/60 bg-card transition-all duration-500 hover:border-success/50 hover:shadow-[0_0_40px_hsl(130,99%,41%,0.12)] focus:outline-none"
+              className="group relative flex flex-col overflow-hidden rounded-xl border border-border/40 bg-card transition-all duration-300 hover:border-success/50 hover:shadow-[0_4px_32px_hsl(var(--success)/0.12)] focus:outline-none active:scale-[0.97]"
             >
+              {/* Image area */}
               <div className="relative aspect-[4/5] overflow-hidden">
                 {game.image_url ? (
                   <img
                     src={game.image_url}
                     alt={game.name}
-                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                   />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center bg-secondary text-5xl font-bold text-muted-foreground/20">
@@ -169,33 +172,33 @@ const GameSelectScreen = ({ onSelect, games, loading }: { onSelect: (gameId: str
                   </div>
                 )}
                 {/* Gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-80 transition-opacity duration-500 group-hover:opacity-90" />
-                
-                {/* Glow line on hover */}
-                <div className="absolute bottom-0 left-0 h-[2px] w-full bg-gradient-to-r from-transparent via-success to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+
+                {/* Product count badge */}
+                <div className="absolute top-3 right-3 rounded-md bg-success px-2 py-0.5 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-success-foreground shadow-lg">
+                  {game.product_count} {game.product_count === 1 ? "software" : "softwares"}
+                </div>
+
+                {/* Game name & description overlaid at bottom */}
+                <div className="absolute bottom-0 left-0 w-full p-3 sm:p-4">
+                  <h3
+                    className="text-base sm:text-xl font-bold text-white drop-shadow-lg"
+                    style={{ fontFamily: "'Valorant', sans-serif" }}
+                  >
+                    {game.name}
+                  </h3>
+                  <p className="mt-0.5 text-[10px] sm:text-xs text-white/60 line-clamp-2">
+                    Cheats para {game.name} — domine cada round
+                  </p>
+                </div>
               </div>
 
-              {/* Content */}
-              <div className="absolute bottom-0 left-0 w-full p-5 md:p-6">
-                <div className="flex items-end justify-between gap-3">
-                  <div className="text-left">
-                    <h3
-                      className="text-lg font-bold text-white md:text-2xl drop-shadow-lg"
-                      style={{ fontFamily: "'Valorant', sans-serif" }}
-                    >
-                      {game.name}
-                    </h3>
-                    <p className="mt-1.5 flex items-center gap-1.5 text-xs text-white/60 md:text-sm">
-                      <Package className="h-3.5 w-3.5" />
-                      {game.product_count} {game.product_count === 1 ? "produto" : "produtos"}
-                    </p>
-                  </div>
-                  <div className="hidden md:flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/40 backdrop-blur-sm transition-all duration-300 group-hover:border-success/40 group-hover:bg-success/20 group-hover:text-success md:h-10 md:w-10">
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                    </svg>
-                  </div>
-                </div>
+              {/* CTA bar */}
+              <div className="flex items-center justify-center gap-1.5 border-t border-border/30 bg-card px-3 py-2.5 sm:py-3 text-[10px] sm:text-xs font-bold uppercase tracking-[0.15em] text-muted-foreground transition-colors group-hover:text-success">
+                Ver softwares {game.name}
+                <svg className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
               </div>
             </motion.button>
           ))}
