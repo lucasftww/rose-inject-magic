@@ -124,7 +124,7 @@ const Header = () => {
                         : "text-foreground/45 hover:text-foreground/80 hover:bg-foreground/[0.04]"
                     }`}
                   >
-                    <Icon className="w-3.5 h-3.5 opacity-70" />
+                    <Icon className="w-4 h-4 opacity-70" />
                     {item.label}
                   </Link>
                 );
