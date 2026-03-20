@@ -80,7 +80,7 @@ const Header = () => {
         className="fixed left-0 right-0 z-50 top-0"
       >
         <div
-          className="flex h-14 sm:h-16 items-center px-5 sm:px-8 lg:px-10 transition-all duration-500"
+          className="relative flex h-14 sm:h-16 items-center px-5 sm:px-8 lg:px-10 transition-all duration-500"
           style={{
             background: "hsla(0,0%,6%,0.7)",
             backdropFilter: "blur(20px) saturate(1.4)",
@@ -106,11 +106,8 @@ const Header = () => {
               </span>
             </Link>
 
-            {/* ── Separator ── */}
-            <div className="hidden lg:block h-6 w-px mx-5 bg-foreground/[0.08]" />
-
-            {/* ── Desktop nav ── */}
-            <nav className="hidden lg:flex items-center gap-0.5 flex-1">
+            {/* ── Desktop nav (centered) ── */}
+            <nav className="hidden lg:flex items-center justify-center gap-1 absolute left-1/2 -translate-x-1/2">
               {NAV_ITEMS.map((item) => {
                 const active = isActive(item.href);
                 const Icon = item.icon;
