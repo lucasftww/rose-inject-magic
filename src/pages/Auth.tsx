@@ -132,9 +132,11 @@ const Auth = () => {
     <div className="min-h-screen relative flex items-center justify-center lg:justify-end overflow-hidden">
       {/* BG image */}
       <img
-        src="/images/auth-bg.png"
+        src="/images/auth-bg.webp"
         alt=""
         className="absolute inset-0 w-full h-full object-cover"
+        loading="eager"
+        fetchPriority="high"
       />
       {/* Dark overlay */}
       <div className="absolute inset-0 bg-black/50" />
