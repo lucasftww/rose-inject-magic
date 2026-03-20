@@ -356,7 +356,7 @@ const Header = () => {
                       to={item.href}
                       onClick={() => setMobileMenuOpen(false)}
                       className={`flex items-center gap-3.5 px-4 py-3 rounded-xl text-[15px] font-medium transition-all ${
-                        active ? "text-success bg-success/8" : "text-foreground/60 hover:text-foreground hover:bg-foreground/[0.04]"
+                        active ? "text-success bg-success/[0.08]" : "text-foreground/60 hover:text-foreground hover:bg-foreground/[0.04]"
                       }`}
                     >
                       <Icon className={`w-[18px] h-[18px] ${active ? "text-success" : "text-foreground/30"}`} />
