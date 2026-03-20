@@ -378,13 +378,13 @@ const Header = () => {
               </div>
             ) : (
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="px-5 mt-5 space-y-2">
-                <button onClick={() => { setAuthTab("register"); setAuthOpen(true); setMobileMenuOpen(false); }}
-                  className="w-full py-3 text-[14px] font-semibold text-success-foreground rounded-xl transition-all btn-shine"
+                <Link to="/auth" onClick={() => setMobileMenuOpen(false)}
+                  className="block w-full py-3 text-[14px] font-semibold text-success-foreground rounded-xl transition-all btn-shine text-center"
                   style={{ background: accentColor, boxShadow: `0 0 20px ${accentColor}20` }}>
                   Criar Conta
-                </button>
-                <button onClick={() => { setAuthTab("login"); setAuthOpen(true); setMobileMenuOpen(false); }}
-                  className="w-full py-3 text-[14px] font-medium text-foreground/50 rounded-xl transition-colors hover:text-foreground"
+                </Link>
+                <Link to="/auth" onClick={() => setMobileMenuOpen(false)}
+                  className="block w-full py-3 text-[14px] font-medium text-foreground/50 rounded-xl transition-colors hover:text-foreground text-center"
                   style={{ background: "hsla(0,0%,100%,0.03)", border: "1px solid hsla(0,0%,100%,0.07)" }}>
                   Já tenho conta
                 </button>
