@@ -118,7 +118,7 @@ const Header = () => {
                   <Link
                     key={item.label}
                     to={item.href}
-                    className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12.5px] font-medium tracking-[0.04em] transition-colors duration-150 ${
+                    className={`relative flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium tracking-[0.02em] transition-colors duration-150 ${
                       active
                         ? "text-success bg-success/[0.08]"
                         : "text-foreground/45 hover:text-foreground/80 hover:bg-foreground/[0.04]"
