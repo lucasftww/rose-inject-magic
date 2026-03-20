@@ -135,7 +135,7 @@ const Header = () => {
             <div className="flex items-center gap-2 sm:gap-3 ml-auto">
               {/* Language pill */}
               <div
-                className="hidden md:flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold uppercase tracking-widest cursor-default select-none text-foreground/30"
+                className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-semibold uppercase tracking-widest cursor-default select-none text-foreground/30"
                 style={{ background: "hsla(0,0%,100%,0.03)" }}
               >
                 <Globe className="w-2.5 h-2.5" />
