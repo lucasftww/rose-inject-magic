@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2, Eye, EyeOff, ArrowRight, Check } from "lucide-react";
 import logoRoyal from "@/assets/logo-royal.png";
+import { useTranslation } from "react-i18next";
 
 // ── Blocked temp-email domains ──────────────────────────────────────
 const BLOCKED_DOMAINS = [
@@ -24,26 +25,13 @@ function isTempEmail(email: string) {
 // ── Types ───────────────────────────────────────────────────────────
 type Mode = "login" | "signup" | "recovery";
 
-// ── Inline validation helpers ───────────────────────────────────────
-function validateEmail(v: string): string | null {
-  if (!v.trim()) return null; // don't show error on empty
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return "Email inválido";
-  if (isTempEmail(v)) return "Emails temporários não são permitidos";
-  return null;
-}
-
-function validatePassword(v: string): string | null {
-  if (!v) return null;
-  if (v.length < 6) return "Mínimo de 6 caracteres";
-  return null;
-}
-
 // ── Page ────────────────────────────────────────────────────────────
 const Auth = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const redirect = searchParams.get("redirect") || "/";
   const { user, loading, signIn, signUp, resetPassword } = useAuth();
+  const { t } = useTranslation();
 
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
@@ -53,20 +41,30 @@ const Auth = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [recoverySent, setRecoverySent] = useState(false);
 
-  // Touched states for inline errors
   const [touchedEmail, setTouchedEmail] = useState(false);
   const [touchedPassword, setTouchedPassword] = useState(false);
   const [touchedConfirm, setTouchedConfirm] = useState(false);
 
-  // Redirect if already logged in
   useEffect(() => {
     if (!loading && user) navigate(redirect, { replace: true });
   }, [loading, user, navigate, redirect]);
 
-  // Inline errors
+  function validateEmail(v: string): string | null {
+    if (!v.trim()) return null;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return t("auth.invalidEmail");
+    if (isTempEmail(v)) return t("auth.tempEmailBlocked");
+    return null;
+  }
+
+  function validatePassword(v: string): string | null {
+    if (!v) return null;
+    if (v.length < 6) return t("auth.minChars");
+    return null;
+  }
+
   const emailError = touchedEmail ? validateEmail(email) : null;
   const passwordError = touchedPassword ? validatePassword(password) : null;
-  const confirmError = touchedConfirm && confirmPassword && password !== confirmPassword ? "As senhas não coincidem" : null;
+  const confirmError = touchedConfirm && confirmPassword && password !== confirmPassword ? t("auth.passwordsMismatch") : null;
 
   const canSubmit = useCallback((): boolean => {
     if (!email.trim() || validateEmail(email)) return false;
@@ -85,20 +83,20 @@ const Auth = () => {
       if (mode === "login") {
         const { error } = await signIn(email, password);
         if (error) throw error;
-        toast.success("Login realizado!");
+        toast.success(t("auth.loginSuccess"));
         navigate(redirect, { replace: true });
       } else if (mode === "signup") {
         const username = email.split("@")[0];
         const { error } = await signUp(email, password, username);
         if (error) throw error;
-        toast.success("Conta criada! Verifique seu email.");
+        toast.success(t("auth.accountCreated"));
       } else {
         const { error } = await resetPassword(email);
         if (error) throw error;
         setRecoverySent(true);
       }
     } catch (error: any) {
-      toast.error(error?.message || "Algo deu errado");
+      toast.error(error?.message || t("auth.error"));
     } finally {
       setIsSubmitting(false);
     }
@@ -123,14 +121,13 @@ const Auth = () => {
   if (user) return null;
 
   const titles: Record<Mode, { title: string; sub: string }> = {
-    login: { title: "Entrar na Royal Store", sub: "Bem-vindo de volta! Faça login para continuar" },
-    signup: { title: "Criar sua conta", sub: "Cadastre-se para começar a comprar" },
-    recovery: { title: "Recuperar senha", sub: "Digite seu email para receber o link de recuperação" },
+    login: { title: t("auth.loginTitle"), sub: t("auth.loginSub") },
+    signup: { title: t("auth.signupTitle"), sub: t("auth.signupSub") },
+    recovery: { title: t("auth.recoveryTitle"), sub: t("auth.recoverySub") },
   };
 
   return (
     <div className="min-h-screen relative flex items-center justify-center lg:justify-end overflow-hidden">
-      {/* BG image */}
       <img
         src="/images/auth-bg.webp"
         alt=""
@@ -138,10 +135,8 @@ const Auth = () => {
         loading="eager"
         fetchPriority="high"
       />
-      {/* Dark overlay */}
       <div className="absolute inset-0 bg-black/50" />
 
-      {/* Logo top-left */}
       <Link
         to="/"
         className="absolute top-5 left-5 z-20 flex items-center gap-2"
@@ -149,7 +144,6 @@ const Auth = () => {
         <img src={logoRoyal} alt="Royal Store" className="w-9 h-9 object-contain" />
       </Link>
 
-      {/* ── Card ─────────────────────────────────────────────────────── */}
       <div className="relative z-10 w-full max-w-md mx-5 lg:mx-0 lg:mr-[15%] my-10">
         <div
           className="rounded-xl p-7 sm:p-9 flex flex-col gap-6"
@@ -158,7 +152,6 @@ const Auth = () => {
             border: "1px solid #2a2a2a",
           }}
         >
-          {/* Title */}
           <div className="text-center">
             <h1 className="text-xl lg:text-3xl font-bold text-white" style={{ lineHeight: 1.15 }}>
               {titles[mode].title}
@@ -168,26 +161,24 @@ const Auth = () => {
             </p>
           </div>
 
-          {/* ── Recovery success state ──────────────────────────────── */}
           {mode === "recovery" && recoverySent ? (
             <div className="flex flex-col items-center gap-4 py-6">
               <div className="w-14 h-14 rounded-full bg-success/15 flex items-center justify-center">
                 <Check className="w-7 h-7 text-success" />
               </div>
               <p className="text-sm text-[hsl(var(--muted-foreground))] text-center">
-                Enviamos um email para <span className="text-white font-medium">{email}</span>.
-                <br />Verifique sua caixa de entrada.
+                {t("auth.emailSent")} <span className="text-white font-medium">{email}</span>.
+                <br />{t("auth.checkInbox")}
               </p>
               <button
                 onClick={() => { setMode("login"); setRecoverySent(false); }}
                 className="text-sm text-success hover:underline mt-2"
               >
-                Voltar ao login
+                {t("auth.backToLogin")}
               </button>
             </div>
           ) : (
             <>
-              {/* ── OAuth (login & signup only) ──────────────────────── */}
               {mode !== "recovery" && (
                 <>
                   <div className="flex flex-col gap-3">
@@ -202,7 +193,7 @@ const Auth = () => {
                         <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18A10.96 10.96 0 0 0 1 12c0 1.77.42 3.45 1.18 4.93l2.85-2.22.81-.62z" />
                         <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
                       </svg>
-                      Entrar com Google
+                      {t("auth.googleLogin")}
                     </button>
 
                     <button
@@ -213,24 +204,21 @@ const Auth = () => {
                       <svg className="w-5 h-5" viewBox="0 0 16 16" fill="currentColor">
                         <path d="M13.545 2.907a13.2 13.2 0 0 0-3.257-1.011.05.05 0 0 0-.052.025c-.141.25-.297.577-.406.833a12.2 12.2 0 0 0-3.658 0 8 8 0 0 0-.412-.833.05.05 0 0 0-.052-.025c-1.125.194-2.22.534-3.257 1.011a.04.04 0 0 0-.021.018C.356 6.024-.213 9.047.066 12.032q.003.022.021.037a13.3 13.3 0 0 0 3.995 2.02.05.05 0 0 0 .056-.019q.463-.63.818-1.329a.05.05 0 0 0-.01-.059l-.018-.011a9 9 0 0 1-1.248-.595.05.05 0 0 1-.02-.066l.015-.019q.127-.095.248-.195a.05.05 0 0 1 .051-.007c2.619 1.196 5.454 1.196 8.041 0a.05.05 0 0 1 .053.007q.121.1.248.195a.05.05 0 0 1-.004.085 8 8 0 0 1-1.249.594.05.05 0 0 0-.03.03.05.05 0 0 0 .003.041c.24.465.515.909.817 1.329a.05.05 0 0 0 .056.019 13.2 13.2 0 0 0 4.001-2.02.05.05 0 0 0 .021-.037c.334-3.451-.559-6.449-2.366-9.106a.03.03 0 0 0-.02-.019m-8.198 7.307c-.789 0-1.438-.724-1.438-1.612s.637-1.613 1.438-1.613c.807 0 1.45.73 1.438 1.613 0 .888-.637 1.612-1.438 1.612m5.316 0c-.788 0-1.438-.724-1.438-1.612s.637-1.613 1.438-1.613c.807 0 1.451.73 1.438 1.613 0 .888-.631 1.612-1.438 1.612" />
                       </svg>
-                      Entrar com Discord
+                      {t("auth.discordLogin")}
                     </button>
                   </div>
 
-                  {/* Divider */}
                   <div className="flex items-center gap-3">
                     <div className="flex-1 h-px bg-[#2a2a2a]" />
-                    <span className="text-xs text-[hsl(var(--muted-foreground))]">Ou continue com email</span>
+                    <span className="text-xs text-[hsl(var(--muted-foreground))]">{t("auth.orContinueWith")}</span>
                     <div className="flex-1 h-px bg-[#2a2a2a]" />
                   </div>
                 </>
               )}
 
-              {/* ── Form ──────────────────────────────────────────────── */}
               <form onSubmit={handleSubmit} autoComplete="on" className="flex flex-col gap-4">
-                {/* Email */}
                 <div>
-                  <label className="text-sm font-semibold text-white mb-1.5 block">Email</label>
+                  <label className="text-sm font-semibold text-white mb-1.5 block">{t("auth.email")}</label>
                   <Input
                     type="email"
                     value={email}
@@ -243,10 +231,9 @@ const Auth = () => {
                   {emailError && <p className="text-xs text-red-500 mt-1">{emailError}</p>}
                 </div>
 
-                {/* Password */}
                 {mode !== "recovery" && (
                   <div>
-                    <label className="text-sm font-semibold text-white mb-1.5 block">Senha</label>
+                    <label className="text-sm font-semibold text-white mb-1.5 block">{t("auth.password")}</label>
                     <div className="relative">
                       <Input
                         type={showPassword ? "text" : "password"}
@@ -270,10 +257,9 @@ const Auth = () => {
                   </div>
                 )}
 
-                {/* Confirm password */}
                 {mode === "signup" && (
                   <div>
-                    <label className="text-sm font-semibold text-white mb-1.5 block">Confirmar senha</label>
+                    <label className="text-sm font-semibold text-white mb-1.5 block">{t("auth.confirmPassword")}</label>
                     <Input
                       type={showPassword ? "text" : "password"}
                       autoComplete="new-password"
@@ -287,7 +273,6 @@ const Auth = () => {
                   </div>
                 )}
 
-                {/* Submit */}
                 <Button
                   type="submit"
                   disabled={isSubmitting || !canSubmit()}
@@ -297,53 +282,50 @@ const Auth = () => {
                     <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
                     <span className="flex items-center gap-2">
-                      {mode === "login" ? "Continuar" : mode === "signup" ? "Criar conta" : "Enviar link"}
+                      {mode === "login" ? t("auth.continue") : mode === "signup" ? t("auth.createAccount") : t("auth.sendLink")}
                       <ArrowRight className="w-4 h-4" />
                     </span>
                   )}
                 </Button>
 
-                {/* Forgot password */}
                 {mode === "login" && (
                   <button
                     type="button"
                     onClick={() => { setMode("recovery"); setRecoverySent(false); }}
                     className="text-sm text-[hsl(var(--muted-foreground))] hover:text-white transition-colors text-center"
                   >
-                    Esqueceu sua senha?
+                    {t("auth.forgotPassword")}
                   </button>
                 )}
               </form>
 
-              {/* ── Mode switcher ────────────────────────────────────── */}
               <div className="text-center text-sm text-[hsl(var(--muted-foreground))]">
                 {mode === "login" ? (
                   <>
-                    Não tem uma conta?{" "}
+                    {t("auth.noAccount")}{" "}
                     <button onClick={() => setMode("signup")} className="text-white font-semibold hover:underline">
-                      Cadastre-se
+                      {t("auth.signUp")}
                     </button>
                   </>
                 ) : mode === "signup" ? (
                   <>
-                    Já tem uma conta?{" "}
+                    {t("auth.hasAccount")}{" "}
                     <button onClick={() => setMode("login")} className="text-white font-semibold hover:underline">
-                      Entrar
+                      {t("auth.login")}
                     </button>
                   </>
                 ) : (
                   <button onClick={() => { setMode("login"); setRecoverySent(false); }} className="text-white font-semibold hover:underline">
-                    Voltar ao login
+                    {t("auth.backToLogin")}
                   </button>
                 )}
               </div>
 
-              {/* ── Footer links ─────────────────────────────────────── */}
               <p className="text-xs text-[hsl(var(--muted-foreground))] text-center leading-relaxed">
-                Ao continuar, você concorda com os{" "}
-                <Link to="/termos" className="text-success hover:underline">Termos de Uso</Link>
-                {" "}e{" "}
-                <Link to="/privacidade" className="text-success hover:underline">Política de Privacidade</Link>
+                {t("auth.termsAgree")}{" "}
+                <Link to="/termos" className="text-success hover:underline">{t("auth.termsLink")}</Link>
+                {" "}{t("auth.and")}{" "}
+                <Link to="/privacidade" className="text-success hover:underline">{t("auth.privacyLink")}</Link>
               </p>
             </>
           )}
