@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_access_log: {
+        Row: {
+          created_at: string
+          granted: boolean
+          id: string
+          ip_hint: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          granted?: boolean
+          id?: string
+          ip_hint?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          granted?: boolean
+          id?: string
+          ip_hint?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       coupon_products: {
         Row: {
           coupon_id: string
@@ -1227,6 +1254,7 @@ export type Database = {
       admin_sales_count: { Args: { _status?: string }; Returns: number }
       admin_sales_revenue: { Args: never; Returns: number }
       admin_scratch_stats: { Args: never; Returns: Json }
+      admin_verify: { Args: never; Returns: Json }
       claim_stock_item: { Args: { _plan_id: string }; Returns: string }
       has_role: {
         Args: {
