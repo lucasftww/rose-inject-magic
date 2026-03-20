@@ -87,7 +87,7 @@ const Header = () => {
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ type: "spring", damping: 22, stiffness: 180 }}
-        className={`fixed left-0 right-0 z-50 transition-all duration-500 ${bannerVisible ? 'top-[30px] sm:top-[32px]' : 'top-0'}`}
+        className="fixed left-0 right-0 z-50 top-0"
       >
         {/* Glassmorphic bar — centered with max-width, floating feel */}
         <div className="mx-auto max-w-5xl px-3 sm:px-4 lg:px-5 pt-3">
