@@ -5,10 +5,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 
 /**
- * Centralized server-side admin guard.
- * - Blocks rendering until Supabase RPC confirms admin role
- * - Cannot be bypassed via DevTools, localStorage, or React state manipulation
- * - Admin child components/bundles are never loaded for non-admin users
+ * Centralized server-side admin guard with DOUBLE verification.
+ *
+ * Layer 1: supabase.rpc("has_role")   — checks user_roles via existing RPC
+ * Layer 2: supabase.rpc("admin_verify") — independent SECURITY DEFINER function
+ *          that also logs every access attempt to admin_access_log
+ *
+ * Both must return true. If either fails → access denied.
+ * Cannot be bypassed via DevTools, localStorage, or React state manipulation.
+ * Admin child components/bundles are never loaded for non-admin users.
  */
 const AdminGuard = ({ children }: { children: ReactNode }) => {
   const { user, loading } = useAuth();
@@ -26,12 +31,32 @@ const AdminGuard = ({ children }: { children: ReactNode }) => {
 
     const verify = async () => {
       try {
-        const { data, error } = await supabase.rpc("has_role", {
-          _user_id: user.id,
-          _role: "admin" as const,
-        });
-        if (error) console.error("AdminGuard: role check failed:", error.message);
-        if (!cancelled) setServerVerified(!error && !!data);
+        // Run BOTH checks in parallel — both must pass
+        const [roleCheck, adminVerify] = await Promise.all([
+          supabase.rpc("has_role", {
+            _user_id: user.id,
+            _role: "admin" as const,
+          }),
+          supabase.rpc("admin_verify"),
+        ]);
+
+        if (roleCheck.error) {
+          console.error("AdminGuard: has_role check failed:", roleCheck.error.message);
+        }
+        if (adminVerify.error) {
+          console.error("AdminGuard: admin_verify check failed:", adminVerify.error.message);
+        }
+
+        const layer1 = !roleCheck.error && !!roleCheck.data;
+        const layer2 = !adminVerify.error &&
+          typeof adminVerify.data === "object" &&
+          adminVerify.data !== null &&
+          (adminVerify.data as any).verified === true &&
+          (adminVerify.data as any).uid === user.id;
+
+        if (!cancelled) {
+          setServerVerified(layer1 && layer2);
+        }
       } catch (err) {
         console.error("AdminGuard: unexpected error during role check:", err);
         if (!cancelled) setServerVerified(false);
