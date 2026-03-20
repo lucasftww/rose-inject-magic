@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Gift, Trophy, Frown, Ticket, History, Star, X, Flower2, Copy, Check, Plus, Minus, Package, User, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import AuthModal from "@/components/AuthModal";
 
 interface Prize {
   id: string;
@@ -95,7 +95,7 @@ const Raspadinha = () => {
   const [result, setResult] = useState<{ won: boolean; prize?: Prize } | null>(null);
   const [history, setHistory] = useState<Play[]>([]);
   const [showHistory, setShowHistory] = useState(false);
-  const [authOpen, setAuthOpen] = useState(false);
+  const navigateAuth = useNavigate();
   const [scratching, setScratching] = useState(false);
   const canvasRefs = useRef<(HTMLCanvasElement | null)[]>(Array(9).fill(null));
   const isDrawing = useRef(false);
@@ -271,7 +271,7 @@ const Raspadinha = () => {
 
   const handlePlay = async () => {
     if (!user) {
-      setAuthOpen(true);
+      navigateAuth("/auth?redirect=/raspadinha");
       return;
     }
     if (mode === "produtos" && !config?.active) {
@@ -624,7 +624,7 @@ const Raspadinha = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <AuthModal open={authOpen} onOpenChange={setAuthOpen} defaultTab="login" />
+      
 
       <div className="mx-auto max-w-4xl px-4 sm:px-6 pt-4 pb-20">
         {/* Pending payment banner */}
