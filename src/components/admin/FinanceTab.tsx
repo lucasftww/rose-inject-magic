@@ -397,8 +397,8 @@ const FinanceTab = () => {
       <div class="card"><p class="card-label">Transações</p><p class="card-value">${fp.length}</p></div>
     </div>
     <p class="section">Custos</p><div class="grid">
-      <div class="card"><p class="card-label">Custo LZT</p><p class="card-value red">R$ ${fmt(lztTotalBought)}</p></div>
-      <div class="card"><p class="card-label">Custo Robot</p><p class="card-value red">R$ ${fmt(robotTotalCost)}</p></div>
+      <div class="card"><p class="card-label">Custo LZT</p><p class="card-value">R$ ${fmt(lztTotalBought)}</p></div>
+      <div class="card"><p class="card-label">Custo Robot</p><p class="card-value">R$ ${fmt(robotTotalCost)}</p></div>
       
     </div>
     <p class="footer">Royal Store · Relatório gerado automaticamente</p></body></html>`;
@@ -442,9 +442,9 @@ const FinanceTab = () => {
         </div>
       </div>
 
-      {/* Hero: Profit */}
+      {/* Hero: Profit + Margin */}
       <div className="rounded-xl border border-success/20 bg-success/[0.03] p-5">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-success/15">
               <TrendingUp className="h-5 w-5 text-success" />
@@ -464,18 +464,18 @@ const FinanceTab = () => {
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+        <div className="grid grid-cols-3 gap-2">
           <div className="rounded-lg bg-card border border-border p-3 text-center">
-            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Receita</p>
-            <p className="text-lg font-bold text-foreground mt-1">R$ {fmtCompact(totalRevenue)}</p>
+            <p className="text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-wider">Receita</p>
+            <p className="text-sm font-semibold text-muted-foreground mt-1">R$ {fmtCompact(totalRevenue)}</p>
           </div>
-          <div className="rounded-lg bg-card border border-destructive/10 p-3 text-center">
-            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Custo LZT</p>
-            <p className="text-lg font-bold text-destructive mt-1">-R$ {fmtCompact(lztTotalBought)}</p>
+          <div className="rounded-lg bg-card border border-border p-3 text-center">
+            <p className="text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-wider">Custo LZT</p>
+            <p className="text-sm font-semibold text-muted-foreground mt-1">R$ {fmtCompact(lztTotalBought)}</p>
           </div>
-          <div className="rounded-lg bg-card border border-destructive/10 p-3 text-center">
-            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Custo Robot</p>
-            <p className="text-lg font-bold text-destructive mt-1">-R$ {fmtCompact(robotTotalCost)}</p>
+          <div className="rounded-lg bg-card border border-border p-3 text-center">
+            <p className="text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-wider">Custo Robot</p>
+            <p className="text-sm font-semibold text-muted-foreground mt-1">R$ {fmtCompact(robotTotalCost)}</p>
           </div>
         </div>
       </div>
@@ -496,7 +496,7 @@ const FinanceTab = () => {
         <div className="rounded-xl border border-border bg-card p-5">
           <h3 className="text-sm font-bold text-foreground flex items-center gap-2 mb-4">
             <CalendarDays className="h-4 w-4 text-success" />
-            {period === "24h" ? "Faturamento por Hora" : "Faturamento Diário"}
+            {period === "24h" ? "Movimentação por Hora" : "Movimentação Diária"}
           </h3>
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={dailyData}>
@@ -522,7 +522,7 @@ const FinanceTab = () => {
         <div className="rounded-xl border border-border bg-card p-5">
           <h3 className="text-sm font-bold text-foreground flex items-center gap-2 mb-4">
             <Package className="h-4 w-4 text-success" />
-            Receita por Fonte
+            Distribuição por Fonte
           </h3>
           {revenuePieData.length === 0 ? (
             <p className="py-8 text-center text-sm text-muted-foreground">Sem dados</p>
