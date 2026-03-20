@@ -254,10 +254,8 @@ const FinanceTab = () => {
   const fp = useMemo(() => filterByPeriod(payments, period), [payments, period]);
   const pp = useMemo(() => getPreviousPeriodItems(payments, period), [payments, period]);
   const fLzt = useMemo(() => filterByPeriod(lztSales, period, "created_at"), [lztSales, period]);
-  const pLzt = useMemo(() => getPreviousPeriodItems(lztSales, period, "created_at"), [lztSales, period]);
   const fReseller = useMemo(() => filterByPeriod(resellerPurchases, period, "created_at"), [resellerPurchases, period]);
   const fRobot = useMemo(() => filterByPeriod(robotTickets, period, "created_at"), [robotTickets, period]);
-  const pRobot = useMemo(() => getPreviousPeriodItems(robotTickets, period, "created_at"), [robotTickets, period]);
 
   // ─── Revenue metrics ───
   const totalRevenue = useMemo(() => fp.reduce((s, p) => s + p.amount / 100, 0), [fp]);
