@@ -80,7 +80,7 @@ const Header = () => {
         className="fixed left-0 right-0 z-50 top-0"
       >
         <div
-          className="flex h-14 sm:h-16 items-center px-5 sm:px-8 lg:px-10 transition-all duration-500"
+          className="relative flex h-14 sm:h-16 items-center px-5 sm:px-8 lg:px-10 transition-all duration-500"
           style={{
             background: "hsla(0,0%,6%,0.7)",
             backdropFilter: "blur(20px) saturate(1.4)",
