@@ -387,7 +387,7 @@ const Header = () => {
                   className="block w-full py-3 text-[14px] font-medium text-foreground/50 rounded-xl transition-colors hover:text-foreground text-center"
                   style={{ background: "hsla(0,0%,100%,0.03)", border: "1px solid hsla(0,0%,100%,0.07)" }}>
                   Já tenho conta
-                </button>
+                </Link>
               </motion.div>
             )}
           </motion.div>
