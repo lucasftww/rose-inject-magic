@@ -128,18 +128,17 @@ const PedidoChat = () => {
           setPlanPrice((planRes.data as any).price);
         }
       }
-      // For Robot products, use download_url from metadata; fallback to product_tutorials
-      if (isRobot) {
-        if (meta?.download_url) {
-          setTutorialFileUrl(meta.download_url);
-          setTutorialText(meta.file_name ? `Arquivo: ${meta.file_name}` : null);
-        } else if (tutorialRes.data) {
-          setTutorialText((tutorialRes.data as any).tutorial_text || null);
-          setTutorialFileUrl((tutorialRes.data as any).tutorial_file_url || null);
-        }
-      } else if (tutorialRes.data) {
+      // Always load tutorial from product_tutorials table first
+      if (tutorialRes.data) {
         setTutorialText((tutorialRes.data as any).tutorial_text || null);
         setTutorialFileUrl((tutorialRes.data as any).tutorial_file_url || null);
+      }
+      // For Robot products, also use download_url from metadata if product_tutorials has no file
+      if (isRobot && meta?.download_url && !tutorialRes.data?.tutorial_file_url) {
+        setTutorialFileUrl(meta.download_url);
+        if (!tutorialRes.data?.tutorial_text && meta.file_name) {
+          setTutorialText(`Arquivo: ${meta.file_name}`);
+        }
       }
       if (messagesRes.data) setMessages(messagesRes.data as any[]);
 
@@ -895,7 +894,7 @@ const PedidoChat = () => {
         {/* Chat - Full Width */}
         <div className="flex max-h-[700px] min-h-[450px] flex-col rounded-xl border border-border bg-card overflow-hidden">
           {/* Delivery banner inside chat */}
-          {(stockContent || isFreeNoKey) && (
+          {(stockContent || isFreeNoKey || tutorialText || tutorialFileUrl) && (
             <>
               <button
                 onClick={() => setExpandedSection(expandedSection === "delivery" ? null : "delivery")}
