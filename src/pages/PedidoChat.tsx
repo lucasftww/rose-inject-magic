@@ -894,7 +894,7 @@ const PedidoChat = () => {
         {/* Chat - Full Width */}
         <div className="flex max-h-[700px] min-h-[450px] flex-col rounded-xl border border-border bg-card overflow-hidden">
           {/* Delivery banner inside chat */}
-          {(stockContent || isFreeNoKey) && (
+          {(stockContent || isFreeNoKey || tutorialText || tutorialFileUrl) && (
             <>
               <button
                 onClick={() => setExpandedSection(expandedSection === "delivery" ? null : "delivery")}
