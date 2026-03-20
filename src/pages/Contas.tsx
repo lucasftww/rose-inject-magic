@@ -314,7 +314,7 @@ const LztPreviewImage = ({ url }: { url: string }) => {
   );
 };
 
-const ValorantCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap: Map<string, SkinEntry>; formatPrice: (price: number, currency?: string) => string }) => {
+const ValorantCard = memo(({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap: Map<string, SkinEntry>; formatPrice: (price: number, currency?: string) => string }) => {
   const navigate = useNavigate();
   const rank = item.riot_valorant_rank ? rankMap[item.riot_valorant_rank] : null;
   const hasKnife = (item.riot_valorant_knife ?? 0) > 0;
@@ -421,10 +421,11 @@ const ValorantCard = ({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap
       </div>
     </div>
   );
-};
+});
+ValorantCard.displayName = "ValorantCard";
 
 // ─── LoL Card ───
-const LolCard = ({ item, champKeyMap, formatPrice }: { item: LztItem; champKeyMap: Map<number, string>; formatPrice: (price: number, currency?: string) => string }) => {
+const LolCard = memo(({ item, champKeyMap, formatPrice }: { item: LztItem; champKeyMap: Map<number, string>; formatPrice: (price: number, currency?: string) => string }) => {
   const navigate = useNavigate();
   const rankText = item.riot_lol_rank || "Unranked";
   const rankFilterId = lolRankToFilterId(rankText);
@@ -571,10 +572,11 @@ const LolCard = ({ item, champKeyMap, formatPrice }: { item: LztItem; champKeyMa
       </div>
     </div>
   );
-};
+});
+LolCard.displayName = "LolCard";
 
 // ─── Fortnite Card ───
-const FortniteCard = ({ item, skinsDb, formatPrice }: { item: LztItem; skinsDb: Map<string, { name: string; image: string }>; formatPrice: (price: number, currency?: string) => string }) => {
+const FortniteCard = memo(({ item, skinsDb, formatPrice }: { item: LztItem; skinsDb: Map<string, { name: string; image: string }>; formatPrice: (price: number, currency?: string) => string }) => {
   const navigate = useNavigate();
   const raw = item as any;
   const vbucks = raw.fortnite_balance ?? raw.fortnite_vbucks ?? 0;
@@ -692,10 +694,11 @@ const FortniteCard = ({ item, skinsDb, formatPrice }: { item: LztItem; skinsDb: 
       </div>
     </div>
   );
-};
+});
+FortniteCard.displayName = "FortniteCard";
 
 // ─── Minecraft Card ───
-const MinecraftCard = ({ item, formatPrice }: { item: LztItem; formatPrice: (price: number, currency?: string) => string }) => {
+const MinecraftCard = memo(({ item, formatPrice }: { item: LztItem; formatPrice: (price: number, currency?: string) => string }) => {
   const navigate = useNavigate();
   const nickname = item.minecraft_nickname;
   const hasJava = (item.minecraft_java ?? 0) > 0;
@@ -760,7 +763,8 @@ const MinecraftCard = ({ item, formatPrice }: { item: LztItem; formatPrice: (pri
       </div>
     </div>
   );
-};
+});
+MinecraftCard.displayName = "MinecraftCard";
 
 // ─── API ───
 const fetchAccountsRaw = async (params: Record<string, string | string[]>) => {
@@ -998,7 +1002,7 @@ const Contas = () => {
       const batches: number[][] = [];
       const remaining: number[] = [];
       for (let p = 2; p <= maxPages; p++) remaining.push(p);
-      while (remaining.length > 0) batches.push(remaining.splice(0, 3));
+      while (remaining.length > 0) batches.push(remaining.splice(0, 4));
 
       let stopProbing = false;
 

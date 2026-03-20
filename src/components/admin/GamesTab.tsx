@@ -66,7 +66,7 @@ const GamesTab = () => {
     setImagePreview(game.image_url || null); setImageMode("url");
   };
 
-  const uploadFile = async (file: File) => {
+  const uploadFile = useCallback(async (file: File) => {
     if (!file.type.startsWith("image/")) { toast({ title: "Apenas imagens são aceitas", variant: "destructive" }); return; }
     if (file.size > 5 * 1024 * 1024) { toast({ title: "Máximo 5MB", variant: "destructive" }); return; }
     setUploading(true);
@@ -79,13 +79,14 @@ const GamesTab = () => {
     setImagePreview(urlData.publicUrl);
     toast({ title: "Imagem enviada!" });
     setUploading(false);
-  };
+  }, []);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault(); setDragOver(false);
     const file = e.dataTransfer.files[0];
     if (file) uploadFile(file);
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uploadFile]);
 
   const handleGenerateAI = async () => {
     const prompt = aiPrompt.trim() || formName.trim();
