@@ -271,7 +271,7 @@ const Raspadinha = () => {
 
   const handlePlay = async () => {
     if (!user) {
-      setAuthOpen(true);
+      navigateAuth("/auth?redirect=/raspadinha");
       return;
     }
     if (mode === "produtos" && !config?.active) {
