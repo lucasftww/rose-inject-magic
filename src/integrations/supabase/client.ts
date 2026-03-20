@@ -1,15 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '';
 
-if (!SUPABASE_URL) {
-  throw new Error('VITE_SUPABASE_URL is not defined. Check your .env file.');
-}
-
-if (!SUPABASE_PUBLISHABLE_KEY) {
-  throw new Error('VITE_SUPABASE_PUBLISHABLE_KEY is not defined. Check your .env file.');
+if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+  console.warn('⚠️ Supabase env vars missing. Check VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY.');
 }
 
 // Import the supabase client like this:
