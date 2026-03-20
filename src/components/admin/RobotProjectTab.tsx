@@ -219,7 +219,7 @@ const RobotProjectTab = () => {
         });
       }
 
-      const tickets = allTickets.filter((t: any) => productIds.includes(t.product_id));
+      const tickets = allTickets.filter((t: any) => productIds.includes(t.product_id) && (t.metadata as any)?.type !== "lzt-account");
       if (tickets.length === 0) {
         setRobotSales([]);
         setSalesLoading(false);

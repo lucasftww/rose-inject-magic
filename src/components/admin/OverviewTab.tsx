@@ -141,7 +141,7 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
 
         const plansRes = await supabase.from("product_plans").select("id, name, price").in("product_id", productIds);
 
-        const robotTickets = (allOrdersRes || []).filter((t: any) => t.status === "delivered" && productIds.includes(t.product_id));
+        const robotTickets = (allOrdersRes || []).filter((t: any) => t.status === "delivered" && productIds.includes(t.product_id) && (t.metadata as any)?.type !== "lzt-account");
         const planMap = Object.fromEntries((plansRes.data || []).map((p: any) => [p.id, p]));
 
         const paidPriceMap = new Map<string, number>();

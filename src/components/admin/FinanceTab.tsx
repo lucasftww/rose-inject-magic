@@ -194,7 +194,9 @@ const FinanceTab = () => {
         supabase.from("product_plans").select("id, name, price, robot_duration_days").in("product_id", productIds),
       ]);
 
-      const robotTicketsRaw = (ticketsRes || []).filter((t: any) => productIds.includes(t.product_id));
+      const robotTicketsRaw = (ticketsRes || []).filter((t: any) => 
+        productIds.includes(t.product_id) && (t.metadata as any)?.type !== "lzt-account"
+      );
       const planMap = Object.fromEntries((plansRes.data || []).map((p: any) => [p.id, p]));
 
       const paidPriceMap = new Map<string, number>();
