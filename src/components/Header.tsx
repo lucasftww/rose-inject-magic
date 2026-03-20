@@ -7,10 +7,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAuth } from "@/hooks/useAuth";
 import { AnimatePresence, motion } from "framer-motion";
 
-const maskEmail = (email: string) => {
-  const [name, domain] = email.split("@");
-  return name.slice(0, 2) + "****@" + domain;
-};
 
 const NAV_ITEMS = [
   { label: "Início", href: "/", icon: Home },
