@@ -430,7 +430,7 @@ const ContaDetalhes = () => {
         value: priceBRL
       });
     }
-  }, [item]);
+  }, [item, getPrice]);
 
   // Gallery from screenshots
   const gallery = useMemo(() => {

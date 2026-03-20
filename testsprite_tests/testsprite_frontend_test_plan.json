@@ -1,0 +1,670 @@
+[
+  {
+    "id": "TC001",
+    "title": "Landing page renders core sections on initial load",
+    "description": "Verifies the public landing page loads and displays the primary marketing sections a user expects to see.",
+    "category": "Landing Page",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the application's home page (/)"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the page title contains \"Royal\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"FAQ\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"How\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Reviews\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC002",
+    "title": "Hero section shows a primary call-to-action",
+    "description": "Verifies the hero area presents a prominent CTA that encourages users to start shopping or exploring products.",
+    "category": "Landing Page",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the application's home page (/)"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Hero section\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Primary call-to-action button\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Scroll to the top of the page"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Primary call-to-action button\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC003",
+    "title": "Featured products section is visible and populated on successful load",
+    "description": "Verifies the featured products section appears on the landing page and shows product content.",
+    "category": "Landing Page",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the application's home page (/)"
+      },
+      {
+        "type": "action",
+        "description": "Scroll to the \"Featured products\" section"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Featured\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Featured products list\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"A product card\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC004",
+    "title": "Featured Valorant accounts section is visible on successful load",
+    "description": "Verifies the landing page displays the featured Valorant accounts area for browsing accounts.",
+    "category": "Landing Page",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the application's home page (/)"
+      },
+      {
+        "type": "action",
+        "description": "Scroll to the \"Valorant accounts\" section"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Valorant\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Accounts list\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"An account card\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC005",
+    "title": "Reviews section is visible and readable",
+    "description": "Verifies customer reviews/testimonials are displayed on the landing page for social proof.",
+    "category": "Landing Page",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the application's home page (/)"
+      },
+      {
+        "type": "action",
+        "description": "Scroll to the \"Reviews\" section"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Reviews\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"A review card\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Reviewer name or handle\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC006",
+    "title": "FAQ section expands an answer and collapses back",
+    "description": "Verifies the FAQ accordion interaction works so users can reveal and hide answers.",
+    "category": "Landing Page",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the application's home page (/)"
+      },
+      {
+        "type": "action",
+        "description": "Scroll to the \"FAQ\" section"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"FAQ\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click on the first FAQ question"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"FAQ answer content\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click on the same FAQ question again"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"FAQ answer content\" is not visible"
+      }
+    ]
+  },
+  {
+    "id": "TC007",
+    "title": "How-it-works section is visible with step content",
+    "description": "Verifies the landing page explains the purchase/delivery process with a visible steps section.",
+    "category": "Landing Page",
+    "priority": "Low",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the application's home page (/)"
+      },
+      {
+        "type": "action",
+        "description": "Scroll to the \"How it works\" section"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"How\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Step 1\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Step 2\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC008",
+    "title": "Footer is visible and contains key navigation/help text",
+    "description": "Verifies the landing page footer renders and provides common informational/navigation content.",
+    "category": "Landing Page",
+    "priority": "Low",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the application's home page (/)"
+      },
+      {
+        "type": "action",
+        "description": "Scroll to the bottom of the page"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Footer\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"FAQ\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"How\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC009",
+    "title": "View product catalog list and verify key catalog content is visible",
+    "description": "Verifies the product catalog page renders a visible list of products for browsing.",
+    "category": "Product Catalog",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the product catalog page using a route that is explicitly listed in the application's routes."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Produtos\" is visible."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify at least one product card/list item element is visible."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify at least one visible product shows a price or plan-related text (for example \"R$\" or \"Plano\")."
+      }
+    ]
+  },
+  {
+    "id": "TC010",
+    "title": "Open a product from the catalog and verify product details page shows plan selection",
+    "description": "Verifies selecting a product navigates to its details view and displays its plans/pricing.",
+    "category": "Product Catalog",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the product catalog page using a route that is explicitly listed in the application's routes."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify at least one product card/list item element is visible."
+      },
+      {
+        "type": "action",
+        "description": "Click on the first visible product card/list item."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the product details view is visible (for example a product title heading is visible)."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a plan selection section is visible (for example text \"Planos\" or \"Escolher plano\" is visible)."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify at least one plan option shows a visible price (for example contains \"R$\")."
+      }
+    ]
+  },
+  {
+    "id": "TC011",
+    "title": "Switch between plan options and verify the displayed price updates",
+    "description": "Verifies that changing the selected plan updates the visible pricing information in the product details UI.",
+    "category": "Product Catalog",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the product catalog page using a route that is explicitly listed in the application's routes."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify at least one product card/list item element is visible."
+      },
+      {
+        "type": "action",
+        "description": "Click on the first visible product card/list item."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify at least two plan options are visible in the plan selection section."
+      },
+      {
+        "type": "action",
+        "description": "Click on a different plan option than the default selected one."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the currently displayed price text changes after selecting the new plan."
+      }
+    ]
+  },
+  {
+    "id": "TC012",
+    "title": "Dashboard Overview tab loads and shows recent activity sections",
+    "description": "Verifies the User Dashboard Overview tab renders core sections for recent purchases and payments for an authenticated user.",
+    "category": "User Dashboard",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to \"/login\""
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Log in\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"dashboard\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Overview\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Purchases\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Payments\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC013",
+    "title": "Switch to Purchases tab and verify purchase history list is visible",
+    "description": "Verifies that an authenticated user can open the Purchases tab and see the purchase history area.",
+    "category": "User Dashboard",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to \"/login\""
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Log in\" button"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Purchases\" tab"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Purchases\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Purchase list\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Recent purchases\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC014",
+    "title": "Switch to Security tab and verify security settings content is visible",
+    "description": "Verifies that an authenticated user can open the Security tab and see security-related settings.",
+    "category": "User Dashboard",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to \"/login\""
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Log in\" button"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Security\" tab"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Security\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Change password\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC015",
+    "title": "Switch to Settings tab and verify account settings content is visible",
+    "description": "Verifies that an authenticated user can open the Settings tab and see account/profile settings areas.",
+    "category": "User Dashboard",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to \"/login\""
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Log in\" button"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Settings\" tab"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Settings\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Account\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Profile\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC016",
+    "title": "Overview shows empty-state messaging when there are no recent purchases/payments",
+    "description": "Verifies the dashboard handles a no-data state by showing a clear empty-state message in recent purchases and payments sections.",
+    "category": "User Dashboard",
+    "priority": "Low",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to \"/login\""
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email/username field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Log in\" button"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Overview\" tab"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Recent purchases\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Recent payments\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"No purchases\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC017",
+    "title": "Open My Orders page and view a non-closed order ticket details",
+    "description": "Verifies a signed-in user can access the orders list and open a ticket to view its messages.",
+    "category": "Order Management",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Login\" button"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /meus-pedidos"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify page title contains \"Meus Pedidos\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first visible order/ticket in the list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Chat\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC018",
+    "title": "Filter orders by status from the My Orders page",
+    "description": "Verifies the user can change the status filter and see the list update accordingly.",
+    "category": "Order Management",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Login\" button"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /meus-pedidos"
+      },
+      {
+        "type": "action",
+        "description": "Click the status filter dropdown"
+      },
+      {
+        "type": "action",
+        "description": "Select \"Aberto\" from dropdown"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Aberto\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC019",
+    "title": "Open an order ticket chat and send a text message",
+    "description": "Verifies a user can send a text message in an existing ticket chat and see it appear in the conversation.",
+    "category": "Order Management",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_USER}}\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Type \"{{LOGIN_PASSWORD}}\" into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Login\" button"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /meus-pedidos"
+      },
+      {
+        "type": "action",
+        "description": "Click on the first visible order/ticket in the list"
+      },
+      {
+        "type": "action",
+        "description": "Type \"Teste de mensagem no chat do pedido\" into the message input field"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Enviar\" button"
+      }
+    ]
+  },
+  {
+    "id": "TC020",
+    "title": "Skip Reviews: No static routes available to navigate",
+    "description": "Ensures tests are not generated when there are no concrete routes defined for navigation.",
+    "category": "Reviews",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "assertion",
+        "description": "Verify text \"Royal Store\" is visible"
+      }
+    ]
+  }
+]

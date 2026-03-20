@@ -1,0 +1,19 @@
+{
+  "status": "commited",
+  "type": "frontend",
+  "scope": "codebase",
+  "localEndpoint": "http://localhost:8080",
+  "backendAuthType": "public",
+  "executionArgs": {
+    "projectName": "rose-inject-magic",
+    "projectPath": "C:\\Users\\Administrator\\.gemini\\antigravity\\scratch\\rose-inject-magic",
+    "testIds": [],
+    "additionalInstruction": "",
+    "serverMode": "development",
+    "envs": {
+      "API_KEY": "sk-user-ZOLiGB9BAeSIC0ScP8cDE6cX23ZG4LAxHSB3VoEx41ymqEh2qltjEx7jqFWFCtJyDDfdV5Py351f0YA48q8DjYiiTSwVyxzBeEMHAt3tXsiLoAk7-A_eDHRT45T_vcYxSwc"
+    }
+  },
+  "serverPort": 9750,
+  "proxy": "http://8f55ecb1-be01-41e6-ae16-c12e74e3dcbc:33UMZ50g0G7uqepANIvJhHHDiJzyoE7H@tun.testsprite.com:8080"
+}

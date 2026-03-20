@@ -18,7 +18,7 @@ export interface CartItem {
 
 interface CartContextType {
   items: CartItem[];
-  addItem: (item: Omit<CartItem, "quantity">) => boolean;
+  addItem: (item: Omit<CartItem, "quantity">, isLoggedIn?: boolean) => boolean;
   removeItem: (productId: string, planId: string) => void;
   updateQuantity: (productId: string, planId: string, quantity: number) => void;
   clearCart: () => void;

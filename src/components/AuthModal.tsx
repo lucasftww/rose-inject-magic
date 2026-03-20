@@ -23,9 +23,17 @@ const testimonials = [
 const AuthModal = ({ open, onOpenChange, defaultTab = "login" }: AuthModalProps) => {
   const [tab, setTab] = useState<"login" | "register">(defaultTab);
 
-  // Sync internal tab when defaultTab prop changes
+  // Sync internal tab + clear fields when modal (re)opens
   React.useEffect(() => {
-    if (open) setTab(defaultTab);
+    if (open) {
+      setTab(defaultTab);
+      setEmail("");
+      setPassword("");
+      setUsername("");
+      setShowForgot(false);
+      setForgotSent(false);
+      setForgotEmail("");
+    }
   }, [defaultTab, open]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -40,6 +48,8 @@ const AuthModal = ({ open, onOpenChange, defaultTab = "login" }: AuthModalProps)
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl w-[95vw] max-h-[95vh] sm:max-h-[90vh] p-0 border-border overflow-hidden gap-0 rounded-2xl [&>button:last-child]:hidden">
+        <DialogTitle className="sr-only">{tab === "login" ? "Entrar na Royal Store" : "Criar conta na Royal Store"}</DialogTitle>
+        <DialogDescription className="sr-only">Faça login ou crie sua conta para acessar a Royal Store</DialogDescription>
         {/* Close button */}
         <button
           onClick={() => onOpenChange(false)}
