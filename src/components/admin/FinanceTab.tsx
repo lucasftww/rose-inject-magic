@@ -442,9 +442,9 @@ const FinanceTab = () => {
         </div>
       </div>
 
-      {/* Hero: Profit */}
+      {/* Hero: Profit + Margin */}
       <div className="rounded-xl border border-success/20 bg-success/[0.03] p-5">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-success/15">
               <TrendingUp className="h-5 w-5 text-success" />
@@ -464,18 +464,18 @@ const FinanceTab = () => {
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+        <div className="grid grid-cols-3 gap-2">
           <div className="rounded-lg bg-card border border-border p-3 text-center">
-            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Receita</p>
-            <p className="text-lg font-bold text-foreground mt-1">R$ {fmtCompact(totalRevenue)}</p>
+            <p className="text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-wider">Receita</p>
+            <p className="text-sm font-semibold text-muted-foreground mt-1">R$ {fmtCompact(totalRevenue)}</p>
           </div>
-          <div className="rounded-lg bg-card border border-destructive/10 p-3 text-center">
-            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Custo LZT</p>
-            <p className="text-lg font-bold text-destructive mt-1">-R$ {fmtCompact(lztTotalBought)}</p>
+          <div className="rounded-lg bg-card border border-border p-3 text-center">
+            <p className="text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-wider">Custo LZT</p>
+            <p className="text-sm font-semibold text-muted-foreground mt-1">R$ {fmtCompact(lztTotalBought)}</p>
           </div>
-          <div className="rounded-lg bg-card border border-destructive/10 p-3 text-center">
-            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Custo Robot</p>
-            <p className="text-lg font-bold text-destructive mt-1">-R$ {fmtCompact(robotTotalCost)}</p>
+          <div className="rounded-lg bg-card border border-border p-3 text-center">
+            <p className="text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-wider">Custo Robot</p>
+            <p className="text-sm font-semibold text-muted-foreground mt-1">R$ {fmtCompact(robotTotalCost)}</p>
           </div>
         </div>
       </div>
