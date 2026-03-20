@@ -45,10 +45,11 @@ const FaqItem = ({ question, answer, index }: { question: string; answer: string
           <path d="M12 5v14M5 12h14" />
         </svg>
       </button>
-      <div className={`grid transition-all duration-300 ${open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
-        <div className="overflow-hidden min-h-0">
-          <p className="px-6 pb-5 text-sm leading-relaxed text-muted-foreground">{answer}</p>
-        </div>
+      <div
+        className="overflow-hidden transition-all duration-300"
+        style={{ maxHeight: open ? "500px" : "0px", opacity: open ? 1 : 0 }}
+      >
+        <p className="px-6 pb-5 text-sm leading-relaxed text-muted-foreground">{answer}</p>
       </div>
     </motion.div>
   );
