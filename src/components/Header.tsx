@@ -395,7 +395,7 @@ const Header = () => {
                 )}
                 <div className="pt-1.5">
                   <button onClick={() => { signOut(); setMobileMenuOpen(false); }}
-                    className="flex w-full items-center gap-3.5 px-4 py-3 rounded-xl text-[15px] text-destructive/70 hover:bg-destructive/8 transition-all">
+                    className="flex w-full items-center gap-3.5 px-4 py-3 rounded-xl text-[15px] text-destructive/70 hover:bg-destructive/[0.08] transition-all">
                     <LogOut className="w-[18px] h-[18px]" />
                     Sair
                   </button>
