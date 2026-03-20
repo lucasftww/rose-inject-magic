@@ -138,7 +138,7 @@ const Header = () => {
                 className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-semibold uppercase tracking-widest cursor-default select-none text-foreground/30"
                 style={{ background: "hsla(0,0%,100%,0.03)" }}
               >
-                <Globe className="w-2.5 h-2.5" />
+                <Globe className="w-3 h-3" />
                 PT
               </div>
 
