@@ -14,7 +14,7 @@ const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { t } = useTranslation();
   
-  const { user, profile, isAdmin, signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const { requiresAuth, clearRequiresAuth } = useCart();
   const navigate = useNavigate();
   const location = useLocation();
