@@ -79,10 +79,15 @@ const Header = () => {
         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         className="fixed left-0 right-0 z-50 top-0"
       >
-        <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div
-            className="flex h-14 sm:h-16 items-center px-0 transition-all duration-500"
-          >
+        <div
+          className="flex h-14 sm:h-16 items-center px-5 sm:px-8 lg:px-10 transition-all duration-500"
+          style={{
+            background: "hsla(0,0%,6%,0.7)",
+            backdropFilter: "blur(20px) saturate(1.4)",
+            WebkitBackdropFilter: "blur(20px) saturate(1.4)",
+            borderBottom: "1px solid hsla(0,0%,100%,0.06)",
+          }}
+        >
             {/* ── Logo ── */}
             <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
               <motion.img
