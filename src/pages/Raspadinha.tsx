@@ -95,7 +95,7 @@ const Raspadinha = () => {
   const [result, setResult] = useState<{ won: boolean; prize?: Prize } | null>(null);
   const [history, setHistory] = useState<Play[]>([]);
   const [showHistory, setShowHistory] = useState(false);
-  const [authOpen, setAuthOpen] = useState(false);
+  const navigateAuth = useNavigate();
   const [scratching, setScratching] = useState(false);
   const canvasRefs = useRef<(HTMLCanvasElement | null)[]>(Array(9).fill(null));
   const isDrawing = useRef(false);
