@@ -20,12 +20,8 @@ const NAV_ITEMS = [
 const LOL_BLUE = "hsl(198,100%,45%)";
 
 const Header = () => {
-  const [authOpen, setAuthOpen] = useState(false);
-  const [authTab, setAuthTab] = useState<"login" | "register">("login");
-  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const { user, profile, isAdmin, signOut } = useAuth();
   const { requiresAuth, clearRequiresAuth } = useCart();
   const navigate = useNavigate();
