@@ -44,11 +44,10 @@ const Header = () => {
 
   useEffect(() => {
     if (requiresAuth) {
-      setAuthTab("login");
-      setAuthOpen(true);
       clearRequiresAuth();
+      navigate("/auth?redirect=/checkout");
     }
-  }, [requiresAuth, clearRequiresAuth]);
+  }, [requiresAuth, clearRequiresAuth, navigate]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
