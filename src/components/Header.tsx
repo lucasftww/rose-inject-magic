@@ -129,22 +129,14 @@ const Header = () => {
                   <Link
                     key={item.label}
                     to={item.href}
-                    className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12.5px] font-medium tracking-[0.04em] transition-all duration-200 ${
+                    className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12.5px] font-medium tracking-[0.04em] transition-colors duration-150 ${
                       active
-                        ? "text-success"
+                        ? "text-success bg-success/[0.08]"
                         : "text-foreground/45 hover:text-foreground/80 hover:bg-foreground/[0.04]"
                     }`}
                   >
                     <Icon className="w-3.5 h-3.5 opacity-70" />
                     {item.label}
-                    {active && (
-                      <motion.span
-                        layoutId="nav-pill"
-                        className="absolute inset-0 rounded-lg -z-10"
-                        style={{ background: `${accentColor}10` }}
-                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                      />
-                    )}
                   </Link>
                 );
               })}
