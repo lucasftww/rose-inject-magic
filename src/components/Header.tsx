@@ -254,7 +254,7 @@ const Header = () => {
                     boxShadow: `0 2px 12px ${accentColor}30`,
                   }}
                 >
-                  <LogIn className="w-3.5 h-3.5" />
+                  <LogIn className="w-4 h-4" />
                   <span className="hidden sm:inline">Entrar</span>
                 </button>
               )}
