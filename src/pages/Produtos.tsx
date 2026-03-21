@@ -6,6 +6,44 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useReseller } from "@/hooks/useReseller";
 
+// Local game images
+import imgValorant from "@/assets/games/valorant.webp";
+import imgCS2 from "@/assets/games/cs2.webp";
+import imgSpoofers from "@/assets/games/spoofers.webp";
+import imgArenaBreakout from "@/assets/games/arena-breakout.webp";
+import imgArcRaiders from "@/assets/games/arc-raiders.webp";
+import imgCallOfDuty from "@/assets/games/call-of-duty.webp";
+import imgRust from "@/assets/games/rust.webp";
+import imgBloodstrike from "@/assets/games/bloodstrike.webp";
+import imgApexLegends from "@/assets/games/apex-legends.webp";
+import imgFarlight84 from "@/assets/games/farlight-84.webp";
+import imgBodycam from "@/assets/games/bodycam.webp";
+import imgWarface from "@/assets/games/warface.webp";
+import imgFiveM from "@/assets/games/fivem.webp";
+import imgSquad from "@/assets/games/squad.webp";
+import imgOverwatch2 from "@/assets/games/overwatch-2.webp";
+import imgHellLetLoose from "@/assets/games/hell-let-loose.webp";
+
+const localImageMap: Record<string, string> = {
+  'Valorant': imgValorant,
+  'Counter-Strike 2': imgCS2,
+  'Counter-Strike 2 (FREE)': imgCS2,
+  'Spoofers': imgSpoofers,
+  'Arena Breakout Infinite': imgArenaBreakout,
+  'ARC Raiders': imgArcRaiders,
+  'Call of Duty': imgCallOfDuty,
+  'Rust': imgRust,
+  'Bloodstrike': imgBloodstrike,
+  'Apex Legends': imgApexLegends,
+  'Farlight 84': imgFarlight84,
+  'Bodycam': imgBodycam,
+  'Warface': imgWarface,
+  'FiveM': imgFiveM,
+  'Squad': imgSquad,
+  'Overwatch 2': imgOverwatch2,
+  'Hell Let Loose': imgHellLetLoose,
+};
+
 interface GameFromDB {
   id: string;
   name: string;
