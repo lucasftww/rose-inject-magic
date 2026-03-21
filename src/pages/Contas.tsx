@@ -1829,7 +1829,11 @@ const Contas = () => {
             {streamError && (
               <div className="flex flex-col items-center justify-center py-20 text-muted-foreground gap-2">
                 <AlertTriangle className="h-10 w-10 text-warning" />
-                <p className="text-lg font-semibold text-foreground">Ops! Algo deu errado</p>
+                <p className="text-lg font-semibold text-foreground">
+                  {streamError.message?.includes("instável") || streamError.message?.includes("503")
+                    ? "Serviço em manutenção"
+                    : "Ops! Algo deu errado"}
+                </p>
                 <p className="mt-1 text-sm text-center max-w-md">{streamError.message}</p>
                 <button
                   onClick={() => refetch()}
