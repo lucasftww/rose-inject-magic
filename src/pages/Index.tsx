@@ -96,15 +96,15 @@ const ContasSection = () => {
   const navigate = useNavigate();
 
   return (
-    <section className="border-t border-border bg-background px-5 sm:px-6 py-14 sm:py-24">
+    <section className="border-t border-border bg-background px-4 sm:px-6 py-12 sm:py-24">
       <div className="mx-auto max-w-7xl">
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-80px" }} variants={slideInLeft} className="text-center sm:text-left">
-          <p className="text-xs sm:text-sm font-medium uppercase tracking-[0.3em] text-success">{t("accounts.subtitle")}</p>
-          <h2 className="mt-2 sm:mt-3 text-2xl sm:text-5xl font-bold tracking-tight text-foreground md:text-7xl" style={{ fontFamily: "'Valorant', sans-serif" }}>{t("accounts.title")}</h2>
+          <p className="text-[10px] sm:text-sm font-medium uppercase tracking-[0.3em] text-success">{t("accounts.subtitle")}</p>
+          <h2 className="mt-1.5 sm:mt-3 text-xl sm:text-5xl font-bold tracking-tight text-foreground md:text-7xl" style={{ fontFamily: "'Valorant', sans-serif" }}>{t("accounts.title")}</h2>
         </motion.div>
 
         <motion.div
-          className="mt-6 sm:mt-14 grid grid-cols-2 gap-2.5 sm:gap-5 lg:grid-cols-4"
+          className="mt-5 sm:mt-14 grid grid-cols-2 gap-2 sm:gap-5 lg:grid-cols-4"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-40px" }}
@@ -115,7 +115,7 @@ const ContasSection = () => {
               key={game.tab}
               variants={fadeUp}
               custom={idx}
-              className="group relative cursor-pointer overflow-hidden rounded-2xl border border-border/50 bg-card transition-all duration-300 hover:border-success/30 hover:shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
+              className="group relative cursor-pointer overflow-hidden rounded-xl sm:rounded-2xl border border-border/50 bg-card transition-all duration-300 hover:border-success/30 hover:shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
               onClick={() => navigate(`/contas?game=${game.tab}`)}
             >
               <div className="relative aspect-[3/4] overflow-hidden">
@@ -128,20 +128,20 @@ const ContasSection = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
                 
                 {game.badge && (
-                  <div className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 rounded-full bg-success px-2 sm:px-2.5 py-0.5 text-[9px] sm:text-xs font-bold uppercase tracking-wider text-success-foreground shadow-lg shadow-success/20">
+                  <div className="absolute top-2 right-2 sm:top-3 sm:right-3 rounded-full bg-success px-2 sm:px-2.5 py-0.5 text-[8px] sm:text-xs font-bold uppercase tracking-wider text-success-foreground shadow-lg shadow-success/20">
                     {game.badge}
                   </div>
                 )}
 
-                <div className="absolute inset-x-0 bottom-0 p-3 sm:p-5">
-                  <h3 className="text-lg sm:text-2xl lg:text-3xl font-bold tracking-tight text-foreground" style={{ fontFamily: "'Valorant', sans-serif" }}>
+                <div className="absolute inset-x-0 bottom-0 p-2.5 sm:p-5">
+                  <h3 className="text-base sm:text-2xl lg:text-3xl font-bold tracking-tight text-foreground" style={{ fontFamily: "'Valorant', sans-serif" }}>
                     {game.name}
                   </h3>
-                  <p className="mt-0.5 sm:mt-1 text-[10px] sm:text-xs text-muted-foreground leading-tight">{game.tagline}</p>
+                  <p className="mt-0.5 text-[9px] sm:text-xs text-muted-foreground leading-tight line-clamp-1">{game.tagline}</p>
                   
-                  <div className="mt-2.5 sm:mt-4 flex items-center gap-1.5 text-success text-[10px] sm:text-xs font-semibold uppercase tracking-wider transition-all group-hover:gap-2.5">
+                  <div className="mt-2 sm:mt-4 flex items-center gap-1 text-success text-[9px] sm:text-xs font-semibold uppercase tracking-wider transition-all group-hover:gap-2">
                     <span>{t("accounts.exploreAccounts")}</span>
-                    <ArrowRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 transition-transform group-hover:translate-x-1" />
+                    <ArrowRight className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 transition-transform group-hover:translate-x-1" />
                   </div>
                 </div>
               </div>
@@ -149,14 +149,14 @@ const ContasSection = () => {
           ))}
         </motion.div>
 
-        <motion.div className="mt-8 sm:mt-12 flex justify-center" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
+        <motion.div className="mt-6 sm:mt-12 flex justify-center" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
           <Link
             to="/contas"
-            className="flex w-full sm:w-auto items-center justify-center gap-2 border-2 border-foreground/20 px-8 sm:px-14 py-3 sm:py-4 text-xs sm:text-sm font-bold uppercase tracking-[0.25em] text-foreground transition-all hover:border-success hover:text-success hover:shadow-[0_0_30px_hsl(197,100%,50%,0.15)] rounded-xl sm:rounded-lg"
+            className="flex w-full sm:w-auto items-center justify-center gap-2 border-2 border-foreground/20 px-6 sm:px-14 py-2.5 sm:py-4 text-[11px] sm:text-sm font-bold uppercase tracking-[0.25em] text-foreground transition-all hover:border-success hover:text-success hover:shadow-[0_0_30px_hsl(197,100%,50%,0.15)] rounded-xl"
             style={{ fontFamily: "'Valorant', sans-serif" }}
           >
             {t("accounts.exploreAccounts")}
-            <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />
+            <ArrowRight className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
           </Link>
         </motion.div>
       </div>
