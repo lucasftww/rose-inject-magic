@@ -180,7 +180,12 @@ const SoftwareSection = () => {
   });
 
   const activeGames = useMemo(
-    () => games.filter(g => g.products?.some(p => p.active)),
+    () => games
+      .filter(g => g.products?.some(p => p.active))
+      .filter(g => {
+        const slug = (g.slug || g.name || "").toLowerCase();
+        return !HIDDEN_GAME_SLUGS.includes(slug);
+      }),
     [games]
   );
 
