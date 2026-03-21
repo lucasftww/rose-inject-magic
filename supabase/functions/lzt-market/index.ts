@@ -171,7 +171,8 @@ function shouldKeepItem(item: LztItem, gameType: string, _displayedPriceBrl: num
   if (item.canBuyItem === false) return false;
 
   // Require minimum 30 days of inactivity for account security
-  const lastActivity = Number(item.account_last_activity || item.riot_last_activity || item.last_activity || item.login_date || 0);
+  const rawLastActivity = Number(item.account_last_activity || item.riot_last_activity || item.last_activity || item.login_date || 0);
+  const lastActivity = rawLastActivity > 1_000_000_000_000 ? Math.floor(rawLastActivity / 1000) : rawLastActivity;
   if (lastActivity > 0) {
     const daysSinceActive = (Date.now() / 1000 - lastActivity) / 86400;
     if (daysSinceActive < 30) return false;
