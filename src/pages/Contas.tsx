@@ -162,9 +162,9 @@ const weapons = [
 ];
 
 const sortOptions = [
-  { label: "Mais Recentes", value: "pdate_desc" },
-  { label: "Menor Preço", value: "price_asc" },
-  { label: "Maior Preço", value: "price_desc" },
+  { label: "Mais Recentes", value: "pdate_to_down" },
+  { label: "Menor Preço", value: "price_to_up" },
+  { label: "Maior Preço", value: "price_to_down" },
 ] as const;
 
 const FN_PURPLE = "hsl(265,80%,65%)";
