@@ -887,7 +887,7 @@ const Contas = () => {
   const buildParams = useCallback((pageNum: number = currentPage): Record<string, string | string[]> => {
     const params: Record<string, string | string[]> = {};
     params.page = String(pageNum);
-    if (sortBy) params.order_by = sortBy;
+    params.order_by = "pdate_desc";
     if (searchQuery) params.title = searchQuery;
 
     if (gameTab === "valorant") {
@@ -946,7 +946,7 @@ const Contas = () => {
     }
 
     return params;
-  }, [currentPage, sortBy, searchQuery, onlyKnife, selectedRank, selectedWeapon, invMin, invMax, lvlMin, lvlMax, gameTab, lolRank, lolChampMin, lolSkinsMin, fnVbMin, fnSkinsMin, mcJava, mcBedrock, mcHypixelLvlMin, mcCapesMin, mcNoBan, lolRegion, valRegion]);
+  }, [currentPage, searchQuery, onlyKnife, selectedRank, selectedWeapon, invMin, invMax, lvlMin, lvlMax, gameTab, lolRank, lolChampMin, lolSkinsMin, fnVbMin, fnSkinsMin, mcJava, mcBedrock, mcHypixelLvlMin, mcCapesMin, mcNoBan, lolRegion, valRegion]);
 
   const paramsKey = JSON.stringify(buildParams(1)) + gameTab;
   const [debouncedParamsKey, setDebouncedParamsKey] = useState(paramsKey);
