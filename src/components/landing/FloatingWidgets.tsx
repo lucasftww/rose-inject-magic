@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, forwardRef } from "react";
 
-const FloatingWidgets = () => {
+const FloatingWidgets = forwardRef<HTMLDivElement>((_props, ref) => {
   const [showTooltip, setShowTooltip] = useState(true);
 
   useEffect(() => {

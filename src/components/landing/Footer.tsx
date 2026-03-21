@@ -1,8 +1,9 @@
+import { forwardRef } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 
-const Footer = () => {
+const Footer = forwardRef<HTMLElement>((_props, ref) => {
   const { t } = useTranslation();
 
   return (
