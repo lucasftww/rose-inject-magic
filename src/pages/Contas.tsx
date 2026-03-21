@@ -1116,7 +1116,7 @@ const Contas = () => {
         cacheSet(`__prefetch__${tab}`, { items, hasNextPage: hasMore, currentPage: 1, timestamp: Date.now() });
       } catch { /* silent */ }
     }
-  }, [gameTab]);
+  }, [gameTab, cacheSet]);
 
   // Enhanced fetchMultiplePages: check prefetch cache on tab switch
   const fetchMultiplePagesWithPrefetch = useCallback(async (controller: AbortController) => {
