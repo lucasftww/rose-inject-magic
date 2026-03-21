@@ -292,8 +292,8 @@ const GameSelectScreen = ({ onSelect, games, loading }: { onSelect: (gameId: str
                     </div>
                   )}
                   {game.product_count > 0 && (
-                    <div className="flex items-center gap-1 rounded-full bg-success px-2.5 py-1 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-success-foreground shadow-lg">
-                      <span className="h-1.5 w-1.5 rounded-full bg-success-foreground animate-pulse" />
+                    <div className="flex items-center gap-1 rounded-full bg-foreground/80 px-2.5 py-1 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-background shadow-lg">
+                      <span className="h-1.5 w-1.5 rounded-full bg-background animate-pulse" />
                       {game.product_count} {game.product_count === 1 ? "software" : "softwares"}
                     </div>
                   )}
