@@ -977,7 +977,9 @@ const Contas = () => {
   const fetchMultiplePages = useCallback(async (controller: AbortController) => {
     const cacheKey = debouncedParamsKey;
     const cached = fetchCacheRef.current.get(cacheKey);
-    if (cached && Date.now() - cached.timestamp < 120000) {
+    
+    // Show stale cache immediately (even if expired) while fetching fresh data
+    if (cached) {
       setStreamedItems(cached.items);
       setStreamingDone(true);
       setStreamError(null);
@@ -987,16 +989,21 @@ const Contas = () => {
       setFirstPageLoaded(true);
       setTotalItems(cached.totalItems);
       setHasNextPage(false);
-      return;
+      
+      // If cache is fresh (5 min), don't refetch
+      if (Date.now() - cached.timestamp < 300000) return;
     }
 
-    setStreamedItems([]);
-    setStreamingDone(false);
-    setStreamError(null);
-    setCurrentPage(1);
-    setLoadingMore(false);
-    setDisplayPage(1);
-    setFirstPageLoaded(false);
+    // Only show loading skeleton if no cache at all
+    if (!cached) {
+      setStreamedItems([]);
+      setStreamingDone(false);
+      setStreamError(null);
+      setCurrentPage(1);
+      setLoadingMore(false);
+      setDisplayPage(1);
+      setFirstPageLoaded(false);
+    }
 
     try {
       // Fetch first page immediately and display it
