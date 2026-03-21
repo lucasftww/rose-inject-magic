@@ -436,11 +436,6 @@ Deno.serve(async (req) => {
       apiUrl = `https://api.lzt.market/${encodeURIComponent(itemId)}`;
     } else {
       // LIST: accounts with filters
-      const maxFetchPrice = lztConfig?.max_fetch_price || 500;
-      const effectivePmax = Math.ceil(maxFetchPrice / activeMarkup);
-      // Apply pmax to ALL games including Valorant to prevent fetching expensive items that will be filtered anyway
-      const shouldAutoApplyConfiguredPmax = true;
-
       const params = new URLSearchParams();
       const allowedParams = [
         "page", "pmin", "pmax", "title", "order_by", "currency",
@@ -483,13 +478,12 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Convert user-provided BRL price filters to API currency (seller BRL on LZT)
+      // Only convert user-provided BRL price filters — do NOT auto-apply pmax
       const userPmin = params.get("pmin");
       if (userPmin) {
         const brlMin = Number(userPmin);
         if (brlMin > 0) {
-          const MIN_PRICE_BRL_FILTER = 20;
-          if (brlMin <= MIN_PRICE_BRL_FILTER) {
+          if (brlMin <= MIN_PRICE_BRL) {
             params.delete("pmin");
           } else {
             params.set("pmin", String(Math.floor(brlMin / activeMarkup)));
@@ -501,15 +495,10 @@ Deno.serve(async (req) => {
       if (userPmax) {
         const brlMax = Number(userPmax);
         if (brlMax > 0) {
-          const sellerMax = Math.ceil((brlMax / activeMarkup) * 1.1);
-          params.set("pmax", String(shouldAutoApplyConfiguredPmax ? Math.min(sellerMax, effectivePmax) : sellerMax));
-        } else if (shouldAutoApplyConfiguredPmax) {
-          params.set("pmax", String(effectivePmax));
+          params.set("pmax", String(Math.ceil((brlMax / activeMarkup) * 1.1)));
         } else {
           params.delete("pmax");
         }
-      } else if (shouldAutoApplyConfiguredPmax) {
-        params.set("pmax", String(effectivePmax));
       }
 
       if (gameType === "fortnite") {
