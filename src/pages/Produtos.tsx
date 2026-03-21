@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
-import { Search, SlidersHorizontal, DollarSign, ArrowLeft, Loader2, Package, Tag, ArrowUpDown, UserCheck, X, ArrowRight, Star, Gamepad2, Gift } from "lucide-react";
+import { Search, SlidersHorizontal, DollarSign, ArrowLeft, Loader2, Package, Tag, ArrowUpDown, UserCheck, X, ArrowRight, Star, Gamepad2, Gift, Shield } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useReseller } from "@/hooks/useReseller";
@@ -141,6 +141,7 @@ const GameSelectScreen = ({ onSelect, games, loading }: { onSelect: (gameId: str
         const descriptions: Record<string, string> = {
           'Valorant': 'Cheats premium para Valorant — domine cada round',
           'Counter-Strike 2': 'Hacks indetectados para CS2',
+          'Counter-Strike 2 (FREE)': 'Cheats gratuitos para CS2',
           'Spoofers': 'Limpe seu HWID e volte a jogar',
           'Fortnite': 'Softwares indetectáveis para Fortnite',
           'Arena Breakout Infinite': 'Cheats para Arena Breakout',
@@ -155,7 +156,7 @@ const GameSelectScreen = ({ onSelect, games, loading }: { onSelect: (gameId: str
           'Farlight 84': 'Softwares para Farlight 84',
           'Bodycam': 'Cheats gratuitos para Bodycam FPS',
           'Bloodhunt': 'Domine a caçada em Bloodhunt',
-          'Warface': 'Hacks premium para Warface',
+          'Warface': 'Hacks gratuitos para Warface',
           'Dead by Daylight': 'Cheats para Dead by Daylight',
           'FiveM': 'Mods e menus para FiveM / GTA RP',
           'Squad': 'Softwares táticos para Squad',
@@ -163,8 +164,10 @@ const GameSelectScreen = ({ onSelect, games, loading }: { onSelect: (gameId: str
           'Hell Let Loose': 'Domine o campo de batalha WW2',
         };
 
-        const freeGameNames = ['Bodycam', 'Bloodhunt', 'Warface'];
-        const premiumGames = games.filter(g => !freeGameNames.includes(g.name));
+        const freeGameNames = ['Bodycam', 'Bloodhunt', 'Counter-Strike 2 (FREE)', 'Warface'];
+        const spooferNames = ['Spoofers'];
+        const premiumGames = games.filter(g => !freeGameNames.includes(g.name) && !spooferNames.includes(g.name));
+        const spooferGames = games.filter(g => spooferNames.includes(g.name));
         const freeGames = games.filter(g => freeGameNames.includes(g.name));
 
         const renderCard = (game: GameFromDB, idx: number, isFree: boolean) => {
@@ -177,7 +180,7 @@ const GameSelectScreen = ({ onSelect, games, loading }: { onSelect: (gameId: str
               onClick={() => onSelect(game.id)}
               className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/40 bg-card text-left transition-all duration-300 hover:border-success/50 hover:shadow-[0_0_30px_hsl(197,100%,50%,0.15)] focus:outline-none active:scale-[0.97]"
             >
-              <div className="relative aspect-[4/5] overflow-hidden">
+              <div className="relative aspect-[3/4] overflow-hidden">
                 {game.image_url ? (
                   <img
                     src={game.image_url}
@@ -210,52 +213,66 @@ const GameSelectScreen = ({ onSelect, games, loading }: { onSelect: (gameId: str
 
                 {/* Game name overlay */}
                 <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
-                  <h3 className="text-lg sm:text-xl lg:text-2xl font-bold tracking-tight text-foreground leading-tight drop-shadow-lg" style={{ fontFamily: "'Valorant', sans-serif" }}>
+                  <h3 className="text-sm sm:text-lg lg:text-xl font-bold tracking-tight text-foreground leading-tight drop-shadow-lg" style={{ fontFamily: "'Valorant', sans-serif" }}>
                     {game.name}
                   </h3>
-                  <p className="mt-1 text-[11px] sm:text-xs text-muted-foreground/80 line-clamp-1">{desc}</p>
+                  <p className="mt-1 text-[10px] sm:text-xs text-muted-foreground/80 line-clamp-1">{desc}</p>
                 </div>
               </div>
 
               {/* CTA bar */}
-              <div className="flex items-center justify-center gap-1.5 border-t border-border/30 bg-card/80 px-4 py-3 sm:py-3.5 text-success text-[10px] sm:text-xs font-bold uppercase tracking-widest transition-all group-hover:bg-success/10 group-hover:gap-2.5">
-                <span>Ver softwares {game.name.split(' ')[0]}</span>
-                <ArrowRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 transition-transform group-hover:translate-x-1" />
+              <div className="flex items-center justify-center gap-1.5 border-t border-border/30 bg-card/80 px-3 py-2.5 sm:py-3 text-success text-[10px] sm:text-xs font-bold uppercase tracking-widest transition-all group-hover:bg-success/10 group-hover:gap-2.5">
+                <span>Ver softwares</span>
+                <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-1" />
               </div>
             </motion.button>
           );
         };
 
+        const gridClasses = "grid grid-cols-2 gap-3 sm:gap-5 sm:grid-cols-3 lg:grid-cols-4";
+
+        const renderSectionHeader = (icon: React.ReactNode, label: string, color: string) => (
+          <div className="mb-5 flex items-center gap-3">
+            <div className={`flex items-center gap-2 rounded-full border px-4 py-1.5`} style={{ borderColor: `${color}30`, backgroundColor: `${color}15` }}>
+              {icon}
+              <span className="text-xs font-bold uppercase tracking-wider" style={{ color }}>{label}</span>
+            </div>
+            <div className="h-px flex-1 bg-border/40" />
+          </div>
+        );
+
         return (
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8 sm:py-12 space-y-12">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8 sm:py-12 space-y-10">
             {/* Premium games */}
             <div>
-              <motion.div
-                className="grid grid-cols-2 gap-3 sm:gap-5 sm:grid-cols-3 lg:grid-cols-4"
-                initial="hidden"
-                animate="visible"
-                variants={staggerContainer}
-              >
+              <motion.div className={gridClasses} initial="hidden" animate="visible" variants={staggerContainer}>
                 {premiumGames.map((game, idx) => renderCard(game, idx, false))}
               </motion.div>
             </div>
 
+            {/* Spoofers section */}
+            {spooferGames.length > 0 && (
+              <div>
+                {renderSectionHeader(
+                  <Shield className="h-4 w-4" style={{ color: 'hsl(197, 100%, 50%)' }} />,
+                  'Spoofers',
+                  'hsl(197, 100%, 50%)'
+                )}
+                <motion.div className={gridClasses} initial="hidden" animate="visible" variants={staggerContainer}>
+                  {spooferGames.map((game, idx) => renderCard(game, idx, false))}
+                </motion.div>
+              </div>
+            )}
+
             {/* Free games section */}
             {freeGames.length > 0 && (
               <div>
-                <div className="mb-6 flex items-center gap-3">
-                  <div className="flex items-center gap-2 rounded-full border border-[hsl(142,76%,36%)]/30 bg-[hsl(142,76%,36%)]/10 px-4 py-1.5">
-                    <Gift className="h-4 w-4 text-[hsl(142,76%,36%)]" />
-                    <span className="text-xs font-bold uppercase tracking-wider text-[hsl(142,76%,36%)]">Softwares Gratuitos</span>
-                  </div>
-                  <div className="h-px flex-1 bg-border/40" />
-                </div>
-                <motion.div
-                  className="grid grid-cols-2 gap-3 sm:gap-5 sm:grid-cols-3 lg:grid-cols-4"
-                  initial="hidden"
-                  animate="visible"
-                  variants={staggerContainer}
-                >
+                {renderSectionHeader(
+                  <Gift className="h-4 w-4" style={{ color: 'hsl(142, 76%, 36%)' }} />,
+                  'Softwares Gratuitos',
+                  'hsl(142, 76%, 36%)'
+                )}
+                <motion.div className={gridClasses} initial="hidden" animate="visible" variants={staggerContainer}>
                   {freeGames.map((game, idx) => renderCard(game, idx, true))}
                 </motion.div>
               </div>
