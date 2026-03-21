@@ -633,8 +633,8 @@ const Produtos = () => {
         <div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:items-end md:justify-between">
           <div className="flex items-center gap-3 sm:gap-4">
             {currentGame && (
-              currentGame.image_url
-                ? <img src={currentGame.image_url} alt={currentGame.name} className="h-10 w-10 sm:h-14 sm:w-14 rounded-lg border border-border object-cover" />
+              (localImageMap[currentGame.name] || currentGame.image_url)
+                ? <img src={localImageMap[currentGame.name] || currentGame.image_url!} alt={currentGame.name} className="h-10 w-10 sm:h-14 sm:w-14 rounded-lg border border-border object-cover" />
                 : <div className="flex h-10 w-10 sm:h-14 sm:w-14 items-center justify-center rounded-lg border border-border bg-secondary text-lg font-bold text-muted-foreground">{currentGame.name[0]}</div>
             )}
             <div>
