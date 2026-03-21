@@ -12,10 +12,6 @@ const RUB_TO_BRL = 0.055;
 const USD_TO_BRL = 5.50;
 const MIN_PRICE_BRL = 20;
 const DEFAULT_MARKUP = 3.0;
-const LOL_MIN_SKINS = 3;
-const VAL_MIN_SKINS = 10;
-const FT_MIN_SKINS = 2;
-const PRICE_BUFFER = 1.30;
 
 type LztItem = Record<string, any>;
 
@@ -161,7 +157,7 @@ function shouldKeepItem(item: LztItem, gameType: string, _displayedPriceBrl: num
   if (item.canBuyItem === false) return false;
 
   // Require minimum 30 days of inactivity for account security
-  const lastActivity = Number(item.last_activity || item.login_date || 0);
+  const lastActivity = Number(item.account_last_activity || item.riot_last_activity || item.last_activity || item.login_date || 0);
   if (lastActivity > 0) {
     const daysSinceActive = (Date.now() / 1000 - lastActivity) / 86400;
     if (daysSinceActive < 30) return false;
