@@ -1,0 +1,2 @@
+INSERT INTO public.games (name, slug, active, sort_order, image_url)
+VALUES ('Counter-Strike 2 (FREE)', 'counter-strike-2-free', true, 50, 'https://cthqzetkshrbsjulfytl.supabase.co/storage/v1/object/public/game-images/games/counter-strike-2-free.webp');
