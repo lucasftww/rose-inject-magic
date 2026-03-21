@@ -122,7 +122,7 @@ const fetchLztAccounts = async (): Promise<LztItem[]> => {
   const projectUrl = import.meta.env.VITE_SUPABASE_URL;
   const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
   const res = await fetch(
-    `${projectUrl}/functions/v1/lzt-market?preview=1&limit=6&page=1&order_by=pdate_desc&game_type=riot&country[]=Bra`,
+    `${projectUrl}/functions/v1/lzt-market?preview=1&limit=6&page=1&order_by=pdate_to_down&game_type=riot&country[]=Bra`,
     { headers: { "Content-Type": "application/json", apikey: anonKey } }
   );
   if (!res.ok) return readCachedLandingAccounts()?.items || [];
@@ -186,7 +186,7 @@ const LztContaCard = forwardRef<HTMLDivElement, { item: LztItem; formatPrice: (p
   return (
     <div
       ref={ref}
-      className="group cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-success/50 hover:shadow-[0_4px_24px_hsl(197,100%,50%,0.12)] flex flex-col h-full"
+      className="group cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-success/50 hover:shadow-[0_4px_24px_hsl(var(--success)/0.12)] flex flex-col h-full"
       onClick={() => navigate(`/conta/${item.item_id}`)}
     >
       {/* Skin preview */}

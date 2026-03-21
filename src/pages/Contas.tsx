@@ -1243,7 +1243,7 @@ const Contas = () => {
     gameTab === "valorant" && selectedRank !== "todos",
     gameTab === "valorant" && selectedWeapon !== "todos",
     gameTab === "valorant" && onlyKnife,
-    gameTab === "valorant" && valRegion !== "all",
+    gameTab === "valorant" && valRegion !== "br",
     gameTab === "lol" && lolRank !== "todos",
     gameTab === "lol" && lolChampMin !== "",
     gameTab === "lol" && lolSkinsMin !== "",
