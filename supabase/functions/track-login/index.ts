@@ -59,7 +59,7 @@ serve(async (req) => {
       .from("profiles")
       .select("banned, banned_reason")
       .eq("user_id", userId)
-      .single();
+      .maybeSingle();
 
     return new Response(JSON.stringify({
       ok: true,
