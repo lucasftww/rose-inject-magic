@@ -1068,6 +1068,43 @@ const Contas = () => {
     }
   }, [buildParams, debouncedParamsKey, fetchWithRetry]);
 
+  // Prefetch adjacent game tabs in background for instant switching
+  const prefetchAdjacentTabs = useCallback(async () => {
+    const allTabs: GameTab[] = ["valorant", "lol", "fortnite", "minecraft"];
+    const otherTabs = allTabs.filter(t => t !== gameTab);
+    for (const tab of otherTabs) {
+      const gameTypeMap: Record<GameTab, string> = { valorant: "riot", lol: "lol", fortnite: "fortnite", minecraft: "minecraft" };
+      const prefetchParams: Record<string, string> = {
+        page: "1",
+        order_by: "pdate_to_down",
+        game_type: gameTypeMap[tab],
+      };
+      if (tab === "fortnite") prefetchParams.smin = "3";
+      if (tab === "valorant") { prefetchParams["country[]"] = "Bra"; }
+      if (tab === "lol") { prefetchParams["lol_region[]"] = "BR1"; }
+      const cacheKey = JSON.stringify(prefetchParams) + tab + "_prefetch";
+      // Build a more accurate cache key matching what switchTab would produce
+      const defaultParamsKey = JSON.stringify({ ...prefetchParams, page: "1" }) + tab;
+      if (fetchCacheRef.current.has(defaultParamsKey)) continue;
+      // Check if we already prefetched this tab
+      if (fetchCacheRef.current.has(cacheKey)) continue;
+      try {
+        const data = await fetchAccountsRaw(prefetchParams);
+        const items: LztItem[] = data?.items ?? [];
+        const hasMore = data?.hasNextPage ?? items.length >= 15;
+        // Store under the key that switchTab would look for
+        const switchTabKey = JSON.stringify({
+          page: "1", order_by: "pdate_to_down", game_type: gameTypeMap[tab],
+          ...(tab === "fortnite" ? { smin: "3" } : {}),
+          ...(tab === "valorant" ? { "country[]": ["Bra"] } : {}),
+          ...(tab === "lol" ? { "lol_region[]": "BR1" } : {}),
+        }) + tab;
+        fetchCacheRef.current.set(switchTabKey, { items, hasNextPage: hasMore, currentPage: 1, timestamp: Date.now() });
+        fetchCacheRef.current.set(cacheKey, { items, hasNextPage: hasMore, currentPage: 1, timestamp: Date.now() });
+      } catch { /* silent — prefetch is best-effort */ }
+    }
+  }, [gameTab]);
+
   useEffect(() => {
     abortRef.current?.abort();
     const controller = new AbortController();
@@ -1075,6 +1112,14 @@ const Contas = () => {
     fetchMultiplePages(controller);
     return () => controller.abort();
   }, [debouncedParamsKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Trigger prefetch after initial load completes
+  useEffect(() => {
+    if (firstPageLoaded && streamedItems.length > 0) {
+      const timer = setTimeout(prefetchAdjacentTabs, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [firstPageLoaded, gameTab]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadMorePages = async () => {
     if (loadingMore || !hasNextPage) return;
