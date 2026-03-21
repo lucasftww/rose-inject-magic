@@ -551,8 +551,12 @@ Deno.serve(async (req) => {
         }
         apiUrl = `https://api.lzt.market/minecraft?${params.toString()}`;
       } else if (gameType === "lol") {
+        // LoL uses /riot endpoint but must NOT have valorant_smin
+        params.delete("valorant_smin");
+        params.delete("valorant_smax");
         apiUrl = `https://api.lzt.market/riot?${params.toString()}`;
       } else {
+        // Valorant: ensure minimum skins filter
         if (!params.has("valorant_smin")) {
           params.set("valorant_smin", String(VAL_MIN_SKINS));
         }
