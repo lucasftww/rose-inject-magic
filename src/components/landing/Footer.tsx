@@ -85,6 +85,8 @@ const Footer = forwardRef<HTMLElement>((_props, ref) => {
       </div>
     </motion.footer>
   );
-};
+});
+
+Footer.displayName = "Footer";
 
 export default Footer;

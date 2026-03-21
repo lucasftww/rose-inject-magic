@@ -32,6 +32,8 @@ const FloatingWidgets = forwardRef<HTMLDivElement>((_props, ref) => {
       </a>
     </div>
   );
-};
+});
+
+FloatingWidgets.displayName = "FloatingWidgets";
 
 export default FloatingWidgets;
