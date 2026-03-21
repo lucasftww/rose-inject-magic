@@ -922,8 +922,8 @@ const Contas = () => {
     } else if (gameTab === "lol") {
       // LoL-specific — use lol_region[] NOT country[] per LZT API docs
       params.game_type = "lol";
-      params.lol_smin = lolSkinsMin && Number(lolSkinsMin) >= 8 ? lolSkinsMin : "8";
-      params.champion_min = lolChampMin && Number(lolChampMin) >= 10 ? lolChampMin : "10";
+      if (lolSkinsMin && Number(lolSkinsMin) > 0) params.lol_smin = lolSkinsMin;
+      if (lolChampMin && Number(lolChampMin) > 0) params.champion_min = lolChampMin;
       if (lvlMin) params.lol_level_min = lvlMin;
       if (lvlMax) params.lol_level_max = lvlMax;
 
