@@ -8,11 +8,25 @@ import { supabase } from "@/integrations/supabase/client";
 import bannerInject from "@/assets/banner-inject.webp";
 import { useTranslation } from "react-i18next";
 
-// Game card images
+// Game card images (accounts)
 import valorantCardImg from "@/assets/games/valorant-card.webp";
 import fortniteCardImg from "@/assets/games/fortnite-card.webp";
 import lolCardImg from "@/assets/games/lol-card.webp";
 import minecraftCardImg from "@/assets/games/minecraft-card.webp";
+
+// Software game images
+import swValorant from "@/assets/games/sw-valorant.webp";
+import swFortnite from "@/assets/games/sw-fortnite.webp";
+import swCs2 from "@/assets/games/sw-cs2.webp";
+import swApex from "@/assets/games/sw-apex.webp";
+import swCod from "@/assets/games/sw-cod.webp";
+import swRust from "@/assets/games/sw-rust.webp";
+import swOverwatch from "@/assets/games/sw-overwatch2.webp";
+import swFivem from "@/assets/games/sw-fivem.webp";
+import swPubg from "@/assets/games/sw-pubg.webp";
+import swMarvelRivals from "@/assets/games/sw-marvel-rivals.webp";
+import swDayz from "@/assets/games/sw-dayz.webp";
+import swSquad from "@/assets/games/sw-squad.webp";
 
 // Extracted components
 import FloatingWidgets from "@/components/landing/FloatingWidgets";
@@ -24,8 +38,32 @@ import HowItWorksSection from "@/components/landing/HowItWorksSection";
 import CtaSection from "@/components/landing/CtaSection";
 import { fadeUp, staggerContainer, scaleIn, slideInLeft } from "@/components/landing/animations";
 
-// Local images map for game cards
-const localImageMap: Record<string, string> = {
+// Local images map for software game cards
+const softwareImageMap: Record<string, string> = {
+  valorant: swValorant,
+  fortnite: swFortnite,
+  "cs2": swCs2,
+  "counter-strike 2": swCs2,
+  "counter strike 2": swCs2,
+  "apex legends": swApex,
+  "apex": swApex,
+  "call of duty": swCod,
+  "cod": swCod,
+  rust: swRust,
+  "overwatch 2": swOverwatch,
+  overwatch: swOverwatch,
+  fivem: swFivem,
+  pubg: swPubg,
+  "marvel rivals": swMarvelRivals,
+  dayz: swDayz,
+  squad: swSquad,
+};
+
+// Slugs to hide from the landing page software showcase
+const HIDDEN_GAME_SLUGS = ["spoofers", "spoofer"];
+
+// Local images map for account game cards
+const accountImageMap: Record<string, string> = {
   valorant: valorantCardImg,
   fortnite: fortniteCardImg,
   lol: lolCardImg,
