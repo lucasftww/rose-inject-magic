@@ -6,6 +6,44 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useReseller } from "@/hooks/useReseller";
 
+// Local game images
+import imgValorant from "@/assets/games/valorant.webp";
+import imgCS2 from "@/assets/games/cs2.webp";
+import imgSpoofers from "@/assets/games/spoofers.webp";
+import imgArenaBreakout from "@/assets/games/arena-breakout.webp";
+import imgArcRaiders from "@/assets/games/arc-raiders.webp";
+import imgCallOfDuty from "@/assets/games/call-of-duty.webp";
+import imgRust from "@/assets/games/rust.webp";
+import imgBloodstrike from "@/assets/games/bloodstrike.webp";
+import imgApexLegends from "@/assets/games/apex-legends.webp";
+import imgFarlight84 from "@/assets/games/farlight-84.webp";
+import imgBodycam from "@/assets/games/bodycam.webp";
+import imgWarface from "@/assets/games/warface.webp";
+import imgFiveM from "@/assets/games/fivem.webp";
+import imgSquad from "@/assets/games/squad.webp";
+import imgOverwatch2 from "@/assets/games/overwatch-2.webp";
+import imgHellLetLoose from "@/assets/games/hell-let-loose.webp";
+
+const localImageMap: Record<string, string> = {
+  'Valorant': imgValorant,
+  'Counter-Strike 2': imgCS2,
+  'Counter-Strike 2 (FREE)': imgCS2,
+  'Spoofers': imgSpoofers,
+  'Arena Breakout Infinite': imgArenaBreakout,
+  'ARC Raiders': imgArcRaiders,
+  'Call of Duty': imgCallOfDuty,
+  'Rust': imgRust,
+  'Bloodstrike': imgBloodstrike,
+  'Apex Legends': imgApexLegends,
+  'Farlight 84': imgFarlight84,
+  'Bodycam': imgBodycam,
+  'Warface': imgWarface,
+  'FiveM': imgFiveM,
+  'Squad': imgSquad,
+  'Overwatch 2': imgOverwatch2,
+  'Hell Let Loose': imgHellLetLoose,
+};
+
 interface GameFromDB {
   id: string;
   name: string;
@@ -228,12 +266,12 @@ const GameSelectScreen = ({ onSelect, games, loading }: { onSelect: (gameId: str
               variants={fadeUp}
               custom={idx}
               onClick={() => onSelect(game.id)}
-              className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/40 bg-card text-left transition-all duration-300 hover:border-success/50 hover:shadow-[0_0_30px_hsl(197,100%,50%,0.15)] focus:outline-none active:scale-[0.97]"
+              className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/30 bg-card text-left transition-all duration-300 hover:border-foreground/20 hover:shadow-[0_4px_24px_rgba(0,0,0,0.4)] focus:outline-none active:scale-[0.97]"
             >
               <div className="relative aspect-[3/4] overflow-hidden">
-                {game.image_url ? (
+                {(localImageMap[game.name] || game.image_url) ? (
                   <img
-                    src={game.image_url}
+                    src={localImageMap[game.name] || game.image_url!}
                     alt={game.name}
                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                     loading="lazy"
@@ -254,8 +292,8 @@ const GameSelectScreen = ({ onSelect, games, loading }: { onSelect: (gameId: str
                     </div>
                   )}
                   {game.product_count > 0 && (
-                    <div className="flex items-center gap-1 rounded-full bg-success px-2.5 py-1 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-success-foreground shadow-lg">
-                      <span className="h-1.5 w-1.5 rounded-full bg-success-foreground animate-pulse" />
+                    <div className="flex items-center gap-1 rounded-full bg-foreground/80 px-2.5 py-1 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-background shadow-lg">
+                      <span className="h-1.5 w-1.5 rounded-full bg-background animate-pulse" />
                       {game.product_count} {game.product_count === 1 ? "software" : "softwares"}
                     </div>
                   )}
@@ -271,7 +309,7 @@ const GameSelectScreen = ({ onSelect, games, loading }: { onSelect: (gameId: str
               </div>
 
               {/* CTA bar */}
-              <div className="flex items-center justify-center gap-1.5 border-t border-border/30 bg-card/80 px-3 py-2.5 sm:py-3 text-success text-[10px] sm:text-xs font-bold uppercase tracking-widest transition-all group-hover:bg-success/10 group-hover:gap-2.5">
+              <div className="flex items-center justify-center gap-1.5 border-t border-border/30 bg-card/80 px-3 py-2.5 sm:py-3 text-foreground/60 text-[10px] sm:text-xs font-bold uppercase tracking-widest transition-all group-hover:bg-foreground/[0.04] group-hover:text-foreground group-hover:gap-2.5">
                 <span>Ver softwares</span>
                 <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-1" />
               </div>
