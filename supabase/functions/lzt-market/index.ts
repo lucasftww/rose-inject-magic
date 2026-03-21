@@ -252,6 +252,11 @@ Deno.serve(async (req) => {
     const action = url.searchParams.get("action") || "list";
     const itemId = url.searchParams.get("item_id");
     const gameType = url.searchParams.get("game_type") || "riot";
+    const previewMode = url.searchParams.get("preview") === "1";
+    const requestedLimit = Number(url.searchParams.get("limit") || (previewMode ? "6" : "0"));
+    const responseLimit = Number.isFinite(requestedLimit)
+      ? Math.max(0, Math.min(Math.trunc(requestedLimit), 24))
+      : 0;
 
     // IMAGE PROXY: Proxy image requests to bypass CORS (requires auth)
     if (action === "image-proxy") {
@@ -701,6 +706,28 @@ Deno.serve(async (req) => {
         "pending_deletion_date", "update_stat_date",
       ];
 
+      const beforeCount = data.items.length;
+      let filteredByOther = 0;
+      data.items = data.items.filter((item: LztItem) => {
+        // Skip sold/closed/deleted items
+        if (item.item_state && item.item_state !== "active") { filteredByOther++; return false; }
+        if (item.buyer) { filteredByOther++; return false; }
+        if (item.canBuyItem === false) { filteredByOther++; return false; }
+        
+        const displayedPriceBrl = getDisplayedPriceBrl(item, undefined, gameType, activeMarkup);
+        
+        if (!shouldKeepItem(item, gameType, displayedPriceBrl)) {
+          filteredByOther++;
+          return false;
+        }
+        return true;
+      });
+
+      if (responseLimit > 0 && data.items.length > responseLimit) {
+        data.items = data.items.slice(0, responseLimit);
+        data.perPage = Math.min(Number(data.perPage || responseLimit), responseLimit);
+      }
+
       const itemIds = data.items.map((item: LztItem) => String(item.item_id)).filter(Boolean);
       const overrideMap = new Map<string, number>();
 
@@ -717,23 +744,6 @@ Deno.serve(async (req) => {
         }
       }
 
-      const beforeCount = data.items.length;
-      let filteredByOther = 0;
-      data.items = data.items.filter((item: LztItem) => {
-        // Skip sold/closed/deleted items
-        if (item.item_state && item.item_state !== "active") { filteredByOther++; return false; }
-        if (item.buyer) { filteredByOther++; return false; }
-        if (item.canBuyItem === false) { filteredByOther++; return false; }
-        
-        const displayedPriceBrl = getDisplayedPriceBrl(item, overrideMap.get(String(item.item_id)), gameType, activeMarkup);
-        
-        if (!shouldKeepItem(item, gameType, displayedPriceBrl)) {
-          filteredByOther++;
-          return false;
-        }
-        return true;
-      });
-
       log("INFO", "lzt-market", "Filtered market items", {
         gameType,
         beforeCount,
@@ -746,6 +756,22 @@ Deno.serve(async (req) => {
 
         // Strip heavy fields
         for (const field of STRIP_FIELDS) delete item[field];
+
+        if (previewMode) {
+          delete item.valorantInventory;
+
+          if (item.imagePreviewLinks?.direct) {
+            item.imagePreviewLinks = {
+              direct: {
+                weapons: item.imagePreviewLinks.direct.weapons,
+                agents: item.imagePreviewLinks.direct.agents,
+                buddies: item.imagePreviewLinks.direct.buddies,
+              },
+            };
+          }
+
+          continue;
+        }
 
         // Trim valorantInventory to max 12 items per category (enough for preview)
         if (item.valorantInventory) {
@@ -815,7 +841,7 @@ Deno.serve(async (req) => {
     }
 
     // Add cache headers: list responses cached 2 min, detail cached 30s
-    const cacheMaxAge = action === "detail" ? 30 : 120;
+    const cacheMaxAge = action === "detail" ? 30 : previewMode ? 300 : 120;
 
     return new Response(JSON.stringify(data), {
       headers: {
