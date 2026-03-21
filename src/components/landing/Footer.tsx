@@ -1,14 +1,12 @@
-import { forwardRef } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 
-const Footer = forwardRef<HTMLElement>((_props, ref) => {
+const Footer = () => {
   const { t } = useTranslation();
 
   return (
     <motion.footer
-      ref={ref}
       className="border-t border-border bg-background px-5 sm:px-6 py-10 sm:py-16 pb-24 sm:pb-16"
       initial={{ opacity: 0 }}
       whileInView={{ opacity: 1 }}
@@ -86,8 +84,6 @@ const Footer = forwardRef<HTMLElement>((_props, ref) => {
       </div>
     </motion.footer>
   );
-});
-
-Footer.displayName = "Footer";
+};
 
 export default Footer;
