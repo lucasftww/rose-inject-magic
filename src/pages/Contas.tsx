@@ -888,8 +888,15 @@ const Contas = () => {
   const buildParams = useCallback((pageNum: number = currentPage): Record<string, string | string[]> => {
     const params: Record<string, string | string[]> = {};
     params.page = String(pageNum);
-    params.order_by = "pdate_to_down";
+    // Send user's chosen sort to API (validated enum values from LZT API)
+    params.order_by = sortBy || "pdate_to_down";
+    // Not sold before — avoid showing previously sold accounts
+    params.nsb = "true";
     if (searchQuery) params.title = searchQuery;
+
+    // Send price filters to API so server filters before returning
+    if (priceMin && Number(priceMin) > 0) params.pmin = priceMin;
+    if (priceMax && Number(priceMax) > 0) params.pmax = priceMax;
 
     if (gameTab === "valorant") {
       params.game_type = "riot";
@@ -913,11 +920,10 @@ const Contas = () => {
       }
 
       if (selectedWeapon !== "todos") {
-        // Combine weapon filter with search query if both are set
         params.title = searchQuery ? `${searchQuery} ${selectedWeapon}` : selectedWeapon;
       }
     } else if (gameTab === "lol") {
-      // LoL-specific — match server-side LOL_MIN_SKINS=8
+      // LoL-specific — use lol_region[] NOT country[] per LZT API docs
       params.game_type = "lol";
       params.lol_smin = lolSkinsMin && Number(lolSkinsMin) >= 8 ? lolSkinsMin : "8";
       params.champion_min = lolChampMin && Number(lolChampMin) >= 10 ? lolChampMin : "10";
@@ -928,7 +934,7 @@ const Contas = () => {
         params["lol_rank[]"] = lolRankApiValues[lolRank];
       }
 
-      // Region filter
+      // LoL uses lol_region[] per official API, NOT country[]
       if (lolRegion !== "all") {
         params["lol_region[]"] = lolRegion;
       }
@@ -947,7 +953,7 @@ const Contas = () => {
     }
 
     return params;
-  }, [currentPage, searchQuery, onlyKnife, selectedRank, selectedWeapon, invMin, invMax, lvlMin, lvlMax, gameTab, lolRank, lolChampMin, lolSkinsMin, fnVbMin, fnSkinsMin, mcJava, mcBedrock, mcHypixelLvlMin, mcCapesMin, mcNoBan, lolRegion, valRegion]);
+  }, [currentPage, searchQuery, onlyKnife, selectedRank, selectedWeapon, invMin, invMax, lvlMin, lvlMax, gameTab, lolRank, lolChampMin, lolSkinsMin, fnVbMin, fnSkinsMin, mcJava, mcBedrock, mcHypixelLvlMin, mcCapesMin, mcNoBan, lolRegion, valRegion, sortBy, priceMin, priceMax]);
 
   const paramsKey = JSON.stringify(buildParams(1)) + gameTab;
   const [debouncedParamsKey, setDebouncedParamsKey] = useState(paramsKey);
