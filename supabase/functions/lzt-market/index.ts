@@ -449,7 +449,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Only convert user-provided BRL price filters — do NOT auto-apply pmax
+      // Convert user-provided BRL price filters to seller currency
       const userPmin = params.get("pmin");
       if (userPmin) {
         const brlMin = Number(userPmin);
@@ -470,6 +470,10 @@ Deno.serve(async (req) => {
         } else {
           params.delete("pmax");
         }
+      } else {
+        // Default pmax: R$2000 BRL equivalent to keep API fast while showing plenty of accounts
+        const defaultPmaxSeller = Math.ceil(2000 / activeMarkup);
+        params.set("pmax", String(defaultPmaxSeller));
       }
 
       if (gameType === "fortnite") {
