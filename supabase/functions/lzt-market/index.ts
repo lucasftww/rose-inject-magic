@@ -682,7 +682,7 @@ Deno.serve(async (req) => {
       }
 
       const beforeCount = data.items.length;
-      let filteredByInactivity = 0, filteredByPrice = 0, filteredByOther = 0;
+      let filteredByOther = 0;
       data.items = data.items.filter((item: LztItem) => {
         // Skip sold/closed/deleted items
         if (item.item_state && item.item_state !== "active") { filteredByOther++; return false; }
