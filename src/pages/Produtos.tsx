@@ -42,6 +42,7 @@ const localImageMap: Record<string, string> = {
   'Squad': imgSquad,
   'Overwatch 2': imgOverwatch2,
   'Hell Let Loose': imgHellLetLoose,
+  'Fortnite': imgCS2, // fallback until dedicated fortnite catalog image exists
 };
 
 interface GameFromDB {

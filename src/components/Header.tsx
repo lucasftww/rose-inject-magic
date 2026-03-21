@@ -290,7 +290,7 @@ const Header = () => {
       </AnimatePresence>
 
       {/* Spacer */}
-      <div className="h-[72px] sm:h-[80px]" />
+      <div className="h-14 sm:h-16" />
     </>
   );
 };
