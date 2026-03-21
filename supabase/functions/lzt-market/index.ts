@@ -460,6 +460,7 @@ Deno.serve(async (req) => {
       const params = new URLSearchParams();
       const allowedParams = [
         "page", "pmin", "pmax", "title", "order_by", "currency",
+        "nsb",  // not sold before
         "rmin", "rmax", "last_rmin", "last_rmax", "previous_rmin", "previous_rmax",
         "valorant_level_min", "valorant_level_max",
         "valorant_smin", "valorant_smax",
@@ -476,6 +477,8 @@ Deno.serve(async (req) => {
         "win_rate_min", "win_rate_max",
         "blue_min", "blue_max",
         "orange_min", "orange_max",
+        "mythic_min", "mythic_max",
+        "riot_min", "riot_max",
       ];
 
       for (const p of allowedParams) {
@@ -487,6 +490,7 @@ Deno.serve(async (req) => {
         "weaponSkin[]", "buddy[]", "agent[]", "valorant_region[]",
         "valorant_rank_type[]", "email_type[]", "country[]",
         "champion[]", "skin[]", "lol_rank[]", "lol_region[]",
+        "not_country[]",
       ];
       for (const p of arrayParams) {
         const vals = url.searchParams.getAll(p);
@@ -531,6 +535,12 @@ Deno.serve(async (req) => {
           const val = url.searchParams.get(p);
           if (val) params.set(p, val);
         }
+        // Remove Valorant/LoL-specific params that don't apply
+        params.delete("valorant_smin");
+        params.delete("valorant_smax");
+        params.delete("lol_smin");
+        params.delete("lol_smax");
+        params.delete("champion_min");
         apiUrl = `https://api.lzt.market/fortnite?${params.toString()}`;
       } else if (gameType === "minecraft") {
         // Minecraft-specific params
@@ -549,17 +559,51 @@ Deno.serve(async (req) => {
           const vals = url.searchParams.getAll(p);
           for (const v of vals) params.append(p, v);
         }
-        apiUrl = `https://api.lzt.market/minecraft?${params.toString()}`;
-      } else if (gameType === "lol") {
-        // LoL uses /riot endpoint but must NOT have valorant_smin
+        // Remove Valorant/LoL-specific params
         params.delete("valorant_smin");
         params.delete("valorant_smax");
+        params.delete("lol_smin");
+        params.delete("lol_smax");
+        params.delete("champion_min");
+        apiUrl = `https://api.lzt.market/minecraft?${params.toString()}`;
+      } else if (gameType === "lol") {
+        // LoL uses /riot endpoint but must NOT have any Valorant-specific params
+        // Per LZT API docs: LoL uses lol_smin, lol_region[], lol_rank[], champion[]
+        params.delete("valorant_smin");
+        params.delete("valorant_smax");
+        params.delete("valorant_level_min");
+        params.delete("valorant_level_max");
+        params.delete("valorant_knife_min");
+        params.delete("valorant_knife_max");
+        params.delete("vp_min");
+        params.delete("vp_max");
+        params.delete("rp_min");
+        params.delete("rp_max");
+        params.delete("fa_min");
+        params.delete("fa_max");
+        params.delete("rmin");
+        params.delete("rmax");
+        params.delete("last_rmin");
+        params.delete("last_rmax");
+        params.delete("previous_rmin");
+        params.delete("previous_rmax");
+        params.delete("knife");
+        params.delete("amin");
+        params.delete("amax");
+        params.delete("inv_min");
+        params.delete("inv_max");
         apiUrl = `https://api.lzt.market/riot?${params.toString()}`;
       } else {
-        // Valorant: ensure minimum skins filter
+        // Valorant: ensure minimum skins filter, remove LoL-specific params
         if (!params.has("valorant_smin")) {
           params.set("valorant_smin", String(VAL_MIN_SKINS));
         }
+        params.delete("lol_smin");
+        params.delete("lol_smax");
+        params.delete("lol_level_min");
+        params.delete("lol_level_max");
+        params.delete("champion_min");
+        params.delete("champion_max");
         apiUrl = `https://api.lzt.market/riot?${params.toString()}`;
       }
     }
