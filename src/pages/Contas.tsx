@@ -885,6 +885,7 @@ const Contas = () => {
   const abortRef = useRef<AbortController | null>(null);
   const fetchCacheRef = useRef(new Map<string, { items: LztItem[]; hasNextPage: boolean; currentPage: number; timestamp: number }>());
   const MAX_PAGES = 8;
+  const [firstPageLoaded, setFirstPageLoaded] = useState(false);
 
   // ─── Asset maps (only load when needed) ───
   const { data: skinsMap = new Map() } = useQuery({
