@@ -677,8 +677,9 @@ Deno.serve(async (req) => {
         const isValorant = gameType === "riot" || gameType === "valorant";
         if (!shouldKeepItem(item, gameType, displayedPriceBrl)) {
           if (isValorant) {
+            const rawLastActivity = Number(item.account_last_activity || item.riot_last_activity || item.last_activity || item.login_date || 0);
+            const lastActivity = rawLastActivity > 1_000_000_000_000 ? Math.floor(rawLastActivity / 1000) : rawLastActivity;
             const nowSec = Math.floor(Date.now() / 1000);
-            const lastActivity = Number(item.account_last_activity || item.riot_last_activity || 0);
             if (lastActivity > 0 && (nowSec - lastActivity) < 30 * 86400) {
               filteredByInactivity++;
             } else {
