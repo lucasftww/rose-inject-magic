@@ -47,7 +47,7 @@ const LazyFallback = () => (
   </div>
 );
 
-const App = forwardRef<HTMLDivElement>((_props, _ref) => (
+const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <CartProvider>
@@ -92,8 +92,6 @@ const App = forwardRef<HTMLDivElement>((_props, _ref) => (
       </CartProvider>
     </AuthProvider>
   </QueryClientProvider>
-));
-
-App.displayName = "App";
+);
 
 export default App;
