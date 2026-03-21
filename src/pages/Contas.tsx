@@ -862,7 +862,8 @@ const Contas = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
-  const MAX_PAGES = gameTab === "valorant" ? 3 : 3;
+  const fetchCacheRef = useRef(new Map<string, { items: LztItem[]; totalItems: number; timestamp: number }>());
+  const MAX_PAGES = 3;
 
   // ─── Asset maps ───
   const { data: skinsMap = new Map() } = useQuery({
