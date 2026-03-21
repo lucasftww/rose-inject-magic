@@ -1057,8 +1057,7 @@ const Contas = () => {
   }, [debouncedParamsKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadMorePages = async () => {
-    const shouldProbeValorantPages = gameTab === "valorant";
-    if (loadingMore || (!hasNextPage && !shouldProbeValorantPages)) return;
+    if (loadingMore || !hasNextPage) return;
     if (currentPage >= MAX_PAGES) return;
     setLoadingMore(true);
     // Abort any previous in-flight request before starting a new one
