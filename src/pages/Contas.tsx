@@ -890,8 +890,6 @@ const Contas = () => {
     params.page = String(pageNum);
     // Send user's chosen sort to API (validated enum values from LZT API)
     params.order_by = sortBy || "pdate_to_down";
-    // Not sold before — avoid showing previously sold accounts
-    params.nsb = "true";
     if (searchQuery) params.title = searchQuery;
 
     // Send price filters to API so server filters before returning
