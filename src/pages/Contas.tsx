@@ -1069,7 +1069,7 @@ const Contas = () => {
       const data = await fetchWithRetry(buildParams(nextPageNum), controller);
       if (controller.signal.aborted) return;
       const pageItems: LztItem[] = data?.items ?? [];
-      setHasNextPage(shouldProbeValorantPages ? nextPageNum < MAX_PAGES && pageItems.length > 0 : (data?.hasNextPage ?? false));
+      setHasNextPage(data?.hasNextPage ?? pageItems.length >= 15);
       setCurrentPage(nextPageNum);
       // Deduplicate by item_id to prevent duplicates from race conditions
       setStreamedItems(prev => {
