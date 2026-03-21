@@ -13,21 +13,8 @@ const USD_TO_BRL = 5.50;
 const MIN_PRICE_BRL = 20;
 const DEFAULT_MARKUP = 3.0;
 const MIN_INACTIVE_DAYS = 30;
-const MAX_RAW_PAGES_PER_REQUEST = 12;
 
 type LztItem = Record<string, any>;
-
-function normalizeUnixTimestamp(value: unknown) {
-  const parsed = Number(value || 0);
-  if (!Number.isFinite(parsed) || parsed <= 0) return 0;
-  return parsed > 1_000_000_000_000 ? Math.floor(parsed / 1000) : Math.floor(parsed);
-}
-
-function getLastActivityTimestamp(item: LztItem) {
-  return normalizeUnixTimestamp(
-    item.account_last_activity || item.riot_last_activity || item.last_activity || item.login_date,
-  );
-}
 
 function log(level: "INFO" | "WARN" | "ERROR", ctx: string, msg: string, data?: Record<string, unknown>) {
   const entry = { ts: new Date().toISOString(), level, ctx, msg, ...(data || {}) };
