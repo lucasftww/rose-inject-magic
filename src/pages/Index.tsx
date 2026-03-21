@@ -124,22 +124,36 @@ const ContasSection = () => {
   );
 };
 
-const ProductsSection = () => {
+const SoftwareSection = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { data: dbProducts = [], isLoading } = useQuery({
-    queryKey: ["featured-products"],
+
+  const { data: games = [], isLoading } = useQuery({
+    queryKey: ["landing-games-software"],
     queryFn: async () => {
       const { data } = await supabase
-        .from("products")
-        .select("id, name, description, image_url, active, sort_order, game_id, created_at, status, status_label, status_updated_at, features_text, product_plans(*)")
+        .from("games")
+        .select("id, name, slug, image_url, sort_order, active, products:products(id, active)")
         .eq("active", true)
-        .order("sort_order", { ascending: true })
-        .limit(6);
-      return (data || []) as ProductFromDB[];
+        .order("sort_order", { ascending: true });
+      return (data || []) as GameFromDB[];
     },
     staleTime: 1000 * 60 * 5,
   });
+
+  const activeGames = useMemo(
+    () => games.filter(g => g.products?.some(p => p.active)),
+    [games]
+  );
+
+  const handleGameClick = async (game: GameFromDB) => {
+    const activeProducts = game.products?.filter(p => p.active) || [];
+    if (activeProducts.length === 1) {
+      navigate(`/produto/${activeProducts[0].id}`);
+    } else {
+      navigate(`/produtos?game=${game.slug || game.id}`);
+    }
+  };
 
   return (
     <section className="border-t border-border bg-background px-5 sm:px-6 py-14 sm:py-24">
@@ -151,59 +165,62 @@ const ProductsSection = () => {
 
         {isLoading ? (
           <div className="mt-14 flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-success" /></div>
-        ) : dbProducts.length === 0 ? (
+        ) : activeGames.length === 0 ? (
           <div className="mt-14 text-center text-muted-foreground">{t("products.empty")}</div>
         ) : (
           <motion.div
-            className="mt-6 sm:mt-14 grid grid-cols-2 gap-2.5 sm:gap-5 lg:grid-cols-3"
+            className="mt-6 sm:mt-14 grid grid-cols-2 gap-2.5 sm:gap-5 lg:grid-cols-4"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-60px" }}
             variants={staggerContainer}
           >
-            {dbProducts.map((product, idx) => {
-              const activePlans = product.product_plans?.filter(p => p.active) || [];
-              const lowestPrice = activePlans.length > 0 ? Math.min(...activePlans.map(p => Number(p.price))) : null;
+            {activeGames.map((game, idx) => {
+              const slug = (game.slug || game.name || "").toLowerCase();
+              const image = localImageMap[slug] || game.image_url;
+              const productCount = game.products?.filter(p => p.active).length || 0;
+
               return (
                 <motion.div
-                  key={product.id}
+                  key={game.id}
                   variants={scaleIn}
                   custom={idx}
-                  onClick={() => navigate(`/produto/${product.id}`)}
-                  className="group flex flex-col cursor-pointer overflow-hidden rounded-2xl border border-border/50 bg-card transition-all duration-300 hover:border-success/30 hover:shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
+                  onClick={() => handleGameClick(game)}
+                  className="group relative flex flex-col cursor-pointer overflow-hidden rounded-2xl border border-border/50 bg-card transition-all duration-300 hover:border-success/30 hover:shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
                 >
-                  <div className="relative aspect-square w-full overflow-hidden">
-                    {product.image_url ? (
+                  <div className="relative aspect-[3/4] w-full overflow-hidden">
+                    {image ? (
                       <img
-                        src={product.image_url}
-                        alt={product.name}
+                        src={image}
+                        alt={game.name}
                         loading="lazy"
-                        className="absolute inset-0 block h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
+                        className="absolute inset-0 block h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-110"
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center bg-card">
-                        <Package className="h-6 w-6 sm:h-10 sm:w-10 text-muted-foreground/20" />
+                        <span className="text-2xl font-bold text-muted-foreground/20">{game.name.charAt(0)}</span>
                       </div>
                     )}
-                    {/* Subtle gradient at bottom */}
-                    <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-card to-transparent" />
-                  </div>
-                  <div className="flex flex-col justify-between p-3 sm:p-4 flex-1">
-                    <h3 className="text-xs sm:text-sm font-bold text-foreground line-clamp-1">{product.name}</h3>
-                    {product.description && (
-                      <p className="mt-0.5 text-[10px] sm:text-xs text-muted-foreground line-clamp-2 hidden sm:block">{product.description}</p>
-                    )}
-                    {lowestPrice !== null && (
-                      <div className="mt-2 sm:mt-3 flex items-end justify-between gap-2">
-                        <div>
-                          <p className="text-[8px] sm:text-[10px] text-muted-foreground uppercase tracking-wider">{t("products.startingFrom")}</p>
-                          <p className="text-sm sm:text-lg font-bold text-success">R$ {lowestPrice.toFixed(2)}</p>
-                        </div>
-                        <span className="hidden sm:flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-[11px] font-medium text-muted-foreground transition-all group-hover:border-success group-hover:text-success group-hover:shadow-[0_0_12px_hsl(197,100%,50%,0.1)]">
-                          {t("products.viewProduct")}
-                        </span>
+                    <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+
+                    {/* Product count badge */}
+                    {productCount > 0 && (
+                      <div className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 rounded-full bg-success/90 px-2 sm:px-2.5 py-0.5 text-[9px] sm:text-xs font-bold text-success-foreground shadow-lg shadow-success/20">
+                        {productCount} {productCount === 1 ? "software" : "softwares"}
                       </div>
                     )}
+
+                    {/* Bottom content */}
+                    <div className="absolute inset-x-0 bottom-0 p-3 sm:p-5">
+                      <h3 className="text-lg sm:text-2xl lg:text-3xl font-bold tracking-tight text-foreground" style={{ fontFamily: "'Valorant', sans-serif" }}>
+                        {game.name.toUpperCase()}
+                      </h3>
+
+                      <div className="mt-2.5 sm:mt-4 flex items-center gap-1.5 text-success text-[10px] sm:text-xs font-semibold uppercase tracking-wider transition-all group-hover:gap-2.5">
+                        <span>{productCount === 1 ? t("products.viewProduct") : t("products.viewProducts", { defaultValue: "Ver softwares" })}</span>
+                        <ArrowRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 transition-transform group-hover:translate-x-1" />
+                      </div>
+                    </div>
                   </div>
                 </motion.div>
               );
