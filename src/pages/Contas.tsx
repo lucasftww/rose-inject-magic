@@ -884,6 +884,7 @@ const Contas = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const fetchCacheRef = useRef(new Map<string, { items: LztItem[]; hasNextPage: boolean; currentPage: number; timestamp: number }>());
+  const MAX_CACHE_ENTRIES = 20;
   const MAX_PAGES = 8;
   const [firstPageLoaded, setFirstPageLoaded] = useState(false);
 
