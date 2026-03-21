@@ -550,8 +550,9 @@ Deno.serve(async (req) => {
           for (const v of vals) params.append(p, v);
         }
         apiUrl = `https://api.lzt.market/minecraft?${params.toString()}`;
+      } else if (gameType === "lol") {
+        apiUrl = `https://api.lzt.market/riot?${params.toString()}`;
       } else {
-        // Valorant/Riot: ensure minimum skins filter is applied API-side
         if (!params.has("valorant_smin")) {
           params.set("valorant_smin", String(VAL_MIN_SKINS));
         }
