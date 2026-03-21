@@ -1081,7 +1081,7 @@ const Contas = () => {
         setStreamingDone(true);
       }
     }
-  }, [buildParams, debouncedParamsKey, fetchWithRetry]);
+  }, [buildParams, debouncedParamsKey, fetchWithRetry, cacheSet]);
 
   // Prefetch adjacent game tabs in background for instant switching
   const prefetchRef = useRef(new Set<string>());
