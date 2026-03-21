@@ -170,15 +170,11 @@ function shouldKeepItem(item: LztItem, gameType: string, _displayedPriceBrl: num
   if (item.buyer) return false;
   if (item.canBuyItem === false) return false;
 
-  // Require minimum 30 days of inactivity for account security
-  const rawLastActivity = Number(item.account_last_activity || item.riot_last_activity || item.last_activity || item.login_date || 0);
-  const lastActivity = rawLastActivity > 1_000_000_000_000 ? Math.floor(rawLastActivity / 1000) : rawLastActivity;
-  if (lastActivity > 0) {
-    const daysSinceActive = (Date.now() / 1000 - lastActivity) / 86400;
-    if (daysSinceActive < 30) return false;
-  }
+  // Inactivity is now enforced by LZT API via `daybreak` parameter.
+  // Minimum skins are also enforced by LZT API via `valorant_smin`/`lol_smin`.
+  // Keep client-side checks only as safety net for edge cases.
 
-  // Minimum 3 skins per game
+  // Minimum 3 skins per game (safety net — API should already filter these)
   const isValorant = gameType === "riot" || gameType === "valorant";
   if (isValorant) {
     const skins = Number(item.riot_valorant_skin_count || 0);
