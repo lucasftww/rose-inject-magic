@@ -356,7 +356,7 @@ const ProductsTab = () => {
 
     if (robotEnabled && formRobotGameId && robotGames.length > 0) {
       const rg = robotGames.find(g => Number(g.id) === Number(formRobotGameId));
-      if (rg?.prices) {
+      if (rg?.prices && !rg.is_free) {
         for (const plan of formPlans) {
           if (!plan.active || !plan.robot_duration_days) continue;
           const fullPriceUsd = rg.prices[String(plan.robot_duration_days)];
@@ -807,175 +807,212 @@ const ProductsTab = () => {
           </SectionCard>
 
           {/* Plans */}
-          <SectionCard title="Planos / Sub-produtos" icon={Layers} actions={
-            <div className="flex items-center gap-2">
-              {robotEnabled && formRobotMarkup !== null && formRobotGameId && robotGames.length > 0 && (
-                <button type="button" onClick={() => {
-                  const rg = robotGames.find(g => Number(g.id) === Number(formRobotGameId));
-                  if (!rg || !rg.prices) { toast({ title: "Jogo Robot não encontrado ou sem preços", variant: "destructive" }); return; }
-                  let filledCount = 0;
-                  const updated = formPlans.map((p) => {
-                    if (!p.robot_duration_days) return p;
-                    const robotPriceUsd = rg.prices[String(p.robot_duration_days)];
-                    if (robotPriceUsd === undefined) return p;
-                    const robotPriceBrl = Number(robotPriceUsd) * robotUsdToBrl;
-                    const calc = Number((robotPriceBrl * (1 + (formRobotMarkup || 0) / 100)).toFixed(2));
-                    filledCount += 1;
-                    return { ...p, price: calc };
-                  });
-                  setFormPlans(updated);
-                  toast({
-                    title: filledCount > 0 ? "Preços preenchidos!" : "Nenhum plano atualizado",
-                    description: filledCount > 0 ? undefined : "Verifique se os dias batem com a API.",
-                    variant: filledCount > 0 ? undefined : "destructive",
-                  });
-                }}
-                  className="flex items-center gap-1.5 rounded-lg bg-accent/10 border border-accent/20 px-3 py-1.5 text-[11px] font-medium text-accent-foreground hover:bg-accent/20 transition-colors">
-                  <DollarSign className="h-3 w-3" /> Auto-preencher
-                </button>
-              )}
-              <button type="button" onClick={addPlan}
-                className="flex items-center gap-1 rounded-lg bg-success/10 border border-success/20 px-3 py-1.5 text-[11px] font-medium text-success hover:bg-success/20 transition-colors">
-                <Plus className="h-3 w-3" /> Plano
-              </button>
-            </div>
-          }>
-            <div className="space-y-2">
-              {formPlans.map((plan, index) => {
-                const selectedRobotGame = robotEnabled && formRobotGameId ? robotGames.find(g => Number(g.id) === Number(formRobotGameId)) : null;
-                const robotPriceUsd = selectedRobotGame && plan.robot_duration_days
-                  ? selectedRobotGame.prices?.[String(plan.robot_duration_days)] : undefined;
-                const robotPriceBrl = robotPriceUsd !== undefined ? Number(robotPriceUsd) * robotUsdToBrl : undefined;
-                const suggestedPrice = robotPriceBrl !== undefined && formRobotMarkup !== null
-                  ? Number((robotPriceBrl * (1 + formRobotMarkup / 100)).toFixed(2)) : null;
+          {(() => {
+            const selectedRobotGameGlobal = robotEnabled && formRobotGameId ? robotGames.find(g => Number(g.id) === Number(formRobotGameId)) : null;
+            const isRobotFree = !!selectedRobotGameGlobal?.is_free;
 
-                return (
-                  <div key={plan._key || index} className="rounded-xl border border-border/40 bg-background/50 p-3">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <input type="text" value={plan.name} onChange={(e) => updatePlan(index, "name", e.target.value.slice(0, 50))}
-                        placeholder="Nome (ex: Diário)"
-                        className="flex-1 min-w-[120px] rounded-lg border border-border/40 bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none focus:border-success/50" />
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground/60">R$</span>
-                        <input type="number" value={plan.price} onChange={(e) => updatePlan(index, "price", Number(e.target.value))}
-                          min="0" step="0.01"
-                          className={`w-28 rounded-lg border bg-background pl-9 pr-3 py-2 text-sm text-foreground outline-none focus:border-success/50 ${
-                            plan.price === 0 && robotEnabled ? "border-warning/40" : "border-border/40"
-                          }`} />
-                      </div>
-                      {robotEnabled && (
-                        <div className="relative">
-                          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground/60">dias</span>
-                          <input type="number" value={plan.robot_duration_days || ""} onChange={(e) => updatePlan(index, "robot_duration_days", Number(e.target.value) || null)}
-                            min="1" step="1" placeholder="30"
-                            className="w-20 rounded-lg border border-accent/20 bg-accent/5 pl-9 pr-2 py-2 text-sm text-foreground outline-none focus:border-accent/40" />
-                        </div>
-                      )}
-                      <button type="button" onClick={() => updatePlan(index, "active", !plan.active)}
-                        className={`flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[11px] font-medium transition-colors ${
-                          plan.active ? "bg-success/10 text-success" : "bg-muted/30 text-muted-foreground"
-                        }`}>
-                        {plan.active ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
-                      </button>
-                      <button type="button" onClick={() => removePlan(index)}
-                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground/40 hover:bg-destructive/10 hover:text-destructive transition-colors">
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                    {robotEnabled && suggestedPrice !== null && (
-                      <div className="mt-2 flex items-center gap-2 text-[10px] text-muted-foreground rounded-lg bg-muted/20 px-3 py-1.5">
-                        <span>
-                          API: ${Number(robotPriceUsd).toFixed(2)} ≈ R${robotPriceBrl?.toFixed(2)} × {(1 + (formRobotMarkup || 0) / 100).toFixed(2)} = <span className="font-bold text-success">R${suggestedPrice.toFixed(2)}</span>
-                          <span className="text-success/60 ml-1">(40% cashback)</span>
-                        </span>
-                        {plan.price !== suggestedPrice && plan.price > 0 && (
-                          <span className="text-warning">(manual: R${plan.price.toFixed(2)})</span>
-                        )}
-                        {plan.price === 0 && (
-                          <button type="button" onClick={() => updatePlan(index, "price", suggestedPrice)}
-                            className="text-success hover:underline font-semibold ml-auto">Usar</button>
-                        )}
-                      </div>
-                    )}
-                    {robotEnabled && plan.price === 0 && !suggestedPrice && (
-                      <p className="mt-1.5 text-[10px] text-warning bg-warning/5 rounded-lg px-3 py-1.5">⚠️ Preço R$ 0 — defina um preço ou configure dias + markup</p>
-                    )}
+            return (
+              <SectionCard title="Planos / Sub-produtos" icon={Layers} actions={
+                <div className="flex items-center gap-2">
+                  {robotEnabled && !isRobotFree && formRobotMarkup !== null && formRobotGameId && robotGames.length > 0 && (
+                    <button type="button" onClick={() => {
+                      const rg = robotGames.find(g => Number(g.id) === Number(formRobotGameId));
+                      if (!rg || !rg.prices) { toast({ title: "Jogo Robot não encontrado ou sem preços", variant: "destructive" }); return; }
+                      let filledCount = 0;
+                      const updated = formPlans.map((p) => {
+                        if (!p.robot_duration_days) return p;
+                        const robotPriceUsd = rg.prices[String(p.robot_duration_days)];
+                        if (robotPriceUsd === undefined) return p;
+                        const robotPriceBrl = Number(robotPriceUsd) * robotUsdToBrl;
+                        const calc = Number((robotPriceBrl * (1 + (formRobotMarkup || 0) / 100)).toFixed(2));
+                        filledCount += 1;
+                        return { ...p, price: calc };
+                      });
+                      setFormPlans(updated);
+                      toast({
+                        title: filledCount > 0 ? "Preços preenchidos!" : "Nenhum plano atualizado",
+                        description: filledCount > 0 ? undefined : "Verifique se os dias batem com a API.",
+                        variant: filledCount > 0 ? undefined : "destructive",
+                      });
+                    }}
+                      className="flex items-center gap-1.5 rounded-lg bg-accent/10 border border-accent/20 px-3 py-1.5 text-[11px] font-medium text-accent-foreground hover:bg-accent/20 transition-colors">
+                      <DollarSign className="h-3 w-3" /> Auto-preencher
+                    </button>
+                  )}
+                  <button type="button" onClick={addPlan}
+                    className="flex items-center gap-1 rounded-lg bg-success/10 border border-success/20 px-3 py-1.5 text-[11px] font-medium text-success hover:bg-success/20 transition-colors">
+                    <Plus className="h-3 w-3" /> Plano
+                  </button>
+                </div>
+              }>
+                {/* Free game banner */}
+                {robotEnabled && isRobotFree && (
+                  <div className="mb-4 rounded-xl border border-info/20 bg-info/5 px-4 py-3 space-y-1">
+                    <p className="text-sm font-semibold text-info">🆓 Jogo Gratuito (FREE)</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Este jogo não gera chaves de ativação. O cliente apenas faz download do programa e cria conta no loader.
+                      Não é necessário configurar dias ou markup — defina apenas o nome do plano e preço (pode ser R$ 0,00 para gratuito).
+                    </p>
                   </div>
-                );
-              })}
-            </div>
-          </SectionCard>
+                )}
+
+                <div className="space-y-2">
+                  {formPlans.map((plan, index) => {
+                    const selectedRobotGame = robotEnabled && formRobotGameId && !isRobotFree ? robotGames.find(g => Number(g.id) === Number(formRobotGameId)) : null;
+                    const robotPriceUsd = selectedRobotGame && plan.robot_duration_days
+                      ? selectedRobotGame.prices?.[String(plan.robot_duration_days)] : undefined;
+                    const robotPriceBrl = robotPriceUsd !== undefined ? Number(robotPriceUsd) * robotUsdToBrl : undefined;
+                    const suggestedPrice = robotPriceBrl !== undefined && formRobotMarkup !== null
+                      ? Number((robotPriceBrl * (1 + formRobotMarkup / 100)).toFixed(2)) : null;
+
+                    return (
+                      <div key={plan._key || index} className="rounded-xl border border-border/40 bg-background/50 p-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <input type="text" value={plan.name} onChange={(e) => updatePlan(index, "name", e.target.value.slice(0, 50))}
+                            placeholder={isRobotFree ? "Nome (ex: Gratuito)" : "Nome (ex: Diário)"}
+                            className="flex-1 min-w-[120px] rounded-lg border border-border/40 bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none focus:border-success/50" />
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground/60">R$</span>
+                            <input type="number" value={plan.price} onChange={(e) => updatePlan(index, "price", Number(e.target.value))}
+                              min="0" step="0.01"
+                              className={`w-28 rounded-lg border bg-background pl-9 pr-3 py-2 text-sm text-foreground outline-none focus:border-success/50 ${
+                                plan.price === 0 && robotEnabled && !isRobotFree ? "border-warning/40" : "border-border/40"
+                              }`} />
+                          </div>
+                          {/* Hide days field for free Robot games */}
+                          {robotEnabled && !isRobotFree && (
+                            <div className="relative">
+                              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground/60">dias</span>
+                              <input type="number" value={plan.robot_duration_days || ""} onChange={(e) => updatePlan(index, "robot_duration_days", Number(e.target.value) || null)}
+                                min="1" step="1" placeholder="30"
+                                className="w-20 rounded-lg border border-accent/20 bg-accent/5 pl-9 pr-2 py-2 text-sm text-foreground outline-none focus:border-accent/40" />
+                            </div>
+                          )}
+                          <button type="button" onClick={() => updatePlan(index, "active", !plan.active)}
+                            className={`flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[11px] font-medium transition-colors ${
+                              plan.active ? "bg-success/10 text-success" : "bg-muted/30 text-muted-foreground"
+                            }`}>
+                            {plan.active ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                          </button>
+                          <button type="button" onClick={() => removePlan(index)}
+                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground/40 hover:bg-destructive/10 hover:text-destructive transition-colors">
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                        {robotEnabled && !isRobotFree && suggestedPrice !== null && (
+                          <div className="mt-2 flex items-center gap-2 text-[10px] text-muted-foreground rounded-lg bg-muted/20 px-3 py-1.5">
+                            <span>
+                              API: ${Number(robotPriceUsd).toFixed(2)} ≈ R${robotPriceBrl?.toFixed(2)} × {(1 + (formRobotMarkup || 0) / 100).toFixed(2)} = <span className="font-bold text-success">R${suggestedPrice.toFixed(2)}</span>
+                              <span className="text-success/60 ml-1">(40% cashback)</span>
+                            </span>
+                            {plan.price !== suggestedPrice && plan.price > 0 && (
+                              <span className="text-warning">(manual: R${plan.price.toFixed(2)})</span>
+                            )}
+                            {plan.price === 0 && (
+                              <button type="button" onClick={() => updatePlan(index, "price", suggestedPrice)}
+                                className="text-success hover:underline font-semibold ml-auto">Usar</button>
+                            )}
+                          </div>
+                        )}
+                        {robotEnabled && !isRobotFree && plan.price === 0 && !suggestedPrice && (
+                          <p className="mt-1.5 text-[10px] text-warning bg-warning/5 rounded-lg px-3 py-1.5">⚠️ Preço R$ 0 — defina um preço ou configure dias + markup</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </SectionCard>
+            );
+          })()}
 
           {/* Robot Project */}
           <SectionCard title="Robot Project (Revenda)" icon={Globe}>
-            <div className="space-y-4">
-              <button type="button" onClick={() => {
-                if (robotEnabled) { setRobotEnabled(false); setFormRobotGameId(null); setFormRobotMarkup(null); }
-                else { setRobotEnabled(true); fetchRobotGames(); }
-              }}
-                className={`flex items-center gap-3 w-full rounded-xl border px-4 py-3 text-left transition-colors ${
-                  robotEnabled ? "border-accent/30 bg-accent/5" : "border-border/40 bg-background/50 hover:border-border"
-                }`}>
-                <div className={`relative h-5 w-9 rounded-full shrink-0 transition-colors ${robotEnabled ? "bg-accent" : "bg-muted"}`}>
-                  <div className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-all ${robotEnabled ? "left-[18px]" : "left-0.5"}`} />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-foreground">Produto via Robot Project</p>
-                  <p className="text-[11px] text-muted-foreground">Keys geradas automaticamente via API</p>
-                </div>
-              </button>
+            {(() => {
+              const selectedRG = robotEnabled && formRobotGameId ? robotGames.find(g => Number(g.id) === Number(formRobotGameId)) : null;
+              const isFree = !!selectedRG?.is_free;
 
-              {robotEnabled && (
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <label className="mb-1.5 block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Jogo Robot</label>
-                    <div className="flex gap-2">
-                      <select value={formRobotGameId || ""} onChange={(e) => setFormRobotGameId(Number(e.target.value) || null)} className={`flex-1 ${selectClass}`}>
-                        <option value="">Selecione o jogo...</option>
-                        {robotGames.map(g => (
-                          <option key={g.id} value={g.id}>
-                            {g.name} {g.status === "off" ? "(OFF)" : ""} {g.is_free ? "(FREE)" : ""}
-                          </option>
-                        ))}
-                      </select>
-                      <button type="button" onClick={fetchRobotGames} disabled={loadingRobotGames}
-                        className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl border border-border/40 text-muted-foreground hover:text-foreground transition-colors">
-                        {loadingRobotGames ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
-                      </button>
+              return (
+                <div className="space-y-4">
+                  <button type="button" onClick={() => {
+                    if (robotEnabled) { setRobotEnabled(false); setFormRobotGameId(null); setFormRobotMarkup(null); }
+                    else { setRobotEnabled(true); fetchRobotGames(); }
+                  }}
+                    className={`flex items-center gap-3 w-full rounded-xl border px-4 py-3 text-left transition-colors ${
+                      robotEnabled ? "border-accent/30 bg-accent/5" : "border-border/40 bg-background/50 hover:border-border"
+                    }`}>
+                    <div className={`relative h-5 w-9 rounded-full shrink-0 transition-colors ${robotEnabled ? "bg-accent" : "bg-muted"}`}>
+                      <div className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-all ${robotEnabled ? "left-[18px]" : "left-0.5"}`} />
                     </div>
-                    {formRobotGameId && formRobotGameId > 0 && robotGames.length > 0 && (() => {
-                      const rg = robotGames.find(g => Number(g.id) === Number(formRobotGameId));
-                      if (!rg) return null;
-                      return (
-                        <div className="mt-2 rounded-lg bg-muted/20 p-3 text-[10px] text-muted-foreground space-y-1">
-                          <p>Versão: {rg.version} · Status: <span className={rg.status === "on" ? "text-success font-semibold" : "text-destructive font-semibold"}>{rg.status.toUpperCase()}</span> · Câmbio: R${robotUsdToBrl.toFixed(2)}/USD</p>
-                          {Object.keys(rg.prices).length > 0 && (
-                            <div>
-                              <p className="font-semibold text-foreground/70">Preços API (40% cashback):</p>
-                              <p>{Object.entries(rg.prices).map(([d, p]) => {
-                                const usd = Number(p);
-                                const brl = usd * robotUsdToBrl;
-                                return `${d}d = $${usd.toFixed(2)} (R$${brl.toFixed(2)})`;
-                              }).join(" · ")}</p>
-                            </div>
-                          )}
-                          {rg.maxKeys && <p>Slots: {rg.soldKeys}/{rg.maxKeys}</p>}
+                    <div>
+                      <p className="text-sm font-medium text-foreground">Produto via Robot Project</p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {isFree ? "Jogo gratuito — sem chaves, apenas download + login no loader" : "Keys geradas automaticamente via API"}
+                      </p>
+                    </div>
+                  </button>
+
+                  {robotEnabled && (
+                    <div className={`grid gap-4 ${isFree ? "" : "sm:grid-cols-2"}`}>
+                      <div>
+                        <label className="mb-1.5 block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Jogo Robot</label>
+                        <div className="flex gap-2">
+                          <select value={formRobotGameId || ""} onChange={(e) => setFormRobotGameId(Number(e.target.value) || null)} className={`flex-1 ${selectClass}`}>
+                            <option value="">Selecione o jogo...</option>
+                            {robotGames.map(g => (
+                              <option key={g.id} value={g.id}>
+                                {g.name} {g.status === "off" ? "(OFF)" : ""} {g.is_free ? "(FREE)" : ""}
+                              </option>
+                            ))}
+                          </select>
+                          <button type="button" onClick={fetchRobotGames} disabled={loadingRobotGames}
+                            className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl border border-border/40 text-muted-foreground hover:text-foreground transition-colors">
+                            {loadingRobotGames ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                          </button>
                         </div>
-                      );
-                    })()}
-                  </div>
-                  <div>
-                    <label className="mb-1.5 block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Markup %</label>
-                    <input type="number" value={formRobotMarkup || ""} onChange={(e) => setFormRobotMarkup(Number(e.target.value) || null)}
-                      min="0" max="500" step="1" placeholder="Ex: 30 (30% de lucro)" className={inputClass} />
-                    <p className="text-[10px] text-muted-foreground/50 mt-1.5">Preço API × câmbio × (1 + markup/100). 40% volta como cashback.</p>
-                  </div>
+                        {selectedRG && (
+                          <div className="mt-2 rounded-lg bg-muted/20 p-3 text-[10px] text-muted-foreground space-y-1">
+                            <p>Versão: {selectedRG.version} · Status: <span className={selectedRG.status === "on" ? "text-success font-semibold" : "text-destructive font-semibold"}>{selectedRG.status.toUpperCase()}</span>
+                              {!isFree && <> · Câmbio: R${robotUsdToBrl.toFixed(2)}/USD</>}
+                            </p>
+                            {isFree ? (
+                              <div className="mt-1 rounded-lg border border-info/20 bg-info/5 p-2.5 text-[11px] text-info">
+                                <p className="font-semibold">🆓 Jogo Gratuito</p>
+                                <p className="mt-0.5 text-muted-foreground">Não gera chaves. O cliente baixa o programa e cria conta diretamente no loader. Configure apenas o nome do plano e preço desejado (R$ 0,00 para gratuito).</p>
+                              </div>
+                            ) : (
+                              <>
+                                {Object.keys(selectedRG.prices).length > 0 && (
+                                  <div>
+                                    <p className="font-semibold text-foreground/70">Preços API (40% cashback):</p>
+                                    <p>{Object.entries(selectedRG.prices).map(([d, p]) => {
+                                      const usd = Number(p);
+                                      const brl = usd * robotUsdToBrl;
+                                      return `${d}d = $${usd.toFixed(2)} (R$${brl.toFixed(2)})`;
+                                    }).join(" · ")}</p>
+                                  </div>
+                                )}
+                              </>
+                            )}
+                            {selectedRG.maxKeys && <p>Slots: {selectedRG.soldKeys}/{selectedRG.maxKeys}</p>}
+                          </div>
+                        )}
+                      </div>
+                      {/* Hide markup for free games */}
+                      {!isFree && (
+                        <div>
+                          <label className="mb-1.5 block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Markup %</label>
+                          <input type="number" value={formRobotMarkup || ""} onChange={(e) => setFormRobotMarkup(Number(e.target.value) || null)}
+                            min="0" max="500" step="1" placeholder="Ex: 30 (30% de lucro)" className={inputClass} />
+                          <p className="text-[10px] text-muted-foreground/50 mt-1.5">Preço API × câmbio × (1 + markup/100). 40% volta como cashback.</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              );
+            })()}
           </SectionCard>
 
-          {/* Media Gallery */}
           <SectionCard title="Galeria de Mídia" icon={Film}>
             {formMedia.length > 0 && (
               <div className="mb-4 flex flex-wrap gap-2">
