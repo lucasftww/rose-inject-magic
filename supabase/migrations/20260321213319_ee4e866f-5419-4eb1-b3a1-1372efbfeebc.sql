@@ -1,0 +1,20 @@
+INSERT INTO public.games (name, slug, active, sort_order) VALUES
+  ('Arena Breakout Infinite', 'arena-breakout-infinite', true, 4),
+  ('ARC Raiders', 'arc-raiders', true, 5),
+  ('Call of Duty', 'call-of-duty', true, 6),
+  ('PUBG', 'pubg', true, 7),
+  ('Rust', 'rust', true, 8),
+  ('DayZ', 'dayz', true, 9),
+  ('Bloodstrike', 'bloodstrike', true, 10),
+  ('Apex Legends', 'apex-legends', true, 11),
+  ('Marvel Rivals', 'marvel-rivals', true, 12),
+  ('Farlight 84', 'farlight-84', true, 13),
+  ('Bodycam', 'bodycam', true, 14),
+  ('Bloodhunt', 'bloodhunt', true, 15),
+  ('Warface', 'warface', true, 16),
+  ('Dead by Daylight', 'dead-by-daylight', true, 17),
+  ('FiveM', 'fivem', true, 18),
+  ('Squad', 'squad', true, 19),
+  ('Overwatch 2', 'overwatch-2', true, 20),
+  ('Hell Let Loose', 'hell-let-loose', true, 21)
+ON CONFLICT DO NOTHING;
