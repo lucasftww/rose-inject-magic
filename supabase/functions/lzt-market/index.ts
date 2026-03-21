@@ -665,11 +665,10 @@ Deno.serve(async (req) => {
         // shouldKeepItem handles inactivity, fair-price, and quality checks for all games
         const isValorant = gameType === "riot" || gameType === "valorant";
         if (!shouldKeepItem(item, gameType, displayedPriceBrl)) {
-          // Track filter reason for diagnostics
           if (isValorant) {
             const nowSec = Math.floor(Date.now() / 1000);
             const lastActivity = Number(item.account_last_activity || item.riot_last_activity || 0);
-            if (lastActivity > 0 && (nowSec - lastActivity) < MIN_INACTIVE_DAYS * 86400) {
+            if (lastActivity > 0 && (nowSec - lastActivity) < 30 * 86400) {
               filteredByInactivity++;
             } else {
               filteredByPrice++;
