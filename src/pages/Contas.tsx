@@ -999,66 +999,46 @@ const Contas = () => {
     setFirstPageLoaded(false);
 
     try {
-      // Fetch first page immediately
+      // Fetch first page immediately and display it
       const data = await fetchWithRetry(buildParams(1), controller);
       if (controller.signal.aborted) return;
 
-      const shouldProbe = gameTab === "valorant";
       setFirstPageLoaded(true);
       const firstPageItems: LztItem[] = data?.items ?? [];
       setTotalItems(data?.totalItems ?? firstPageItems.length ?? 0);
-      const hasMore = data?.hasNextPage ?? false;
-      setHasNextPage(shouldProbe ? firstPageItems.length > 0 : hasMore);
+      const hasMore = data?.hasNextPage ?? firstPageItems.length >= 15;
+      setHasNextPage(hasMore);
       setCurrentPage(1);
       setStreamedItems(firstPageItems);
+      setStreamingDone(true); // Mark done immediately so UI is responsive
 
-      // Early exit if nothing to fetch
-      if (!shouldProbe && !hasMore) {
+      // Cache first page result
+      if (firstPageItems.length === 0 || !hasMore) {
         fetchCacheRef.current.set(cacheKey, { items: firstPageItems, totalItems: firstPageItems.length, timestamp: Date.now() });
-        setStreamingDone(true);
-        return;
-      }
-      if (firstPageItems.length === 0) {
-        fetchCacheRef.current.set(cacheKey, { items: [], totalItems: 0, timestamp: Date.now() });
-        setStreamingDone(true);
         return;
       }
 
+      // Fetch page 2 in background (don't block UI)
       const seenIds = new Set(firstPageItems.map(i => i.item_id));
       let allItems = [...firstPageItems];
 
-      // Fetch ALL remaining pages in parallel (max 2 more pages = 3 total)
-      const remaining: number[] = [];
-      for (let p = 2; p <= MAX_PAGES; p++) remaining.push(p);
-
-      if (remaining.length > 0) {
-        const results = await Promise.all(
-          remaining.map(p => fetchWithRetry(buildParams(p), controller).catch(() => null))
-        );
-        if (controller.signal.aborted) return;
-
-        for (const pageData of results) {
-          if (!pageData) continue;
-          const rawItems: LztItem[] = pageData?.items ?? [];
-          const newItems = rawItems.filter((item: LztItem) => {
-            if (seenIds.has(item.item_id)) return false;
-            seenIds.add(item.item_id);
-            return true;
-          });
-          if (newItems.length > 0) allItems = [...allItems, ...newItems];
-        }
-
-        setStreamedItems([...allItems]);
-        setCurrentPage(remaining[remaining.length - 1]);
-      }
-
-      if (!controller.signal.aborted) {
-        fetchCacheRef.current.set(cacheKey, { items: allItems, totalItems: allItems.length, timestamp: Date.now() });
+      const bgData = await fetchWithRetry(buildParams(2), controller).catch(() => null);
+      if (controller.signal.aborted) return;
+      if (bgData) {
+        const rawItems: LztItem[] = bgData?.items ?? [];
+        const newItems = rawItems.filter((item: LztItem) => {
+          if (seenIds.has(item.item_id)) return false;
+          seenIds.add(item.item_id);
+          return true;
+        });
+        if (newItems.length > 0) allItems = [...allItems, ...newItems];
         setStreamedItems([...allItems]);
         setTotalItems(allItems.length);
-        setHasNextPage(false);
-        setStreamingDone(true);
+        setCurrentPage(2);
+        setHasNextPage(bgData?.hasNextPage ?? newItems.length >= 15);
       }
+
+      fetchCacheRef.current.set(cacheKey, { items: allItems, totalItems: allItems.length, timestamp: Date.now() });
     } catch (err: any) {
       if (!controller.signal.aborted) {
         setFirstPageLoaded(true);
