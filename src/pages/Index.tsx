@@ -44,6 +44,7 @@ const softwareImageMap: Record<string, string> = {
   fortnite: swFortnite,
   "cs2": swCs2,
   "counter-strike 2": swCs2,
+  "counter-strike-2": swCs2,
   "counter strike 2": swCs2,
   "apex legends": swApex,
   "apex": swApex,
