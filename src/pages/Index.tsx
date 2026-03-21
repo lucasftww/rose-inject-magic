@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
-import { Star, ArrowRight, Package, Loader2, Zap, Shield, Clock } from "lucide-react";
+import { Star, ArrowRight, Loader2, Zap, Shield, Clock } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,13 +24,22 @@ import HowItWorksSection from "@/components/landing/HowItWorksSection";
 import CtaSection from "@/components/landing/CtaSection";
 import { fadeUp, staggerContainer, scaleIn, slideInLeft } from "@/components/landing/animations";
 
+// Local images map for game cards
+const localImageMap: Record<string, string> = {
+  valorant: valorantCardImg,
+  fortnite: fortniteCardImg,
+  lol: lolCardImg,
+  minecraft: minecraftCardImg,
+};
 
-interface ProductFromDB {
+interface GameFromDB {
   id: string;
   name: string;
-  description: string | null;
+  slug: string | null;
   image_url: string | null;
-  product_plans: { id: string; name: string; price: number; active: boolean }[];
+  sort_order: number | null;
+  active: boolean | null;
+  products: { id: string; active: boolean | null }[];
 }
 
 // ─── Sections ───────────────────────────────────────────────────────────────
