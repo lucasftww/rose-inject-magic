@@ -653,11 +653,14 @@ const ProductsTab = () => {
                     </div>
                     <p className="mt-0.5 text-xs text-muted-foreground truncate">
                       {getGameName(product.game_id)} · {product.product_plans?.length || 0} planos
-                      {product.product_plans && product.product_plans.length > 0 && (
-                        <> · a partir de <span className="font-semibold text-success">
-                          R$ {Math.min(...(product.product_plans as any[]).filter((p: any) => p.active && p.price > 0).map((p: any) => Number(p.price)) || [0]).toFixed(2)}
-                        </span></>
-                      )}
+                      {(() => {
+                        const activePaidPlans = (product.product_plans as any[] || []).filter((p: any) => p.active && Number(p.price) > 0);
+                        if (activePaidPlans.length === 0) return null;
+                        const minPrice = Math.min(...activePaidPlans.map((p: any) => Number(p.price)));
+                        return (
+                          <> · a partir de <span className="font-semibold text-success">R$ {minPrice.toFixed(2)}</span></>
+                        );
+                      })()}
                     </p>
                   </div>
                   
