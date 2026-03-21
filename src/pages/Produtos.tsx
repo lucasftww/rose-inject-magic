@@ -309,7 +309,7 @@ const GameSelectScreen = ({ onSelect, games, loading }: { onSelect: (gameId: str
               </div>
 
               {/* CTA bar */}
-              <div className="flex items-center justify-center gap-1.5 border-t border-border/30 bg-card/80 px-3 py-2.5 sm:py-3 text-success text-[10px] sm:text-xs font-bold uppercase tracking-widest transition-all group-hover:bg-success/10 group-hover:gap-2.5">
+              <div className="flex items-center justify-center gap-1.5 border-t border-border/30 bg-card/80 px-3 py-2.5 sm:py-3 text-foreground/60 text-[10px] sm:text-xs font-bold uppercase tracking-widest transition-all group-hover:bg-foreground/[0.04] group-hover:text-foreground group-hover:gap-2.5">
                 <span>Ver softwares</span>
                 <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-1" />
               </div>
