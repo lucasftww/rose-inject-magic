@@ -122,7 +122,7 @@ const ProdutoDetalhes = () => {
         .select("id, name, description, image_url, active, sort_order, game_id, created_at, status, status_label, status_updated_at, features_text, robot_game_id, product_plans(*), product_media(*), product_features(*)")
         .eq("id", id)
         .eq("active", true)
-        .single();
+        .maybeSingle();
 
       if (error || !data) {
         setLoading(false);
@@ -135,7 +135,7 @@ const ProdutoDetalhes = () => {
         .from("games")
         .select("id, name, slug")
         .eq("id", data.game_id)
-        .single();
+        .maybeSingle();
       if (gameData) setGame(gameData);
 
       const { data: reviewsData } = await supabase
