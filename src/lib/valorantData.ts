@@ -12,7 +12,6 @@ import rankDiamante from "@/assets/rank-diamante.png";
 import rankAscendente from "@/assets/rank-ascendente.png";
 import rankImortal from "@/assets/rank-imortal.png";
 import rankRadianteNew from "@/assets/rank-radiante-new.png";
-import rankRadiante from "@/assets/rank-radiante.png";
 import rankUnranked from "@/assets/rank-unranked.png";
 
 import raritySelect from "@/assets/rarity-select.png";
@@ -25,7 +24,7 @@ import rarityExclusive from "@/assets/rarity-exclusive.png";
 export {
   rankFerro, rankBronze, rankPrata, rankOuro, rankPlatina,
   rankDiamante, rankAscendente, rankImortal, rankRadianteNew,
-  rankRadiante, rankUnranked,
+  rankUnranked,
 };
 
 // ─── Valorant rank map (used by Index, Contas, ContaDetalhes) ───
