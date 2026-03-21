@@ -976,13 +976,24 @@ const Contas = () => {
   }, [currentPage, searchQuery, onlyKnife, selectedRank, selectedWeapon, invMin, invMax, lvlMin, lvlMax, gameTab, lolRank, lolChampMin, lolSkinsMin, fnVbMin, fnSkinsMin, mcJava, mcBedrock, mcHypixelLvlMin, mcCapesMin, mcNoBan, lolRegion, valRegion, sortBy, priceMin, priceMax]);
 
   const paramsKey = JSON.stringify(buildParams(1)) + gameTab;
+  // Track which params are "text inputs" that need debouncing vs instant changes
+  const textParamsKey = `${searchQuery}|${priceMin}|${priceMax}|${lvlMin}|${lvlMax}|${invMin}|${invMax}|${lolChampMin}|${lolSkinsMin}|${fnVbMin}|${fnSkinsMin}|${mcHypixelLvlMin}|${mcCapesMin}`;
+  const nonTextParamsKey = paramsKey.replace(textParamsKey, "");
   const [debouncedParamsKey, setDebouncedParamsKey] = useState(paramsKey);
+  const prevNonTextRef = useRef(nonTextParamsKey);
   useEffect(() => {
+    // If non-text params changed (tab switch, rank click, etc.), fire immediately
+    if (prevNonTextRef.current !== nonTextParamsKey) {
+      prevNonTextRef.current = nonTextParamsKey;
+      setDebouncedParamsKey(paramsKey);
+      return;
+    }
+    // Only debounce text input changes (search, price, level fields)
     const handler = setTimeout(() => {
       setDebouncedParamsKey(paramsKey);
-    }, 250);
+    }, 150);
     return () => clearTimeout(handler);
-  }, [paramsKey]);
+  }, [paramsKey, nonTextParamsKey]);
 
   const fetchWithRetry = useCallback(async (params: Record<string, string | string[]>, controller: AbortController, retries = 3): Promise<any> => {
     for (let attempt = 0; attempt <= retries; attempt++) {
