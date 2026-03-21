@@ -1002,12 +1002,11 @@ const Contas = () => {
       const seenIds = new Set(firstPageItems.map(i => i.item_id));
       let allItems = [...firstPageItems];
 
-      // Fetch remaining pages in batches of 2-3 for balanced speed + rate-limit safety
-      // Batch 1: pages 2-4, Batch 2: pages 5-8 (Valorant only)
+      // Fetch remaining pages in batches of 2 for balanced speed + rate-limit safety
       const batches: number[][] = [];
       const remaining: number[] = [];
       for (let p = 2; p <= maxPages; p++) remaining.push(p);
-      while (remaining.length > 0) batches.push(remaining.splice(0, 4));
+      while (remaining.length > 0) batches.push(remaining.splice(0, 2));
 
       let stopProbing = false;
 
