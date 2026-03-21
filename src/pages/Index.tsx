@@ -220,7 +220,7 @@ const SoftwareSection = () => {
           >
             {activeGames.map((game, idx) => {
               const slug = (game.slug || game.name || "").toLowerCase();
-              const image = localImageMap[slug] || game.image_url;
+              const image = softwareImageMap[slug] || game.image_url;
               const productCount = game.products?.filter(p => p.active).length || 0;
 
               return (
