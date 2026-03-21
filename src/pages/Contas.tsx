@@ -1153,14 +1153,14 @@ const Contas = () => {
     }
 
     // If user explicitly chose a price sort, use BRL display price for accurate ordering
-    if (sortBy === "price_asc") {
+    if (sortBy === "price_to_up") {
       return filtered.sort((a, b) => getBrlPrice(a) - getBrlPrice(b));
     }
-    if (sortBy === "price_desc") {
+    if (sortBy === "price_to_down") {
       return filtered.sort((a, b) => getBrlPrice(b) - getBrlPrice(a));
     }
 
-    // Default sort (pdate_desc): apply game-specific "best quality" sorting
+    // Default sort (pdate_to_down): apply game-specific "best quality" sorting
     if (gameTab === "lol") {
       return filtered.sort((a, b) => {
         const scoreA = (a.riot_lol_level ?? 0) > 0 && (a.riot_lol_skin_count ?? 0) > 0 ? 2
