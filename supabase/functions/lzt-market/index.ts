@@ -170,15 +170,11 @@ function shouldKeepItem(item: LztItem, gameType: string, _displayedPriceBrl: num
   if (item.buyer) return false;
   if (item.canBuyItem === false) return false;
 
-  // Require minimum 30 days of inactivity for account security
-  const rawLastActivity = Number(item.account_last_activity || item.riot_last_activity || item.last_activity || item.login_date || 0);
-  const lastActivity = rawLastActivity > 1_000_000_000_000 ? Math.floor(rawLastActivity / 1000) : rawLastActivity;
-  if (lastActivity > 0) {
-    const daysSinceActive = (Date.now() / 1000 - lastActivity) / 86400;
-    if (daysSinceActive < 30) return false;
-  }
+  // Inactivity is now enforced by LZT API via `daybreak` parameter.
+  // Minimum skins are also enforced by LZT API via `valorant_smin`/`lol_smin`.
+  // Keep client-side checks only as safety net for edge cases.
 
-  // Minimum 3 skins per game
+  // Minimum 3 skins per game (safety net — API should already filter these)
   const isValorant = gameType === "riot" || gameType === "valorant";
   if (isValorant) {
     const skins = Number(item.riot_valorant_skin_count || 0);
@@ -444,6 +440,7 @@ Deno.serve(async (req) => {
       const allowedParams = [
         "page", "pmin", "pmax", "title", "order_by", "currency",
         "nsb",  // not sold before
+        "daybreak", // minimum days offline (inactivity)
         "rmin", "rmax", "last_rmin", "last_rmax", "previous_rmin", "previous_rmax",
         "valorant_level_min", "valorant_level_max",
         "valorant_smin", "valorant_smax",
@@ -463,6 +460,27 @@ Deno.serve(async (req) => {
         "mythic_min", "mythic_max",
         "riot_min", "riot_max",
       ];
+
+      for (const p of allowedParams) {
+        const val = url.searchParams.get(p);
+        if (val) params.set(p, val);
+      }
+
+      // Always enforce minimum 30 days offline via API param (server-side at LZT)
+      if (!params.get("daybreak") || Number(params.get("daybreak")) < MIN_INACTIVE_DAYS) {
+        params.set("daybreak", String(MIN_INACTIVE_DAYS));
+      }
+
+      // Always enforce minimum 3 skins via API params (server-side at LZT)
+      if (gameType === "riot" || gameType === "valorant") {
+        if (!params.get("valorant_smin") || Number(params.get("valorant_smin")) < 3) {
+          params.set("valorant_smin", "3");
+        }
+      } else if (gameType === "lol") {
+        if (!params.get("lol_smin") || Number(params.get("lol_smin")) < 3) {
+          params.set("lol_smin", "3");
+        }
+      }
 
       for (const p of allowedParams) {
         const val = url.searchParams.get(p);
@@ -664,7 +682,7 @@ Deno.serve(async (req) => {
       }
 
       const beforeCount = data.items.length;
-      let filteredByInactivity = 0, filteredByPrice = 0, filteredByOther = 0;
+      let filteredByOther = 0;
       data.items = data.items.filter((item: LztItem) => {
         // Skip sold/closed/deleted items
         if (item.item_state && item.item_state !== "active") { filteredByOther++; return false; }
@@ -673,19 +691,8 @@ Deno.serve(async (req) => {
         
         const displayedPriceBrl = getDisplayedPriceBrl(item, overrideMap.get(String(item.item_id)), gameType, activeMarkup);
         
-        // shouldKeepItem handles inactivity, fair-price, and quality checks for all games
-        const isValorant = gameType === "riot" || gameType === "valorant";
         if (!shouldKeepItem(item, gameType, displayedPriceBrl)) {
-          if (isValorant) {
-            const rawLastActivity = Number(item.account_last_activity || item.riot_last_activity || item.last_activity || item.login_date || 0);
-            const lastActivity = rawLastActivity > 1_000_000_000_000 ? Math.floor(rawLastActivity / 1000) : rawLastActivity;
-            const nowSec = Math.floor(Date.now() / 1000);
-            if (lastActivity > 0 && (nowSec - lastActivity) < 30 * 86400) {
-              filteredByInactivity++;
-            } else {
-              filteredByPrice++;
-            }
-          }
+          filteredByOther++;
           return false;
         }
         return true;
@@ -695,7 +702,7 @@ Deno.serve(async (req) => {
         gameType,
         beforeCount,
         afterCount: data.items.length,
-        ...(gameType === "riot" || gameType === "valorant" ? { filteredByInactivity, filteredByPrice, filteredByOther } : {}),
+        filteredByOther,
       });
 
       for (const item of data.items) {
