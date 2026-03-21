@@ -24,7 +24,7 @@ import rarityExclusive from "@/assets/rarity-exclusive.png";
 export {
   rankFerro, rankBronze, rankPrata, rankOuro, rankPlatina,
   rankDiamante, rankAscendente, rankImortal, rankRadianteNew,
-  rankRadiante, rankUnranked,
+  rankUnranked,
 };
 
 // ─── Valorant rank map (used by Index, Contas, ContaDetalhes) ───
