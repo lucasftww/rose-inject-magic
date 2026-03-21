@@ -1107,7 +1107,7 @@ const Contas = () => {
     document.title = titles[gameTab];
     return () => { document.title = "Royal Store"; };
   }, [gameTab]);
-  const isStreaming = firstPageLoaded && !streamingDone;
+  const isStreaming = false; // streamingDone is set true immediately after first page
 
   // Helper: get BRL price for sorting (matches what user sees on screen)
   const getBrlPrice = useCallback((item: LztItem): number => {
