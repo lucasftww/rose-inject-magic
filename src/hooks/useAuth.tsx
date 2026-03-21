@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .from("profiles")
         .select("username, avatar_url")
         .eq("user_id", userId)
-        .single();
+        .maybeSingle();
       if (isMountedRef.current) setProfile(data);
     } catch {
       // silently fail
