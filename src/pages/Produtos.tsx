@@ -121,22 +121,72 @@ const ProductCard = ({ product }: { product: ProductFromDB }) => {
 };
 
 const GameSelectScreen = ({ onSelect, games, loading }: { onSelect: (gameId: string) => void; games: GameFromDB[]; loading: boolean }) => {
+  const [gameSearch, setGameSearch] = useState("");
+
+  const filteredBySearch = useMemo(() => {
+    if (!gameSearch.trim()) return games;
+    const q = gameSearch.toLowerCase();
+    return games.filter(g => g.name.toLowerCase().includes(q));
+  }, [games, gameSearch]);
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
 
       {/* Hero header */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 pt-8 sm:pt-12 pb-2 sm:pb-4">
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="flex items-center gap-3">
-          <Gamepad2 className="h-5 w-5 text-success" />
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">Escolha seu jogo</h1>
-        </motion.div>
+      <section className="relative overflow-hidden">
+        {/* Background glow */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] rounded-full opacity-[0.07]" style={{ background: 'radial-gradient(ellipse, hsl(var(--success)), transparent 70%)' }} />
+        </div>
+
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 pt-10 sm:pt-16 pb-6 sm:pb-8">
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="flex flex-col items-center text-center gap-4">
+            {/* Badge */}
+            <div className="flex items-center gap-2 rounded-full border border-success/20 bg-success/[0.06] px-4 py-1.5">
+              <Gamepad2 className="h-4 w-4 text-success" />
+              <span className="text-[11px] font-bold uppercase tracking-widest text-success">Catálogo de Jogos</span>
+            </div>
+
+            <h1 className="text-2xl sm:text-4xl font-bold tracking-tight text-foreground" style={{ fontFamily: "'Valorant', sans-serif" }}>
+              <span className="text-success">Escolha</span> seu jogo
+            </h1>
+            <p className="max-w-md text-sm text-muted-foreground">
+              Encontre os melhores softwares para seu jogo favorito. Selecione abaixo e descubra as opções disponíveis.
+            </p>
+
+            {/* Search bar */}
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.15 }}
+              className="relative mt-2 w-full max-w-md"
+            >
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
+              <input
+                type="text"
+                value={gameSearch}
+                onChange={e => setGameSearch(e.target.value)}
+                placeholder="Pesquisar jogo..."
+                className="w-full rounded-xl border border-border/60 bg-card/80 pl-11 pr-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/40 outline-none transition-all focus:border-success/50 focus:ring-2 focus:ring-success/20"
+                style={{ backdropFilter: 'blur(12px)' }}
+              />
+              {gameSearch && (
+                <button onClick={() => setGameSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md text-muted-foreground hover:text-foreground transition-colors">
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </motion.div>
+          </motion.div>
+        </div>
       </section>
 
       {loading ? (
         <div className="flex items-center justify-center py-32"><Loader2 className="h-8 w-8 animate-spin text-success" /></div>
-      ) : games.length === 0 ? (
-        <div className="py-32 text-center text-muted-foreground">Nenhum jogo disponível no momento.</div>
+      ) : filteredBySearch.length === 0 ? (
+        <div className="py-32 text-center text-muted-foreground">
+          {gameSearch ? `Nenhum jogo encontrado para "${gameSearch}"` : 'Nenhum jogo disponível no momento.'}
+        </div>
       ) : (() => {
         const descriptions: Record<string, string> = {
           'Valorant': 'Cheats premium para Valorant — domine cada round',
@@ -166,9 +216,9 @@ const GameSelectScreen = ({ onSelect, games, loading }: { onSelect: (gameId: str
 
         const freeGameNames = ['Bodycam', 'Bloodhunt', 'Counter-Strike 2 (FREE)', 'Warface'];
         const spooferNames = ['Spoofers'];
-        const premiumGames = games.filter(g => !freeGameNames.includes(g.name) && !spooferNames.includes(g.name));
-        const spooferGames = games.filter(g => spooferNames.includes(g.name));
-        const freeGames = games.filter(g => freeGameNames.includes(g.name));
+        const premiumGames = filteredBySearch.filter(g => !freeGameNames.includes(g.name) && !spooferNames.includes(g.name));
+        const spooferGames = filteredBySearch.filter(g => spooferNames.includes(g.name));
+        const freeGames = filteredBySearch.filter(g => freeGameNames.includes(g.name));
 
         const renderCard = (game: GameFromDB, idx: number, isFree: boolean) => {
           const desc = descriptions[game.name] || `Softwares para ${game.name}`;
@@ -233,7 +283,7 @@ const GameSelectScreen = ({ onSelect, games, loading }: { onSelect: (gameId: str
 
         const renderSectionHeader = (icon: React.ReactNode, label: string, color: string) => (
           <div className="mb-5 flex items-center gap-3">
-            <div className={`flex items-center gap-2 rounded-full border px-4 py-1.5`} style={{ borderColor: `${color}30`, backgroundColor: `${color}15` }}>
+            <div className="flex items-center gap-2 rounded-full border px-4 py-1.5" style={{ borderColor: `${color}30`, backgroundColor: `${color}15` }}>
               {icon}
               <span className="text-xs font-bold uppercase tracking-wider" style={{ color }}>{label}</span>
             </div>
@@ -242,13 +292,15 @@ const GameSelectScreen = ({ onSelect, games, loading }: { onSelect: (gameId: str
         );
 
         return (
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8 sm:py-12 space-y-10">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 py-4 sm:py-8 space-y-10">
             {/* Premium games */}
-            <div>
-              <motion.div className={gridClasses} initial="hidden" animate="visible" variants={staggerContainer}>
-                {premiumGames.map((game, idx) => renderCard(game, idx, false))}
-              </motion.div>
-            </div>
+            {premiumGames.length > 0 && (
+              <div>
+                <motion.div className={gridClasses} initial="hidden" animate="visible" variants={staggerContainer}>
+                  {premiumGames.map((game, idx) => renderCard(game, idx, false))}
+                </motion.div>
+              </div>
+            )}
 
             {/* Spoofers section */}
             {spooferGames.length > 0 && (
