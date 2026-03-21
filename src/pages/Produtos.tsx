@@ -163,7 +163,7 @@ const GameSelectScreen = ({ onSelect, games, loading }: { onSelect: (gameId: str
           'Hell Let Loose': 'Domine o campo de batalha WW2',
         };
 
-        const freeGameNames = ['Bodycam', 'Bloodhunt', 'Counter-Strike 2', 'Warface'];
+        const freeGameNames = ['Bodycam', 'Bloodhunt', 'Warface'];
         const premiumGames = games.filter(g => !freeGameNames.includes(g.name));
         const freeGames = games.filter(g => freeGameNames.includes(g.name));
 
