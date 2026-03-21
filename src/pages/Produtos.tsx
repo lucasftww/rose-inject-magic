@@ -251,7 +251,7 @@ const GameSelectScreen = ({ onSelect, games, loading }: { onSelect: (gameId: str
                   <div className="h-px flex-1 bg-border/40" />
                 </div>
                 <motion.div
-                  className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3"
+                  className="grid grid-cols-2 gap-3 sm:gap-5 sm:grid-cols-3 lg:grid-cols-4"
                   initial="hidden"
                   animate="visible"
                   variants={staggerContainer}
