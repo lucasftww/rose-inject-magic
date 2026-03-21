@@ -20,7 +20,7 @@ import lolRankMestreImg from "@/assets/lol-rank-mestre.png";
 import {
   rankFerro, rankBronze, rankPrata, rankOuro, rankPlatina,
   rankDiamante, rankAscendente, rankImortal, rankRadianteNew as rankRadiante,
-  rankUnranked, rankMap, RARITY_PRIORITY, fetchAllValorantSkins,
+  rankUnranked, rankMap, fetchAllValorantSkins,
   type SkinEntry,
 } from "@/lib/valorantData";
 
@@ -767,7 +767,28 @@ const MinecraftCard = memo(({ item, formatPrice }: { item: LztItem; formatPrice:
 MinecraftCard.displayName = "MinecraftCard";
 
 // ─── API ───
-const fetchAccountsRaw = async (params: Record<string, string | string[]>) => {
+const waitWithAbort = (ms: number, signal: AbortSignal) =>
+  new Promise<void>((resolve, reject) => {
+    if (signal.aborted) {
+      reject(new DOMException("Request aborted", "AbortError"));
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      signal.removeEventListener("abort", onAbort);
+      resolve();
+    }, ms);
+
+    const onAbort = () => {
+      window.clearTimeout(timeoutId);
+      signal.removeEventListener("abort", onAbort);
+      reject(new DOMException("Request aborted", "AbortError"));
+    };
+
+    signal.addEventListener("abort", onAbort, { once: true });
+  });
+
+const fetchAccountsRaw = async (params: Record<string, string | string[]>, signal?: AbortSignal) => {
   const queryParams = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) {
     if (Array.isArray(v)) v.forEach(val => queryParams.append(k, val));
@@ -777,6 +798,7 @@ const fetchAccountsRaw = async (params: Record<string, string | string[]>) => {
   const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
   const res = await fetch(`${projectUrl}/functions/v1/lzt-market?${queryParams.toString()}`, {
     headers: { "Content-Type": "application/json", apikey: anonKey },
+    signal,
   });
   if (!res.ok) throwApiError(res.status);
   return res.json();
@@ -857,12 +879,11 @@ const Contas = () => {
   const [streamedItems, setStreamedItems] = useState<LztItem[]>([]);
   const [streamingDone, setStreamingDone] = useState(false);
   const [streamError, setStreamError] = useState<Error | null>(null);
-  const [totalItems, setTotalItems] = useState(0);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
-  const fetchCacheRef = useRef(new Map<string, { items: LztItem[]; totalItems: number; timestamp: number }>());
+  const fetchCacheRef = useRef(new Map<string, { items: LztItem[]; hasNextPage: boolean; currentPage: number; timestamp: number }>());
   const MAX_PAGES = 8;
 
   // ─── Asset maps ───
@@ -965,11 +986,12 @@ const Contas = () => {
     for (let attempt = 0; attempt <= retries; attempt++) {
       if (controller.signal.aborted) throw new Error("aborted");
       try {
-        return await fetchAccountsRaw(params);
+        return await fetchAccountsRaw(params, controller.signal);
       } catch (err: any) {
+        if (controller.signal.aborted || err?.name === "AbortError") throw err;
         if (attempt >= retries) throw err;
         // Exponential backoff: 1s, 2s, 4s
-        await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempt)));
+        await waitWithAbort(1000 * Math.pow(2, attempt), controller.signal);
       }
     }
   }, []);
@@ -983,12 +1005,11 @@ const Contas = () => {
       setStreamedItems(cached.items);
       setStreamingDone(true);
       setStreamError(null);
-      setCurrentPage(1);
+      setCurrentPage(cached.currentPage);
       setLoadingMore(false);
       setDisplayPage(1);
       setFirstPageLoaded(true);
-      setTotalItems(cached.totalItems);
-      setHasNextPage(false);
+      setHasNextPage(cached.hasNextPage);
       
       // If cache is fresh (5 min), don't refetch
       if (Date.now() - cached.timestamp < 300000) return;
@@ -1012,7 +1033,6 @@ const Contas = () => {
 
       setFirstPageLoaded(true);
       const firstPageItems: LztItem[] = data?.items ?? [];
-      setTotalItems(data?.totalItems ?? firstPageItems.length ?? 0);
       const hasMore = data?.hasNextPage ?? firstPageItems.length >= 15;
       setHasNextPage(hasMore);
       setCurrentPage(1);
@@ -1021,7 +1041,12 @@ const Contas = () => {
 
       // Cache first page result
       if (firstPageItems.length === 0 || !hasMore) {
-        fetchCacheRef.current.set(cacheKey, { items: firstPageItems, totalItems: firstPageItems.length, timestamp: Date.now() });
+        fetchCacheRef.current.set(cacheKey, {
+          items: firstPageItems,
+          hasNextPage: false,
+          currentPage: 1,
+          timestamp: Date.now(),
+        });
         return;
       }
 
@@ -1040,12 +1065,24 @@ const Contas = () => {
         });
         if (newItems.length > 0) allItems = [...allItems, ...newItems];
         setStreamedItems([...allItems]);
-        setTotalItems(allItems.length);
         setCurrentPage(2);
-        setHasNextPage(bgData?.hasNextPage ?? newItems.length >= 15);
+        const nextHasPage = bgData?.hasNextPage ?? newItems.length >= 15;
+        setHasNextPage(nextHasPage);
+        fetchCacheRef.current.set(cacheKey, {
+          items: allItems,
+          hasNextPage: nextHasPage,
+          currentPage: 2,
+          timestamp: Date.now(),
+        });
+        return;
       }
 
-      fetchCacheRef.current.set(cacheKey, { items: allItems, totalItems: allItems.length, timestamp: Date.now() });
+      fetchCacheRef.current.set(cacheKey, {
+        items: allItems,
+        hasNextPage: hasMore,
+        currentPage: 1,
+        timestamp: Date.now(),
+      });
     } catch (err: any) {
       if (!controller.signal.aborted) {
         setFirstPageLoaded(true);
@@ -1072,22 +1109,32 @@ const Contas = () => {
     const controller = new AbortController();
     abortRef.current = controller;
     try {
+      const cacheKey = debouncedParamsKey;
       const nextPageNum = currentPage + 1;
       const data = await fetchWithRetry(buildParams(nextPageNum), controller);
       if (controller.signal.aborted) return;
       const pageItems: LztItem[] = data?.items ?? [];
-      setHasNextPage(data?.hasNextPage ?? pageItems.length >= 15);
+      const nextHasPage = data?.hasNextPage ?? pageItems.length >= 15;
+      setHasNextPage(nextHasPage);
       setCurrentPage(nextPageNum);
       // Deduplicate by item_id to prevent duplicates from race conditions
       setStreamedItems(prev => {
         const existingIds = new Set(prev.map(i => i.item_id));
         const newItems = pageItems.filter(i => !existingIds.has(i.item_id));
-        return [...prev, ...newItems];
+        const merged = [...prev, ...newItems];
+        fetchCacheRef.current.set(cacheKey, {
+          items: merged,
+          hasNextPage: nextHasPage,
+          currentPage: nextPageNum,
+          timestamp: Date.now(),
+        });
+        return merged;
       });
     } catch (err: any) {
       if (!controller.signal.aborted) setStreamError(err);
+    } finally {
+      setLoadingMore(false);
     }
-    setLoadingMore(false);
   };
 
   const ITEMS_PER_PAGE = 24;
@@ -1107,7 +1154,6 @@ const Contas = () => {
     document.title = titles[gameTab];
     return () => { document.title = "Royal Store"; };
   }, [gameTab]);
-  const isStreaming = false; // streamingDone is set true immediately after first page
 
   // Helper: get BRL price for sorting (matches what user sees on screen)
   const getBrlPrice = useCallback((item: LztItem): number => {
@@ -1193,6 +1239,7 @@ const Contas = () => {
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
+    setDisplayPage(1);
     fetchMultiplePages(controller);
   };
 
@@ -1606,7 +1653,7 @@ const Contas = () => {
               {isValorant ? "CONTAS VALORANT" : isFortnite ? "CONTAS FORTNITE" : isMinecraft ? "CONTAS MINECRAFT" : "CONTAS LOL"}
             </h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              {streamError ? "Erro ao buscar contas" : isLoading ? "Buscando contas..." : isStreaming ? `Carregando... ${allItems.length} contas (página ${currentPage})` : `${allItems.length} contas · Página ${displayPage} de ${totalDisplayPages}`}
+              {streamError ? "Erro ao buscar contas" : isLoading ? "Buscando contas..." : `${allItems.length} contas · Página ${displayPage} de ${totalDisplayPages}`}
             </p>
           </div>
           <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
@@ -1745,20 +1792,6 @@ const Contas = () => {
 
             {!isLoading && !streamError && (
               <>
-                {isStreaming && (
-                  <div className="mb-4 flex items-center gap-2 rounded-lg border px-4 py-2.5" style={{ borderColor: `${accentColor}30`, background: `${accentColor}08` }}>
-                    <Loader2 className="h-4 w-4 animate-spin" style={{ color: accentColor }} />
-                    <span className="text-xs font-medium" style={{ color: accentColor }}>
-                      Carregando contas... {allItems.length} encontradas (página {currentPage}/{MAX_PAGES})
-                    </span>
-                    <div className="ml-auto flex gap-1">
-                      {[0, 1, 2].map((i) => (
-                        <div key={i} className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ background: accentColor, animationDelay: `${i * 200}ms` }} />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
                 <motion.div
                   className="grid grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3"
                   initial="hidden"

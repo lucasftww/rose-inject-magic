@@ -13,7 +13,7 @@ serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_PUBLISHABLE_KEY")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
     // Verify caller is admin
@@ -206,15 +206,16 @@ serve(async (req) => {
       switch (action) {
         case "ban": {
           // 1. Update profiles table
-          await supabase.from("profiles").update({
+          const { error: profileError } = await supabase.from("profiles").update({
             banned: true,
             banned_at: new Date().toISOString(),
             banned_reason: reason || "Banido pelo admin",
           }).eq("user_id", target_user_id);
+          if (profileError) throw profileError;
 
           // 2. Suspend Auth account (invalidates JWTs and prevents new logins)
           const { error: banError } = await supabase.auth.admin.updateUserById(target_user_id, { ban_duration: '87600h' });
-          if (banError) console.error("Error setting ban_duration in Auth:", banError);
+          if (banError) throw banError;
 
           return new Response(JSON.stringify({ ok: true, message: "Usuário banido" }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -223,15 +224,16 @@ serve(async (req) => {
 
         case "unban": {
           // 1. Update profiles table
-          await supabase.from("profiles").update({
+          const { error: profileError } = await supabase.from("profiles").update({
             banned: false,
             banned_at: null,
             banned_reason: null,
           }).eq("user_id", target_user_id);
+          if (profileError) throw profileError;
 
           // 2. Restore Auth account
           const { error: unbanError } = await supabase.auth.admin.updateUserById(target_user_id, { ban_duration: 'none' });
-          if (unbanError) console.error("Error removing ban_duration in Auth:", unbanError);
+          if (unbanError) throw unbanError;
 
           return new Response(JSON.stringify({ ok: true, message: "Usuário desbanido" }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -255,9 +257,10 @@ serve(async (req) => {
         }
 
         case "remove_admin": {
-          await supabase.from("user_roles").delete()
+          const { error } = await supabase.from("user_roles").delete()
             .eq("user_id", target_user_id)
             .eq("role", "admin");
+          if (error) throw error;
           return new Response(JSON.stringify({ ok: true, message: "Admin removido" }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });

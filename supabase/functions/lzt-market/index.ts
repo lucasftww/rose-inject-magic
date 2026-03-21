@@ -23,6 +23,37 @@ function log(level: "INFO" | "WARN" | "ERROR", ctx: string, msg: string, data?: 
   else console.log(JSON.stringify(entry));
 }
 
+function normalizeCurrency(currency?: string | null) {
+  const normalized = String(currency || "rub").trim().toLowerCase();
+  if (normalized === "usd" || normalized === "brl") return normalized;
+  return "rub";
+}
+
+function convertBrlToSellerPrice(brlAmount: number, currency: string, markup: number) {
+  if (!Number.isFinite(brlAmount) || brlAmount <= 0) return null;
+
+  if (currency === "usd") {
+    return Math.max(1, Math.ceil(brlAmount / (USD_TO_BRL * Math.max(markup, 1))));
+  }
+
+  if (currency === "brl") {
+    return Math.max(1, Math.ceil(brlAmount / 1.3));
+  }
+
+  return Math.max(1, Math.ceil(brlAmount / (RUB_TO_BRL * Math.max(markup, 1))));
+}
+
+async function parseJsonResponse(response: Response) {
+  const text = await response.text();
+  if (!text) return {};
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { raw: text };
+  }
+}
+
 /**
  * Content-based minimum price: ensures accounts with lots of skins/content
  * are never sold below a fair floor, even if listed cheap on LZT.
@@ -405,7 +436,13 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Convert user-provided BRL price filters to seller currency
+      const effectiveCurrency = normalizeCurrency(params.get("currency") || lztConfig?.currency);
+      if (params.get("currency") || lztConfig?.currency) {
+        params.set("currency", effectiveCurrency);
+      }
+
+      // Convert user-facing BRL filters into the seller currency used by LZT.
+      // The previous logic divided only by markup, which under-fetched valid accounts.
       const userPmin = params.get("pmin");
       if (userPmin) {
         const brlMin = Number(userPmin);
@@ -413,8 +450,11 @@ Deno.serve(async (req) => {
           if (brlMin <= MIN_PRICE_BRL) {
             params.delete("pmin");
           } else {
-            params.set("pmin", String(Math.floor(brlMin / activeMarkup)));
+            const sellerPmin = convertBrlToSellerPrice(brlMin, effectiveCurrency, activeMarkup);
+            if (sellerPmin) params.set("pmin", String(Math.max(1, Math.floor(sellerPmin))));
           }
+        } else {
+          params.delete("pmin");
         }
       }
 
@@ -422,14 +462,17 @@ Deno.serve(async (req) => {
       if (userPmax) {
         const brlMax = Number(userPmax);
         if (brlMax > 0) {
-          params.set("pmax", String(Math.ceil((brlMax / activeMarkup) * 1.1)));
+          const sellerPmax = convertBrlToSellerPrice(brlMax, effectiveCurrency, activeMarkup);
+          if (sellerPmax) params.set("pmax", String(Math.ceil(sellerPmax * 1.1)));
         } else {
           params.delete("pmax");
         }
       } else {
-        // Default pmax: R$2000 BRL equivalent to keep API fast while showing plenty of accounts
-        const defaultPmaxSeller = Math.ceil(2000 / activeMarkup);
-        params.set("pmax", String(defaultPmaxSeller));
+        const defaultMaxFetchPriceBrl = Number(lztConfig?.max_fetch_price) > 0
+          ? Number(lztConfig?.max_fetch_price)
+          : 2000;
+        const defaultPmaxSeller = convertBrlToSellerPrice(defaultMaxFetchPriceBrl, effectiveCurrency, activeMarkup);
+        if (defaultPmaxSeller) params.set("pmax", String(defaultPmaxSeller));
       }
 
       if (gameType === "fortnite") {
@@ -541,17 +584,31 @@ Deno.serve(async (req) => {
       );
     }
 
-    const data = await response.json();
+    const data = await parseJsonResponse(response);
+
+    if (!data || typeof data !== "object") {
+      return new Response(
+        JSON.stringify({ error: "Invalid LZT response", detail: "Response body is not a JSON object" }),
+        {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
 
     if (action !== "detail") {
+      if (!Array.isArray(data.items)) data.items = [];
+
       const currentPage = Math.max(1, Number(data.page || url.searchParams.get("page") || 1));
-      const perPage = Math.max(1, Number(data.perPage || (Array.isArray(data.items) ? data.items.length : 0) || 1));
+      const perPage = Math.max(1, Number(data.perPage || data.items.length || 1));
       const totalItems = Math.max(0, Number(data.totalItems || 0));
+      const hasNextPageFromTotal = totalItems > currentPage * perPage;
+      const hasNextPageFromPageFill = data.items.length >= perPage;
 
       data.page = currentPage;
       data.perPage = perPage;
       data.totalItems = totalItems;
-      data.hasNextPage = totalItems > currentPage * perPage;
+      data.hasNextPage = hasNextPageFromTotal || (totalItems === 0 && hasNextPageFromPageFill);
     }
  
     // For LIST responses, strip heavy fields to reduce egress (~80% reduction per item)
@@ -676,6 +733,13 @@ Deno.serve(async (req) => {
       }
     }
 
+    if (action === "detail" && !data.item) {
+      return new Response(JSON.stringify({ error: "Account not found", item: null }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Add cache headers: list responses cached 2 min, detail cached 30s
     const cacheMaxAge = action === "detail" ? 30 : 120;
 
@@ -687,7 +751,10 @@ Deno.serve(async (req) => {
       },
     });
   } catch (error: any) {
-    log("ERROR", "lzt-market", "Edge function error", { error: error?.message || String(error) });
+    log("ERROR", "lzt-market", "Edge function error", {
+      error: error?.message || String(error),
+      stack: error?.stack,
+    });
     return new Response(JSON.stringify({ error: "An internal error occurred" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
