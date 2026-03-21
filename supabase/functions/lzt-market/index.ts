@@ -63,7 +63,6 @@ function getContentFloorBrl(item: LztItem, gameType?: string) {
     const skins = Number(item.fortnite_skin_count || item.fortnite_outfit_count || 0);
     const vbucks = Math.min(Number(item.fortnite_vbucks || 0), 50000);
     const level = Math.min(Number(item.fortnite_level || 0), 500);
-    // ~R$0.35/skin + vbucks value + level bonus
     return skins * 0.35 + vbucks * 0.005 + level * 0.1;
   }
   if (gameType === "lol") {
@@ -77,6 +76,60 @@ function getContentFloorBrl(item: LztItem, gameType?: string) {
   const knives = Number(item.riot_valorant_knife || item.riot_valorant_knife_count || 0);
   const level = Math.min(Number(item.riot_valorant_level || 0), 500);
   return skins * 0.6 + knives * 5 + level * 0.08;
+}
+
+/**
+ * Content-based CEILING: prevents overpricing low-quality accounts.
+ * An unranked account with 12 basic skins should NOT cost R$225.
+ * The ceiling reflects the realistic resale value of the account's content.
+ */
+function getContentCeilingBrl(item: LztItem, gameType?: string) {
+  if (gameType === "fortnite") {
+    const skins = Number(item.fortnite_skin_count || item.fortnite_outfit_count || 0);
+    const vbucks = Math.min(Number(item.fortnite_vbucks || 0), 50000);
+    const level = Math.min(Number(item.fortnite_level || 0), 999);
+    // R$3/skin + vbucks value + level bonus
+    let ceiling = skins * 3 + vbucks * 0.02 + level * 0.2;
+    return Math.max(ceiling, MIN_PRICE_BRL);
+  }
+  if (gameType === "lol") {
+    const skins = Number(item.riot_lol_skin_count || 0);
+    const champs = Number(item.riot_lol_champion_count || 0);
+    const level = Math.min(Number(item.riot_lol_level || 0), 500);
+    const rank = String(item.riot_lol_rank || "").toUpperCase();
+    let ceiling = skins * 2.5 + champs * 0.8 + level * 0.3;
+    // Rank bonus
+    if (rank.includes("MASTER") || rank.includes("GRANDMASTER") || rank.includes("CHALLENGER")) ceiling += 120;
+    else if (rank.includes("DIAMOND")) ceiling += 60;
+    else if (rank.includes("EMERALD")) ceiling += 40;
+    else if (rank.includes("PLATINUM")) ceiling += 25;
+    else if (rank.includes("GOLD")) ceiling += 15;
+    return Math.max(ceiling, MIN_PRICE_BRL);
+  }
+  // Valorant
+  const skins = Number(item.riot_valorant_skin_count || 0);
+  const knives = Number(item.riot_valorant_knife || item.riot_valorant_knife_count || 0);
+  const agents = Number(item.riot_valorant_agent_count || 0);
+  const level = Math.min(Number(item.riot_valorant_level || 0), 500);
+  const rank = Number(item.riot_valorant_rank || 0);
+  const vp = Number(item.riot_valorant_wallet_vp || 0);
+  const invValue = Number(item.riot_valorant_inventory_value || 0);
+
+  // Base: R$5/skin, R$30/knife, agents, level, VP
+  let ceiling = skins * 5 + knives * 30 + agents * 1.5 + level * 0.15 + vp * 0.01;
+
+  // Inventory value bonus (if API provides it)
+  if (invValue > 0) ceiling += invValue * 0.003;
+
+  // Rank bonus
+  if (rank >= 27) ceiling += 150;       // Radiante
+  else if (rank >= 24) ceiling += 80;   // Imortal
+  else if (rank >= 21) ceiling += 50;   // Ascendente
+  else if (rank >= 18) ceiling += 35;   // Diamante
+  else if (rank >= 15) ceiling += 20;   // Platina
+  else if (rank >= 12) ceiling += 10;   // Ouro
+
+  return Math.max(ceiling, MIN_PRICE_BRL);
 }
 
 function getDisplayedPriceBrl(item: LztItem, overridePrice?: number, gameType?: string, markup?: number) {
@@ -93,7 +146,6 @@ function getDisplayedPriceBrl(item: LztItem, overridePrice?: number, gameType?: 
     brl = rawPrice * USD_TO_BRL;
     brl = brl * activeMarkup;
   } else {
-    // Already BRL — apply a smaller margin (30%) since seller set BRL price directly
     brl = rawPrice * 1.30;
   }
   let final = brl;
@@ -101,6 +153,10 @@ function getDisplayedPriceBrl(item: LztItem, overridePrice?: number, gameType?: 
   // Enforce content-based floor so cheap listings with lots of content get a fair price
   const contentFloor = getContentFloorBrl(item, gameType);
   if (final < contentFloor) final = contentFloor;
+
+  // Enforce content-based CEILING so expensive listings with low content don't get overpriced
+  const contentCeiling = getContentCeilingBrl(item, gameType);
+  if (final > contentCeiling) final = contentCeiling;
 
   return final < MIN_PRICE_BRL ? MIN_PRICE_BRL : Math.round(final * 100) / 100;
 }
