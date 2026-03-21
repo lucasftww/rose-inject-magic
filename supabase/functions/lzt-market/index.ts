@@ -435,12 +435,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Fetch lzt_config (needed for list and detail actions)
-    const { data: lztConfig } = await supabaseAdmin
-      .from("lzt_config")
-      .select("max_fetch_price, currency, markup_multiplier, markup_valorant, markup_lol, markup_fortnite, markup_minecraft")
-      .limit(1)
-      .maybeSingle();
+    // lzt_config already fetched in parallel at startup
+    const lztConfig = lztConfigRow.data;
 
     // Compute per-game markup from DB (used for both list and detail)
     let activeMarkup = DEFAULT_MARKUP;

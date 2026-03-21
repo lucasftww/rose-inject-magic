@@ -979,7 +979,7 @@ const Contas = () => {
     setDisplayPage(1);
     setFirstPageLoaded(false);
 
-    const maxPages = gameTab === "valorant" ? 5 : 4;
+    const maxPages = gameTab === "valorant" ? 3 : 3;
 
     try {
       // Fetch first page immediately
