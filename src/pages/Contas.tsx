@@ -1069,10 +1069,7 @@ const Contas = () => {
     if (loadingMore || !hasNextPage) return;
     if (currentPage >= MAX_PAGES) return;
     setLoadingMore(true);
-    // Abort any previous in-flight request before starting a new one
-    abortRef.current?.abort();
     const controller = new AbortController();
-    abortRef.current = controller;
     try {
       const cacheKey = debouncedParamsKey;
       const nextPageNum = currentPage + 1;
