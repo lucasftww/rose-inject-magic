@@ -1,6 +1,6 @@
-import { useState, useEffect, forwardRef } from "react";
+import { useState, useEffect } from "react";
 
-const FloatingWidgets = forwardRef<HTMLDivElement>((_props, ref) => {
+const FloatingWidgets = () => {
   const [showTooltip, setShowTooltip] = useState(true);
 
   useEffect(() => {
@@ -9,7 +9,7 @@ const FloatingWidgets = forwardRef<HTMLDivElement>((_props, ref) => {
   }, []);
 
   return (
-    <div ref={ref} className="fixed bottom-24 right-4 sm:bottom-6 sm:right-6 z-40 flex items-end gap-2 sm:gap-3">
+    <div className="fixed bottom-24 right-4 sm:bottom-6 sm:right-6 z-40 flex items-end gap-2 sm:gap-3">
       <div
         className={`mb-1 rounded-lg border border-border bg-card px-3 py-2 sm:px-4 sm:py-3 shadow-lg transition-all duration-500 hidden sm:block ${
           showTooltip ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-2 opacity-0"
@@ -32,8 +32,6 @@ const FloatingWidgets = forwardRef<HTMLDivElement>((_props, ref) => {
       </a>
     </div>
   );
-});
-
-FloatingWidgets.displayName = "FloatingWidgets";
+};
 
 export default FloatingWidgets;
