@@ -888,7 +888,7 @@ const Contas = () => {
   const buildParams = useCallback((pageNum: number = currentPage): Record<string, string | string[]> => {
     const params: Record<string, string | string[]> = {};
     params.page = String(pageNum);
-    params.order_by = "pdate_desc";
+    params.order_by = "pdate_to_down";
     if (searchQuery) params.title = searchQuery;
 
     if (gameTab === "valorant") {
