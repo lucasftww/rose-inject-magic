@@ -1,14 +1,18 @@
-import { useState, useMemo, forwardRef } from "react";
+import { useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
-import ValorantImage from "@/components/ValorantImage";
-import { Star, ArrowRight, Package, Loader2, Crosshair, Globe } from "lucide-react";
+import { Star, ArrowRight, Package, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useLztMarkup } from "@/hooks/useLztMarkup";
 import bannerInject from "@/assets/banner-inject.webp";
 import { useTranslation } from "react-i18next";
+
+// Game card images
+import valorantCardImg from "@/assets/games/valorant-card.webp";
+import fortniteCardImg from "@/assets/games/fortnite-card.webp";
+import lolCardImg from "@/assets/games/lol-card.webp";
+import minecraftCardImg from "@/assets/games/minecraft-card.webp";
 
 // Extracted components
 import FloatingWidgets from "@/components/landing/FloatingWidgets";
@@ -19,119 +23,7 @@ import FaqSection from "@/components/landing/FaqSection";
 import HowItWorksSection from "@/components/landing/HowItWorksSection";
 import CtaSection from "@/components/landing/CtaSection";
 import { fadeUp, staggerContainer, scaleIn, slideInLeft } from "@/components/landing/animations";
-import { translateRegion } from "@/lib/regionTranslation";
 
-interface LztItem {
-  item_id: number;
-  title: string;
-  price: number;
-  price_currency?: string;
-  riot_valorant_rank?: number;
-  riot_valorant_skin_count?: number;
-  riot_valorant_knife?: number;
-  riot_valorant_rank_type?: string;
-  valorantRegionPhrase?: string;
-  valorantInventory?: {
-    WeaponSkins?: string[];
-    Agent?: string[];
-    Buddy?: string[];
-  };
-  imagePreviewLinks?: {
-    direct?: {
-      weapons?: string;
-      agents?: string;
-      buddies?: string;
-    };
-  };
-  price_brl?: number;
-}
-
-type LandingAccountsCache = {
-  items: LztItem[];
-  cachedAt: number;
-};
-
-const LANDING_ACCOUNTS_CACHE_KEY = "landing-lzt-accounts-v2";
-const LANDING_ACCOUNTS_CACHE_TTL = 1000 * 60 * 5;
-
-const LANDING_RANK_NAMES: Record<number, string> = {
-  0: "Unranked",
-  1: "Unranked",
-  2: "Unranked",
-  3: "Ferro 1",
-  4: "Ferro 2",
-  5: "Ferro 3",
-  6: "Bronze 1",
-  7: "Bronze 2",
-  8: "Bronze 3",
-  9: "Prata 1",
-  10: "Prata 2",
-  11: "Prata 3",
-  12: "Ouro 1",
-  13: "Ouro 2",
-  14: "Ouro 3",
-  15: "Platina 1",
-  16: "Platina 2",
-  17: "Platina 3",
-  18: "Diamante 1",
-  19: "Diamante 2",
-  20: "Diamante 3",
-  21: "Ascendente 1",
-  22: "Ascendente 2",
-  23: "Ascendente 3",
-  24: "Imortal 1",
-  25: "Imortal 2",
-  26: "Imortal 3",
-  27: "Radiante",
-};
-
-const readCachedLandingAccounts = (): LandingAccountsCache | null => {
-  if (typeof window === "undefined") return null;
-
-  try {
-    const raw = window.sessionStorage.getItem(LANDING_ACCOUNTS_CACHE_KEY);
-    if (!raw) return null;
-
-    const parsed = JSON.parse(raw) as Partial<LandingAccountsCache>;
-    if (!Array.isArray(parsed.items) || typeof parsed.cachedAt !== "number") return null;
-    if (Date.now() - parsed.cachedAt > LANDING_ACCOUNTS_CACHE_TTL) return null;
-
-    return { items: parsed.items, cachedAt: parsed.cachedAt };
-  } catch {
-    return null;
-  }
-};
-
-const writeCachedLandingAccounts = (items: LztItem[]) => {
-  if (typeof window === "undefined") return;
-
-  try {
-    window.sessionStorage.setItem(
-      LANDING_ACCOUNTS_CACHE_KEY,
-      JSON.stringify({ items, cachedAt: Date.now() } satisfies LandingAccountsCache)
-    );
-  } catch {
-    // Ignore storage quota/private mode issues
-  }
-};
-
-const getLandingPreviewUrl = (item: LztItem) => {
-  return item.imagePreviewLinks?.direct?.weapons || item.imagePreviewLinks?.direct?.agents || item.imagePreviewLinks?.direct?.buddies || "";
-};
-
-const fetchLztAccounts = async (): Promise<LztItem[]> => {
-  const projectUrl = import.meta.env.VITE_SUPABASE_URL;
-  const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-  const res = await fetch(
-    `${projectUrl}/functions/v1/lzt-market?preview=1&limit=6&page=1&order_by=pdate_to_down&game_type=riot&country[]=Bra`,
-    { headers: { "Content-Type": "application/json", apikey: anonKey } }
-  );
-  if (!res.ok) return readCachedLandingAccounts()?.items || [];
-  const data = await res.json();
-  const items: LztItem[] = Array.isArray(data.items) ? data.items.slice(0, 6) : [];
-  if (items.length > 0) writeCachedLandingAccounts(items);
-  return items;
-};
 
 interface ProductFromDB {
   id: string;
@@ -161,105 +53,18 @@ const StarHalfIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-// ─── LZT Account Card ──────────────────────────────────────────────────────
-
-const LztPreviewFallback = forwardRef<HTMLDivElement, { url: string }>(({ url }, ref) => {
-  return (
-    <div ref={ref} className="relative z-[1] flex items-center justify-center w-full h-full p-3">
-      <ValorantImage src={url} alt="Skins preview" className="h-full w-full object-contain" timeout={10000} />
-    </div>
-  );
-});
-LztPreviewFallback.displayName = "LztPreviewFallback";
-
-const LztContaCard = forwardRef<HTMLDivElement, { item: LztItem; formatPrice: (price: number, currency?: string) => string }>(({ item, formatPrice }, ref) => {
-  const navigate = useNavigate();
-  const { t } = useTranslation();
-  const rankName = LANDING_RANK_NAMES[item.riot_valorant_rank ?? 0] || "Unranked";
-  const hasKnife = (item.riot_valorant_knife ?? 0) > 0;
-  const skinCount = item.riot_valorant_skin_count ?? 0;
-  const previewUrl = getLandingPreviewUrl(item);
-
-  return (
-    <div
-      ref={ref}
-      className="group cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-success/50 hover:shadow-[0_4px_24px_hsl(var(--success)/0.12)] flex flex-col h-full"
-      onClick={() => navigate(`/conta/${item.item_id}`)}
-    >
-      {/* Skin preview */}
-      <div className="relative flex h-28 sm:h-36 items-center justify-center overflow-hidden bg-secondary/20">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--success)/0.06),transparent_70%)]" />
-          {previewUrl ? (
-            <LztPreviewFallback url={previewUrl} />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center"><Crosshair className="h-6 w-6 sm:h-10 sm:w-10 text-muted-foreground/20" /></div>
-        )}
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-background/40 to-transparent" />
-      </div>
-      {/* Info bar */}
-      <div className="flex items-center justify-between px-2.5 py-1 bg-secondary/40 border-b border-border/20">
-          <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-1.5 py-0.5 text-[9px] sm:text-[11px] font-semibold text-foreground">
-            <span className="h-1.5 w-1.5 rounded-full bg-success/80" />
-            {rankName}
-          {hasKnife && <span className="ml-0.5">🔪</span>}
-        </span>
-        <span className="text-[9px] sm:text-[11px] font-semibold text-muted-foreground">{skinCount} {t("common.skins")}</span>
-      </div>
-      {/* Body */}
-      <div className="p-2.5 sm:p-3 flex flex-col flex-1 gap-1.5">
-        <div className="flex items-center gap-1">
-          <svg className="h-2.5 w-2.5 text-success flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-          <span className="text-[9px] sm:text-[11px] text-muted-foreground">{t("accounts.fullAccess")}</span>
-        </div>
-        {item.valorantRegionPhrase && (
-          <div className="flex items-center gap-1">
-            <Globe className="h-2.5 w-2.5 text-muted-foreground/60 flex-shrink-0" />
-            <span className="text-[9px] sm:text-[11px] text-muted-foreground/80">{translateRegion(item.valorantRegionPhrase)}</span>
-          </div>
-        )}
-        <div className="mt-auto pt-1.5 border-t border-border/30">
-          <p className="text-sm sm:text-base font-bold text-success tracking-tight">{formatPrice(item.price, item.price_currency)}</p>
-          <button className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg bg-success py-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-success-foreground">
-            {t("accounts.viewAccount")} <ArrowRight className="h-2.5 w-2.5" />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-});
-LztContaCard.displayName = "LztContaCard";
-
-const LandingAccountSkeleton = () => (
-  <div className="overflow-hidden rounded-xl border border-border/60 bg-card animate-pulse">
-    <div className="h-28 sm:h-36 bg-secondary/30" />
-    <div className="flex items-center justify-between border-b border-border/20 bg-secondary/40 px-2.5 py-1">
-      <div className="h-4 w-24 rounded-full bg-secondary/60" />
-      <div className="h-3 w-12 rounded-full bg-secondary/60" />
-    </div>
-    <div className="flex flex-col gap-2 p-2.5 sm:p-3">
-      <div className="h-3 w-36 rounded-full bg-secondary/60" />
-      <div className="h-3 w-20 rounded-full bg-secondary/60" />
-      <div className="mt-2 h-5 w-24 rounded-full bg-secondary/60" />
-      <div className="h-8 rounded-lg bg-secondary/60" />
-    </div>
-  </div>
-);
-
 // ─── Sections ───────────────────────────────────────────────────────────────
+
+const GAME_CATEGORIES = [
+  { name: "VALORANT", image: valorantCardImg, tab: "valorant", tagline: "Contas rankeadas e full acesso", badge: "Popular" },
+  { name: "FORTNITE", image: fortniteCardImg, tab: "fortnite", tagline: "Skins raras e V-Bucks inclusos", badge: "Novo" },
+  { name: "LOL", image: lolCardImg, tab: "lol", tagline: "Campeões, skins e ranks", badge: null },
+  { name: "MINECRAFT", image: minecraftCardImg, tab: "minecraft", tagline: "Java & Bedrock Edition", badge: null },
+];
 
 const ContasSection = () => {
   const { t } = useTranslation();
-  const { getDisplayPrice } = useLztMarkup();
-  const cachedLandingAccounts = useMemo(readCachedLandingAccounts, []);
-  const { data: accounts = [], isLoading: loadingAccounts } = useQuery({
-    queryKey: ["landing-lzt-accounts"],
-    queryFn: fetchLztAccounts,
-    staleTime: LANDING_ACCOUNTS_CACHE_TTL,
-    initialData: cachedLandingAccounts?.items,
-    initialDataUpdatedAt: cachedLandingAccounts?.cachedAt,
-    refetchOnWindowFocus: false,
-    retry: 1,
-  });
+  const navigate = useNavigate();
 
   return (
     <section className="border-t border-border bg-background px-5 sm:px-6 py-14 sm:py-24">
@@ -269,29 +74,55 @@ const ContasSection = () => {
           <h2 className="mt-3 text-3xl sm:text-5xl font-bold tracking-tight text-foreground md:text-7xl" style={{ fontFamily: "'Valorant', sans-serif" }}>{t("accounts.title")}</h2>
         </motion.div>
 
-        {loadingAccounts ? (
-          <div className="mt-8 sm:mt-14 grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-3">
-            {Array.from({ length: 6 }).map((_, idx) => (
-              <LandingAccountSkeleton key={idx} />
-            ))}
-          </div>
-        ) : accounts.length === 0 ? (
-          <div className="mt-14 text-center text-muted-foreground">{t("accounts.empty")}</div>
-        ) : (
-          <motion.div
-            className="mt-8 sm:mt-14 grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-3"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-40px" }}
-            variants={staggerContainer}
-          >
-            {accounts.map((item, idx) => (
-              <motion.div key={item.item_id} variants={fadeUp} custom={idx}>
-                <LztContaCard item={item} formatPrice={(p, c) => getDisplayPrice({ price: p, price_currency: c, price_brl: item.price_brl }, "valorant")} />
-              </motion.div>
-            ))}
-          </motion.div>
-        )}
+        <motion.div
+          className="mt-8 sm:mt-14 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-40px" }}
+          variants={staggerContainer}
+        >
+          {GAME_CATEGORIES.map((game, idx) => (
+            <motion.div
+              key={game.tab}
+              variants={fadeUp}
+              custom={idx}
+              className="group relative cursor-pointer overflow-hidden rounded-2xl border border-border/40 bg-card transition-all duration-300 hover:border-success/60 hover:shadow-[0_0_40px_hsl(197,100%,50%,0.15)]"
+              onClick={() => navigate(`/contas?game=${game.tab}`)}
+            >
+              {/* Image */}
+              <div className="relative aspect-[3/4] overflow-hidden">
+                <img
+                  src={game.image}
+                  alt={game.name}
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  loading="lazy"
+                />
+                {/* Gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+                
+                {/* Badge */}
+                {game.badge && (
+                  <div className="absolute top-3 right-3 rounded-full bg-success px-2.5 py-0.5 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-success-foreground shadow-lg">
+                    {game.badge}
+                  </div>
+                )}
+
+                {/* Bottom content */}
+                <div className="absolute inset-x-0 bottom-0 p-3 sm:p-5">
+                  <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-foreground" style={{ fontFamily: "'Valorant', sans-serif" }}>
+                    {game.name}
+                  </h3>
+                  <p className="mt-1 text-[10px] sm:text-xs text-muted-foreground leading-tight">{game.tagline}</p>
+                  
+                  <div className="mt-3 sm:mt-4 flex items-center gap-1.5 text-success text-[10px] sm:text-xs font-semibold uppercase tracking-wider transition-all group-hover:gap-2.5">
+                    <span>{t("accounts.exploreAccounts")}</span>
+                    <ArrowRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 transition-transform group-hover:translate-x-1" />
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </motion.div>
 
         <motion.div className="mt-10 sm:mt-12 flex justify-center" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
           <Link

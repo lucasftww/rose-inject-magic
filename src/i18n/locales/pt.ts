@@ -64,8 +64,8 @@ const pt = {
 
   // Accounts section
   accounts: {
-    subtitle: "Selecao Accounts",
-    title: "CONTAS VALORANT",
+    subtitle: "Marketplace",
+    title: "CONTAS PREMIUM",
     empty: "Nenhuma conta disponível no momento.",
     fullAccess: "Full Acesso · Entrega Automática",
     viewAccount: "Ver conta",
