@@ -3,17 +3,10 @@ import { Link, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import { Star, ArrowRight, Package, Loader2, Crosshair, Globe } from "lucide-react";
 import { motion } from "framer-motion";
-import ValorantImage from "@/components/ValorantImage";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useLztMarkup } from "@/hooks/useLztMarkup";
 import bannerInject from "@/assets/banner-inject.webp";
-import {
-  rankFerro, rankBronze, rankPrata, rankOuro, rankPlatina,
-  rankDiamante, rankAscendente, rankImortal, rankRadianteNew as rankRadiante,
-  rankUnranked, rankMap, RARITY_PRIORITY, fetchAllValorantSkins,
-  type SkinEntry,
-} from "@/lib/valorantData";
 import { useTranslation } from "react-i18next";
 
 // Extracted components
@@ -52,18 +45,91 @@ interface LztItem {
   price_brl?: number;
 }
 
+type LandingAccountsCache = {
+  items: LztItem[];
+  cachedAt: number;
+};
+
+const LANDING_ACCOUNTS_CACHE_KEY = "landing-lzt-accounts-v2";
+const LANDING_ACCOUNTS_CACHE_TTL = 1000 * 60 * 5;
+
+const LANDING_RANK_NAMES: Record<number, string> = {
+  0: "Unranked",
+  1: "Unranked",
+  2: "Unranked",
+  3: "Ferro 1",
+  4: "Ferro 2",
+  5: "Ferro 3",
+  6: "Bronze 1",
+  7: "Bronze 2",
+  8: "Bronze 3",
+  9: "Prata 1",
+  10: "Prata 2",
+  11: "Prata 3",
+  12: "Ouro 1",
+  13: "Ouro 2",
+  14: "Ouro 3",
+  15: "Platina 1",
+  16: "Platina 2",
+  17: "Platina 3",
+  18: "Diamante 1",
+  19: "Diamante 2",
+  20: "Diamante 3",
+  21: "Ascendente 1",
+  22: "Ascendente 2",
+  23: "Ascendente 3",
+  24: "Imortal 1",
+  25: "Imortal 2",
+  26: "Imortal 3",
+  27: "Radiante",
+};
+
+const readCachedLandingAccounts = (): LandingAccountsCache | null => {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const raw = window.sessionStorage.getItem(LANDING_ACCOUNTS_CACHE_KEY);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw) as Partial<LandingAccountsCache>;
+    if (!Array.isArray(parsed.items) || typeof parsed.cachedAt !== "number") return null;
+    if (Date.now() - parsed.cachedAt > LANDING_ACCOUNTS_CACHE_TTL) return null;
+
+    return { items: parsed.items, cachedAt: parsed.cachedAt };
+  } catch {
+    return null;
+  }
+};
+
+const writeCachedLandingAccounts = (items: LztItem[]) => {
+  if (typeof window === "undefined") return;
+
+  try {
+    window.sessionStorage.setItem(
+      LANDING_ACCOUNTS_CACHE_KEY,
+      JSON.stringify({ items, cachedAt: Date.now() } satisfies LandingAccountsCache)
+    );
+  } catch {
+    // Ignore storage quota/private mode issues
+  }
+};
+
+const getLandingPreviewUrl = (item: LztItem) => {
+  return item.imagePreviewLinks?.direct?.weapons || item.imagePreviewLinks?.direct?.agents || item.imagePreviewLinks?.direct?.buddies || "";
+};
+
 const fetchLztAccounts = async (): Promise<LztItem[]> => {
   const projectUrl = import.meta.env.VITE_SUPABASE_URL;
   const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
   const res = await fetch(
-    `${projectUrl}/functions/v1/lzt-market?order_by=pdate_desc&game_type=riot&country[]=Bra`,
+    `${projectUrl}/functions/v1/lzt-market?preview=1&limit=6&page=1&order_by=pdate_desc&game_type=riot&country[]=Bra`,
     { headers: { "Content-Type": "application/json", apikey: anonKey } }
   );
-  if (!res.ok) return [];
+  if (!res.ok) return readCachedLandingAccounts()?.items || [];
   const data = await res.json();
-  const items: LztItem[] = data.items || [];
-  items.sort((a, b) => (b.riot_valorant_skin_count || 0) - (a.riot_valorant_skin_count || 0));
-  return items.slice(0, 6);
+  const items: LztItem[] = Array.isArray(data.items) ? data.items.slice(0, 6) : [];
+  if (items.length > 0) writeCachedLandingAccounts(items);
+  return items;
 };
 
 interface ProductFromDB {
@@ -109,34 +175,13 @@ const LztPreviewFallback = forwardRef<HTMLDivElement, { url: string }>(({ url },
 });
 LztPreviewFallback.displayName = "LztPreviewFallback";
 
-const LztContaCard = forwardRef<HTMLDivElement, { item: LztItem; skinsMap: Map<string, SkinEntry>; formatPrice: (price: number, currency?: string) => string }>(({ item, skinsMap, formatPrice }, ref) => {
+const LztContaCard = forwardRef<HTMLDivElement, { item: LztItem; formatPrice: (price: number, currency?: string) => string }>(({ item, formatPrice }, ref) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const rank = item.riot_valorant_rank ? rankMap[item.riot_valorant_rank] : null;
+  const rankName = LANDING_RANK_NAMES[item.riot_valorant_rank ?? 0] || "Unranked";
   const hasKnife = (item.riot_valorant_knife ?? 0) > 0;
   const skinCount = item.riot_valorant_skin_count ?? 0;
-
-  const skinPreviews = useMemo(() => {
-    const results: SkinEntry[] = [];
-    const toUuids = (raw: unknown): string[] => {
-      if (Array.isArray(raw)) return raw;
-      if (raw && typeof raw === "object") return Object.values(raw as Record<string, string>);
-      return [];
-    };
-    const allUuids = toUuids(item.valorantInventory?.WeaponSkins);
-    for (const uuid of allUuids) {
-      if (typeof uuid !== "string") continue;
-      const entry = skinsMap.get(uuid.toLowerCase());
-      if (entry) results.push(entry);
-    }
-    results.sort((a, b) => b.rarity - a.rarity);
-    const premium = results.filter(s => s.rarity >= 2);
-    return (premium.length >= 4 ? premium : results.filter(s => s.rarity > 0).length >= 4 ? results.filter(s => s.rarity > 0) : results).slice(0, 6);
-  }, [item.valorantInventory, skinsMap]);
-
-  const renderSkin = (skin: SkinEntry) => (
-    <ValorantImage src={skin.image} alt={skin.name} className="w-full h-full object-contain" />
-  );
+  const previewUrl = getLandingPreviewUrl(item);
 
   return (
     <div
@@ -147,56 +192,18 @@ const LztContaCard = forwardRef<HTMLDivElement, { item: LztItem; skinsMap: Map<s
       {/* Skin preview */}
       <div className="relative flex h-28 sm:h-36 items-center justify-center overflow-hidden bg-secondary/20">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--success)/0.06),transparent_70%)]" />
-        {skinPreviews.length === 1 ? (
-          <div className="relative z-[1] w-full h-full flex items-center justify-center bg-secondary/30">
-            {renderSkin(skinPreviews[0])}
-          </div>
-        ) : skinPreviews.length === 2 ? (
-          <div className="relative z-[1] grid grid-cols-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
-            {skinPreviews.map((skin, i) => (
-              <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/30 p-0.5">
-                {renderSkin(skin)}
-              </div>
-            ))}
-          </div>
-        ) : skinPreviews.length === 3 ? (
-          <div className="relative z-[1] grid grid-cols-2 grid-rows-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
-            {skinPreviews.slice(0, 2).map((skin, i) => (
-              <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/30 p-0.5">
-                {renderSkin(skin)}
-              </div>
-            ))}
-            <div className="flex items-center justify-center w-full h-full rounded bg-secondary/30 p-0.5 col-span-2">
-              {renderSkin(skinPreviews[2])}
-            </div>
-          </div>
-        ) : skinPreviews.length === 4 ? (
-          <div className="relative z-[1] grid grid-cols-2 grid-rows-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
-            {skinPreviews.map((skin, i) => (
-              <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/30 p-0.5">
-                {renderSkin(skin)}
-              </div>
-            ))}
-          </div>
-        ) : skinPreviews.length > 0 ? (
-          <div className="relative z-[1] grid grid-cols-3 grid-rows-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
-            {skinPreviews.map((skin, i) => (
-              <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/30 p-0.5">
-                {renderSkin(skin)}
-              </div>
-            ))}
-          </div>
-        ) : item.imagePreviewLinks?.direct?.weapons ? (
-          <LztPreviewFallback url={item.imagePreviewLinks.direct.weapons} />
+          {previewUrl ? (
+            <LztPreviewFallback url={previewUrl} />
         ) : (
           <div className="flex h-full w-full items-center justify-center"><Crosshair className="h-6 w-6 sm:h-10 sm:w-10 text-muted-foreground/20" /></div>
         )}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-background/40 to-transparent" />
       </div>
       {/* Info bar */}
       <div className="flex items-center justify-between px-2.5 py-1 bg-secondary/40 border-b border-border/20">
-        <span className="flex items-center gap-1 text-[9px] sm:text-[11px] font-semibold text-foreground">
-          <img src={rank?.img || rankUnranked} alt={rank?.name || "Unranked"} className="h-3 w-3 sm:h-3.5 sm:w-3.5 object-contain" />
-          {rank?.name || "Unranked"}
+          <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-1.5 py-0.5 text-[9px] sm:text-[11px] font-semibold text-foreground">
+            <span className="h-1.5 w-1.5 rounded-full bg-success/80" />
+            {rankName}
           {hasKnife && <span className="ml-0.5">🔪</span>}
         </span>
         <span className="text-[9px] sm:text-[11px] font-semibold text-muted-foreground">{skinCount} {t("common.skins")}</span>
@@ -225,21 +232,36 @@ const LztContaCard = forwardRef<HTMLDivElement, { item: LztItem; skinsMap: Map<s
 });
 LztContaCard.displayName = "LztContaCard";
 
+const LandingAccountSkeleton = () => (
+  <div className="overflow-hidden rounded-xl border border-border/60 bg-card animate-pulse">
+    <div className="h-28 sm:h-36 bg-secondary/30" />
+    <div className="flex items-center justify-between border-b border-border/20 bg-secondary/40 px-2.5 py-1">
+      <div className="h-4 w-24 rounded-full bg-secondary/60" />
+      <div className="h-3 w-12 rounded-full bg-secondary/60" />
+    </div>
+    <div className="flex flex-col gap-2 p-2.5 sm:p-3">
+      <div className="h-3 w-36 rounded-full bg-secondary/60" />
+      <div className="h-3 w-20 rounded-full bg-secondary/60" />
+      <div className="mt-2 h-5 w-24 rounded-full bg-secondary/60" />
+      <div className="h-8 rounded-lg bg-secondary/60" />
+    </div>
+  </div>
+);
+
 // ─── Sections ───────────────────────────────────────────────────────────────
 
 const ContasSection = () => {
   const { t } = useTranslation();
   const { getDisplayPrice } = useLztMarkup();
+  const cachedLandingAccounts = useMemo(readCachedLandingAccounts, []);
   const { data: accounts = [], isLoading: loadingAccounts } = useQuery({
     queryKey: ["landing-lzt-accounts"],
     queryFn: fetchLztAccounts,
-    staleTime: 1000 * 60 * 5,
-  });
-
-  const { data: skinsMap = new Map() } = useQuery({
-    queryKey: ["all-valorant-skins"],
-    queryFn: fetchAllValorantSkins,
-    staleTime: 1000 * 60 * 60,
+    staleTime: LANDING_ACCOUNTS_CACHE_TTL,
+    initialData: cachedLandingAccounts?.items,
+    initialDataUpdatedAt: cachedLandingAccounts?.cachedAt,
+    refetchOnWindowFocus: false,
+    retry: 1,
   });
 
   return (
@@ -251,7 +273,11 @@ const ContasSection = () => {
         </motion.div>
 
         {loadingAccounts ? (
-          <div className="mt-14 flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-success" /></div>
+          <div className="mt-8 sm:mt-14 grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, idx) => (
+              <LandingAccountSkeleton key={idx} />
+            ))}
+          </div>
         ) : accounts.length === 0 ? (
           <div className="mt-14 text-center text-muted-foreground">{t("accounts.empty")}</div>
         ) : (
@@ -264,7 +290,7 @@ const ContasSection = () => {
           >
             {accounts.map((item, idx) => (
               <motion.div key={item.item_id} variants={fadeUp} custom={idx}>
-                <LztContaCard item={item} skinsMap={skinsMap} formatPrice={(p, c) => getDisplayPrice({ price: p, price_currency: c, price_brl: item.price_brl }, "valorant")} />
+                <LztContaCard item={item} formatPrice={(p, c) => getDisplayPrice({ price: p, price_currency: c, price_brl: item.price_brl }, "valorant")} />
               </motion.div>
             ))}
           </motion.div>
