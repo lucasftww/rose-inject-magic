@@ -28,6 +28,16 @@ interface LztSale {
 }
 
 const SALES_PER_PAGE = 15;
+const DEFAULT_CONFIG: LztConfig = {
+  id: "",
+  markup_multiplier: 3,
+  max_fetch_price: 500,
+  currency: "rub",
+  markup_valorant: 3,
+  markup_lol: 3,
+  markup_fortnite: 3,
+  markup_minecraft: 3,
+};
 
 const gameMarkupFields = [
   { key: "markup_valorant" as const, label: "Valorant", color: "text-destructive" },
@@ -52,9 +62,46 @@ const LztTab = () => {
   const [changingPrice, setChangingPrice] = useState(false);
   const [overrides, setOverrides] = useState<{ lzt_item_id: string; custom_price_brl: number }[]>([]);
 
+  const applyConfig = (partial?: Partial<LztConfig> | null) => {
+    const resolved: LztConfig = {
+      ...DEFAULT_CONFIG,
+      ...(partial || {}),
+      id: partial?.id || "",
+    };
+
+    setConfig(resolved);
+    setMaxPrice(String(resolved.max_fetch_price));
+    setMarkups({
+      markup_valorant: String(resolved.markup_valorant ?? resolved.markup_multiplier),
+      markup_lol: String(resolved.markup_lol ?? resolved.markup_multiplier),
+      markup_fortnite: String(resolved.markup_fortnite ?? resolved.markup_multiplier),
+      markup_minecraft: String(resolved.markup_minecraft ?? resolved.markup_multiplier),
+    });
+  };
+
   const fetchOverrides = async () => {
-    const { data } = await supabase.from("lzt_price_overrides").select("lzt_item_id, custom_price_brl").order("created_at", { ascending: false });
-    if (data) setOverrides(data);
+    try {
+      const { data, error } = await supabase
+        .from("lzt_price_overrides")
+        .select("lzt_item_id, custom_price_brl")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      const deduped = new Map<string, { lzt_item_id: string; custom_price_brl: number }>();
+      for (const row of data || []) {
+        if (!deduped.has(row.lzt_item_id)) {
+          deduped.set(row.lzt_item_id, {
+            lzt_item_id: row.lzt_item_id,
+            custom_price_brl: Number(row.custom_price_brl),
+          });
+        }
+      }
+
+      setOverrides(Array.from(deduped.values()));
+    } catch {
+      setOverrides([]);
+    }
   };
 
   // Per-game markup state
@@ -74,67 +121,63 @@ const LztTab = () => {
 
   const fetchData = async () => {
     setLoading(true);
-
-    // Fetch aggregated stats from DB function (no 1000-row limit)
-    const [configRes, statsRes] = await Promise.all([
-      supabase.from("lzt_config").select("*").limit(1).maybeSingle(),
-      supabase.rpc("admin_lzt_stats"),
-    ]);
-
-    if (configRes.data) {
-      const c = configRes.data as any as LztConfig;
-      setConfig(c);
-      setMaxPrice(String(c.max_fetch_price));
-      setMarkups({
-        markup_valorant: String(c.markup_valorant ?? c.markup_multiplier),
-        markup_lol: String(c.markup_lol ?? c.markup_multiplier),
-        markup_fortnite: String(c.markup_fortnite ?? c.markup_multiplier),
-        markup_minecraft: String(c.markup_minecraft ?? c.markup_multiplier),
-      });
-    }
-
-    if (statsRes.data) setDbStats(statsRes.data);
-
-    // Fetch ALL sales using paginated helper
-    let sales: LztSale[];
     try {
-      sales = await fetchAllRows<LztSale>("lzt_sales", {
-        select: "*",
-        order: { column: "created_at", ascending: false },
-      });
-    } catch {
-      sales = [];
-    }
+      const [configRes, statsRes] = await Promise.all([
+        supabase.from("lzt_config").select("*").limit(1).maybeSingle(),
+        supabase.rpc("admin_lzt_stats"),
+      ]);
 
-    // If lzt_sales is empty, reconstruct from order_tickets metadata
-    if (sales.length === 0) {
+      if (configRes.error) throw configRes.error;
+      applyConfig((configRes.data as LztConfig | null) || null);
+
+      if (statsRes.error) throw statsRes.error;
+      setDbStats(statsRes.data);
+
+      let sales: LztSale[];
       try {
-        const tickets = await fetchAllRows("order_tickets", {
-          select: "id, metadata, created_at",
+        sales = await fetchAllRows<LztSale>("lzt_sales", {
+          select: "*",
           order: { column: "created_at", ascending: false },
-        });
-        const lztTickets = tickets.filter((t: any) => (t.metadata as any)?.type === "lzt-account");
-        sales = lztTickets.map((t: any) => {
-          const meta = t.metadata as any;
-          return {
-            id: t.id,
-            lzt_item_id: meta?.lzt_item_id || "",
-            buy_price: 0,
-            sell_price: Number(meta?.price_paid || meta?.sell_price || 0),
-            profit: Number(meta?.price_paid || meta?.sell_price || 0),
-            title: meta?.account_name || meta?.title || "Conta LZT",
-            game: meta?.game || null,
-            buyer_user_id: null,
-            created_at: t.created_at,
-          } as LztSale;
         });
       } catch {
         sales = [];
       }
-    }
 
-    setAllSales(sales);
-    setLoading(false);
+      if (sales.length === 0) {
+        try {
+          const tickets = await fetchAllRows("order_tickets", {
+            select: "id, metadata, created_at",
+            order: { column: "created_at", ascending: false },
+          });
+          const lztTickets = tickets.filter((t: any) => (t.metadata as any)?.type === "lzt-account");
+          sales = lztTickets.map((t: any) => {
+            const meta = t.metadata as any;
+            return {
+              id: t.id,
+              lzt_item_id: meta?.lzt_item_id || "",
+              buy_price: 0,
+              sell_price: Number(meta?.price_paid || meta?.sell_price || 0),
+              profit: Number(meta?.price_paid || meta?.sell_price || 0),
+              title: meta?.account_name || meta?.title || "Conta LZT",
+              game: meta?.game || null,
+              buyer_user_id: null,
+              created_at: t.created_at,
+            } as LztSale;
+          });
+        } catch {
+          sales = [];
+        }
+      }
+
+      setAllSales(sales);
+    } catch (err: any) {
+      toast({ title: "Erro ao carregar dados LZT", description: err?.message || "Tente novamente.", variant: "destructive" });
+      applyConfig(null);
+      setAllSales([]);
+      setDbStats(null);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { fetchData(); fetchOverrides(); }, []);
@@ -158,19 +201,39 @@ const LztTab = () => {
     const avgMarkup = Object.values(parsedMarkups).reduce((a, b) => a + b, 0) / Object.values(parsedMarkups).length;
 
     setSaving(true);
-    const { error } = await supabase
-      .from("lzt_config")
-      .update({
-        markup_multiplier: avgMarkup,
-        max_fetch_price: p,
-        ...parsedMarkups,
-      } as any)
-      .eq("id", config.id);
+    const payload = {
+      markup_multiplier: avgMarkup,
+      max_fetch_price: p,
+      currency: config.currency,
+      ...parsedMarkups,
+    } as any;
+
+    let error = null;
+    let savedConfig: Partial<LztConfig> | null = null;
+
+    if (config.id) {
+      const result = await supabase
+        .from("lzt_config")
+        .update(payload)
+        .eq("id", config.id)
+        .select("*")
+        .single();
+      error = result.error;
+      savedConfig = result.data as Partial<LztConfig> | null;
+    } else {
+      const result = await supabase
+        .from("lzt_config")
+        .insert(payload)
+        .select("*")
+        .single();
+      error = result.error;
+      savedConfig = result.data as Partial<LztConfig> | null;
+    }
 
     if (error) toast({ title: "Erro ao salvar", description: error.message, variant: "destructive" });
     else {
       toast({ title: "Configurações salvas!" });
-      setConfig({ ...config, markup_multiplier: avgMarkup, max_fetch_price: p, ...parsedMarkups } as LztConfig);
+      applyConfig(savedConfig);
     }
     setSaving(false);
   };
@@ -343,7 +406,8 @@ const LztTab = () => {
             </div>
             <button
               onClick={async () => {
-                if (!priceItemId.trim() || !newPrice.trim()) {
+                const trimmedItemId = priceItemId.trim();
+                if (!trimmedItemId || !newPrice.trim()) {
                   toast({ title: "Preencha o ID e o preço", variant: "destructive" });
                   return;
                 }
@@ -354,12 +418,24 @@ const LztTab = () => {
                 }
                 setChangingPrice(true);
                 try {
-                  const { error } = await supabase.from("lzt_price_overrides").upsert(
-                    { lzt_item_id: priceItemId.trim(), custom_price_brl: p },
-                    { onConflict: "lzt_item_id" }
-                  );
-                  if (error) throw error;
-                  toast({ title: "Preço definido!", description: `Conta #${priceItemId.trim()} → R$ ${p.toFixed(2)}` });
+                  const { data: existingRows, error: selectError } = await supabase
+                    .from("lzt_price_overrides")
+                    .select("lzt_item_id")
+                    .eq("lzt_item_id", trimmedItemId);
+
+                  if (selectError) throw selectError;
+
+                  const saveResult = existingRows && existingRows.length > 0
+                    ? await supabase
+                        .from("lzt_price_overrides")
+                        .update({ custom_price_brl: p, updated_at: new Date().toISOString() })
+                        .eq("lzt_item_id", trimmedItemId)
+                    : await supabase
+                        .from("lzt_price_overrides")
+                        .insert({ lzt_item_id: trimmedItemId, custom_price_brl: p });
+
+                  if (saveResult.error) throw saveResult.error;
+                  toast({ title: "Preço definido!", description: `Conta #${trimmedItemId} → R$ ${p.toFixed(2)}` });
                   setPriceItemId("");
                   setNewPrice("");
                   fetchOverrides();

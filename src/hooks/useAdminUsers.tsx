@@ -34,11 +34,13 @@ export function useAdminUsers() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { setLoading(false); fetchingRef.current = false; return []; }
 
-      const res = await supabase.functions.invoke("admin-users", {
+      const res = await supabase.functions.invoke<AdminUser[]>("admin-users", {
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
 
-      const data = (res.data || []) as AdminUser[];
+      if (res.error) throw res.error;
+
+      const data = Array.isArray(res.data) ? res.data : [];
       cachedUsers = data;
       cacheTimestamp = Date.now();
       setUsers(data);
