@@ -164,7 +164,7 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
           const product = productMap[t.product_id];
           const plan = planMap[t.product_plan_id];
           const meta = (t.metadata || {}) as Record<string, any>;
-          const revenue = paidPriceMap.get(`${t.user_id}|${t.product_id}|${t.product_plan_id}`) ?? plan?.price ?? 0;
+          const revenue = paidPriceMap.get(`${t.user_id}|${t.product_id}|${t.product_plan_id}`) ?? 0;
           let cost = 0;
           if (meta.amount_spent && Number(meta.amount_spent) > 0) {
             // Real cost = 60% of amount_spent (40% cashback from Robot Project)
