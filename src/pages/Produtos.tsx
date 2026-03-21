@@ -126,31 +126,11 @@ const GameSelectScreen = ({ onSelect, games, loading }: { onSelect: (gameId: str
       <Header />
 
       {/* Hero header */}
-      <section className="relative overflow-hidden border-b border-border">
-        <div className="pointer-events-none absolute inset-0"
-          style={{
-            backgroundImage: "linear-gradient(hsl(var(--border) / 0.6) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--border) / 0.6) 1px, transparent 1px)",
-            backgroundSize: "60px 60px",
-            maskImage: "radial-gradient(ellipse at center, black 20%, transparent 70%)",
-            WebkitMaskImage: "radial-gradient(ellipse at center, black 20%, transparent 70%)",
-          }}
-        />
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,_hsl(197,100%,50%,0.08)_0%,_transparent_60%)]" />
-
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 py-10 sm:py-16 text-center">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-            <div className="mx-auto mb-4 flex w-fit items-center gap-2 rounded-full border border-success/20 bg-success/5 px-4 py-1.5">
-              <Gamepad2 className="h-4 w-4 text-success" />
-              <span className="text-xs font-semibold tracking-wide text-success">CATÁLOGO DE SOFTWARES</span>
-            </div>
-            <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight text-foreground" style={{ fontFamily: "'Valorant', sans-serif" }}>
-              ESCOLHA SEU <span className="bg-gradient-to-r from-success via-[hsl(197,100%,70%)] to-success bg-[length:200%_100%] bg-clip-text text-transparent">JOGO</span>
-            </h1>
-            <p className="mt-3 sm:mt-4 text-sm sm:text-base text-muted-foreground max-w-lg mx-auto">
-              Cheats premium para seus jogos favoritos. Domine cada partida com segurança e confiança total.
-            </p>
-          </motion.div>
-        </div>
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 pt-8 sm:pt-12 pb-2 sm:pb-4">
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="flex items-center gap-3">
+          <Gamepad2 className="h-5 w-5 text-success" />
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">Escolha seu jogo</h1>
+        </motion.div>
       </section>
 
       {loading ? (
@@ -160,7 +140,7 @@ const GameSelectScreen = ({ onSelect, games, loading }: { onSelect: (gameId: str
       ) : (
         <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8 sm:py-14">
           <motion.div
-            className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+            className="grid grid-cols-2 gap-3 sm:gap-5 sm:grid-cols-3 lg:grid-cols-4"
             initial="hidden"
             animate="visible"
             variants={staggerContainer}
