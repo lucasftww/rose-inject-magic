@@ -156,39 +156,10 @@ function getFortniteFairPriceCeiling(item: LztItem) {
   return Math.max(Math.round(estimatedValue), 60);
 }
 
-function shouldKeepItem(item: LztItem, gameType: string, displayedPriceBrl: number) {
+function shouldKeepItem(item: LztItem, gameType: string, _displayedPriceBrl: number) {
+  // Only filter out items that are already sold or can't be bought
   if (item.buyer) return false;
   if (item.canBuyItem === false) return false;
-
-  const isValorant = gameType === "riot" || gameType === "valorant";
-
-  // Valorant: only skin count + max price cap
-  if (isValorant) {
-    const skinCount = Number(item.riot_valorant_skin_count || 0);
-    if (skinCount < VAL_MIN_SKINS) return false;
-    if (displayedPriceBrl > 1500) return false;
-    return true;
-  }
-
-  if (gameType === "lol") {
-    const skinCount = Number(item.riot_lol_skin_count || 0);
-    if (skinCount < LOL_MIN_SKINS) return false;
-    if (displayedPriceBrl > 2000) return false;
-    return true;
-  }
-
-  if (gameType === "fortnite") {
-    const ftSkins = Number(item.fortnite_skin_count || item.fortnite_outfit_count || 0);
-    if (ftSkins < FT_MIN_SKINS) return false;
-    if (displayedPriceBrl > 1500) return false;
-    return true;
-  }
-
-  if (gameType === "minecraft") {
-    if (displayedPriceBrl > 500) return false;
-    return true;
-  }
-
   return true;
 }
 
@@ -436,11 +407,6 @@ Deno.serve(async (req) => {
       apiUrl = `https://api.lzt.market/${encodeURIComponent(itemId)}`;
     } else {
       // LIST: accounts with filters
-      const maxFetchPrice = lztConfig?.max_fetch_price || 500;
-      const effectivePmax = Math.ceil(maxFetchPrice / activeMarkup);
-      // Apply pmax to ALL games including Valorant to prevent fetching expensive items that will be filtered anyway
-      const shouldAutoApplyConfiguredPmax = true;
-
       const params = new URLSearchParams();
       const allowedParams = [
         "page", "pmin", "pmax", "title", "order_by", "currency",
@@ -483,13 +449,12 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Convert user-provided BRL price filters to API currency (seller BRL on LZT)
+      // Only convert user-provided BRL price filters — do NOT auto-apply pmax
       const userPmin = params.get("pmin");
       if (userPmin) {
         const brlMin = Number(userPmin);
         if (brlMin > 0) {
-          const MIN_PRICE_BRL_FILTER = 20;
-          if (brlMin <= MIN_PRICE_BRL_FILTER) {
+          if (brlMin <= MIN_PRICE_BRL) {
             params.delete("pmin");
           } else {
             params.set("pmin", String(Math.floor(brlMin / activeMarkup)));
@@ -501,15 +466,10 @@ Deno.serve(async (req) => {
       if (userPmax) {
         const brlMax = Number(userPmax);
         if (brlMax > 0) {
-          const sellerMax = Math.ceil((brlMax / activeMarkup) * 1.1);
-          params.set("pmax", String(shouldAutoApplyConfiguredPmax ? Math.min(sellerMax, effectivePmax) : sellerMax));
-        } else if (shouldAutoApplyConfiguredPmax) {
-          params.set("pmax", String(effectivePmax));
+          params.set("pmax", String(Math.ceil((brlMax / activeMarkup) * 1.1)));
         } else {
           params.delete("pmax");
         }
-      } else if (shouldAutoApplyConfiguredPmax) {
-        params.set("pmax", String(effectivePmax));
       }
 
       if (gameType === "fortnite") {
@@ -578,10 +538,7 @@ Deno.serve(async (req) => {
         params.delete("inv_max");
         apiUrl = `https://api.lzt.market/riot?${params.toString()}`;
       } else {
-        // Valorant: ensure minimum skins filter, remove LoL-specific params
-        if (!params.has("valorant_smin")) {
-          params.set("valorant_smin", String(VAL_MIN_SKINS));
-        }
+        // Valorant: remove LoL-specific params only
         params.delete("lol_smin");
         params.delete("lol_smax");
         params.delete("lol_level_min");
