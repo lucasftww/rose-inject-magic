@@ -48,6 +48,7 @@ const softwareImageMap: Record<string, string> = {
   "apex legends": swApex,
   "apex": swApex,
   "call of duty": swCod,
+  "call-of-duty": swCod,
   "cod": swCod,
   rust: swRust,
   "overwatch 2": swOverwatch,
