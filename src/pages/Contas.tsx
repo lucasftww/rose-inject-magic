@@ -1068,7 +1068,7 @@ const Contas = () => {
       setStreamingDone(true);
 
       // Cache result
-      fetchCacheRef.current.set(cacheKey, {
+      cacheSet(cacheKey, {
         items: firstPageItems,
         hasNextPage: hasMore,
         currentPage: 1,
@@ -1113,7 +1113,7 @@ const Contas = () => {
         const items: LztItem[] = data?.items ?? [];
         const hasMore = data?.hasNextPage ?? items.length >= 15;
         // Store using a prefetch-specific key
-        fetchCacheRef.current.set(`__prefetch__${tab}`, { items, hasNextPage: hasMore, currentPage: 1, timestamp: Date.now() });
+        cacheSet(`__prefetch__${tab}`, { items, hasNextPage: hasMore, currentPage: 1, timestamp: Date.now() });
       } catch { /* silent */ }
     }
   }, [gameTab]);
@@ -1145,7 +1145,7 @@ const Contas = () => {
         setStreamedItems(items);
         setHasNextPage(hasMore);
         setCurrentPage(1);
-        fetchCacheRef.current.set(cacheKey, { items, hasNextPage: hasMore, currentPage: 1, timestamp: Date.now() });
+        cacheSet(cacheKey, { items, hasNextPage: hasMore, currentPage: 1, timestamp: Date.now() });
       } catch { /* silent — user already sees prefetched data */ }
       return;
     }
@@ -1189,7 +1189,7 @@ const Contas = () => {
         const existingIds = new Set(prev.map(i => i.item_id));
         const newItems = pageItems.filter(i => !existingIds.has(i.item_id));
         const merged = [...prev, ...newItems];
-        fetchCacheRef.current.set(cacheKey, {
+        cacheSet(cacheKey, {
           items: merged,
           hasNextPage: nextHasPage,
           currentPage: nextPageNum,
