@@ -266,12 +266,12 @@ const GameSelectScreen = ({ onSelect, games, loading }: { onSelect: (gameId: str
               variants={fadeUp}
               custom={idx}
               onClick={() => onSelect(game.id)}
-              className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/40 bg-card text-left transition-all duration-300 hover:border-success/50 hover:shadow-[0_0_30px_hsl(197,100%,50%,0.15)] focus:outline-none active:scale-[0.97]"
+              className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/30 bg-card text-left transition-all duration-300 hover:border-foreground/20 hover:shadow-[0_4px_24px_rgba(0,0,0,0.4)] focus:outline-none active:scale-[0.97]"
             >
               <div className="relative aspect-[3/4] overflow-hidden">
-                {game.image_url ? (
+                {(localImageMap[game.name] || game.image_url) ? (
                   <img
-                    src={game.image_url}
+                    src={localImageMap[game.name] || game.image_url!}
                     alt={game.name}
                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                     loading="lazy"
