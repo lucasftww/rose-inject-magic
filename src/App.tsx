@@ -39,7 +39,16 @@ const Auth = lazy(() => import("./pages/Auth"));
 // Admin panel — lazy-loaded INSIDE AdminGuard so the bundle never downloads for non-admins
 const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 
-const queryClient = new QueryClient({});
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,   // 5 min — avoid refetching fresh data
+      gcTime: 10 * 60 * 1000,     // 10 min garbage collection
+      retry: 1,                    // single retry on failure
+      refetchOnWindowFocus: false, // prevent refetch on tab switch
+    },
+  },
+});
 
 const LazyFallback = () => (
   <div className="min-h-screen flex items-center justify-center bg-background">
