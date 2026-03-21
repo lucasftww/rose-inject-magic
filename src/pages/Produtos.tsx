@@ -262,6 +262,7 @@ const GameSelectScreen = ({ onSelect, games, loading }: { onSelect: (gameId: str
             )}
           </div>
         );
+      })()}
     </div>
   );
 };
