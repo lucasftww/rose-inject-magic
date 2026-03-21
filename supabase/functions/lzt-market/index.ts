@@ -358,7 +358,7 @@ Deno.serve(async (req) => {
         "vp_min", "vp_max", "rp_min", "rp_max",
         "fa_min", "fa_max",
         "inv_min", "inv_max",
-        "knife", "nsb",
+        "knife",
         "amin", "amax",
         // LoL params
         "lol_level_min", "lol_level_max",
@@ -390,11 +390,6 @@ Deno.serve(async (req) => {
         if (!params.get("lol_smin") || Number(params.get("lol_smin")) < 3) {
           params.set("lol_smin", "3");
         }
-      }
-
-      for (const p of allowedParams) {
-        const val = url.searchParams.get(p);
-        if (val) params.set(p, val);
       }
 
       const arrayParams = [
