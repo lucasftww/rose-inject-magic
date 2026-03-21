@@ -457,7 +457,8 @@ Deno.serve(async (req) => {
       // LIST: accounts with filters
       const maxFetchPrice = lztConfig?.max_fetch_price || 500;
       const effectivePmax = Math.ceil(maxFetchPrice / activeMarkup);
-      const shouldAutoApplyConfiguredPmax = gameType !== "riot" && gameType !== "valorant";
+      // Apply pmax to ALL games including Valorant to prevent fetching expensive items that will be filtered anyway
+      const shouldAutoApplyConfiguredPmax = true;
 
       const params = new URLSearchParams();
       const allowedParams = [
