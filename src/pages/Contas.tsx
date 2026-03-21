@@ -972,6 +972,21 @@ const Contas = () => {
   }, []);
 
   const fetchMultiplePages = useCallback(async (controller: AbortController) => {
+    const cacheKey = debouncedParamsKey;
+    const cached = fetchCacheRef.current.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < 120000) {
+      setStreamedItems(cached.items);
+      setStreamingDone(true);
+      setStreamError(null);
+      setCurrentPage(1);
+      setLoadingMore(false);
+      setDisplayPage(1);
+      setFirstPageLoaded(true);
+      setTotalItems(cached.totalItems);
+      setHasNextPage(false);
+      return;
+    }
+
     setStreamedItems([]);
     setStreamingDone(false);
     setStreamError(null);
@@ -979,8 +994,6 @@ const Contas = () => {
     setLoadingMore(false);
     setDisplayPage(1);
     setFirstPageLoaded(false);
-
-    const maxPages = gameTab === "valorant" ? 3 : 3;
 
     try {
       // Fetch first page immediately
@@ -997,15 +1010,23 @@ const Contas = () => {
       setStreamedItems(firstPageItems);
 
       // Early exit if nothing to fetch
-      if (!shouldProbe && !hasMore) { setStreamingDone(true); return; }
-      if (firstPageItems.length === 0) { setStreamingDone(true); return; }
+      if (!shouldProbe && !hasMore) {
+        fetchCacheRef.current.set(cacheKey, { items: firstPageItems, totalItems: firstPageItems.length, timestamp: Date.now() });
+        setStreamingDone(true);
+        return;
+      }
+      if (firstPageItems.length === 0) {
+        fetchCacheRef.current.set(cacheKey, { items: [], totalItems: 0, timestamp: Date.now() });
+        setStreamingDone(true);
+        return;
+      }
 
       const seenIds = new Set(firstPageItems.map(i => i.item_id));
       let allItems = [...firstPageItems];
 
       // Fetch ALL remaining pages in parallel (max 2 more pages = 3 total)
       const remaining: number[] = [];
-      for (let p = 2; p <= maxPages; p++) remaining.push(p);
+      for (let p = 2; p <= MAX_PAGES; p++) remaining.push(p);
 
       if (remaining.length > 0) {
         const results = await Promise.all(
@@ -1029,6 +1050,7 @@ const Contas = () => {
       }
 
       if (!controller.signal.aborted) {
+        fetchCacheRef.current.set(cacheKey, { items: allItems, totalItems: allItems.length, timestamp: Date.now() });
         setStreamedItems([...allItems]);
         setTotalItems(allItems.length);
         setHasNextPage(false);
@@ -1041,7 +1063,7 @@ const Contas = () => {
         setStreamingDone(true);
       }
     }
-  }, [buildParams, fetchWithRetry, gameTab]);
+  }, [buildParams, debouncedParamsKey, fetchWithRetry, gameTab]);
 
   useEffect(() => {
     abortRef.current?.abort();
