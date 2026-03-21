@@ -25,7 +25,7 @@ const FaqSection = () => {
           variants={slideInLeft}
           className="text-center"
         >
-          <p className="text-sm font-medium uppercase tracking-[0.3em] text-success">{t("faq.subtitle")}</p>
+          <p className="text-xs sm:text-sm font-medium uppercase tracking-[0.3em] text-success">{t("faq.subtitle")}</p>
           <h2
             className="mt-2 sm:mt-3 text-2xl sm:text-5xl font-bold tracking-tight text-foreground md:text-7xl"
             style={{ fontFamily: "'Valorant', sans-serif" }}
@@ -35,7 +35,7 @@ const FaqSection = () => {
         </motion.div>
 
         <motion.div
-          className="mt-8 sm:mt-14 space-y-3 sm:space-y-4"
+          className="mt-6 sm:mt-14 space-y-2 sm:space-y-3"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-60px" }}
@@ -53,14 +53,14 @@ const FaqSection = () => {
 const FaqItem = ({ question, answer, index }: { question: string; answer: string; index: number }) => {
   const [open, setOpen] = useState(false);
   return (
-    <motion.div variants={fadeUp} custom={index} className="rounded-lg border border-border bg-card overflow-hidden transition-colors hover:border-success/30">
+    <motion.div variants={fadeUp} custom={index} className="rounded-2xl border border-border/50 bg-card overflow-hidden transition-all duration-300 hover:border-success/20">
       <button
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center justify-between px-6 py-5 text-left"
+        className="flex w-full items-center justify-between px-4 sm:px-6 py-4 sm:py-5 text-left"
       >
-        <span className="text-base font-semibold text-foreground pr-4">{question}</span>
+        <span className="text-xs sm:text-base font-semibold text-foreground pr-4">{question}</span>
         <svg
-          className={`h-5 w-5 shrink-0 text-success transition-transform duration-300 ${open ? "rotate-45" : ""}`}
+          className={`h-4 w-4 sm:h-5 sm:w-5 shrink-0 text-success transition-transform duration-300 ${open ? "rotate-45" : ""}`}
           xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
         >
           <path d="M12 5v14M5 12h14" />
@@ -70,7 +70,7 @@ const FaqItem = ({ question, answer, index }: { question: string; answer: string
         className="overflow-hidden transition-all duration-300"
         style={{ maxHeight: open ? "500px" : "0px", opacity: open ? 1 : 0 }}
       >
-        <p className="px-6 pb-5 text-sm leading-relaxed text-muted-foreground">{answer}</p>
+        <p className="px-4 sm:px-6 pb-4 sm:pb-5 text-[11px] sm:text-sm leading-relaxed text-muted-foreground">{answer}</p>
       </div>
     </motion.div>
   );

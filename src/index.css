@@ -88,6 +88,10 @@
     }
   }
 
+  .animate-\[text-shine_4s_ease-in-out_infinite\] {
+    animation: text-shine 4s ease-in-out infinite;
+  }
+
   .btn-shine {
     position: relative;
     overflow: hidden;
