@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
-import { Search, SlidersHorizontal, DollarSign, ArrowLeft, Loader2, Package, Tag, ArrowUpDown, UserCheck, X, ArrowRight, Star, Gamepad2 } from "lucide-react";
+import { Search, SlidersHorizontal, DollarSign, ArrowLeft, Loader2, Package, Tag, ArrowUpDown, UserCheck, X, ArrowRight, Star, Gamepad2, Gift } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useReseller } from "@/hooks/useReseller";
@@ -137,93 +137,132 @@ const GameSelectScreen = ({ onSelect, games, loading }: { onSelect: (gameId: str
         <div className="flex items-center justify-center py-32"><Loader2 className="h-8 w-8 animate-spin text-success" /></div>
       ) : games.length === 0 ? (
         <div className="py-32 text-center text-muted-foreground">Nenhum jogo disponível no momento.</div>
-      ) : (
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8 sm:py-14">
-          <motion.div
-            className="grid grid-cols-2 gap-3 sm:gap-5 sm:grid-cols-3 lg:grid-cols-4"
-            initial="hidden"
-            animate="visible"
-            variants={staggerContainer}
-          >
-            {games.map((game, idx) => {
-              const descriptions: Record<string, string> = {
-                'Valorant': 'Cheats premium para Valorant — domine cada round',
-                'Counter-Strike 2': 'Hacks indetectados para CS2',
-                'Spoofers': 'Limpe seu HWID e volte a jogar',
-                'Fortnite': 'Softwares indetectáveis para Fortnite',
-                'Arena Breakout Infinite': 'Cheats para Arena Breakout',
-                'ARC Raiders': 'Softwares premium para ARC Raiders',
-                'Call of Duty': 'Cheats para Call of Duty — Warzone & MP',
-                'PUBG': 'Softwares para PUBG — domine o battleground',
-                'Rust': 'Hacks indetectados para Rust',
-                'DayZ': 'Sobreviva com vantagem no DayZ',
-                'Bloodstrike': 'Cheats premium para Bloodstrike',
-                'Apex Legends': 'Cheats premium para Apex Legends',
-                'Marvel Rivals': 'Domine as batalhas em Marvel Rivals',
-                'Farlight 84': 'Softwares para Farlight 84',
-                'Bodycam': 'Cheats para Bodycam FPS',
-                'Bloodhunt': 'Domine a caçada em Bloodhunt',
-                'Warface': 'Hacks premium para Warface',
-                'Dead by Daylight': 'Cheats para Dead by Daylight',
-                'FiveM': 'Mods e menus para FiveM / GTA RP',
-                'Squad': 'Softwares táticos para Squad',
-                'Overwatch 2': 'Cheats para Overwatch 2',
-                'Hell Let Loose': 'Domine o campo de batalha WW2',
-              };
-              const desc = descriptions[game.name] || `Softwares para ${game.name}`;
+      ) : (() => {
+        const descriptions: Record<string, string> = {
+          'Valorant': 'Cheats premium para Valorant — domine cada round',
+          'Counter-Strike 2': 'Hacks indetectados para CS2',
+          'Spoofers': 'Limpe seu HWID e volte a jogar',
+          'Fortnite': 'Softwares indetectáveis para Fortnite',
+          'Arena Breakout Infinite': 'Cheats para Arena Breakout',
+          'ARC Raiders': 'Softwares premium para ARC Raiders',
+          'Call of Duty': 'Cheats para Call of Duty — Warzone & MP',
+          'PUBG': 'Softwares para PUBG — domine o battleground',
+          'Rust': 'Hacks indetectados para Rust',
+          'DayZ': 'Sobreviva com vantagem no DayZ',
+          'Bloodstrike': 'Cheats premium para Bloodstrike',
+          'Apex Legends': 'Cheats premium para Apex Legends',
+          'Marvel Rivals': 'Domine as batalhas em Marvel Rivals',
+          'Farlight 84': 'Softwares para Farlight 84',
+          'Bodycam': 'Cheats gratuitos para Bodycam FPS',
+          'Bloodhunt': 'Domine a caçada em Bloodhunt',
+          'Warface': 'Hacks premium para Warface',
+          'Dead by Daylight': 'Cheats para Dead by Daylight',
+          'FiveM': 'Mods e menus para FiveM / GTA RP',
+          'Squad': 'Softwares táticos para Squad',
+          'Overwatch 2': 'Cheats para Overwatch 2',
+          'Hell Let Loose': 'Domine o campo de batalha WW2',
+        };
 
-              return (
-                <motion.button
-                  key={game.id}
-                  variants={fadeUp}
-                  custom={idx}
-                  onClick={() => onSelect(game.id)}
-                  className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/40 bg-card text-left transition-all duration-300 hover:border-success/50 hover:shadow-[0_0_30px_hsl(197,100%,50%,0.15)] focus:outline-none active:scale-[0.97]"
-                >
-                  {/* Image area */}
-                  <div className="relative aspect-[4/3] overflow-hidden">
-                    {game.image_url ? (
-                      <img
-                        src={game.image_url}
-                        alt={game.name}
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-secondary">
-                        <Gamepad2 className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground/15" />
-                      </div>
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+        const freeGameNames = ['Bodycam', 'Bloodhunt', 'Counter-Strike 2', 'Warface'];
+        const premiumGames = games.filter(g => !freeGameNames.includes(g.name));
+        const freeGames = games.filter(g => freeGameNames.includes(g.name));
 
-                    {/* Product count badge */}
-                    {game.product_count > 0 && (
-                      <div className="absolute top-2.5 right-2.5 flex items-center gap-1 rounded-full bg-success px-2.5 py-1 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-success-foreground shadow-lg">
-                        <span className="h-1.5 w-1.5 rounded-full bg-success-foreground animate-pulse" />
-                        {game.product_count} {game.product_count === 1 ? "software" : "softwares"}
-                      </div>
-                    )}
+        const renderCard = (game: GameFromDB, idx: number, isFree: boolean) => {
+          const desc = descriptions[game.name] || `Softwares para ${game.name}`;
+          return (
+            <motion.button
+              key={game.id}
+              variants={fadeUp}
+              custom={idx}
+              onClick={() => onSelect(game.id)}
+              className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/40 bg-card text-left transition-all duration-300 hover:border-success/50 hover:shadow-[0_0_30px_hsl(197,100%,50%,0.15)] focus:outline-none active:scale-[0.97]"
+            >
+              <div className="relative aspect-[4/5] overflow-hidden">
+                {game.image_url ? (
+                  <img
+                    src={game.image_url}
+                    alt={game.name}
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-secondary">
+                    <Gamepad2 className="h-12 w-12 text-muted-foreground/15" />
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
 
-                    {/* Game name overlay */}
-                    <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4">
-                      <h3 className="text-base sm:text-lg lg:text-xl font-bold tracking-tight text-foreground leading-tight drop-shadow-lg" style={{ fontFamily: "'Valorant', sans-serif" }}>
-                        {game.name}
-                      </h3>
-                      <p className="mt-0.5 text-[10px] sm:text-xs text-muted-foreground/80 line-clamp-1">{desc}</p>
+                {/* Badges */}
+                <div className="absolute top-3 right-3 flex flex-col gap-1.5 items-end">
+                  {isFree && (
+                    <div className="flex items-center gap-1 rounded-full bg-[hsl(142,76%,36%)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-lg">
+                      <Gift className="h-3 w-3" />
+                      FREE
                     </div>
-                  </div>
+                  )}
+                  {game.product_count > 0 && (
+                    <div className="flex items-center gap-1 rounded-full bg-success px-2.5 py-1 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-success-foreground shadow-lg">
+                      <span className="h-1.5 w-1.5 rounded-full bg-success-foreground animate-pulse" />
+                      {game.product_count} {game.product_count === 1 ? "software" : "softwares"}
+                    </div>
+                  )}
+                </div>
 
-                  {/* CTA bar */}
-                  <div className="flex items-center justify-center gap-1.5 border-t border-border/30 bg-card/80 px-3 py-2.5 sm:py-3 text-success text-[10px] sm:text-xs font-bold uppercase tracking-widest transition-all group-hover:bg-success/10 group-hover:gap-2.5">
-                    <span>Ver softwares {game.name.split(' ')[0]}</span>
-                    <ArrowRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 transition-transform group-hover:translate-x-1" />
+                {/* Game name overlay */}
+                <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
+                  <h3 className="text-lg sm:text-xl lg:text-2xl font-bold tracking-tight text-foreground leading-tight drop-shadow-lg" style={{ fontFamily: "'Valorant', sans-serif" }}>
+                    {game.name}
+                  </h3>
+                  <p className="mt-1 text-[11px] sm:text-xs text-muted-foreground/80 line-clamp-1">{desc}</p>
+                </div>
+              </div>
+
+              {/* CTA bar */}
+              <div className="flex items-center justify-center gap-1.5 border-t border-border/30 bg-card/80 px-4 py-3 sm:py-3.5 text-success text-[10px] sm:text-xs font-bold uppercase tracking-widest transition-all group-hover:bg-success/10 group-hover:gap-2.5">
+                <span>Ver softwares {game.name.split(' ')[0]}</span>
+                <ArrowRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 transition-transform group-hover:translate-x-1" />
+              </div>
+            </motion.button>
+          );
+        };
+
+        return (
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8 sm:py-12 space-y-12">
+            {/* Premium games */}
+            <div>
+              <motion.div
+                className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3"
+                initial="hidden"
+                animate="visible"
+                variants={staggerContainer}
+              >
+                {premiumGames.map((game, idx) => renderCard(game, idx, false))}
+              </motion.div>
+            </div>
+
+            {/* Free games section */}
+            {freeGames.length > 0 && (
+              <div>
+                <div className="mb-6 flex items-center gap-3">
+                  <div className="flex items-center gap-2 rounded-full border border-[hsl(142,76%,36%)]/30 bg-[hsl(142,76%,36%)]/10 px-4 py-1.5">
+                    <Gift className="h-4 w-4 text-[hsl(142,76%,36%)]" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-[hsl(142,76%,36%)]">Softwares Gratuitos</span>
                   </div>
-                </motion.button>
-              );
-            })}
-          </motion.div>
-        </div>
-      )}
+                  <div className="h-px flex-1 bg-border/40" />
+                </div>
+                <motion.div
+                  className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3"
+                  initial="hidden"
+                  animate="visible"
+                  variants={staggerContainer}
+                >
+                  {freeGames.map((game, idx) => renderCard(game, idx, true))}
+                </motion.div>
+              </div>
+            )}
+          </div>
+        );
+      })()}
     </div>
   );
 };
