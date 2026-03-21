@@ -1,0 +1,2 @@
+INSERT INTO products (name, game_id, active, sort_order, description, status, status_label)
+VALUES ('Call of Duty Cheat', '4acfb98b-5ab4-4948-b9a9-11a6ac96b7fd', true, 0, 'Cheat premium para Call of Duty com Aimbot, ESP e mais.', 'active', 'Ativo');
