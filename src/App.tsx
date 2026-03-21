@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { CartProvider } from "@/hooks/useCart";
-import { lazy, Suspense, forwardRef } from "react";
+import { lazy, Suspense } from "react";
 import AdminGuard from "@/components/AdminGuard";
 
 // Eager-load critical routes
@@ -47,7 +47,7 @@ const LazyFallback = () => (
   </div>
 );
 
-const App = forwardRef<HTMLDivElement>((_props, _ref) => (
+const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <CartProvider>
@@ -92,8 +92,6 @@ const App = forwardRef<HTMLDivElement>((_props, _ref) => (
       </CartProvider>
     </AuthProvider>
   </QueryClientProvider>
-));
-
-App.displayName = "App";
+);
 
 export default App;
