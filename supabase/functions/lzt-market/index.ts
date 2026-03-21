@@ -156,39 +156,10 @@ function getFortniteFairPriceCeiling(item: LztItem) {
   return Math.max(Math.round(estimatedValue), 60);
 }
 
-function shouldKeepItem(item: LztItem, gameType: string, displayedPriceBrl: number) {
+function shouldKeepItem(item: LztItem, gameType: string, _displayedPriceBrl: number) {
+  // Only filter out items that are already sold or can't be bought
   if (item.buyer) return false;
   if (item.canBuyItem === false) return false;
-
-  const isValorant = gameType === "riot" || gameType === "valorant";
-
-  // Valorant: only skin count + max price cap
-  if (isValorant) {
-    const skinCount = Number(item.riot_valorant_skin_count || 0);
-    if (skinCount < VAL_MIN_SKINS) return false;
-    if (displayedPriceBrl > 1500) return false;
-    return true;
-  }
-
-  if (gameType === "lol") {
-    const skinCount = Number(item.riot_lol_skin_count || 0);
-    if (skinCount < LOL_MIN_SKINS) return false;
-    if (displayedPriceBrl > 2000) return false;
-    return true;
-  }
-
-  if (gameType === "fortnite") {
-    const ftSkins = Number(item.fortnite_skin_count || item.fortnite_outfit_count || 0);
-    if (ftSkins < FT_MIN_SKINS) return false;
-    if (displayedPriceBrl > 1500) return false;
-    return true;
-  }
-
-  if (gameType === "minecraft") {
-    if (displayedPriceBrl > 500) return false;
-    return true;
-  }
-
   return true;
 }
 
