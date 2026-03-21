@@ -155,7 +155,7 @@ function getFortniteFairPriceCeiling(item: LztItem) {
   return Math.max(Math.round(estimatedValue), 60);
 }
 
-const MIN_INACTIVE_DAYS = 30;
+const MIN_INACTIVE_DAYS = 14;
 
 function shouldKeepItem(item: LztItem, gameType: string, displayedPriceBrl: number) {
   if (item.buyer) return false;
@@ -172,12 +172,12 @@ function shouldKeepItem(item: LztItem, gameType: string, displayedPriceBrl: numb
   if (lastActivity > 0 && (nowSec - lastActivity) < minInactiveSec) return false;
 
   // Valorant: enforce inactivity + fair-price ceiling + max display price
-  if (isValorant) {
+   if (isValorant) {
     const skinCount = Number(item.riot_valorant_skin_count || 0);
     if (skinCount < VAL_MIN_SKINS) return false;
     const fairCeiling = getValorantFairPriceCeiling(item) * PRICE_BUFFER;
     if (displayedPriceBrl > fairCeiling) return false;
-    if (displayedPriceBrl > 900) return false;
+    if (displayedPriceBrl > 1200) return false;
     return true;
   }
 
@@ -552,6 +552,10 @@ Deno.serve(async (req) => {
         }
         apiUrl = `https://api.lzt.market/minecraft?${params.toString()}`;
       } else {
+        // Valorant/Riot: ensure minimum skins filter is applied API-side
+        if (!params.has("valorant_smin")) {
+          params.set("valorant_smin", String(VAL_MIN_SKINS));
+        }
         apiUrl = `https://api.lzt.market/riot?${params.toString()}`;
       }
     }
