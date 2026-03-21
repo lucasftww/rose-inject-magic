@@ -886,17 +886,19 @@ const Contas = () => {
   const fetchCacheRef = useRef(new Map<string, { items: LztItem[]; hasNextPage: boolean; currentPage: number; timestamp: number }>());
   const MAX_PAGES = 8;
 
-  // ─── Asset maps ───
+  // ─── Asset maps (only load when needed) ───
   const { data: skinsMap = new Map() } = useQuery({
     queryKey: ["all-valorant-skins"],
     queryFn: fetchAllValorantSkins,
     staleTime: 1000 * 60 * 60,
+    enabled: gameTab === "valorant",
   });
 
   const { data: champKeyMap = new Map<number, string>() } = useQuery({
     queryKey: ["lol-champ-key-map"],
     queryFn: fetchLolChampKeyMap,
     staleTime: 1000 * 60 * 60 * 6,
+    enabled: gameTab === "lol",
   });
 
   const { data: fnSkinsDb = new Map<string, { name: string; image: string }>() } = useQuery({
