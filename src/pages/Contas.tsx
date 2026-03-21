@@ -162,9 +162,9 @@ const weapons = [
 ];
 
 const sortOptions = [
-  { label: "Mais Recentes", value: "pdate_desc" },
-  { label: "Menor Preço", value: "price_asc" },
-  { label: "Maior Preço", value: "price_desc" },
+  { label: "Mais Recentes", value: "pdate_to_down" },
+  { label: "Menor Preço", value: "price_to_up" },
+  { label: "Maior Preço", value: "price_to_down" },
 ] as const;
 
 const FN_PURPLE = "hsl(265,80%,65%)";
@@ -824,7 +824,7 @@ const Contas = () => {
   // ─── Shared filters ───
   const [priceMin, setPriceMin] = useState("");
   const [priceMax, setPriceMax] = useState("");
-  const [sortBy, setSortBy] = useState<string>("pdate_desc");
+  const [sortBy, setSortBy] = useState<string>("pdate_to_down");
   const [searchQuery, setSearchQuery] = useState("");
   const [lvlMin, setLvlMin] = useState("");
   const [lvlMax, setLvlMax] = useState("");
@@ -888,7 +888,7 @@ const Contas = () => {
   const buildParams = useCallback((pageNum: number = currentPage): Record<string, string | string[]> => {
     const params: Record<string, string | string[]> = {};
     params.page = String(pageNum);
-    params.order_by = "pdate_desc";
+    params.order_by = "pdate_to_down";
     if (searchQuery) params.title = searchQuery;
 
     if (gameTab === "valorant") {
@@ -1153,14 +1153,14 @@ const Contas = () => {
     }
 
     // If user explicitly chose a price sort, use BRL display price for accurate ordering
-    if (sortBy === "price_asc") {
+    if (sortBy === "price_to_up") {
       return filtered.sort((a, b) => getBrlPrice(a) - getBrlPrice(b));
     }
-    if (sortBy === "price_desc") {
+    if (sortBy === "price_to_down") {
       return filtered.sort((a, b) => getBrlPrice(b) - getBrlPrice(a));
     }
 
-    // Default sort (pdate_desc): apply game-specific "best quality" sorting
+    // Default sort (pdate_to_down): apply game-specific "best quality" sorting
     if (gameTab === "lol") {
       return filtered.sort((a, b) => {
         const scoreA = (a.riot_lol_level ?? 0) > 0 && (a.riot_lol_skin_count ?? 0) > 0 ? 2
@@ -1237,7 +1237,7 @@ const Contas = () => {
     if (tab !== "valorant") params.game = tab;
     setSearchParams(params);
     clearFilters();
-    setSortBy("pdate_desc");
+    setSortBy("pdate_to_down");
   };
 
   const isMinecraft = gameTab === "minecraft";
