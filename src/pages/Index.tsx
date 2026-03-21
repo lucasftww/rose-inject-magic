@@ -86,7 +86,7 @@ const ContasSection = () => {
               key={game.tab}
               variants={fadeUp}
               custom={idx}
-              className="group relative cursor-pointer overflow-hidden rounded-2xl border border-border/40 bg-card transition-all duration-300 hover:border-success/60 hover:shadow-[0_0_40px_hsl(197,100%,50%,0.15)]"
+              className="group relative cursor-pointer overflow-hidden rounded-2xl border border-border/40 bg-card transition-all duration-300 hover:border-foreground/20 hover:shadow-[0_4px_24px_rgba(0,0,0,0.4)]"
               onClick={() => navigate(`/contas?game=${game.tab}`)}
             >
               {/* Image */}

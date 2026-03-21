@@ -411,15 +411,21 @@ const Produtos = () => {
   // Fetch products when game is selected
   useEffect(() => {
     if (!selectedGame) { setProducts([]); return; }
+    setLoadingProducts(true);
     const fetchProducts = async () => {
-      const { data } = await supabase
-        .from("products")
-        .select("id, name, description, image_url, active, sort_order, game_id, created_at, status, status_label, status_updated_at, features_text, robot_game_id, product_plans(*)")
-        .eq("game_id", selectedGame)
-        .eq("active", true)
-        .order("sort_order", { ascending: true });
-      if (data) setProducts(data as any);
-      setLoadingProducts(false);
+      try {
+        const { data } = await supabase
+          .from("products")
+          .select("id, name, description, image_url, active, sort_order, game_id, created_at, status, status_label, status_updated_at, features_text, robot_game_id, product_plans(*)")
+          .eq("game_id", selectedGame)
+          .eq("active", true)
+          .order("sort_order", { ascending: true });
+        if (data) setProducts(data as any);
+      } catch (err) {
+        console.error("Failed to fetch products:", err);
+      } finally {
+        setLoadingProducts(false);
+      }
     };
     fetchProducts();
   }, [selectedGame]);
@@ -627,8 +633,8 @@ const Produtos = () => {
         <div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:items-end md:justify-between">
           <div className="flex items-center gap-3 sm:gap-4">
             {currentGame && (
-              currentGame.image_url
-                ? <img src={currentGame.image_url} alt={currentGame.name} className="h-10 w-10 sm:h-14 sm:w-14 rounded-lg border border-border object-cover" />
+              (localImageMap[currentGame.name] || currentGame.image_url)
+                ? <img src={localImageMap[currentGame.name] || currentGame.image_url!} alt={currentGame.name} className="h-10 w-10 sm:h-14 sm:w-14 rounded-lg border border-border object-cover" />
                 : <div className="flex h-10 w-10 sm:h-14 sm:w-14 items-center justify-center rounded-lg border border-border bg-secondary text-lg font-bold text-muted-foreground">{currentGame.name[0]}</div>
             )}
             <div>
