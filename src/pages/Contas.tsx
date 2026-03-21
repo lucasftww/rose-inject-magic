@@ -885,6 +885,7 @@ const Contas = () => {
   const abortRef = useRef<AbortController | null>(null);
   const fetchCacheRef = useRef(new Map<string, { items: LztItem[]; hasNextPage: boolean; currentPage: number; timestamp: number }>());
   const MAX_PAGES = 8;
+  const [firstPageLoaded, setFirstPageLoaded] = useState(false);
 
   // ─── Asset maps (only load when needed) ───
   const { data: skinsMap = new Map() } = useQuery({
@@ -976,13 +977,24 @@ const Contas = () => {
   }, [currentPage, searchQuery, onlyKnife, selectedRank, selectedWeapon, invMin, invMax, lvlMin, lvlMax, gameTab, lolRank, lolChampMin, lolSkinsMin, fnVbMin, fnSkinsMin, mcJava, mcBedrock, mcHypixelLvlMin, mcCapesMin, mcNoBan, lolRegion, valRegion, sortBy, priceMin, priceMax]);
 
   const paramsKey = JSON.stringify(buildParams(1)) + gameTab;
+  // Track which params are "text inputs" that need debouncing vs instant changes
+  const textParamsKey = `${searchQuery}|${priceMin}|${priceMax}|${lvlMin}|${lvlMax}|${invMin}|${invMax}|${lolChampMin}|${lolSkinsMin}|${fnVbMin}|${fnSkinsMin}|${mcHypixelLvlMin}|${mcCapesMin}`;
+  const nonTextParamsKey = paramsKey.replace(textParamsKey, "");
   const [debouncedParamsKey, setDebouncedParamsKey] = useState(paramsKey);
+  const prevNonTextRef = useRef(nonTextParamsKey);
   useEffect(() => {
+    // If non-text params changed (tab switch, rank click, etc.), fire immediately
+    if (prevNonTextRef.current !== nonTextParamsKey) {
+      prevNonTextRef.current = nonTextParamsKey;
+      setDebouncedParamsKey(paramsKey);
+      return;
+    }
+    // Only debounce text input changes (search, price, level fields)
     const handler = setTimeout(() => {
       setDebouncedParamsKey(paramsKey);
-    }, 250);
+    }, 150);
     return () => clearTimeout(handler);
-  }, [paramsKey]);
+  }, [paramsKey, nonTextParamsKey]);
 
   const fetchWithRetry = useCallback(async (params: Record<string, string | string[]>, controller: AbortController, retries = 3): Promise<any> => {
     for (let attempt = 0; attempt <= retries; attempt++) {
@@ -1057,13 +1069,92 @@ const Contas = () => {
     }
   }, [buildParams, debouncedParamsKey, fetchWithRetry]);
 
+  // Prefetch adjacent game tabs in background for instant switching
+  const prefetchRef = useRef(new Set<string>());
+  const prefetchAdjacentTabs = useCallback(async () => {
+    const allTabs: GameTab[] = ["valorant", "lol", "fortnite", "minecraft"];
+    const otherTabs = allTabs.filter(t => t !== gameTab);
+    const projectUrl = import.meta.env.VITE_SUPABASE_URL;
+    const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+    for (const tab of otherTabs) {
+      if (prefetchRef.current.has(tab)) continue;
+      prefetchRef.current.add(tab);
+
+      const gameTypeMap: Record<GameTab, string> = { valorant: "riot", lol: "lol", fortnite: "fortnite", minecraft: "minecraft" };
+      const qp = new URLSearchParams();
+      qp.set("page", "1");
+      qp.set("order_by", "pdate_to_down");
+      qp.set("game_type", gameTypeMap[tab]);
+      if (tab === "fortnite") qp.set("smin", "3");
+      if (tab === "valorant") qp.append("country[]", "Bra");
+      if (tab === "lol") qp.append("lol_region[]", "BR1");
+
+      try {
+        const res = await fetch(`${projectUrl}/functions/v1/lzt-market?${qp.toString()}`, {
+          headers: { "Content-Type": "application/json", apikey: anonKey },
+        });
+        if (!res.ok) continue;
+        const data = await res.json();
+        const items: LztItem[] = data?.items ?? [];
+        const hasMore = data?.hasNextPage ?? items.length >= 15;
+        // Store using a prefetch-specific key
+        fetchCacheRef.current.set(`__prefetch__${tab}`, { items, hasNextPage: hasMore, currentPage: 1, timestamp: Date.now() });
+      } catch { /* silent */ }
+    }
+  }, [gameTab]);
+
+  // Enhanced fetchMultiplePages: check prefetch cache on tab switch
+  const fetchMultiplePagesWithPrefetch = useCallback(async (controller: AbortController) => {
+    // Check if we have a prefetched result for this game tab
+    const prefetchKey = `__prefetch__${gameTab}`;
+    const prefetched = fetchCacheRef.current.get(prefetchKey);
+    const cacheKey = debouncedParamsKey;
+    const cached = fetchCacheRef.current.get(cacheKey);
+
+    // Use prefetch if no specific cache exists and filters are at defaults
+    if (!cached && prefetched && Date.now() - prefetched.timestamp < 300000) {
+      setStreamedItems(prefetched.items);
+      setStreamingDone(true);
+      setStreamError(null);
+      setCurrentPage(prefetched.currentPage);
+      setLoadingMore(false);
+      setDisplayPage(1);
+      setFirstPageLoaded(true);
+      setHasNextPage(prefetched.hasNextPage);
+      // Still fetch fresh data in background
+      try {
+        const data = await fetchWithRetry(buildParams(1), controller);
+        if (controller.signal.aborted) return;
+        const items: LztItem[] = data?.items ?? [];
+        const hasMore = data?.hasNextPage ?? items.length >= 15;
+        setStreamedItems(items);
+        setHasNextPage(hasMore);
+        setCurrentPage(1);
+        fetchCacheRef.current.set(cacheKey, { items, hasNextPage: hasMore, currentPage: 1, timestamp: Date.now() });
+      } catch { /* silent — user already sees prefetched data */ }
+      return;
+    }
+
+    // Fallback to original logic
+    await fetchMultiplePages(controller);
+  }, [buildParams, debouncedParamsKey, fetchMultiplePages, fetchWithRetry, gameTab]);
+
   useEffect(() => {
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
-    fetchMultiplePages(controller);
+    fetchMultiplePagesWithPrefetch(controller);
     return () => controller.abort();
   }, [debouncedParamsKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Trigger prefetch after initial load completes
+  useEffect(() => {
+    if (firstPageLoaded && streamedItems.length > 0) {
+      const timer = setTimeout(prefetchAdjacentTabs, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [firstPageLoaded, gameTab]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadMorePages = async () => {
     if (loadingMore || !hasNextPage) return;
@@ -1101,7 +1192,6 @@ const Contas = () => {
 
   const ITEMS_PER_PAGE = 24;
   const [displayPage, setDisplayPage] = useState(1);
-  const [firstPageLoaded, setFirstPageLoaded] = useState(false);
 
   const isLoading = !firstPageLoaded && !streamingDone && !streamError;
 
