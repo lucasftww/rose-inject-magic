@@ -1157,7 +1157,6 @@ const Contas = () => {
 
   const ITEMS_PER_PAGE = 24;
   const [displayPage, setDisplayPage] = useState(1);
-  const [firstPageLoaded, setFirstPageLoaded] = useState(false);
 
   const isLoading = !firstPageLoaded && !streamingDone && !streamError;
 
