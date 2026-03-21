@@ -884,6 +884,20 @@ const Contas = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const fetchCacheRef = useRef(new Map<string, { items: LztItem[]; hasNextPage: boolean; currentPage: number; timestamp: number }>());
+  const MAX_CACHE_ENTRIES = 20;
+  const cacheSet = useCallback((key: string, value: { items: LztItem[]; hasNextPage: boolean; currentPage: number; timestamp: number }) => {
+    const cache = fetchCacheRef.current;
+    cache.set(key, value);
+    // Evict oldest entries when cache grows too large
+    if (cache.size > MAX_CACHE_ENTRIES) {
+      let oldestKey = '';
+      let oldestTs = Infinity;
+      for (const [k, v] of cache) {
+        if (v.timestamp < oldestTs) { oldestTs = v.timestamp; oldestKey = k; }
+      }
+      if (oldestKey) cache.delete(oldestKey);
+    }
+  }, []);
   const MAX_PAGES = 8;
   const [firstPageLoaded, setFirstPageLoaded] = useState(false);
 
@@ -1054,7 +1068,7 @@ const Contas = () => {
       setStreamingDone(true);
 
       // Cache result
-      fetchCacheRef.current.set(cacheKey, {
+      cacheSet(cacheKey, {
         items: firstPageItems,
         hasNextPage: hasMore,
         currentPage: 1,
@@ -1067,7 +1081,7 @@ const Contas = () => {
         setStreamingDone(true);
       }
     }
-  }, [buildParams, debouncedParamsKey, fetchWithRetry]);
+  }, [buildParams, debouncedParamsKey, fetchWithRetry, cacheSet]);
 
   // Prefetch adjacent game tabs in background for instant switching
   const prefetchRef = useRef(new Set<string>());
@@ -1099,10 +1113,10 @@ const Contas = () => {
         const items: LztItem[] = data?.items ?? [];
         const hasMore = data?.hasNextPage ?? items.length >= 15;
         // Store using a prefetch-specific key
-        fetchCacheRef.current.set(`__prefetch__${tab}`, { items, hasNextPage: hasMore, currentPage: 1, timestamp: Date.now() });
+        cacheSet(`__prefetch__${tab}`, { items, hasNextPage: hasMore, currentPage: 1, timestamp: Date.now() });
       } catch { /* silent */ }
     }
-  }, [gameTab]);
+  }, [gameTab, cacheSet]);
 
   // Enhanced fetchMultiplePages: check prefetch cache on tab switch
   const fetchMultiplePagesWithPrefetch = useCallback(async (controller: AbortController) => {
@@ -1131,7 +1145,7 @@ const Contas = () => {
         setStreamedItems(items);
         setHasNextPage(hasMore);
         setCurrentPage(1);
-        fetchCacheRef.current.set(cacheKey, { items, hasNextPage: hasMore, currentPage: 1, timestamp: Date.now() });
+        cacheSet(cacheKey, { items, hasNextPage: hasMore, currentPage: 1, timestamp: Date.now() });
       } catch { /* silent — user already sees prefetched data */ }
       return;
     }
@@ -1175,7 +1189,7 @@ const Contas = () => {
         const existingIds = new Set(prev.map(i => i.item_id));
         const newItems = pageItems.filter(i => !existingIds.has(i.item_id));
         const merged = [...prev, ...newItems];
-        fetchCacheRef.current.set(cacheKey, {
+        cacheSet(cacheKey, {
           items: merged,
           hasNextPage: nextHasPage,
           currentPage: nextPageNum,
