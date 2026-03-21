@@ -1,12 +1,10 @@
-import { useMemo, forwardRef } from "react";
+import { useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
-import ValorantImage from "@/components/ValorantImage";
-import { Star, ArrowRight, Package, Loader2, Crosshair, Globe } from "lucide-react";
+import { Star, ArrowRight, Package, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useLztMarkup } from "@/hooks/useLztMarkup";
 import bannerInject from "@/assets/banner-inject.webp";
 import { useTranslation } from "react-i18next";
 
