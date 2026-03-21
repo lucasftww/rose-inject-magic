@@ -862,7 +862,7 @@ const Contas = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
-  const MAX_PAGES = gameTab === "valorant" ? 8 : 5;
+  const MAX_PAGES = gameTab === "valorant" ? 5 : 4;
 
   // ─── Asset maps ───
   const { data: skinsMap = new Map() } = useQuery({
@@ -979,7 +979,7 @@ const Contas = () => {
     setDisplayPage(1);
     setFirstPageLoaded(false);
 
-    const maxPages = gameTab === "valorant" ? 8 : 5;
+    const maxPages = gameTab === "valorant" ? 5 : 4;
 
     try {
       // Fetch first page immediately
@@ -1002,12 +1002,11 @@ const Contas = () => {
       const seenIds = new Set(firstPageItems.map(i => i.item_id));
       let allItems = [...firstPageItems];
 
-      // Fetch remaining pages in batches of 2-3 for balanced speed + rate-limit safety
-      // Batch 1: pages 2-4, Batch 2: pages 5-8 (Valorant only)
+      // Fetch remaining pages in batches of 2 for balanced speed + rate-limit safety
       const batches: number[][] = [];
       const remaining: number[] = [];
       for (let p = 2; p <= maxPages; p++) remaining.push(p);
-      while (remaining.length > 0) batches.push(remaining.splice(0, 4));
+      while (remaining.length > 0) batches.push(remaining.splice(0, 2));
 
       let stopProbing = false;
 
