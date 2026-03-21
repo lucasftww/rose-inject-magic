@@ -552,6 +552,10 @@ Deno.serve(async (req) => {
         }
         apiUrl = `https://api.lzt.market/minecraft?${params.toString()}`;
       } else {
+        // Valorant/Riot: ensure minimum skins filter is applied API-side
+        if (!params.has("valorant_smin")) {
+          params.set("valorant_smin", String(VAL_MIN_SKINS));
+        }
         apiUrl = `https://api.lzt.market/riot?${params.toString()}`;
       }
     }
