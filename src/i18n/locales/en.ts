@@ -58,8 +58,8 @@ const en = {
   },
 
   accounts: {
-    subtitle: "Account Selection",
-    title: "VALORANT ACCOUNTS",
+    subtitle: "Marketplace",
+    title: "PREMIUM ACCOUNTS",
     empty: "No accounts available at the moment.",
     fullAccess: "Full Access · Auto Delivery",
     viewAccount: "View account",

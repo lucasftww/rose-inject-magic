@@ -58,8 +58,8 @@ const es = {
   },
 
   accounts: {
-    subtitle: "Selección de Cuentas",
-    title: "CUENTAS VALORANT",
+    subtitle: "Marketplace",
+    title: "CUENTAS PREMIUM",
     empty: "No hay cuentas disponibles en este momento.",
     fullAccess: "Acceso Completo · Entrega Automática",
     viewAccount: "Ver cuenta",
