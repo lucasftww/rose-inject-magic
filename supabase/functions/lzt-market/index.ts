@@ -71,6 +71,13 @@ function getContentFloorBrl(item: LztItem, gameType?: string) {
     const level = Math.min(Number(item.riot_lol_level || 0), 350);
     return skins * 0.5 + champs * 0.15 + level * 0.1;
   }
+  if (gameType === "minecraft") {
+    const capes = Number(item.minecraft_capes_count || 0);
+    const level = Math.min(Number(item.minecraft_hypixel_level || 0), 300);
+    const hasJava = Number(item.minecraft_java || 0);
+    const hasBedrock = Number(item.minecraft_bedrock || 0);
+    return capes * 2 + level * 0.1 + hasJava * 3 + hasBedrock * 3;
+  }
   // Valorant
   const skins = Number(item.riot_valorant_skin_count || 0);
   const knives = Number(item.riot_valorant_knife || item.riot_valorant_knife_count || 0);
@@ -106,6 +113,21 @@ function getContentCeilingBrl(item: LztItem, gameType?: string) {
     else if (rank.includes("GOLD")) ceiling += 15;
     return Math.max(ceiling, MIN_PRICE_BRL);
   }
+  if (gameType === "minecraft") {
+    const capes = Number(item.minecraft_capes_count || 0);
+    const level = Math.min(Number(item.minecraft_hypixel_level || 0), 300);
+    const hasJava = Number(item.minecraft_java || 0);
+    const hasBedrock = Number(item.minecraft_bedrock || 0);
+    const hasDungeons = Number(item.minecraft_dungeons || 0);
+    const hasLegends = Number(item.minecraft_legends || 0);
+    let ceiling = capes * 15 + level * 0.5 + hasJava * 20 + hasBedrock * 15 + hasDungeons * 10 + hasLegends * 10;
+    const rankStr = String(item.minecraft_hypixel_rank || "").toUpperCase();
+    if (rankStr.includes("MVP+")) ceiling += 40;
+    else if (rankStr.includes("MVP")) ceiling += 25;
+    else if (rankStr.includes("VIP+")) ceiling += 15;
+    else if (rankStr.includes("VIP")) ceiling += 8;
+    return Math.max(ceiling, MIN_PRICE_BRL);
+  }
   // Valorant
   const skins = Number(item.riot_valorant_skin_count || 0);
   const knives = Number(item.riot_valorant_knife || item.riot_valorant_knife_count || 0);
@@ -115,19 +137,15 @@ function getContentCeilingBrl(item: LztItem, gameType?: string) {
   const vp = Number(item.riot_valorant_wallet_vp || 0);
   const invValue = Number(item.riot_valorant_inventory_value || 0);
 
-  // Base: R$5/skin, R$30/knife, agents, level, VP
   let ceiling = skins * 5 + knives * 30 + agents * 1.5 + level * 0.15 + vp * 0.01;
-
-  // Inventory value bonus (if API provides it)
   if (invValue > 0) ceiling += invValue * 0.003;
 
-  // Rank bonus
-  if (rank >= 27) ceiling += 150;       // Radiante
-  else if (rank >= 24) ceiling += 80;   // Imortal
-  else if (rank >= 21) ceiling += 50;   // Ascendente
-  else if (rank >= 18) ceiling += 35;   // Diamante
-  else if (rank >= 15) ceiling += 20;   // Platina
-  else if (rank >= 12) ceiling += 10;   // Ouro
+  if (rank >= 27) ceiling += 150;
+  else if (rank >= 24) ceiling += 80;
+  else if (rank >= 21) ceiling += 50;
+  else if (rank >= 18) ceiling += 35;
+  else if (rank >= 15) ceiling += 20;
+  else if (rank >= 12) ceiling += 10;
 
   return Math.max(ceiling, MIN_PRICE_BRL);
 }
