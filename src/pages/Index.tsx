@@ -1,6 +1,7 @@
 import { useState, useMemo, forwardRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
+import ValorantImage from "@/components/ValorantImage";
 import { Star, ArrowRight, Package, Loader2, Crosshair, Globe } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
@@ -163,13 +164,9 @@ const StarHalfIcon = ({ className }: { className?: string }) => (
 // ─── LZT Account Card ──────────────────────────────────────────────────────
 
 const LztPreviewFallback = forwardRef<HTMLDivElement, { url: string }>(({ url }, ref) => {
-  const [failed, setFailed] = useState(false);
-  if (failed) {
-    return <div ref={ref} className="flex h-full w-full items-center justify-center"><Crosshair className="h-12 w-12 text-muted-foreground/20" /></div>;
-  }
   return (
     <div ref={ref} className="relative z-[1] flex items-center justify-center w-full h-full p-3">
-      <img src={url} alt="Skins preview" className="h-full w-full object-contain" loading="lazy" onError={() => setFailed(true)} />
+      <ValorantImage src={url} alt="Skins preview" className="h-full w-full object-contain" timeout={10000} />
     </div>
   );
 });
