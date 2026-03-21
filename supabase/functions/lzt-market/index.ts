@@ -12,10 +12,6 @@ const RUB_TO_BRL = 0.055;
 const USD_TO_BRL = 5.50;
 const MIN_PRICE_BRL = 20;
 const DEFAULT_MARKUP = 3.0;
-const LOL_MIN_SKINS = 3;
-const VAL_MIN_SKINS = 10;
-const FT_MIN_SKINS = 2;
-const PRICE_BUFFER = 1.30;
 
 type LztItem = Record<string, any>;
 
