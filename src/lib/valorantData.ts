@@ -12,7 +12,6 @@ import rankDiamante from "@/assets/rank-diamante.png";
 import rankAscendente from "@/assets/rank-ascendente.png";
 import rankImortal from "@/assets/rank-imortal.png";
 import rankRadianteNew from "@/assets/rank-radiante-new.png";
-import rankRadiante from "@/assets/rank-radiante.png";
 import rankUnranked from "@/assets/rank-unranked.png";
 
 import raritySelect from "@/assets/rarity-select.png";
