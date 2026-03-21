@@ -802,7 +802,7 @@ const Contas = () => {
   const [selectedRank, setSelectedRank] = useState("todos");
   const [selectedWeapon, setSelectedWeapon] = useState("todos");
   const [onlyKnife, setOnlyKnife] = useState(false);
-  const [valRegion, setValRegion] = useState("br");
+  const [valRegion, setValRegion] = useState("all");
 
   // ─── LoL filters ───
   const [lolRank, setLolRank] = useState("todos");
