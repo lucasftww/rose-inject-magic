@@ -85,6 +85,6 @@ export function initErrorTracker() {
     }
   };
 
-  console.log(`[ErrorTracker] Ativo — erros serão salvos em localStorage("${STORAGE_KEY}")`);
+  // silent init — no console output
 }
 
