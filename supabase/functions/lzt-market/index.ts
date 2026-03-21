@@ -71,6 +71,13 @@ function getContentFloorBrl(item: LztItem, gameType?: string) {
     const level = Math.min(Number(item.riot_lol_level || 0), 350);
     return skins * 0.5 + champs * 0.15 + level * 0.1;
   }
+  if (gameType === "minecraft") {
+    const capes = Number(item.minecraft_capes_count || 0);
+    const level = Math.min(Number(item.minecraft_hypixel_level || 0), 300);
+    const hasJava = Number(item.minecraft_java || 0);
+    const hasBedrock = Number(item.minecraft_bedrock || 0);
+    return capes * 2 + level * 0.1 + hasJava * 3 + hasBedrock * 3;
+  }
   // Valorant
   const skins = Number(item.riot_valorant_skin_count || 0);
   const knives = Number(item.riot_valorant_knife || item.riot_valorant_knife_count || 0);
