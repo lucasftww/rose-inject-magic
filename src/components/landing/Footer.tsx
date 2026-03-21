@@ -8,6 +8,7 @@ const Footer = forwardRef<HTMLElement>((_props, ref) => {
 
   return (
     <motion.footer
+      ref={ref}
       className="border-t border-border bg-background px-5 sm:px-6 py-10 sm:py-16 pb-24 sm:pb-16"
       initial={{ opacity: 0 }}
       whileInView={{ opacity: 1 }}
