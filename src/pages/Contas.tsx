@@ -1002,25 +1002,17 @@ const Contas = () => {
       const seenIds = new Set(firstPageItems.map(i => i.item_id));
       let allItems = [...firstPageItems];
 
-      // Fetch remaining pages in batches of 2 for balanced speed + rate-limit safety
-      const batches: number[][] = [];
+      // Fetch ALL remaining pages in parallel (max 2 more pages = 3 total)
       const remaining: number[] = [];
       for (let p = 2; p <= maxPages; p++) remaining.push(p);
-      while (remaining.length > 0) batches.push(remaining.splice(0, 2));
 
-      let stopProbing = false;
-
-      for (const batch of batches) {
-        if (controller.signal.aborted || stopProbing) break;
-
-        const batchPromises = batch.map(p =>
-          fetchWithRetry(buildParams(p), controller).catch(() => null)
+      if (remaining.length > 0) {
+        const results = await Promise.all(
+          remaining.map(p => fetchWithRetry(buildParams(p), controller).catch(() => null))
         );
-        const batchResults = await Promise.all(batchPromises);
         if (controller.signal.aborted) return;
 
-        let batchHadItems = false;
-        for (const pageData of batchResults) {
+        for (const pageData of results) {
           if (!pageData) continue;
           const rawItems: LztItem[] = pageData?.items ?? [];
           const newItems = rawItems.filter((item: LztItem) => {
@@ -1028,23 +1020,11 @@ const Contas = () => {
             seenIds.add(item.item_id);
             return true;
           });
-          if (newItems.length > 0) {
-            allItems = [...allItems, ...newItems];
-            batchHadItems = true;
-          }
+          if (newItems.length > 0) allItems = [...allItems, ...newItems];
         }
 
-        // Stream results after each batch so user sees items appear progressively
         setStreamedItems([...allItems]);
-        setCurrentPage(batch[batch.length - 1]);
-
-        // Stop probing if an entire batch returned zero new items
-        if (!batchHadItems && shouldProbe) stopProbing = true;
-        // For non-Valorant, stop if API says no more pages
-        if (!shouldProbe) {
-          const lastResult = batchResults[batchResults.length - 1];
-          if (!lastResult?.hasNextPage) break;
-        }
+        setCurrentPage(remaining[remaining.length - 1]);
       }
 
       if (!controller.signal.aborted) {
