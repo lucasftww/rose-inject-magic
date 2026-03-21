@@ -135,7 +135,7 @@ const ProdutoDetalhes = () => {
         .from("games")
         .select("id, name, slug")
         .eq("id", data.game_id)
-        .single();
+        .maybeSingle();
       if (gameData) setGame(gameData);
 
       const { data: reviewsData } = await supabase
