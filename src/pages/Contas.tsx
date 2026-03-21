@@ -885,6 +885,19 @@ const Contas = () => {
   const abortRef = useRef<AbortController | null>(null);
   const fetchCacheRef = useRef(new Map<string, { items: LztItem[]; hasNextPage: boolean; currentPage: number; timestamp: number }>());
   const MAX_CACHE_ENTRIES = 20;
+  const cacheSet = useCallback((key: string, value: { items: LztItem[]; hasNextPage: boolean; currentPage: number; timestamp: number }) => {
+    const cache = fetchCacheRef.current;
+    cache.set(key, value);
+    // Evict oldest entries when cache grows too large
+    if (cache.size > MAX_CACHE_ENTRIES) {
+      let oldestKey = '';
+      let oldestTs = Infinity;
+      for (const [k, v] of cache) {
+        if (v.timestamp < oldestTs) { oldestTs = v.timestamp; oldestKey = k; }
+      }
+      if (oldestKey) cache.delete(oldestKey);
+    }
+  }, []);
   const MAX_PAGES = 8;
   const [firstPageLoaded, setFirstPageLoaded] = useState(false);
 
