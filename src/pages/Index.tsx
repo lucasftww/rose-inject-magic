@@ -1,4 +1,4 @@
-import { useState, useMemo, forwardRef } from "react";
+import { useMemo, forwardRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import ValorantImage from "@/components/ValorantImage";
@@ -9,6 +9,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useLztMarkup } from "@/hooks/useLztMarkup";
 import bannerInject from "@/assets/banner-inject.webp";
 import { useTranslation } from "react-i18next";
+
+// Game card images
+import valorantCardImg from "@/assets/games/valorant-card.webp";
+import fortniteCardImg from "@/assets/games/fortnite-card.webp";
+import lolCardImg from "@/assets/games/lol-card.webp";
+import minecraftCardImg from "@/assets/games/minecraft-card.webp";
 
 // Extracted components
 import FloatingWidgets from "@/components/landing/FloatingWidgets";
