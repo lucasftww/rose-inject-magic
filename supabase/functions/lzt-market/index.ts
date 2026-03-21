@@ -157,9 +157,31 @@ function getFortniteFairPriceCeiling(item: LztItem) {
 }
 
 function shouldKeepItem(item: LztItem, gameType: string, _displayedPriceBrl: number) {
-  // Only filter out items that are already sold or can't be bought
   if (item.buyer) return false;
   if (item.canBuyItem === false) return false;
+
+  // Require minimum 30 days of inactivity for account security
+  const lastActivity = Number(item.last_activity || item.login_date || 0);
+  if (lastActivity > 0) {
+    const daysSinceActive = (Date.now() / 1000 - lastActivity) / 86400;
+    if (daysSinceActive < 30) return false;
+  }
+
+  // Minimum 3 skins per game
+  const isValorant = gameType === "riot" || gameType === "valorant";
+  if (isValorant) {
+    const skins = Number(item.riot_valorant_skin_count || 0);
+    if (skins < 3) return false;
+  }
+  if (gameType === "lol") {
+    const skins = Number(item.riot_lol_skin_count || 0);
+    if (skins < 3) return false;
+  }
+  if (gameType === "fortnite") {
+    const skins = Number(item.fortnite_skin_count || item.fortnite_outfit_count || 0);
+    if (skins < 3) return false;
+  }
+
   return true;
 }
 
