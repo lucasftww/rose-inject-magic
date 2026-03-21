@@ -131,15 +131,16 @@ function getValorantFairPriceCeiling(item: LztItem) {
   else if (effectiveRank >= 12) rankBonus = 120;    // Gold
   else if (effectiveRank >= 9) rankBonus = 60;      // Silver
 
+  // Increased skin value from 12 to 25 to stop filtering 85% of items
   const estimatedValue =
-    skinCount * 12 +
-    knifeCount * 60 +
-    level * 0.6 +
-    vp * 0.01 +
-    rp * 0.02 +
+    skinCount * 25 +
+    knifeCount * 120 +
+    level * 1.2 +
+    vp * 0.02 +
+    rp * 0.03 +
     rankBonus;
 
-  return Math.max(Math.round(estimatedValue), 80);
+  return Math.max(Math.round(estimatedValue), 150);
 }
 
 function getFortniteFairPriceCeiling(item: LztItem) {
