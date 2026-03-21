@@ -863,7 +863,7 @@ const Contas = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const fetchCacheRef = useRef(new Map<string, { items: LztItem[]; totalItems: number; timestamp: number }>());
-  const MAX_PAGES = 3;
+  const MAX_PAGES = 5;
 
   // ─── Asset maps ───
   const { data: skinsMap = new Map() } = useQuery({
@@ -890,8 +890,6 @@ const Contas = () => {
     params.page = String(pageNum);
     // Send user's chosen sort to API (validated enum values from LZT API)
     params.order_by = sortBy || "pdate_to_down";
-    // Not sold before — avoid showing previously sold accounts
-    params.nsb = "true";
     if (searchQuery) params.title = searchQuery;
 
     // Send price filters to API so server filters before returning
@@ -900,7 +898,7 @@ const Contas = () => {
 
     if (gameTab === "valorant") {
       params.game_type = "riot";
-      params.valorant_smin = "15"; // match server-side VAL_MIN_SKINS=15
+      params.valorant_smin = "10"; // match server-side VAL_MIN_SKINS=10
       if (invMin) params.inv_min = invMin;
       if (invMax) params.inv_max = invMax;
       if (onlyKnife) params.knife = "true";

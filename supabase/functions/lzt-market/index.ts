@@ -12,9 +12,9 @@ const RUB_TO_BRL = 0.055;
 const USD_TO_BRL = 5.50;
 const MIN_PRICE_BRL = 20;
 const DEFAULT_MARKUP = 3.0;
-const LOL_MIN_SKINS = 8;
-const VAL_MIN_SKINS = 15;
-const FT_MIN_SKINS = 3;
+const LOL_MIN_SKINS = 3;
+const VAL_MIN_SKINS = 10;
+const FT_MIN_SKINS = 2;
 const PRICE_BUFFER = 1.30;
 
 type LztItem = Record<string, any>;
@@ -156,52 +156,36 @@ function getFortniteFairPriceCeiling(item: LztItem) {
   return Math.max(Math.round(estimatedValue), 60);
 }
 
-const MIN_INACTIVE_DAYS = 14;
-
 function shouldKeepItem(item: LztItem, gameType: string, displayedPriceBrl: number) {
   if (item.buyer) return false;
   if (item.canBuyItem === false) return false;
 
   const isValorant = gameType === "riot" || gameType === "valorant";
 
-  // All games: reject accounts with recent activity (30 days minimum inactivity)
-  const nowSec = Math.floor(Date.now() / 1000);
-  const minInactiveSec = MIN_INACTIVE_DAYS * 86400;
-  const lastActivity = Number(
-    item.account_last_activity || item.riot_last_activity || item.fortnite_last_activity || 0
-  );
-  if (lastActivity > 0 && (nowSec - lastActivity) < minInactiveSec) return false;
-
-  // Valorant: enforce inactivity + fair-price ceiling + max display price
-   if (isValorant) {
+  // Valorant: only skin count + max price cap
+  if (isValorant) {
     const skinCount = Number(item.riot_valorant_skin_count || 0);
     if (skinCount < VAL_MIN_SKINS) return false;
-    const fairCeiling = getValorantFairPriceCeiling(item) * PRICE_BUFFER;
-    if (displayedPriceBrl > fairCeiling) return false;
-    if (displayedPriceBrl > 1200) return false;
+    if (displayedPriceBrl > 1500) return false;
     return true;
   }
-
-  // Non-Valorant games: additional quality filters
 
   if (gameType === "lol") {
     const skinCount = Number(item.riot_lol_skin_count || 0);
     if (skinCount < LOL_MIN_SKINS) return false;
-    const fairCeiling = getLolFairPriceCeiling(item) * PRICE_BUFFER;
-    if (displayedPriceBrl > fairCeiling) return false;
+    if (displayedPriceBrl > 2000) return false;
     return true;
   }
 
   if (gameType === "fortnite") {
     const ftSkins = Number(item.fortnite_skin_count || item.fortnite_outfit_count || 0);
     if (ftSkins < FT_MIN_SKINS) return false;
-    const fairCeiling = getFortniteFairPriceCeiling(item) * PRICE_BUFFER;
-    if (displayedPriceBrl > fairCeiling) return false;
+    if (displayedPriceBrl > 1500) return false;
     return true;
   }
 
   if (gameType === "minecraft") {
-    if (displayedPriceBrl > 300) return false;
+    if (displayedPriceBrl > 500) return false;
     return true;
   }
 
