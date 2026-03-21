@@ -538,10 +538,7 @@ Deno.serve(async (req) => {
         params.delete("inv_max");
         apiUrl = `https://api.lzt.market/riot?${params.toString()}`;
       } else {
-        // Valorant: ensure minimum skins filter, remove LoL-specific params
-        if (!params.has("valorant_smin")) {
-          params.set("valorant_smin", String(VAL_MIN_SKINS));
-        }
+        // Valorant: remove LoL-specific params only
         params.delete("lol_smin");
         params.delete("lol_smax");
         params.delete("lol_level_min");
