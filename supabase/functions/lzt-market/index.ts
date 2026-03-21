@@ -691,19 +691,8 @@ Deno.serve(async (req) => {
         
         const displayedPriceBrl = getDisplayedPriceBrl(item, overrideMap.get(String(item.item_id)), gameType, activeMarkup);
         
-        // shouldKeepItem handles inactivity, fair-price, and quality checks for all games
-        const isValorant = gameType === "riot" || gameType === "valorant";
         if (!shouldKeepItem(item, gameType, displayedPriceBrl)) {
-          if (isValorant) {
-            const rawLastActivity = Number(item.account_last_activity || item.riot_last_activity || item.last_activity || item.login_date || 0);
-            const lastActivity = rawLastActivity > 1_000_000_000_000 ? Math.floor(rawLastActivity / 1000) : rawLastActivity;
-            const nowSec = Math.floor(Date.now() / 1000);
-            if (lastActivity > 0 && (nowSec - lastActivity) < 30 * 86400) {
-              filteredByInactivity++;
-            } else {
-              filteredByPrice++;
-            }
-          }
+          filteredByOther++;
           return false;
         }
         return true;
@@ -713,7 +702,7 @@ Deno.serve(async (req) => {
         gameType,
         beforeCount,
         afterCount: data.items.length,
-        ...(gameType === "riot" || gameType === "valorant" ? { filteredByInactivity, filteredByPrice, filteredByOther } : {}),
+        filteredByOther,
       });
 
       for (const item of data.items) {
