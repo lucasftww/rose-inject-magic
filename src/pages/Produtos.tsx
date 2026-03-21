@@ -8,6 +8,7 @@ import { useReseller } from "@/hooks/useReseller";
 
 // Local game images
 import imgValorant from "@/assets/games/valorant.webp";
+import imgFortnite from "@/assets/games/fortnite.webp";
 import imgCS2 from "@/assets/games/cs2.webp";
 import imgSpoofers from "@/assets/games/spoofers.webp";
 import imgArenaBreakout from "@/assets/games/arena-breakout.webp";
@@ -42,6 +43,7 @@ const localImageMap: Record<string, string> = {
   'Squad': imgSquad,
   'Overwatch 2': imgOverwatch2,
   'Hell Let Loose': imgHellLetLoose,
+  'Fortnite': imgFortnite,
 };
 
 interface GameFromDB {
