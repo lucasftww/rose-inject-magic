@@ -356,7 +356,7 @@ const ProductsTab = () => {
 
     if (robotEnabled && formRobotGameId && robotGames.length > 0) {
       const rg = robotGames.find(g => Number(g.id) === Number(formRobotGameId));
-      if (rg?.prices) {
+      if (rg?.prices && !rg.is_free) {
         for (const plan of formPlans) {
           if (!plan.active || !plan.robot_duration_days) continue;
           const fullPriceUsd = rg.prices[String(plan.robot_duration_days)];
