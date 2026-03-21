@@ -1,6 +1,7 @@
 import { useState, useMemo, forwardRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
+import ValorantImage from "@/components/ValorantImage";
 import { Star, ArrowRight, Package, Loader2, Crosshair, Globe } from "lucide-react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
