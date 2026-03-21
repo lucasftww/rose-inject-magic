@@ -1208,6 +1208,7 @@ const Contas = () => {
   };
 
   const switchTab = (tab: GameTab) => {
+    if (tab === gameTab) return;
     setGameTab(tab);
     const params: Record<string, string> = {};
     if (tab !== "valorant") params.game = tab;
