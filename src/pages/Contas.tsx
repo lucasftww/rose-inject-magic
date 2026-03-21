@@ -886,17 +886,19 @@ const Contas = () => {
   const fetchCacheRef = useRef(new Map<string, { items: LztItem[]; hasNextPage: boolean; currentPage: number; timestamp: number }>());
   const MAX_PAGES = 8;
 
-  // ─── Asset maps ───
+  // ─── Asset maps (only load when needed) ───
   const { data: skinsMap = new Map() } = useQuery({
     queryKey: ["all-valorant-skins"],
     queryFn: fetchAllValorantSkins,
     staleTime: 1000 * 60 * 60,
+    enabled: gameTab === "valorant",
   });
 
   const { data: champKeyMap = new Map<number, string>() } = useQuery({
     queryKey: ["lol-champ-key-map"],
     queryFn: fetchLolChampKeyMap,
     staleTime: 1000 * 60 * 60 * 6,
+    enabled: gameTab === "lol",
   });
 
   const { data: fnSkinsDb = new Map<string, { name: string; image: string }>() } = useQuery({
@@ -1037,48 +1039,11 @@ const Contas = () => {
       setHasNextPage(hasMore);
       setCurrentPage(1);
       setStreamedItems(firstPageItems);
-      setStreamingDone(true); // Mark done immediately so UI is responsive
+      setStreamingDone(true);
 
-      // Cache first page result
-      if (firstPageItems.length === 0 || !hasMore) {
-        fetchCacheRef.current.set(cacheKey, {
-          items: firstPageItems,
-          hasNextPage: false,
-          currentPage: 1,
-          timestamp: Date.now(),
-        });
-        return;
-      }
-
-      // Fetch page 2 in background (don't block UI)
-      const seenIds = new Set(firstPageItems.map(i => i.item_id));
-      let allItems = [...firstPageItems];
-
-      const bgData = await fetchWithRetry(buildParams(2), controller).catch(() => null);
-      if (controller.signal.aborted) return;
-      if (bgData) {
-        const rawItems: LztItem[] = bgData?.items ?? [];
-        const newItems = rawItems.filter((item: LztItem) => {
-          if (seenIds.has(item.item_id)) return false;
-          seenIds.add(item.item_id);
-          return true;
-        });
-        if (newItems.length > 0) allItems = [...allItems, ...newItems];
-        setStreamedItems([...allItems]);
-        setCurrentPage(2);
-        const nextHasPage = bgData?.hasNextPage ?? newItems.length >= 15;
-        setHasNextPage(nextHasPage);
-        fetchCacheRef.current.set(cacheKey, {
-          items: allItems,
-          hasNextPage: nextHasPage,
-          currentPage: 2,
-          timestamp: Date.now(),
-        });
-        return;
-      }
-
+      // Cache result
       fetchCacheRef.current.set(cacheKey, {
-        items: allItems,
+        items: firstPageItems,
         hasNextPage: hasMore,
         currentPage: 1,
         timestamp: Date.now(),
@@ -1090,7 +1055,7 @@ const Contas = () => {
         setStreamingDone(true);
       }
     }
-  }, [buildParams, debouncedParamsKey, fetchWithRetry, gameTab]);
+  }, [buildParams, debouncedParamsKey, fetchWithRetry]);
 
   useEffect(() => {
     abortRef.current?.abort();
@@ -1104,10 +1069,7 @@ const Contas = () => {
     if (loadingMore || !hasNextPage) return;
     if (currentPage >= MAX_PAGES) return;
     setLoadingMore(true);
-    // Abort any previous in-flight request before starting a new one
-    abortRef.current?.abort();
     const controller = new AbortController();
-    abortRef.current = controller;
     try {
       const cacheKey = debouncedParamsKey;
       const nextPageNum = currentPage + 1;
