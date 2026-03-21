@@ -120,93 +120,165 @@ const ProductCard = ({ product }: { product: ProductFromDB }) => {
   );
 };
 
-const GameSelectScreen = ({ onSelect, games, loading }: { onSelect: (gameId: string) => void; games: GameFromDB[]; loading: boolean }) => (
-  <div className="min-h-screen bg-background">
-    <Header />
-    <div className="mx-auto max-w-6xl px-4 sm:px-6 pt-6 pb-20">
-      <motion.div
-        className="text-center"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-      >
-        <p className="text-xs sm:text-sm font-medium uppercase tracking-[0.3em] text-success">Nossos Jogos</p>
-        <h1 className="mt-2 sm:mt-3 text-2xl sm:text-4xl font-bold tracking-tight text-foreground md:text-5xl" style={{ fontFamily: "'Valorant', sans-serif" }}>
-          ESCOLHA SEU JOGO
-        </h1>
-        <p className="mt-2 sm:mt-4 text-sm sm:text-base text-muted-foreground max-w-xl mx-auto">
-          Cheats premium e contas para seus jogos favoritos. Domine as lobbies com confiança e segurança.
-        </p>
-      </motion.div>
+const GameSelectScreen = ({ onSelect, games, loading }: { onSelect: (gameId: string) => void; games: GameFromDB[]; loading: boolean }) => {
+  // Split games into featured (first 4 with images) and the rest
+  const featuredGames = games.filter(g => g.image_url).slice(0, 4);
+  const allGames = games;
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Header />
+
+      {/* Hero header */}
+      <section className="relative overflow-hidden border-b border-border">
+        <div className="pointer-events-none absolute inset-0"
+          style={{
+            backgroundImage: "linear-gradient(hsl(var(--border) / 0.6) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--border) / 0.6) 1px, transparent 1px)",
+            backgroundSize: "60px 60px",
+            maskImage: "radial-gradient(ellipse at center, black 20%, transparent 70%)",
+            WebkitMaskImage: "radial-gradient(ellipse at center, black 20%, transparent 70%)",
+          }}
+        />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,_hsl(197,100%,50%,0.08)_0%,_transparent_60%)]" />
+
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 py-12 sm:py-20 text-center">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+            <div className="mx-auto mb-4 flex w-fit items-center gap-2 rounded-full border border-success/20 bg-success/5 px-4 py-1.5">
+              <Gamepad2 className="h-4 w-4 text-success" />
+              <span className="text-xs font-semibold tracking-wide text-success">CATÁLOGO DE SOFTWARES</span>
+            </div>
+            <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight text-foreground" style={{ fontFamily: "'Valorant', sans-serif" }}>
+              ESCOLHA SEU <span className="bg-gradient-to-r from-success via-[hsl(197,100%,70%)] to-success bg-[length:200%_100%] bg-clip-text text-transparent">JOGO</span>
+            </h1>
+            <p className="mt-3 sm:mt-4 text-sm sm:text-base text-muted-foreground max-w-lg mx-auto">
+              Cheats premium para seus jogos favoritos. Domine cada partida com segurança e confiança total.
+            </p>
+          </motion.div>
+        </div>
+      </section>
 
       {loading ? (
-        <div className="mt-14 sm:mt-20 flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-success" /></div>
+        <div className="flex items-center justify-center py-32"><Loader2 className="h-8 w-8 animate-spin text-success" /></div>
       ) : games.length === 0 ? (
-        <div className="mt-14 sm:mt-20 text-center text-muted-foreground">Nenhum jogo disponível no momento.</div>
+        <div className="py-32 text-center text-muted-foreground">Nenhum jogo disponível no momento.</div>
       ) : (
-        <motion.div
-          className="mt-8 sm:mt-12 grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4"
-          initial="hidden"
-          animate="visible"
-          variants={staggerContainer}
-        >
-          {games.map((game, idx) => (
-            <motion.button
-              key={game.id}
-              variants={fadeUp}
-              custom={idx}
-              onClick={() => onSelect(game.id)}
-              className="group relative flex flex-col overflow-hidden rounded-xl border border-border/40 bg-card transition-all duration-300 hover:border-success/50 hover:shadow-[0_4px_32px_hsl(var(--success)/0.12)] focus:outline-none active:scale-[0.97]"
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10 sm:py-16">
+          {/* Featured games — large cards */}
+          {featuredGames.length > 0 && (
+            <motion.div
+              className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4"
+              initial="hidden"
+              animate="visible"
+              variants={staggerContainer}
             >
-              {/* Image area */}
-              <div className="relative aspect-[4/5] overflow-hidden">
-                {game.image_url ? (
-                  <img
-                    src={game.image_url}
-                    alt={game.name}
-                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-secondary text-5xl font-bold text-muted-foreground/20">
-                    {game.name[0]}
+              {featuredGames.map((game, idx) => (
+                <motion.button
+                  key={game.id}
+                  variants={fadeUp}
+                  custom={idx}
+                  onClick={() => onSelect(game.id)}
+                  className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/40 bg-card text-left transition-all duration-300 hover:border-success/60 hover:shadow-[0_0_40px_hsl(197,100%,50%,0.15)] focus:outline-none active:scale-[0.98]"
+                >
+                  <div className="relative aspect-[3/4] overflow-hidden">
+                    <img
+                      src={game.image_url!}
+                      alt={game.name}
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+
+                    {/* Badge */}
+                    <div className="absolute top-3 right-3 rounded-full bg-success px-2.5 py-0.5 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-success-foreground shadow-lg">
+                      {game.product_count} {game.product_count === 1 ? "software" : "softwares"}
+                    </div>
+
+                    {/* Bottom content */}
+                    <div className="absolute inset-x-0 bottom-0 p-3 sm:p-5">
+                      <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-foreground" style={{ fontFamily: "'Valorant', sans-serif" }}>
+                        {game.name}
+                      </h3>
+                      <p className="mt-1 text-[10px] sm:text-xs text-muted-foreground leading-tight">
+                        Cheats premium para {game.name}
+                      </p>
+
+                      <div className="mt-3 sm:mt-4 flex items-center gap-1.5 text-success text-[10px] sm:text-xs font-semibold uppercase tracking-wider transition-all group-hover:gap-2.5">
+                        <span>Ver softwares</span>
+                        <ArrowRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 transition-transform group-hover:translate-x-1" />
+                      </div>
+                    </div>
                   </div>
-                )}
-                {/* Gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+                </motion.button>
+              ))}
+            </motion.div>
+          )}
 
-                {/* Product count badge */}
-                <div className="absolute top-3 right-3 rounded-md bg-success px-2 py-0.5 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-success-foreground shadow-lg">
-                  {game.product_count} {game.product_count === 1 ? "software" : "softwares"}
-                </div>
+          {/* All games — compact grid */}
+          {allGames.length > 4 && (
+            <>
+              <div className="mt-12 sm:mt-16 mb-6 sm:mb-8">
+                <p className="text-xs font-medium uppercase tracking-[0.3em] text-success">Todos os jogos</p>
+                <h2 className="mt-2 text-xl sm:text-3xl font-bold tracking-tight text-foreground" style={{ fontFamily: "'Valorant', sans-serif" }}>
+                  CATÁLOGO COMPLETO
+                </h2>
+              </div>
 
-                {/* Game name & description overlaid at bottom */}
-                <div className="absolute bottom-0 left-0 w-full p-3 sm:p-4">
-                  <h3
-                    className="text-base sm:text-xl font-bold text-white drop-shadow-lg"
-                    style={{ fontFamily: "'Valorant', sans-serif" }}
+              <motion.div
+                className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: "-40px" }}
+                variants={staggerContainer}
+              >
+                {allGames.slice(4).map((game, idx) => (
+                  <motion.button
+                    key={game.id}
+                    variants={fadeUp}
+                    custom={idx}
+                    onClick={() => onSelect(game.id)}
+                    className="group relative flex flex-col overflow-hidden rounded-xl border border-border/40 bg-card text-left transition-all duration-300 hover:border-success/50 hover:shadow-[0_0_24px_hsl(197,100%,50%,0.12)] focus:outline-none active:scale-[0.97]"
                   >
-                    {game.name}
-                  </h3>
-                  <p className="mt-0.5 text-[10px] sm:text-xs text-white/60 line-clamp-2">
-                    Cheats para {game.name} — domine cada round
-                  </p>
-                </div>
-              </div>
+                    <div className="relative aspect-[4/5] overflow-hidden">
+                      {game.image_url ? (
+                        <img
+                          src={game.image_url}
+                          alt={game.name}
+                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center bg-secondary">
+                          <Gamepad2 className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground/20" />
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
 
-              {/* CTA bar */}
-              <div className="flex items-center justify-center gap-1.5 border-t border-border/30 bg-card px-3 py-2.5 sm:py-3 text-[10px] sm:text-xs font-bold uppercase tracking-[0.15em] text-muted-foreground transition-colors group-hover:text-success">
-                Ver softwares {game.name}
-                <svg className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
-            </motion.button>
-          ))}
-        </motion.div>
+                      {/* Product count */}
+                      <div className="absolute top-2.5 right-2.5 rounded-full bg-success/90 px-2 py-0.5 text-[9px] sm:text-[10px] font-bold text-success-foreground shadow">
+                        {game.product_count}
+                      </div>
+
+                      {/* Name at bottom */}
+                      <div className="absolute inset-x-0 bottom-0 p-2.5 sm:p-3.5">
+                        <h3 className="text-sm sm:text-base font-bold tracking-tight text-foreground leading-tight" style={{ fontFamily: "'Valorant', sans-serif" }}>
+                          {game.name}
+                        </h3>
+                        <div className="mt-1.5 flex items-center gap-1 text-success text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                          <span>Ver softwares</span>
+                          <ArrowRight className="h-2.5 w-2.5" />
+                        </div>
+                      </div>
+                    </div>
+                  </motion.button>
+                ))}
+              </motion.div>
+            </>
+          )}
+        </div>
       )}
     </div>
-  </div>
-);
+  );
+};
 
 const Produtos = () => {
   const navigate = useNavigate();
