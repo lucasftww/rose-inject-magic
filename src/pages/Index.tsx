@@ -362,7 +362,7 @@ const Index = () => {
         </div>
       </section>
 
-      <ProductsSection />
+      <SoftwareSection />
       <ContasSection />
       <ReviewsSection />
       <HowItWorksSection />
