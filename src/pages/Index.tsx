@@ -253,19 +253,16 @@ const LandingAccountSkeleton = () => (
 
 // ─── Sections ───────────────────────────────────────────────────────────────
 
+const GAME_CATEGORIES = [
+  { name: "VALORANT", image: valorantCardImg, tab: "valorant", tagline: "Contas rankeadas e full acesso", badge: "Popular" },
+  { name: "FORTNITE", image: fortniteCardImg, tab: "fortnite", tagline: "Skins raras e V-Bucks inclusos", badge: "Novo" },
+  { name: "LOL", image: lolCardImg, tab: "lol", tagline: "Campeões, skins e ranks", badge: null },
+  { name: "MINECRAFT", image: minecraftCardImg, tab: "minecraft", tagline: "Java & Bedrock Edition", badge: null },
+];
+
 const ContasSection = () => {
   const { t } = useTranslation();
-  const { getDisplayPrice } = useLztMarkup();
-  const cachedLandingAccounts = useMemo(readCachedLandingAccounts, []);
-  const { data: accounts = [], isLoading: loadingAccounts } = useQuery({
-    queryKey: ["landing-lzt-accounts"],
-    queryFn: fetchLztAccounts,
-    staleTime: LANDING_ACCOUNTS_CACHE_TTL,
-    initialData: cachedLandingAccounts?.items,
-    initialDataUpdatedAt: cachedLandingAccounts?.cachedAt,
-    refetchOnWindowFocus: false,
-    retry: 1,
-  });
+  const navigate = useNavigate();
 
   return (
     <section className="border-t border-border bg-background px-5 sm:px-6 py-14 sm:py-24">
@@ -275,29 +272,55 @@ const ContasSection = () => {
           <h2 className="mt-3 text-3xl sm:text-5xl font-bold tracking-tight text-foreground md:text-7xl" style={{ fontFamily: "'Valorant', sans-serif" }}>{t("accounts.title")}</h2>
         </motion.div>
 
-        {loadingAccounts ? (
-          <div className="mt-8 sm:mt-14 grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-3">
-            {Array.from({ length: 6 }).map((_, idx) => (
-              <LandingAccountSkeleton key={idx} />
-            ))}
-          </div>
-        ) : accounts.length === 0 ? (
-          <div className="mt-14 text-center text-muted-foreground">{t("accounts.empty")}</div>
-        ) : (
-          <motion.div
-            className="mt-8 sm:mt-14 grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-3"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-40px" }}
-            variants={staggerContainer}
-          >
-            {accounts.map((item, idx) => (
-              <motion.div key={item.item_id} variants={fadeUp} custom={idx}>
-                <LztContaCard item={item} formatPrice={(p, c) => getDisplayPrice({ price: p, price_currency: c, price_brl: item.price_brl }, "valorant")} />
-              </motion.div>
-            ))}
-          </motion.div>
-        )}
+        <motion.div
+          className="mt-8 sm:mt-14 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-40px" }}
+          variants={staggerContainer}
+        >
+          {GAME_CATEGORIES.map((game, idx) => (
+            <motion.div
+              key={game.tab}
+              variants={fadeUp}
+              custom={idx}
+              className="group relative cursor-pointer overflow-hidden rounded-2xl border border-border/40 bg-card transition-all duration-300 hover:border-success/60 hover:shadow-[0_0_40px_hsl(197,100%,50%,0.15)]"
+              onClick={() => navigate(`/contas?game=${game.tab}`)}
+            >
+              {/* Image */}
+              <div className="relative aspect-[3/4] overflow-hidden">
+                <img
+                  src={game.image}
+                  alt={game.name}
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  loading="lazy"
+                />
+                {/* Gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+                
+                {/* Badge */}
+                {game.badge && (
+                  <div className="absolute top-3 right-3 rounded-full bg-success px-2.5 py-0.5 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-success-foreground shadow-lg">
+                    {game.badge}
+                  </div>
+                )}
+
+                {/* Bottom content */}
+                <div className="absolute inset-x-0 bottom-0 p-3 sm:p-5">
+                  <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-foreground" style={{ fontFamily: "'Valorant', sans-serif" }}>
+                    {game.name}
+                  </h3>
+                  <p className="mt-1 text-[10px] sm:text-xs text-muted-foreground leading-tight">{game.tagline}</p>
+                  
+                  <div className="mt-3 sm:mt-4 flex items-center gap-1.5 text-success text-[10px] sm:text-xs font-semibold uppercase tracking-wider transition-all group-hover:gap-2.5">
+                    <span>{t("accounts.exploreAccounts")}</span>
+                    <ArrowRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 transition-transform group-hover:translate-x-1" />
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </motion.div>
 
         <motion.div className="mt-10 sm:mt-12 flex justify-center" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
           <Link
