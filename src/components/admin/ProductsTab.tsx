@@ -1011,8 +1011,8 @@ const ProductsTab = () => {
                 </div>
               );
             })()}
+          </SectionCard>
 
-          {/* Media Gallery */}
           <SectionCard title="Galeria de Mídia" icon={Film}>
             {formMedia.length > 0 && (
               <div className="mb-4 flex flex-wrap gap-2">
