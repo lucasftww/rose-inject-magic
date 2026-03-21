@@ -234,13 +234,14 @@ Deno.serve(async (req) => {
 
     // Fetch LZT token from system_credentials table
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
-    const { data: credRow } = await supabaseAdmin
-      .from("system_credentials")
-      .select("value")
-      .eq("env_key", "LZT_API_TOKEN")
-      .maybeSingle();
 
-    const token = credRow?.value || Deno.env.get("LZT_MARKET_TOKEN");
+    // Fetch token + config in parallel to reduce latency
+    const [credRow, lztConfigRow] = await Promise.all([
+      supabaseAdmin.from("system_credentials").select("value").eq("env_key", "LZT_API_TOKEN").maybeSingle(),
+      supabaseAdmin.from("lzt_config").select("max_fetch_price, currency, markup_multiplier, markup_valorant, markup_lol, markup_fortnite, markup_minecraft").limit(1).maybeSingle(),
+    ]);
+
+    const token = credRow.data?.value || Deno.env.get("LZT_MARKET_TOKEN");
     if (!token) {
       return new Response(JSON.stringify({ error: "LZT token not configured" }), {
         status: 500,
