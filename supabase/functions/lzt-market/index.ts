@@ -172,12 +172,12 @@ function shouldKeepItem(item: LztItem, gameType: string, displayedPriceBrl: numb
   if (lastActivity > 0 && (nowSec - lastActivity) < minInactiveSec) return false;
 
   // Valorant: enforce inactivity + fair-price ceiling + max display price
-  if (isValorant) {
+   if (isValorant) {
     const skinCount = Number(item.riot_valorant_skin_count || 0);
     if (skinCount < VAL_MIN_SKINS) return false;
     const fairCeiling = getValorantFairPriceCeiling(item) * PRICE_BUFFER;
     if (displayedPriceBrl > fairCeiling) return false;
-    if (displayedPriceBrl > 900) return false;
+    if (displayedPriceBrl > 1200) return false;
     return true;
   }
 
