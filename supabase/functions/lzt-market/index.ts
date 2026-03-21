@@ -502,6 +502,13 @@ Deno.serve(async (req) => {
         }
       }
 
+      // Also enforce minimum 3 skins for Fortnite
+      if (gameType === "fortnite") {
+        if (!params.get("smin") || Number(params.get("smin")) < 3) {
+          params.set("smin", "3");
+        }
+      }
+
       const arrayParams = [
         "weaponSkin[]", "buddy[]", "agent[]", "valorant_region[]",
         "valorant_rank_type[]", "email_type[]", "country[]",
