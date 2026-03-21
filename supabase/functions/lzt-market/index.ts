@@ -12,8 +12,22 @@ const RUB_TO_BRL = 0.055;
 const USD_TO_BRL = 5.50;
 const MIN_PRICE_BRL = 20;
 const DEFAULT_MARKUP = 3.0;
+const MIN_INACTIVE_DAYS = 30;
+const MAX_RAW_PAGES_PER_REQUEST = 12;
 
 type LztItem = Record<string, any>;
+
+function normalizeUnixTimestamp(value: unknown) {
+  const parsed = Number(value || 0);
+  if (!Number.isFinite(parsed) || parsed <= 0) return 0;
+  return parsed > 1_000_000_000_000 ? Math.floor(parsed / 1000) : Math.floor(parsed);
+}
+
+function getLastActivityTimestamp(item: LztItem) {
+  return normalizeUnixTimestamp(
+    item.account_last_activity || item.riot_last_activity || item.last_activity || item.login_date,
+  );
+}
 
 function log(level: "INFO" | "WARN" | "ERROR", ctx: string, msg: string, data?: Record<string, unknown>) {
   const entry = { ts: new Date().toISOString(), level, ctx, msg, ...(data || {}) };
@@ -157,7 +171,8 @@ function shouldKeepItem(item: LztItem, gameType: string, _displayedPriceBrl: num
   if (item.canBuyItem === false) return false;
 
   // Require minimum 30 days of inactivity for account security
-  const lastActivity = Number(item.account_last_activity || item.riot_last_activity || item.last_activity || item.login_date || 0);
+  const rawLastActivity = Number(item.account_last_activity || item.riot_last_activity || item.last_activity || item.login_date || 0);
+  const lastActivity = rawLastActivity > 1_000_000_000_000 ? Math.floor(rawLastActivity / 1000) : rawLastActivity;
   if (lastActivity > 0) {
     const daysSinceActive = (Date.now() / 1000 - lastActivity) / 86400;
     if (daysSinceActive < 30) return false;
@@ -662,8 +677,9 @@ Deno.serve(async (req) => {
         const isValorant = gameType === "riot" || gameType === "valorant";
         if (!shouldKeepItem(item, gameType, displayedPriceBrl)) {
           if (isValorant) {
+            const rawLastActivity = Number(item.account_last_activity || item.riot_last_activity || item.last_activity || item.login_date || 0);
+            const lastActivity = rawLastActivity > 1_000_000_000_000 ? Math.floor(rawLastActivity / 1000) : rawLastActivity;
             const nowSec = Math.floor(Date.now() / 1000);
-            const lastActivity = Number(item.account_last_activity || item.riot_last_activity || 0);
             if (lastActivity > 0 && (nowSec - lastActivity) < 30 * 86400) {
               filteredByInactivity++;
             } else {
