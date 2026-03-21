@@ -862,7 +862,7 @@ const Contas = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
-  const MAX_PAGES = gameTab === "valorant" ? 8 : 5;
+  const MAX_PAGES = gameTab === "valorant" ? 5 : 4;
 
   // ─── Asset maps ───
   const { data: skinsMap = new Map() } = useQuery({
