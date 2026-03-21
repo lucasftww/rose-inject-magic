@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { CartProvider } from "@/hooks/useCart";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, forwardRef } from "react";
 import AdminGuard from "@/components/AdminGuard";
 
 // Eager-load critical routes
