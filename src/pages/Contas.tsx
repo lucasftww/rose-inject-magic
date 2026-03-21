@@ -802,7 +802,7 @@ const Contas = () => {
   const [selectedRank, setSelectedRank] = useState("todos");
   const [selectedWeapon, setSelectedWeapon] = useState("todos");
   const [onlyKnife, setOnlyKnife] = useState(false);
-  const [valRegion, setValRegion] = useState("all");
+  const [valRegion, setValRegion] = useState("br");
 
   // ─── LoL filters ───
   const [lolRank, setLolRank] = useState("todos");
@@ -1197,7 +1197,7 @@ const Contas = () => {
     setMcHypixelLvlMin("");
     setMcCapesMin("");
     setMcNoBan(false);
-    setValRegion("all");
+    setValRegion("br");
     setLolRegion("BR1");
     setPriceMin(""); setPriceMax("");
     setSearchQuery(""); setOnlyKnife(false);
