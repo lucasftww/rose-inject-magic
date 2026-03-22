@@ -204,8 +204,6 @@ const SoftwareSection = () => {
             initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-60px" }} variants={staggerContainer}
           >
             {activeGames.slice(0, 8).map((game, idx) => {
-          >
-            {activeGames.map((game, idx) => {
               const slug = (game.slug || game.name || "").toLowerCase();
               const image = softwareImageMap[slug] || game.image_url;
               const productCount = game.products?.filter(p => p.active).length || 0;
