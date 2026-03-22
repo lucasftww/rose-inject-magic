@@ -85,7 +85,7 @@ const GamesTab = () => {
     e.preventDefault(); setDragOver(false);
     const file = e.dataTransfer.files[0];
     if (file) uploadFile(file);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [uploadFile]);
 
   const handleGenerateAI = async () => {
