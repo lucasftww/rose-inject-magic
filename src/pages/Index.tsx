@@ -162,7 +162,7 @@ const SoftwareSection = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("games")
-        .select("id, name, slug, image_url, sort_order, active, products:products(id, active)")
+        .select("id, name, slug, image_url, sort_order, active, products:public_products(id, active)")
         .eq("active", true)
         .order("sort_order", { ascending: true });
       return (data || []) as GameFromDB[];
