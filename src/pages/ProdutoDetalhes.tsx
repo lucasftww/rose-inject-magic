@@ -668,28 +668,44 @@ const ProdutoDetalhes = () => {
           <div className="border-t border-border/40 bg-background/95 backdrop-blur-xl px-5 py-3 safe-area-bottom">
             <div className="flex items-center gap-4">
               <div className="flex flex-col min-w-0">
-                <span className="text-[10px] text-muted-foreground/70 leading-none mb-1">Total</span>
-                {isReseller && isResellerForProduct(product.id) ? (
+                {Number(selectedPlan.price) > 0 && (
                   <>
-                    <span className="text-[10px] text-muted-foreground line-through leading-none">R$ {Number(selectedPlan.price).toFixed(2)}</span>
-                    <span className="text-lg font-bold text-success leading-tight">
-                      R$ {(Number(selectedPlan.price) * (1 - discountPercent / 100)).toFixed(2)}
-                    </span>
+                    <span className="text-[10px] text-muted-foreground/70 leading-none mb-1">Total</span>
+                    {isReseller && isResellerForProduct(product.id) ? (
+                      <>
+                        <span className="text-[10px] text-muted-foreground line-through leading-none">R$ {Number(selectedPlan.price).toFixed(2)}</span>
+                        <span className="text-lg font-bold text-success leading-tight">
+                          R$ {(Number(selectedPlan.price) * (1 - discountPercent / 100)).toFixed(2)}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-lg font-bold text-success leading-tight">
+                        R$ {Number(selectedPlan.price).toFixed(2)}
+                      </span>
+                    )}
                   </>
-                ) : (
-                  <span className="text-lg font-bold text-success leading-tight">
-                    R$ {Number(selectedPlan.price).toFixed(2)}
-                  </span>
                 )}
               </div>
               <button
                 onClick={buyNow}
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-success py-3.5 text-sm font-bold uppercase tracking-wider text-success-foreground transition-all active:scale-[0.98]"
+                className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-bold uppercase tracking-wider transition-all active:scale-[0.98] ${
+                  Number(selectedPlan.price) === 0
+                    ? "bg-gradient-to-r from-emerald-500 to-cyan-500 text-white"
+                    : "bg-success text-success-foreground"
+                }`}
                 style={{ fontFamily: "'Valorant', sans-serif" }}
               >
-                <ShoppingCart className="h-4 w-4" />
-                Comprar Agora
-              </button>
+                {Number(selectedPlan.price) === 0 ? (
+                  <>
+                    <Download className="h-4 w-4" />
+                    Obter Grátis
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart className="h-4 w-4" />
+                    Comprar Agora
+                  </>
+                )}
             </div>
           </div>
         </div>
