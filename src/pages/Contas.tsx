@@ -883,7 +883,9 @@ const Contas = () => {
   const [hasNextPage, setHasNextPage] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [isRefetching, setIsRefetching] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+  const prevGameTabRef = useRef(gameTab);
   
   // ─── Persistent Cache (Session Storage) ───
   // Use session storage so when users navigate away and back, it's instant.
@@ -1065,13 +1067,21 @@ const Contas = () => {
 
     // Only show loading skeleton if no cache at all
     if (!cached) {
-      setStreamedItems([]);
+      if (prevGameTabRef.current !== gameTab) {
+        // Full component wipe ONLY when switching games (Valorant -> Fortnite)
+        setStreamedItems([]);
+        setFirstPageLoaded(false);
+      } else {
+        // Just changed filters (like price/sort), keep old items on screen, just dim them!
+        setIsRefetching(true);
+      }
+      prevGameTabRef.current = gameTab;
+      
       setStreamingDone(false);
       setStreamError(null);
       setCurrentPage(1);
       setLoadingMore(false);
       setDisplayPage(1);
-      setFirstPageLoaded(false);
     }
 
     try {
@@ -1080,6 +1090,7 @@ const Contas = () => {
       if (controller.signal.aborted) return;
 
       setFirstPageLoaded(true);
+      setIsRefetching(false);
       const firstPageItems: LztItem[] = data?.items ?? [];
       const hasMore = data?.hasNextPage ?? firstPageItems.length >= 15;
       setHasNextPage(hasMore);
@@ -1097,6 +1108,7 @@ const Contas = () => {
     } catch (err: any) {
       if (!controller.signal.aborted) {
         setFirstPageLoaded(true);
+        setIsRefetching(false);
         setStreamError(err);
         setStreamingDone(true);
       }
@@ -1884,7 +1896,7 @@ const Contas = () => {
             {!isLoading && !streamError && (
               <>
                 <motion.div
-                  className="grid grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3"
+                  className={`grid grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3 transition-opacity duration-300 relative ${isRefetching ? "opacity-50 pointer-events-none" : ""}`}
                   initial="hidden"
                   animate="visible"
                   variants={staggerContainer}
