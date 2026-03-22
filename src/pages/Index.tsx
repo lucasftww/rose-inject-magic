@@ -203,6 +203,8 @@ const SoftwareSection = () => {
             className="mt-5 sm:mt-12 grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4"
             initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-60px" }} variants={staggerContainer}
           >
+            {activeGames.slice(0, 8).map((game, idx) => {
+          >
             {activeGames.map((game, idx) => {
               const slug = (game.slug || game.name || "").toLowerCase();
               const image = softwareImageMap[slug] || game.image_url;
