@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
-import { AlertTriangle, ArrowLeft, ChevronLeft, ChevronRight, Cpu, Fingerprint, Loader2, Monitor, Package, Play, ShoppingCart, Sparkles, Star, UserCheck, Zap } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ChevronLeft, ChevronRight, Cpu, Download, Fingerprint, Loader2, Monitor, Package, Play, ShoppingCart, Sparkles, Star, UserCheck, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { getYouTubeId, getYouTubeEmbedUrl, getYouTubeThumbnail } from "@/lib/videoUtils";
@@ -552,23 +552,44 @@ const ProdutoDetalhes = () => {
                 {/* Total + CTA */}
                 {selectedPlan && (
                   <div className="mt-6">
-                    <div className="mb-4 flex items-end justify-between">
-                      <span className="text-sm text-muted-foreground">Total</span>
-                      {isReseller && isResellerForProduct(product.id) ? (
-                        <div className="text-right">
-                          <span className="text-sm text-muted-foreground line-through mr-2">R$ {Number(selectedPlan.price).toFixed(2)}</span>
-                          <span className="text-2xl font-bold text-success">R$ {(Number(selectedPlan.price) * (1 - discountPercent / 100)).toFixed(2)}</span>
-                        </div>
-                      ) : (
-                        <span className="text-2xl font-bold text-success">R$ {Number(selectedPlan.price).toFixed(2)}</span>
-                      )}
-                    </div>
+                    {Number(selectedPlan.price) > 0 && (
+                      <div className="mb-4 flex items-end justify-between">
+                        <span className="text-sm text-muted-foreground">Total</span>
+                        {isReseller && isResellerForProduct(product.id) ? (
+                          <div className="text-right">
+                            <span className="text-sm text-muted-foreground line-through mr-2">R$ {Number(selectedPlan.price).toFixed(2)}</span>
+                            <span className="text-2xl font-bold text-success">R$ {(Number(selectedPlan.price) * (1 - discountPercent / 100)).toFixed(2)}</span>
+                          </div>
+                        ) : (
+                          <span className="text-2xl font-bold text-success">R$ {Number(selectedPlan.price).toFixed(2)}</span>
+                        )}
+                      </div>
+                    )}
+                    {Number(selectedPlan.price) === 0 && (
+                      <div className="mb-4 flex items-center gap-2 rounded-lg bg-emerald-500/10 px-4 py-3">
+                        <Download className="h-5 w-5 text-emerald-400" />
+                        <span className="text-sm text-emerald-300">Software gratuito — obtenha acesso instantâneo!</span>
+                      </div>
+                    )}
                     <button
                       onClick={buyNow}
-                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-success py-4 text-sm font-bold uppercase tracking-wider text-success-foreground transition-all hover:shadow-[0_0_30px_hsl(130,99%,41%,0.4)] active:scale-[0.98]"
+                      className={`flex w-full items-center justify-center gap-2 rounded-xl py-4 text-sm font-bold uppercase tracking-wider transition-all active:scale-[0.98] ${
+                        Number(selectedPlan.price) === 0
+                          ? "bg-gradient-to-r from-emerald-500 to-cyan-500 text-white hover:shadow-[0_0_30px_hsl(160,80%,45%,0.4)]"
+                          : "bg-success text-success-foreground hover:shadow-[0_0_30px_hsl(130,99%,41%,0.4)]"
+                      }`}
                       style={{ fontFamily: "'Valorant', sans-serif" }}>
-                      <Zap className="h-4 w-4" />
-                      COMPRAR AGORA
+                      {Number(selectedPlan.price) === 0 ? (
+                        <>
+                          <Download className="h-4 w-4" />
+                          OBTER GRÁTIS
+                        </>
+                      ) : (
+                        <>
+                          <Zap className="h-4 w-4" />
+                          COMPRAR AGORA
+                        </>
+                      )}
                     </button>
                   </div>
                 )}
@@ -647,27 +668,44 @@ const ProdutoDetalhes = () => {
           <div className="border-t border-border/40 bg-background/95 backdrop-blur-xl px-5 py-3 safe-area-bottom">
             <div className="flex items-center gap-4">
               <div className="flex flex-col min-w-0">
-                <span className="text-[10px] text-muted-foreground/70 leading-none mb-1">Total</span>
-                {isReseller && isResellerForProduct(product.id) ? (
+                {Number(selectedPlan.price) > 0 && (
                   <>
-                    <span className="text-[10px] text-muted-foreground line-through leading-none">R$ {Number(selectedPlan.price).toFixed(2)}</span>
-                    <span className="text-lg font-bold text-success leading-tight">
-                      R$ {(Number(selectedPlan.price) * (1 - discountPercent / 100)).toFixed(2)}
-                    </span>
+                    <span className="text-[10px] text-muted-foreground/70 leading-none mb-1">Total</span>
+                    {isReseller && isResellerForProduct(product.id) ? (
+                      <>
+                        <span className="text-[10px] text-muted-foreground line-through leading-none">R$ {Number(selectedPlan.price).toFixed(2)}</span>
+                        <span className="text-lg font-bold text-success leading-tight">
+                          R$ {(Number(selectedPlan.price) * (1 - discountPercent / 100)).toFixed(2)}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-lg font-bold text-success leading-tight">
+                        R$ {Number(selectedPlan.price).toFixed(2)}
+                      </span>
+                    )}
                   </>
-                ) : (
-                  <span className="text-lg font-bold text-success leading-tight">
-                    R$ {Number(selectedPlan.price).toFixed(2)}
-                  </span>
                 )}
               </div>
               <button
                 onClick={buyNow}
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-success py-3.5 text-sm font-bold uppercase tracking-wider text-success-foreground transition-all active:scale-[0.98]"
+                className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-bold uppercase tracking-wider transition-all active:scale-[0.98] ${
+                  Number(selectedPlan.price) === 0
+                    ? "bg-gradient-to-r from-emerald-500 to-cyan-500 text-white"
+                    : "bg-success text-success-foreground"
+                }`}
                 style={{ fontFamily: "'Valorant', sans-serif" }}
               >
-                <ShoppingCart className="h-4 w-4" />
-                Comprar Agora
+                {Number(selectedPlan.price) === 0 ? (
+                  <>
+                    <Download className="h-4 w-4" />
+                    Obter Grátis
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart className="h-4 w-4" />
+                    Comprar Agora
+                  </>
+                )}
               </button>
             </div>
           </div>
