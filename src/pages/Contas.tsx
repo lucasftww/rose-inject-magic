@@ -1115,13 +1115,15 @@ const Contas = () => {
     }
   }, [buildParams, debouncedParamsKey, fetchWithRetry, cacheSet]);
 
-  // Prefetch adjacent game tabs in background for instant switching
+  // Prefetch adjacent game tabs in background for instant switching (staggered to avoid 429 Rate Limits)
   const prefetchRef = useRef(new Set<string>());
-  const prefetchAdjacentTabs = useCallback(async () => {
+  const prefetchAdjacentTabs = useCallback(() => {
     const allTabs: GameTab[] = ["valorant", "lol", "fortnite", "minecraft"];
     const otherTabs = allTabs.filter(t => t !== gameTab);
     const projectUrl = import.meta.env.VITE_SUPABASE_URL;
     const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+    let delayMultiplier = 0;
 
     for (const tab of otherTabs) {
       if (prefetchRef.current.has(tab)) continue;
@@ -1136,17 +1138,21 @@ const Contas = () => {
       if (tab === "valorant") qp.append("country[]", "Bra");
       if (tab === "lol") qp.append("lol_region[]", "BR1");
 
-      try {
-        const res = await fetch(`${projectUrl}/functions/v1/lzt-market?${qp.toString()}`, {
-          headers: { "Content-Type": "application/json", apikey: anonKey },
-        });
-        if (!res.ok) continue;
-        const data = await res.json();
-        const items: LztItem[] = data?.items ?? [];
-        const hasMore = data?.hasNextPage ?? items.length >= 15;
-        // Store using a prefetch-specific key
-        cacheSet(`__prefetch__${tab}`, { items, hasNextPage: hasMore, currentPage: 1, timestamp: Date.now() });
-      } catch { /* silent */ }
+      // Stagger fetches by 2000ms carefully to avoid hammering the LZT backend
+      setTimeout(async () => {
+        try {
+          const res = await fetch(`${projectUrl}/functions/v1/lzt-market?${qp.toString()}`, {
+            headers: { "Content-Type": "application/json", apikey: anonKey },
+          });
+          if (!res.ok) return;
+          const data = await res.json();
+          const items: LztItem[] = data?.items ?? [];
+          const hasMore = data?.hasNextPage ?? items.length >= 15;
+          cacheSet(`__prefetch__${tab}`, { items, hasNextPage: hasMore, currentPage: 1, timestamp: Date.now() });
+        } catch { /* silent */ }
+      }, delayMultiplier * 2500);
+      
+      delayMultiplier++;
     }
   }, [gameTab, cacheSet]);
 
@@ -1174,17 +1180,18 @@ const Contas = () => {
         if (controller.signal.aborted) return;
         const items: LztItem[] = data?.items ?? [];
         const hasMore = data?.hasNextPage ?? items.length >= 15;
+        // Don't wipe items, just silently update
         setStreamedItems(items);
         setHasNextPage(hasMore);
         setCurrentPage(1);
         cacheSet(cacheKey, { items, hasNextPage: hasMore, currentPage: 1, timestamp: Date.now() });
-      } catch { /* silent — user already sees prefetched data */ }
+      } catch { /* silent */ }
       return;
     }
 
     // Fallback to original logic
     await fetchMultiplePages(controller);
-  }, [buildParams, debouncedParamsKey, fetchMultiplePages, fetchWithRetry, gameTab]);
+  }, [buildParams, debouncedParamsKey, fetchMultiplePages, fetchWithRetry, gameTab, cacheSet]);
 
   useEffect(() => {
     abortRef.current?.abort();
@@ -1197,11 +1204,11 @@ const Contas = () => {
   // Trigger prefetch after initial load completes
   useEffect(() => {
     if (firstPageLoaded && streamedItems.length > 0) {
-      // Disabled aggressive prefetch to prevent LZT API rate limits and browser slowness
-      // const timer = setTimeout(prefetchAdjacentTabs, 500);
-      // return () => clearTimeout(timer);
+      // Re-enabled Staggered Prefetch (Safe from 429 API Rate Limit)
+      const timer = setTimeout(prefetchAdjacentTabs, 1500);
+      return () => clearTimeout(timer);
     }
-  }, [firstPageLoaded, gameTab]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [firstPageLoaded, gameTab, prefetchAdjacentTabs]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadMorePages = async () => {
     if (loadingMore || !hasNextPage) return;
