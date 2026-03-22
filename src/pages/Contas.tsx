@@ -884,12 +884,27 @@ const Contas = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+  
+  // ─── Persistent Cache (Session Storage) ───
+  // Use session storage so when users navigate away and back, it's instant.
   const fetchCacheRef = useRef(new Map<string, { items: LztItem[]; hasNextPage: boolean; currentPage: number; timestamp: number }>());
   const MAX_CACHE_ENTRIES = 20;
+
+  // Hydrate memory cache once on mount
+  useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem("royal_lzt_cache");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        fetchCacheRef.current = new Map(parsed);
+      }
+    } catch { /* silent */ }
+  }, []);
+
   const cacheSet = useCallback((key: string, value: { items: LztItem[]; hasNextPage: boolean; currentPage: number; timestamp: number }) => {
     const cache = fetchCacheRef.current;
     cache.set(key, value);
-    // Evict oldest entries when cache grows too large
+    // Evict oldest entries
     if (cache.size > MAX_CACHE_ENTRIES) {
       let oldestKey = '';
       let oldestTs = Infinity;
@@ -898,6 +913,10 @@ const Contas = () => {
       }
       if (oldestKey) cache.delete(oldestKey);
     }
+    // Persist to session storage
+    try {
+      sessionStorage.setItem("royal_lzt_cache", JSON.stringify(Array.from(cache.entries())));
+    } catch { /* silent */ }
   }, []);
   const MAX_PAGES = 8;
   const [firstPageLoaded, setFirstPageLoaded] = useState(false);
