@@ -1166,8 +1166,9 @@ const Contas = () => {
   // Trigger prefetch after initial load completes
   useEffect(() => {
     if (firstPageLoaded && streamedItems.length > 0) {
-      const timer = setTimeout(prefetchAdjacentTabs, 500);
-      return () => clearTimeout(timer);
+      // Disabled aggressive prefetch to prevent LZT API rate limits and browser slowness
+      // const timer = setTimeout(prefetchAdjacentTabs, 500);
+      // return () => clearTimeout(timer);
     }
   }, [firstPageLoaded, gameTab]); // eslint-disable-line react-hooks/exhaustive-deps
 
