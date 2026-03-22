@@ -338,7 +338,7 @@ const Dashboard = () => {
                           className="flex cursor-pointer items-center gap-3 rounded-md p-3 transition-all hover:bg-secondary/50 group"
                         >
                           {t.image_url ? (
-                            <img src={t.image_url} alt="" className="h-10 w-10 rounded-md object-cover ring-1 ring-border" />
+                            <img src={t.image_url} alt="" className="h-10 w-10 rounded-md object-cover ring-1 ring-border" loading="lazy" />
                           ) : (
                             <div className="h-10 w-10 rounded-md bg-secondary flex items-center justify-center ring-1 ring-border">
                               <Package className="h-4 w-4 text-muted-foreground" />
@@ -490,7 +490,7 @@ const Dashboard = () => {
                       <div className="flex gap-2 overflow-hidden">
                         {tickets.filter(t => !t.metadata?.type || t.metadata?.type === "robot-project").slice(0, 4).map((t) => (
                           <div key={t.id} className="relative shrink-0 h-8 w-8 rounded-lg overflow-hidden border border-border bg-secondary">
-                            {t.image_url ? <img src={t.image_url} alt="" className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center"><Package className="h-3.5 w-3.5 text-muted-foreground/40" /></div>}
+                            {t.image_url ? <img src={t.image_url} alt="" className="h-full w-full object-cover" loading="lazy" /> : <div className="flex h-full items-center justify-center"><Package className="h-3.5 w-3.5 text-muted-foreground/40" /></div>}
                           </div>
                         ))}
                         {tickets.filter(t => !t.metadata?.type || t.metadata?.type === "robot-project").length > 4 && (
@@ -544,7 +544,7 @@ const Dashboard = () => {
                       <div className="flex gap-2 overflow-hidden">
                         {tickets.filter(t => t.metadata?.type === "lzt-account").slice(0, 4).map((t) => (
                           <div key={t.id} className="relative shrink-0 h-8 w-8 rounded-lg overflow-hidden border border-border bg-secondary">
-                            {t.image_url ? <img src={t.image_url} alt="" className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center"><Smartphone className="h-3.5 w-3.5 text-muted-foreground/40" /></div>}
+                            {t.image_url ? <img src={t.image_url} alt="" className="h-full w-full object-cover" loading="lazy" /> : <div className="flex h-full items-center justify-center"><Smartphone className="h-3.5 w-3.5 text-muted-foreground/40" /></div>}
                           </div>
                         ))}
                         {tickets.filter(t => t.metadata?.type === "lzt-account").length > 4 && (
@@ -580,7 +580,7 @@ const Dashboard = () => {
                         className="group flex cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 transition-colors hover:bg-secondary/50"
                       >
                         <div className="shrink-0 h-9 w-9 rounded-lg overflow-hidden border border-border bg-secondary">
-                          {t.image_url ? <img src={t.image_url} alt="" className="h-full w-full object-cover" /> : (
+                          {t.image_url ? <img src={t.image_url} alt="" className="h-full w-full object-cover" loading="lazy" /> : (
                             <div className="flex h-full items-center justify-center">
                               {t.metadata?.type === "lzt-account" ? <Smartphone className="h-3.5 w-3.5 text-muted-foreground/40" /> : <Package className="h-3.5 w-3.5 text-muted-foreground/40" />}
                             </div>
