@@ -4,6 +4,7 @@ import { translateRegion } from "@/lib/regionTranslation";
 import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/Header";
 import { ArrowLeft, Shield, Loader2, ChevronRight, ChevronLeft, CheckCircle2, ShoppingCart, Swords, Users, Star, X, Zap } from "lucide-react";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useMemo, useCallback, useEffect, useRef, forwardRef } from "react";
 import { useCart } from "@/hooks/useCart";
@@ -797,10 +798,11 @@ const ContaDetalhes = () => {
               )}
                   </div> :
             activeLoading ?
-            <div className="flex items-center justify-center py-12 rounded-lg border border-border bg-card">
-                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground mr-2" />
-                    <p className="text-sm text-muted-foreground">Carregando itens...</p>
-                  </div> :
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2.5 sm:gap-3">
+              {Array.from({ length: 12 }).map((_, i) => (
+                <Skeleton key={i} className="aspect-square w-full rounded-xl" />
+              ))}
+            </div> :
             activeError ?
             <div className="flex items-center justify-center py-12 rounded-lg border border-border bg-card">
                     <p className="text-sm text-muted-foreground">Erro ao carregar itens. Tente recarregar a página.</p>

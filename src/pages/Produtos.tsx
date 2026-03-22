@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import { Search, SlidersHorizontal, DollarSign, ArrowLeft, Loader2, Package, Tag, ArrowUpDown, UserCheck, X, ArrowRight, Star, Gamepad2, Gift, Shield } from "lucide-react";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useReseller } from "@/hooks/useReseller";
@@ -222,7 +223,11 @@ const GameSelectScreen = ({ onSelect, games, loading }: { onSelect: (gameId: str
       </section>
 
       {loading ? (
-        <div className="flex items-center justify-center py-32"><Loader2 className="h-8 w-8 animate-spin text-success" /></div>
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-4 sm:py-8 grid grid-cols-2 gap-3 sm:gap-5 sm:grid-cols-3 lg:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+             <Skeleton key={i} className="aspect-[3/4] w-full rounded-2xl" />
+          ))}
+        </div>
       ) : filteredBySearch.length === 0 ? (
         <div className="py-32 text-center text-muted-foreground">
           {gameSearch ? `Nenhum jogo encontrado para "${gameSearch}"` : 'Nenhum jogo disponível no momento.'}
@@ -466,13 +471,17 @@ const Produtos = () => {
       })
       .sort((a, b) => {
         if (sortBy === "Menor Preço") {
-          const aMin = Math.min(...(a.product_plans?.filter(p => p.active).map(p => Number(p.price)) || [Infinity]));
-          const bMin = Math.min(...(b.product_plans?.filter(p => p.active).map(p => Number(p.price)) || [Infinity]));
+          const aPlans = a.product_plans?.filter(p => p.active) || [];
+          const bPlans = b.product_plans?.filter(p => p.active) || [];
+          const aMin = aPlans.length ? Math.min(...aPlans.map(p => Number(p.price))) : Infinity;
+          const bMin = bPlans.length ? Math.min(...bPlans.map(p => Number(p.price))) : Infinity;
           return aMin - bMin;
         }
         if (sortBy === "Maior Preço") {
-          const aMax = Math.max(...(a.product_plans?.filter(p => p.active).map(p => Number(p.price)) || [0]));
-          const bMax = Math.max(...(b.product_plans?.filter(p => p.active).map(p => Number(p.price)) || [0]));
+          const aPlans = a.product_plans?.filter(p => p.active) || [];
+          const bPlans = b.product_plans?.filter(p => p.active) || [];
+          const aMax = aPlans.length ? Math.max(...aPlans.map(p => Number(p.price))) : -Infinity;
+          const bMax = bPlans.length ? Math.max(...bPlans.map(p => Number(p.price))) : -Infinity;
           return bMax - aMax;
         }
         return 0;
@@ -739,8 +748,10 @@ const Produtos = () => {
 
           {/* Products Grid */}
           {loadingProducts ? (
-            <div className="flex-1 flex items-center justify-center py-20">
-              <Loader2 className="h-8 w-8 animate-spin text-success" />
+            <div className="flex-1 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                 <Skeleton key={i} className="h-96 w-full rounded-lg" />
+              ))}
             </div>
           ) : (
             <motion.div
