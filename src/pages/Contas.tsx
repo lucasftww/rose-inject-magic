@@ -1006,7 +1006,7 @@ const Contas = () => {
     // Only debounce text input changes (search, price, level fields)
     const handler = setTimeout(() => {
       setDebouncedParamsKey(paramsKey);
-    }, 150);
+    }, 700); // Increased debounce to 700ms for better performance
     return () => clearTimeout(handler);
   }, [paramsKey, nonTextParamsKey]);
 

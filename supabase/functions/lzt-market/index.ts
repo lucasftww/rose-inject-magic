@@ -207,6 +207,8 @@ function shouldKeepItem(item: LztItem, gameType: string, _displayedPriceBrl: num
   return true;
 }
 
+const globalLztCache = new Map<string, { data: any; expiry: number }>();
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -638,6 +640,23 @@ Deno.serve(async (req) => {
       }
     }
 
+    const shouldCache = action !== "detail" && action !== "fast-buy" && action !== "change-price" && action !== "image-proxy";
+    const cacheKey = apiUrl + "|" + activeMarkup;
+
+    if (shouldCache) {
+      const cached = globalLztCache.get(cacheKey);
+      if (cached && cached.expiry > Date.now()) {
+        console.log("Serving from global cache:", apiUrl);
+        return new Response(JSON.stringify(cached.data), {
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+            "Cache-Control": "public, max-age=60, s-maxage=60",
+          },
+        });
+      }
+    }
+
     console.log("Fetching:", apiUrl);
 
     let response: Response | null = null;
@@ -849,6 +868,15 @@ Deno.serve(async (req) => {
 
     // Add cache headers: list responses cached 2 min, detail cached 30s
     const cacheMaxAge = action === "detail" ? 30 : previewMode ? 300 : 120;
+
+    if (shouldCache) {
+      // Free up memory if cache gets too large (>200 items)
+      if (globalLztCache.size > 200) {
+        const oldestKey = globalLztCache.keys().next().value;
+        if (oldestKey) globalLztCache.delete(oldestKey);
+      }
+      globalLztCache.set(cacheKey, { data, expiry: Date.now() + 60_000 });
+    }
 
     return new Response(JSON.stringify(data), {
       headers: {
