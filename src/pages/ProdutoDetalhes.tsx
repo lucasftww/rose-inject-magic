@@ -706,6 +706,7 @@ const ProdutoDetalhes = () => {
                     Comprar Agora
                   </>
                 )}
+              </button>
             </div>
           </div>
         </div>
