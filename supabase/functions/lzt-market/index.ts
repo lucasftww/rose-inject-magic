@@ -555,12 +555,6 @@ Deno.serve(async (req) => {
         } else {
           params.delete("pmax");
         }
-      } else {
-        const defaultMaxFetchPriceBrl = Number(lztConfig?.max_fetch_price) > 0
-          ? Number(lztConfig?.max_fetch_price)
-          : 2000;
-        const defaultPmaxSeller = convertBrlToSellerPrice(defaultMaxFetchPriceBrl, effectiveCurrency, activeMarkup);
-        if (defaultPmaxSeller) params.set("pmax", String(defaultPmaxSeller));
       }
 
       if (gameType === "fortnite") {
