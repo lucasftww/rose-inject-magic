@@ -33,6 +33,9 @@ declare global {
 const PIXEL_ID = "4378225905838577";
 const STORAGE_KEY_EM = "_meta_em";
 const STORAGE_KEY_EID = "_meta_eid";
+const STORAGE_KEY_PH = "_meta_ph";
+const STORAGE_KEY_FN = "_meta_fn";
+const STORAGE_KEY_LN = "_meta_ln";
 
 // ─── SHA-256 Hashing ────────────────────────────────────────────────────────
 
@@ -54,13 +57,16 @@ sha256("br").then((h) => { _countryHash = h; });
 
 // ─── Cached user identity ───────────────────────────────────────────────────
 
-let _cachedUserData: { em?: string; external_id?: string } = {};
+let _cachedUserData: { em?: string; external_id?: string; ph?: string; fn?: string; ln?: string } = {};
 let _pixelInitWithAM = false;
 
 const persistUserData = () => {
   try {
     if (_cachedUserData.em) localStorage.setItem(STORAGE_KEY_EM, _cachedUserData.em);
     if (_cachedUserData.external_id) localStorage.setItem(STORAGE_KEY_EID, _cachedUserData.external_id);
+    if (_cachedUserData.ph) localStorage.setItem(STORAGE_KEY_PH, _cachedUserData.ph);
+    if (_cachedUserData.fn) localStorage.setItem(STORAGE_KEY_FN, _cachedUserData.fn);
+    if (_cachedUserData.ln) localStorage.setItem(STORAGE_KEY_LN, _cachedUserData.ln);
   } catch (_) { /* ignore */ }
 };
 
@@ -68,8 +74,15 @@ const restoreUserData = () => {
   try {
     const em = localStorage.getItem(STORAGE_KEY_EM);
     const eid = localStorage.getItem(STORAGE_KEY_EID);
+    const ph = localStorage.getItem(STORAGE_KEY_PH);
+    const fn = localStorage.getItem(STORAGE_KEY_FN);
+    const ln = localStorage.getItem(STORAGE_KEY_LN);
+
     if (em) _cachedUserData.em = em;
     if (eid) _cachedUserData.external_id = eid;
+    if (ph) _cachedUserData.ph = ph;
+    if (fn) _cachedUserData.fn = fn;
+    if (ln) _cachedUserData.ln = ln;
   } catch (_) { /* ignore */ }
 };
 
@@ -81,6 +94,8 @@ export const setAdvancedMatching = async (userData: {
   email?: string | null;
   phone?: string | null;
   externalId?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
 }) => {
   const matchData: Record<string, string> = {};
 
@@ -94,7 +109,24 @@ export const setAdvancedMatching = async (userData: {
   if (userData.phone) {
     const cleaned = userData.phone.replace(/\D/g, "");
     const hashed = await sha256(cleaned);
-    if (hashed) matchData.ph = hashed;
+    if (hashed) {
+      matchData.ph = hashed;
+      _cachedUserData.ph = hashed;
+    }
+  }
+  if (userData.firstName) {
+    const hashed = await sha256(userData.firstName);
+    if (hashed) {
+      matchData.fn = hashed;
+      _cachedUserData.fn = hashed;
+    }
+  }
+  if (userData.lastName) {
+    const hashed = await sha256(userData.lastName);
+    if (hashed) {
+      matchData.ln = hashed;
+      _cachedUserData.ln = hashed;
+    }
   }
   if (userData.externalId) {
     const hashed = await sha256(userData.externalId);
@@ -122,6 +154,9 @@ export const clearAdvancedMatching = () => {
   try {
     localStorage.removeItem(STORAGE_KEY_EM);
     localStorage.removeItem(STORAGE_KEY_EID);
+    localStorage.removeItem(STORAGE_KEY_PH);
+    localStorage.removeItem(STORAGE_KEY_FN);
+    localStorage.removeItem(STORAGE_KEY_LN);
   } catch (_) { /* ignore */ }
 };
 
@@ -252,9 +287,12 @@ export const getUserData = (): Record<string, string> => {
     // User agent
     data.client_user_agent = navigator.userAgent;
 
-    // Hashed email + external_id
-    if (!_cachedUserData.em && !_cachedUserData.external_id) restoreUserData();
+    // Hashed email + external_id + advanced
+    if (!_cachedUserData.em && !_cachedUserData.external_id && !_cachedUserData.ph) restoreUserData();
     if (_cachedUserData.em) data.em = _cachedUserData.em;
+    if (_cachedUserData.ph) data.ph = _cachedUserData.ph;
+    if (_cachedUserData.fn) data.fn = _cachedUserData.fn;
+    if (_cachedUserData.ln) data.ln = _cachedUserData.ln;
 
     // external_id: prefer authenticated user ID, fallback to first-party tracking ID
     if (_cachedUserData.external_id) {

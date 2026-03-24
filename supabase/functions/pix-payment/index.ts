@@ -191,11 +191,14 @@ async function sendServerPurchaseEvent(payment: any, req: Request) {
 
     const userData: Record<string, string> = {};
     
-    // 1. Browser-captured identity data (fbp, fbc, external_id, em, country)
+    // 1. Browser-captured identity data (fbp, fbc, external_id, em, ph, fn, ln, country)
     if (browserData.fbp) userData.fbp = browserData.fbp;
     if (browserData.fbc) userData.fbc = browserData.fbc;
     if (browserData.external_id) userData.external_id = browserData.external_id;
     if (browserData.em) userData.em = browserData.em;
+    if (browserData.ph) userData.ph = browserData.ph;
+    if (browserData.fn) userData.fn = browserData.fn;
+    if (browserData.ln) userData.ln = browserData.ln;
     if (browserData.country) userData.country = browserData.country;
     if (browserData.client_user_agent) userData.client_user_agent = browserData.client_user_agent;
     

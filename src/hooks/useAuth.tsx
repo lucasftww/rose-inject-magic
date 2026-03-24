@@ -56,9 +56,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   /** Send Advanced Matching data to Meta Pixel + cache for CAPI */
   const syncAdvancedMatching = (u: User) => {
+    const rawName = (u.user_metadata?.username || "").trim();
+    const nameParts = rawName.split(" ");
+    const firstName = nameParts[0] || undefined;
+    const lastName = nameParts.length > 1 ? nameParts.slice(1).join(" ") : undefined;
+    const phone = u.phone || u.user_metadata?.phone || undefined;
+
     setAdvancedMatching({
       email: u.email,
       externalId: u.id,
+      firstName,
+      lastName,
+      phone,
     });
   };
 
