@@ -6,7 +6,7 @@
  *   Browser → fbq events with Advanced Matching
  *   Server  → Edge Function meta-capi with event_id deduplication
  *
- * Events: PageView (auto), ViewContent, InitiateCheckout, Purchase
+ * Events: PageView (manual for SPA), ViewContent, InitiateCheckout, Purchase
  * Categories: Valorant, Fortnite, Roblox, Minecraft, LoL, CS2, GTA
  *
  * user_data sent to CAPI:
@@ -142,11 +142,36 @@ export const setAdvancedMatching = async (userData: {
 
   persistUserData();
 
-  if (typeof window !== "undefined" && window.fbq && Object.keys(matchData).length > 0 && !_pixelInitWithAM) {
+  if (typeof window !== "undefined" && window.fbq && Object.keys(matchData).length > 0) {
     _pixelInitWithAM = true;
-    window.fbq("init", PIXEL_ID, matchData);
+    window.fbq("init", PIXEL_ID, { ...matchData, external_id: matchData.external_id || undefined });
+    // Re-track page view with new identity if we just initialized or updated significant data
+    trackPageView();
   }
 };
+
+/** Initialize the Pixel with cached data or default settings */
+export const initPixel = () => {
+  if (typeof window === "undefined" || !window.fbq || _pixelInitWithAM) return;
+
+  restoreUserData();
+
+  const matchData: Record<string, string> = {};
+  if (_cachedUserData.em) matchData.em = _cachedUserData.em;
+  if (_cachedUserData.ph) matchData.ph = _cachedUserData.ph;
+  if (_cachedUserData.fn) matchData.fn = _cachedUserData.fn;
+  if (_cachedUserData.ln) matchData.ln = _cachedUserData.ln;
+  if (_cachedUserData.external_id) matchData.external_id = _cachedUserData.external_id;
+  matchData.country = "br";
+
+  _pixelInitWithAM = true;
+  window.fbq("init", PIXEL_ID, Object.keys(matchData).length > 0 ? matchData : undefined);
+};
+
+// Eager initialization on module load
+if (typeof window !== "undefined") {
+  initPixel();
+}
 
 export const clearAdvancedMatching = () => {
   _cachedUserData = {};
@@ -383,6 +408,14 @@ const sendCAPI = (
 };
 
 // ─── Event Tracking ─────────────────────────────────────────────────────────
+
+export const trackPageView = () => {
+  if (typeof window === "undefined" || !window.fbq) return;
+
+  // We don't send PageView to CAPI usually to avoid noise,
+  // but we ensure Pixel tracks it with identity present.
+  window.fbq("track", "PageView");
+};
 
 export const trackViewContent = (data: TrackingData) => {
   if (typeof window === "undefined") return;

@@ -7,6 +7,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { CartProvider } from "@/hooks/useCart";
 import { lazy, Suspense } from "react";
 import AdminGuard from "@/components/AdminGuard";
+import RouteTracker from "@/components/RouteTracker";
 
 // Eager-load critical routes
 import Index from "./pages/Index";
@@ -64,6 +65,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <RouteTracker />
             <Suspense fallback={<LazyFallback />}>
               <Routes>
                 <Route path="/" element={<Index />} />
