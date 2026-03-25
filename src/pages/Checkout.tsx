@@ -8,7 +8,7 @@ import { toast } from "@/hooks/use-toast";
 import { Loader2, Copy, Check, Clock, ArrowLeft, Package, ShieldCheck, Zap, CreditCard, Wallet, Sparkles, ChevronRight, ExternalLink } from "lucide-react";
 import logoRoyal from "@/assets/logo-royal.png";
 import { motion } from "framer-motion";
-import { trackPurchase, resolveCategory, getUserData } from "@/lib/metaPixel";
+import { trackPurchase, resolveCategory, getUserData, setAdvancedMatching } from "@/lib/metaPixel";
 
 type PaymentMethod = "pix" | "card" | "crypto" | null;
 
@@ -17,6 +17,14 @@ const Checkout = () => {
   const { user, loading: authLoading } = useAuth();
   const { items, clearCart } = useCart();
   const [searchParams] = useSearchParams();
+
+  const [formData, setFormData] = useState({ 
+    name: "", 
+    email: user?.email || "", 
+    phone: "", 
+    document: "" 
+  });
+  const [formValid, setFormValid] = useState(false);
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(null);
   const [loading, setLoading] = useState(false);
@@ -59,7 +67,19 @@ const Checkout = () => {
   useEffect(() => {
     if (!authLoading && !user) navigate("/");
     if (!authLoading && user && items.length === 0 && !paymentId) navigate("/");
+    if (user?.email && !formData.email) {
+      setFormData(prev => ({ ...prev, email: user.email! }));
+    }
   }, [authLoading, user, items.length, navigate, paymentId]);
+
+  useEffect(() => {
+    const isValid = 
+      formData.name.trim().length >= 3 &&
+      formData.email.includes("@") &&
+      formData.phone.replace(/\D/g, "").length >= 10 &&
+      formData.document.replace(/\D/g, "").length === 11;
+    setFormValid(isValid);
+  }, [formData]);
 
   useEffect(() => {
     supabase.from("payment_settings").select("method, enabled").then(({ data }) => {
@@ -109,6 +129,15 @@ const Checkout = () => {
   const createPixCharge = async () => {
     if (!user || loading) return;
     setLoading(true);
+    
+    await setAdvancedMatching({
+      email: formData.email,
+      phone: "55" + formData.phone.replace(/\D/g, ""),
+      firstName: formData.name.split(" ")[0],
+      lastName: formData.name.split(" ").slice(1).join(" "),
+      externalId: user.id
+    });
+
     try {
       const res = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pix-payment?action=create`,
@@ -119,6 +148,7 @@ const Checkout = () => {
             cart_snapshot: buildCartSnapshot(),
             coupon_id: couponId,
             meta_user_data: getUserData(),
+            customer_data: formData,
           }),
         }
       );
@@ -145,6 +175,15 @@ const Checkout = () => {
   const createCardCharge = async () => {
     if (!user || loading) return;
     setLoading(true);
+    
+    await setAdvancedMatching({
+      email: formData.email,
+      phone: "55" + formData.phone.replace(/\D/g, ""),
+      firstName: formData.name.split(" ")[0],
+      lastName: formData.name.split(" ").slice(1).join(" "),
+      externalId: user.id
+    });
+
     try {
       const res = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pix-payment?action=create-card`,
@@ -155,6 +194,7 @@ const Checkout = () => {
             cart_snapshot: buildCartSnapshot(),
             coupon_id: couponId,
             meta_user_data: getUserData(),
+            customer_data: formData,
           }),
         }
       );
@@ -182,6 +222,15 @@ const Checkout = () => {
   const createCryptoCharge = async () => {
     if (!user || loading) return;
     setLoading(true);
+
+    await setAdvancedMatching({
+      email: formData.email,
+      phone: "55" + formData.phone.replace(/\D/g, ""),
+      firstName: formData.name.split(" ")[0],
+      lastName: formData.name.split(" ").slice(1).join(" "),
+      externalId: user.id
+    });
+
     try {
       const res = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pix-payment?action=create-crypto`,
@@ -192,6 +241,7 @@ const Checkout = () => {
               cart_snapshot: buildCartSnapshot(),
               coupon_id: couponId,
               meta_user_data: getUserData(),
+              customer_data: formData,
             }),
         }
       );
@@ -460,8 +510,83 @@ const Checkout = () => {
               </div>
             </motion.div>
 
+            {/* Customer Data Form */}
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 }}
+              className="mx-auto mb-10 max-w-lg space-y-4 rounded-xl border border-border/80 bg-card p-6"
+            >
+              <h3 className="text-lg font-bold text-foreground">Seus Dados</h3>
+              <p className="text-xs text-muted-foreground mb-4">Esses dados garantem a segurança e entrega do seu pedido.</p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-foreground">Nome Completo</label>
+                  <input 
+                    type="text" 
+                    value={formData.name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    className="w-full rounded-md border border-border/50 bg-background/50 px-3 py-2 text-sm text-foreground focus:border-success focus:outline-none focus:ring-1 focus:ring-success/50" 
+                    placeholder="Seu nome"
+                  />
+                </div>
+                
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-foreground">E-mail</label>
+                  <input 
+                    type="email" 
+                    value={formData.email}
+                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                    className="w-full rounded-md border border-border/50 bg-background/50 px-3 py-2 text-sm text-foreground focus:border-success focus:outline-none focus:ring-1 focus:ring-success/50" 
+                    placeholder="email@exemplo.com"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-foreground">Telefone (WhatsApp)</label>
+                  <input 
+                    type="tel" 
+                    value={formData.phone}
+                    onChange={(e) => {
+                      // Apply simple mask
+                      let val = e.target.value.replace(/\D/g, "");
+                      if (val.length > 11) val = val.slice(0, 11);
+                      if (val.length > 2) val = `(${val.slice(0,2)}) ${val.slice(2)}`;
+                      if (val.length > 10) val = val.replace(/(\d{5})(\d)/, "$1-$2");
+                      setFormData(prev => ({ ...prev, phone: val }));
+                    }}
+                    className="w-full rounded-md border border-border/50 bg-background/50 px-3 py-2 text-sm text-foreground focus:border-success focus:outline-none focus:ring-1 focus:ring-success/50" 
+                    placeholder="(00) 00000-0000"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-foreground">CPF</label>
+                  <input 
+                    type="text" 
+                    value={formData.document}
+                    onChange={(e) => {
+                      // Apply simple CPF mask
+                      let val = e.target.value.replace(/\D/g, "");
+                      if (val.length > 11) val = val.slice(0, 11);
+                      val = val.replace(/(\d{3})(\d)/, "$1.$2");
+                      val = val.replace(/(\d{3})(\d)/, "$1.$2");
+                      val = val.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+                      setFormData(prev => ({ ...prev, document: val }));
+                    }}
+                    className="w-full rounded-md border border-border/50 bg-background/50 px-3 py-2 text-sm text-foreground focus:border-success focus:outline-none focus:ring-1 focus:ring-success/50" 
+                    placeholder="000.000.000-00"
+                  />
+                </div>
+              </div>
+            </motion.div>
+
             {/* Payment methods */}
-            <div className="flex flex-col gap-3 max-w-lg mx-auto">
+            <div className={`flex flex-col gap-3 max-w-lg mx-auto ${!formValid ? 'opacity-50 pointer-events-none' : ''}`}>
+              {!formValid && (
+                <p className="text-center text-xs text-destructive font-medium mb-2">Preencha todos os seus dados corretamente acima para liberar o pagamento.</p>
+              )}
               {/* PIX */}
               {enabledMethods.pix !== false && (
                 <motion.button

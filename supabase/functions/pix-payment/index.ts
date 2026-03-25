@@ -148,6 +148,19 @@ async function fetchRobotGameSnapshot(
 const META_PIXEL_ID = "4378225905838577";
 const META_GRAPH_VERSION = "v21.0";
 
+// SHA-256 hash helper for server-side PII hashing
+async function sha256Hash(message: string): Promise<string> {
+  try {
+    const msgBuffer = new TextEncoder().encode(message.trim().toLowerCase());
+    const hashBuffer = await crypto.subtle.digest("SHA-256", msgBuffer);
+    return Array.from(new Uint8Array(hashBuffer))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+  } catch {
+    return "";
+  }
+}
+
 async function sendServerPurchaseEvent(payment: any, req: Request) {
   try {
     const accessToken = Deno.env.get("META_ACCESS_TOKEN");
@@ -201,8 +214,34 @@ async function sendServerPurchaseEvent(payment: any, req: Request) {
     if (browserData.ln) userData.ln = browserData.ln;
     if (browserData.country) userData.country = browserData.country;
     if (browserData.client_user_agent) userData.client_user_agent = browserData.client_user_agent;
+
+    // 2. Fallback: hash PII from customer_data (checkout form) if browser didn't provide hashes
+    const customerData = (payment.customer_data || {}) as Record<string, string>;
+    if (!userData.em && customerData.email) {
+      userData.em = await sha256Hash(customerData.email);
+    }
+    if (!userData.ph && customerData.phone) {
+      let phone = customerData.phone.replace(/\D/g, "");
+      if (!phone.startsWith("55") && phone.length >= 10) phone = "55" + phone;
+      userData.ph = await sha256Hash(phone);
+    }
+    if (!userData.fn && customerData.name) {
+      const firstName = customerData.name.split(" ")[0];
+      if (firstName) userData.fn = await sha256Hash(firstName);
+    }
+    if (!userData.ln && customerData.name) {
+      const lastName = customerData.name.split(" ").slice(1).join(" ");
+      if (lastName) userData.ln = await sha256Hash(lastName);
+    }
+    if (!userData.external_id && payment.user_id) {
+      userData.external_id = await sha256Hash(payment.user_id);
+    }
+    // Always ensure country is set
+    if (!userData.country) {
+      userData.country = await sha256Hash("br");
+    }
     
-    // 2. Server-side enrichment (always override IP for accuracy)
+    // 3. Server-side enrichment (always override IP for accuracy)
     if (clientIp) userData.client_ip_address = clientIp;
     // Fallback user agent from request if browser didn't provide one
     if (!userData.client_user_agent) {
@@ -1933,7 +1972,7 @@ Deno.serve(async (req) => {
     // ==================== CREATE PIX CHARGE (MisticPay) ====================
     if (action === "create" && req.method === "POST") {
       const body = await req.json();
-      const { cart_snapshot, coupon_id, meta_user_data } = body;
+      const { cart_snapshot, coupon_id, meta_user_data, customer_data } = body;
 
       // Run credentials fetch, price validation, and profile fetch in PARALLEL
       const [misticCreds, validationResult, profileResult] = await Promise.all([
@@ -2003,6 +2042,7 @@ Deno.serve(async (req) => {
           discount_amount: validatedDiscount,
           payment_method: "pix",
           meta_tracking: meta_user_data || null,
+          customer_data: customer_data || null,
         })
         .select("id")
         .single();
