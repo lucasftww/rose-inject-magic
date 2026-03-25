@@ -43,7 +43,12 @@ const PoliticaReembolso = () => {
 
           <section>
             <h2 className="text-lg font-semibold text-foreground mb-2">6. Situações Não Reembolsáveis</h2>
-            <p>Não são elegíveis a reembolso: produtos utilizados ou ativados, compras realizadas há mais de 7 dias (exceto defeitos), ou situações onde o cliente violou nossos Termos de Uso.</p>
+            <div className="space-y-3">
+              <p>Não são elegíveis a reembolso: produtos utilizados ou ativados, compras realizadas há mais de 7 dias (exceto defeitos), ou situações onde o cliente violou nossos Termos de Uso.</p>
+              <p>
+                <strong className="text-foreground">Exceção para Contas Full Acesso (FA):</strong> Caso a sua conta Full Acesso apresente problemas irreversíveis dentro do prazo de 7 dias após a compra, ofereceremos a substituição por uma conta de valor equivalente ou intermediário. Essa medida visa garantir uma solução justa, assegurando a sua satisfação e o equilíbrio da operação para ambas as partes.
+              </p>
+            </div>
           </section>
         </div>
 
