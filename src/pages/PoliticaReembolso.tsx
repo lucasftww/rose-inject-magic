@@ -30,7 +30,7 @@ const PoliticaReembolso = () => {
           <section>
             <h2 className="text-lg font-semibold text-foreground mb-2">3. Contas de Jogos (Acessos e Banimentos)</h2>
             <ul className="list-disc list-inside space-y-2">
-              <li><strong>Contas NFA (Non-Full Access) e SFA (Semi-Full Access):</strong> A garantia cobre exclusivamente o momento do primeiro login. O cliente deve verificar o funcionamento em até 12 horas após a compra. Após o primeiro acesso bem-sucedido, por não possuírem dados alteráveis, não nos responsabilizamos por perdas de acesso futuras. Não há reembolsos sob nenhuma hipótese após o login testado e validado.</li>
+              <li><strong>Contas NFA (Non-Full Access):</strong> A garantia cobre exclusivamente o momento do primeiro login. O cliente deve verificar o funcionamento em até 12 horas após a compra. Após o primeiro acesso bem-sucedido, por não possuírem dados alteráveis, não nos responsabilizamos por perdas de acesso futuras. Não há reembolsos sob nenhuma hipótese após o login testado e validado.</li>
               <li><strong>Responsabilidade por Banimentos:</strong> Nenhuma conta possui garantia contra bloqueios, suspensões ou banimentos causados por ações do comprador após a entrega (uso de cheats, scripts, conduta tóxica, IP flagged ou qualquer outra violação dos Termos de Serviço da desenvolvedora do jogo).</li>
             </ul>
           </section>
@@ -52,7 +52,7 @@ const PoliticaReembolso = () => {
               <p>Não são elegíveis a reembolso:</p>
               <ul className="list-disc list-inside space-y-1">
                 <li>Produtos já utilizados, ativados ou cujos dados foram revelados.</li>
-                <li>Qualquer conta NFA/SFA que já teve o primeiro login realizado e testado.</li>
+                <li>Qualquer conta NFA que já teve o primeiro login realizado e testado.</li>
                 <li>Banimentos aplicados ao cliente após o momento da entrega por infrações in-game ou uso de softwares de terceiros.</li>
                 <li>Alegações de falta de hardware potente o suficiente para rodar os jogos ou softwares.</li>
               </ul>
