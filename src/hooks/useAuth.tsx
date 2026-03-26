@@ -116,6 +116,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // Initial session restore
     const initializeAuth = async () => {
+      // Failsafe: force loading off after 5 seconds
+      const timeout = setTimeout(() => {
+        if (isMountedRef.current && loading) {
+          console.warn("Auth initialization timed out, proceeding anyway.");
+          setLoading(false);
+        }
+      }, 5000);
+
       try {
         const { data: { session: initialSession } } = await supabase.auth.getSession();
         if (!isMountedRef.current) return;
@@ -123,14 +131,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (initialSession) {
           setSession(initialSession);
           setUser(initialSession.user);
-          await Promise.all([
-            fetchProfile(initialSession.user.id),
-            checkAdmin(initialSession.user.id),
-          ]);
-          // Advanced Matching on session restore (not just SIGNED_IN)
-          syncAdvancedMatching(initialSession.user);
+          try {
+            await Promise.all([
+              fetchProfile(initialSession.user.id),
+              checkAdmin(initialSession.user.id),
+            ]);
+            syncAdvancedMatching(initialSession.user);
+          } catch (e) {
+            console.error("Profile fetch error during init:", e);
+          }
         }
+      } catch (error) {
+        console.error("Session restore failed:", error);
       } finally {
+        clearTimeout(timeout);
         if (isMountedRef.current) setLoading(false);
       }
     };

@@ -180,6 +180,7 @@ const pt = {
     loginSuccess: "Login realizado!",
     accountCreated: "Conta criada! Verifique seu email.",
     error: "Algo deu errado",
+    redirecting: "Redirecionando...",
   },
 
   // 404

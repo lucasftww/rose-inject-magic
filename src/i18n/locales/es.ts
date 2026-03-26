@@ -165,8 +165,9 @@ const es = {
     minChars: "Mínimo 6 caracteres",
     passwordsMismatch: "Las contraseñas no coinciden",
     loginSuccess: "¡Inicio de sesión exitoso!",
-    accountCreated: "¡Cuenta creada! Revisa tu email.",
+    accountCreated: "¡Cuenta criada! Revisa tu email.",
     error: "Algo salió mal",
+    redirecting: "Redireccionando...",
   },
 
   notFound: {

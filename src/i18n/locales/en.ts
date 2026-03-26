@@ -167,6 +167,7 @@ const en = {
     loginSuccess: "Login successful!",
     accountCreated: "Account created! Check your email.",
     error: "Something went wrong",
+    redirecting: "Redirecting...",
   },
 
   notFound: {

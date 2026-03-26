@@ -110,15 +110,16 @@ const Auth = () => {
     if (error) toast.error(error.message);
   };
 
-  if (loading) {
+  if (loading || user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-black">
-        <Loader2 className="h-8 w-8 animate-spin text-success" />
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-success" />
+          {user && <p className="text-white/40 text-xs animate-pulse">{t("auth.redirecting")}</p>}
+        </div>
       </div>
     );
   }
-
-  if (user) return null;
 
   const titles: Record<Mode, { title: string; sub: string }> = {
     login: { title: t("auth.loginTitle"), sub: t("auth.loginSub") },

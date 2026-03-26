@@ -32,7 +32,7 @@ export function initErrorTracker() {
   // JS errors
   window.addEventListener('error', (e) => {
     saveError({
-      id: crypto.randomUUID(),
+      id: typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Math.random().toString(36).substring(2),
       timestamp: new Date().toISOString(),
       type: 'js-error',
       message: e.message || String(e),
@@ -47,7 +47,7 @@ export function initErrorTracker() {
   window.addEventListener('unhandledrejection', (e) => {
     const reason = e.reason;
     saveError({
-      id: crypto.randomUUID(),
+      id: typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Math.random().toString(36).substring(2),
       timestamp: new Date().toISOString(),
       type: 'unhandled-rejection',
       message: reason?.message || String(reason),
@@ -63,7 +63,7 @@ export function initErrorTracker() {
       if (!response.ok && response.status >= 500) {
         const url = typeof args[0] === 'string' ? args[0] : args[0] instanceof Request ? args[0].url : String(args[0]);
         saveError({
-          id: crypto.randomUUID(),
+          id: typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Math.random().toString(36).substring(2),
           timestamp: new Date().toISOString(),
           type: 'network-error',
           message: `HTTP ${response.status} ${response.statusText}`,
@@ -74,7 +74,7 @@ export function initErrorTracker() {
     } catch (err: any) {
       const url = typeof args[0] === 'string' ? args[0] : args[0] instanceof Request ? args[0].url : String(args[0]);
       saveError({
-        id: crypto.randomUUID(),
+        id: typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Math.random().toString(36).substring(2),
         timestamp: new Date().toISOString(),
         type: 'network-error',
         message: err?.message || 'Network request failed',
