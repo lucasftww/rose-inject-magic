@@ -130,10 +130,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Failsafe: force loading off after 5 seconds
       const timeout = setTimeout(() => {
         if (isMountedRef.current && loading) {
-          console.warn("Auth initialization timed out, proceeding anyway.");
           setLoading(false);
         }
-      }, 5000);
+      }, 2000);
 
       try {
         const { data: { session: initialSession } } = await supabase.auth.getSession();
