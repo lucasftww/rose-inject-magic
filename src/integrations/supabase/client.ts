@@ -11,10 +11,18 @@ if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-  auth: {
-    storage: localStorage,
-    persistSession: true,
-    autoRefreshToken: true,
-  }
-});
+// Initialize the supabase client with safety checks
+export const supabase = (SUPABASE_URL && SUPABASE_PUBLISHABLE_KEY) 
+  ? createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+      auth: {
+        storage: localStorage,
+        persistSession: true,
+        autoRefreshToken: true,
+      }
+    })
+  : null as any; // Fallback to avoid crash during module load
+
+// If supabase is null, any call to it will fail, but the app can still mount.
+if (!supabase) {
+  console.error('Supabase client could not be initialized due to missing environment variables.');
+}

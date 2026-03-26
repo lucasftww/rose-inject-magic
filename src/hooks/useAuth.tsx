@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { setAdvancedMatching, clearAdvancedMatching } from "@/lib/metaPixel";
 import type { User, Session } from "@supabase/supabase-js";
@@ -23,10 +24,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [profile, setProfile] = useState<{ username: string | null; avatar_url: string | null } | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
+  const { t } = useTranslation();
   const trackedSessionRef = useRef<string | null>(null);
   const isMountedRef = useRef(true);
 
   const fetchProfile = async (userId: string) => {
+    if (!supabase) return;
     try {
       const { data } = await supabase
         .from("profiles")
@@ -40,6 +43,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const checkAdmin = async (userId: string) => {
+    if (!supabase) return;
     try {
       const { data, error } = await supabase.rpc("has_role", {
         _user_id: userId,
@@ -74,6 +78,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     isMountedRef.current = true;
 
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
         if (!isMountedRef.current) return;
@@ -104,9 +113,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const sessionId = newSession.access_token.slice(-20);
           if (trackedSessionRef.current !== sessionId) {
             trackedSessionRef.current = sessionId;
-            supabase.functions.invoke("track-login", {
-              headers: { Authorization: `Bearer ${newSession.access_token}` },
-            }).catch(() => {});
+            if (supabase) {
+              supabase.functions.invoke("track-login", {
+                headers: { Authorization: `Bearer ${newSession.access_token}` },
+              }).catch(() => {});
+            }
 
             syncAdvancedMatching(newSession.user);
           }
@@ -158,6 +169,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const signUp = async (email: string, password: string, username: string, captchaToken?: string) => {
+    if (!supabase) return { error: new Error(t("auth.error")) };
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -171,15 +183,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signIn = async (email: string, password: string, captchaToken?: string) => {
+    if (!supabase) return { error: new Error(t("auth.error")) };
     const { error } = await supabase.auth.signInWithPassword({ email, password, options: { captchaToken } });
     return { error: error as Error | null };
   };
 
   const signOut = async () => {
+    if (!supabase) return;
     await supabase.auth.signOut();
   };
 
   const resetPassword = async (email: string) => {
+    if (!supabase) return { error: new Error(t("auth.error")) };
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
