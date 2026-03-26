@@ -11,6 +11,13 @@ if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
+// Debug logging for environment variables (safe version)
+console.log("[Debug Env] Checking VITE_SUPABASE_URL:", !!SUPABASE_URL);
+console.log("[Debug Env] Checking VITE_SUPABASE_PUBLISHABLE_KEY:", !!SUPABASE_PUBLISHABLE_KEY);
+if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+  console.log("[Debug Env] Available VITE keys:", Object.keys(import.meta.env).filter(key => key.startsWith('VITE_')));
+}
+
 // Initialize the supabase client with safety checks
 export const supabase = (SUPABASE_URL && SUPABASE_PUBLISHABLE_KEY) 
   ? createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
