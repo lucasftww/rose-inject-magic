@@ -8,7 +8,7 @@ export const useLztMarkup = () => {
    */
   const calcPrice = (price: number, currency?: string, _game?: GameCategory): number => {
     const RUB_TO_BRL = 0.055;
-    const USD_TO_BRL = 5.50;
+    const USD_TO_BRL = 6.10;
     const MARKUP = 3.0;
     const cur = String(currency || "rub").toLowerCase();
     let brl = price;

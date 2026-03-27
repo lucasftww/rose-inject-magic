@@ -1459,10 +1459,11 @@ async function validateAndCalculatePrice(
           finalPrice = clientDisplayPrice;
           console.log(`LZT PRICE LOCKED (override active): itemId=${lztItemId}, lockedPrice=${finalPrice}, overridePrice=${overridePrice}, cost=${costBrl.toFixed(2)}`);
         } else {
-          // Check if we're still profitable: client price must be >= cost
-          // Allow a small 5% tolerance for edge cases
-          if (clientDisplayPrice < costBrl * 0.95) {
-            console.error(`LZT PRICE LOCK REJECTED: clientPrice=${clientDisplayPrice}, cost=${costBrl.toFixed(2)}, would lose money`);
+          // Increase tolerance for LZT accounts to 15% below cost, to avoid rejecting valid purchases due to minor price fluctuations.
+          // This means we allow a client price that is up to 15% less than our calculated cost.
+          // If the client price is below this threshold, it means we would lose too much money.
+          if (clientDisplayPrice < costBrl * 0.85) {
+            console.error(`LZT PRICE LOCK REJECTED: itemId=${lztItemId}, clientPrice=${clientDisplayPrice}, cost=${costBrl.toFixed(2)}, threshold=${(costBrl * 0.85).toFixed(2)}, would lose money`);
             return { validatedAmount: 0, validatedDiscount: 0, validatedCart: [], error: "O preço desta conta mudou. Por favor, volte e tente novamente." };
           }
           // Lock to the price the customer saw

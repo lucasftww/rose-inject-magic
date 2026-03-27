@@ -1266,7 +1266,7 @@ const Contas = () => {
     if (item.price_brl && item.price_brl > 0) return item.price_brl;
     // Fallback: must match server-side logic
     const RUB_TO_BRL = 0.055;
-    const USD_TO_BRL = 5.50;
+    const USD_TO_BRL = 6.10;
     const MARKUP = 3.0;
     const currency = String(item.price_currency || "rub").toLowerCase();
     let brl = item.price;
