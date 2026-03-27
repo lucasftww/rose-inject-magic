@@ -732,6 +732,7 @@ Deno.serve(async (req) => {
         // Skip sold/closed/deleted items
         if (item.item_state && item.item_state !== "active") { filteredByOther++; return false; }
         if (item.buyer) { filteredByOther++; return false; }
+        // More robust check for canBuyItem (catch false or null if it's supposed to be buyable)
         if (item.canBuyItem === false) { filteredByOther++; return false; }
         
         const displayedPriceBrl = getDisplayedPriceBrl(item, undefined, gameType, activeMarkup);
@@ -860,8 +861,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Add cache headers: list responses cached 2 min, detail cached 30s
-    const cacheMaxAge = action === "detail" ? 30 : previewMode ? 300 : 120;
+    // Shorter cache: list cached 30s, detail cached 10s
+    const cacheMaxAge = action === "detail" ? 10 : previewMode ? 60 : 30;
 
     if (shouldCache) {
       // Free up memory if cache gets too large (>200 items)
@@ -869,7 +870,7 @@ Deno.serve(async (req) => {
         const oldestKey = globalLztCache.keys().next().value;
         if (oldestKey) globalLztCache.delete(oldestKey);
       }
-      globalLztCache.set(cacheKey, { data, expiry: Date.now() + 60_000 });
+      globalLztCache.set(cacheKey, { data, expiry: Date.now() + 30_000 }); // 30s in-memory
     }
 
     return new Response(JSON.stringify(data), {
