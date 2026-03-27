@@ -645,9 +645,28 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
 
   const lztGame = item.lztGame || "valorant";
 
+  // ─── IDEMPOTENCY CHECK ──────────────────────────────────────────────────────
+  // Check if we already have a successful ticket for this specific LZT item
+  // associated with this user. This prevents double-purchases if the script
+  // is triggered twice (e.g. webhook retry + manual status polling).
+  const { data: existingTicket } = await supabaseAdmin
+    .from("order_tickets")
+    .select("id, status")
+    .eq("user_id", payment.user_id)
+    .eq("metadata->>lzt_item_id", String(itemId))
+    .neq("status", "failed")
+    .maybeSingle();
+
+  if (existingTicket && existingTicket.status === "delivered") {
+    console.log(`LZT item ${itemId} already delivered for user ${payment.user_id}. Skipping duplicate fulfillment.`);
+    return;
+  }
+
   const findProductAndPlan = async () => {
     let productId: string | null = null;
     let planId: string | null = null;
+    // ... (rest of findProductAndPlan)
+
 
     // Try game-specific product name first (multiple patterns per game)
     const gameSearchPatterns: Record<string, string[]> = {
@@ -1459,17 +1478,18 @@ async function validateAndCalculatePrice(
           finalPrice = clientDisplayPrice;
           console.log(`LZT PRICE LOCKED (override active): itemId=${lztItemId}, lockedPrice=${finalPrice}, overridePrice=${overridePrice}, cost=${costBrl.toFixed(2)}`);
         } else {
-          // Increase tolerance for LZT accounts to 15% below cost, to avoid rejecting valid purchases due to minor price fluctuations.
-          // This means we allow a client price that is up to 15% less than our calculated cost.
-          // If the client price is below this threshold, it means we would lose too much money.
-          if (clientDisplayPrice < costBrl * 0.85) {
-            console.error(`LZT PRICE LOCK REJECTED: itemId=${lztItemId}, clientPrice=${clientDisplayPrice}, cost=${costBrl.toFixed(2)}, threshold=${(costBrl * 0.85).toFixed(2)}, would lose money`);
-            return { validatedAmount: 0, validatedDiscount: 0, validatedCart: [], error: "O preço desta conta mudou. Por favor, volte e tente novamente." };
+          // ⚠️ ENFORCE MINIMUM 50% MARGIN:
+          // If the client price (locked at checkout) is below 2.0x our cost, we reject it.
+          // This ensures the 50% minimum margin is respected even if prices fluctuate slightly on LZT.
+          if (clientDisplayPrice < costBrl * 2.00) {
+            console.error(`LZT PRICE LOCK REJECTED: itemId=${lztItemId}, clientPrice=${clientDisplayPrice}, cost=${costBrl.toFixed(2)}, threshold=${(costBrl * 2.00).toFixed(2)} (Min 50% Margin required)`);
+            return { validatedAmount: 0, validatedDiscount: 0, validatedCart: [], error: "O preço desta conta foi atualizado. Por favor, remova do carrinho e adicione novamente." };
           }
           // Lock to the price the customer saw
           finalPrice = clientDisplayPrice;
           console.log(`LZT PRICE LOCKED: itemId=${lztItemId}, lockedPrice=${finalPrice}, cost=${costBrl.toFixed(2)}, currentFair=${currentFairPrice}, margin=${((finalPrice - costBrl) / finalPrice * 100).toFixed(1)}%`);
         }
+
       } else {
         // No client price sent — use current calculated price (backwards compat)
         finalPrice = currentFairPrice;

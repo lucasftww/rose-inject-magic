@@ -56,8 +56,9 @@ function convertBrlToSellerPrice(brlAmount: number, currency: string, markup: nu
   }
 
   if (currency === "brl") {
-    return Math.max(1, Math.ceil(brlAmount / 1.3));
+    return Math.max(1, Math.ceil(brlAmount / 2.0));
   }
+
 
   return Math.max(1, Math.ceil(brlAmount / (RUB_TO_BRL * Math.max(markup, 1))));
 }
