@@ -176,6 +176,7 @@ function getDisplayedPriceBrl(item: LztItem, overridePrice?: number, gameType?: 
   const currency = String(item.price_currency || "rub").toLowerCase();
   const rawPrice = Number(item.price || 0);
   let brl = rawPrice;
+  
   if (currency === "rub") {
     brl = rawPrice * RUB_TO_BRL;
     brl = brl * activeMarkup;
@@ -183,9 +184,11 @@ function getDisplayedPriceBrl(item: LztItem, overridePrice?: number, gameType?: 
     brl = rawPrice * USD_TO_BRL;
     brl = brl * activeMarkup;
   } else {
-    brl = rawPrice * 1.30;
+    // BRL or unknown: increased to 2.00 for 50% minimum margin
+    brl = rawPrice * 2.00;
   }
   let final = brl;
+
 
   // Enforce content-based floor so cheap listings with lots of content get a fair price
   const contentFloor = getContentFloorBrl(item, gameType);
@@ -195,8 +198,15 @@ function getDisplayedPriceBrl(item: LztItem, overridePrice?: number, gameType?: 
   const contentCeiling = getContentCeilingBrl(item, gameType);
   if (final > contentCeiling) final = contentCeiling;
 
+  // ⚠️ NEW: Ensure minimum 50% margin over cost (protect against ceiling being too aggressive)
+  const costBrl = currency === "rub" ? rawPrice * RUB_TO_BRL : currency === "usd" ? rawPrice * USD_TO_BRL : rawPrice;
+  const minMarginPrice = costBrl * 2.00; // Guarantee 50% margin even on high-cost accounts
+  if (final < minMarginPrice) final = minMarginPrice;
+
+
   return final < MIN_PRICE_BRL ? MIN_PRICE_BRL : Math.round(final * 100) / 100;
 }
+
 
 // Fair price ceiling functions kept for potential future use in filtering overpriced items
 

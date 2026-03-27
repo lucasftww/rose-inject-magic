@@ -10,7 +10,7 @@ const MISTICPAY_BASE_URL = "https://api.misticpay.com/api";
 
 // ─── Live exchange rate helper ────────────────────────────────────────────────
 const FALLBACK_RUB_TO_BRL = 0.055;
-const FALLBACK_USD_TO_BRL = 5.50;
+const FALLBACK_USD_TO_BRL = 6.10;
 let cachedRates: { rub: number; usd: number; fetchedAt: number } | null = null;
 
 async function getLiveRates(): Promise<{ rub: number; usd: number }> {
