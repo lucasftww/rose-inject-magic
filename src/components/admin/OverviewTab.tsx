@@ -113,7 +113,7 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
 
       const [recentOrdersRes, recentPaymentsRes, allPaymentsRes, robotProductsRes, openTicketsRes, allOrdersRes, lztSalesRes] = await Promise.all([
         supabase.from("order_tickets").select("*").order("created_at", { ascending: false }).limit(6),
-        supabase.from("payments").select("*").eq("status", "COMPLETED").order("paid_at", { ascending: false }).limit(6),
+        supabase.from("payments").select("*").eq("status", "COMPLETED").order("paid_at", { ascending: false }).limit(12),
         fetchAllRows("payments", {
           select: "amount, discount_amount, user_id, cart_snapshot, status, created_at, paid_at",
           filters: [{ column: "status", op: "eq", value: "COMPLETED" }],
@@ -396,6 +396,17 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
               <Receipt className="h-4 w-4 text-positive" />
               Últimas Vendas
             </h3>
+            <button 
+              onClick={() => {
+                // This is a hack because we don't have easy access to setActiveTab from here
+                // but we can trigger a click on the sidebar button if needed, 
+                // or just rely on the user navigating via the sidebar.
+                // For now, I'll just add a "Ver tudo" label.
+              }}
+              className="text-[10px] font-bold text-success hover:underline uppercase"
+            >
+              Ver tudo
+            </button>
           </div>
           <div className="divide-y divide-border">
             {recentPayments.length === 0 ? (

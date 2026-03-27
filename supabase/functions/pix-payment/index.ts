@@ -1649,12 +1649,12 @@ function misticPayHeaders(creds: { clientId: string; clientSecret: string }) {
 }
 
 function mapMisticPayStatus(state: string): string {
-  switch (state?.toUpperCase()) {
-    case "COMPLETO": return "COMPLETED";
-    case "FALHA": return "FAILED";
-    case "PENDENTE": return "ACTIVE";
-    default: return "ACTIVE";
-  }
+  if (!state) return "ACTIVE";
+  const s = state.toUpperCase();
+  if (["COMPLETO", "CONCLUIDO", "PAID", "SUCCESS", "COMPLETED"].includes(s)) return "COMPLETED";
+  if (["FALHA", "RECUSADO", "FAILED", "REJECTED"].includes(s)) return "FAILED";
+  if (["PENDENTE", "WAITING", "ACTIVE"].includes(s)) return "ACTIVE";
+  return "ACTIVE";
 }
 
 // In-memory throttle map for status polling (per-isolate)
@@ -1782,14 +1782,14 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Replay prevention: reject webhooks with timestamps older than 5 minutes
-      const webhookTimestamp = body.timestamp || body.createdAt;
+      // Replay prevention: reject webhooks with timestamps older than 24 hours
+      const webhookTimestamp = body.timestamp || body.createdAt || body.updatedAt;
       if (webhookTimestamp) {
         const webhookTime = new Date(webhookTimestamp).getTime();
         const now = Date.now();
-        const fiveMinutes = 5 * 60 * 1000;
-        if (!isNaN(webhookTime) && Math.abs(now - webhookTime) > fiveMinutes) {
-          console.error("Webhook rejected: timestamp too old/future", webhookTimestamp);
+        const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+        if (!isNaN(webhookTime) && (now - webhookTime) > maxAge) {
+          console.error("Webhook rejected: timestamp too old", webhookTimestamp);
           return new Response(JSON.stringify({ error: "Stale webhook" }), {
             status: 403,
             headers: { ...corsHeaders, "Content-Type": "application/json" },

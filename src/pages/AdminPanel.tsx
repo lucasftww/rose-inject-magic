@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   ShieldAlert, Gamepad2, Mail, Package, Tag, UserCheck, TrendingUp,
   Key, CreditCard, BarChart3, ShoppingBag, Globe, Shield, Users,
-  ChevronRight, Menu, Loader2, Home
+  ChevronRight, Menu, Loader2, Home, History
 } from "lucide-react";
 import {
   Sheet,
@@ -22,6 +22,7 @@ const LztTab = lazy(() => import("@/components/admin/LztTab"));
 const RobotProjectTab = lazy(() => import("@/components/admin/RobotProjectTab"));
 const SalesTab = lazy(() => import("@/components/admin/SalesTab"));
 const PaymentsTab = lazy(() => import("@/components/admin/PaymentsTab"));
+const PaymentsListTab = lazy(() => import("@/components/admin/PaymentsListTab"));
 const CouponsTab = lazy(() => import("@/components/admin/CouponsTab"));
 const ScratchCardTab = lazy(() => import("@/components/admin/ScratchCardTab"));
 const TicketsTab = lazy(() => import("@/components/admin/TicketsTab"));
@@ -30,7 +31,7 @@ const UsersTab = lazy(() => import("@/components/admin/UsersTab"));
 const ResellersTab = lazy(() => import("@/components/admin/ResellersTab"));
 const CredentialsTab = lazy(() => import("@/components/admin/CredentialsTab"));
 
-type TabId = "overview" | "financeiro" | "jogos" | "produtos" | "estoque" | "lzt" | "robot" | "vendas" | "pagamentos" | "cupons" | "raspadinha" | "tickets" | "status" | "usuarios" | "revendedores" | "credenciais";
+type TabId = "overview" | "financeiro" | "pix_historico" | "jogos" | "produtos" | "estoque" | "lzt" | "robot" | "vendas" | "pagamentos" | "cupons" | "raspadinha" | "tickets" | "status" | "usuarios" | "revendedores" | "credenciais";
 
 interface TabItem { id: TabId; label: string; icon: React.ComponentType<{ className?: string }>; }
 interface TabGroup { label: string; tabs: TabItem[]; }
@@ -57,7 +58,8 @@ const tabGroups: TabGroup[] = [
     label: "Vendas",
     tabs: [
       { id: "vendas", label: "Vendas", icon: ShoppingBag },
-      { id: "pagamentos", label: "Pagamentos", icon: CreditCard },
+      { id: "pix_historico", label: "Histórico Pix", icon: History },
+      { id: "pagamentos", label: "Pagamentos (Config)", icon: CreditCard },
       { id: "cupons", label: "Cupons", icon: Tag },
       { id: "raspadinha", label: "Raspadinha", icon: Gamepad2 },
     ],
@@ -244,6 +246,7 @@ const AdminPanel = () => {
               <div style={{ display: activeTab === "credenciais" ? "block" : "none" }}>{visitedTabs.has("credenciais") && <CredentialsTab />}</div>
               <div style={{ display: activeTab === "lzt" ? "block" : "none" }}>{visitedTabs.has("lzt") && <LztTab />}</div>
               <div style={{ display: activeTab === "vendas" ? "block" : "none" }}>{visitedTabs.has("vendas") && <SalesTab onGoToTicket={handleGoToTicket} />}</div>
+              <div style={{ display: activeTab === "pix_historico" ? "block" : "none" }}>{visitedTabs.has("pix_historico") && <PaymentsListTab />}</div>
               <div style={{ display: activeTab === "pagamentos" ? "block" : "none" }}>{visitedTabs.has("pagamentos") && <PaymentsTab />}</div>
               <div style={{ display: activeTab === "financeiro" ? "block" : "none" }}>{visitedTabs.has("financeiro") && <FinanceTab />}</div>
               <div style={{ display: activeTab === "raspadinha" ? "block" : "none" }}>{visitedTabs.has("raspadinha") && <ScratchCardTab />}</div>
