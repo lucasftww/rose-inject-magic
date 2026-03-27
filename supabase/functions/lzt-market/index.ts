@@ -508,9 +508,10 @@ Deno.serve(async (req) => {
         if (val) params.set(p, val);
       }
 
-      // Always enforce minimum 30 days offline via API param (server-side at LZT)
-      if (!params.get("daybreak") || Number(params.get("daybreak")) < MIN_INACTIVE_DAYS) {
-        params.set("daybreak", String(MIN_INACTIVE_DAYS));
+      // Always enforce minimum 30 days offline (60 for Fortnite) via API param (server-side at LZT)
+      const minDays = gameType === "fortnite" ? 60 : MIN_INACTIVE_DAYS;
+      if (!params.get("daybreak") || Number(params.get("daybreak")) < minDays) {
+        params.set("daybreak", String(minDays));
       }
 
       // Always enforce minimum 3 skins via API params (server-side at LZT)
