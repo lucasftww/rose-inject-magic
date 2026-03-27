@@ -4,7 +4,8 @@ import { fetchAllRows } from "@/lib/supabaseAllRows";
 import { useAdminUsers } from "@/hooks/useAdminUsers";
 import {
   Loader2, Search, DollarSign, Clock, RefreshCw, 
-  ChevronLeft, ChevronRight, Eye, Check, XCircle, AlertCircle
+  ChevronLeft, ChevronRight, Eye, Check, XCircle, AlertCircle,
+  ShoppingCart, Users
 } from "lucide-react";
 
 interface PaymentRow {
@@ -185,12 +186,15 @@ const PaymentsListTab = () => {
 
       {/* Details Modal */}
       {selectedPayment && (
-              </h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-2xl border border-border bg-card shadow-2xl flex flex-col animate-in fade-in zoom-in duration-200">
+            <div className="border-b border-border p-4 flex items-center justify-between bg-secondary/30">
+              <h3 className="text-lg font-bold text-foreground">Detalhes do Pagamento</h3>
               <button 
                 onClick={() => setSelectedPayment(null)}
                 className="rounded-lg p-1 hover:bg-secondary text-muted-foreground"
               >
-                <ChevronRight className="h-5 w-5" />
+                <XCircle className="h-5 w-5" />
               </button>
             </div>
             
@@ -258,9 +262,6 @@ const PaymentsListTab = () => {
       )}
     </div>
   );
-};
-
-export default PaymentsListTab;
 };
 
 export default PaymentsListTab;
