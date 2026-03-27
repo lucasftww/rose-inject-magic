@@ -256,7 +256,7 @@ async function sendServerPurchaseEvent(payment: any, req: Request) {
       event_id: eventId,
       event_time: Math.floor(Date.now() / 1000),
       action_source: "website",
-      event_source_url: "https://rose-inject-magic.lovable.app/checkout",
+      event_source_url: req.headers.get("referer") || "https://royalstorebr.com/",
       user_data: userData,
       custom_data: {
         content_name: firstItem.productName,
@@ -1427,7 +1427,15 @@ async function validateAndCalculatePrice(
       else if (gameCategory === "minecraft" && lztConfig?.markup_minecraft) markup = lztConfig.markup_minecraft;
       
       const RUB_TO_BRL = 0.055;
-      const USD_TO_BRL = 5.50;
+      let USD_TO_BRL = 6.10; // Updated fallback to be more realistic (6.10 is closer to current market)
+      try {
+        const fxRes = await fetch("https://economia.awesomeapi.com.br/json/last/USD-BRL");
+        if (fxRes.ok) {
+          const fxData = await fxRes.json();
+          const bid = Number(fxData?.USDBRL?.bid);
+          if (bid > 0) USD_TO_BRL = bid;
+        }
+      } catch (_) { /* use fallback */ }
       const costBrl = realLztCurrency === "rub" ? realLztPrice * RUB_TO_BRL : realLztCurrency === "usd" ? realLztPrice * USD_TO_BRL : realLztPrice;
       
       // The price the customer saw (sent from frontend)
@@ -1530,7 +1538,7 @@ async function validateAndCalculatePrice(
             const basePriceUsd = robotSnapshot.expectedPrice;
             if (basePriceUsd !== null && basePriceUsd > 0) {
               const costPriceUsd = basePriceUsd * 0.6;
-              let usdToBrl = 5.25;
+              let usdToBrl = 6.10;
               try {
                 const fxRes = await fetch("https://economia.awesomeapi.com.br/json/last/USD-BRL");
                 if (fxRes.ok) {

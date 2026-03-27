@@ -103,7 +103,7 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
       setLoading(true);
       try {
 
-      let usdToBrl = 5.5;
+      let usdToBrl = 6.10;
       try {
         const res = await fetch("https://economia.awesomeapi.com.br/json/last/USD-BRL");
         const data = await res.json();

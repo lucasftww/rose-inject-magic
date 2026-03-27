@@ -76,12 +76,14 @@ const PaymentsListTab = () => {
   const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
   const paginated = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
 
+  const [selectedPayment, setSelectedPayment] = useState<PaymentRow | null>(null);
+
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h2 className="text-lg font-bold text-foreground">Todos os Pagamentos</h2>
-        <button onClick={fetchPayments} className="rounded-lg border border-border bg-card p-2 text-muted-foreground hover:text-foreground">
-          <RefreshCw className="h-4 w-4" />
+        <button onClick={fetchPayments} className="rounded-lg border border-border bg-card p-2 text-muted-foreground hover:text-foreground transition-colors group">
+          <RefreshCw className="h-4 w-4 group-active:rotate-180 transition-transform duration-500" />
         </button>
       </div>
 
@@ -92,16 +94,16 @@ const PaymentsListTab = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar por ID, Charge ID ou Usuário..."
-            className="w-full rounded-lg border border-border bg-card pl-10 pr-4 py-2.5 text-sm"
+            className="w-full rounded-lg border border-border bg-card pl-10 pr-4 py-2.5 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-success/50"
           />
         </div>
-        <div className="flex gap-1">
+        <div className="flex gap-1 overflow-x-auto pb-1 max-w-full">
           {["all", "COMPLETED", "ACTIVE", "FAILED", "EXPIRED"].map((f) => (
             <button
               key={f}
-              onClick={() => setStatusFilter(f)}
-              className={`rounded-lg px-3 py-2 text-xs font-medium ${
-                statusFilter === f ? "bg-success/20 text-success border border-success/30" : "bg-secondary/50 text-muted-foreground border border-border"
+              onClick={() => { setStatusFilter(f); setPage(1); }}
+              className={`rounded-lg px-3 py-2 text-xs font-medium border transition-all whitespace-nowrap ${
+                statusFilter === f ? "bg-success/20 text-success border-success/30 shadow-sm" : "bg-card text-muted-foreground border-border hover:bg-secondary"
               }`}
             >
               {f === "all" ? "Todos" : f}
@@ -110,60 +112,155 @@ const PaymentsListTab = () => {
         </div>
       </div>
 
-      <div className="rounded-lg border border-border bg-card overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border bg-secondary/30 text-[10px] font-semibold text-muted-foreground uppercase">
-              <th className="px-3 py-2.5 text-left">Usuário</th>
-              <th className="px-3 py-2.5 text-left">Valor</th>
-              <th className="px-3 py-2.5 text-left">Status</th>
-              <th className="px-3 py-2.5 text-left">Data</th>
-              <th className="px-3 py-2.5 text-left">Charge ID</th>
-              <th className="px-3 py-2.5 text-left">Método</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan={6} className="py-20 text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin text-success" /></td></tr>
-            ) : paginated.length === 0 ? (
-              <tr><td colSpan={6} className="py-10 text-center text-muted-foreground">Nenhum pagamento encontrado.</td></tr>
-            ) : (
-              paginated.map((p) => (
-                <tr key={p.id} className="border-b border-border/50 hover:bg-secondary/10">
-                  <td className="px-3 py-2.5 text-xs font-medium">{usernameMap.get(p.user_id) || p.user_id.slice(0, 8)}</td>
-                  <td className="px-3 py-2.5 text-xs font-bold text-foreground">R$ {(p.amount / 100).toFixed(2)}</td>
-                  <td className="px-3 py-2.5">
-                    <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-bold ${statusColors[p.status] || "bg-muted text-muted-foreground border-border"}`}>
-                      {p.status}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2.5 text-[11px] text-muted-foreground">
-                    {new Date(p.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
-                  </td>
-                  <td className="px-3 py-2.5 text-[10px] font-mono text-muted-foreground">{p.charge_id || "—"}</td>
-                  <td className="px-3 py-2.5 text-[10px] uppercase font-bold text-muted-foreground">{p.payment_method || "—"}</td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+      <div className="rounded-xl border border-border bg-card overflow-hidden shadow-sm font-sans">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border bg-secondary/30 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                <th className="px-4 py-3 text-left">Usuário</th>
+                <th className="px-4 py-3 text-left">Valor</th>
+                <th className="px-4 py-3 text-left">Status</th>
+                <th className="px-4 py-3 text-left">Data</th>
+                <th className="px-4 py-3 text-left">Charge ID</th>
+                <th className="px-4 py-3 text-center">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr><td colSpan={6} className="py-20 text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin text-success" /></td></tr>
+              ) : paginated.length === 0 ? (
+                <tr><td colSpan={6} className="py-12 text-center text-muted-foreground italic">Nenhum pagamento encontrado.</td></tr>
+              ) : (
+                paginated.map((p) => (
+                  <tr key={p.id} className="border-b border-border/50 hover:bg-secondary/10 transition-colors">
+                    <td className="px-4 py-3">
+                      <div className="flex flex-col">
+                        <span className="text-xs font-medium text-foreground">{usernameMap.get(p.user_id) || "..."}</span>
+                        <span className="text-[10px] text-muted-foreground font-mono truncate max-w-[80px]">{p.user_id.slice(0, 8)}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-xs font-bold text-foreground">R$ {(p.amount / 100).toFixed(2)}</td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-bold shadow-sm ${statusColors[p.status] || "bg-muted text-muted-foreground border-border"}`}>
+                        {p.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-[11px] text-muted-foreground whitespace-nowrap">
+                      {new Date(p.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                    </td>
+                    <td className="px-4 py-3 text-[10px] font-mono text-muted-foreground">{p.charge_id || "—"}</td>
+                    <td className="px-4 py-3 text-center">
+                      <button
+                        onClick={() => setSelectedPayment(p)}
+                        className="rounded-lg p-2 text-muted-foreground hover:bg-success/10 hover:text-success transition-all active:scale-95"
+                        title="Ver Detalhes"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">Página {page} de {totalPages}</p>
-          <div className="flex gap-1">
-            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="rounded-lg border border-border bg-card p-1.5 disabled:opacity-40">
+        <div className="flex items-center justify-between pt-2">
+          <p className="text-xs text-muted-foreground font-medium italic">Mostrando {(page-1)*ITEMS_PER_PAGE + 1}-{Math.min(page*ITEMS_PER_PAGE, filtered.length)} de {filtered.length}</p>
+          <div className="flex gap-1.5">
+            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="rounded-lg border border-border bg-card h-8 w-8 flex items-center justify-center disabled:opacity-30 hover:bg-secondary transition-colors transition-all active:scale-90">
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="rounded-lg border border-border bg-card p-1.5 disabled:opacity-40">
+            <div className="flex items-center px-4 rounded-lg bg-secondary/30 border border-border text-[11px] font-bold">
+              {page} / {totalPages}
+            </div>
+            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="rounded-lg border border-border bg-card h-8 w-8 flex items-center justify-center disabled:opacity-30 hover:bg-secondary transition-colors transition-all active:scale-90">
               <ChevronRight className="h-4 w-4" />
             </button>
           </div>
         </div>
       )}
+
+      {/* Details Modal */}
+      {selectedPayment && (
+              </h3>
+              <button 
+                onClick={() => setSelectedPayment(null)}
+                className="rounded-lg p-1 hover:bg-secondary text-muted-foreground"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <div className="overflow-y-auto p-5 space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <span className="text-[10px] uppercase font-bold text-muted-foreground">Status</span>
+                  <div className="flex">
+                    <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-bold ${statusColors[selectedPayment.status]}`}>
+                      {selectedPayment.status}
+                    </span>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] uppercase font-bold text-muted-foreground">Valor</span>
+                  <p className="text-lg font-bold text-foreground">R$ {(selectedPayment.amount / 100).toFixed(2)}</p>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] uppercase font-bold text-muted-foreground">ID do Pagamento</span>
+                  <p className="text-xs font-mono text-muted-foreground truncate">{selectedPayment.id}</p>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] uppercase font-bold text-muted-foreground">Data</span>
+                  <p className="text-xs text-muted-foreground">{new Date(selectedPayment.created_at).toLocaleString("pt-BR")}</p>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                  <ShoppingCart className="h-3.5 w-3.5 text-muted-foreground" />
+                  Carrinho (Snapshot)
+                </h4>
+                <div className="rounded-lg border border-border/50 bg-secondary/20 p-3">
+                  <pre className="text-[11px] font-mono overflow-x-auto whitespace-pre-wrap text-muted-foreground">
+                    {JSON.stringify(selectedPayment.cart_snapshot, null, 2)}
+                  </pre>
+                </div>
+              </div>
+
+              {selectedPayment.customer_data && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                    <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                    Dados do Cliente
+                  </h4>
+                  <div className="rounded-lg border border-border/50 bg-secondary/20 p-3">
+                    <pre className="text-[11px] font-mono overflow-x-auto whitespace-pre-wrap text-muted-foreground">
+                      {JSON.stringify(selectedPayment.customer_data, null, 2)}
+                    </pre>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="border-t border-border p-4 bg-secondary/30 flex justify-end">
+              <button 
+                onClick={() => setSelectedPayment(null)}
+                className="px-4 py-2 bg-foreground text-background rounded-lg text-sm font-bold hover:opacity-90 transition-opacity"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
+};
+
+export default PaymentsListTab;
 };
 
 export default PaymentsListTab;

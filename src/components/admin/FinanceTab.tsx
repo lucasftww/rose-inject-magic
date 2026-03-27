@@ -145,7 +145,7 @@ const FinanceTab = () => {
   const [resellerPurchases, setResellerPurchases] = useState<ResellerPurchase[]>([]);
   const [robotTickets, setRobotTickets] = useState<RobotTicket[]>([]);
   const [period, setPeriod] = useState<Period>("24h");
-  const [usdToBrl, setUsdToBrl] = useState(5.5);
+  const [usdToBrl, setUsdToBrl] = useState(6.10);
 
   const fetchData = async () => {
     setLoading(true);

@@ -9,7 +9,26 @@ const corsHeaders = {
 const LZT_ALLOWED_IMAGE_DOMAINS = ["lzt.market", "api.lzt.market", "s.lzt.market", "img.lzt.market"];
 const RETRYABLE_STATUSES = [429, 502, 503, 504];
 const RUB_TO_BRL = 0.055;
-const USD_TO_BRL = 5.50;
+let USD_TO_BRL = 6.10; // Updated fallback to be more realistic
+let lastFxFetch = 0;
+
+async function updateUsdRate() {
+  const now = Date.now();
+  if (now - lastFxFetch < 1000 * 60 * 60) return; // Cache for 1 hour
+  try {
+    const fxRes = await fetch("https://economia.awesomeapi.com.br/json/last/USD-BRL");
+    if (fxRes.ok) {
+      const fxData = await fxRes.json();
+      const bid = Number(fxData?.USDBRL?.bid);
+      if (bid > 0) {
+        USD_TO_BRL = bid;
+        lastFxFetch = now;
+      }
+    }
+  } catch (e) {
+    console.warn("FX fetch failed, using fallback:", e);
+  }
+}
 const MIN_PRICE_BRL = 20;
 const DEFAULT_MARKUP = 3.0;
 const MIN_INACTIVE_DAYS = 30;
@@ -237,6 +256,7 @@ Deno.serve(async (req) => {
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
     // Fetch token + config in parallel to reduce latency
+    await updateUsdRate();
     const [credRow, lztConfigRow] = await Promise.all([
       supabaseAdmin.from("system_credentials").select("value").eq("env_key", "LZT_API_TOKEN").maybeSingle(),
       supabaseAdmin.from("lzt_config").select("max_fetch_price, currency, markup_multiplier, markup_valorant, markup_lol, markup_fortnite, markup_minecraft").limit(1).maybeSingle(),
