@@ -4,7 +4,7 @@
  *
  * Architecture:
  *   Browser → fbq events with Advanced Matching
- *   Server  → Edge Function meta-capi with event_id deduplication
+ *   Server  → Edge Function server-relay with event_id deduplication
  *
  * Events: PageView (manual for SPA), ViewContent, InitiateCheckout, Purchase
  * Categories: Valorant, Fortnite, Roblox, Minecraft, LoL, CS2, GTA
@@ -344,7 +344,7 @@ const sendCAPI = (
     const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
     if (!projectId) return;
 
-    const url = `https://${projectId}.supabase.co/functions/v1/meta-capi`;
+    const url = `https://${projectId}.supabase.co/functions/v1/server-relay`;
 
     // Collect user data, if fbp is missing schedule a retry
     const userData = getUserData();
