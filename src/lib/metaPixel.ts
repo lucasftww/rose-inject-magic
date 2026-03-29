@@ -22,11 +22,6 @@
  *   Purchase → deterministic purchase_${transactionId} + sessionStorage guard
  */
 
-declare global {
-  interface Window {
-    fbq: (...args: any[]) => void;
-  }
-}
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -57,8 +52,11 @@ sha256("br").then((h) => { _countryHash = h; });
 
 // ─── Cached user identity ───────────────────────────────────────────────────
 
+// ─── Cached user identity ───────────────────────────────────────────────────
+
 let _cachedUserData: { em?: string; external_id?: string; ph?: string; fn?: string; ln?: string } = {};
 let _pixelInitWithAM = false;
+let _identityReadyPromise: Promise<void> | null = null;
 
 const persistUserData = () => {
   try {
@@ -86,7 +84,20 @@ const restoreUserData = () => {
   } catch (_) { /* ignore */ }
 };
 
+// Initialize identity from storage immediately
 restoreUserData();
+
+/** Ensures that the identity (at least from storage) is ready */
+export const ensureIdentityReady = async () => {
+  if (_identityReadyPromise) return _identityReadyPromise;
+  
+  _identityReadyPromise = (async () => {
+    restoreUserData();
+    await getHashedTrackingId(); // Pre-warm the tracking ID hash
+  })();
+  
+  return _identityReadyPromise;
+};
 
 // ─── Advanced Matching ──────────────────────────────────────────────────────
 
@@ -99,62 +110,66 @@ export const setAdvancedMatching = async (userData: {
 }) => {
   const matchData: Record<string, string> = {};
 
+  const promises: Promise<void>[] = [];
+
   if (userData.email) {
-    const hashed = await sha256(userData.email);
-    if (hashed) {
-      matchData.em = hashed;
-      _cachedUserData.em = hashed;
-    }
+    promises.push(sha256(userData.email).then(hashed => {
+      if (hashed) {
+        matchData.em = hashed;
+        _cachedUserData.em = hashed;
+      }
+    }));
   }
   if (userData.phone) {
     const cleaned = userData.phone.replace(/\D/g, "");
-    const hashed = await sha256(cleaned);
-    if (hashed) {
-      matchData.ph = hashed;
-      _cachedUserData.ph = hashed;
-    }
+    promises.push(sha256(cleaned).then(hashed => {
+      if (hashed) {
+        matchData.ph = hashed;
+        _cachedUserData.ph = hashed;
+      }
+    }));
   }
   if (userData.firstName) {
-    const hashed = await sha256(userData.firstName);
-    if (hashed) {
-      matchData.fn = hashed;
-      _cachedUserData.fn = hashed;
-    }
+    promises.push(sha256(userData.firstName).then(hashed => {
+      if (hashed) {
+        matchData.fn = hashed;
+        _cachedUserData.fn = hashed;
+      }
+    }));
   }
   if (userData.lastName) {
-    const hashed = await sha256(userData.lastName);
-    if (hashed) {
-      matchData.ln = hashed;
-      _cachedUserData.ln = hashed;
-    }
+    promises.push(sha256(userData.lastName).then(hashed => {
+      if (hashed) {
+        matchData.ln = hashed;
+        _cachedUserData.ln = hashed;
+      }
+    }));
   }
   if (userData.externalId) {
-    const hashed = await sha256(userData.externalId);
-    if (hashed) {
-      // Use hashed value for both fbq and CAPI — Meta requires hashed external_id
-      matchData.external_id = hashed;
-      _cachedUserData.external_id = hashed;
-    }
+    promises.push(sha256(userData.externalId).then(hashed => {
+      if (hashed) {
+        matchData.external_id = hashed;
+        _cachedUserData.external_id = hashed;
+      }
+    }));
   }
+
+  await Promise.all(promises);
 
   // Always include country for Advanced Matching
   matchData.country = "br";
 
   persistUserData();
 
-  if (typeof window !== "undefined" && window.fbq && Object.keys(matchData).length > 0) {
+  if (typeof window !== "undefined" && window.fbq) {
     _pixelInitWithAM = true;
     window.fbq("init", PIXEL_ID, { ...matchData, external_id: matchData.external_id || undefined });
-    // Re-track page view with new identity if we just initialized or updated significant data
-    trackPageView();
   }
 };
 
 /** Initialize the Pixel with cached data or default settings */
 export const initPixel = () => {
   if (typeof window === "undefined" || !window.fbq || _pixelInitWithAM) return;
-
-  restoreUserData();
 
   const matchData: Record<string, string> = {};
   if (_cachedUserData.em) matchData.em = _cachedUserData.em;
@@ -325,6 +340,9 @@ export const getUserData = (): Record<string, string> => {
       data.external_id = _trackingIdHash;
     }
 
+    // Origin URL — critical for CAPI matching
+    data.event_source_url = window.location.href;
+
     // Country — always "br" (hashed for CAPI)
     if (_countryHash) data.country = _countryHash;
   } catch (_) { /* ignore */ }
@@ -335,7 +353,7 @@ export const getUserData = (): Record<string, string> => {
 getFbc();
 
 /** Fire-and-forget server-side event via Edge Function */
-const sendCAPI = (
+const sendCAPI = async (
   eventName: string,
   eventId: string,
   customData: Record<string, any>
@@ -345,6 +363,9 @@ const sendCAPI = (
     if (!projectId) return;
 
     const url = `https://${projectId}.supabase.co/functions/v1/server-relay`;
+
+    // Wait for initial hashing to finish if it's the first event
+    await ensureIdentityReady();
 
     // Collect user data, if fbp is missing schedule a retry
     const userData = getUserData();

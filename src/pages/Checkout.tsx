@@ -65,6 +65,33 @@ const Checkout = () => {
   const totalPrice = displayPrice?.total ?? cartTotal;
   const finalPrice = displayPrice?.final ?? cartFinalPrice;
 
+  // Track InitiateCheckout once when component mounts and items are loaded
+  useEffect(() => {
+    if (!authLoading && user && items.length > 0) {
+      const firstItem = items[0];
+      const { trackInitiateCheckout } = import("@/lib/metaPixel");
+      trackInitiateCheckout({
+        contentName: firstItem.productName,
+        contentIds: items.map(i => i.productId),
+        value: cartFinalPrice,
+        currency: "BRL"
+      });
+    }
+  }, [authLoading, !!user, items.length === 0]);
+
+  // Eagerly set Advanced Matching as soon as form is semi-valid to warm up CAPI identity
+  useEffect(() => {
+    if (formData.email.includes("@") && formData.name.length > 2) {
+      const { setAdvancedMatching } = import("@/lib/metaPixel");
+      setAdvancedMatching({
+        email: formData.email,
+        firstName: formData.name.split(" ")[0],
+        lastName: formData.name.split(" ").slice(1).join(" "),
+        externalId: user?.id
+      });
+    }
+  }, [formData.email, formData.name, user?.id]);
+
   useEffect(() => {
     if (!authLoading && !user) navigate("/");
     if (!authLoading && user && items.length === 0 && !paymentId) navigate("/");

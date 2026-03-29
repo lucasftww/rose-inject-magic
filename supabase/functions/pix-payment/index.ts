@@ -149,9 +149,11 @@ const META_PIXEL_ID = "4378225905838577";
 const META_GRAPH_VERSION = "v21.0";
 
 // SHA-256 hash helper for server-side PII hashing
-async function sha256Hash(message: string): Promise<string> {
+async function sha256Hash(message: string | null | undefined): Promise<string> {
+  if (!message) return "";
   try {
-    const msgBuffer = new TextEncoder().encode(message.trim().toLowerCase());
+    const clean = message.trim().toLowerCase();
+    const msgBuffer = new TextEncoder().encode(clean);
     const hashBuffer = await crypto.subtle.digest("SHA-256", msgBuffer);
     return Array.from(new Uint8Array(hashBuffer))
       .map((b) => b.toString(16).padStart(2, "0"))
@@ -211,37 +213,30 @@ async function sendServerPurchaseEvent(supabaseAdmin: any, payment: any, req: Re
     else if (lower.includes("cs") || lower.includes("counter")) category = "CS2";
     else if (lower.includes("gta")) category = "GTA";
 
-    // Server-side user_data — merge browser-captured data from meta_tracking
+    // 1. Identity data (em, ph, fbp, fbc, external_id)
     const browserData = (payment.meta_tracking || {}) as Record<string, string>;
-    
-    const clientIp =
-      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-      req.headers.get("x-real-ip") ||
-      req.headers.get("cf-connecting-ip") || undefined;
+    const customerData = (payment.customer_data || {}) as Record<string, string>;
+    const userData: Record<string, any> = {};
 
-    const userData: Record<string, string> = {};
+    // Priority: browserData (meta_tracking) > customerData (payment table)
+    const email = browserData.em || customerData.email;
+    const rawPhone = browserData.ph || customerData.phone;
     
-    // 1. Browser-captured identity data (fbp, fbc, external_id, em, ph, fn, ln, country)
+    userData.em = await sha256Hash(email);
+    
+    let phone = rawPhone ? String(rawPhone).replace(/\D/g, "") : "";
+    if (phone && !phone.startsWith("55") && phone.length >= 10) phone = "55" + phone;
+    userData.ph = await sha256Hash(phone);
+    
     if (browserData.fbp) userData.fbp = browserData.fbp;
     if (browserData.fbc) userData.fbc = browserData.fbc;
     if (browserData.external_id) userData.external_id = browserData.external_id;
-    if (browserData.em) userData.em = browserData.em;
-    if (browserData.ph) userData.ph = browserData.ph;
     if (browserData.fn) userData.fn = browserData.fn;
     if (browserData.ln) userData.ln = browserData.ln;
     if (browserData.country) userData.country = browserData.country;
     if (browserData.client_user_agent) userData.client_user_agent = browserData.client_user_agent;
 
-    // 2. Fallback: hash PII from customer_data (checkout form) if browser didn't provide hashes
-    const customerData = (payment.customer_data || {}) as Record<string, string>;
-    if (!userData.em && customerData.email) {
-      userData.em = await sha256Hash(customerData.email);
-    }
-    if (!userData.ph && customerData.phone) {
-      let phone = customerData.phone.replace(/\D/g, "");
-      if (!phone.startsWith("55") && phone.length >= 10) phone = "55" + phone;
-      userData.ph = await sha256Hash(phone);
-    }
+    // 2. Extra fallbacks from customer_data naming
     if (!userData.fn && customerData.name) {
       const firstName = customerData.name.split(" ")[0];
       if (firstName) userData.fn = await sha256Hash(firstName);
@@ -258,6 +253,11 @@ async function sendServerPurchaseEvent(supabaseAdmin: any, payment: any, req: Re
       userData.country = await sha256Hash("br");
     }
     
+    const clientIp =
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      req.headers.get("x-real-ip") ||
+      req.headers.get("cf-connecting-ip") || undefined;
+
     // 3. Server-side enrichment (always override IP for accuracy)
     if (clientIp) userData.client_ip_address = clientIp;
     // Fallback user agent from request if browser didn't provide one
@@ -273,7 +273,7 @@ async function sendServerPurchaseEvent(supabaseAdmin: any, payment: any, req: Re
       event_id: eventId,
       event_time: Math.floor(Date.now() / 1000),
       action_source: "website",
-      event_source_url: req.headers.get("referer") || "https://royalstorebr.com/",
+      event_source_url: browserData.event_source_url || req.headers.get("referer") || "https://royalstorebr.com/",
       user_data: userData,
       custom_data: {
         content_name: firstItem.productName,
