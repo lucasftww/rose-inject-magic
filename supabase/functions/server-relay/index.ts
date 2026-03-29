@@ -1,26 +1,39 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const PIXEL_ID = "4378225905838577";
 const GRAPH_API_VERSION = "v21.0";
+const DEFAULT_PIXEL_ID = "4378225905838577";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
-  const ACCESS_TOKEN = Deno.env.get("META_ACCESS_TOKEN");
-  if (!ACCESS_TOKEN) {
-    return new Response(JSON.stringify({ error: "META_ACCESS_TOKEN not configured" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
+  const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+  const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
   try {
+    const [capiTokenRow, pixelIdRow] = await Promise.all([
+      supabaseAdmin.from("system_credentials").select("value").eq("env_key", "META_ACCESS_TOKEN").maybeSingle(),
+      supabaseAdmin.from("system_credentials").select("value").eq("env_key", "META_PIXEL_ID").maybeSingle(),
+    ]);
+
+    const ACCESS_TOKEN = capiTokenRow.data?.value || Deno.env.get("META_ACCESS_TOKEN");
+    const PIXEL_ID = pixelIdRow.data?.value || Deno.env.get("META_PIXEL_ID") || DEFAULT_PIXEL_ID;
+
+    if (!ACCESS_TOKEN) {
+      return new Response(JSON.stringify({ error: "META_ACCESS_TOKEN not configured" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const body = await req.json();
     const { event_name, event_id, event_time, user_data, custom_data, event_source_url, action_source } = body;
 
@@ -30,6 +43,16 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // Only allow InitiateCheckout (Purchase is handled by pix-payment function)
+    if (event_name !== "InitiateCheckout") {
+      console.log(`Relay skipped event: ${event_name}. Only InitiateCheckout is allowed.`);
+      return new Response(JSON.stringify({ success: true, message: "Event ignored by policy" }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
 
     // ─── Build user_data with server-side enrichment ───
 

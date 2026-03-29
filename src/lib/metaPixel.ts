@@ -409,32 +409,12 @@ const sendCAPI = (
 // ─── Event Tracking ─────────────────────────────────────────────────────────
 
 export const trackPageView = () => {
-  if (typeof window === "undefined" || !window.fbq) return;
-
-  // We don't send PageView to CAPI usually to avoid noise,
-  // but we ensure Pixel tracks it with identity present.
-  window.fbq("track", "PageView");
+  // PageView disabled for CAPI-only minimal tracking (only IC and Purchase)
 };
 
 export const trackViewContent = (data: TrackingData) => {
-  if (typeof window === "undefined") return;
-
-  const eventId = generateEventId("vc");
-  const customData: Record<string, any> = {
-    content_name: data.contentName,
-    content_ids: data.contentIds,
-    contents: data.contentIds.map((id) => ({ id, quantity: 1 })),
-    content_type: "product",
-    value: data.value,
-    currency: data.currency || "BRL",
-  };
-
-  if (window.fbq) {
-    window.fbq("track", "ViewContent", customData, { eventID: eventId });
-  }
-  sendCAPI("ViewContent", eventId, customData);
-
-  return eventId;
+  // ViewContent disabled for CAPI-only minimal tracking (only IC and Purchase)
+  return null;
 };
 
 export const trackInitiateCheckout = (data: TrackingData) => {
@@ -450,9 +430,7 @@ export const trackInitiateCheckout = (data: TrackingData) => {
     currency: data.currency || "BRL",
   };
 
-  if (window.fbq) {
-    window.fbq("track", "InitiateCheckout", customData, { eventID: eventId });
-  }
+  // Pixel (fbq) removed — CAPI-only
   sendCAPI("InitiateCheckout", eventId, customData);
 
   return eventId;
@@ -481,11 +459,10 @@ export const trackPurchase = (
     transaction_id: data.transactionId,
   };
 
-  if (window.fbq) {
-    window.fbq("track", "Purchase", customData, { eventID: eventId });
-  }
+  // Pixel (fbq) removed — CAPI-only
   sendCAPI("Purchase", eventId, customData);
 
   return eventId;
 };
+
 

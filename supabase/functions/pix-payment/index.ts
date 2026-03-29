@@ -161,10 +161,27 @@ async function sha256Hash(message: string): Promise<string> {
   }
 }
 
-async function sendServerPurchaseEvent(payment: any, req: Request) {
+async function sendServerPurchaseEvent(supabaseAdmin: any, payment: any, req: Request) {
   try {
-    const accessToken = Deno.env.get("META_ACCESS_TOKEN");
-    if (!accessToken) return;
+    const { data: capiTokenRow } = await supabaseAdmin
+      .from("system_credentials")
+      .select("value")
+      .eq("env_key", "META_ACCESS_TOKEN")
+      .maybeSingle();
+
+    const { data: pixelIdRow } = await supabaseAdmin
+      .from("system_credentials")
+      .select("value")
+      .eq("env_key", "META_PIXEL_ID")
+      .maybeSingle();
+
+    const accessToken = capiTokenRow?.value || Deno.env.get("META_ACCESS_TOKEN");
+    const pixelId = pixelIdRow?.value || META_PIXEL_ID;
+
+    if (!accessToken) {
+      console.warn("CAPI Purchase skipped: META_ACCESS_TOKEN not found in DB or Env.");
+      return;
+    }
 
     const cartItems = (payment.cart_snapshot || []) as Array<{
       productId: string;
@@ -270,7 +287,7 @@ async function sendServerPurchaseEvent(payment: any, req: Request) {
       },
     };
 
-    const url = `https://graph.facebook.com/${META_GRAPH_VERSION}/${META_PIXEL_ID}/events?access_token=${accessToken}`;
+    const url = `https://graph.facebook.com/${META_GRAPH_VERSION}/${pixelId}/events?access_token=${accessToken}`;
 
     // Retry up to 3 times
     for (let attempt = 1; attempt <= 3; attempt++) {
@@ -1871,7 +1888,7 @@ Deno.serve(async (req) => {
           log("INFO", "webhook", "Fulfilling completed payment", { paymentId: payment.id, userId: payment.user_id, amount: payment.amount });
           await fulfillOrder(supabaseAdmin, payment);
           await sendDiscordSaleNotification(supabaseAdmin, payment);
-          await sendServerPurchaseEvent(payment, req);
+          await sendServerPurchaseEvent(supabaseAdmin, payment, req);
           await assignDiscordClientRole(supabaseAdmin, payment.user_id);
         }
       }
@@ -2165,7 +2182,7 @@ Deno.serve(async (req) => {
             if (newStatus === "COMPLETED" && updatedPayment) {
               await fulfillOrder(supabaseAdmin, payment);
               await sendDiscordSaleNotification(supabaseAdmin, payment);
-              await sendServerPurchaseEvent(payment, req);
+              await sendServerPurchaseEvent(supabaseAdmin, payment, req);
               await assignDiscordClientRole(supabaseAdmin, payment.user_id);
             }
           }
@@ -2240,7 +2257,7 @@ Deno.serve(async (req) => {
       if (updatedPayment) {
         await fulfillOrder(supabaseAdmin, payment);
         await sendDiscordSaleNotification(supabaseAdmin, payment);
-        await sendServerPurchaseEvent(payment, req);
+        await sendServerPurchaseEvent(supabaseAdmin, payment, req);
         await assignDiscordClientRole(supabaseAdmin, payment.user_id);
       }
 
