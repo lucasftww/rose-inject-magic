@@ -5,8 +5,10 @@ import { useAdminUsers } from "@/hooks/useAdminUsers";
 import {
   Loader2, Search, DollarSign, Clock, RefreshCw, 
   ChevronLeft, ChevronRight, Eye, Check, XCircle, AlertCircle,
-  ShoppingCart, Users
+  ShoppingCart, Users, ShieldCheck, Zap
 } from "lucide-react";
+import { verifyPayment } from "@/hooks/useAdminData";
+import { toast } from "@/hooks/use-toast";
 
 interface PaymentRow {
   id: string;
@@ -39,6 +41,32 @@ const PaymentsListTab = () => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
+  const [verifying, setVerifying] = useState<Record<string, boolean>>({});
+
+  const handleVerify = async (p: PaymentRow) => {
+    if (p.status !== "ACTIVE" && p.status !== "PENDING") {
+      toast({ title: "Aviso", description: "Este pagamento já está em um estado final." });
+      return;
+    }
+    
+    setVerifying(prev => ({ ...prev, [p.id]: true }));
+    try {
+      const res = await verifyPayment(p.id, p.payment_method || "pix");
+      toast({ 
+        title: "Sucesso", 
+        description: `Status atualizado: ${res.status || "verificado"}.`,
+        variant: res.status === "COMPLETED" ? "default" : "destructive" 
+      });
+      fetchPayments();
+      if (selectedPayment?.id === p.id) {
+         setSelectedPayment(prev => prev ? { ...prev, status: res.status } : null);
+      }
+    } catch (err: any) {
+      toast({ title: "Erro na verificação", description: err.message, variant: "destructive" });
+    } finally {
+      setVerifying(prev => ({ ...prev, [p.id]: false }));
+    }
+  };
 
   const fetchPayments = async () => {
     setLoading(true);
@@ -151,13 +179,25 @@ const PaymentsListTab = () => {
                     </td>
                     <td className="px-4 py-3 text-[10px] font-mono text-muted-foreground">{p.charge_id || "—"}</td>
                     <td className="px-4 py-3 text-center">
-                      <button
-                        onClick={() => setSelectedPayment(p)}
-                        className="rounded-lg p-2 text-muted-foreground hover:bg-success/10 hover:text-success transition-all active:scale-95"
-                        title="Ver Detalhes"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </button>
+                      <div className="flex items-center justify-center gap-1">
+                        <button
+                          onClick={() => setSelectedPayment(p)}
+                          className="rounded-lg p-2 text-muted-foreground hover:bg-success/10 hover:text-success transition-all active:scale-95"
+                          title="Ver Detalhes"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                        {(p.status === "ACTIVE" || p.status === "PENDING") && (
+                          <button
+                            onClick={() => handleVerify(p)}
+                            disabled={verifying[p.id]}
+                            className="rounded-lg p-2 text-warning hover:bg-warning/10 transition-all active:scale-95 disabled:opacity-50"
+                            title="Verificar Status Manualmente"
+                          >
+                            {verifying[p.id] ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -249,7 +289,19 @@ const PaymentsListTab = () => {
               )}
             </div>
 
-            <div className="border-t border-border p-4 bg-secondary/30 flex justify-end">
+            <div className="border-t border-border p-4 bg-secondary/30 flex justify-between items-center">
+              <div>
+                {(selectedPayment.status === "ACTIVE" || selectedPayment.status === "PENDING") && (
+                  <button
+                    onClick={() => handleVerify(selectedPayment)}
+                    disabled={verifying[selectedPayment.id]}
+                    className="flex items-center gap-2 px-4 py-2 bg-warning/10 text-warning border border-warning/30 rounded-lg text-xs font-bold hover:bg-warning/20 transition-all disabled:opacity-50"
+                  >
+                    {verifying[selectedPayment.id] ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                    Verificar Agora
+                  </button>
+                )}
+              </div>
               <button 
                 onClick={() => setSelectedPayment(null)}
                 className="px-4 py-2 bg-foreground text-background rounded-lg text-sm font-bold hover:opacity-90 transition-opacity"

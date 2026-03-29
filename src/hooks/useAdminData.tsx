@@ -88,3 +88,29 @@ export function useInvalidateAdminCache() {
     queryClient.invalidateQueries({ queryKey: ["admin"] });
   }, [queryClient]);
 }
+
+/**
+ * Manually trigger status verification for a payment.
+ * Calls the pix-payment Edge Function using the admin's session.
+ */
+export async function verifyPayment(paymentId: string, method: string = "pix") {
+  const session = (await supabase.auth.getSession()).data.session;
+  if (!session) throw new Error("No active session");
+
+  const action = method === "card" ? "card-status" : method === "crypto" ? "crypto-status" : "status";
+  
+  const res = await fetch(
+    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pix-payment?action=${action}&payment_id=${paymentId}`,
+    {
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+        "Content-Type": "application/json",
+        apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      },
+    }
+  );
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Erro ao verificar pagamento");
+  return data;
+}
