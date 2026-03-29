@@ -20,8 +20,8 @@ Deno.serve(async (req) => {
 
   try {
     const [capiTokenRow, pixelIdRow] = await Promise.all([
-      supabaseAdmin.from("system_credentials").select("value").eq("env_key", "META_ACCESS_TOKEN").maybeSingle(),
-      supabaseAdmin.from("system_credentials").select("value").eq("env_key", "META_PIXEL_ID").maybeSingle(),
+      supabaseAdmin.from("system_credentials").select("value").eq("key", "META_ACCESS_TOKEN").maybeSingle(),
+      supabaseAdmin.from("system_credentials").select("value").eq("key", "META_PIXEL_ID").maybeSingle(),
     ]);
 
     const ACCESS_TOKEN = capiTokenRow.data?.value || Deno.env.get("META_ACCESS_TOKEN");
@@ -44,9 +44,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Only allow InitiateCheckout (Purchase is handled by pix-payment function)
-    if (event_name !== "InitiateCheckout") {
-      console.log(`Relay skipped event: ${event_name}. Only InitiateCheckout is allowed.`);
+    // Only allow InitiateCheckout and Purchase (rest is manual pixel only)
+    if (event_name !== "InitiateCheckout" && event_name !== "Purchase") {
+      console.log(`Relay skipped event: ${event_name}. Only InitiateCheckout and Purchase are allowed.`);
       return new Response(JSON.stringify({ success: true, message: "Event ignored by policy" }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
