@@ -30,7 +30,7 @@ declare global {
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
-const PIXEL_ID = "4378225905838577";
+const PIXEL_ID = import.meta.env.VITE_META_PIXEL_ID || "4378225905838577";
 const STORAGE_KEY_EM = "_meta_em";
 const STORAGE_KEY_EID = "_meta_eid";
 const STORAGE_KEY_PH = "_meta_ph";
