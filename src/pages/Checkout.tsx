@@ -8,7 +8,7 @@ import { toast } from "@/hooks/use-toast";
 import { Loader2, Copy, Check, Clock, ArrowLeft, Package, ShieldCheck, Zap, CreditCard, Wallet, Sparkles, ChevronRight, ExternalLink } from "lucide-react";
 import logoRoyal from "@/assets/logo-royal.png";
 import { motion } from "framer-motion";
-import { trackPurchase, resolveCategory, getUserData, setAdvancedMatching } from "@/lib/metaPixel";
+import { trackPurchase, getUserData, setAdvancedMatching } from "@/lib/metaPixel";
 
 type PaymentMethod = "pix" | "card" | "crypto" | null;
 
@@ -306,7 +306,6 @@ const Checkout = () => {
             if (cartItem) {
               trackPurchase({
                 contentName: cartItem.productName,
-                contentCategory: resolveCategory(cartItem.lztGame || cartItem.planName),
                 contentIds: [cartItem.productId],
                 value: finalPriceRef.current,
                 transactionId: paymentIdRef.current || "unknown",

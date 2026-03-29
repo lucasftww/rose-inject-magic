@@ -8,7 +8,7 @@ import { getYouTubeId, getYouTubeEmbedUrl, getYouTubeThumbnail } from "@/lib/vid
 import { useCart } from "@/hooks/useCart";
 import { useReseller } from "@/hooks/useReseller";
 import { toast } from "@/hooks/use-toast";
-import { trackViewContent, trackInitiateCheckout, resolveCategory } from "@/lib/metaPixel";
+import { trackViewContent, trackInitiateCheckout } from "@/lib/metaPixel";
 
 interface Product {
   id: string;
@@ -196,7 +196,6 @@ const ProdutoDetalhes = () => {
       const plan = sortedPlans[0];
       trackViewContent({
         contentName: product.name,
-        contentCategory: resolveCategory(game.name),
         contentIds: [product.id],
         value: Number(plan.price),
       });
@@ -251,7 +250,6 @@ const ProdutoDetalhes = () => {
 
     trackInitiateCheckout({
       contentName: product.name,
-      contentCategory: resolveCategory(game?.name),
       contentIds: [product.id],
       value: finalItemPrice,
     });

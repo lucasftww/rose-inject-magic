@@ -160,7 +160,6 @@ const FortniteDetalhes = () => {
       const priceBRL = getPrice(item, "fortnite");
       trackViewContent({
         contentName: `Conta Fortnite #${item.item_id}`,
-        contentCategory: "Fortnite",
         contentIds: [`lzt-fn-${item.item_id}`],
         value: priceBRL,
       });
@@ -180,7 +179,6 @@ const FortniteDetalhes = () => {
 
     trackInitiateCheckout({
       contentName: title,
-      contentCategory: "Fortnite",
       contentIds: [`lzt-fn-${item.item_id}`],
       value: priceBRL,
     });

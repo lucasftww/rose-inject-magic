@@ -218,7 +218,6 @@ const LolDetalhes = () => {
       const priceBRL = getPrice(item, "lol");
       trackViewContent({
         contentName: `Conta LoL #${item.item_id}`,
-        contentCategory: "League of Legends",
         contentIds: [`lzt-lol-${item.item_id}`],
         value: priceBRL,
       });
@@ -238,7 +237,6 @@ const LolDetalhes = () => {
 
     trackInitiateCheckout({
       contentName: title,
-      contentCategory: "League of Legends",
       contentIds: [`lzt-lol-${item.item_id}`],
       value: priceBRL,
     });

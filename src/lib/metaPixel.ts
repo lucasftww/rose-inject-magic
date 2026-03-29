@@ -290,7 +290,6 @@ const generateEventId = (prefix: string): string => {
 
 export interface TrackingData {
   contentName: string;
-  contentCategory: string;
   contentIds: string[];
   value: number;
   currency?: string;
@@ -423,7 +422,6 @@ export const trackViewContent = (data: TrackingData) => {
   const eventId = generateEventId("vc");
   const customData: Record<string, any> = {
     content_name: data.contentName,
-    content_category: data.contentCategory,
     content_ids: data.contentIds,
     contents: data.contentIds.map((id) => ({ id, quantity: 1 })),
     content_type: "product",
@@ -445,7 +443,6 @@ export const trackInitiateCheckout = (data: TrackingData) => {
   const eventId = generateEventId("ic");
   const customData: Record<string, any> = {
     content_name: data.contentName,
-    content_category: data.contentCategory,
     content_ids: data.contentIds,
     contents: data.contentIds.map((id) => ({ id, quantity: 1 })),
     content_type: "product",
@@ -476,7 +473,6 @@ export const trackPurchase = (
 
   const customData: Record<string, any> = {
     content_name: data.contentName,
-    content_category: data.contentCategory,
     content_ids: data.contentIds,
     contents: data.contentIds.map((id) => ({ id, quantity: 1 })),
     content_type: "product",
@@ -492,18 +488,4 @@ export const trackPurchase = (
 
   return eventId;
 };
-
-// ─── Category Resolution ────────────────────────────────────────────────────
-
-export const resolveCategory = (gameName?: string | null): string => {
-  if (!gameName) return "Outros";
-  const lower = gameName.toLowerCase();
-  if (lower.includes("valorant")) return "Valorant";
-  if (lower.includes("fortnite")) return "Fortnite";
-  if (lower.includes("roblox")) return "Roblox";
-  if (lower.includes("minecraft")) return "Minecraft";
-  if (lower.includes("lol") || lower.includes("league")) return "League of Legends";
-  if (lower.includes("cs") || lower.includes("counter")) return "CS2";
-  if (lower.includes("gta")) return "GTA";
-  return gameName;
-};
+

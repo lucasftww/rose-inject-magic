@@ -98,7 +98,6 @@ const MinecraftDetalhes = () => {
       const priceBRL = getPrice(item, "minecraft");
       trackViewContent({
         contentName: `Conta Minecraft${nickname ? ` · ${nickname}` : ""}`,
-        contentCategory: "Minecraft",
         contentIds: [`lzt-mc-${item.item_id}`],
         value: priceBRL,
       });
@@ -118,7 +117,6 @@ const MinecraftDetalhes = () => {
 
     trackInitiateCheckout({
       contentName: title,
-      contentCategory: "Minecraft",
       contentIds: [`lzt-mc-${item.item_id}`],
       value: priceBRL,
     });

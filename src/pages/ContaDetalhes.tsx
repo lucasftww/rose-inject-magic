@@ -385,7 +385,6 @@ const ContaDetalhes = () => {
 
     trackInitiateCheckout({
       contentName: title,
-      contentCategory: "Valorant",
       contentIds: [`lzt-${item.item_id}`],
       value: priceBRL
     });
@@ -426,7 +425,6 @@ const ContaDetalhes = () => {
       const priceBRL = getPrice(item, "valorant");
       trackViewContent({
         contentName: `Conta Valorant #${item.item_id}`,
-        contentCategory: "Valorant",
         contentIds: [`lzt-${item.item_id}`],
         value: priceBRL
       });
