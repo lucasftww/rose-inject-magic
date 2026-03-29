@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Gift, Trophy, Frown, Ticket, History, Star, X, Flower2, Copy, Check, Plus, Minus, Package, User, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { safeJsonFetch, ApiError } from "@/lib/apiUtils";
 
 interface Prize {
   id: string;
@@ -191,7 +192,7 @@ const Raspadinha = () => {
         if (payment.status === "ACTIVE") {
           try {
             const session = (await supabase.auth.getSession()).data.session;
-            const res = await fetch(
+            const data = await safeJsonFetch(
               `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pix-payment?action=status&payment_id=${payment.id}`,
               {
                 headers: {
@@ -200,7 +201,6 @@ const Raspadinha = () => {
                 },
               }
             );
-            const data = await res.json();
             if (data.status === "COMPLETED") {
               const paymentMode = raspadinhaItem.planId?.includes("contas") ? "contas" : "produtos";
               const qty = parseInt(raspadinhaItem.planName?.match(/(\d+)x/)?.[1] || "1");
@@ -295,7 +295,7 @@ const Raspadinha = () => {
     try {
       const totalAmount = Math.round(unitPrice * quantity * 100);
       const label = mode === "contas" ? "Raspadinha de Contas" : "Raspadinha da Sorte";
-      const res = await fetch(
+      const data = await safeJsonFetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pix-payment?action=create`,
         {
           method: "POST",
@@ -315,8 +315,7 @@ const Raspadinha = () => {
           }),
         }
       );
-      const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.error || "Erro ao criar cobrança");
+      if (!data.success) throw new Error(data.error || "Erro ao criar cobrança");
 
       setPaymentId(data.payment_id);
       paymentIdRef.current = data.payment_id;
@@ -337,7 +336,7 @@ const Raspadinha = () => {
     const check = async () => {
       try {
         const session = (await supabase.auth.getSession()).data.session;
-        const res = await fetch(
+        const data = await safeJsonFetch(
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pix-payment?action=status&payment_id=${pId}`,
           {
             headers: {
@@ -346,7 +345,6 @@ const Raspadinha = () => {
             },
           }
         );
-        const data = await res.json();
         if (data.status === "COMPLETED") {
           if (pollRef.current) clearInterval(pollRef.current);
           onPaymentCompleted();
@@ -425,13 +423,12 @@ const Raspadinha = () => {
     try {
       // Call server-side edge function for secure win determination
       const session = (await supabase.auth.getSession()).data.session;
-      const res = await fetch(
+      const data = await safeJsonFetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/scratch-card-play`,
         {
           method: "POST",
           headers: {
             Authorization: `Bearer ${session?.access_token}`,
-            "Content-Type": "application/json",
             apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
           },
           body: JSON.stringify({
@@ -441,11 +438,7 @@ const Raspadinha = () => {
           }),
         }
       );
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Erro ao processar raspadinha");
-      }
+      if (!data) throw new Error("Erro ao processar raspadinha");
 
       const newGrid: GridCell[] = data.grid;
       setGrid(newGrid);
@@ -568,13 +561,12 @@ const Raspadinha = () => {
 
     try {
       const session = (await supabase.auth.getSession()).data.session;
-      const res = await fetch(
+      const data = await safeJsonFetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/scratch-card-play`,
         {
           method: "POST",
           headers: {
             Authorization: `Bearer ${session?.access_token}`,
-            "Content-Type": "application/json",
             apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
           },
           body: JSON.stringify({
@@ -584,11 +576,7 @@ const Raspadinha = () => {
           }),
         }
       );
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Erro ao processar raspadinha");
-      }
+      if (!data) throw new Error("Erro ao processar raspadinha");
 
       const newGrid: GridCell[] = data.grid;
       setGrid(newGrid);

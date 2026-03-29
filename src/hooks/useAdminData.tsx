@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCallback } from "react";
+import { safeJsonFetch } from "@/lib/apiUtils";
 
 /**
  * Shared admin data hooks using React Query.
@@ -99,18 +100,16 @@ export async function verifyPayment(paymentId: string, method: string = "pix") {
 
   const action = method === "card" ? "card-status" : method === "crypto" ? "crypto-status" : "status";
   
-  const res = await fetch(
+  const result = await safeJsonFetch(
     `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pix-payment?action=${action}&payment_id=${paymentId}`,
     {
       headers: {
         Authorization: `Bearer ${session.access_token}`,
-        "Content-Type": "application/json",
         apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
       },
     }
   );
 
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Erro ao verificar pagamento");
-  return data;
+  if (!result.success && result.error) throw new Error(result.error || "Erro ao verificar pagamento");
+  return result;
 }

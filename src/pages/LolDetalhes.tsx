@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { throwApiError } from "@/lib/apiErrors";
 import { useQuery } from "@tanstack/react-query";
+import { safeJsonFetch, ApiError } from "@/lib/apiUtils";
 import Header from "@/components/Header";
 import {
   ArrowLeft, Shield, Loader2, ChevronLeft, ChevronRight,
@@ -55,35 +56,39 @@ const lolRankToKey = (rank: string): string => {
 
 // ─── DDragon helpers ───
 const fetchChampKeyMap = async (): Promise<Map<number, string>> => {
-  const versRes = await fetch("https://ddragon.leagueoflegends.com/api/versions.json");
-  if (!versRes.ok) return new Map();
-  const versions = await versRes.json();
-  const version = versions[0];
-  const res = await fetch(`https://ddragon.leagueoflegends.com/cdn/${version}/data/en_US/champion.json`);
-  if (!res.ok) return new Map();
-  const data = await res.json();
-  const map = new Map<number, string>();
-  for (const [internalName, champ] of Object.entries(data.data as Record<string, any>)) {
-    map.set(parseInt((champ as any).key), internalName);
+  try {
+    const versions = await safeJsonFetch("https://ddragon.leagueoflegends.com/api/versions.json");
+    const version = versions[0];
+    const data = await safeJsonFetch(`https://ddragon.leagueoflegends.com/cdn/${version}/data/en_US/champion.json`);
+    const map = new Map<number, string>();
+    for (const [internalName, champ] of Object.entries(data.data as Record<string, any>)) {
+      map.set(parseInt((champ as any).key), internalName);
+    }
+    return map;
+  } catch (err) {
+    console.warn("Failed to fetch LoL champ map:", err);
+    return new Map();
   }
-  return map;
 };
 
 const fetchAccountDetail = async (itemId: string) => {
-  const projectUrl = import.meta.env.VITE_SUPABASE_URL;
+  const projectUrl = import.meta.env.VITE_SUPABASE_URL || 'https://cthqzetkshrbsjulfytl.supabase.co';
   const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-  const res = await fetch(
-    `${projectUrl}/functions/v1/lzt-market?action=detail&item_id=${encodeURIComponent(itemId)}&game_type=lol`,
-    { headers: { "Content-Type": "application/json", apikey: anonKey } }
-  );
-  if (!res.ok) {
-    const body = await res.json().catch(() => null);
-    if (res.status === 410) {
-      throw new Error(body?.error === "Account already sold" ? "Esta conta já foi vendida." : "Esta conta não está mais disponível.");
+  
+  try {
+    return await safeJsonFetch(
+      `${projectUrl}/functions/v1/lzt-market?action=detail&item_id=${encodeURIComponent(itemId)}&game_type=lol`,
+      { headers: { apikey: anonKey } }
+    );
+  } catch (err: any) {
+    if (err instanceof ApiError) {
+      if (err.status === 410) {
+        throw new Error("Esta conta já foi vendida ou não está mais disponível.");
+      }
+      throwApiError(err.status || 500);
     }
-    throwApiError(res.status);
+    throw err;
   }
-  return res.json();
 };
 
 // ─── Types ───

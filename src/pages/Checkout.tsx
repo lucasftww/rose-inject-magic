@@ -9,6 +9,7 @@ import { Loader2, Copy, Check, Clock, ArrowLeft, Package, ShieldCheck, Zap, Cred
 import logoRoyal from "@/assets/logo-royal.png";
 import { motion } from "framer-motion";
 import { trackPurchase, getUserData, setAdvancedMatching } from "@/lib/metaPixel";
+import { safeJsonFetch, ApiError } from "@/lib/apiUtils";
 
 type PaymentMethod = "pix" | "card" | "crypto" | null;
 
@@ -139,7 +140,7 @@ const Checkout = () => {
     });
 
     try {
-      const res = await fetch(
+      const result = await safeJsonFetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pix-payment?action=create`,
         {
           method: "POST",
@@ -152,8 +153,7 @@ const Checkout = () => {
           }),
         }
       );
-      const result = await res.json();
-      if (!res.ok || !result.success) throw new Error(result.error || "Erro ao criar cobrança");
+      if (!result.success) throw new Error(result.error || "Erro ao criar cobrança");
       setPaymentId(result.payment_id);
       setChargeData(result.charge);
       // Use server-validated amount (price is locked to what customer saw)
@@ -185,7 +185,7 @@ const Checkout = () => {
     });
 
     try {
-      const res = await fetch(
+      const result = await safeJsonFetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pix-payment?action=create-card`,
         {
           method: "POST",
@@ -198,8 +198,7 @@ const Checkout = () => {
           }),
         }
       );
-      const result = await res.json();
-      if (!res.ok || !result.success) throw new Error(result.error || "Erro ao criar cobrança");
+      if (!result.success) throw new Error(result.error || "Erro ao criar cobrança");
       setPaymentId(result.payment_id);
       setCardPaymentUrl(result.paymentUrl);
       const serverTotal = result.validated_amount ?? cartFinalPrice;
@@ -232,7 +231,7 @@ const Checkout = () => {
     });
 
     try {
-      const res = await fetch(
+      const result = await safeJsonFetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pix-payment?action=create-crypto`,
         {
           method: "POST",
@@ -245,8 +244,7 @@ const Checkout = () => {
             }),
         }
       );
-      const result = await res.json();
-      if (!res.ok || !result.success) throw new Error(result.error || "Erro ao criar cobrança");
+      if (!result.success) throw new Error(result.error || "Erro ao criar cobrança");
       setPaymentId(result.payment_id);
       setCryptoData(result.crypto);
       const serverTotal = result.validated_amount ?? cartFinalPrice;
@@ -286,7 +284,7 @@ const Checkout = () => {
     const checkStatus = async () => {
       setChecking(true);
       try {
-        const res = await fetch(
+        const data = await safeJsonFetch(
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pix-payment?action=${statusAction}&payment_id=${paymentId}`,
           {
             headers: {
@@ -295,7 +293,6 @@ const Checkout = () => {
             },
           }
         );
-        const data = await res.json();
         if (data.status && data.status !== "ACTIVE") {
           setPaymentStatus(data.status);
           // Stop polling on any terminal status (COMPLETED, EXPIRED, CANCELLED, etc.)

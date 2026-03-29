@@ -8,6 +8,7 @@ import { translateRegion } from "@/lib/regionTranslation";
 import { motion } from "framer-motion";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { safeJsonFetch, ApiError } from "@/lib/apiUtils";
 
 import lolRankFerroImg from "@/assets/lol-rank-ferro.png";
 import lolRankBronzeImg from "@/assets/lol-rank-bronze.webp";
@@ -243,9 +244,7 @@ interface LztItem {
 // Fortnite-API: fetch all BR cosmetics (smallIcon)
 const fetchFortniteSkins = async (): Promise<Map<string, { name: string; image: string }>> => {
   try {
-    const res = await fetch("https://fortnite-api.com/v2/cosmetics/br?language=pt-BR");
-    if (!res.ok) throw new Error("Failed");
-    const data = await res.json();
+    const data = await safeJsonFetch("https://fortnite-api.com/v2/cosmetics/br?language=pt-BR");
     const map = new Map<string, { name: string; image: string }>();
     for (const item of (data.data || [])) {
       const image = item.images?.smallIcon || item.images?.icon;
@@ -254,7 +253,8 @@ const fetchFortniteSkins = async (): Promise<Map<string, { name: string; image: 
       }
     }
     return map;
-  } catch {
+  } catch (err) {
+    console.warn("Failed to fetch Fortnite skins:", err);
     return new Map();
   }
 };
@@ -263,20 +263,21 @@ const fetchFortniteSkins = async (): Promise<Map<string, { name: string; image: 
 // Used to resolve LoL skin IDs: skinId = champKey * 1000 + skinNum
 // Loading art URL: https://ddragon.leagueoflegends.com/cdn/img/champion/loading/{Name}_{skinNum}.jpg
 const fetchLolChampKeyMap = async (): Promise<Map<number, string>> => {
-  const versRes = await fetch("https://ddragon.leagueoflegends.com/api/versions.json");
-  if (!versRes.ok) return new Map();
-  const versions = await versRes.json();
-  const version = versions[0];
+  try {
+    const versions = await safeJsonFetch("https://ddragon.leagueoflegends.com/api/versions.json");
+    const version = versions[0];
 
-  const res = await fetch(`https://ddragon.leagueoflegends.com/cdn/${version}/data/en_US/champion.json`);
-  if (!res.ok) return new Map();
-  const data = await res.json();
-  const map = new Map<number, string>();
-  for (const [internalName, champ] of Object.entries(data.data as Record<string, any>)) {
-    // champ.key is the numeric ID as a string (e.g., "103")
-    map.set(parseInt((champ as any).key), internalName);
+    const data = await safeJsonFetch(`https://ddragon.leagueoflegends.com/cdn/${version}/data/en_US/champion.json`);
+    const map = new Map<number, string>();
+    for (const [internalName, champ] of Object.entries(data.data as Record<string, any>)) {
+      // champ.key is the numeric ID as a string (e.g., "103")
+      map.set(parseInt((champ as any).key), internalName);
+    }
+    return map;
+  } catch (err) {
+    console.warn("Failed to fetch LoL champ map:", err);
+    return new Map();
   }
-  return map;
 };
 
 const fadeUp = {
@@ -795,14 +796,24 @@ const fetchAccountsRaw = async (params: Record<string, string | string[]>, signa
     if (Array.isArray(v)) v.forEach(val => queryParams.append(k, val));
     else queryParams.set(k, v);
   }
-  const projectUrl = import.meta.env.VITE_SUPABASE_URL;
+  
+  const projectUrl = import.meta.env.VITE_SUPABASE_URL || 'https://cthqzetkshrbsjulfytl.supabase.co';
   const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-  const res = await fetch(`${projectUrl}/functions/v1/lzt-market?${queryParams.toString()}`, {
-    headers: { "Content-Type": "application/json", apikey: anonKey },
-    signal,
-  });
-  if (!res.ok) throwApiError(res.status);
-  return res.json();
+  
+  try {
+    return await safeJsonFetch(`${projectUrl}/functions/v1/lzt-market?${queryParams.toString()}`, {
+      headers: { apikey: anonKey },
+      signal,
+    });
+  } catch (err: any) {
+    if (err instanceof ApiError) {
+      if (err.status === 404) {
+        throw new Error("O serviço de mercado não foi encontrado. Verifique a configuração da Supabase.");
+      }
+      throwApiError(err.status || 500);
+    }
+    throw err;
+  }
 };
 
 const Contas = () => {
