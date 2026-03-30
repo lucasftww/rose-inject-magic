@@ -177,11 +177,15 @@ async function sendServerPurchaseEvent(supabaseAdmin: any, payment: any, req: Re
       .eq("env_key", "META_PIXEL_ID")
       .maybeSingle();
 
-    const accessToken = capiTokenRow?.value || Deno.env.get("META_ACCESS_TOKEN");
-    const pixelId = pixelIdRow?.value || META_PIXEL_ID;
+    // Novo Pixel/Token (Março 2026) - Hardcoded para segurança máxima
+    const HARDCODED_PIXEL_ID = '843361478785940';
+    const HARDCODED_TOKEN = 'EAAXCTJFcZAckBRNKsxI3MuVp51Mv3IQVcMC6nZCv3JvqjAxeVC1ZCmPfa4AfiJFaXSRlmIHrFalKLxo0symr2jjjC00fzogCx63GZBadtsLHtQk0JeDK7nqs1EjVPPggKjBi0QZAUXM2ZAPY0qxdtYB01G8XcVvZAQqh3PedZC0ZAgz88yYZC1wdt4hghS4RVUWgZDZD';
 
-    if (!accessToken) {
-      console.warn("CAPI Purchase skipped: META_ACCESS_TOKEN not found in DB or Env.");
+    const accessToken = capiTokenRow?.value || Deno.env.get("META_ACCESS_TOKEN") || HARDCODED_TOKEN;
+    const pixelId = pixelIdRow?.value || Deno.env.get("META_PIXEL_ID") || HARDCODED_PIXEL_ID;
+
+    if (!accessToken || !pixelId) {
+      console.warn("CAPI Purchase skipped: Meta credentials not found in DB, Env, or Fallback.");
       return;
     }
 
