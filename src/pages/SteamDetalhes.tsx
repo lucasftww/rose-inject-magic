@@ -202,9 +202,25 @@ const SteamDetalhes = () => {
           {/* Main Content */}
           <div className="lg:w-2/3 space-y-8">
             {/* Hero Section */}
-            <div className="relative overflow-hidden rounded-3xl border border-border bg-card p-6 sm:p-10">
-              <div className="absolute top-0 left-0 h-1 w-full bg-gradient-to-r from-[hsl(210,100%,50%)] to-transparent" />
-              <div className="relative z-10">
+            <div className="relative overflow-hidden rounded-3xl border border-border bg-card">
+              {/* Product Preview Image */}
+              <div className="relative h-64 sm:h-80 w-full overflow-hidden bg-secondary/20">
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(210,100%,50%,0.1),transparent_70%)]" />
+                {item.imagePreviewLinks?.direct?.main || item.imagePreviewLinks?.direct?.weapons ? (
+                  <img 
+                    src={getProxiedImageUrl(item.imagePreviewLinks?.direct?.main || item.imagePreviewLinks?.direct?.weapons)} 
+                    alt="Preview" 
+                    className="h-full w-full object-contain p-4 drop-shadow-2xl"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center opacity-10">
+                    <Globe className="h-32 w-32" />
+                  </div>
+                )}
+                <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-card to-transparent" />
+              </div>
+
+              <div className="relative z-10 p-6 sm:p-10 pt-0 -mt-12">
                 <div className="mb-4 flex flex-wrap gap-2">
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-[hsl(210,100%,50%,0.1)] px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[hsl(210,100%,50%)]">
                     <Globe className="h-3 w-3" />
@@ -271,6 +287,41 @@ const SteamDetalhes = () => {
                 )}
               </div>
             </div>
+
+            {/* Inventory Section */}
+            {raw.inventory && Array.isArray(raw.inventory) && raw.inventory.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-bold flex items-center gap-2">
+                    <Trophy className="h-5 w-5 text-amber-500" />
+                    Inventário e Skins
+                  </h2>
+                  <span className="text-xs text-muted-foreground font-medium">{raw.inventory.length} itens encontrados</span>
+                </div>
+                
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  {raw.inventory.map((invItem: any, idx: number) => (
+                    <div key={idx} className="flex flex-col rounded-xl border border-border bg-card overflow-hidden hover:border-primary/30 transition-all group">
+                      <div className="aspect-square relative bg-secondary/10 flex items-center justify-center p-4">
+                        <img 
+                          src={getProxiedImageUrl(invItem.image)} 
+                          alt={invItem.name} 
+                          className="w-full h-full object-contain group-hover:scale-110 transition-transform"
+                          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                        />
+                        <div className="absolute bottom-1 right-1">
+                           <span className={invItem.rarity_color ? `h-2 w-2 rounded-full block shadow-[0_0_8px_currentColor]` : ""} style={{ color: invItem.rarity_color }} />
+                        </div>
+                      </div>
+                      <div className="p-2 border-t border-border/50">
+                        <p className="text-[10px] font-bold truncate text-foreground leading-tight">{invItem.name}</p>
+                        {invItem.type && <p className="text-[8px] text-muted-foreground font-medium truncate mt-0.5">{invItem.type}</p>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Games Section */}
             <div className="space-y-4">

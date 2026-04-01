@@ -428,12 +428,18 @@ const ValorantCard = memo(({ item, skinsMap, formatPrice }: { item: LztItem; ski
           <button className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg bg-success py-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-success-foreground">
             Ver conta <ArrowRight className="h-2.5 w-2.5" />
           </button>
-        </div>
-      </div>
-    </div>
-  );
-});
-ValorantCard.displayName = "ValorantCard";
+const normalizeChampName = (name: string) => {
+  if (!name) return "";
+  // DDragon expects capitalized names, e.g. "Vayne", "Karma"
+  // Some exceptions like "Wukong" is "MonkeyKing" and "LeBlanc" has capital B
+  const common = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+  if (common === "Wukong") return "MonkeyKing";
+  if (common === "Leblanc") return "LeBlanc";
+  if (common === "Kogmaw") return "KogMaw";
+  if (common === "Khazix") return "KhaZix";
+  if (common === "Rexsai") return "RekSai";
+  return common;
+};
 
 // ─── LoL Card ───
 const LolCard = memo(({ item, champKeyMap, formatPrice }: { item: LztItem; champKeyMap: Map<number, string>; formatPrice: (price: number, currency?: string) => string }) => {
@@ -469,8 +475,9 @@ const LolCard = memo(({ item, champKeyMap, formatPrice }: { item: LztItem; champ
       if (isNaN(id)) continue;
       const champKey = Math.floor(id / 1000);
       const skinNum = id % 1000;
-      const champName = champKeyMap.get(champKey);
-      if (champName && skinNum > 0) {
+      const rawChampName = champKeyMap.get(champKey);
+      if (rawChampName && skinNum > 0) {
+        const champName = normalizeChampName(rawChampName);
         results.push({
           name: champName,
           image: `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${champName}_${skinNum}.jpg`,
@@ -482,8 +489,9 @@ const LolCard = memo(({ item, champKeyMap, formatPrice }: { item: LztItem; champ
     // Fallback: campeões (skin 0 = arte base)
     if (results.length === 0) {
       for (const champId of champIds) {
-        const champName = champKeyMap.get(Number(champId));
-        if (champName) {
+        const rawChampName = champKeyMap.get(Number(champId));
+        if (rawChampName) {
+          const champName = normalizeChampName(rawChampName);
           results.push({
             name: champName,
             image: `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${champName}_0.jpg`,
@@ -512,7 +520,7 @@ const LolCard = memo(({ item, champKeyMap, formatPrice }: { item: LztItem; champ
           <div className="relative z-[1] grid grid-cols-2 gap-0 w-full h-full">
             {skinPreviews.map((skin, i) => (
               <div key={i} className="relative overflow-hidden">
-                <img src={skin.image} alt={skin.name} className="h-full w-full object-cover object-top" loading="lazy" />
+                <img src={getProxiedImageUrl(skin.image)} alt={skin.name} className="h-full w-full object-cover object-top" loading="lazy" />
                 {i > 0 && <div className="absolute inset-y-0 left-0 w-px bg-black/20" />}
               </div>
             ))}
@@ -521,7 +529,7 @@ const LolCard = memo(({ item, champKeyMap, formatPrice }: { item: LztItem; champ
           <div className="relative z-[1] grid grid-cols-2 grid-rows-2 gap-0 w-full h-full">
             {skinPreviews.map((skin, i) => (
               <div key={i} className="relative overflow-hidden">
-                <img src={skin.image} alt={skin.name} className="h-full w-full object-cover object-top" loading="lazy" />
+                <img src={getProxiedImageUrl(skin.image)} alt={skin.name} className="h-full w-full object-cover object-top" loading="lazy" />
               </div>
             ))}
           </div>
@@ -588,6 +596,7 @@ LolCard.displayName = "LolCard";
 
 // ─── Steam Card ───
 const SteamCard = memo(({ item, formatPrice }: { item: LztItem; formatPrice: (price: number, currency?: string) => string }) => {
+  const navigate = useNavigate();
   const cleanedTitle = useMemo(() => {
     let t = item.title || "";
     // Remove cyrillic
@@ -602,6 +611,8 @@ const SteamCard = memo(({ item, formatPrice }: { item: LztItem; formatPrice: (pr
     return t;
   }, [item.title, item.premier_elo, item.cs2_elo, item.premier_elo_min, item.medals_count, item.medals, item.medals_min]);
 
+  const previewImage = item.imagePreviewLinks?.direct?.weapons || item.imagePreviewLinks?.direct?.main;
+
   return (
     <div
       className="group cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-[hsl(210,100%,50%)/50%] hover:shadow-[0_4px_24px_hsl(210,100%,50%,0.12)] flex flex-col h-full"
@@ -609,30 +620,32 @@ const SteamCard = memo(({ item, formatPrice }: { item: LztItem; formatPrice: (pr
     >
       <div className="relative flex h-28 sm:h-36 items-center justify-center overflow-hidden bg-secondary/20">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(210,100%,50%,0.08),transparent_70%)]" />
-        <div className="flex flex-col h-full w-full items-center justify-center gap-2 p-4 text-center">
-          <Globe className="h-10 w-10 text-muted-foreground/30" />
-          <div className="flex flex-col gap-1 items-center">
+        {previewImage ? (
+          <img src={getProxiedImageUrl(previewImage)} alt="Preview" className="relative z-[1] h-full w-full object-contain p-2 transition-transform group-hover:scale-105" loading="lazy" />
+        ) : (
+          <div className="flex flex-col h-full w-full items-center justify-center gap-2 p-4 text-center">
+            <Globe className="h-10 w-10 text-muted-foreground/30" />
             <span className="text-[10px] font-medium text-muted-foreground/60 uppercase tracking-wider">Conta Steam / CS2</span>
-            <div className="flex gap-1">
-               {(item.premier_elo_min || item.premier_elo || item.cs2_elo) && (
-                 <span className="bg-primary/20 text-primary text-[8px] font-black px-1.5 py-0.5 rounded border border-primary/30 uppercase">
-                   {String(item.premier_elo || item.cs2_elo || item.premier_elo_min)} ELO
-                 </span>
-               )}
-               {(item.cs2_prime === "1" || item.cs2_prime === true || item.steam_prime === "Yes") && (
-                 <span className="bg-emerald-500/20 text-emerald-500 text-[8px] font-black px-1.5 py-0.5 rounded border border-emerald-500/30 uppercase">
-                   PRIME
-                 </span>
-               )}
-            </div>
           </div>
+        )}
+        <div className="absolute top-2 left-2 flex flex-col gap-1 z-[2]">
+          {(item.premier_elo_min || item.premier_elo || item.cs2_elo) && (
+            <span className="bg-primary/90 text-primary-foreground text-[8px] font-black px-1.5 py-0.5 rounded shadow-lg uppercase">
+              {String(item.premier_elo || item.cs2_elo || item.premier_elo_min)} ELO
+            </span>
+          )}
+          {(item.cs2_prime === "1" || item.cs2_prime === true || item.steam_prime === "Yes") && (
+            <span className="bg-emerald-500/90 text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow-lg uppercase">
+              PRIME
+            </span>
+          )}
         </div>
       </div>
       <div className="p-3 flex flex-col flex-1 gap-2">
         <h3 className="text-xs font-bold text-foreground line-clamp-1">{cleanedTitle}</h3>
-        <p className="text-[9px] text-muted-foreground line-clamp-2 leading-relaxed opacity-70 italic">Clique para ver detalhes</p>
-        <div className="mt-auto pt-2 border-t border-border/30">
+        <div className="flex items-center justify-between mt-auto pt-2 border-t border-border/30">
           <p className="text-sm sm:text-base font-bold text-[hsl(210,100%,50%)] tracking-tight">{formatPrice(item.price, item.price_currency)}</p>
+          <ArrowRight className="h-3 w-3 text-muted-foreground group-hover:text-primary transition-colors" />
         </div>
       </div>
     </div>
@@ -790,7 +803,7 @@ const MinecraftCard = memo(({ item, formatPrice }: { item: LztItem; formatPrice:
         <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse at center, ${MC_GREEN}0a, transparent 70%)` }} />
         {skinUrl ? (
           <div className="relative z-[1] flex items-end justify-center h-full pt-2 pb-1">
-            <img src={getProxiedImageUrl(skinUrl)} alt={nickname || "Skin"} className="h-full w-auto object-contain drop-shadow-2xl transition-transform duration-300 group-hover:scale-105" loading="lazy" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+            <img src={skinUrl} alt={nickname || "Skin"} className="h-full w-auto object-contain drop-shadow-2xl transition-transform duration-300 group-hover:scale-105" loading="lazy" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
           </div>
         ) : (
           <div className="relative z-[1] flex items-center justify-center h-full">
@@ -1425,6 +1438,18 @@ const Contas = () => {
     if (gameTab === "minecraft") {
       return filtered.sort((a, b) => getBrlPrice(a) - getBrlPrice(b));
     }
+    if (gameTab === "steam") {
+      return filtered.sort((a, b) => {
+        // High quality score based on ELO and Prime status
+        const primeA = (a.cs2_prime === "1" || a.cs2_prime === true || a.steam_prime === "Yes") ? 1 : 0;
+        const primeB = (b.cs2_prime === "1" || b.cs2_prime === true || b.steam_prime === "Yes") ? 1 : 0;
+        const eloA = Number(a.premier_elo || a.cs2_elo || a.premier_elo_min || 0);
+        const eloB = Number(b.premier_elo || b.cs2_elo || b.premier_elo_min || 0);
+        
+        if (primeB !== primeA) return primeB - primeA;
+        return eloB - eloA || getBrlPrice(a) - getBrlPrice(b);
+      });
+    }
     return filtered;
   }, [streamedItems, sortBy, gameTab, priceMin, priceMax, getBrlPrice]);
   const totalDisplayPages = Math.max(1, Math.ceil(allItems.length / ITEMS_PER_PAGE));
@@ -1463,6 +1488,13 @@ const Contas = () => {
     setSearchQuery(""); setOnlyKnife(false);
     setInvMin(""); setInvMax("");
     setLvlMin(""); setLvlMax("");
+    setSteamLvlMin("");
+    setCs2EloMin("");
+    setCs2WinsMin("");
+    setCs2FaceitLvlMin("");
+    setCs2MedalsMin("");
+    setCs2Prime(false);
+    setCs2Only(false);
     // page state removed
     setDisplayPage(1);
   };

@@ -378,11 +378,9 @@ Deno.serve(async (req) => {
       const imageData = await response.arrayBuffer();
       const contentType = response.headers.get("Content-Type") || "image/png";
 
-      return new Response(imageData, {
-        headers: {
           ...corsHeaders,
           "Content-Type": contentType,
-          "Cache-Control": "public, max-age=3600",
+          "Cache-Control": "public, max-age=86400, s-maxage=86400",
         },
       });
     }
