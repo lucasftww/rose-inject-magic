@@ -27,6 +27,17 @@ import swMarvelRivals from "@/assets/games/sw-marvel-rivals.webp";
 import swDayz from "@/assets/games/sw-dayz.webp";
 import swSquad from "@/assets/games/sw-squad.webp";
 
+// Character overlay images
+import bgCardCod from "@/assets/games/bg-card-cod.png";
+import codNormal from "@/assets/games/cod-normal.png";
+import codHover from "@/assets/games/cod-hover.png";
+import bgCardPubg from "@/assets/games/bg-card-pubg.png";
+import pubgNormal from "@/assets/games/pubg-normal.png";
+import pubgHover from "@/assets/games/pubg-hover.png";
+import bgCardFortnite from "@/assets/games/bg-card-fortnite.png";
+import fortniteNormal from "@/assets/games/fortnite-normal.png";
+import fortniteHover from "@/assets/games/fortnite-hover.png";
+
 // Extracted components
 import FloatingWidgets from "@/components/landing/FloatingWidgets";
 import StickyMobileCTA from "@/components/landing/StickyMobileCTA";
