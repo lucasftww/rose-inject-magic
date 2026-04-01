@@ -8,25 +8,28 @@ const corsHeaders = {
 
 const LZT_ALLOWED_IMAGE_DOMAINS = ["lzt.market", "api.lzt.market", "s.lzt.market", "img.lzt.market"];
 const RETRYABLE_STATUSES = [429, 502, 503, 504];
-const RUB_TO_BRL = 0.055;
+let RUB_TO_BRL = 0.055; // Updated fallback
 let USD_TO_BRL = 6.10; // Updated fallback to be more realistic
 let lastFxFetch = 0;
 
-async function updateUsdRate() {
+async function updateRates() {
   const now = Date.now();
   if (now - lastFxFetch < 1000 * 60 * 60) return; // Cache for 1 hour
   try {
-    const fxRes = await fetch("https://economia.awesomeapi.com.br/json/last/USD-BRL");
+    const fxRes = await fetch("https://economia.awesomeapi.com.br/json/last/USD-BRL,RUB-BRL");
     if (fxRes.ok) {
       const fxData = await fxRes.json();
-      const bid = Number(fxData?.USDBRL?.bid);
-      if (bid > 0) {
-        USD_TO_BRL = bid;
-        lastFxFetch = now;
-      }
+      const usdBid = Number(fxData?.USDBRL?.bid);
+      const rubBid = Number(fxData?.RUBBRL?.bid);
+      
+      if (usdBid > 0) USD_TO_BRL = usdBid;
+      if (rubBid > 0) RUB_TO_BRL = rubBid;
+      
+      if (usdBid > 0 || rubBid > 0) lastFxFetch = now;
+      console.log(`Rates updated: USD=${USD_TO_BRL}, RUB=${RUB_TO_BRL}`);
     }
   } catch (e) {
-    console.warn("FX fetch failed, using fallback:", e);
+    console.warn("FX fetch failed, using fallbacks:", e);
   }
 }
 const MIN_PRICE_BRL = 20;
@@ -102,6 +105,11 @@ function getContentFloorBrl(item: LztItem, gameType?: string) {
   const skins = Number(item.riot_valorant_skin_count || 0);
   const knives = Number(item.riot_valorant_knife || item.riot_valorant_knife_count || 0);
   const level = Math.min(Number(item.riot_valorant_level || 0), 500);
+  // Support for CS2 / Steam (if applicable)
+  if (gameType === "steam" || gameType === "csgo" || gameType === "cs2") {
+    const csSkins = Number(item.steam_inventory_items_count || 0);
+    return csSkins * 0.1 + 10;
+  }
   return skins * 0.6 + knives * 5 + level * 0.08;
 }
 
@@ -233,6 +241,10 @@ function shouldKeepItem(item: LztItem, gameType: string, _displayedPriceBrl: num
     const skins = Number(item.fortnite_skin_count || item.fortnite_outfit_count || 0);
     if (skins < 3) return false;
   }
+  
+  if (gameType === "steam" || gameType === "csgo" || gameType === "cs2") {
+    if (item.steam_vac_ban || item.steam_community_ban) return false;
+  }
 
   return true;
 }
@@ -266,14 +278,21 @@ Deno.serve(async (req) => {
     // Fetch LZT token from system_credentials table
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
-    // Fetch token + config in parallel to reduce latency
-    await updateUsdRate();
-    const [credRow, lztConfigRow] = await Promise.all([
+    // Update rates and fetch configs in parallel
+    await updateRates();
+    const [credRow, clientIdRow, lztConfigRow] = await Promise.all([
       supabaseAdmin.from("system_credentials").select("value").eq("env_key", "LZT_API_TOKEN").maybeSingle(),
+      supabaseAdmin.from("system_credentials").select("value").eq("env_key", "LZT_CLIENT_ID").maybeSingle(),
       supabaseAdmin.from("lzt_config").select("max_fetch_price, currency, markup_multiplier, markup_valorant, markup_lol, markup_fortnite, markup_minecraft").limit(1).maybeSingle(),
     ]);
 
-    const token = credRow.data?.value || Deno.env.get("LZT_MARKET_TOKEN");
+    // Provided token as fallback if DB is empty
+    const NEW_TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzUxMiJ9.eyJzdWIiOjEwNDIzOTg5LCJpc3MiOiJsenQiLCJpYXQiOjE3NzUwNjY2MzcsImp0aSI6Ijk1NDQwMiIsInNjb3BlIjoiYmFzaWMgcmVhZCBwb3N0IGNvbnZlcnNhdGUgcGF5bWVudCBpbnZvaWNlIGNoYXRib3ggbWFya2V0IiwiZXhwIjoxOTMyNzQ2NjM3fQ.urPp0RWVn3WaBCsrJCISf1EW5zSnkx-Fjz-QkohjkbO-HdpUNICHbKTtto5liF50OrIOufBZkqWQdG8rD36xsrFTE6ONeWehQzQbPSxK4ophWhaJ8mI2gGYX7eFKLZIYWBA9AjcPpEHovnImvV12AApsVmJZJhrI6eczqyX65Vo";
+    const NEW_CLIENT_ID = "a3ryez9tif";
+
+    const token = credRow.data?.value || Deno.env.get("LZT_MARKET_TOKEN") || NEW_TOKEN;
+    const clientId = clientIdRow.data?.value || Deno.env.get("LZT_CLIENT_ID") || NEW_CLIENT_ID;
+
     if (!token) {
       return new Response(JSON.stringify({ error: "LZT token not configured" }), {
         status: 500,
@@ -705,9 +724,19 @@ Deno.serve(async (req) => {
     if (!response || !response.ok) {
       const errorText = response ? await response.text() : "No response";
       const status = response?.status || 502;
-      console.error("LZT API error after retries:", status, errorText);
+      
+      let detail = errorText;
+      try {
+        const errorJson = JSON.parse(errorText);
+        if (errorJson.error_description) detail = errorJson.error_description;
+        else if (errorJson.message) detail = errorJson.message;
+      } catch (e) {
+        // Not JSON
+      }
+
+      console.error("LZT API error after retries:", status, detail);
       return new Response(
-        JSON.stringify({ error: "LZT API error", status, detail: errorText }),
+        JSON.stringify({ error: "LZT API error", status, detail }),
         {
           status,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
