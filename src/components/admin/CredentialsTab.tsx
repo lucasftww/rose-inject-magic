@@ -59,7 +59,7 @@ const CredentialsTab = () => {
     }
     setSaving(true);
     if (editing) {
-      const { error } = await supabase.from("system_credentials")
+      const { error } = await (supabase.from("system_credentials") as any)
         .update({
           name: formName.trim(),
           env_key: formEnvKey.trim().toUpperCase(),
@@ -71,7 +71,7 @@ const CredentialsTab = () => {
       if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
       else { toast({ title: "Credencial atualizada!" }); resetForm(); fetchCredentials(); }
     } else {
-      const { error } = await supabase.from("system_credentials")
+      const { error } = await (supabase.from("system_credentials") as any)
         .insert({
           name: formName.trim(),
           env_key: formEnvKey.trim().toUpperCase(),
@@ -87,7 +87,7 @@ const CredentialsTab = () => {
 
   const handleDelete = async (cred: Credential) => {
     if (!confirm(`Excluir "${cred.name}"?`)) return;
-    const { error } = await supabase.from("system_credentials")
+    const { error } = await (supabase.from("system_credentials") as any)
       .delete()
       .eq("id", cred.id);
     if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import { Star, ArrowRight, Loader2, Zap, Shield, Clock, Users, CheckCircle } from "lucide-react";
@@ -26,6 +26,17 @@ import swPubg from "@/assets/games/sw-pubg.webp";
 import swMarvelRivals from "@/assets/games/sw-marvel-rivals.webp";
 import swDayz from "@/assets/games/sw-dayz.webp";
 import swSquad from "@/assets/games/sw-squad.webp";
+
+// Character overlay images
+import bgCardCod from "@/assets/games/bg-card-cod.png";
+import codNormal from "@/assets/games/cod-normal.png";
+import codHover from "@/assets/games/cod-hover.png";
+import bgCardPubg from "@/assets/games/bg-card-pubg.png";
+import pubgNormal from "@/assets/games/pubg-normal.png";
+import pubgHover from "@/assets/games/pubg-hover.png";
+import bgCardFortnite from "@/assets/games/bg-card-fortnite.png";
+import fortniteNormal from "@/assets/games/fortnite-normal.png";
+import fortniteHover from "@/assets/games/fortnite-hover.png";
 
 // Extracted components
 import FloatingWidgets from "@/components/landing/FloatingWidgets";
@@ -57,6 +68,15 @@ const softwareImageMap: Record<string, string> = {
   "marvel rivals": swMarvelRivals,
   dayz: swDayz,
   squad: swSquad,
+};
+
+// Character overlay data for featured games
+const characterOverlayMap: Record<string, { bg: string; character: string; characterHover: string }> = {
+  "call of duty": { bg: bgCardCod, character: codNormal, characterHover: codHover },
+  "call-of-duty": { bg: bgCardCod, character: codNormal, characterHover: codHover },
+  cod: { bg: bgCardCod, character: codNormal, characterHover: codHover },
+  pubg: { bg: bgCardPubg, character: pubgNormal, characterHover: pubgHover },
+  fortnite: { bg: bgCardFortnite, character: fortniteNormal, characterHover: fortniteHover },
 };
 
 // Slugs to hide from the landing page software showcase
@@ -152,6 +172,89 @@ const ContasSection = () => {
   );
 };
 
+// ─── Software Card with Character Overlay ───────────────────────────────────
+const SoftwareCard = ({
+  game, image, character, characterHover, productCount, index, onClick, t
+}: {
+  game: GameFromDB;
+  image: string | null;
+  character?: string;
+  characterHover?: string;
+  productCount: number;
+  index: number;
+  onClick: () => void;
+  t: any;
+}) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <motion.div
+      variants={scaleIn}
+      custom={index}
+      onClick={onClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className="group relative flex flex-col cursor-pointer overflow-hidden rounded-xl border border-border/40 bg-card transition-all duration-300 hover:border-success/40 hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)]"
+    >
+      <div className="relative aspect-[3/4] w-full overflow-hidden">
+        {image ? (
+          <img
+            src={image}
+            alt={game.name}
+            loading="lazy"
+            className="absolute inset-0 block h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-110"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-card">
+            <span className="text-xl font-bold text-muted-foreground/20">{game.name.charAt(0)}</span>
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+
+        {/* Character normal */}
+        {character && (
+          <div
+            className="absolute bottom-0 right-[-40px] sm:right-[-60px] w-[140%] pointer-events-none z-[5] transition-opacity duration-500 ease-out"
+            style={{ opacity: isHovered ? 0 : 1 }}
+          >
+            <img src={character} alt="" loading="lazy" decoding="async" className="w-full h-auto object-contain" style={{ filter: "drop-shadow(0 4px 20px rgba(0,0,0,0.6))" }} />
+          </div>
+        )}
+
+        {/* Character hover */}
+        {characterHover && (
+          <div
+            className="absolute bottom-0 right-[-40px] sm:right-[-60px] w-[140%] pointer-events-none z-[6] transition-all duration-500 ease-out"
+            style={{
+              opacity: isHovered ? 1 : 0,
+              transform: isHovered ? "scale(1.15)" : "scale(1)",
+              transformOrigin: "bottom center",
+            }}
+          >
+            <img src={characterHover} alt="" loading="lazy" decoding="async" className="w-full h-auto object-contain" style={{ filter: "drop-shadow(0 4px 20px rgba(0,0,0,0.6))" }} />
+          </div>
+        )}
+
+        {productCount > 0 && (
+          <div className="absolute top-2 right-2 sm:top-3 sm:right-3 z-10 rounded-full bg-success/90 px-2 sm:px-2.5 py-0.5 text-[7px] sm:text-[10px] font-bold text-success-foreground shadow-lg shadow-success/20">
+            {productCount} {productCount === 1 ? "software" : "softwares"}
+          </div>
+        )}
+
+        <div className="absolute inset-x-0 bottom-0 p-3 sm:p-5 z-[7]">
+          <h3 className="text-sm sm:text-xl lg:text-2xl font-bold tracking-tight text-foreground drop-shadow-lg" style={{ fontFamily: "'Valorant', sans-serif" }}>
+            {game.name.toUpperCase()}
+          </h3>
+          <div className="mt-2 sm:mt-3 flex items-center gap-1 text-success text-[8px] sm:text-[11px] font-semibold uppercase tracking-wider group-hover:gap-2 transition-all">
+            <span>{productCount === 1 ? t("products.viewProduct") : t("products.viewProducts", { defaultValue: "Ver softwares" })}</span>
+            <ArrowRight className="h-2.5 w-2.5 sm:h-3 sm:w-3 transition-transform group-hover:translate-x-1" />
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
 // ─── Software Section ───────────────────────────────────────────────────────
 const SoftwareSection = () => {
   const navigate = useNavigate();
@@ -207,42 +310,20 @@ const SoftwareSection = () => {
               const slug = (game.slug || game.name || "").toLowerCase();
               const image = softwareImageMap[slug] || game.image_url;
               const productCount = game.products?.filter(p => p.active).length || 0;
+              const overlay = characterOverlayMap[slug];
 
               return (
-                <motion.div
+                <SoftwareCard
                   key={game.id}
-                  variants={scaleIn}
-                  custom={idx}
+                  game={game}
+                  image={overlay?.bg || image}
+                  character={overlay?.character}
+                  characterHover={overlay?.characterHover}
+                  productCount={productCount}
+                  index={idx}
                   onClick={() => handleGameClick(game)}
-                  className="group relative flex flex-col cursor-pointer overflow-hidden rounded-xl border border-border/40 bg-card transition-all duration-300 hover:border-success/40 hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)]"
-                >
-                  <div className="relative aspect-[3/4] w-full overflow-hidden">
-                    {image ? (
-                      <img src={image} alt={game.name} loading="lazy" className="absolute inset-0 block h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-110" />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-card">
-                        <span className="text-xl font-bold text-muted-foreground/20">{game.name.charAt(0)}</span>
-                      </div>
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
-
-                    {productCount > 0 && (
-                      <div className="absolute top-2 right-2 sm:top-3 sm:right-3 rounded-full bg-success/90 px-2 sm:px-2.5 py-0.5 text-[7px] sm:text-[10px] font-bold text-success-foreground shadow-lg shadow-success/20">
-                        {productCount} {productCount === 1 ? "software" : "softwares"}
-                      </div>
-                    )}
-
-                    <div className="absolute inset-x-0 bottom-0 p-3 sm:p-5">
-                      <h3 className="text-sm sm:text-xl lg:text-2xl font-bold tracking-tight text-foreground" style={{ fontFamily: "'Valorant', sans-serif" }}>
-                        {game.name.toUpperCase()}
-                      </h3>
-                      <div className="mt-2 sm:mt-3 flex items-center gap-1 text-success text-[8px] sm:text-[11px] font-semibold uppercase tracking-wider group-hover:gap-2 transition-all">
-                        <span>{productCount === 1 ? t("products.viewProduct") : t("products.viewProducts", { defaultValue: "Ver softwares" })}</span>
-                        <ArrowRight className="h-2.5 w-2.5 sm:h-3 sm:w-3 transition-transform group-hover:translate-x-1" />
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
+                  t={t}
+                />
               );
             })}
           </motion.div>

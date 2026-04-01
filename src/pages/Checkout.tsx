@@ -69,12 +69,13 @@ const Checkout = () => {
   useEffect(() => {
     if (!authLoading && user && items.length > 0) {
       const firstItem = items[0];
-      const { trackInitiateCheckout } = import("@/lib/metaPixel");
-      trackInitiateCheckout({
-        contentName: firstItem.productName,
-        contentIds: items.map(i => i.productId),
-        value: cartFinalPrice,
-        currency: "BRL"
+      import("@/lib/metaPixel").then(({ trackInitiateCheckout }) => {
+        trackInitiateCheckout({
+          contentName: firstItem.productName,
+          contentIds: items.map(i => i.productId),
+          value: cartFinalPrice,
+          currency: "BRL"
+        });
       });
     }
   }, [authLoading, !!user, items.length === 0]);
@@ -82,12 +83,13 @@ const Checkout = () => {
   // Eagerly set Advanced Matching as soon as form is semi-valid to warm up CAPI identity
   useEffect(() => {
     if (formData.email.includes("@") && formData.name.length > 2) {
-      const { setAdvancedMatching } = import("@/lib/metaPixel");
-      setAdvancedMatching({
-        email: formData.email,
-        firstName: formData.name.split(" ")[0],
-        lastName: formData.name.split(" ").slice(1).join(" "),
-        externalId: user?.id
+      import("@/lib/metaPixel").then(({ setAdvancedMatching }) => {
+        setAdvancedMatching({
+          email: formData.email,
+          firstName: formData.name.split(" ")[0],
+          lastName: formData.name.split(" ").slice(1).join(" "),
+          externalId: user?.id
+        });
       });
     }
   }, [formData.email, formData.name, user?.id]);

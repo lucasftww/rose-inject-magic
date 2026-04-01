@@ -376,6 +376,7 @@ export type Database = {
           charge_id: string | null
           coupon_id: string | null
           created_at: string | null
+          customer_data: Json | null
           discount_amount: number | null
           external_id: string | null
           id: string
@@ -391,6 +392,7 @@ export type Database = {
           charge_id?: string | null
           coupon_id?: string | null
           created_at?: string | null
+          customer_data?: Json | null
           discount_amount?: number | null
           external_id?: string | null
           id?: string
@@ -406,6 +408,7 @@ export type Database = {
           charge_id?: string | null
           coupon_id?: string | null
           created_at?: string | null
+          customer_data?: Json | null
           discount_amount?: number | null
           external_id?: string | null
           id?: string
@@ -996,29 +999,23 @@ export type Database = {
         Row: {
           created_at: string | null
           description: string | null
-          env_key: string
-          help_url: string | null
-          id: string
-          name: string
-          value: string | null
+          key: string
+          updated_at: string | null
+          value: string
         }
         Insert: {
           created_at?: string | null
           description?: string | null
-          env_key: string
-          help_url?: string | null
-          id?: string
-          name: string
-          value?: string | null
+          key: string
+          updated_at?: string | null
+          value: string
         }
         Update: {
           created_at?: string | null
           description?: string | null
-          env_key?: string
-          help_url?: string | null
-          id?: string
-          name?: string
-          value?: string | null
+          key?: string
+          updated_at?: string | null
+          value?: string
         }
         Relationships: []
       }
