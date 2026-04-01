@@ -605,6 +605,7 @@ LolCard.displayName = "LolCard";
 
 // ─── Steam Card ───
 const SteamCard = memo(({ item, formatPrice }: { item: LztItem; formatPrice: (price: number, currency?: string) => string }) => {
+  const navigate = useNavigate();
   const cleanedTitle = useMemo(() => {
     let t = item.title || "";
     // Remove cyrillic
