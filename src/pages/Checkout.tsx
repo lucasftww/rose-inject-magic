@@ -69,8 +69,8 @@ const Checkout = () => {
   useEffect(() => {
     if (!authLoading && user && items.length > 0) {
       const firstItem = items[0];
-      const { trackInitiateCheckout } = import("@/lib/metaPixel");
-      trackInitiateCheckout({
+      import("@/lib/metaPixel").then(({ trackInitiateCheckout }) => {
+        trackInitiateCheckout({
         contentName: firstItem.productName,
         contentIds: items.map(i => i.productId),
         value: cartFinalPrice,
