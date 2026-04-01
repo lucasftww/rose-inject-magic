@@ -244,6 +244,23 @@ interface LztItem {
   };
   // Server-calculated BRL price (with correct markup)
   price_brl?: number;
+  // Steam / CS2
+  premier_elo?: number;
+  cs2_elo?: number;
+  premier_elo_min?: number;
+  medals_count?: number;
+  medals?: number;
+  medals_min?: number;
+  cs2_prime?: string | boolean;
+  steam_prime?: string;
+  steam_level?: number;
+  steam_country?: string;
+  steam_id?: string;
+  steam_vac_ban?: boolean;
+  cs2_win?: number;
+  cs2_wins?: number;
+  faceit_lvl?: number;
+  faceit_level?: number;
 }
 
 // ─── Data fetchers ───
