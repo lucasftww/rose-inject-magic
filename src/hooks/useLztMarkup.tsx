@@ -1,4 +1,4 @@
-export type GameCategory = "valorant" | "lol" | "fortnite" | "minecraft";
+export type GameCategory = "valorant" | "lol" | "fortnite" | "minecraft" | "steam";
 
 const MIN_PRICE_BRL = 20;
 

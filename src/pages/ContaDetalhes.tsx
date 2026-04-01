@@ -37,6 +37,15 @@ const fetchAccountDetail = async (itemId: string) => {
 // RARITY_PRIORITY imported from @/lib/valorantData
 
 // Permissive UUID pattern (Valorant UUIDs don't strictly follow RFC 4122)
+const getProxiedImageUrl = (url: string) => {
+  if (!url) return "";
+  if (url.includes("lzt.market") || url.includes("img.lzt.market") || url.includes("mineskin.eu")) {
+    const projectUrl = import.meta.env.VITE_SUPABASE_URL;
+    return `${projectUrl}/functions/v1/lzt-market?action=image-proxy&url=${encodeURIComponent(url)}`;
+  }
+  return url;
+};
+
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const collectUuidStrings = (raw: unknown): string[] => {
@@ -566,7 +575,7 @@ const ContaDetalhes = () => {
                     transition={{ duration: 0.2 }}>
                     
                         <img
-                      src={skinItems[selectedSkin]?.image}
+                      src={getProxiedImageUrl(skinItems[selectedSkin]?.image)}
                       alt={skinItems[selectedSkin]?.name}
                       className="max-h-full max-w-full object-contain" />
                     
@@ -592,7 +601,7 @@ const ContaDetalhes = () => {
                     <AnimatePresence mode="wait">
                       <motion.img
                     key={selectedSkin}
-                    src={mainGallery[selectedSkin]?.image}
+                    src={getProxiedImageUrl(mainGallery[selectedSkin]?.image)}
                     alt={mainGallery[selectedSkin]?.name}
                     className="h-full w-full object-contain p-6"
                     initial={{ opacity: 0, scale: 0.95 }}
@@ -781,11 +790,11 @@ const ContaDetalhes = () => {
                             
                           </div>
                 }
-                        <div className="aspect-square bg-secondary/15 flex items-center justify-center p-3 sm:p-3">
+                        <div className="relative flex aspect-square items-center justify-center p-3 sm:p-4 bg-secondary/30 rounded-xl group-hover:bg-secondary/50 transition-colors">
                           <img
-                    src={invItem.image}
+                    src={getProxiedImageUrl(invItem.image)}
                     alt={invItem.name}
-                    className="h-full w-full object-contain group-hover:scale-105 transition-transform"
+                    className="h-full w-full object-contain drop-shadow-md transition-transform group-hover:scale-110"
                     loading="lazy" />
                   
                         </div>

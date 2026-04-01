@@ -45,9 +45,18 @@ import weaponSpectre from "@/assets/weapon-spectre.png";
 import weaponStinger from "@/assets/weapon-stinger.png";
 import weaponVandal from "@/assets/weapon-vandal.png";
 
-type GameTab = "valorant" | "lol" | "fortnite" | "minecraft";
+type GameTab = "valorant" | "lol" | "fortnite" | "minecraft" | "steam";
 
-// Minecraft colors
+const getProxiedImageUrl = (url: string) => {
+  if (!url) return "";
+  if (url.includes("lzt.market") || url.includes("img.lzt.market") || url.includes("ddragon.leagueoflegends.com") || url.includes("steamstatic.com") || url.includes("akamaihd.net") || url.includes("mineskin.eu")) {
+    const projectUrl = import.meta.env.VITE_SUPABASE_URL;
+    return `${projectUrl}/functions/v1/lzt-market?action=image-proxy&url=${encodeURIComponent(url)}`;
+  }
+  return url;
+};
+
+import { checkLztAvailability } from "@/lib/lztAvailability";
 const MC_GREEN = "hsl(120,60%,45%)";
 
 // ─── Region options ───
@@ -306,7 +315,7 @@ const LztPreviewImage = ({ url }: { url: string }) => {
   return (
     <div className="relative z-[1] flex items-center justify-center w-full h-full p-3">
       <img
-        src={url}
+        src={getProxiedImageUrl(url)}
         alt="Skins preview"
         className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-105"
         loading="lazy"
@@ -369,7 +378,7 @@ const ValorantCard = memo(({ item, skinsMap, formatPrice }: { item: LztItem; ski
               </div>
             ))}
             <div className="flex items-center justify-center w-full h-full rounded bg-secondary/30 p-0.5 col-span-2">
-              <img src={skinPreviews[2].image} alt={skinPreviews[2].name} className="w-full h-full object-contain" loading="lazy" />
+              <img src={getProxiedImageUrl(skinPreviews[2].image)} alt={skinPreviews[2].name} className="w-full h-full object-contain" loading="lazy" />
             </div>
           </div>
         ) : skinPreviews.length === 4 ? (
@@ -497,7 +506,7 @@ const LolCard = memo(({ item, champKeyMap, formatPrice }: { item: LztItem; champ
         <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[hsl(var(--card))] to-transparent z-[2]" />
         {skinPreviews.length === 1 ? (
           <div className="relative z-[1] w-full h-full">
-            <img src={skinPreviews[0].image} alt={skinPreviews[0].name} className="h-full w-full object-cover object-top" loading="lazy" />
+            <img src={getProxiedImageUrl(skinPreviews[0].image)} alt={skinPreviews[0].name} className="h-full w-full object-cover object-top" loading="lazy" />
           </div>
         ) : skinPreviews.length === 2 ? (
           <div className="relative z-[1] grid grid-cols-2 gap-0 w-full h-full">
@@ -520,7 +529,7 @@ const LolCard = memo(({ item, champKeyMap, formatPrice }: { item: LztItem; champ
           <div className="relative z-[1] grid grid-cols-3 grid-rows-2 gap-0 w-full h-full">
             {skinPreviews.map((skin, i) => (
               <div key={i} className="relative overflow-hidden">
-                <img src={skin.image} alt={skin.name} className="h-full w-full object-cover object-top" loading="lazy" />
+                <img src={getProxiedImageUrl(skin.image)} alt={skin.name} className="h-full w-full object-cover object-top" loading="lazy" />
               </div>
             ))}
           </div>
@@ -577,6 +586,33 @@ const LolCard = memo(({ item, champKeyMap, formatPrice }: { item: LztItem; champ
 });
 LolCard.displayName = "LolCard";
 
+// ─── Steam Card ───
+const SteamCard = memo(({ item, formatPrice }: { item: LztItem; formatPrice: (price: number, currency?: string) => string }) => {
+  const navigate = useNavigate();
+  return (
+    <div
+      className="group cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-[hsl(210,100%,50%)/50%] hover:shadow-[0_4px_24px_hsl(210,100%,50%,0.12)] flex flex-col h-full"
+      onClick={() => navigate(`/steam/${item.item_id}`)}
+    >
+      <div className="relative flex h-28 sm:h-36 items-center justify-center overflow-hidden bg-secondary/20">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(210,100%,50%,0.08),transparent_70%)]" />
+        <div className="flex flex-col h-full w-full items-center justify-center gap-2 p-4 text-center">
+          <Globe className="h-10 w-10 text-muted-foreground/30" />
+          <span className="text-[10px] font-medium text-muted-foreground/60 uppercase tracking-wider">Conta Steam / CS2</span>
+        </div>
+      </div>
+      <div className="p-3 flex flex-col flex-1 gap-2">
+        <h3 className="text-xs font-bold text-foreground line-clamp-1">{item.title}</h3>
+        <p className="text-[9px] text-muted-foreground line-clamp-2 leading-relaxed opacity-70 italic">Clique para ver detalhes</p>
+        <div className="mt-auto pt-2 border-t border-border/30">
+          <p className="text-sm sm:text-base font-bold text-[hsl(210,100%,50%)] tracking-tight">{formatPrice(item.price, item.price_currency)}</p>
+        </div>
+      </div>
+    </div>
+  );
+});
+SteamCard.displayName = "SteamCard";
+
 // ─── Fortnite Card ───
 const FortniteCard = memo(({ item, skinsDb, formatPrice }: { item: LztItem; skinsDb: Map<string, { name: string; image: string }>; formatPrice: (price: number, currency?: string) => string }) => {
   const navigate = useNavigate();
@@ -631,13 +667,13 @@ const FortniteCard = memo(({ item, skinsDb, formatPrice }: { item: LztItem; skin
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(265,80%,65%,0.08),transparent_70%)]" />
         {skinPreviews.length === 1 ? (
           <div className="relative z-[1] w-full h-full flex items-center justify-center bg-secondary/20">
-            <img src={skinPreviews[0].image} alt={skinPreviews[0].name} className="w-full h-full object-contain" loading="lazy" />
+            <img src={getProxiedImageUrl(skinPreviews[0].image)} alt={skinPreviews[0].name} className="w-full h-full object-contain" loading="lazy" />
           </div>
         ) : skinPreviews.length === 2 ? (
           <div className="relative z-[1] grid grid-cols-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
             {skinPreviews.map((skin, i) => (
               <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/20 p-0.5">
-                <img src={skin.image} alt={skin.name} className="h-full w-full object-contain drop-shadow-sm" loading="lazy" />
+                <img src={getProxiedImageUrl(skin.image)} alt={skin.name} className="h-full w-full object-contain drop-shadow-sm" loading="lazy" />
               </div>
             ))}
           </div>
@@ -645,18 +681,18 @@ const FortniteCard = memo(({ item, skinsDb, formatPrice }: { item: LztItem; skin
           <div className="relative z-[1] grid grid-cols-2 grid-rows-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
             {skinPreviews.slice(0, 2).map((skin, i) => (
               <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/20 p-0.5">
-                <img src={skin.image} alt={skin.name} className="h-full w-full object-contain drop-shadow-sm" loading="lazy" />
+                <img src={getProxiedImageUrl(skin.image)} alt={skin.name} className="h-full w-full object-contain drop-shadow-sm" loading="lazy" />
               </div>
             ))}
             <div className="flex items-center justify-center w-full h-full rounded bg-secondary/20 p-0.5 col-span-2">
-              <img src={skinPreviews[2].image} alt={skinPreviews[2].name} className="h-full w-full object-contain drop-shadow-sm" loading="lazy" />
+              <img src={getProxiedImageUrl(skinPreviews[2].image)} alt={skinPreviews[2].name} className="w-full h-full object-contain drop-shadow-sm" loading="lazy" />
             </div>
           </div>
         ) : skinPreviews.length === 4 ? (
           <div className="relative z-[1] grid grid-cols-2 grid-rows-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
             {skinPreviews.map((skin, i) => (
               <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/20 p-0.5">
-                <img src={skin.image} alt={skin.name} className="h-full w-full object-contain drop-shadow-sm" loading="lazy" />
+                <img src={getProxiedImageUrl(skin.image)} alt={skin.name} className="h-full w-full object-contain drop-shadow-sm" loading="lazy" />
               </div>
             ))}
           </div>
@@ -664,7 +700,7 @@ const FortniteCard = memo(({ item, skinsDb, formatPrice }: { item: LztItem; skin
           <div className="relative z-[1] grid grid-cols-3 grid-rows-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
             {skinPreviews.map((skin, i) => (
               <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/20 p-0.5">
-                <img src={skin.image} alt={skin.name} className="h-full w-full object-contain drop-shadow-sm" loading="lazy" />
+                <img src={getProxiedImageUrl(skin.image)} alt={skin.name} className="h-full w-full object-contain drop-shadow-sm" loading="lazy" />
               </div>
             ))}
           </div>
@@ -712,7 +748,7 @@ const MinecraftCard = memo(({ item, formatPrice }: { item: LztItem; formatPrice:
 
   // mineskin.eu avatar (body render)
   const skinUrl = nickname
-    ? `https://mineskin.eu/body/${encodeURIComponent(nickname)}/120.png`
+    ? getProxiedImageUrl(`https://mineskin.eu/body/${encodeURIComponent(nickname)}/120.png`)
     : null;
 
   return (
@@ -727,7 +763,7 @@ const MinecraftCard = memo(({ item, formatPrice }: { item: LztItem; formatPrice:
         <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse at center, ${MC_GREEN}0a, transparent 70%)` }} />
         {skinUrl ? (
           <div className="relative z-[1] flex items-end justify-center h-full pt-2 pb-1">
-            <img src={skinUrl} alt={nickname || "Skin"} className="h-full w-auto object-contain drop-shadow-2xl transition-transform duration-300 group-hover:scale-105" loading="lazy" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+            <img src={getProxiedImageUrl(skinUrl)} alt={nickname || "Skin"} className="h-full w-auto object-contain drop-shadow-2xl transition-transform duration-300 group-hover:scale-105" loading="lazy" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
           </div>
         ) : (
           <div className="relative z-[1] flex items-center justify-center h-full">
@@ -810,6 +846,10 @@ const fetchAccountsRaw = async (params: Record<string, string | string[]>, signa
       if (err.status === 404) {
         throw new Error("O serviço de mercado não foi encontrado. Verifique a configuração da Supabase.");
       }
+      const body = (err as any).response?.json().catch(() => null);
+      if (body?.detail) {
+        throw new Error(`${body.detail}`);
+      }
       throwApiError(err.status || 500);
     }
     throw err;
@@ -824,9 +864,9 @@ const Contas = () => {
     if (g === "lol") return "lol";
     if (g === "fortnite") return "fortnite";
     if (g === "minecraft") return "minecraft";
+    if (g === "steam") return "steam";
     return "valorant";
   });
-
   // Scroll to top on mount
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
@@ -897,6 +937,12 @@ const Contas = () => {
   const [isRefetching, setIsRefetching] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const prevGameTabRef = useRef(gameTab);
+  
+  const isValorant = gameTab === "valorant";
+  const isLol = gameTab === "lol";
+  const isFortnite = gameTab === "fortnite";
+  const isMinecraft = gameTab === "minecraft";
+  const isSteam = gameTab === "steam";
   
   // ─── Persistent Cache (Session Storage) ───
   // Use session storage so when users navigate away and back, it's instant.
@@ -1013,11 +1059,14 @@ const Contas = () => {
       if (mcHypixelLvlMin) params.level_hypixel_min = mcHypixelLvlMin;
       if (mcCapesMin) params.capes_min = mcCapesMin;
       if (mcNoBan) params.hypixel_ban = "no";
-    } else {
+    } else if (gameTab === "fortnite") {
       // Fortnite-specific
       params.game_type = "fortnite";
       if (fnVbMin) params.vbmin = fnVbMin;
       if (fnSkinsMin) params.smin = fnSkinsMin;
+    } else if (gameTab === "steam") {
+      params.game_type = "steam";
+      params.order_by = sortBy || "pdate_to_down";
     }
 
     return params;
@@ -1129,7 +1178,7 @@ const Contas = () => {
   // Prefetch adjacent game tabs in background for instant switching (staggered to avoid 429 Rate Limits)
   const prefetchRef = useRef(new Set<string>());
   const prefetchAdjacentTabs = useCallback(() => {
-    const allTabs: GameTab[] = ["valorant", "lol", "fortnite", "minecraft"];
+    const allTabs: GameTab[] = ["valorant", "lol", "fortnite", "minecraft", "steam"];
     const otherTabs = allTabs.filter(t => t !== gameTab);
     const projectUrl = import.meta.env.VITE_SUPABASE_URL;
     const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -1140,7 +1189,7 @@ const Contas = () => {
       if (prefetchRef.current.has(tab)) continue;
       prefetchRef.current.add(tab);
 
-      const gameTypeMap: Record<GameTab, string> = { valorant: "riot", lol: "lol", fortnite: "fortnite", minecraft: "minecraft" };
+      const gameTypeMap: Record<GameTab, string> = { valorant: "riot", lol: "lol", fortnite: "fortnite", minecraft: "minecraft", steam: "steam" };
       const qp = new URLSearchParams();
       qp.set("page", "1");
       qp.set("order_by", "pdate_to_down");
@@ -1267,6 +1316,7 @@ const Contas = () => {
       lol: "Contas LoL | Royal Store",
       fortnite: "Contas Fortnite | Royal Store",
       minecraft: "Contas Minecraft | Royal Store",
+      steam: "Contas CS2 / Steam | Royal Store",
     };
     document.title = titles[gameTab];
     return () => { document.title = "Royal Store"; };
@@ -1274,17 +1324,7 @@ const Contas = () => {
 
   // Helper: get BRL price for sorting (matches what user sees on screen)
   const getBrlPrice = useCallback((item: LztItem): number => {
-    if (item.price_brl && item.price_brl > 0) return item.price_brl;
-    // Fallback: must match server-side logic
-    const RUB_TO_BRL = 0.055;
-    const USD_TO_BRL = 6.10;
-    const MARKUP = 3.0;
-    const currency = String(item.price_currency || "rub").toLowerCase();
-    let brl = item.price;
-    if (currency === "rub") brl = item.price * RUB_TO_BRL * MARKUP;
-    else if (currency === "usd") brl = item.price * USD_TO_BRL * MARKUP;
-    else brl = item.price * 1.30; // BRL: small margin only
-    return brl < 20 ? 20 : brl;
+    return item.price_brl && item.price_brl > 0 ? item.price_brl : 20;
   }, []);
 
   const allItems = useMemo(() => {
@@ -1393,7 +1433,6 @@ const Contas = () => {
     setSortBy("pdate_to_down");
   };
 
-  const isMinecraft = gameTab === "minecraft";
   const activeFiltersCount = [
     gameTab === "valorant" && selectedRank !== "todos",
     gameTab === "valorant" && selectedWeapon !== "todos",
@@ -1414,11 +1453,10 @@ const Contas = () => {
     searchQuery !== "",
     invMin !== "", invMax !== "",
     lvlMin !== "", lvlMax !== "",
+    gameTab === "steam",
   ].filter(Boolean).length;
 
-  const isValorant = gameTab === "valorant";
-  const isFortnite = gameTab === "fortnite";
-  const accentColor = isValorant ? "hsl(var(--success))" : isFortnite ? FN_PURPLE : isMinecraft ? MC_GREEN : "hsl(198,100%,45%)";
+  const accentColor = isValorant ? "hsl(var(--success))" : isFortnite ? FN_PURPLE : isMinecraft ? MC_GREEN : isSteam ? "hsl(210,100%,50%)" : "hsl(198,100%,45%)";
   const accentClass = isValorant
     ? "text-success border-success bg-success/10"
     : isFortnite
@@ -1712,7 +1750,7 @@ const Contas = () => {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 pt-4 pb-20">
 
         {/* ─── Game Tab Switcher ─── */}
-        <div className="grid grid-cols-4 gap-1.5 sm:flex sm:items-center sm:gap-3 mb-6 sm:mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 sm:flex sm:items-center sm:gap-3 mb-6 sm:mb-8">
           <button
             onClick={() => switchTab("valorant")}
             className={`flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-2.5 rounded-xl border px-2 sm:px-5 py-2.5 sm:py-3 text-[11px] sm:text-sm font-bold transition-all ${
@@ -1759,15 +1797,27 @@ const Contas = () => {
             <svg className="h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" id="mdi-minecraft"><path d="M4,2H20A2,2 0 0,1 22,4V20A2,2 0 0,1 20,22H4A2,2 0 0,1 2,20V4A2,2 0 0,1 4,2M6,6V10H10V12H8V18H10V16H14V18H16V12H14V10H18V6H14V10H10V6H6Z" /></svg>
             <span className="leading-tight">Minecraft</span>
           </button>
+          
+          <button
+            onClick={() => switchTab("steam")}
+            className={`flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-2.5 rounded-xl border px-2 sm:px-5 py-2.5 sm:py-3 text-[11px] sm:text-sm font-bold transition-all ${
+              isSteam
+                ? "border-[hsl(210,100%,50%)] bg-[hsl(210,100%,50%,0.1)] text-[hsl(210,100%,50%)] shadow-[0_0_16px_hsl(210,100%,50%,0.2)]"
+                : "border-border bg-secondary/30 text-muted-foreground hover:border-foreground/30 hover:text-foreground"
+            }`}
+          >
+            <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M11.968 0C5.358 0 0 5.358 0 11.968c0 3.336 1.365 6.353 3.568 8.529l.068.068.034.034 4.545 1.5c1.465-1.295 2.193-3.239 2.193-4.908V17.15c0-.602-.454-1.056-1.057-1.056H8.25c-.602 0-1.057-.454-1.057-1.057V12.1c0-.602-.454-1.057-.852-1.057H5.284C4.68 11.043 4.227 10.59 4.227 9.986V7.15c0-.603.454-1.057 1.057-1.057H7.15c.603 0 1.057-.454 1.057-1.057v-1.1c0-.603.454-1.057 1.057-1.057h3.705c.603 0 1.057.454 1.057 1.057v1.1c0 .603.454 1.057 1.057 1.057h1.864c.603 0 1.057.454 1.057 1.057v2.836c0 .603-.454 1.057-1.057 1.057H15.11c-.432 0-.853.454-.853 1.057v2.932c0 .603.454 1.057 1.057 1.057h1.1c.603 0 1.057.454 1.057 1.057v.1c0 1.669.728 3.613 2.193 4.908l4.545-1.5.034-.034.068-.068C22.635 18.32 24 15.304 24 11.968 24 5.358 18.642 0 12.032 0h-.064z" /></svg>
+            <span className="leading-tight">Steam / CS2</span>
+          </button>
         </div>
 
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-sm font-medium uppercase tracking-[0.3em]" style={{ color: accentColor }}>
-              {isValorant ? "Valorant" : isFortnite ? "Fortnite" : isMinecraft ? "Minecraft" : "League of Legends"}
+              {isValorant ? "Valorant" : isFortnite ? "Fortnite" : isMinecraft ? "Minecraft" : isSteam ? "Steam" : "League of Legends"}
             </p>
             <h1 className="mt-2 text-3xl font-bold text-foreground md:text-4xl" style={{ fontFamily: "'Valorant', sans-serif" }}>
-              {isValorant ? "CONTAS VALORANT" : isFortnite ? "CONTAS FORTNITE" : isMinecraft ? "CONTAS MINECRAFT" : "CONTAS LOL"}
+              {isValorant ? "CONTAS VALORANT" : isFortnite ? "CONTAS FORTNITE" : isMinecraft ? "CONTAS MINECRAFT" : isSteam ? "CONTAS STEAM / CS2" : "CONTAS LOL"}
             </h1>
             <p className="mt-2 text-sm text-muted-foreground">
               {streamError ? "Erro ao buscar contas" : isLoading ? "Buscando contas..." : `${allItems.length} contas · Página ${displayPage} de ${totalDisplayPages}`}
@@ -1932,6 +1982,8 @@ const Contas = () => {
                         <FortniteCard item={item} skinsDb={fnSkinsDb} formatPrice={(p, c) => getDisplayPrice({ price: p, price_currency: c, price_brl: item.price_brl }, "fortnite")} />
                       ) : isMinecraft ? (
                         <MinecraftCard item={item} formatPrice={(p, c) => getDisplayPrice({ price: p, price_currency: c, price_brl: item.price_brl }, "minecraft")} />
+                      ) : isSteam ? (
+                        <SteamCard item={item} formatPrice={(p, c) => getDisplayPrice({ price: p, price_currency: c, price_brl: item.price_brl }, "steam")} />
                       ) : (
                         <LolCard item={item} champKeyMap={champKeyMap} formatPrice={(p, c) => getDisplayPrice({ price: p, price_currency: c, price_brl: item.price_brl }, "lol")} />
                       )}

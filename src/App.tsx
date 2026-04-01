@@ -21,6 +21,7 @@ const ContaDetalhes = lazy(() => import("./pages/ContaDetalhes"));
 const LolDetalhes = lazy(() => import("./pages/LolDetalhes"));
 const FortniteDetalhes = lazy(() => import("./pages/FortniteDetalhes"));
 const MinecraftDetalhes = lazy(() => import("./pages/MinecraftDetalhes"));
+const SteamDetalhes = lazy(() => import("./pages/SteamDetalhes"));
 const Status = lazy(() => import("./pages/Status"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Avaliacoes = lazy(() => import("./pages/Avaliacoes"));
@@ -77,6 +78,7 @@ const App = () => (
                   <Route path="/lol/:id" element={<LolDetalhes />} />
                   <Route path="/fortnite/:id" element={<FortniteDetalhes />} />
                   <Route path="/minecraft/:id" element={<MinecraftDetalhes />} />
+                  <Route path="/steam/:id" element={<SteamDetalhes />} />
                   <Route path="/status" element={<Status />} />
                   <Route path="/admin" element={<AdminGuard><AdminPanel /></AdminGuard>} />
                   <Route path="/avaliacoes" element={<Avaliacoes />} />

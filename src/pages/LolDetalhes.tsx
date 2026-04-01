@@ -15,6 +15,17 @@ import { useLztMarkup } from "@/hooks/useLztMarkup";
 import { trackViewContent, trackInitiateCheckout } from "@/lib/metaPixel";
 import { checkLztAvailability } from "@/lib/lztAvailability";
 
+const getProxiedImageUrl = (url: string) => {
+  if (!url) return "";
+  if (url.includes("lzt.market") || url.includes("img.lzt.market") || url.includes("ddragon.leagueoflegends.com")) {
+    const projectUrl = import.meta.env.VITE_SUPABASE_URL;
+    return `${projectUrl}/functions/v1/lzt-market?action=image-proxy&url=${encodeURIComponent(url)}`;
+  }
+  return url;
+};
+
+import { rankMap } from "@/lib/valorantData";
+
 import lolRankFerroImg from "@/assets/lol-rank-ferro.png";
 import lolRankBronzeImg from "@/assets/lol-rank-bronze.webp";
 import lolRankPrataImg from "@/assets/lol-rank-prata.png";
@@ -319,14 +330,13 @@ const LolDetalhes = () => {
                         exit={{ opacity: 0, scale: 0.98 }}
                         transition={{ duration: 0.2 }}
                       >
-                        {/* Splash art no background com blur */}
                         <div
                           className="absolute inset-0 bg-cover bg-center opacity-30 blur-sm scale-105"
-                          style={{ backgroundImage: `url(${'splashImage' in galleryItems[selectedIndex] ? (galleryItems[selectedIndex] as SkinPreview).splashImage : galleryItems[selectedIndex].image})` }}
+                          style={{ backgroundImage: `url(${getProxiedImageUrl('splashImage' in galleryItems[selectedIndex] ? (galleryItems[selectedIndex] as SkinPreview).splashImage : galleryItems[selectedIndex].image)})` }}
                         />
                         {/* Loading art (portrait) na frente */}
                         <img
-                          src={galleryItems[selectedIndex].image}
+                          src={getProxiedImageUrl(galleryItems[selectedIndex].image)}
                           alt={galleryItems[selectedIndex].champName}
                           className="relative z-[1] h-full w-auto object-contain drop-shadow-2xl"
                         />
@@ -529,7 +539,7 @@ const LolDetalhes = () => {
                         {/* Portrait image */}
                         <div className="aspect-[3/4] bg-secondary/20 overflow-hidden">
                           <img
-                            src={it.image}
+                            src={getProxiedImageUrl(it.image)}
                             alt={it.champName}
                             className="h-full w-full object-cover object-top group-hover:scale-105 transition-transform duration-300"
                             loading="lazy"
@@ -588,9 +598,9 @@ const LolDetalhes = () => {
                             {/* Splash blurred bg */}
                             <div
                               className="absolute inset-0 bg-cover bg-center opacity-30 blur-md scale-110"
-                              style={{ backgroundImage: `url(${splashImg})` }}
+                              style={{ backgroundImage: `url(${getProxiedImageUrl(splashImg)})` }}
                             />
-                            <img src={cur.image} alt={cur.champName} className="relative z-[1] h-full w-full object-cover object-top" />
+                            <img src={getProxiedImageUrl(cur.image)} alt={cur.champName} className="relative z-[1] h-full w-full object-cover object-top" />
                           </div>
 
                           <div className="p-5 flex flex-col items-center gap-3">

@@ -11,6 +11,15 @@ import { useLztMarkup } from "@/hooks/useLztMarkup";
 import { trackViewContent, trackInitiateCheckout } from "@/lib/metaPixel";
 import { checkLztAvailability } from "@/lib/lztAvailability";
 
+const getProxiedImageUrl = (url: string) => {
+  if (!url) return "";
+  if (url.includes("lzt.market") || url.includes("img.lzt.market") || url.includes("mineskin.eu") || url.includes("capes.dev")) {
+    const projectUrl = import.meta.env.VITE_SUPABASE_URL;
+    return `${projectUrl}/functions/v1/lzt-market?action=image-proxy&url=${encodeURIComponent(url)}`;
+  }
+  return url;
+};
+
 const MC_GREEN = "hsl(120,60%,45%)";
 
 type CapeEntry = {
@@ -189,7 +198,7 @@ const MinecraftDetalhes = () => {
                   {bodyUrl ? (
                     <div className="relative z-[1] flex items-end justify-center h-full py-4 gap-10">
                       <img
-                        src={bodyUrl}
+                        src={getProxiedImageUrl(bodyUrl)}
                         alt={nickname || "Skin"}
                         className="h-full w-auto object-contain drop-shadow-2xl"
                         loading="lazy"
@@ -205,7 +214,7 @@ const MinecraftDetalhes = () => {
                   {/* Nickname badge */}
                   {nickname && (
                     <div className="absolute top-3 left-3 z-[2] rounded-lg bg-background/80 backdrop-blur-sm border border-border px-3 py-1.5 flex items-center gap-2">
-                      {headUrl && <img src={headUrl} alt="head" className="h-7 w-7 rounded object-contain" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />}
+                      {headUrl && <img src={getProxiedImageUrl(headUrl)} alt="head" className="h-7 w-7 rounded object-contain" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />}
                       <div>
                         <p className="text-xs font-bold text-foreground">{nickname}</p>
                         <p className="text-[10px] text-muted-foreground">
@@ -308,7 +317,7 @@ const MinecraftDetalhes = () => {
                                   <div key={type} className="group relative flex flex-col items-center gap-2 rounded-xl border border-border bg-secondary/20 p-3 hover:border-opacity-60 transition-all" style={{ borderColor: `${MC_GREEN}25` }}>
                                     <div className="relative flex items-center justify-center rounded-lg overflow-hidden w-full" style={{ background: "radial-gradient(ellipse at center, hsl(120,20%,12%), hsl(0,0%,8%))", minHeight: 120 }}>
                                       <img
-                                        src={v.frontImageUrl!}
+                                        src={getProxiedImageUrl(v.frontImageUrl!)}
                                         alt={type}
                                         className="object-contain transition-transform group-hover:scale-105"
                                         style={{ maxHeight: 110, maxWidth: "100%", imageRendering: "pixelated" }}

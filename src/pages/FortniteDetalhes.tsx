@@ -14,6 +14,15 @@ import { useLztMarkup } from "@/hooks/useLztMarkup";
 import { trackViewContent, trackInitiateCheckout } from "@/lib/metaPixel";
 import { checkLztAvailability } from "@/lib/lztAvailability";
 
+const getProxiedImageUrl = (url: string) => {
+  if (!url) return "";
+  if (url.includes("lzt.market") || url.includes("img.lzt.market") || url.includes("fortnite-api.com")) {
+    const projectUrl = import.meta.env.VITE_SUPABASE_URL;
+    return `${projectUrl}/functions/v1/lzt-market?action=image-proxy&url=${encodeURIComponent(url)}`;
+  }
+  return url;
+};
+
 const FN_PURPLE = "hsl(265,80%,65%)";
 const FN_BLUE = "hsl(210,100%,56%)";
 
@@ -263,7 +272,7 @@ const FortniteDetalhes = () => {
                         transition={{ duration: 0.2 }}
                       >
                         <img
-                          src={galleryPreviews[selectedIndex].image}
+                          src={getProxiedImageUrl(galleryPreviews[selectedIndex].image)}
                           alt={galleryPreviews[selectedIndex].name}
                           className="relative z-[1] h-full w-auto max-w-full object-contain drop-shadow-2xl"
                           onError={(e) => { (e.currentTarget as HTMLImageElement).style.opacity = "0.2"; }}
@@ -456,7 +465,7 @@ const FortniteDetalhes = () => {
                           style={{ background: getRarityColor(cosmetic.rarity) }}
                         />
                         <img
-                          src={cosmetic.image}
+                          src={getProxiedImageUrl(cosmetic.image)}
                           alt={cosmetic.name}
                           className="relative z-[1] h-full w-full object-contain group-hover:scale-110 transition-transform duration-300"
                           loading="lazy"
@@ -524,7 +533,7 @@ const FortniteDetalhes = () => {
                           className="absolute inset-0 opacity-20"
                           style={{ background: `radial-gradient(ellipse at center, ${getRarityColor(cur.rarity)}, transparent 70%)` }}
                         />
-                        <img src={cur.image} alt={cur.name} className="relative z-[1] h-full w-full object-contain drop-shadow-2xl" />
+                        <img src={getProxiedImageUrl(cur.image)} alt={cur.name} className="relative z-[1] h-full w-full object-contain drop-shadow-2xl" />
                       </div>
                       <div className="p-4 flex flex-col items-center gap-3">
                         <div className="text-center">

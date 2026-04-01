@@ -6,7 +6,11 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const LZT_ALLOWED_IMAGE_DOMAINS = ["lzt.market", "api.lzt.market", "s.lzt.market", "img.lzt.market"];
+const LZT_ALLOWED_IMAGE_DOMAINS = [
+  "lzt.market", "api.lzt.market", "s.lzt.market", "img.lzt.market",
+  "ddragon.leagueoflegends.com", "fortnite-api.com", "mineskin.eu",
+  "steamstatic.com", "akamaihd.net"
+];
 const RETRYABLE_STATUSES = [429, 502, 503, 504];
 let RUB_TO_BRL = 0.055; // Updated fallback
 let USD_TO_BRL = 6.10; // Updated fallback to be more realistic
@@ -687,6 +691,9 @@ Deno.serve(async (req) => {
         params.delete("inv_min");
         params.delete("inv_max");
         apiUrl = `https://api.lzt.market/riot?${params.toString()}`;
+      } else if (gameType === "steam" || gameType === "csgo" || gameType === "cs2") {
+        // Steam/CSGO/CS2 specific
+        apiUrl = `https://api.lzt.market/steam?${params.toString()}`;
       } else {
         // Valorant: remove LoL-specific params only
         params.delete("lol_smin");
