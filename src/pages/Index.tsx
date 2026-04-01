@@ -227,42 +227,20 @@ const SoftwareSection = () => {
               const slug = (game.slug || game.name || "").toLowerCase();
               const image = softwareImageMap[slug] || game.image_url;
               const productCount = game.products?.filter(p => p.active).length || 0;
+              const overlay = characterOverlayMap[slug];
 
               return (
-                <motion.div
+                <SoftwareCard
                   key={game.id}
-                  variants={scaleIn}
-                  custom={idx}
+                  game={game}
+                  image={overlay?.bg || image}
+                  character={overlay?.character}
+                  characterHover={overlay?.characterHover}
+                  productCount={productCount}
+                  index={idx}
                   onClick={() => handleGameClick(game)}
-                  className="group relative flex flex-col cursor-pointer overflow-hidden rounded-xl border border-border/40 bg-card transition-all duration-300 hover:border-success/40 hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)]"
-                >
-                  <div className="relative aspect-[3/4] w-full overflow-hidden">
-                    {image ? (
-                      <img src={image} alt={game.name} loading="lazy" className="absolute inset-0 block h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-110" />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-card">
-                        <span className="text-xl font-bold text-muted-foreground/20">{game.name.charAt(0)}</span>
-                      </div>
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
-
-                    {productCount > 0 && (
-                      <div className="absolute top-2 right-2 sm:top-3 sm:right-3 rounded-full bg-success/90 px-2 sm:px-2.5 py-0.5 text-[7px] sm:text-[10px] font-bold text-success-foreground shadow-lg shadow-success/20">
-                        {productCount} {productCount === 1 ? "software" : "softwares"}
-                      </div>
-                    )}
-
-                    <div className="absolute inset-x-0 bottom-0 p-3 sm:p-5">
-                      <h3 className="text-sm sm:text-xl lg:text-2xl font-bold tracking-tight text-foreground" style={{ fontFamily: "'Valorant', sans-serif" }}>
-                        {game.name.toUpperCase()}
-                      </h3>
-                      <div className="mt-2 sm:mt-3 flex items-center gap-1 text-success text-[8px] sm:text-[11px] font-semibold uppercase tracking-wider group-hover:gap-2 transition-all">
-                        <span>{productCount === 1 ? t("products.viewProduct") : t("products.viewProducts", { defaultValue: "Ver softwares" })}</span>
-                        <ArrowRight className="h-2.5 w-2.5 sm:h-3 sm:w-3 transition-transform group-hover:translate-x-1" />
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
+                  t={t}
+                />
               );
             })}
           </motion.div>
