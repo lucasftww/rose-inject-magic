@@ -71,7 +71,7 @@ const CredentialsTab = () => {
       if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
       else { toast({ title: "Credencial atualizada!" }); resetForm(); fetchCredentials(); }
     } else {
-      const { error } = await supabase.from("system_credentials")
+      const { error } = await (supabase.from("system_credentials") as any)
         .insert({
           name: formName.trim(),
           env_key: formEnvKey.trim().toUpperCase(),
