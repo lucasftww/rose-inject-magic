@@ -424,6 +424,9 @@ Deno.serve(async (req) => {
       const buyUrl = `https://api.lzt.market/${encodeURIComponent(item_id)}/fast-buy?price=${encodeURIComponent(price)}${currency ? `&currency=${encodeURIComponent(currency)}` : ""}`;
       console.log("Fast-buy:", buyUrl);
 
+      // DEBUG: Log the final API URL
+      console.log(`[DEBUG] Requesting LZT API: ${buyUrl}`);
+
       const response = await fetch(buyUrl, {
         method: "POST",
         headers: {
@@ -699,10 +702,12 @@ Deno.serve(async (req) => {
         apiUrl = `https://api.lzt.market/riot?${params.toString()}`;
       } else if (gameType === "steam" || gameType === "csgo" || gameType === "cs2") {
         // Steam/CSGO/CS2 specific
-        // Force Brazil region if no country filter is provided for Steam
+        // TEMPORARILY DISABLED: country[]=Bra might be too restrictive or incorrect for /steam endpoint
+        /*
         if (!params.get("country[]") && !params.get("country")) {
           params.set("country[]", "Bra");
         }
+        */
         apiUrl = `https://api.lzt.market/steam?${params.toString()}`;
       } else {
         // Valorant: remove LoL-specific params only
