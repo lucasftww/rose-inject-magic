@@ -80,17 +80,28 @@ const SteamDetalhes = () => {
   const faceitLevel = raw.faceit_lvl || raw.faceit_level || raw.faceit_lvl_min;
   const medalsCount = raw.medals_count || raw.medals || raw.medals_min;
 
+  const cleanedTitle = useMemo(() => {
+    let t = item?.title || "";
+    // Remove cyrillic
+    t = t.replace(/[А-Яа-я]/g, '').trim();
+    if (!t || t.toLowerCase() === "kuki" || t.length < 3) {
+      const eloPart = cs2Elo ? ` [${cs2Elo} ELO]` : "";
+      const medalsPart = medalsCount ? ` [${medalsCount} Medalhas]` : "";
+      return `Conta Steam / CS2${eloPart}${medalsPart}`;
+    }
+    return t;
+  }, [item?.title, cs2Elo, medalsCount]);
+
   useEffect(() => {
     if (item) {
       trackViewContent({
-        content_name: item.title,
-        content_category: "Steam Account",
-        content_ids: [item.item_id],
+        contentName: cleanedTitle,
+        contentIds: [item.item_id],
         value: getPrice(item),
         currency: "BRL"
       });
     }
-  }, [item, getPrice]);
+  }, [item, getPrice, cleanedTitle]);
 
   const handleAddToCart = async () => {
     if (!item) return;
@@ -106,20 +117,21 @@ const SteamDetalhes = () => {
     }
 
     trackInitiateCheckout({
-      content_name: item.title,
-      content_category: "Steam Account",
-      content_ids: [item.item_id],
+      contentName: cleanedTitle,
+      contentIds: [item.item_id],
       value: getPrice(item),
       currency: "BRL"
     });
 
     addItem({
-      id: item.item_id,
-      name: item.title,
+      productId: item.item_id,
+      productName: cleanedTitle,
+      productImage: "",
+      planId: "steam-account",
+      planName: "Conta Steam / CS2",
       price: getPrice(item),
-      image: "", // Steam accounts usually don't have a single thumb, or we could use a placeholder
-      category: "steam",
-      lztId: item.item_id
+      type: "lzt-account",
+      lztItemId: item.item_id
     });
     
     toast({
@@ -213,13 +225,13 @@ const SteamDetalhes = () => {
                 </div>
                 
                 <h1 className="text-2xl sm:text-4xl font-black text-foreground mb-4 leading-tight">
-                  {item.title}
+                  {cleanedTitle}
                 </h1>
                 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8">
                   <div className="rounded-2xl bg-secondary/40 p-4 border border-border/50">
                     <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Nível Steam</p>
-                    <p className="text-xl font-black text-foreground">{steamLevel}</p>
+                    <p className="text-xl font-black text-foreground">{String(steamLevel)}</p>
                   </div>
                   <div className="rounded-2xl bg-secondary/40 p-4 border border-border/50">
                     <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Jogos</p>
@@ -240,19 +252,19 @@ const SteamDetalhes = () => {
                     {cs2Wins && (
                       <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-primary/5 border border-primary/10">
                         <Swords className="h-3.5 w-3.5 text-primary" />
-                        <span className="text-xs font-bold text-foreground">{cs2Wins} Vitórias</span>
+                        <span className="text-xs font-bold text-foreground">{String(cs2Wins)} Vitórias</span>
                       </div>
                     )}
                     {faceitLevel && (
                       <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-orange-500/5 border border-orange-500/10">
                         <Trophy className="h-3.5 w-3.5 text-orange-500" />
-                        <span className="text-xs font-bold text-foreground">Faceit Level {faceitLevel}</span>
+                        <span className="text-xs font-bold text-foreground">Faceit Level {String(faceitLevel)}</span>
                       </div>
                     )}
                     {medalsCount && (
                       <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500/5 border border-amber-500/10">
                         <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
-                        <span className="text-xs font-bold text-foreground">{medalsCount} Medalhas</span>
+                        <span className="text-xs font-bold text-foreground">{String(medalsCount)} Medalhas</span>
                       </div>
                     )}
                   </div>

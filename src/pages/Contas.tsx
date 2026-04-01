@@ -588,7 +588,20 @@ LolCard.displayName = "LolCard";
 
 // ─── Steam Card ───
 const SteamCard = memo(({ item, formatPrice }: { item: LztItem; formatPrice: (price: number, currency?: string) => string }) => {
-  const navigate = useNavigate();
+  const cleanedTitle = useMemo(() => {
+    let t = item.title || "";
+    // Remove cyrillic
+    t = t.replace(/[А-Яа-я]/g, '').trim();
+    if (!t || t.toLowerCase() === "kuki" || t.length < 3) {
+      const elo = item.premier_elo || item.cs2_elo || item.premier_elo_min;
+      const medals = item.medals_count || item.medals || item.medals_min;
+      const eloPart = elo ? ` [${elo} ELO]` : "";
+      const medalsPart = medals ? ` [${medals} Medalhas]` : "";
+      return `Conta Steam / CS2${eloPart}${medalsPart}`;
+    }
+    return t;
+  }, [item.title, item.premier_elo, item.cs2_elo, item.premier_elo_min, item.medals_count, item.medals, item.medals_min]);
+
   return (
     <div
       className="group cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-[hsl(210,100%,50%)/50%] hover:shadow-[0_4px_24px_hsl(210,100%,50%,0.12)] flex flex-col h-full"
@@ -603,7 +616,7 @@ const SteamCard = memo(({ item, formatPrice }: { item: LztItem; formatPrice: (pr
             <div className="flex gap-1">
                {(item.premier_elo_min || item.premier_elo || item.cs2_elo) && (
                  <span className="bg-primary/20 text-primary text-[8px] font-black px-1.5 py-0.5 rounded border border-primary/30 uppercase">
-                   {item.premier_elo || item.cs2_elo || item.premier_elo_min} ELO
+                   {String(item.premier_elo || item.cs2_elo || item.premier_elo_min)} ELO
                  </span>
                )}
                {(item.cs2_prime === "1" || item.cs2_prime === true || item.steam_prime === "Yes") && (
@@ -616,7 +629,7 @@ const SteamCard = memo(({ item, formatPrice }: { item: LztItem; formatPrice: (pr
         </div>
       </div>
       <div className="p-3 flex flex-col flex-1 gap-2">
-        <h3 className="text-xs font-bold text-foreground line-clamp-1">{item.title}</h3>
+        <h3 className="text-xs font-bold text-foreground line-clamp-1">{cleanedTitle}</h3>
         <p className="text-[9px] text-muted-foreground line-clamp-2 leading-relaxed opacity-70 italic">Clique para ver detalhes</p>
         <div className="mt-auto pt-2 border-t border-border/30">
           <p className="text-sm sm:text-base font-bold text-[hsl(210,100%,50%)] tracking-tight">{formatPrice(item.price, item.price_currency)}</p>
