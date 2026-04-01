@@ -598,7 +598,21 @@ const SteamCard = memo(({ item, formatPrice }: { item: LztItem; formatPrice: (pr
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(210,100%,50%,0.08),transparent_70%)]" />
         <div className="flex flex-col h-full w-full items-center justify-center gap-2 p-4 text-center">
           <Globe className="h-10 w-10 text-muted-foreground/30" />
-          <span className="text-[10px] font-medium text-muted-foreground/60 uppercase tracking-wider">Conta Steam / CS2</span>
+          <div className="flex flex-col gap-1 items-center">
+            <span className="text-[10px] font-medium text-muted-foreground/60 uppercase tracking-wider">Conta Steam / CS2</span>
+            <div className="flex gap-1">
+               {(item.premier_elo_min || item.premier_elo || item.cs2_elo) && (
+                 <span className="bg-primary/20 text-primary text-[8px] font-black px-1.5 py-0.5 rounded border border-primary/30 uppercase">
+                   {item.premier_elo || item.cs2_elo || item.premier_elo_min} ELO
+                 </span>
+               )}
+               {(item.cs2_prime === "1" || item.cs2_prime === true || item.steam_prime === "Yes") && (
+                 <span className="bg-emerald-500/20 text-emerald-500 text-[8px] font-black px-1.5 py-0.5 rounded border border-emerald-500/30 uppercase">
+                   PRIME
+                 </span>
+               )}
+            </div>
+          </div>
         </div>
       </div>
       <div className="p-3 flex flex-col flex-1 gap-2">
@@ -895,6 +909,15 @@ const Contas = () => {
   const [mcCapesMin, setMcCapesMin] = useState("");
   const [mcNoBan, setMcNoBan] = useState(false);
 
+  // Steam / CS2
+  const [steamLvlMin, setSteamLvlMin] = useState("");
+  const [cs2EloMin, setCs2EloMin] = useState("");
+  const [cs2WinsMin, setCs2WinsMin] = useState("");
+  const [cs2FaceitLvlMin, setCs2FaceitLvlMin] = useState("");
+  const [cs2MedalsMin, setCs2MedalsMin] = useState("");
+  const [cs2Prime, setCs2Prime] = useState(false);
+  const [cs2Only, setCs2Only] = useState(false);
+
   // ─── Shared filters ───
   const [priceMin, setPriceMin] = useState("");
   const [priceMax, setPriceMax] = useState("");
@@ -1067,14 +1090,22 @@ const Contas = () => {
     } else if (gameTab === "steam") {
       params.game_type = "steam";
       params.order_by = sortBy || "pdate_to_down";
+      
+      if (steamLvlMin) params.steam_level_min = steamLvlMin;
+      if (cs2EloMin) params.premier_elo_min = cs2EloMin;
+      if (cs2WinsMin) params.cs2_win_min = cs2WinsMin;
+      if (cs2FaceitLvlMin) params.faceit_lvl_min = cs2FaceitLvlMin;
+      if (cs2MedalsMin) params.medals_min = cs2MedalsMin;
+      if (cs2Prime) params.cs2_prime = "1";
+      if (cs2Only) params["relevant_games[]"] = "730";
     }
 
     return params;
-  }, [currentPage, searchQuery, onlyKnife, selectedRank, selectedWeapon, invMin, invMax, lvlMin, lvlMax, gameTab, lolRank, lolChampMin, lolSkinsMin, fnVbMin, fnSkinsMin, mcJava, mcBedrock, mcHypixelLvlMin, mcCapesMin, mcNoBan, lolRegion, valRegion, sortBy, priceMin, priceMax]);
+  }, [currentPage, searchQuery, onlyKnife, selectedRank, selectedWeapon, invMin, invMax, lvlMin, lvlMax, gameTab, lolRank, lolChampMin, lolSkinsMin, fnVbMin, fnSkinsMin, mcJava, mcBedrock, mcHypixelLvlMin, mcCapesMin, mcNoBan, lolRegion, valRegion, sortBy, priceMin, priceMax, steamLvlMin, cs2EloMin, cs2WinsMin, cs2FaceitLvlMin, cs2MedalsMin, cs2Prime, cs2Only]);
 
   const paramsKey = JSON.stringify(buildParams(1)) + gameTab;
   // Track which params are "text inputs" that need debouncing vs instant changes
-  const textParamsKey = `${searchQuery}|${priceMin}|${priceMax}|${lvlMin}|${lvlMax}|${invMin}|${invMax}|${lolChampMin}|${lolSkinsMin}|${fnVbMin}|${fnSkinsMin}|${mcHypixelLvlMin}|${mcCapesMin}`;
+  const textParamsKey = `${searchQuery}|${priceMin}|${priceMax}|${lvlMin}|${lvlMax}|${invMin}|${invMax}|${lolChampMin}|${lolSkinsMin}|${fnVbMin}|${fnSkinsMin}|${mcHypixelLvlMin}|${mcCapesMin}|${steamLvlMin}|${cs2EloMin}|${cs2WinsMin}|${cs2FaceitLvlMin}|${cs2MedalsMin}`;
   const nonTextParamsKey = paramsKey.replace(textParamsKey, "");
   const [debouncedParamsKey, setDebouncedParamsKey] = useState(paramsKey);
   const prevNonTextRef = useRef(nonTextParamsKey);
@@ -1687,8 +1718,79 @@ const Contas = () => {
         </>
       )}
 
+      {/* CS2 / Steam filters */}
+      {gameTab === "steam" && (
+        <div className="space-y-4">
+          <div className="mt-6">
+            <label className="flex cursor-pointer items-center gap-3">
+              <div className="relative">
+                <input type="checkbox" checked={cs2Only} onChange={(e) => { setCs2Only(e.target.checked); setDisplayPage(1); }} className="peer sr-only" />
+                <div className="h-5 w-9 rounded-full border border-border bg-secondary transition-colors peer-checked:border-[hsl(210,100%,50%)] peer-checked:bg-[hsl(210,100%,50%)]" />
+                <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-foreground/60 transition-all peer-checked:left-[18px] peer-checked:bg-white" />
+              </div>
+              <span className="text-xs font-bold text-foreground italic flex items-center gap-1.5"><Globe className="h-3.5 w-3.5 text-primary" /> Apenas CS2</span>
+            </label>
+          </div>
+          
+          <div className="mt-3">
+            <label className="flex cursor-pointer items-center gap-3">
+              <div className="relative">
+                <input type="checkbox" checked={cs2Prime} onChange={(e) => { setCs2Prime(e.target.checked); setDisplayPage(1); }} className="peer sr-only" />
+                <div className="h-5 w-9 rounded-full border border-border bg-secondary transition-colors peer-checked:border-emerald-500 peer-checked:bg-emerald-500" />
+                <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-foreground/60 transition-all peer-checked:left-[18px] peer-checked:bg-white" />
+              </div>
+              <span className="text-xs font-bold text-foreground italic flex items-center gap-1.5"><Zap className="h-3.5 w-3.5 text-emerald-500" /> Apenas Prime</span>
+            </label>
+          </div>
+
+          <div className="mt-4">
+            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
+              <Trophy className="h-3.5 w-3.5 text-primary" /> Premier ELO (Min)
+            </p>
+            <input type="number" placeholder="Ex: 15000" value={cs2EloMin} onChange={(e) => { setCs2EloMin(e.target.value); setDisplayPage(1); }}
+              className="w-full rounded-xl border border-border bg-secondary/30 py-2.5 px-4 text-sm text-foreground placeholder:text-muted-foreground/40 outline-none focus:border-primary/50 transition-all" />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 mt-4">
+            <div>
+              <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2 flex items-center gap-1.5">
+                <Swords className="h-3 w-3" /> Wins
+              </p>
+              <input type="number" placeholder="Min" value={cs2WinsMin} onChange={(e) => { setCs2WinsMin(e.target.value); setDisplayPage(1); }}
+                className="w-full rounded-xl border border-border bg-secondary/30 py-2 px-3 text-sm text-foreground outline-none focus:border-primary/50 transition-all" />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2 flex items-center gap-1.5">
+                <Star className="h-3 w-3" /> Medals
+              </p>
+              <input type="number" placeholder="Min" value={cs2MedalsMin} onChange={(e) => { setCs2MedalsMin(e.target.value); setDisplayPage(1); }}
+                className="w-full rounded-xl border border-border bg-secondary/30 py-2 px-3 text-sm text-foreground outline-none focus:border-primary/50 transition-all" />
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
+              Nível Faceit (Mín)
+            </p>
+            <select value={cs2FaceitLvlMin} onChange={(e) => { setCs2FaceitLvlMin(e.target.value); setDisplayPage(1); }}
+              className="w-full rounded-xl border border-border bg-secondary/30 py-2.5 px-4 text-sm text-foreground outline-none focus:border-primary/50 transition-all">
+              <option value="">Qualquer Level</option>
+              {[1,2,3,4,5,6,7,8,9,10].map(l => <option key={l} value={l}>Level {l}</option>)}
+            </select>
+          </div>
+
+          <div className="mt-4">
+            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
+              <Zap className="h-3.5 w-3.5 text-amber-500" /> Nível Steam (Mín)
+            </p>
+            <input type="number" placeholder="Ex: 50" value={steamLvlMin} onChange={(e) => { setSteamLvlMin(e.target.value); setDisplayPage(1); }}
+              className="w-full rounded-xl border border-border bg-secondary/30 py-2.5 px-4 text-sm text-foreground outline-none focus:border-primary/50 transition-all" />
+          </div>
+        </div>
+      )}
+
       {/* Price (shared) */}
-      <div className="mt-6">
+      <div className="mt-8">
         <button onClick={() => setPriceOpen(!priceOpen)} className="flex w-full items-center justify-between text-sm font-semibold text-foreground">
           <span className="flex items-center gap-2"><DollarSign className="h-4 w-4" style={{ color: accentColor }} />Faixa de Preço</span>
           <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${priceOpen ? "rotate-180" : ""}`} />

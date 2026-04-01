@@ -6,7 +6,7 @@ import Header from "@/components/Header";
 import {
   ArrowLeft, Shield, Loader2, ChevronLeft, ChevronRight,
   CheckCircle2, ShoppingCart, Star, X, Zap, Trophy, Globe, History,
-  Gamepad2, AlertTriangle, ExternalLink
+  Gamepad2, AlertTriangle, ExternalLink, Swords
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useMemo, useEffect } from "react";
@@ -73,6 +73,12 @@ const SteamDetalhes = () => {
   const hasPrime = raw.steam_prime === "Yes" || raw.steam_prime === true || !!raw.cs2_prime;
   const hasVac = !!raw.steam_vac_ban;
   const steamId = raw.steam_id;
+  
+  // CS2 Specifics from raw data
+  const cs2Elo = raw.premier_elo || raw.cs2_elo || raw.premier_elo_min;
+  const cs2Wins = raw.cs2_win || raw.cs2_wins || raw.cs2_win_min;
+  const faceitLevel = raw.faceit_lvl || raw.faceit_level || raw.faceit_lvl_min;
+  const medalsCount = raw.medals_count || raw.medals || raw.medals_min;
 
   useEffect(() => {
     if (item) {
@@ -220,14 +226,37 @@ const SteamDetalhes = () => {
                     <p className="text-xl font-black text-foreground">{steamGames.length}</p>
                   </div>
                   <div className="rounded-2xl bg-secondary/40 p-4 border border-border/50">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Status CS2</p>
-                    <p className="text-sm font-black text-foreground">{hasPrime ? "CS2 PRIME" : "SEM PRIME"}</p>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Premier ELO</p>
+                    <p className="text-xl font-black text-primary">{cs2Elo ? `${cs2Elo}` : "N/A"}</p>
                   </div>
                   <div className="rounded-2xl bg-secondary/40 p-4 border border-border/50">
                     <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Região</p>
-                    <p className="text-sm font-black text-foreground">{item.steam_country || "Global"}</p>
+                    <p className="text-sm font-black text-foreground">{item.steam_country === 'Bra' ? 'Brasil' : (item.steam_country || "Global")}</p>
                   </div>
                 </div>
+
+                {(cs2Wins || faceitLevel || medalsCount) && (
+                  <div className="mt-4 flex flex-wrap gap-4">
+                    {cs2Wins && (
+                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-primary/5 border border-primary/10">
+                        <Swords className="h-3.5 w-3.5 text-primary" />
+                        <span className="text-xs font-bold text-foreground">{cs2Wins} Vitórias</span>
+                      </div>
+                    )}
+                    {faceitLevel && (
+                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-orange-500/5 border border-orange-500/10">
+                        <Trophy className="h-3.5 w-3.5 text-orange-500" />
+                        <span className="text-xs font-bold text-foreground">Faceit Level {faceitLevel}</span>
+                      </div>
+                    )}
+                    {medalsCount && (
+                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500/5 border border-amber-500/10">
+                        <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
+                        <span className="text-xs font-bold text-foreground">{medalsCount} Medalhas</span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 

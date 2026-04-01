@@ -549,6 +549,12 @@ Deno.serve(async (req) => {
         "orange_min", "orange_max",
         "mythic_min", "mythic_max",
         "riot_min", "riot_max",
+        // CS2 / Steam params
+        "cs2_win_min", "cs2_win_max",
+        "premier_elo_min", "premier_elo_max",
+        "faceit_lvl_min", "faceit_lvl_max",
+        "steam_level_min", "steam_level_max",
+        "cs2_prime",
       ];
 
       for (const p of allowedParams) {
@@ -584,7 +590,7 @@ Deno.serve(async (req) => {
         "weaponSkin[]", "buddy[]", "agent[]", "valorant_region[]",
         "valorant_rank_type[]", "email_type[]", "country[]",
         "champion[]", "skin[]", "lol_rank[]", "lol_region[]",
-        "not_country[]",
+        "not_country[]", "medal[]", "relevant_games[]",
       ];
       for (const p of arrayParams) {
         const vals = url.searchParams.getAll(p);
@@ -693,6 +699,10 @@ Deno.serve(async (req) => {
         apiUrl = `https://api.lzt.market/riot?${params.toString()}`;
       } else if (gameType === "steam" || gameType === "csgo" || gameType === "cs2") {
         // Steam/CSGO/CS2 specific
+        // Force Brazil region if no country filter is provided for Steam
+        if (!params.get("country[]") && !params.get("country")) {
+          params.set("country[]", "Bra");
+        }
         apiUrl = `https://api.lzt.market/steam?${params.toString()}`;
       } else {
         // Valorant: remove LoL-specific params only
