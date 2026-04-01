@@ -87,7 +87,7 @@ const CredentialsTab = () => {
 
   const handleDelete = async (cred: Credential) => {
     if (!confirm(`Excluir "${cred.name}"?`)) return;
-    const { error } = await supabase.from("system_credentials")
+    const { error } = await (supabase.from("system_credentials") as any)
       .delete()
       .eq("id", cred.id);
     if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
