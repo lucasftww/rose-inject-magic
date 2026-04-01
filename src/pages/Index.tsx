@@ -70,6 +70,15 @@ const softwareImageMap: Record<string, string> = {
   squad: swSquad,
 };
 
+// Character overlay data for featured games
+const characterOverlayMap: Record<string, { bg: string; character: string; characterHover: string }> = {
+  "call of duty": { bg: bgCardCod, character: codNormal, characterHover: codHover },
+  "call-of-duty": { bg: bgCardCod, character: codNormal, characterHover: codHover },
+  cod: { bg: bgCardCod, character: codNormal, characterHover: codHover },
+  pubg: { bg: bgCardPubg, character: pubgNormal, characterHover: pubgHover },
+  fortnite: { bg: bgCardFortnite, character: fortniteNormal, characterHover: fortniteHover },
+};
+
 // Slugs to hide from the landing page software showcase
 const HIDDEN_GAME_SLUGS = ["spoofers", "spoofer"];
 
