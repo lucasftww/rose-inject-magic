@@ -264,22 +264,34 @@ Deno.serve(async (req) => {
 
     // Helper: authenticate user (returns null if not authenticated)
     const getAuthUser = async () => {
-      if (!authHeader?.startsWith("Bearer ")) return null;
-      const supabaseUser = createClient(supabaseUrl, anonKey, {
-        global: { headers: { Authorization: authHeader } },
-      });
-      const {
-        data: { user },
-        error,
-      } = await supabaseUser.auth.getUser();
-      return error ? null : user;
+      try {
+        if (!authHeader?.startsWith("Bearer ")) return null;
+        const supabaseUser = createClient(supabaseUrl, anonKey, {
+          global: { headers: { Authorization: authHeader } },
+        });
+        const { data, error } = await supabaseUser.auth.getUser();
+        if (error || !data) return null;
+        return data.user;
+      } catch (e) {
+        console.warn("getAuthUser failed:", e);
+        return null;
+      }
     };
 
     // Fetch LZT token from system_credentials table
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
-    // Update rates and fetch configs in parallel
-    await updateRates();
+    // Update rates and fetch configs in parallel with overall timeout
+    try {
+      console.log("Starting backend fetch tasks...");
+      await Promise.race([
+        updateRates(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("Rates timeout")), 5000))
+      ]).catch(e => console.warn("Rates fetch timed out or failed:", e));
+    } catch (e) { 
+      console.warn("Critical error in rate update loop:", e);
+    }
+
     const [credRow, clientIdRow, lztConfigRow] = await Promise.all([
       supabaseAdmin.from("system_credentials").select("value").eq("env_key", "LZT_API_TOKEN").maybeSingle(),
       supabaseAdmin.from("system_credentials").select("value").eq("env_key", "LZT_CLIENT_ID").maybeSingle(),
@@ -290,15 +302,17 @@ Deno.serve(async (req) => {
     const NEW_TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzUxMiJ9.eyJzdWIiOjEwNDIzOTg5LCJpc3MiOiJsenQiLCJpYXQiOjE3NzUwNjY2MzcsImp0aSI6Ijk1NDQwMiIsInNjb3BlIjoiYmFzaWMgcmVhZCBwb3N0IGNvbnZlcnNhdGUgcGF5bWVudCBpbnZvaWNlIGNoYXRib3ggbWFya2V0IiwiZXhwIjoxOTMyNzQ2NjM3fQ.urPp0RWVn3WaBCsrJCISf1EW5zSnkx-Fjz-QkohjkbO-HdpUNICHbKTtto5liF50OrIOufBZkqWQdG8rD36xsrFTE6ONeWehQzQbPSxK4ophWhaJ8mI2gGYX7eFKLZIYWBA9AjcPpEHovnImvV12AApsVmJZJhrI6eczqyX65Vo";
     const NEW_CLIENT_ID = "a3ryez9tif";
 
-    const token = credRow.data?.value || Deno.env.get("LZT_MARKET_TOKEN") || NEW_TOKEN;
-    const clientId = clientIdRow.data?.value || Deno.env.get("LZT_CLIENT_ID") || NEW_CLIENT_ID;
+    const token = credRow?.data?.value || Deno.env.get("LZT_MARKET_TOKEN") || NEW_TOKEN;
+    const clientId = clientIdRow?.data?.value || Deno.env.get("LZT_CLIENT_ID") || NEW_CLIENT_ID;
 
     if (!token) {
+      console.error("LZT token missing even after fallbacks");
       return new Response(JSON.stringify({ error: "LZT token not configured" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    console.log("Authentication and credentials loaded successfully");
 
     const url = new URL(req.url);
     const action = url.searchParams.get("action") || "list";
