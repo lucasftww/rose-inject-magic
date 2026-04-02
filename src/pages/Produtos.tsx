@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import { Search, SlidersHorizontal, DollarSign, ArrowLeft, Loader2, Package, Tag, ArrowUpDown, UserCheck, X, ArrowRight, Star, Gamepad2, Gift, Shield } from "lucide-react";
@@ -25,6 +25,60 @@ import imgFiveM from "@/assets/games/fivem.webp";
 import imgSquad from "@/assets/games/squad.webp";
 import imgOverwatch2 from "@/assets/games/overwatch-2.webp";
 import imgHellLetLoose from "@/assets/games/hell-let-loose.webp";
+import swValorant from "@/assets/games/sw-valorant.webp";
+import swFortnite from "@/assets/games/sw-fortnite.webp";
+import swCs2 from "@/assets/games/sw-cs2.webp";
+import swApex from "@/assets/games/sw-apex.webp";
+import swCod from "@/assets/games/sw-cod.webp";
+import swRust from "@/assets/games/sw-rust.webp";
+import swOverwatch from "@/assets/games/sw-overwatch2.webp";
+import swFivem from "@/assets/games/sw-fivem.webp";
+import swPubg from "@/assets/games/sw-pubg.webp";
+import swMarvelRivals from "@/assets/games/sw-marvel-rivals.webp";
+import swDayz from "@/assets/games/sw-dayz.webp";
+import swArcRaiders from "@/assets/games/sw-arc-raiders.webp";
+import swArenaBreakout from "@/assets/games/sw-arena-breakout.webp";
+import swSpoofers from "@/assets/games/sw-spoofers.webp";
+import swBloodhunt from "@/assets/games/sw-bloodhunt.webp";
+import swDbd from "@/assets/games/sw-dbd.webp";
+import bgCardCod from "@/assets/games/bg-card-cod.png";
+import bgCardPubg from "@/assets/games/bg-card-pubg.png";
+import bgCardFortnite from "@/assets/games/bg-card-fortnite.png";
+import bgCardCs2 from "@/assets/games/bg-card-cs2.png";
+import bgCardRust from "@/assets/games/bg-card-rust.png";
+import bgCardDayz from "@/assets/games/bg-card-dayz.png";
+import bgCardFivem from "@/assets/games/bg-card-fivem.png";
+import bgCardRivals from "@/assets/games/bg-card-rivals.png";
+import bgCardBloodstrike from "@/assets/games/bg-card-bloodstrike.png";
+import bgCardApex from "@/assets/games/bg-card-apex.png";
+import bgCardArcraiders from "@/assets/games/bg-card-arcraiders.png";
+import bgCardArenabreakout from "@/assets/games/bg-card-arenabreakout.png";
+import codNormal from "@/assets/games/cod-normal.png";
+import codHover from "@/assets/games/cod-hover.png";
+import pubgNormal from "@/assets/games/pubg-normal.png";
+import pubgHover from "@/assets/games/pubg-hover.png";
+import fortniteNormal from "@/assets/games/fortnite-normal.png";
+import fortniteHover from "@/assets/games/fortnite-hover.png";
+import valorantNormal from "@/assets/games/valorant-normal.png";
+import valorantHover from "@/assets/games/valorant-hover.png";
+import cs2Normal from "@/assets/games/cs2-normal.png";
+import cs2Hover from "@/assets/games/cs2-hover.png";
+import rustNormal from "@/assets/games/rust-normal.png";
+import rustHover from "@/assets/games/rust-hover.png";
+import dayzNormal from "@/assets/games/dayz-normal.png";
+import dayzHover from "@/assets/games/dayz-hover.png";
+import fivemNormal from "@/assets/games/fivem-normal.png";
+import fivemHover from "@/assets/games/fivem-hover.png";
+import rivalsNormal from "@/assets/games/rivals-normal.png";
+import rivalsHover from "@/assets/games/rivals-hover.png";
+import bloodstrikeNormal from "@/assets/games/bloodstrike-normal.png";
+import bloodstrikeHover from "@/assets/games/bloodstrike-hover.png";
+import apexNormal from "@/assets/games/apex-normal.png";
+import apexHover from "@/assets/games/apex-hover.png";
+import arcraidersNormal from "@/assets/games/arcraiders-normal.png";
+import arcraidersHover from "@/assets/games/arcraiders-hover.png";
+import arenabreakoutNormal from "@/assets/games/arenabreakout-normal.png";
+import arenabreakoutHover from "@/assets/games/arenabreakout-hover.png";
 
 const localImageMap: Record<string, string> = {
   'Valorant': imgValorant,
@@ -45,6 +99,227 @@ const localImageMap: Record<string, string> = {
   'Overwatch 2': imgOverwatch2,
   'Hell Let Loose': imgHellLetLoose,
   'Fortnite': imgFortnite,
+  'DayZ': swDayz,
+  'PUBG': swPubg,
+  'Marvel Rivals': swMarvelRivals,
+  'Bloodhunt': swBloodhunt,
+  'Dead by Daylight': swDbd,
+};
+
+const softwareImageMap: Record<string, string> = {
+  valorant: swValorant,
+  fortnite: swFortnite,
+  cs2: swCs2,
+  'cs2-free': swCs2,
+  'counter-strike 2': swCs2,
+  'counter-strike-2': swCs2,
+  'counter-strike 2 (free)': swCs2,
+  'counter-strike-2-free': swCs2,
+  apex: swApex,
+  'apex legends': swApex,
+  'apex-legends': swApex,
+  cod: swCod,
+  'call of duty': swCod,
+  'call-of-duty': swCod,
+  rust: swRust,
+  overwatch: swOverwatch,
+  'overwatch 2': swOverwatch,
+  'overwatch-2': swOverwatch,
+  fivem: swFivem,
+  fivem: swFivem,
+  pubg: swPubg,
+  dayz: swDayz,
+  squad: swSquad,
+  'marvel rivals': swMarvelRivals,
+  'marvel-rivals': swMarvelRivals,
+  'arc raiders': swArcRaiders,
+  'arc-raiders': swArcRaiders,
+  'arena breakout': swArenaBreakout,
+  'arena-breakout': swArenaBreakout,
+  'arena breakout infinite': swArenaBreakout,
+  'bodycam': imgBodycam,
+  'spoofers': swSpoofers,
+  'bloodhunt': swBloodhunt,
+  'dead by daylight': swDbd,
+  'dead-by-daylight': swDbd,
+  'warface': imgWarface,
+};
+
+const softwareCharacterOverlayMap: Record<string, { bg: string; character: string; characterHover: string }> = {
+  'call of duty': { bg: bgCardCod, character: codNormal, characterHover: codHover },
+  'call-of-duty': { bg: bgCardCod, character: codNormal, characterHover: codHover },
+  cod: { bg: bgCardCod, character: codNormal, characterHover: codHover },
+  pubg: { bg: bgCardPubg, character: pubgNormal, characterHover: pubgHover },
+  fortnite: { bg: bgCardFortnite, character: fortniteNormal, characterHover: fortniteHover },
+  valorant: { bg: swValorant, character: valorantNormal, characterHover: valorantHover },
+  cs2: { bg: bgCardCs2, character: cs2Normal, characterHover: cs2Hover },
+  'cs2-free': { bg: bgCardCs2, character: cs2Normal, characterHover: cs2Hover },
+  'counter-strike 2': { bg: bgCardCs2, character: cs2Normal, characterHover: cs2Hover },
+  'counter-strike-2': { bg: bgCardCs2, character: cs2Normal, characterHover: cs2Hover },
+  'counter-strike 2 (free)': { bg: bgCardCs2, character: cs2Normal, characterHover: cs2Hover },
+  rust: { bg: bgCardRust, character: rustNormal, characterHover: rustHover },
+  dayz: { bg: bgCardDayz, character: dayzNormal, characterHover: dayzHover },
+  fivem: { bg: bgCardFivem, character: fivemNormal, characterHover: fivemHover },
+  fivem: { bg: bgCardFivem, character: fivemNormal, characterHover: fivemHover },
+  'marvel rivals': { bg: bgCardRivals, character: rivalsNormal, characterHover: rivalsHover },
+  'marvel-rivals': { bg: bgCardRivals, character: rivalsNormal, characterHover: rivalsHover },
+  bloodstrike: { bg: bgCardBloodstrike, character: bloodstrikeNormal, characterHover: bloodstrikeHover },
+  'apex legends': { bg: bgCardApex, character: apexNormal, characterHover: apexHover },
+  'apex-legends': { bg: bgCardApex, character: apexNormal, characterHover: apexHover },
+  apex: { bg: bgCardApex, character: apexNormal, characterHover: apexHover },
+  'arc raiders': { bg: bgCardArcraiders, character: arcraidersNormal, characterHover: arcraidersHover },
+  'arc-raiders': { bg: bgCardArcraiders, character: arcraidersNormal, characterHover: arcraidersHover },
+  'arena breakout': { bg: bgCardArenabreakout, character: arenabreakoutNormal, characterHover: arenabreakoutHover },
+  'arena-breakout': { bg: bgCardArenabreakout, character: arenabreakoutNormal, characterHover: arenabreakoutHover },
+  'arena breakout infinite': { bg: bgCardArenabreakout, character: arenabreakoutNormal, characterHover: arenabreakoutHover },
+};
+
+const fadeUpShowcase = {
+  hidden: { opacity: 0, y: 18 },
+  visible: (i: number = 0) => ({
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.35, delay: i * 0.04, ease: 'easeOut' as const },
+  }),
+};
+
+const getLookupKeys = (game: Pick<GameFromDB, 'name' | 'slug'>) => {
+  const keys = [
+    game.slug || '',
+    game.name || '',
+    (game.slug || '').replace(/-/g, ' '),
+    (game.name || '').replace(/\s+/g, '-'),
+  ];
+
+  return Array.from(new Set(keys.map(key => key.trim().toLowerCase()).filter(Boolean)));
+};
+
+const getShowcaseAssets = (game: Pick<GameFromDB, 'name' | 'slug' | 'image_url'>) => {
+  const keys = getLookupKeys(game);
+  const overlay = keys.map((key) => softwareCharacterOverlayMap[key]).find(Boolean);
+  const image = overlay?.bg || keys.map((key) => softwareImageMap[key]).find(Boolean) || localImageMap[game.name] || game.image_url || null;
+
+  return {
+    image,
+    character: overlay?.character,
+    characterHover: overlay?.characterHover,
+  };
+};
+
+const TiltCard = ({ children, index }: { children: ReactNode; index: number }) => {
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const card = cardRef.current;
+    if (!card) return;
+
+    const rect = card.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const rotateX = ((y - centerY) / centerY) * -7;
+    const rotateY = ((x - centerX) / centerX) * 7;
+    card.style.transform = `perspective(900px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.015, 1.015, 1.015)`;
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    const card = cardRef.current;
+    if (card) card.style.transform = 'perspective(900px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+  }, []);
+
+  return (
+    <motion.div
+      ref={cardRef}
+      variants={fadeUpShowcase}
+      custom={index}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      style={{ transition: 'transform 0.18s ease-out', transformStyle: 'preserve-3d' }}
+    >
+      {children}
+    </motion.div>
+  );
+};
+
+const SoftwareShowcaseCard = ({ game, index, isFree, description, onSelect }: { game: GameFromDB; index: number; isFree: boolean; description: string; onSelect: (gameId: string) => void }) => {
+  const [isHovered, setIsHovered] = useState(false);
+  const { image, character, characterHover } = getShowcaseAssets(game);
+  const hasProducts = game.product_count > 0;
+  const isSpoofer = game.name.toLowerCase().includes('spoof');
+  const characterPositionClass = isSpoofer
+    ? 'absolute bottom-[-6%] right-[-8%] z-[8] w-[58%] sm:w-[52%]'
+    : 'absolute bottom-0 right-[-14%] z-[8] w-[72%] sm:right-[-10%] sm:w-[62%]';
+
+  return (
+    <TiltCard index={index}>
+      <motion.button
+        type="button"
+        onClick={() => onSelect(game.id)}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        className="group relative block w-full overflow-hidden rounded-2xl border border-border/50 bg-card text-left transition-all duration-500 hover:border-success/40 hover:shadow-[0_20px_50px_hsl(var(--foreground)/0.18)] focus:outline-none active:scale-[0.98]"
+      >
+        <div className="relative aspect-[16/11] overflow-hidden">
+          {image ? (
+            <img src={image} alt={game.name} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" loading="lazy" />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-muted to-card">
+              <Gamepad2 className="h-12 w-12 text-muted-foreground/20" />
+            </div>
+          )}
+
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/35 to-background/[0.02]" />
+
+          {character && (
+            <div className={`${characterPositionClass} pointer-events-none transition-opacity duration-500 ease-out`} style={{ opacity: isHovered ? 0 : 1 }}>
+              <img src={character} alt="" loading="lazy" className="w-full h-auto object-contain" style={{ filter: 'drop-shadow(0 10px 28px rgba(0,0,0,0.55))' }} />
+            </div>
+          )}
+
+          {characterHover && (
+            <div
+              className={`${characterPositionClass} pointer-events-none z-[9] transition-all duration-500 ease-out`}
+              style={{
+                opacity: isHovered ? 1 : 0,
+                transformOrigin: 'bottom center',
+                transform: isHovered ? 'scale(1.14)' : 'scale(1)',
+              }}
+            >
+              <img src={characterHover} alt="" loading="lazy" className="w-full h-auto object-contain" style={{ filter: 'drop-shadow(0 12px 32px rgba(0,0,0,0.6))' }} />
+            </div>
+          )}
+
+          <div className="absolute left-3 top-3 z-[12] flex flex-wrap gap-2">
+            {isFree && (
+              <div className="flex items-center gap-1 rounded-full bg-success px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-success-foreground shadow-lg">
+                <Gift className="h-3 w-3" />
+                FREE
+              </div>
+            )}
+
+            {hasProducts && (
+              <div className="flex items-center gap-1.5 rounded-full border border-border/50 bg-card/75 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-foreground shadow-lg backdrop-blur-sm">
+                <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
+                {game.product_count} {game.product_count === 1 ? 'software' : 'softwares'}
+              </div>
+            )}
+          </div>
+
+          <div className="absolute inset-x-0 bottom-0 z-[12] p-4 sm:p-5">
+            <h3 className="text-sm sm:text-lg lg:text-xl font-bold tracking-tight text-foreground drop-shadow-lg" style={{ fontFamily: "'Valorant', sans-serif" }}>
+              {game.name}
+            </h3>
+            <p className="mt-1 max-w-[70%] text-[10px] sm:text-xs leading-relaxed text-muted-foreground/90 line-clamp-2">{description}</p>
+            <div className="mt-3 inline-flex items-center gap-2 text-[10px] sm:text-xs font-bold uppercase tracking-[0.18em] text-success transition-all group-hover:gap-3">
+              <span>Ver softwares</span>
+              <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+            </div>
+          </div>
+        </div>
+      </motion.button>
+    </TiltCard>
+  );
 };
 
 interface GameFromDB {
@@ -223,9 +498,9 @@ const GameSelectScreen = ({ onSelect, games, loading }: { onSelect: (gameId: str
       </section>
 
       {loading ? (
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-4 sm:py-8 grid grid-cols-2 gap-3 sm:gap-5 sm:grid-cols-3 lg:grid-cols-4">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 py-4 sm:py-8 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">
           {Array.from({ length: 8 }).map((_, i) => (
-             <Skeleton key={i} className="aspect-[3/4] w-full rounded-2xl" />
+             <Skeleton key={i} className="aspect-[16/11] w-full rounded-2xl" />
           ))}
         </div>
       ) : filteredBySearch.length === 0 ? (
@@ -267,66 +542,12 @@ const GameSelectScreen = ({ onSelect, games, loading }: { onSelect: (gameId: str
 
         const renderCard = (game: GameFromDB, idx: number, isFree: boolean) => {
           const desc = descriptions[game.name] || `Softwares para ${game.name}`;
-          return (
-            <motion.button
-              key={game.id}
-              variants={fadeUp}
-              custom={idx}
-              onClick={() => onSelect(game.id)}
-              className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/30 bg-card text-left transition-all duration-300 hover:border-foreground/20 hover:shadow-[0_4px_24px_rgba(0,0,0,0.4)] focus:outline-none active:scale-[0.97]"
-            >
-              <div className="relative aspect-[3/4] overflow-hidden">
-                {(localImageMap[game.name] || game.image_url) ? (
-                  <img
-                    src={localImageMap[game.name] || game.image_url!}
-                    alt={game.name}
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    loading="lazy"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-secondary">
-                    <Gamepad2 className="h-12 w-12 text-muted-foreground/15" />
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
-
-                {/* Badges */}
-                <div className="absolute top-3 right-3 flex flex-col gap-1.5 items-end">
-                  {isFree && (
-                    <div className="flex items-center gap-1 rounded-full bg-[hsl(142,76%,36%)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-lg">
-                      <Gift className="h-3 w-3" />
-                      FREE
-                    </div>
-                  )}
-                  {game.product_count > 0 && (
-                    <div className="flex items-center gap-1 rounded-full bg-foreground/80 px-2.5 py-1 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-background shadow-lg">
-                      <span className="h-1.5 w-1.5 rounded-full bg-background animate-pulse" />
-                      {game.product_count} {game.product_count === 1 ? "software" : "softwares"}
-                    </div>
-                  )}
-                </div>
-
-                {/* Game name overlay */}
-                <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
-                  <h3 className="text-sm sm:text-lg lg:text-xl font-bold tracking-tight text-foreground leading-tight drop-shadow-lg" style={{ fontFamily: "'Valorant', sans-serif" }}>
-                    {game.name}
-                  </h3>
-                  <p className="mt-1 text-[10px] sm:text-xs text-muted-foreground/80 line-clamp-1">{desc}</p>
-                </div>
-              </div>
-
-              {/* CTA bar */}
-              <div className="flex items-center justify-center gap-1.5 border-t border-border/30 bg-card/80 px-3 py-2.5 sm:py-3 text-foreground/60 text-[10px] sm:text-xs font-bold uppercase tracking-widest transition-all group-hover:bg-foreground/[0.04] group-hover:text-foreground group-hover:gap-2.5">
-                <span>Ver softwares</span>
-                <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-1" />
-              </div>
-            </motion.button>
-          );
+          return <SoftwareShowcaseCard key={game.id} game={game} index={idx} isFree={isFree} description={desc} onSelect={onSelect} />;
         };
 
-        const gridClasses = "grid grid-cols-2 gap-3 sm:gap-5 sm:grid-cols-3 lg:grid-cols-4";
+        const gridClasses = "grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4";
 
-        const renderSectionHeader = (icon: React.ReactNode, label: string, color: string) => (
+        const renderSectionHeader = (icon: ReactNode, label: string, color: string) => (
           <div className="mb-5 flex items-center gap-3">
             <div className="flex items-center gap-2 rounded-full border px-4 py-1.5" style={{ borderColor: `${color}30`, backgroundColor: `${color}15` }}>
               {icon}
