@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { throwApiError } from "@/lib/apiErrors";
 import { translateRegion } from "@/lib/regionTranslation";
 import { motion } from "framer-motion";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { safeJsonFetch, ApiError } from "@/lib/apiUtils";
 
@@ -49,12 +49,54 @@ type GameTab = "valorant" | "lol" | "fortnite" | "minecraft" | "steam";
 
 const getProxiedImageUrl = (url: string) => {
   if (!url) return "";
-  if (url.includes("lzt.market") || url.includes("img.lzt.market") || url.includes("ddragon.leagueoflegends.com") || url.includes("steamstatic.com") || url.includes("akamaihd.net") || url.includes("mineskin.eu")) {
-    const projectUrl = import.meta.env.VITE_SUPABASE_URL;
+  if (
+    url.includes("lzt.market") ||
+    url.includes("img.lzt.market") ||
+    url.includes("ddragon.leagueoflegends.com") ||
+    url.includes("steamstatic.com") ||
+    url.includes("akamaihd.net") ||
+    url.includes("mineskin.eu") ||
+    url.includes("fortnite-api.com") ||
+    url.includes("capes.dev")
+  ) {
+    const projectUrl = import.meta.env.VITE_SUPABASE_URL || "https://cthqzetkshrbsjulfytl.supabase.co";
     return `${projectUrl}/functions/v1/lzt-market?action=image-proxy&url=${encodeURIComponent(url)}`;
   }
   return url;
 };
+
+/** Data Dragon champion keys from champion.json are already valid (e.g. LeeSin); do not sentence-case them. */
+const ddragonChampionId = (internalNameFromMap: string) => internalNameFromMap;
+
+function shouldReplaceListingTitle(raw: string | undefined, game: GameTab): boolean {
+  const t = (raw || "").replace(/[А-Яа-я]/g, "").trim();
+  const lower = t.toLowerCase();
+  if (!t || lower === "kuki" || lower === "waiting" || lower === "lol" || t.length < 3) return true;
+  if (/^[\s|+\-_.:0-9]{1,24}$/.test(t)) return true;
+  const compact = t.replace(/\s/g, "");
+  if (/^\|+$/.test(compact) || compact === "||") return true;
+  if (game === "lol" && /\b\d+\s*knives?\b/i.test(t) && !/\b(champion|league|lol|skin)\b/i.test(t)) return true;
+  if (game === "minecraft") {
+    if (/^[\s|\-:]+$/.test(t) || /^.?\|.?\|/.test(t)) return true;
+    const letters = (t.match(/[a-zA-ZÀ-ÿ]/g) || []).length;
+    if (letters < 4 && t.length < 28) return true;
+  }
+  return false;
+}
+
+/** Drop obvious Valorant listings that leak into LoL API responses. */
+function isLikelyWrongGameInLolList(item: LztItem): boolean {
+  const t = item.title || "";
+  const smellsValorant =
+    /\b(knives?|vandal|phantom|spectre|bulldog|operator|valorant)\b/i.test(t) &&
+    !/\b(league|lol|champion|ranked|skins?)\b/i.test(t);
+  if (!smellsValorant) return false;
+  const hasLol =
+    (item.riot_lol_skin_count ?? 0) >= 15 ||
+    (item.riot_lol_champion_count ?? 0) >= 30 ||
+    !!(item.lolInventory?.Skin && (Array.isArray(item.lolInventory.Skin) ? item.lolInventory.Skin.length : Object.keys(item.lolInventory.Skin).length) > 0);
+  return !hasLol;
+}
 
 const MC_GREEN = "hsl(120,60%,45%)";
 
@@ -362,19 +404,18 @@ const LztPreviewImage = ({ url }: { url: string }) => {
 };
 
 const ValorantCard = memo(({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap: Map<string, SkinEntry>; formatPrice: (price: number, currency?: string) => string }) => {
-  const navigate = useNavigate();
   const rank = item.riot_valorant_rank ? rankMap[item.riot_valorant_rank] : null;
   const skinCount = item.riot_valorant_skin_count ?? 0;
   const hasKnife = (item.riot_valorant_knife ?? 0) > 0;
 
   const cleanedTitle = useMemo(() => {
-    let t = item.title || "";
-    t = t.replace(/[А-Яа-я]/g, '').trim();
-    if (!t || t.toLowerCase() === "kuki" || t.length < 3) {
+    const synth = () => {
       const rankName = rank?.name || "Unranked";
       return `Conta Valorant [${rankName}] [${skinCount} Skins]`;
-    }
-    return t;
+    };
+    if (shouldReplaceListingTitle(item.title, "valorant")) return synth();
+    let t = (item.title || "").replace(/[А-Яа-я]/g, "").trim();
+    return t || synth();
   }, [item.title, rank, skinCount]);
 
   const skinPreviews = useMemo(() => {
@@ -396,9 +437,9 @@ const ValorantCard = memo(({ item, skinsMap, formatPrice }: { item: LztItem; ski
   }, [item.valorantInventory, skinsMap]);
 
   return (
-    <div
-      className="group cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-success/50 hover:shadow-[0_4px_24px_hsl(var(--success)/0.12)] flex flex-col h-full"
-      onClick={() => navigate(`/conta/${item.item_id}`)}
+    <Link
+      to={`/conta/${item.item_id}`}
+      className="group cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-success/50 hover:shadow-[0_4px_24px_hsl(var(--success)/0.12)] flex flex-col h-full no-underline text-inherit"
     >
       <div className="relative flex h-28 sm:h-36 items-center justify-center overflow-hidden bg-secondary/20">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--success)/0.06),transparent_70%)]" />
@@ -470,31 +511,17 @@ const ValorantCard = memo(({ item, skinsMap, formatPrice }: { item: LztItem; ski
         <div className="mt-auto pt-1.5 border-t border-border/30">
           <h3 className="text-[10px] sm:text-xs font-bold text-foreground line-clamp-1 mb-1">{cleanedTitle}</h3>
           <p className="text-sm sm:text-base font-bold text-success tracking-tight">{formatPrice(item.price, item.price_currency)}</p>
-          <button className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg bg-success py-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-success-foreground">
+          <span className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg bg-success py-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-success-foreground">
             Ver conta <ArrowRight className="h-2.5 w-2.5" />
-          </button>
+          </span>
         </div>
       </div>
-    </div>
+    </Link>
   );
 });
 
-const normalizeChampName = (name: string) => {
-  if (!name) return "";
-  // DDragon expects capitalized names, e.g. "Vayne", "Karma"
-  // Some exceptions like "Wukong" is "MonkeyKing" and "LeBlanc" has capital B
-  const common = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
-  if (common === "Wukong") return "MonkeyKing";
-  if (common === "Leblanc") return "LeBlanc";
-  if (common === "Kogmaw") return "KogMaw";
-  if (common === "Khazix") return "KhaZix";
-  if (common === "Rexsai") return "RekSai";
-  return common;
-};
-
 // ─── LoL Card ───
 const LolCard = memo(({ item, champKeyMap, formatPrice }: { item: LztItem; champKeyMap: Map<number, string>; formatPrice: (price: number, currency?: string) => string }) => {
-  const navigate = useNavigate();
   const rankText = item.riot_lol_rank || "Unranked";
   const rankFilterId = lolRankToFilterId(rankText);
   const rankFilterData = lolRankFilters.find(r => r.id === rankFilterId);
@@ -505,13 +532,10 @@ const LolCard = memo(({ item, champKeyMap, formatPrice }: { item: LztItem; champ
   const winRate = item.riot_lol_rank_win_rate;
 
   const cleanedTitle = useMemo(() => {
-    let t = item.title || "";
-    // Remove cyrillic
-    t = t.replace(/[А-Яа-я]/g, '').trim();
-    if (!t || t.toLowerCase() === "kuki" || t.length < 3) {
-      return `Conta LoL [${rankText}] [Nv.${level}] [${skinCount} Skins]`;
-    }
-    return t;
+    const synth = () => `Conta LoL [${rankText}] [Nv.${level}] [${skinCount} Skins]`;
+    if (shouldReplaceListingTitle(item.title, "lol")) return synth();
+    const t = (item.title || "").replace(/[А-Яа-я]/g, "").trim();
+    return t || synth();
   }, [item.title, rankText, level, skinCount]);
 
   // Resolve LoL skin IDs via lolInventory (não valorantInventory!)
@@ -538,7 +562,7 @@ const LolCard = memo(({ item, champKeyMap, formatPrice }: { item: LztItem; champ
       const skinNum = id % 1000;
       const rawChampName = champKeyMap.get(champKey);
       if (rawChampName && skinNum > 0) {
-        const champName = normalizeChampName(rawChampName);
+        const champName = ddragonChampionId(rawChampName);
         results.push({
           name: champName,
           image: `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${champName}_${skinNum}.jpg`,
@@ -552,7 +576,7 @@ const LolCard = memo(({ item, champKeyMap, formatPrice }: { item: LztItem; champ
       for (const champId of champIds) {
         const rawChampName = champKeyMap.get(Number(champId));
         if (rawChampName) {
-          const champName = normalizeChampName(rawChampName);
+          const champName = ddragonChampionId(rawChampName);
           results.push({
             name: champName,
             image: `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${champName}_0.jpg`,
@@ -566,9 +590,9 @@ const LolCard = memo(({ item, champKeyMap, formatPrice }: { item: LztItem; champ
   }, [lolInventory, champKeyMap]);
 
   return (
-    <div
-      className="group cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-[hsl(198,100%,45%)/50%] hover:shadow-[0_4px_24px_hsl(198,100%,45%,0.12)] flex flex-col h-full"
-      onClick={() => navigate(`/lol/${item.item_id}`)}
+    <Link
+      to={`/lol/${item.item_id}`}
+      className="group cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-[hsl(198,100%,45%)/50%] hover:shadow-[0_4px_24px_hsl(198,100%,45%,0.12)] flex flex-col h-full no-underline text-inherit"
     >
       <div className="relative flex h-28 sm:h-36 items-center justify-center overflow-hidden bg-secondary/20">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(198,100%,45%,0.08),transparent_70%)]" />
@@ -646,39 +670,37 @@ const LolCard = memo(({ item, champKeyMap, formatPrice }: { item: LztItem; champ
         <div className="mt-auto pt-1.5 border-t border-border/30">
           <h3 className="text-[10px] sm:text-xs font-bold text-foreground line-clamp-1 mb-1">{cleanedTitle}</h3>
           <p className="text-sm sm:text-base font-bold text-[hsl(198,100%,45%)] tracking-tight">{formatPrice(item.price, item.price_currency)}</p>
-          <button className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg py-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-white" style={{ background: "hsl(198,100%,45%)" }}>
+          <span className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg py-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-white" style={{ background: "hsl(198,100%,45%)" }}>
             Ver conta <ArrowRight className="h-2.5 w-2.5" />
-          </button>
+          </span>
         </div>
       </div>
-    </div>
+    </Link>
   );
 });
 LolCard.displayName = "LolCard";
 
 // ─── Steam Card ───
 const SteamCard = memo(({ item, formatPrice }: { item: LztItem; formatPrice: (price: number, currency?: string) => string }) => {
-  const navigate = useNavigate();
   const cleanedTitle = useMemo(() => {
-    let t = item.title || "";
-    // Remove cyrillic
-    t = t.replace(/[А-Яа-я]/g, '').trim();
-    if (!t || t.toLowerCase() === "kuki" || t.length < 3) {
+    const synth = () => {
       const elo = item.premier_elo || item.cs2_elo || item.premier_elo_min;
       const medals = item.medals_count || item.medals || item.medals_min;
       const eloPart = elo ? ` [${elo} ELO]` : "";
       const medalsPart = medals ? ` [${medals} Medalhas]` : "";
       return `Conta Steam / CS2${eloPart}${medalsPart}`;
-    }
-    return t;
+    };
+    if (shouldReplaceListingTitle(item.title, "steam")) return synth();
+    const t = (item.title || "").replace(/[А-Яа-я]/g, "").trim();
+    return t || synth();
   }, [item.title, item.premier_elo, item.cs2_elo, item.premier_elo_min, item.medals_count, item.medals, item.medals_min]);
 
   const previewImage = item.imagePreviewLinks?.direct?.weapons || item.imagePreviewLinks?.direct?.main;
 
   return (
-    <div
-      className="group cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-[hsl(210,100%,50%)/50%] hover:shadow-[0_4px_24px_hsl(210,100%,50%,0.12)] flex flex-col h-full"
-      onClick={() => navigate(`/steam/${item.item_id}`)}
+    <Link
+      to={`/steam/${item.item_id}`}
+      className="group cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-[hsl(210,100%,50%)/50%] hover:shadow-[0_4px_24px_hsl(210,100%,50%,0.12)] flex flex-col h-full no-underline text-inherit"
     >
       <div className="relative flex h-28 sm:h-36 items-center justify-center overflow-hidden bg-secondary/20">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(210,100%,50%,0.08),transparent_70%)]" />
@@ -710,26 +732,22 @@ const SteamCard = memo(({ item, formatPrice }: { item: LztItem; formatPrice: (pr
           <ArrowRight className="h-3 w-3 text-muted-foreground group-hover:text-primary transition-colors" />
         </div>
       </div>
-    </div>
+    </Link>
   );
 });
 SteamCard.displayName = "SteamCard";
 
 // ─── Fortnite Card ───
 const FortniteCard = memo(({ item, skinsDb, formatPrice }: { item: LztItem; skinsDb: Map<string, { name: string; image: string }>; formatPrice: (price: number, currency?: string) => string }) => {
-  const navigate = useNavigate();
   const vbucks = item.fortnite_balance ?? item.fortnite_vbucks ?? 0;
   const skinCount = item.fortnite_skin_count ?? 0;
   const level = item.fortnite_level ?? 0;
 
   const cleanedTitle = useMemo(() => {
-    let t = item.title || "";
-    // Remove cyrillic
-    t = t.replace(/[А-Яа-я]/g, '').trim();
-    if (!t || t.toLowerCase() === "kuki" || t.length < 3) {
-      return `Conta Fortnite [${skinCount} Skins] [${vbucks} VB]`;
-    }
-    return t;
+    const synth = () => `Conta Fortnite [${skinCount} Skins] [${vbucks} VB]`;
+    if (shouldReplaceListingTitle(item.title, "fortnite")) return synth();
+    const t = (item.title || "").replace(/[А-Яа-я]/g, "").trim();
+    return t || synth();
   }, [item.title, skinCount, vbucks]);
 
   // fortniteSkins is an array of { id, title, rarity } from LZT API
@@ -770,9 +788,9 @@ const FortniteCard = memo(({ item, skinsDb, formatPrice }: { item: LztItem; skin
   }, [item.fortniteSkins, item.fortnitePickaxe, skinsDb]);
 
   return (
-    <div
-      className="group cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-[hsl(265,80%,65%)/50%] hover:shadow-[0_4px_24px_hsl(265,80%,65%,0.12)] flex flex-col h-full"
-      onClick={() => navigate(`/fortnite/${item.item_id}`)}
+    <Link
+      to={`/fortnite/${item.item_id}`}
+      className="group cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-[hsl(265,80%,65%)/50%] hover:shadow-[0_4px_24px_hsl(265,80%,65%,0.12)] flex flex-col h-full no-underline text-inherit"
     >
       <div className="relative flex h-28 sm:h-36 items-center justify-center overflow-hidden bg-secondary/20">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(265,80%,65%,0.08),transparent_70%)]" />
@@ -837,19 +855,18 @@ const FortniteCard = memo(({ item, skinsDb, formatPrice }: { item: LztItem; skin
         <div className="mt-auto pt-1.5 border-t border-border/30">
           <h3 className="text-[10px] sm:text-xs font-bold text-foreground line-clamp-1 mb-1">{cleanedTitle}</h3>
           <p className="text-sm sm:text-base font-bold tracking-tight" style={{ color: FN_PURPLE }}>{formatPrice(item.price, item.price_currency)}</p>
-          <button className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg py-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-white" style={{ background: FN_PURPLE }}>
+          <span className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg py-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-white" style={{ background: FN_PURPLE }}>
             Ver conta <ArrowRight className="h-2.5 w-2.5" />
-          </button>
+          </span>
         </div>
       </div>
-    </div>
+    </Link>
   );
 });
 FortniteCard.displayName = "FortniteCard";
 
 // ─── Minecraft Card ───
 const MinecraftCard = memo(({ item, formatPrice }: { item: LztItem; formatPrice: (price: number, currency?: string) => string }) => {
-  const navigate = useNavigate();
   const nickname = item.minecraft_nickname;
   const hasJava = (item.minecraft_java ?? 0) > 0;
   const hasBedrock = (item.minecraft_bedrock ?? 0) > 0;
@@ -859,14 +876,13 @@ const MinecraftCard = memo(({ item, formatPrice }: { item: LztItem; formatPrice:
   const banned = (item.minecraft_hypixel_ban ?? 0) > 0;
 
   const cleanedTitle = useMemo(() => {
-    let t = item.title || "";
-    // Remove cyrillic
-    t = t.replace(/[А-Яа-я]/g, '').trim();
-    if (!t || t.toLowerCase() === "kuki" || t.length < 3) {
+    const synth = () => {
       const edition = hasJava && hasBedrock ? "Java + Bedrock" : hasJava ? "Java" : hasBedrock ? "Bedrock" : "MC";
       return `Conta Minecraft [${nickname || "Standard"}] [${edition}]`;
-    }
-    return t;
+    };
+    if (shouldReplaceListingTitle(item.title, "minecraft")) return synth();
+    const t = (item.title || "").replace(/[А-Яа-я]/g, "").trim();
+    return t || synth();
   }, [item.title, nickname, hasJava, hasBedrock]);
 
   // mineskin.eu avatar (body render)
@@ -875,12 +891,12 @@ const MinecraftCard = memo(({ item, formatPrice }: { item: LztItem; formatPrice:
     : null;
 
   return (
-    <div
-      className="group cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all flex flex-col h-full"
+    <Link
+      to={`/minecraft/${item.item_id}`}
+      className="group cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all flex flex-col h-full no-underline text-inherit"
       style={{ ['--hover-shadow' as string]: `0 0 24px ${MC_GREEN}15` }}
       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = `${MC_GREEN}80`; (e.currentTarget as HTMLElement).style.boxShadow = `0 4px 24px ${MC_GREEN}15`; }}
       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = ''; (e.currentTarget as HTMLElement).style.boxShadow = ''; }}
-      onClick={() => navigate(`/minecraft/${item.item_id}`)}
     >
       <div className="relative flex h-28 sm:h-36 items-center justify-center overflow-hidden bg-secondary/20">
         <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse at center, ${MC_GREEN}0a, transparent 70%)` }} />
@@ -918,12 +934,12 @@ const MinecraftCard = memo(({ item, formatPrice }: { item: LztItem; formatPrice:
         <div className="mt-auto pt-1.5 border-t border-border/30">
           <h3 className="text-[10px] sm:text-xs font-bold text-foreground line-clamp-1 mb-1">{cleanedTitle}</h3>
           <p className="text-sm sm:text-base font-bold tracking-tight" style={{ color: MC_GREEN }}>{formatPrice(item.price, item.price_currency)}</p>
-          <button className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg py-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-white" style={{ background: MC_GREEN }}>
+          <span className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg py-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-white" style={{ background: MC_GREEN }}>
             Ver conta <ArrowRight className="h-2.5 w-2.5" />
-          </button>
+          </span>
         </div>
       </div>
-    </div>
+    </Link>
   );
 });
 MinecraftCard.displayName = "MinecraftCard";
@@ -982,17 +998,26 @@ const fetchAccountsRaw = async (
   }
 };
 
+function gameTabFromSearchParams(sp: URLSearchParams): GameTab {
+  const g = sp.get("game");
+  if (g === "lol") return "lol";
+  if (g === "fortnite") return "fortnite";
+  if (g === "minecraft") return "minecraft";
+  if (g === "steam") return "steam";
+  return "valorant";
+}
+
 const Contas = () => {
   const { getDisplayPrice } = useLztMarkup();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [gameTab, setGameTab] = useState<GameTab>(() => {
-    const g = searchParams.get("game");
-    if (g === "lol") return "lol";
-    if (g === "fortnite") return "fortnite";
-    if (g === "minecraft") return "minecraft";
-    if (g === "steam") return "steam";
-    return "valorant";
-  });
+  const [gameTab, setGameTab] = useState<GameTab>(() => gameTabFromSearchParams(searchParams));
+
+  // Voltar/avançar no navegador ou link direto: manter aba alinhada a ?game=
+  useEffect(() => {
+    const tab = gameTabFromSearchParams(searchParams);
+    setGameTab((prev) => (prev === tab ? prev : tab));
+  }, [searchParams]);
+
   // Scroll to top on mount
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
@@ -1216,9 +1241,40 @@ const Contas = () => {
   }, [currentPage, searchQuery, onlyKnife, selectedRank, selectedWeapon, invMin, invMax, lvlMin, lvlMax, gameTab, lolRank, lolChampMin, lolSkinsMin, fnVbMin, fnSkinsMin, mcJava, mcBedrock, mcHypixelLvlMin, mcCapesMin, mcNoBan, lolRegion, valRegion, sortBy, priceMin, priceMax, steamLvlMin, cs2EloMin, cs2WinsMin, cs2FaceitLvlMin, cs2MedalsMin, cs2Prime, cs2Only]);
 
   const paramsKey = JSON.stringify(buildParams(1)) + gameTab;
-  // Track which params are "text inputs" that need debouncing vs instant changes
-  const textParamsKey = `${searchQuery}|${priceMin}|${priceMax}|${lvlMin}|${lvlMax}|${invMin}|${invMax}|${lolChampMin}|${lolSkinsMin}|${fnVbMin}|${fnSkinsMin}|${mcHypixelLvlMin}|${mcCapesMin}|${steamLvlMin}|${cs2EloMin}|${cs2WinsMin}|${cs2FaceitLvlMin}|${cs2MedalsMin}`;
-  const nonTextParamsKey = paramsKey.replace(textParamsKey, "");
+  // Campos de texto / número digitados: debounce. Resto (aba, rank, sort, toggles): dispara na hora.
+  const nonTextParamsKey = useMemo(
+    () =>
+      JSON.stringify({
+        gameTab,
+        sortBy,
+        selectedRank,
+        selectedWeapon,
+        onlyKnife,
+        valRegion,
+        lolRank,
+        lolRegion,
+        mcJava,
+        mcBedrock,
+        mcNoBan,
+        cs2Only,
+        cs2Prime,
+      }),
+    [
+      gameTab,
+      sortBy,
+      selectedRank,
+      selectedWeapon,
+      onlyKnife,
+      valRegion,
+      lolRank,
+      lolRegion,
+      mcJava,
+      mcBedrock,
+      mcNoBan,
+      cs2Only,
+      cs2Prime,
+    ],
+  );
   const [debouncedParamsKey, setDebouncedParamsKey] = useState(paramsKey);
   const prevNonTextRef = useRef(nonTextParamsKey);
   useEffect(() => {
@@ -1263,7 +1319,8 @@ const Contas = () => {
   const fetchMultiplePages = useCallback(async (controller: AbortController) => {
     const cacheKey = debouncedParamsKey;
     const cached = fetchCacheRef.current.get(cacheKey);
-    
+    const tabChanged = prevGameTabRef.current !== gameTab;
+
     // Show stale cache immediately (even if expired) while fetching fresh data
     if (cached) {
       setStreamedItems(cached.items);
@@ -1274,32 +1331,32 @@ const Contas = () => {
       setDisplayPage(1);
       setFirstPageLoaded(true);
       setHasNextPage(cached.hasNextPage);
-      
-      // If cache is fresh (5 min), don't refetch
-      if (Date.now() - cached.timestamp < 300000) return;
-    }
 
-    // Only show loading skeleton if no cache at all
-    if (!cached) {
-      if (prevGameTabRef.current !== gameTab) {
-        // Full component wipe ONLY when switching games (Valorant -> Fortnite)
-        setStreamedItems([]);
-        setFirstPageLoaded(false);
-      } else {
-        // Just changed filters (like price/sort), keep old items on screen, just dim them!
-        setIsRefetching(true);
+      // If cache is fresh (5 min), don't refetch
+      if (Date.now() - cached.timestamp < 300000) {
+        prevGameTabRef.current = gameTab;
+        return;
       }
-      prevGameTabRef.current = gameTab;
-      
-      setStreamingDone(false);
-      setStreamError(null);
-      setCurrentPage(1);
-      setLoadingMore(false);
-      setDisplayPage(1);
     }
 
     try {
-      // Fetch first page immediately and display it
+      if (!cached) {
+        if (tabChanged) {
+          setStreamedItems([]);
+          setFirstPageLoaded(false);
+        } else {
+          setIsRefetching(true);
+        }
+        setStreamingDone(false);
+        setStreamError(null);
+        setCurrentPage(1);
+        setLoadingMore(false);
+        setDisplayPage(1);
+      } else {
+        // Cache expirado: manter itens antigos e indicar refetch
+        setIsRefetching(true);
+      }
+
       const data = await fetchWithRetry(buildParams(1), controller);
       if (controller.signal.aborted) return;
 
@@ -1312,7 +1369,6 @@ const Contas = () => {
       setStreamedItems(firstPageItems);
       setStreamingDone(true);
 
-      // Cache result
       cacheSet(cacheKey, {
         items: firstPageItems,
         hasNextPage: hasMore,
@@ -1326,15 +1382,29 @@ const Contas = () => {
         setStreamError(err instanceof Error ? err : new Error(String(err)));
         setStreamingDone(true);
       }
+    } finally {
+      prevGameTabRef.current = gameTab;
     }
   }, [buildParams, debouncedParamsKey, fetchWithRetry, cacheSet, gameTab]);
 
   // Prefetch adjacent game tabs in background for instant switching (staggered to avoid 429 Rate Limits)
   const prefetchRef = useRef(new Set<string>());
+  const prefetchTimeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const prefetchRunIdRef = useRef(0);
+
+  const clearPrefetchTimeouts = useCallback(() => {
+    prefetchTimeoutsRef.current.forEach(clearTimeout);
+    prefetchTimeoutsRef.current = [];
+  }, []);
+
   const prefetchAdjacentTabs = useCallback(() => {
+    clearPrefetchTimeouts();
+    prefetchRunIdRef.current += 1;
+    const runId = prefetchRunIdRef.current;
+
     const allTabs: GameTab[] = ["valorant", "lol", "fortnite", "minecraft", "steam"];
     const otherTabs = allTabs.filter(t => t !== gameTab);
-    const projectUrl = import.meta.env.VITE_SUPABASE_URL;
+    const projectUrl = import.meta.env.VITE_SUPABASE_URL || "https://cthqzetkshrbsjulfytl.supabase.co";
     const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
     let delayMultiplier = 0;
@@ -1352,23 +1422,31 @@ const Contas = () => {
       if (tab === "valorant") qp.append("country[]", "Bra");
       if (tab === "lol") qp.append("lol_region[]", "BR1");
 
-      // Stagger fetches by 2000ms carefully to avoid hammering the LZT backend
-      setTimeout(async () => {
-        try {
-          const res = await fetch(`${projectUrl}/functions/v1/lzt-market?${qp.toString()}`, {
-            headers: { "Content-Type": "application/json", apikey: anonKey },
-          });
-          if (!res.ok) return;
-          const data = await res.json();
-          const items: LztItem[] = data?.items ?? [];
-          const hasMore = data?.hasNextPage ?? items.length >= 15;
-          cacheSet(`__prefetch__${tab}`, { items, hasNextPage: hasMore, currentPage: 1, timestamp: Date.now() });
-        } catch { /* silent */ }
-      }, delayMultiplier * 2500);
-      
+      const delayMs = delayMultiplier * 2500;
+      const timeoutId = setTimeout(() => {
+        if (runId !== prefetchRunIdRef.current) return;
+        void (async () => {
+          try {
+            const res = await fetch(`${projectUrl}/functions/v1/lzt-market?${qp.toString()}`, {
+              headers: { "Content-Type": "application/json", apikey: anonKey },
+            });
+            if (runId !== prefetchRunIdRef.current) return;
+            if (!res.ok) return;
+            const data = await res.json();
+            if (runId !== prefetchRunIdRef.current) return;
+            const items: LztItem[] = data?.items ?? [];
+            const hasMore = data?.hasNextPage ?? items.length >= 15;
+            cacheSet(`__prefetch__${tab}`, { items, hasNextPage: hasMore, currentPage: 1, timestamp: Date.now() });
+          } catch { /* silent */ }
+        })();
+      }, delayMs);
+      prefetchTimeoutsRef.current.push(timeoutId);
+
       delayMultiplier++;
     }
-  }, [gameTab, cacheSet]);
+  }, [gameTab, cacheSet, clearPrefetchTimeouts]);
+
+  useEffect(() => () => clearPrefetchTimeouts(), [clearPrefetchTimeouts]);
 
   // Enhanced fetchMultiplePages: check prefetch cache on tab switch
   const fetchMultiplePagesWithPrefetch = useCallback(async (controller: AbortController) => {
@@ -1400,6 +1478,7 @@ const Contas = () => {
         setCurrentPage(1);
         cacheSet(cacheKey, { items, hasNextPage: hasMore, currentPage: 1, timestamp: Date.now() });
       } catch { /* silent */ }
+      prevGameTabRef.current = gameTab;
       return;
     }
 
@@ -1425,7 +1504,7 @@ const Contas = () => {
   }, [firstPageLoaded, gameTab, prefetchAdjacentTabs]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadMorePages = async () => {
-    if (loadingMore || !hasNextPage) return;
+    if (streamError || loadingMore || !hasNextPage) return;
     if (currentPage >= MAX_PAGES) return;
     setLoadingMore(true);
     const controller = new AbortController();
@@ -1490,6 +1569,9 @@ const Contas = () => {
 
   const allItems = useMemo(() => {
     let filtered = [...streamedItems];
+    if (gameTab === "lol") {
+      filtered = filtered.filter((item) => !isLikelyWrongGameInLolList(item));
+    }
 
     // Region filter is now done server-side via country[] API param
 
@@ -1570,7 +1652,7 @@ const Contas = () => {
     const controller = new AbortController();
     abortRef.current = controller;
     setDisplayPage(1);
-    fetchMultiplePages(controller);
+    fetchMultiplePagesWithPrefetch(controller);
   };
 
   const clearFilters = () => {
@@ -1633,7 +1715,13 @@ const Contas = () => {
     searchQuery !== "",
     invMin !== "", invMax !== "",
     lvlMin !== "", lvlMax !== "",
-    gameTab === "steam",
+    gameTab === "steam" && cs2Only,
+    gameTab === "steam" && cs2Prime,
+    gameTab === "steam" && steamLvlMin !== "",
+    gameTab === "steam" && cs2EloMin !== "",
+    gameTab === "steam" && cs2WinsMin !== "",
+    gameTab === "steam" && cs2MedalsMin !== "",
+    gameTab === "steam" && cs2FaceitLvlMin !== "",
   ].filter(Boolean).length;
 
   const accentColor = isValorant ? "hsl(var(--success))" : isFortnite ? FN_PURPLE : isMinecraft ? MC_GREEN : isSteam ? "hsl(210,100%,50%)" : "hsl(198,100%,45%)";
@@ -2215,7 +2303,7 @@ const Contas = () => {
             {!isLoading && !streamError && (
               <>
                 <motion.div
-                  className={`grid grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3 transition-opacity duration-300 relative ${isRefetching ? "opacity-50 pointer-events-none" : ""}`}
+                  className={`grid grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3 transition-opacity duration-300 relative ${isRefetching ? "opacity-60" : ""}`}
                   initial="hidden"
                   animate="visible"
                   variants={staggerContainer}
@@ -2302,7 +2390,7 @@ const Contas = () => {
                     {hasNextPage && (
                       <button
                         onClick={loadMorePages}
-                        disabled={loadingMore}
+                        disabled={loadingMore || !!streamError}
                         className="flex items-center gap-2 rounded-lg border border-border bg-card px-6 py-2 text-xs font-medium text-muted-foreground transition-colors disabled:opacity-50"
                         onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = accentColor; (e.currentTarget as HTMLElement).style.color = accentColor; }}
                         onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = ''; (e.currentTarget as HTMLElement).style.color = ''; }}

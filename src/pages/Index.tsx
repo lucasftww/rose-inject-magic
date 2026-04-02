@@ -142,6 +142,28 @@ const GAME_GRADIENTS: Record<string, string> = {
 // Slugs to hide from the landing page software showcase
 const HIDDEN_GAME_SLUGS = ["spoofers", "spoofer"];
 
+// Descrições curtas na landing (i18n `products.desc_*` em geral não existe — evita mostrar a chave crua)
+const LANDING_SOFTWARE_BLURB: Record<string, string> = {
+  valorant: "Cheats premium para Valorant — domine cada round",
+  fortnite: "Softwares indetectáveis para Fortnite",
+  cs2: "Hacks indetectados para CS2",
+  "counter-strike 2": "Hacks indetectados para CS2",
+  "counter-strike-2": "Hacks indetectados para CS2",
+  cod: "Cheats para Call of Duty — Warzone & MP",
+  "call of duty": "Cheats para Call of Duty — Warzone & MP",
+  "call-of-duty": "Cheats para Call of Duty — Warzone & MP",
+  pubg: "Softwares para PUBG — domine o battleground",
+  rust: "Hacks indetectados para Rust",
+  dayz: "Sobreviva com vantagem no DayZ",
+  fivem: "Mods e menus para FiveM / GTA RP",
+  "marvel rivals": "Domine as batalhas em Marvel Rivals",
+  "apex legends": "Cheats premium para Apex Legends",
+  apex: "Cheats premium para Apex Legends",
+  overwatch: "Cheats para Overwatch 2",
+  "overwatch 2": "Cheats para Overwatch 2",
+  squad: "Softwares táticos para Squad",
+};
+
 interface GameFromDB {
   id: string;
   name: string;
@@ -244,8 +266,8 @@ const TiltCard = ({ children, index }: { children: React.ReactNode; index: numbe
     const y = e.clientY - rect.top;
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
-    const rotateX = ((y - centerY) / centerY) * -8;
-    const rotateY = ((x - centerX) / centerX) * 8;
+    const rotateX = centerY > 0 ? ((y - centerY) / centerY) * -8 : 0;
+    const rotateY = centerX > 0 ? ((x - centerX) / centerX) * 8 : 0;
     card.style.transform = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02,1.02,1.02)`;
   }, []);
 
@@ -274,6 +296,8 @@ interface GameCardGame {
   keywords: string[];
   image: string | null;
   descKey: string;
+  /** Texto quando a chave i18n `descKey` não existe */
+  fallbackDesc: string;
   logo?: string;
   character?: string;
   characterHover?: string;
@@ -296,7 +320,11 @@ function GameCard({ game, count, t, index }: { game: GameCardGame; count: number
         onMouseLeave={() => setIsHovered(false)}
       >
         <Link
-          to={`/produtos?game=${encodeURIComponent(game.keywords[0])}`}
+          to={
+            game.keywords[0]
+              ? `/produtos?game=${encodeURIComponent(game.keywords[0])}`
+              : "/produtos"
+          }
           className="group relative block rounded-2xl border border-border/50 hover:border-primary/50 transition-all duration-500 bg-card h-full overflow-hidden"
         >
           {/* Image / gradient background */}
@@ -347,7 +375,7 @@ function GameCard({ game, count, t, index }: { game: GameCardGame; count: number
               </h3>
             )}
             <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
-              {t(game.descKey)}
+              {t(game.descKey, { defaultValue: game.fallbackDesc })}
             </p>
 
             <div className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-card border border-border/60 text-xs font-semibold text-foreground uppercase tracking-wider transition-all group-hover:border-primary/50 group-hover:text-primary">
@@ -430,12 +458,14 @@ const SoftwareSection = () => {
       const image = overlay?.bg || softwareImageMap[slug] || game.image_url;
       const productCount = game.products?.filter(p => p.active).length || 0;
 
+      const slugKey = slug.replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
       return {
         id: game.id,
         name: game.name,
-        keywords: [game.slug || game.name],
+        keywords: [game.slug || game.name].filter(Boolean) as string[],
         image,
-        descKey: `products.desc_${slug.replace(/\s+/g, "_")}`,
+        descKey: `products.desc_${slugKey}`,
+        fallbackDesc: LANDING_SOFTWARE_BLURB[slug] || `Softwares premium para ${game.name}`,
         character: overlay?.character,
         characterHover: overlay?.characterHover,
         count: productCount,

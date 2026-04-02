@@ -9,7 +9,7 @@ const corsHeaders = {
 const LZT_ALLOWED_IMAGE_DOMAINS = [
   "lzt.market", "api.lzt.market", "s.lzt.market", "img.lzt.market",
   "ddragon.leagueoflegends.com", "fortnite-api.com", "mineskin.eu",
-  "steamstatic.com", "akamaihd.net"
+  "steamstatic.com", "akamaihd.net", "capes.dev",
 ];
 const RETRYABLE_STATUSES = [429, 502, 503, 504];
 let RUB_TO_BRL = 0.055; // Updated fallback
@@ -332,15 +332,9 @@ Deno.serve(async (req) => {
       ? Math.max(0, Math.min(Math.trunc(requestedLimit), 24))
       : 0;
 
-    // IMAGE PROXY: Proxy image requests to bypass CORS (requires auth)
+    // IMAGE PROXY: Public read for allowlisted hosts only (<img src> cannot send user JWT).
+    // LZT image hosts still use the market Bearer token upstream.
     if (action === "image-proxy") {
-      const user = await getAuthUser();
-      if (!user) {
-        return new Response(JSON.stringify({ error: "Unauthorized" }), {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
       const imageUrl = url.searchParams.get("url");
       if (!imageUrl) {
         return new Response(JSON.stringify({ error: "url parameter required" }), {
@@ -349,9 +343,9 @@ Deno.serve(async (req) => {
         });
       }
 
-      // SECURITY: Only allow proxying from known LZT domains
+      let parsedUrl: URL;
       try {
-        const parsedUrl = new URL(imageUrl);
+        parsedUrl = new URL(imageUrl);
         if (!LZT_ALLOWED_IMAGE_DOMAINS.some((domain) => parsedUrl.hostname.endsWith(domain))) {
           return new Response(JSON.stringify({ error: "Domain not allowed" }), {
             status: 403,
@@ -365,12 +359,12 @@ Deno.serve(async (req) => {
         });
       }
 
-      const response = await fetch(imageUrl, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "image/*",
-        },
-      });
+      const lztImageHosts = ["lzt.market", "api.lzt.market", "s.lzt.market", "img.lzt.market"];
+      const needsLztBearer = lztImageHosts.some((h) => parsedUrl.hostname.endsWith(h));
+      const upstreamHeaders: Record<string, string> = { Accept: "image/*,*/*" };
+      if (needsLztBearer) upstreamHeaders.Authorization = `Bearer ${token}`;
+
+      const response = await fetch(imageUrl, { headers: upstreamHeaders });
 
       if (!response.ok) {
         return new Response(JSON.stringify({ error: "Image fetch failed", status: response.status }), {

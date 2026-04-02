@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef, useCallback, type ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import { Search, SlidersHorizontal, DollarSign, ArrowLeft, Loader2, Package, Tag, ArrowUpDown, UserCheck, X, ArrowRight, Star, Gamepad2, Gift, Shield } from "lucide-react";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -217,8 +217,8 @@ const TiltCard = ({ children, index }: { children: ReactNode; index: number }) =
     const y = e.clientY - rect.top;
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
-    const rotateX = ((y - centerY) / centerY) * -7;
-    const rotateY = ((x - centerX) / centerX) * 7;
+    const rotateX = centerY > 0 ? ((y - centerY) / centerY) * -7 : 0;
+    const rotateY = centerX > 0 ? ((x - centerX) / centerX) * 7 : 0;
     card.style.transform = `perspective(900px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.015, 1.015, 1.015)`;
   }, []);
 
@@ -603,6 +603,7 @@ const GameSelectScreen = ({ onSelect, games, loading }: { onSelect: (gameId: str
 
 const Produtos = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [games, setGames] = useState<GameFromDB[]>([]);
   const [loadingGames, setLoadingGames] = useState(true);
   const [products, setProducts] = useState<ProductFromDB[]>([]);
@@ -634,6 +635,41 @@ const Produtos = () => {
     };
     fetchGames();
   }, []);
+
+  const handleGameSelect = useCallback(
+    async (gameId: string) => {
+      const game = games.find((g) => g.id === gameId);
+      if (game && game.product_count === 1) {
+        const { data } = await supabase
+          .from("products")
+          .select("id")
+          .eq("game_id", gameId)
+          .eq("active", true)
+          .limit(1);
+        if (data && data.length === 1) {
+          navigate(`/produto/${data[0].id}`);
+          return;
+        }
+      }
+      setSelectedGame(gameId);
+    },
+    [games, navigate],
+  );
+
+  // Deep link: /produtos?game=valorant (ou slug/nome) — igual aos cards da landing
+  useEffect(() => {
+    if (loadingGames || games.length === 0 || selectedGame) return;
+    const raw = searchParams.get("game");
+    if (!raw?.trim()) return;
+    let decoded: string;
+    try {
+      decoded = decodeURIComponent(raw.trim()).toLowerCase();
+    } catch {
+      decoded = raw.trim().toLowerCase();
+    }
+    const match = games.find((g) => getLookupKeys(g).some((k) => k === decoded));
+    if (match) void handleGameSelect(match.id);
+  }, [loadingGames, games, selectedGame, searchParams, handleGameSelect]);
 
   // Fetch products when game is selected
   useEffect(() => {
@@ -828,22 +864,15 @@ const Produtos = () => {
     </>
   );
 
-  const handleGameSelect = async (gameId: string) => {
-    const game = games.find(g => g.id === gameId);
-    if (game && game.product_count === 1) {
-      // Only 1 product — navigate directly to it
-      const { data } = await supabase
-        .from("products")
-        .select("id")
-        .eq("game_id", gameId)
-        .eq("active", true)
-        .limit(1);
-      if (data && data.length === 1) {
-        navigate(`/produto/${data[0].id}`);
-        return;
-      }
-    }
-    setSelectedGame(gameId);
+  const clearGameQueryParam = () => {
+    setSearchParams(
+      (prev) => {
+        const p = new URLSearchParams(prev);
+        p.delete("game");
+        return p;
+      },
+      { replace: true },
+    );
   };
 
   if (!selectedGame) {
@@ -855,7 +884,10 @@ const Produtos = () => {
       <Header />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 pt-4 pb-20">
         <button
-          onClick={() => setSelectedGame(null)}
+          onClick={() => {
+            setSelectedGame(null);
+            clearGameQueryParam();
+          }}
           className="mb-4 sm:mb-6 flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-success"
         >
           <ArrowLeft className="h-4 w-4" />
