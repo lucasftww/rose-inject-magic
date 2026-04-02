@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import { Star, ArrowRight, Loader2, Zap, Shield, Clock, Users, CheckCircle } from "lucide-react";
@@ -13,7 +13,7 @@ import fortniteCardImg from "@/assets/games/fortnite-card.webp";
 import lolCardImg from "@/assets/games/lol-card.webp";
 import minecraftCardImg from "@/assets/games/minecraft-card.webp";
 
-// Software game images
+// Software game images (fallbacks)
 import swValorant from "@/assets/games/sw-valorant.webp";
 import swFortnite from "@/assets/games/sw-fortnite.webp";
 import swCs2 from "@/assets/games/sw-cs2.webp";
@@ -27,16 +27,48 @@ import swMarvelRivals from "@/assets/games/sw-marvel-rivals.webp";
 import swDayz from "@/assets/games/sw-dayz.webp";
 import swSquad from "@/assets/games/sw-squad.webp";
 
-// Character overlay images
+// Character overlay images — backgrounds
 import bgCardCod from "@/assets/games/bg-card-cod.png";
+import bgCardPubg from "@/assets/games/bg-card-pubg.png";
+import bgCardFortnite from "@/assets/games/bg-card-fortnite.png";
+import bgCardValorant from "@/assets/games/bg-card-valorant.png" with { type: "url" };
+import bgCardCs2 from "@/assets/games/bg-card-cs2.png";
+import bgCardRust from "@/assets/games/bg-card-rust.png";
+import bgCardDayz from "@/assets/games/bg-card-dayz.png";
+import bgCardFivem from "@/assets/games/bg-card-fivem.png";
+import bgCardRivals from "@/assets/games/bg-card-rivals.png";
+import bgCardBloodstrike from "@/assets/games/bg-card-bloodstrike.png";
+import bgCardApex from "@/assets/games/bg-card-apex.png";
+import bgCardArcraiders from "@/assets/games/bg-card-arcraiders.png";
+import bgCardArenabreakout from "@/assets/games/bg-card-arenabreakout.png";
+
+// Character overlay images — normal + hover
 import codNormal from "@/assets/games/cod-normal.png";
 import codHover from "@/assets/games/cod-hover.png";
-import bgCardPubg from "@/assets/games/bg-card-pubg.png";
 import pubgNormal from "@/assets/games/pubg-normal.png";
 import pubgHover from "@/assets/games/pubg-hover.png";
-import bgCardFortnite from "@/assets/games/bg-card-fortnite.png";
 import fortniteNormal from "@/assets/games/fortnite-normal.png";
 import fortniteHover from "@/assets/games/fortnite-hover.png";
+import valorantNormal from "@/assets/games/valorant-normal.png";
+import valorantHover from "@/assets/games/valorant-hover.png";
+import cs2Normal from "@/assets/games/cs2-normal.png";
+import cs2Hover from "@/assets/games/cs2-hover.png";
+import rustNormal from "@/assets/games/rust-normal.png";
+import rustHover from "@/assets/games/rust-hover.png";
+import dayzNormal from "@/assets/games/dayz-normal.png";
+import dayzHover from "@/assets/games/dayz-hover.png";
+import fivemNormal from "@/assets/games/fivem-normal.png";
+import fivemHover from "@/assets/games/fivem-hover.png";
+import rivalsNormal from "@/assets/games/rivals-normal.png";
+import rivalsHover from "@/assets/games/rivals-hover.png";
+import bloodstrikeNormal from "@/assets/games/bloodstrike-normal.png";
+import bloodstrikeHover from "@/assets/games/bloodstrike-hover.png";
+import apexNormal from "@/assets/games/apex-normal.png";
+import apexHover from "@/assets/games/apex-hover.png";
+import arcraidersNormal from "@/assets/games/arcraiders-normal.png";
+import arcraidersHover from "@/assets/games/arcraiders-hover.png";
+import arenabreakoutNormal from "@/assets/games/arenabreakout-normal.png";
+import arenabreakoutHover from "@/assets/games/arenabreakout-hover.png";
 
 // Extracted components
 import FloatingWidgets from "@/components/landing/FloatingWidgets";
@@ -47,7 +79,7 @@ import FaqSection from "@/components/landing/FaqSection";
 import HowItWorksSection from "@/components/landing/HowItWorksSection";
 import { fadeUp, staggerContainer, scaleIn, slideInLeft } from "@/components/landing/animations";
 
-// Local images map for software game cards
+// Local images map for software game cards (fallbacks when no character overlay)
 const softwareImageMap: Record<string, string> = {
   valorant: swValorant,
   fortnite: swFortnite,
@@ -70,13 +102,41 @@ const softwareImageMap: Record<string, string> = {
   squad: swSquad,
 };
 
-// Character overlay data for featured games
+// Character overlay data — bg, character, characterHover per game slug
 const characterOverlayMap: Record<string, { bg: string; character: string; characterHover: string }> = {
   "call of duty": { bg: bgCardCod, character: codNormal, characterHover: codHover },
   "call-of-duty": { bg: bgCardCod, character: codNormal, characterHover: codHover },
   cod: { bg: bgCardCod, character: codNormal, characterHover: codHover },
   pubg: { bg: bgCardPubg, character: pubgNormal, characterHover: pubgHover },
   fortnite: { bg: bgCardFortnite, character: fortniteNormal, characterHover: fortniteHover },
+  valorant: { bg: bgCardValorant, character: valorantNormal, characterHover: valorantHover },
+  cs2: { bg: bgCardCs2, character: cs2Normal, characterHover: cs2Hover },
+  "counter-strike 2": { bg: bgCardCs2, character: cs2Normal, characterHover: cs2Hover },
+  "counter-strike-2": { bg: bgCardCs2, character: cs2Normal, characterHover: cs2Hover },
+  rust: { bg: bgCardRust, character: rustNormal, characterHover: rustHover },
+  dayz: { bg: bgCardDayz, character: dayzNormal, characterHover: dayzHover },
+  fivem: { bg: bgCardFivem, character: fivemNormal, characterHover: fivemHover },
+  "marvel rivals": { bg: bgCardRivals, character: rivalsNormal, characterHover: rivalsHover },
+  bloodstrike: { bg: bgCardBloodstrike, character: bloodstrikeNormal, characterHover: bloodstrikeHover },
+  "apex legends": { bg: bgCardApex, character: apexNormal, characterHover: apexHover },
+  apex: { bg: bgCardApex, character: apexNormal, characterHover: apexHover },
+  "arc raiders": { bg: bgCardArcraiders, character: arcraidersNormal, characterHover: arcraidersHover },
+  "arena breakout": { bg: bgCardArenabreakout, character: arenabreakoutNormal, characterHover: arenabreakoutHover },
+};
+
+// Gradient fallbacks for games without images
+const GAME_GRADIENTS: Record<string, string> = {
+  "Valorant": "from-rose-900/60 to-card",
+  "Fortnite": "from-violet-900/60 to-card",
+  "CS2": "from-amber-900/60 to-card",
+  "Call of Duty": "from-emerald-900/60 to-card",
+  "PUBG": "from-yellow-900/60 to-card",
+  "Rust": "from-orange-900/60 to-card",
+  "DayZ": "from-green-900/60 to-card",
+  "FiveM": "from-blue-900/60 to-card",
+  "Marvel Rivals": "from-red-900/60 to-card",
+  "Apex Legends": "from-red-800/60 to-card",
+  "Spoofer": "from-purple-900/60 to-card",
 };
 
 // Slugs to hide from the landing page software showcase
