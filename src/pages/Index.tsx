@@ -397,7 +397,6 @@ function GameCard({ game, count, t, index }: { game: GameCardGame; count: number
 
 // ─── Software Section ───────────────────────────────────────────────────────
 const SoftwareSection = () => {
-  const navigate = useNavigate();
   const { t } = useTranslation();
 
   const { data: games = [], isLoading } = useQuery({
@@ -422,15 +421,6 @@ const SoftwareSection = () => {
       }),
     [games]
   );
-
-  const handleGameClick = async (game: GameFromDB) => {
-    const activeProducts = game.products?.filter(p => p.active) || [];
-    if (activeProducts.length === 1) {
-      navigate(`/produto/${activeProducts[0].id}`);
-    } else {
-      navigate(`/produtos?game=${game.slug || game.id}`);
-    }
-  };
 
   // Build GameCard-compatible data from DB games
   const gameCards = useMemo(() =>
