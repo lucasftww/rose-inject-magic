@@ -634,7 +634,7 @@ const SteamCard = memo(({ item, formatPrice }: { item: LztItem; formatPrice: (pr
     return t;
   }, [item.title, item.premier_elo, item.cs2_elo, item.premier_elo_min, item.medals_count, item.medals, item.medals_min]);
 
-  const previewImage = item.imagePreviewLinks?.direct?.weapons || item.imagePreviewLinks?.direct?.main;
+  const previewImage = item.imagePreviewLinks?.direct?.weapons || (item.imagePreviewLinks?.direct as any)?.main;
 
   return (
     <div
