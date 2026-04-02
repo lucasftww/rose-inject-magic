@@ -296,7 +296,7 @@ function GameCard({ game, count, t, index }: { game: GameCardGame; count: number
         onMouseLeave={() => setIsHovered(false)}
       >
         <Link
-          to={`/softwares?game=${encodeURIComponent(game.keywords[0])}`}
+          to={`/produtos?game=${encodeURIComponent(game.keywords[0])}`}
           className="group relative block rounded-2xl border border-border/50 hover:border-primary/50 transition-all duration-500 bg-card h-full overflow-hidden"
         >
           {/* Image / gradient background */}
