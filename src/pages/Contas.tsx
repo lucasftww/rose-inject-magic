@@ -453,11 +453,7 @@ const ValorantCard = memo(({ item, skinsMap, formatPrice }: { item: LztItem; ski
           <p className="text-sm sm:text-base font-bold text-success tracking-tight">{formatPrice(item.price, item.price_currency)}</p>
           <button className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg bg-success py-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-success-foreground">
             Ver conta <ArrowRight className="h-2.5 w-2.5" />
-<<<<<<< HEAD
           </button>
-=======
-           </button>
->>>>>>> fad773e95f2c54158ebe21fa7fab4b7a553407e3
         </div>
       </div>
     </div>
