@@ -355,7 +355,12 @@ const fetchValorantSkins = async (uuids: string[]) => {
   return final;
 };
 
-type SimpleGalleryItem = { name: string; image: string; rarity?: { name: string; color: string } };
+type SimpleGalleryItem = {
+  name: string;
+  image: string;
+  /** Só skins Valorant; agentes/buddies não têm */
+  rarity?: ValorantSkinItem["rarity"] | null;
+};
 
 const fetchValorantAgents = async (uuids: string[]): Promise<SimpleGalleryItem[]> => {
   const res = await fetch("https://valorant-api.com/v1/agents?isPlayableCharacter=true&language=pt-BR");
@@ -434,21 +439,41 @@ const ContaDetalhes = () => {
 
   const [checkingAvailability, setCheckingAvailability] = useState(false);
 
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["lzt-account-detail", "valorant", id],
+    queryFn: () => fetchAccountDetail(id!),
+    enabled: !!id,
+    staleTime: 1000 * 30, // 30 seconds
+    retry: false,
+  });
+
+  const item = data?.item;
+  const rank = item?.riot_valorant_rank ? rankMap[item.riot_valorant_rank] : null;
+  const inventory = item?.valorantInventory;
+  const skinCount = item?.riot_valorant_skin_count ?? 0;
+
+  const cleanedTitle = useMemo(() => {
+    let t = item?.title || "";
+    t = t.replace(/[А-Яа-я]/g, "").trim();
+    if (!t || t.toLowerCase() === "kuki" || t.length < 3) {
+      const rName = rank?.name || "Unranked";
+      return `Conta Valorant [${rName}] [${skinCount} Skins]`;
+    }
+    return t;
+  }, [item?.title, rank, skinCount]);
+
   const handleBuyNow = async () => {
     if (!item || checkingAvailability) return;
     setCheckingAvailability(true);
     const available = await checkLztAvailability(String(item.item_id), "valorant");
     setCheckingAvailability(false);
     if (!available) return;
-    const rankName = rank?.name || "Unranked";
-    const skinCount = item.riot_valorant_skin_count ?? 0;
-    const title = `Conta ${rankName} com ${skinCount} Skins`;
     const priceBRL = getPrice(item, "valorant");
 
     trackInitiateCheckout({
       contentName: cleanedTitle,
       contentIds: [`lzt-${item.item_id}`],
-      value: priceBRL
+      value: priceBRL,
     });
 
     const added = addItem({
@@ -463,42 +488,23 @@ const ContaDetalhes = () => {
       lztPrice: item.price,
       lztCurrency: item.price_currency || "rub",
       lztGame: "valorant",
-      skinsCount: skinCount
+      skinsCount: skinCount,
     });
     if (added) navigate("/checkout");
   };
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["lzt-account-detail", "valorant", id],
-    queryFn: () => fetchAccountDetail(id!),
-    enabled: !!id,
-    staleTime: 1000 * 30, // 30 seconds
-    retry: false,
-  });
-
-  const item = data?.item;
-  const rank = item?.riot_valorant_rank ? rankMap[item.riot_valorant_rank] : null;
-  const inventory = item?.valorantInventory;
-
-  // ViewContent tracking
-   useEffect(() => {
+  // ViewContent tracking (cleanedTitle deve existir antes deste effect)
+  useEffect(() => {
     if (item && !viewTracked.current) {
       viewTracked.current = true;
       const priceBRL = getPrice(item, "valorant");
-      let titleForTracking = item?.title || "";
-      titleForTracking = titleForTracking.replace(/[А-Яа-я]/g, '').trim();
-      if (!titleForTracking || titleForTracking.toLowerCase() === "kuki" || titleForTracking.length < 3) {
-        const rName = rank?.name || "Unranked";
-        const sc = item?.riot_valorant_skin_count ?? 0;
-        titleForTracking = `Conta Valorant [${rName}] [${sc} Skins]`;
-      }
       trackViewContent({
-        contentName: titleForTracking,
+        contentName: cleanedTitle,
         contentIds: [`lzt-${item.item_id}`],
-        value: priceBRL
+        value: priceBRL,
       });
     }
-  }, [item, getPrice, rank]);
+  }, [item, getPrice, cleanedTitle]);
 
   // Gallery from screenshots
   const gallery = useMemo(() => {
@@ -558,18 +564,6 @@ const ContaDetalhes = () => {
 
   const handlePrev = () => setSelectedSkin((p) => p > 0 ? p - 1 : galleryLength - 1);
   const handleNext = () => setSelectedSkin((p) => p < galleryLength - 1 ? p + 1 : 0);
-
-  const skinCount = item?.riot_valorant_skin_count ?? 0;
-  const cleanedTitle = useMemo(() => {
-    let t = item?.title || "";
-    // Remove cyrillic
-    t = t.replace(/[А-Яа-я]/g, '').trim();
-    if (!t || t.toLowerCase() === "kuki" || t.length < 3) {
-      const rName = rank?.name || "Unranked";
-      return `Conta Valorant [${rName}] [${skinCount} Skins]`;
-    }
-    return t;
-  }, [item?.title, rank, skinCount]);
 
   const tabs = [
   { key: "skins" as const, label: "Skins", icon: <Swords className="h-4 w-4" />, count: skinItems.length },
