@@ -355,7 +355,7 @@ const fetchValorantSkins = async (uuids: string[]) => {
   return final;
 };
 
-type SimpleGalleryItem = { name: string; image: string };
+type SimpleGalleryItem = { name: string; image: string; rarity?: { name: string; color: string } };
 
 const fetchValorantAgents = async (uuids: string[]): Promise<SimpleGalleryItem[]> => {
   const res = await fetch("https://valorant-api.com/v1/agents?isPlayableCharacter=true&language=pt-BR");
