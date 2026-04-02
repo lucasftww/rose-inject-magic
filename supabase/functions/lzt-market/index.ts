@@ -313,17 +313,25 @@ Deno.serve(async (req) => {
       console.warn("Critical error in rate update loop:", e);
     }
 
-    const [credRow, clientIdRow, lztConfigRow] = await Promise.all([
-      supabaseAdmin.from("system_credentials").select("value").eq("env_key", "LZT_API_TOKEN").maybeSingle(),
+    const [lztCredsRes, clientIdRow, lztConfigRow] = await Promise.all([
+      supabaseAdmin.from("system_credentials").select("env_key, value").in("env_key", ["LZT_API_TOKEN", "LZT_MARKET_TOKEN"]),
       supabaseAdmin.from("system_credentials").select("value").eq("env_key", "LZT_CLIENT_ID").maybeSingle(),
       supabaseAdmin.from("lzt_config").select("max_fetch_price, currency, markup_multiplier, markup_valorant, markup_lol, markup_fortnite, markup_minecraft, markup_steam").limit(1).maybeSingle(),
     ]);
+
+    const byLztKey = new Map<string, string>();
+    for (const r of lztCredsRes?.data || []) {
+      const k = String((r as { env_key?: string }).env_key || "");
+      const v = String((r as { value?: string }).value || "").trim();
+      if (k && v) byLztKey.set(k, v);
+    }
+    const tokenFromDb = byLztKey.get("LZT_API_TOKEN") || byLztKey.get("LZT_MARKET_TOKEN") || "";
 
     // Provided token as fallback if DB is empty
     const NEW_TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzUxMiJ9.eyJzdWIiOjEwNDIzOTg5LCJpc3MiOiJsenQiLCJpYXQiOjE3NzUwNjY2MzcsImp0aSI6Ijk1NDQwMiIsInNjb3BlIjoiYmFzaWMgcmVhZCBwb3N0IGNvbnZlcnNhdGUgcGF5bWVudCBpbnZvaWNlIGNoYXRib3ggbWFya2V0IiwiZXhwIjoxOTMyNzQ2NjM3fQ.urPp0RWVn3WaBCsrJCISf1EW5zSnkx-Fjz-QkohjkbO-HdpUNICHbKTtto5liF50OrIOufBZkqWQdG8rD36xsrFTE6ONeWehQzQbPSxK4ophWhaJ8mI2gGYX7eFKLZIYWBA9AjcPpEHovnImvV12AApsVmJZJhrI6eczqyX65Vo";
     const NEW_CLIENT_ID = "a3ryez9tif";
 
-    const token = credRow?.data?.value || Deno.env.get("LZT_MARKET_TOKEN") || NEW_TOKEN;
+    const token = tokenFromDb || Deno.env.get("LZT_MARKET_TOKEN") || NEW_TOKEN;
     const clientId = clientIdRow?.data?.value || Deno.env.get("LZT_CLIENT_ID") || NEW_CLIENT_ID;
 
     if (!token) {

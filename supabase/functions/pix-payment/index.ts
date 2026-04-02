@@ -61,6 +61,32 @@ async function getRobotCredentials(supabaseAdmin: any): Promise<RobotCredentials
   return { username, password };
 }
 
+/**
+ * Token da API Lolzteam Market: coluna `LZT_API_TOKEN` (migração recente) ou `LZT_MARKET_TOKEN` (seed legado),
+ * depois segredo `LZT_MARKET_TOKEN` na Edge Function.
+ */
+async function getLztMarketToken(supabaseAdmin: any): Promise<string | null> {
+  const { data: rows } = await supabaseAdmin
+    .from("system_credentials")
+    .select("env_key, value")
+    .in("env_key", ["LZT_API_TOKEN", "LZT_MARKET_TOKEN"]);
+
+  const byKey = new Map<string, string>();
+  for (const r of rows || []) {
+    const k = String((r as { env_key?: string }).env_key || "");
+    const v = String((r as { value?: string }).value || "").trim();
+    if (k && v) byKey.set(k, v);
+  }
+
+  const api = byKey.get("LZT_API_TOKEN");
+  if (api) return api;
+  const legacy = byKey.get("LZT_MARKET_TOKEN");
+  if (legacy) return legacy;
+
+  const env = Deno.env.get("LZT_MARKET_TOKEN")?.trim();
+  return env || null;
+}
+
 function robotAuthHeader(creds: RobotCredentials) {
   return `Basic ${btoa(`${creds.username}:${creds.password}`)}`;
 }
@@ -653,12 +679,7 @@ async function fulfillOrder(supabaseAdmin: any, payment: any) {
 
 // LZT Market account purchase and delivery
 async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
-  const { data: lztCred } = await supabaseAdmin
-    .from("system_credentials")
-    .select("value")
-    .eq("env_key", "LZT_API_TOKEN")
-    .maybeSingle();
-  const LZT_TOKEN = lztCred?.value || Deno.env.get("LZT_MARKET_TOKEN");
+  const LZT_TOKEN = await getLztMarketToken(supabaseAdmin);
 
   const itemId = item.lztItemId;
   let price = item.lztPrice;
@@ -1393,13 +1414,7 @@ async function validateAndCalculatePrice(
         return { validatedAmount: 0, validatedDiscount: 0, validatedCart: [], error: "ID da conta LZT não informado" };
       }
 
-      // Fetch LZT token
-      const { data: lztCredRow } = await supabaseAdmin
-        .from("system_credentials")
-        .select("value")
-        .eq("env_key", "LZT_API_TOKEN")
-        .maybeSingle();
-      const lztToken = lztCredRow?.value || Deno.env.get("LZT_MARKET_TOKEN");
+      const lztToken = await getLztMarketToken(supabaseAdmin);
       if (!lztToken) {
         return { validatedAmount: 0, validatedDiscount: 0, validatedCart: [], error: "LZT token não configurado" };
       }
