@@ -500,9 +500,16 @@ const ContaDetalhes = () => {
   const handleNext = () => setSelectedSkin((p) => p < galleryLength - 1 ? p + 1 : 0);
 
   const skinCount = item?.riot_valorant_skin_count ?? 0;
-  const dynamicTitle = rank ?
-  `Conta ${rank.name} com ${skinCount} Skins` :
-  `Conta Unranked com ${skinCount} Skins`;
+  const cleanedTitle = useMemo(() => {
+    let t = item?.title || "";
+    // Remove cyrillic
+    t = t.replace(/[А-Яа-я]/g, '').trim();
+    if (!t || t.toLowerCase() === "kuki" || t.length < 3) {
+      const rName = rank?.name || "Unranked";
+      return `Conta Valorant [${rName}] [${skinCount} Skins]`;
+    }
+    return t;
+  }, [item?.title, rank, skinCount]);
 
   const tabs = [
   { key: "skins" as const, label: "Skins", icon: <Swords className="h-4 w-4" />, count: skinItems.length },
@@ -678,7 +685,7 @@ const ContaDetalhes = () => {
               <div className="lg:col-span-2 space-y-4 sm:space-y-4">
                 {/* Title + Purchase */}
                 <div className="rounded-xl border border-border/60 bg-card p-5 sm:p-5 space-y-4">
-                  <h1 className="text-lg sm:text-lg font-bold text-foreground leading-snug">{dynamicTitle}</h1>
+                  <h1 className="text-lg sm:text-lg font-bold text-foreground leading-snug">{cleanedTitle}</h1>
 
                   <div className="flex flex-wrap gap-2">
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-success/10 border border-success/30 px-3 py-1 text-[11px] font-semibold text-success">

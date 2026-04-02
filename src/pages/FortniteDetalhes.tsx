@@ -158,6 +158,16 @@ const FortniteDetalhes = () => {
   const skinCount = raw?.fortnite_skin_count ?? 0;
   const level = raw?.fortnite_level ?? 0;
 
+  const cleanedTitle = useMemo(() => {
+    let t = item?.title || "";
+    // Remove cyrillic
+    t = t.replace(/[А-Яа-я]/g, '').trim();
+    if (!t || t.toLowerCase() === "kuki" || t.length < 3) {
+      return `Conta Fortnite [${skinCount} Skins] [${vbucks} VB]`;
+    }
+    return t;
+  }, [item?.title, skinCount, vbucks]);
+
   // Gallery uses skins, fallback to pickaxes
   const galleryPreviews = skinPreviews.length > 0 ? skinPreviews : pickaxePreviews;
 
@@ -338,7 +348,7 @@ const FortniteDetalhes = () => {
               <div className="lg:col-span-2 space-y-4">
                 <div className="rounded-lg border bg-card p-5 space-y-3.5" style={{ borderColor: `${FN_PURPLE}40` }}>
                   <h1 className="text-lg font-bold text-foreground leading-snug">
-                    Conta Fortnite{vbucks > 0 ? ` · ${vbucks} V-Bucks` : ""}{level > 0 ? ` · Nível ${level}` : ""}
+                    {cleanedTitle}
                   </h1>
 
                   <div className="flex flex-wrap gap-1.5">

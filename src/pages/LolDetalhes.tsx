@@ -207,6 +207,16 @@ const LolDetalhes = () => {
   const orangeEssence = item?.riot_lol_wallet_orange;
   const region = item?.riot_lol_region;
 
+  const cleanedTitle = useMemo(() => {
+    let t = item?.title || "";
+    // Remove cyrillic
+    t = t.replace(/[А-Яа-я]/g, '').trim();
+    if (!t || t.toLowerCase() === "kuki" || t.length < 3) {
+      return `Conta LoL [${rankText}] [Nv. ${level}] [${skinCount} Skins]`;
+    }
+    return t;
+  }, [item?.title, rankText, level, skinCount]);
+
   // Se não há skins mas há campeões, muda aba padrão
   useEffect(() => {
     if (skinPreviews.length === 0 && champPreviews.length > 0) {
@@ -419,7 +429,7 @@ const LolDetalhes = () => {
               <div className="lg:col-span-2 space-y-4">
                 <div className="rounded-lg border border-border bg-card p-5 space-y-3.5" style={{ borderColor: `${rankColor}30` }}>
                   <h1 className="text-lg font-bold text-foreground leading-snug">
-                    Conta LoL {rankText} · Nível {level}
+                    {cleanedTitle}
                   </h1>
 
                   <div className="flex flex-wrap gap-1.5">

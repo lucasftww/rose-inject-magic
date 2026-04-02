@@ -328,8 +328,18 @@ const LztPreviewImage = ({ url }: { url: string }) => {
 const ValorantCard = memo(({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap: Map<string, SkinEntry>; formatPrice: (price: number, currency?: string) => string }) => {
   const navigate = useNavigate();
   const rank = item.riot_valorant_rank ? rankMap[item.riot_valorant_rank] : null;
-  const hasKnife = (item.riot_valorant_knife ?? 0) > 0;
   const skinCount = item.riot_valorant_skin_count ?? 0;
+  const hasKnife = (item.riot_valorant_knife ?? 0) > 0;
+
+  const cleanedTitle = useMemo(() => {
+    let t = item.title || "";
+    t = t.replace(/[А-Яа-я]/g, '').trim();
+    if (!t || t.toLowerCase() === "kuki" || t.length < 3) {
+      const rankName = rank?.name || "Unranked";
+      return `Conta Valorant [${rankName}] [${skinCount} Skins]`;
+    }
+    return t;
+  }, [item.title, rank, skinCount]);
 
   const skinPreviews = useMemo(() => {
     const results: SkinEntry[] = [];
@@ -344,9 +354,7 @@ const ValorantCard = memo(({ item, skinsMap, formatPrice }: { item: LztItem; ski
       const entry = skinsMap.get(uuid.toLowerCase());
       if (entry) results.push(entry);
     }
-    // Sort by rarity descending (best skins first)
     results.sort((a, b) => b.rarity - a.rarity);
-    // Prefer Deluxe+ (rarity >= 2), exclude Select/battle pass skins
     const premium = results.filter(s => s.rarity >= 2);
     return (premium.length >= 4 ? premium : results.filter(s => s.rarity > 0).length >= 4 ? results.filter(s => s.rarity > 0) : results).slice(0, 6);
   }, [item.valorantInventory, skinsMap]);
@@ -360,13 +368,13 @@ const ValorantCard = memo(({ item, skinsMap, formatPrice }: { item: LztItem; ski
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--success)/0.06),transparent_70%)]" />
         {skinPreviews.length === 1 ? (
           <div className="relative z-[1] w-full h-full flex items-center justify-center bg-secondary/30">
-            <img src={skinPreviews[0].image} alt={skinPreviews[0].name} className="w-full h-full object-contain" loading="lazy" />
+            <img src={getProxiedImageUrl(skinPreviews[0].image)} alt={skinPreviews[0].name} className="w-full h-full object-contain" loading="lazy" />
           </div>
         ) : skinPreviews.length === 2 ? (
           <div className="relative z-[1] grid grid-cols-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
             {skinPreviews.map((skin, i) => (
               <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/30 p-0.5">
-                <img src={skin.image} alt={skin.name} className="w-full h-full object-contain" loading="lazy" />
+                <img src={getProxiedImageUrl(skin.image)} alt={skin.name} className="w-full h-full object-contain" loading="lazy" />
               </div>
             ))}
           </div>
@@ -374,7 +382,7 @@ const ValorantCard = memo(({ item, skinsMap, formatPrice }: { item: LztItem; ski
           <div className="relative z-[1] grid grid-cols-2 grid-rows-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
             {skinPreviews.slice(0, 2).map((skin, i) => (
               <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/30 p-0.5">
-                <img src={skin.image} alt={skin.name} className="w-full h-full object-contain" loading="lazy" />
+                <img src={getProxiedImageUrl(skin.image)} alt={skin.name} className="w-full h-full object-contain" loading="lazy" />
               </div>
             ))}
             <div className="flex items-center justify-center w-full h-full rounded bg-secondary/30 p-0.5 col-span-2">
@@ -385,7 +393,7 @@ const ValorantCard = memo(({ item, skinsMap, formatPrice }: { item: LztItem; ski
           <div className="relative z-[1] grid grid-cols-2 grid-rows-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
             {skinPreviews.map((skin, i) => (
               <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/30 p-0.5">
-                <img src={skin.image} alt={skin.name} className="w-full h-full object-contain" loading="lazy" />
+                <img src={getProxiedImageUrl(skin.image)} alt={skin.name} className="w-full h-full object-contain" loading="lazy" />
               </div>
             ))}
           </div>
@@ -393,7 +401,7 @@ const ValorantCard = memo(({ item, skinsMap, formatPrice }: { item: LztItem; ski
           <div className="relative z-[1] grid grid-cols-3 grid-rows-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
             {skinPreviews.map((skin, i) => (
               <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/30 p-0.5">
-                <img src={skin.image} alt={skin.name} className="w-full h-full object-contain" loading="lazy" />
+                <img src={getProxiedImageUrl(skin.image)} alt={skin.name} className="w-full h-full object-contain" loading="lazy" />
               </div>
             ))}
           </div>
@@ -424,10 +432,17 @@ const ValorantCard = memo(({ item, skinsMap, formatPrice }: { item: LztItem; ski
           </div>
         )}
         <div className="mt-auto pt-1.5 border-t border-border/30">
+          <h3 className="text-[10px] sm:text-xs font-bold text-foreground line-clamp-1 mb-1">{cleanedTitle}</h3>
           <p className="text-sm sm:text-base font-bold text-success tracking-tight">{formatPrice(item.price, item.price_currency)}</p>
           <button className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg bg-success py-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-success-foreground">
             Ver conta <ArrowRight className="h-2.5 w-2.5" />
           </button>
+        </div>
+      </div>
+    </div>
+  );
+});
+
 const normalizeChampName = (name: string) => {
   if (!name) return "";
   // DDragon expects capitalized names, e.g. "Vayne", "Karma"
@@ -452,6 +467,16 @@ const LolCard = memo(({ item, champKeyMap, formatPrice }: { item: LztItem; champ
   const skinCount = item.riot_lol_skin_count ?? 0;
   const level = item.riot_lol_level ?? 0;
   const winRate = item.riot_lol_rank_win_rate;
+
+  const cleanedTitle = useMemo(() => {
+    let t = item.title || "";
+    // Remove cyrillic
+    t = t.replace(/[А-Яа-я]/g, '').trim();
+    if (!t || t.toLowerCase() === "kuki" || t.length < 3) {
+      return `Conta LoL [${rankText}] [Nv.${level}] [${skinCount} Skins]`;
+    }
+    return t;
+  }, [item.title, rankText, level, skinCount]);
 
   // Resolve LoL skin IDs via lolInventory (não valorantInventory!)
   // skinId = champKey * 1000 + skinNum
@@ -583,6 +608,7 @@ const LolCard = memo(({ item, champKeyMap, formatPrice }: { item: LztItem; champ
           )}
         </div>
         <div className="mt-auto pt-1.5 border-t border-border/30">
+          <h3 className="text-[10px] sm:text-xs font-bold text-foreground line-clamp-1 mb-1">{cleanedTitle}</h3>
           <p className="text-sm sm:text-base font-bold text-[hsl(198,100%,45%)] tracking-tight">{formatPrice(item.price, item.price_currency)}</p>
           <button className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg py-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-white" style={{ background: "hsl(198,100%,45%)" }}>
             Ver conta <ArrowRight className="h-2.5 w-2.5" />
@@ -660,6 +686,16 @@ const FortniteCard = memo(({ item, skinsDb, formatPrice }: { item: LztItem; skin
   const vbucks = raw.fortnite_balance ?? raw.fortnite_vbucks ?? 0;
   const skinCount = raw.fortnite_skin_count ?? 0;
   const level = raw.fortnite_level ?? 0;
+
+  const cleanedTitle = useMemo(() => {
+    let t = item.title || "";
+    // Remove cyrillic
+    t = t.replace(/[А-Яа-я]/g, '').trim();
+    if (!t || t.toLowerCase() === "kuki" || t.length < 3) {
+      return `Conta Fortnite [${skinCount} Skins] [${vbucks} VB]`;
+    }
+    return t;
+  }, [item.title, skinCount, vbucks]);
 
   // fortniteSkins is an array of { id, title, rarity } from LZT API
   const skinPreviews = useMemo(() => {
@@ -764,6 +800,7 @@ const FortniteCard = memo(({ item, skinsDb, formatPrice }: { item: LztItem; skin
           <span className="text-[9px] sm:text-[11px] text-muted-foreground">Full Acesso · Entrega Automática</span>
         </div>
         <div className="mt-auto pt-1.5 border-t border-border/30">
+          <h3 className="text-[10px] sm:text-xs font-bold text-foreground line-clamp-1 mb-1">{cleanedTitle}</h3>
           <p className="text-sm sm:text-base font-bold tracking-tight" style={{ color: FN_PURPLE }}>{formatPrice(item.price, item.price_currency)}</p>
           <button className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg py-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-white" style={{ background: FN_PURPLE }}>
             Ver conta <ArrowRight className="h-2.5 w-2.5" />
@@ -785,6 +822,17 @@ const MinecraftCard = memo(({ item, formatPrice }: { item: LztItem; formatPrice:
   const hypixelLevel = item.minecraft_hypixel_level ?? 0;
   const capes = item.minecraft_capes_count ?? 0;
   const banned = (item.minecraft_hypixel_ban ?? 0) > 0;
+
+  const cleanedTitle = useMemo(() => {
+    let t = item.title || "";
+    // Remove cyrillic
+    t = t.replace(/[А-Яа-я]/g, '').trim();
+    if (!t || t.toLowerCase() === "kuki" || t.length < 3) {
+      const edition = hasJava && hasBedrock ? "Java + Bedrock" : hasJava ? "Java" : hasBedrock ? "Bedrock" : "MC";
+      return `Conta Minecraft [${nickname || "Standard"}] [${edition}]`;
+    }
+    return t;
+  }, [item.title, nickname, hasJava, hasBedrock]);
 
   // mineskin.eu avatar (body render)
   const skinUrl = nickname
@@ -833,6 +881,7 @@ const MinecraftCard = memo(({ item, formatPrice }: { item: LztItem; formatPrice:
           <span className="text-[9px] sm:text-[11px] text-muted-foreground">Full Acesso · Entrega Automática</span>
         </div>
         <div className="mt-auto pt-1.5 border-t border-border/30">
+          <h3 className="text-[10px] sm:text-xs font-bold text-foreground line-clamp-1 mb-1">{cleanedTitle}</h3>
           <p className="text-sm sm:text-base font-bold tracking-tight" style={{ color: MC_GREEN }}>{formatPrice(item.price, item.price_currency)}</p>
           <button className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg py-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-white" style={{ background: MC_GREEN }}>
             Ver conta <ArrowRight className="h-2.5 w-2.5" />

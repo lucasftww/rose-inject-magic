@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/Header";
 import { ArrowLeft, Loader2, ChevronRight, CheckCircle2, Shield, ShoppingCart, Zap } from "lucide-react";
 import { motion } from "framer-motion";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "@/hooks/use-toast";
 import { useLztMarkup } from "@/hooks/useLztMarkup";
@@ -98,6 +98,17 @@ const MinecraftDetalhes = () => {
 
   const bodyUrl = nickname ? `https://mineskin.eu/body/${encodeURIComponent(nickname)}/200.png` : null;
   const headUrl = nickname ? `https://mineskin.eu/helm/${encodeURIComponent(nickname)}/100.png` : null;
+
+  const cleanedTitle = useMemo(() => {
+    let t = item?.title || "";
+    // Remove cyrillic
+    t = t.replace(/[А-Яа-я]/g, '').trim();
+    if (!t || t.toLowerCase() === "kuki" || t.length < 3) {
+      const edition = hasJava && hasBedrock ? "Java + Bedrock" : hasJava ? "Java Edition" : hasBedrock ? "Bedrock Edition" : "Full Access";
+      return `Conta Minecraft [${nickname || "Standard"}] [${edition}]`;
+    }
+    return t;
+  }, [item?.title, nickname, hasJava, hasBedrock]);
 
   // ViewContent tracking
   const viewTracked = useRef(false);
@@ -355,7 +366,7 @@ const MinecraftDetalhes = () => {
               <div className="lg:col-span-2 space-y-4">
                 <div className="rounded-lg border bg-card p-5 space-y-3.5" style={{ borderColor: `${MC_GREEN}40` }}>
                   <h1 className="text-lg font-bold text-foreground leading-snug">
-                    Conta Minecraft{nickname ? ` · ${nickname}` : ""}{hasJava && hasBedrock ? " · Java + Bedrock" : hasJava ? " · Java" : hasBedrock ? " · Bedrock" : ""}
+                    {cleanedTitle}
                   </h1>
 
                   <div className="flex flex-wrap gap-1.5">

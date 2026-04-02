@@ -216,6 +216,10 @@ function getDisplayedPriceBrl(item: LztItem, overridePrice?: number, gameType?: 
   const minMarginPrice = costBrl * 2.00; // Guarantee 50% margin even on high-cost accounts
   if (final < minMarginPrice) final = minMarginPrice;
 
+  // 🛡️ SECURITY: Minimum absolute profit of R$ 20.00 to guarantee a fair return per sale
+  const MIN_PROFIT_BRL = 20.0;
+  const safeProfitPrice = costBrl + MIN_PROFIT_BRL;
+  if (final < safeProfitPrice) final = safeProfitPrice;
 
   return final < MIN_PRICE_BRL ? MIN_PRICE_BRL : Math.round(final * 100) / 100;
 }
@@ -378,6 +382,8 @@ Deno.serve(async (req) => {
       const imageData = await response.arrayBuffer();
       const contentType = response.headers.get("Content-Type") || "image/png";
 
+      return new Response(imageData, {
+        headers: {
           ...corsHeaders,
           "Content-Type": contentType,
           "Cache-Control": "public, max-age=86400, s-maxage=86400",
