@@ -106,7 +106,7 @@ const SteamDetalhes = () => {
   const handleAddToCart = async () => {
     if (!item) return;
     
-    const isStillAvailable = await checkLztAvailability(item.item_id);
+    const isStillAvailable = await checkLztAvailability(item.item_id, "steam");
     if (!isStillAvailable) {
       toast({
         title: "Conta indisponível",

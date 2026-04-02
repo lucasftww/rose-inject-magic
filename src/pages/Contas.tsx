@@ -244,6 +244,23 @@ interface LztItem {
   };
   // Server-calculated BRL price (with correct markup)
   price_brl?: number;
+  // Steam / CS2
+  premier_elo?: number;
+  cs2_elo?: number;
+  premier_elo_min?: number;
+  medals_count?: number;
+  medals?: number;
+  medals_min?: number;
+  cs2_prime?: string | boolean;
+  steam_prime?: string;
+  steam_level?: number;
+  steam_country?: string;
+  steam_id?: string;
+  steam_vac_ban?: boolean;
+  cs2_win?: number;
+  cs2_wins?: number;
+  faceit_lvl?: number;
+  faceit_level?: number;
 }
 
 // ─── Data fetchers ───
@@ -436,7 +453,11 @@ const ValorantCard = memo(({ item, skinsMap, formatPrice }: { item: LztItem; ski
           <p className="text-sm sm:text-base font-bold text-success tracking-tight">{formatPrice(item.price, item.price_currency)}</p>
           <button className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg bg-success py-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-success-foreground">
             Ver conta <ArrowRight className="h-2.5 w-2.5" />
+<<<<<<< HEAD
           </button>
+=======
+           </button>
+>>>>>>> fad773e95f2c54158ebe21fa7fab4b7a553407e3
         </div>
       </div>
     </div>
@@ -637,7 +658,7 @@ const SteamCard = memo(({ item, formatPrice }: { item: LztItem; formatPrice: (pr
     return t;
   }, [item.title, item.premier_elo, item.cs2_elo, item.premier_elo_min, item.medals_count, item.medals, item.medals_min]);
 
-  const previewImage = item.imagePreviewLinks?.direct?.weapons || item.imagePreviewLinks?.direct?.main;
+  const previewImage = item.imagePreviewLinks?.direct?.weapons || (item.imagePreviewLinks?.direct as any)?.main;
 
   return (
     <div

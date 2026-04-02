@@ -196,6 +196,12 @@ const pt = {
     loading: "Carregando...",
     skins: "skins",
   },
+  games: {
+    software: "software",
+    softwares: "softwares",
+    comingSoon: "Em breve",
+    viewSoftwares: "Ver softwares",
+  },
 };
 
 export default pt;

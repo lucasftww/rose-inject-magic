@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import { Star, ArrowRight, Loader2, Zap, Shield, Clock, Users, CheckCircle } from "lucide-react";
@@ -13,7 +13,7 @@ import fortniteCardImg from "@/assets/games/fortnite-card.webp";
 import lolCardImg from "@/assets/games/lol-card.webp";
 import minecraftCardImg from "@/assets/games/minecraft-card.webp";
 
-// Software game images
+// Software game images (fallbacks)
 import swValorant from "@/assets/games/sw-valorant.webp";
 import swFortnite from "@/assets/games/sw-fortnite.webp";
 import swCs2 from "@/assets/games/sw-cs2.webp";
@@ -27,16 +27,48 @@ import swMarvelRivals from "@/assets/games/sw-marvel-rivals.webp";
 import swDayz from "@/assets/games/sw-dayz.webp";
 import swSquad from "@/assets/games/sw-squad.webp";
 
-// Character overlay images
+// Character overlay images — backgrounds
 import bgCardCod from "@/assets/games/bg-card-cod.png";
+import bgCardPubg from "@/assets/games/bg-card-pubg.png";
+import bgCardFortnite from "@/assets/games/bg-card-fortnite.png";
+// bg-card-valorant doesn't exist — we'll use the sw-valorant.webp fallback via softwareImageMap
+import bgCardCs2 from "@/assets/games/bg-card-cs2.png";
+import bgCardRust from "@/assets/games/bg-card-rust.png";
+import bgCardDayz from "@/assets/games/bg-card-dayz.png";
+import bgCardFivem from "@/assets/games/bg-card-fivem.png";
+import bgCardRivals from "@/assets/games/bg-card-rivals.png";
+import bgCardBloodstrike from "@/assets/games/bg-card-bloodstrike.png";
+import bgCardApex from "@/assets/games/bg-card-apex.png";
+import bgCardArcraiders from "@/assets/games/bg-card-arcraiders.png";
+import bgCardArenabreakout from "@/assets/games/bg-card-arenabreakout.png";
+
+// Character overlay images — normal + hover
 import codNormal from "@/assets/games/cod-normal.png";
 import codHover from "@/assets/games/cod-hover.png";
-import bgCardPubg from "@/assets/games/bg-card-pubg.png";
 import pubgNormal from "@/assets/games/pubg-normal.png";
 import pubgHover from "@/assets/games/pubg-hover.png";
-import bgCardFortnite from "@/assets/games/bg-card-fortnite.png";
 import fortniteNormal from "@/assets/games/fortnite-normal.png";
 import fortniteHover from "@/assets/games/fortnite-hover.png";
+import valorantNormal from "@/assets/games/valorant-normal.png";
+import valorantHover from "@/assets/games/valorant-hover.png";
+import cs2Normal from "@/assets/games/cs2-normal.png";
+import cs2Hover from "@/assets/games/cs2-hover.png";
+import rustNormal from "@/assets/games/rust-normal.png";
+import rustHover from "@/assets/games/rust-hover.png";
+import dayzNormal from "@/assets/games/dayz-normal.png";
+import dayzHover from "@/assets/games/dayz-hover.png";
+import fivemNormal from "@/assets/games/fivem-normal.png";
+import fivemHover from "@/assets/games/fivem-hover.png";
+import rivalsNormal from "@/assets/games/rivals-normal.png";
+import rivalsHover from "@/assets/games/rivals-hover.png";
+import bloodstrikeNormal from "@/assets/games/bloodstrike-normal.png";
+import bloodstrikeHover from "@/assets/games/bloodstrike-hover.png";
+import apexNormal from "@/assets/games/apex-normal.png";
+import apexHover from "@/assets/games/apex-hover.png";
+import arcraidersNormal from "@/assets/games/arcraiders-normal.png";
+import arcraidersHover from "@/assets/games/arcraiders-hover.png";
+import arenabreakoutNormal from "@/assets/games/arenabreakout-normal.png";
+import arenabreakoutHover from "@/assets/games/arenabreakout-hover.png";
 
 // Extracted components
 import FloatingWidgets from "@/components/landing/FloatingWidgets";
@@ -47,7 +79,7 @@ import FaqSection from "@/components/landing/FaqSection";
 import HowItWorksSection from "@/components/landing/HowItWorksSection";
 import { fadeUp, staggerContainer, scaleIn, slideInLeft } from "@/components/landing/animations";
 
-// Local images map for software game cards
+// Local images map for software game cards (fallbacks when no character overlay)
 const softwareImageMap: Record<string, string> = {
   valorant: swValorant,
   fortnite: swFortnite,
@@ -70,13 +102,41 @@ const softwareImageMap: Record<string, string> = {
   squad: swSquad,
 };
 
-// Character overlay data for featured games
+// Character overlay data — bg, character, characterHover per game slug
 const characterOverlayMap: Record<string, { bg: string; character: string; characterHover: string }> = {
   "call of duty": { bg: bgCardCod, character: codNormal, characterHover: codHover },
   "call-of-duty": { bg: bgCardCod, character: codNormal, characterHover: codHover },
   cod: { bg: bgCardCod, character: codNormal, characterHover: codHover },
   pubg: { bg: bgCardPubg, character: pubgNormal, characterHover: pubgHover },
   fortnite: { bg: bgCardFortnite, character: fortniteNormal, characterHover: fortniteHover },
+  valorant: { bg: swValorant, character: valorantNormal, characterHover: valorantHover },
+  cs2: { bg: bgCardCs2, character: cs2Normal, characterHover: cs2Hover },
+  "counter-strike 2": { bg: bgCardCs2, character: cs2Normal, characterHover: cs2Hover },
+  "counter-strike-2": { bg: bgCardCs2, character: cs2Normal, characterHover: cs2Hover },
+  rust: { bg: bgCardRust, character: rustNormal, characterHover: rustHover },
+  dayz: { bg: bgCardDayz, character: dayzNormal, characterHover: dayzHover },
+  fivem: { bg: bgCardFivem, character: fivemNormal, characterHover: fivemHover },
+  "marvel rivals": { bg: bgCardRivals, character: rivalsNormal, characterHover: rivalsHover },
+  bloodstrike: { bg: bgCardBloodstrike, character: bloodstrikeNormal, characterHover: bloodstrikeHover },
+  "apex legends": { bg: bgCardApex, character: apexNormal, characterHover: apexHover },
+  apex: { bg: bgCardApex, character: apexNormal, characterHover: apexHover },
+  "arc raiders": { bg: bgCardArcraiders, character: arcraidersNormal, characterHover: arcraidersHover },
+  "arena breakout": { bg: bgCardArenabreakout, character: arenabreakoutNormal, characterHover: arenabreakoutHover },
+};
+
+// Gradient fallbacks for games without images
+const GAME_GRADIENTS: Record<string, string> = {
+  "Valorant": "from-rose-900/60 to-card",
+  "Fortnite": "from-violet-900/60 to-card",
+  "CS2": "from-amber-900/60 to-card",
+  "Call of Duty": "from-emerald-900/60 to-card",
+  "PUBG": "from-yellow-900/60 to-card",
+  "Rust": "from-orange-900/60 to-card",
+  "DayZ": "from-green-900/60 to-card",
+  "FiveM": "from-blue-900/60 to-card",
+  "Marvel Rivals": "from-red-900/60 to-card",
+  "Apex Legends": "from-red-800/60 to-card",
+  "Spoofer": "from-purple-900/60 to-card",
 };
 
 // Slugs to hide from the landing page software showcase
@@ -172,92 +232,171 @@ const ContasSection = () => {
   );
 };
 
-// ─── Software Card with Character Overlay ───────────────────────────────────
-const SoftwareCard = ({
-  game, image, character, characterHover, productCount, index, onClick, t
-}: {
-  game: GameFromDB;
-  image: string | null;
-  character?: string;
-  characterHover?: string;
-  productCount: number;
-  index: number;
-  onClick: () => void;
-  t: any;
-}) => {
-  const [isHovered, setIsHovered] = useState(false);
+// ─── TiltCard (3D tilt on hover) ────────────────────────────────────────────
+const TiltCard = ({ children, index }: { children: React.ReactNode; index: number }) => {
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const card = cardRef.current;
+    if (!card) return;
+    const rect = card.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const rotateX = ((y - centerY) / centerY) * -8;
+    const rotateY = ((x - centerX) / centerX) * 8;
+    card.style.transform = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02,1.02,1.02)`;
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    const card = cardRef.current;
+    if (card) card.style.transform = "perspective(800px) rotateX(0deg) rotateY(0deg) scale3d(1,1,1)";
+  }, []);
 
   return (
     <motion.div
+      ref={cardRef}
       variants={scaleIn}
       custom={index}
-      onClick={onClick}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      className="group relative flex flex-col cursor-pointer overflow-hidden rounded-xl border border-border/40 bg-card transition-all duration-300 hover:border-success/40 hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)]"
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      style={{ transition: "transform 0.15s ease-out", transformStyle: "preserve-3d" }}
     >
-      <div className="relative aspect-[3/4] w-full overflow-hidden">
-        {image ? (
-          <img
-            src={image}
-            alt={game.name}
-            loading="lazy"
-            className="absolute inset-0 block h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-110"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-card">
-            <span className="text-xl font-bold text-muted-foreground/20">{game.name.charAt(0)}</span>
-          </div>
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
-
-        {/* Character normal */}
-        {character && (
-          <div
-            className="absolute bottom-0 right-[-40px] sm:right-[-60px] w-[140%] pointer-events-none z-[5] transition-opacity duration-500 ease-out"
-            style={{ opacity: isHovered ? 0 : 1 }}
-          >
-            <img src={character} alt="" loading="lazy" decoding="async" className="w-full h-auto object-contain" style={{ filter: "drop-shadow(0 4px 20px rgba(0,0,0,0.6))" }} />
-          </div>
-        )}
-
-        {/* Character hover */}
-        {characterHover && (
-          <div
-            className="absolute bottom-0 right-[-40px] sm:right-[-60px] w-[140%] pointer-events-none z-[6] transition-all duration-500 ease-out"
-            style={{
-              opacity: isHovered ? 1 : 0,
-              transform: isHovered ? "scale(1.15)" : "scale(1)",
-              transformOrigin: "bottom center",
-            }}
-          >
-            <img src={characterHover} alt="" loading="lazy" decoding="async" className="w-full h-auto object-contain" style={{ filter: "drop-shadow(0 4px 20px rgba(0,0,0,0.6))" }} />
-          </div>
-        )}
-
-        {productCount > 0 && (
-          <div className="absolute top-2 right-2 sm:top-3 sm:right-3 z-10 rounded-full bg-success/90 px-2 sm:px-2.5 py-0.5 text-[7px] sm:text-[10px] font-bold text-success-foreground shadow-lg shadow-success/20">
-            {productCount} {productCount === 1 ? "software" : "softwares"}
-          </div>
-        )}
-
-        <div className="absolute inset-x-0 bottom-0 p-3 sm:p-5 z-[7]">
-          <h3 className="text-sm sm:text-xl lg:text-2xl font-bold tracking-tight text-foreground drop-shadow-lg" style={{ fontFamily: "'Valorant', sans-serif" }}>
-            {game.name.toUpperCase()}
-          </h3>
-          <div className="mt-2 sm:mt-3 flex items-center gap-1 text-success text-[8px] sm:text-[11px] font-semibold uppercase tracking-wider group-hover:gap-2 transition-all">
-            <span>{productCount === 1 ? t("products.viewProduct") : t("products.viewProducts", { defaultValue: "Ver softwares" })}</span>
-            <ArrowRight className="h-2.5 w-2.5 sm:h-3 sm:w-3 transition-transform group-hover:translate-x-1" />
-          </div>
-        </div>
-      </div>
+      {children}
     </motion.div>
   );
 };
 
+// ─── GameCard (exact user-provided component) ───────────────────────────────
+interface GameCardGame {
+  name: string;
+  keywords: string[];
+  image: string | null;
+  descKey: string;
+  logo?: string;
+  character?: string;
+  characterHover?: string;
+}
+
+function GameCard({ game, count, t, index }: { game: GameCardGame; count: number; t: any; index: number }) {
+  const hasProducts = count > 0;
+  const [isHovered, setIsHovered] = useState(false);
+  const isSpoofer = game.name === "Spoofer";
+
+  const characterPositionClass = isSpoofer
+    ? "absolute bottom-[-6px] right-[-64px] md:right-[-52px] lg:right-[-62px] w-[124%]"
+    : "absolute bottom-0 right-[-125px] md:right-[-105px] lg:right-[-125px] w-[162.5%]";
+
+  return (
+    <TiltCard index={index}>
+      <div
+        className="relative"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        <Link
+          to={`/produtos?game=${encodeURIComponent(game.keywords[0])}`}
+          className="group relative block rounded-2xl border border-border/50 hover:border-primary/50 transition-all duration-500 bg-card h-full overflow-hidden"
+        >
+          {/* Image / gradient background */}
+          <div className="relative aspect-[16/11] overflow-hidden">
+            {game.image ? (
+              <img
+                src={game.image}
+                alt={game.name}
+                loading="lazy"
+                decoding="async"
+                width={400}
+                height={275}
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+              />
+            ) : (
+              <div className={`w-full h-full bg-gradient-to-br ${GAME_GRADIENTS[game.name] || "from-muted to-card"} flex items-center justify-center`}>
+                <span className="text-3xl md:text-4xl font-bold text-foreground/20 uppercase tracking-widest select-none" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
+                  {game.name}
+                </span>
+              </div>
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-card via-card/60 to-transparent" />
+          </div>
+
+          {/* Badge */}
+          <div className="absolute top-3 right-3 z-[6]">
+            {hasProducts ? (
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/20 backdrop-blur-sm border border-primary/40">
+                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
+                  {count} {count === 1 ? t("games.software") : t("games.softwares")}
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/80 backdrop-blur-sm border border-border">
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{t("games.comingSoon")}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Content */}
+          <div className="p-4 relative z-20">
+            {game.logo ? (
+              <img src={game.logo} alt={game.name} className="w-[55%] h-auto mb-1.5 group-hover:brightness-125 transition-all" />
+            ) : (
+              <h3 className="font-bold text-base md:text-lg text-foreground mb-1.5 group-hover:text-primary transition-colors" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
+                {game.name}
+              </h3>
+            )}
+            <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
+              {t(game.descKey)}
+            </p>
+
+            <div className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-card border border-border/60 text-xs font-semibold text-foreground uppercase tracking-wider transition-all group-hover:border-primary/50 group-hover:text-primary">
+              {t("games.viewSoftwares")} {game.name.split(" ")[0]}
+              <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
+            </div>
+          </div>
+
+          {/* Character (inside card for non-spoofer) */}
+          {game.character && !isSpoofer && (
+            <div
+              className={`${characterPositionClass} pointer-events-none z-[5] transition-opacity duration-500 ease-out`}
+              style={{ opacity: isHovered ? 0 : 1 }}
+            >
+              <img src={game.character} alt="" loading="lazy" decoding="async" className="w-full h-auto object-contain" style={{ filter: "drop-shadow(0 4px 20px rgba(0,0,0,0.6))" }} />
+            </div>
+          )}
+        </Link>
+
+        {/* Spoofer character outside Link to avoid clipping */}
+        {game.character && isSpoofer && (
+          <div
+            className={`${characterPositionClass} pointer-events-none z-[12] transition-opacity duration-500 ease-out`}
+            style={{ opacity: isHovered ? 0 : 1 }}
+          >
+            <img src={game.character} alt="" loading="lazy" decoding="async" className="w-full h-auto object-contain" style={{ filter: "drop-shadow(0 4px 20px rgba(0,0,0,0.6))" }} />
+          </div>
+        )}
+
+        {/* Hover character */}
+        {game.characterHover && (
+          <div
+            className={`${characterPositionClass} pointer-events-none z-[15] transition-all duration-500 ease-out`}
+            style={{
+              opacity: isHovered ? 1 : 0,
+              transformOrigin: "bottom center",
+              transform: isHovered ? `scale(${isSpoofer ? 1.08 : 1.2})` : "scale(1)",
+            }}
+          >
+            <img src={game.characterHover} alt="" loading="lazy" decoding="async" className="w-full h-auto object-contain" style={{ filter: "drop-shadow(0 4px 20px rgba(0,0,0,0.6))" }} />
+          </div>
+        )}
+      </div>
+    </TiltCard>
+  );
+}
+
 // ─── Software Section ───────────────────────────────────────────────────────
 const SoftwareSection = () => {
-  const navigate = useNavigate();
   const { t } = useTranslation();
 
   const { data: games = [], isLoading } = useQuery({
@@ -283,14 +422,27 @@ const SoftwareSection = () => {
     [games]
   );
 
-  const handleGameClick = async (game: GameFromDB) => {
-    const activeProducts = game.products?.filter(p => p.active) || [];
-    if (activeProducts.length === 1) {
-      navigate(`/produto/${activeProducts[0].id}`);
-    } else {
-      navigate(`/produtos?game=${game.slug || game.id}`);
-    }
-  };
+  // Build GameCard-compatible data from DB games
+  const gameCards = useMemo(() =>
+    activeGames.slice(0, 8).map(game => {
+      const slug = (game.slug || game.name || "").toLowerCase();
+      const overlay = characterOverlayMap[slug];
+      const image = overlay?.bg || softwareImageMap[slug] || game.image_url;
+      const productCount = game.products?.filter(p => p.active).length || 0;
+
+      return {
+        id: game.id,
+        name: game.name,
+        keywords: [game.slug || game.name],
+        image,
+        descKey: `products.desc_${slug.replace(/\s+/g, "_")}`,
+        character: overlay?.character,
+        characterHover: overlay?.characterHover,
+        count: productCount,
+      };
+    }),
+    [activeGames]
+  );
 
   return (
     <section className="border-t border-border bg-background px-4 sm:px-6 py-12 sm:py-20">
@@ -299,33 +451,16 @@ const SoftwareSection = () => {
 
         {isLoading ? (
           <div className="mt-10 flex justify-center"><Loader2 className="h-7 w-7 animate-spin text-success" /></div>
-        ) : activeGames.length === 0 ? (
+        ) : gameCards.length === 0 ? (
           <div className="mt-10 text-center text-muted-foreground text-sm">{t("products.empty")}</div>
         ) : (
           <motion.div
             className="mt-5 sm:mt-12 grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4"
             initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-60px" }} variants={staggerContainer}
           >
-            {activeGames.slice(0, 8).map((game, idx) => {
-              const slug = (game.slug || game.name || "").toLowerCase();
-              const image = softwareImageMap[slug] || game.image_url;
-              const productCount = game.products?.filter(p => p.active).length || 0;
-              const overlay = characterOverlayMap[slug];
-
-              return (
-                <SoftwareCard
-                  key={game.id}
-                  game={game}
-                  image={overlay?.bg || image}
-                  character={overlay?.character}
-                  characterHover={overlay?.characterHover}
-                  productCount={productCount}
-                  index={idx}
-                  onClick={() => handleGameClick(game)}
-                  t={t}
-                />
-              );
-            })}
+            {gameCards.map((gc, idx) => (
+              <GameCard key={gc.id} game={gc} count={gc.count} t={t} index={idx} />
+            ))}
           </motion.div>
         )}
 
