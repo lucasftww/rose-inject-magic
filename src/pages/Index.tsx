@@ -432,6 +432,28 @@ const SoftwareSection = () => {
     }
   };
 
+  // Build GameCard-compatible data from DB games
+  const gameCards = useMemo(() =>
+    activeGames.slice(0, 8).map(game => {
+      const slug = (game.slug || game.name || "").toLowerCase();
+      const overlay = characterOverlayMap[slug];
+      const image = overlay?.bg || softwareImageMap[slug] || game.image_url;
+      const productCount = game.products?.filter(p => p.active).length || 0;
+
+      return {
+        id: game.id,
+        name: game.name,
+        keywords: [game.slug || game.name],
+        image,
+        descKey: `products.desc_${slug.replace(/\s+/g, "_")}`,
+        character: overlay?.character,
+        characterHover: overlay?.characterHover,
+        count: productCount,
+      };
+    }),
+    [activeGames]
+  );
+
   return (
     <section className="border-t border-border bg-background px-4 sm:px-6 py-12 sm:py-20">
       <div className="mx-auto max-w-7xl">
@@ -439,33 +461,16 @@ const SoftwareSection = () => {
 
         {isLoading ? (
           <div className="mt-10 flex justify-center"><Loader2 className="h-7 w-7 animate-spin text-success" /></div>
-        ) : activeGames.length === 0 ? (
+        ) : gameCards.length === 0 ? (
           <div className="mt-10 text-center text-muted-foreground text-sm">{t("products.empty")}</div>
         ) : (
           <motion.div
             className="mt-5 sm:mt-12 grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4"
             initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-60px" }} variants={staggerContainer}
           >
-            {activeGames.slice(0, 8).map((game, idx) => {
-              const slug = (game.slug || game.name || "").toLowerCase();
-              const image = softwareImageMap[slug] || game.image_url;
-              const productCount = game.products?.filter(p => p.active).length || 0;
-              const overlay = characterOverlayMap[slug];
-
-              return (
-                <SoftwareCard
-                  key={game.id}
-                  game={game}
-                  image={overlay?.bg || image}
-                  character={overlay?.character}
-                  characterHover={overlay?.characterHover}
-                  productCount={productCount}
-                  index={idx}
-                  onClick={() => handleGameClick(game)}
-                  t={t}
-                />
-              );
-            })}
+            {gameCards.map((gc, idx) => (
+              <GameCard key={gc.id} game={gc} count={gc.count} t={t} index={idx} />
+            ))}
           </motion.div>
         )}
 
