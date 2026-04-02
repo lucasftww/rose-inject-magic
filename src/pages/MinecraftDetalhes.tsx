@@ -117,7 +117,7 @@ const MinecraftDetalhes = () => {
       viewTracked.current = true;
       const priceBRL = getPrice(item, "minecraft");
       trackViewContent({
-        contentName: `Conta Minecraft${nickname ? ` · ${nickname}` : ""}`,
+        contentName: cleanedTitle,
         contentIds: [`lzt-mc-${item.item_id}`],
         value: priceBRL,
       });
@@ -136,14 +136,14 @@ const MinecraftDetalhes = () => {
     const priceBRL = getPrice(item, "minecraft");
 
     trackInitiateCheckout({
-      contentName: title,
+      contentName: cleanedTitle,
       contentIds: [`lzt-mc-${item.item_id}`],
       value: priceBRL,
     });
 
     const added = addItem({
       productId: `lzt-mc-${item.item_id}`,
-      productName: title,
+      productName: cleanedTitle,
       productImage: headUrl,
       planId: "lzt-mc-account",
       planName: "Conta Minecraft",

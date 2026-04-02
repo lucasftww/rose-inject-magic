@@ -337,8 +337,17 @@ const SteamDetalhes = () => {
                 {steamGames.length > 0 ? (
                   steamGames.slice(0, 12).map((game: any, idx: number) => (
                     <div key={idx} className="flex items-center gap-4 rounded-xl border border-border bg-card p-3 hover:border-primary/30 transition-colors group">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary/50 text-muted-foreground group-hover:text-primary transition-colors">
-                        <Gamepad2 className="h-5 w-5" />
+                      <div className="flex h-12 w-20 shrink-0 items-center justify-center rounded-lg bg-secondary/50 text-muted-foreground group-hover:text-primary transition-colors overflow-hidden">
+                        {game.appid || game.id ? (
+                          <img 
+                            src={`https://cdn.akamai.steamstatic.com/steam/apps/${game.appid || game.id}/header.jpg`}
+                            alt={game.name || "Game"}
+                            className="h-full w-full object-cover"
+                            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                          />
+                        ) : (
+                          <Gamepad2 className="h-5 w-5" />
+                        )}
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-bold truncate text-foreground">{game.name || game}</p>
@@ -434,6 +443,29 @@ const SteamDetalhes = () => {
           </div>
         </div>
       </div>
+
+      {/* Sticky mobile bottom bar */}
+      {item && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 sm:hidden">
+          <div className="border-t border-border bg-card/95 backdrop-blur-xl px-4 py-3 safe-area-bottom">
+            <div className="flex items-center gap-3">
+              <div className="flex flex-col min-w-0">
+                <span className="text-lg font-bold leading-tight text-primary">
+                  {getDisplayPrice(item)}
+                </span>
+              </div>
+              <button
+                onClick={handleAddToCart}
+                className="flex flex-1 items-center justify-center gap-2 rounded-lg py-3 text-sm font-bold uppercase tracking-wider text-white transition-all active:scale-[0.98] bg-primary"
+                style={{ fontFamily: "'Valorant', sans-serif" }}
+              >
+                <ShoppingCart className="h-4 w-4" />
+                Comprar Agora
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

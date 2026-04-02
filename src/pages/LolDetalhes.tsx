@@ -243,7 +243,7 @@ const LolDetalhes = () => {
       viewTracked.current = true;
       const priceBRL = getPrice(item, "lol");
       trackViewContent({
-        contentName: `Conta LoL #${item.item_id}`,
+        contentName: cleanedTitle,
         contentIds: [`lzt-lol-${item.item_id}`],
         value: priceBRL,
       });
@@ -262,14 +262,14 @@ const LolDetalhes = () => {
     const priceBRL = getPrice(item, "lol");
 
     trackInitiateCheckout({
-      contentName: title,
+      contentName: cleanedTitle,
       contentIds: [`lzt-lol-${item.item_id}`],
       value: priceBRL,
     });
 
     const added = addItem({
       productId: `lzt-lol-${item.item_id}`,
-      productName: title,
+      productName: cleanedTitle,
       productImage: null,
       planId: "lzt-lol-account",
       planName: "Conta League of Legends",

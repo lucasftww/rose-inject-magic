@@ -393,14 +393,14 @@ const ContaDetalhes = () => {
     const priceBRL = getPrice(item, "valorant");
 
     trackInitiateCheckout({
-      contentName: title,
+      contentName: cleanedTitle,
       contentIds: [`lzt-${item.item_id}`],
       value: priceBRL
     });
 
     const added = addItem({
       productId: `lzt-${item.item_id}`,
-      productName: title,
+      productName: cleanedTitle,
       productImage: rank?.img || null,
       planId: "lzt-account",
       planName: "Conta Valorant",
@@ -433,7 +433,7 @@ const ContaDetalhes = () => {
       viewTracked.current = true;
       const priceBRL = getPrice(item, "valorant");
       trackViewContent({
-        contentName: `Conta Valorant #${item.item_id}`,
+        contentName: cleanedTitle,
         contentIds: [`lzt-${item.item_id}`],
         value: priceBRL
       });

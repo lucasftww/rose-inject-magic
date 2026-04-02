@@ -178,7 +178,7 @@ const FortniteDetalhes = () => {
       viewTracked.current = true;
       const priceBRL = getPrice(item, "fortnite");
       trackViewContent({
-        contentName: `Conta Fortnite #${item.item_id}`,
+        contentName: cleanedTitle,
         contentIds: [`lzt-fn-${item.item_id}`],
         value: priceBRL,
       });
@@ -197,14 +197,14 @@ const FortniteDetalhes = () => {
     const priceBRL = getPrice(item, "fortnite");
 
     trackInitiateCheckout({
-      contentName: title,
+      contentName: cleanedTitle,
       contentIds: [`lzt-fn-${item.item_id}`],
       value: priceBRL,
     });
 
     const added = addItem({
       productId: `lzt-fn-${item.item_id}`,
-      productName: title,
+      productName: cleanedTitle,
       productImage: null,
       planId: "lzt-fn-account",
       planName: "Conta Fortnite",
