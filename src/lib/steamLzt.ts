@@ -95,6 +95,43 @@ export function countSteamGamesOnListItem(item: Record<string, unknown>): number
   return normalizeSteamGamesFromRaw(item).length;
 }
 
+/** URLs que claramente vêm da Steam — o campo LZT `weapons` às vezes é collage de outro jogo; só aceitamos weapons se for isso. */
+export function isLikelySteamHostedImageUrl(url: string): boolean {
+  const u = String(url || "").toLowerCase();
+  if (!u.startsWith("http")) return false;
+  return (
+    u.includes("steamstatic.com") ||
+    u.includes("akamaihd.net") ||
+    u.includes("steamcommunity.com") ||
+    u.includes("cloudflare.steamstatic.com")
+  );
+}
+
+export function steamLibraryHeaderImageUrl(appid: number): string {
+  return `https://cdn.akamai.steamstatic.com/steam/apps/${appid}/header.jpg`;
+}
+
+type PreviewDirect = { weapons?: string; main?: string };
+
+/**
+ * Hero/listagem Steam: `main` do LZT primeiro; senão capa do 1º jogo da biblioteca (CDN Steam);
+ * `weapons` só se a URL for claramente hospedada na Steam (evita collage Valorant/CS errado).
+ */
+export function resolveSteamHeroImage(item: Record<string, unknown>): string | null {
+  const direct = (item.imagePreviewLinks as { direct?: PreviewDirect } | undefined)?.direct;
+  const main = direct?.main?.trim();
+  if (main) return main;
+
+  const games = normalizeSteamGamesFromRaw(item);
+  const firstAppid = games.find((g) => g.appid != null && g.appid > 0)?.appid;
+  if (firstAppid != null) return steamLibraryHeaderImageUrl(firstAppid);
+
+  const weapons = direct?.weapons?.trim();
+  if (weapons && isLikelySteamHostedImageUrl(weapons)) return weapons;
+
+  return null;
+}
+
 export function formatSteamPlaytime(minutes: number | undefined): string {
   if (minutes == null || !Number.isFinite(minutes) || minutes <= 0) return "";
   const h = Math.floor(minutes / 60);

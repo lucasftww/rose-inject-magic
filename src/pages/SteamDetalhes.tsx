@@ -24,7 +24,12 @@ import { toast } from "@/hooks/use-toast";
 import { useLztMarkup } from "@/hooks/useLztMarkup";
 import { trackViewContent, trackInitiateCheckout } from "@/lib/metaPixel";
 import { checkLztAvailability } from "@/lib/lztAvailability";
-import { formatSteamPlaytime, normalizeSteamGamesFromRaw, type SteamLibGame } from "@/lib/steamLzt";
+import {
+  formatSteamPlaytime,
+  normalizeSteamGamesFromRaw,
+  resolveSteamHeroImage,
+  type SteamLibGame,
+} from "@/lib/steamLzt";
 
 const PROJECT_FALLBACK = "https://cthqzetkshrbsjulfytl.supabase.co";
 
@@ -88,6 +93,11 @@ const SteamDetalhes = () => {
 
   const steamGames: SteamLibGame[] = useMemo(
     () => normalizeSteamGamesFromRaw((item || {}) as Record<string, unknown>),
+    [item],
+  );
+
+  const heroImageUrl = useMemo(
+    () => resolveSteamHeroImage((item || {}) as Record<string, unknown>),
     [item],
   );
 
@@ -258,13 +268,12 @@ const SteamDetalhes = () => {
             <div className="relative overflow-hidden rounded-3xl border border-border bg-card">
               <div className="relative h-64 w-full overflow-hidden bg-secondary/20 sm:h-80">
                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(210,100%,50%,0.1),transparent_70%)]" />
-                {item.imagePreviewLinks?.direct?.main || item.imagePreviewLinks?.direct?.weapons ? (
+                {heroImageUrl ? (
                   <img
-                    src={getProxiedImageUrl(
-                      item.imagePreviewLinks?.direct?.main || item.imagePreviewLinks?.direct?.weapons || "",
-                    )}
-                    alt="Preview"
-                    className="h-full w-full object-contain p-4 drop-shadow-2xl"
+                    key={heroImageUrl}
+                    src={getProxiedImageUrl(heroImageUrl)}
+                    alt=""
+                    className="h-full w-full object-cover sm:object-contain p-0 sm:p-4 drop-shadow-2xl"
                   />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center opacity-10">

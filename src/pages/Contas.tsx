@@ -4,7 +4,7 @@ import Header from "@/components/Header";
 import { ChevronLeft, ChevronRight, ChevronDown, Search, SlidersHorizontal, DollarSign, Crosshair, Loader2, RefreshCw, Globe, TrendingUp, Star, Shield, Trophy, AlertTriangle, X, ArrowRight, Zap, Swords } from "lucide-react";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { throwApiError } from "@/lib/apiErrors";
-import { countSteamGamesOnListItem } from "@/lib/steamLzt";
+import { countSteamGamesOnListItem, resolveSteamHeroImage } from "@/lib/steamLzt";
 import { translateRegion } from "@/lib/regionTranslation";
 import { motion } from "framer-motion";
 import { Link, useSearchParams } from "react-router-dom";
@@ -517,7 +517,7 @@ const ValorantCard = memo(({ item, skinsMap, formatPrice }: { item: LztItem; ski
           </div>
         )}
         <div className="mt-auto pt-1.5 border-t border-border/30">
-          <h3 className="text-[10px] sm:text-xs font-bold text-foreground line-clamp-1 mb-1">{cleanedTitle}</h3>
+          <h3 className="text-[11px] sm:text-xs font-semibold text-foreground line-clamp-2 leading-snug tracking-tight mb-1">{cleanedTitle}</h3>
           <p className="text-sm sm:text-base font-bold text-success tracking-tight">{formatPrice(item.price, item.price_currency)}</p>
           <span className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg bg-success py-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-success-foreground">
             Ver conta <ArrowRight className="h-2.5 w-2.5" />
@@ -676,7 +676,7 @@ const LolCard = memo(({ item, champKeyMap, formatPrice }: { item: LztItem; champ
           )}
         </div>
         <div className="mt-auto pt-1.5 border-t border-border/30">
-          <h3 className="text-[10px] sm:text-xs font-bold text-foreground line-clamp-1 mb-1">{cleanedTitle}</h3>
+          <h3 className="text-[11px] sm:text-xs font-semibold text-foreground line-clamp-2 leading-snug tracking-tight mb-1">{cleanedTitle}</h3>
           <p className="text-sm sm:text-base font-bold text-[hsl(198,100%,45%)] tracking-tight">{formatPrice(item.price, item.price_currency)}</p>
           <span className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg py-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-white" style={{ background: "hsl(198,100%,45%)" }}>
             Ver conta <ArrowRight className="h-2.5 w-2.5" />
@@ -709,7 +709,10 @@ const SteamCard = memo(({ item, formatPrice }: { item: LztItem; formatPrice: (pr
     return t || synth();
   }, [item.title, item.premier_elo, item.cs2_elo, item.premier_elo_min, gameCount, invSkins, steamLvl]);
 
-  const previewImage = item.imagePreviewLinks?.direct?.weapons || item.imagePreviewLinks?.direct?.main;
+  const previewImage = useMemo(
+    () => resolveSteamHeroImage(item as unknown as Record<string, unknown>),
+    [item],
+  );
 
   return (
     <Link
@@ -719,7 +722,13 @@ const SteamCard = memo(({ item, formatPrice }: { item: LztItem; formatPrice: (pr
       <div className="relative flex h-28 sm:h-36 items-center justify-center overflow-hidden bg-secondary/20">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(210,100%,50%,0.08),transparent_70%)]" />
         {previewImage ? (
-          <img src={getProxiedImageUrl(previewImage)} alt="Preview" className="relative z-[1] h-full w-full object-contain p-2 transition-transform group-hover:scale-105" loading="lazy" />
+          <img
+            key={previewImage}
+            src={getProxiedImageUrl(previewImage)}
+            alt=""
+            className="relative z-[1] h-full w-full object-cover sm:object-contain p-0 sm:p-2 transition-transform group-hover:scale-[1.02]"
+            loading="lazy"
+          />
         ) : (
           <div className="flex flex-col h-full w-full items-center justify-center gap-2 p-4 text-center">
             <Globe className="h-10 w-10 text-muted-foreground/30" />
@@ -750,7 +759,7 @@ const SteamCard = memo(({ item, formatPrice }: { item: LztItem; formatPrice: (pr
         </div>
       </div>
       <div className="p-3 flex flex-col flex-1 gap-2">
-        <h3 className="text-xs font-bold text-foreground line-clamp-2 leading-snug">{cleanedTitle}</h3>
+        <h3 className="text-[13px] font-semibold text-foreground line-clamp-2 leading-snug tracking-tight">{cleanedTitle}</h3>
         {(invSkins > 0 || !!item.faceit_lvl || !!item.faceit_level) && (
           <div className="flex flex-wrap gap-1 text-[9px] text-muted-foreground">
             {invSkins > 0 && <span className="rounded bg-secondary/80 px-1.5 py-0.5">{invSkins} skins CS</span>}
@@ -887,7 +896,7 @@ const FortniteCard = memo(({ item, skinsDb, formatPrice }: { item: LztItem; skin
           <span className="text-[9px] sm:text-[11px] text-muted-foreground">Full Acesso · Entrega Automática</span>
         </div>
         <div className="mt-auto pt-1.5 border-t border-border/30">
-          <h3 className="text-[10px] sm:text-xs font-bold text-foreground line-clamp-1 mb-1">{cleanedTitle}</h3>
+          <h3 className="text-[11px] sm:text-xs font-semibold text-foreground line-clamp-2 leading-snug tracking-tight mb-1">{cleanedTitle}</h3>
           <p className="text-sm sm:text-base font-bold tracking-tight" style={{ color: FN_PURPLE }}>{formatPrice(item.price, item.price_currency)}</p>
           <span className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg py-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-white" style={{ background: FN_PURPLE }}>
             Ver conta <ArrowRight className="h-2.5 w-2.5" />
@@ -966,7 +975,7 @@ const MinecraftCard = memo(({ item, formatPrice }: { item: LztItem; formatPrice:
           <span className="text-[9px] sm:text-[11px] text-muted-foreground">Full Acesso · Entrega Automática</span>
         </div>
         <div className="mt-auto pt-1.5 border-t border-border/30">
-          <h3 className="text-[10px] sm:text-xs font-bold text-foreground line-clamp-1 mb-1">{cleanedTitle}</h3>
+          <h3 className="text-[11px] sm:text-xs font-semibold text-foreground line-clamp-2 leading-snug tracking-tight mb-1">{cleanedTitle}</h3>
           <p className="text-sm sm:text-base font-bold tracking-tight" style={{ color: MC_GREEN }}>{formatPrice(item.price, item.price_currency)}</p>
           <span className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg py-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-white" style={{ background: MC_GREEN }}>
             Ver conta <ArrowRight className="h-2.5 w-2.5" />
@@ -2170,78 +2179,105 @@ const Contas = () => {
       <Header />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 pt-4 pb-20">
 
-        {/* ─── Game Tab Switcher ─── */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 sm:flex sm:items-center sm:gap-3 mb-6 sm:mb-8">
+        {/* ─── Game Tab Switcher (segment control) ─── */}
+        <nav
+          className="mb-6 sm:mb-8 rounded-2xl border border-border/60 bg-card/30 p-1 shadow-sm backdrop-blur-sm"
+          aria-label="Categorias de contas"
+        >
+          <div className="grid grid-cols-2 gap-1 sm:flex sm:flex-wrap sm:justify-stretch sm:gap-1">
           <button
+            type="button"
             onClick={() => switchTab("valorant")}
-            className={`flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-2.5 rounded-xl border px-2 sm:px-5 py-2.5 sm:py-3 text-[11px] sm:text-sm font-bold transition-all ${
+            className={`flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-xl px-2 sm:flex-1 sm:px-3 py-2.5 sm:py-2.5 text-xs sm:text-sm font-semibold tracking-tight transition-all duration-200 ${
               isValorant
-                ? "border-success bg-success/10 text-success shadow-[0_0_16px_hsl(130,99%,41%,0.2)]"
-                : "border-border bg-secondary/30 text-muted-foreground hover:border-foreground/30 hover:text-foreground"
+                ? "bg-success/15 text-success ring-2 ring-success/35 ring-offset-2 ring-offset-background"
+                : "text-muted-foreground hover:bg-background/70 hover:text-foreground"
             }`}
           >
-            <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M23.792 2.152a.252.252 0 0 0-.098.083c-3.384 4.23-6.769 8.46-10.15 12.69-.107.093-.025.288.119.265 2.439.003 4.877 0 7.316.001a.66.66 0 0 0 .552-.25c.774-.967 1.55-1.934 2.324-2.903a.72.72 0 0 0 .144-.49c-.002-3.077 0-6.153-.003-9.23.016-.11-.1-.206-.204-.167zM.077 2.166c-.077.038-.074.132-.076.205.002 3.074.001 6.15.001 9.225a.679.679 0 0 0 .158.463l7.64 9.55c.12.152.308.25.505.247 2.455 0 4.91.003 7.365 0 .142.02.222-.174.116-.265C10.661 15.176 5.526 8.766.4 2.35c-.08-.094-.174-.272-.322-.184z"/></svg>
-            <span className="leading-tight">Valorant</span>
+            <svg className="h-4 w-4 sm:h-[18px] sm:w-[18px] shrink-0 opacity-90" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M23.792 2.152a.252.252 0 0 0-.098.083c-3.384 4.23-6.769 8.46-10.15 12.69-.107.093-.025.288.119.265 2.439.003 4.877 0 7.316.001a.66.66 0 0 0 .552-.25c.774-.967 1.55-1.934 2.324-2.903a.72.72 0 0 0 .144-.49c-.002-3.077 0-6.153-.003-9.23.016-.11-.1-.206-.204-.167zM.077 2.166c-.077.038-.074.132-.076.205.002 3.074.001 6.15.001 9.225a.679.679 0 0 0 .158.463l7.64 9.55c.12.152.308.25.505.247 2.455 0 4.91.003 7.365 0 .142.02.222-.174.116-.265C10.661 15.176 5.526 8.766.4 2.35c-.08-.094-.174-.272-.322-.184z"/></svg>
+            <span className="leading-none">Valorant</span>
           </button>
           <button
+            type="button"
             onClick={() => switchTab("lol")}
-            className={`flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-2.5 rounded-xl border px-2 sm:px-5 py-2.5 sm:py-3 text-[11px] sm:text-sm font-bold transition-all ${
+            className={`flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-xl px-2 sm:flex-1 sm:px-3 py-2.5 sm:py-2.5 text-xs sm:text-sm font-semibold tracking-tight transition-all duration-200 ${
               gameTab === "lol"
-                ? "border-[hsl(198,100%,45%)] bg-[hsl(198,100%,45%,0.1)] text-[hsl(198,100%,45%)] shadow-[0_0_16px_hsl(198,100%,45%,0.2)]"
-                : "border-border bg-secondary/30 text-muted-foreground hover:border-foreground/30 hover:text-foreground"
+                ? "bg-[hsl(198,100%,45%,0.12)] text-[hsl(198,100%,48%)] ring-2 ring-[hsl(198,100%,45%,0.35)] ring-offset-2 ring-offset-background"
+                : "text-muted-foreground hover:bg-background/70 hover:text-foreground"
             }`}
           >
-            <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="m1.912 0 1.212 2.474v19.053L1.912 24h14.73l1.337-4.682H8.33V0ZM12 1.516c-.913 0-1.798.112-2.648.312v1.74a9.738 9.738 0 0 1 2.648-.368c5.267 0 9.536 4.184 9.536 9.348a9.203 9.203 0 0 1-2.3 6.086l-.273.954-.602 2.112c2.952-1.993 4.89-5.335 4.89-9.122C23.25 6.468 18.213 1.516 12 1.516Zm0 2.673c-.924 0-1.814.148-2.648.414v13.713h8.817a8.246 8.246 0 0 0 2.36-5.768c0-4.617-3.818-8.359-8.529-8.359zM2.104 7.312A10.858 10.858 0 0 0 .75 12.576c0 1.906.492 3.7 1.355 5.266z"/></svg>
-            <span className="leading-tight">LoL</span>
+            <svg className="h-4 w-4 sm:h-[18px] sm:w-[18px] shrink-0 opacity-90" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="m1.912 0 1.212 2.474v19.053L1.912 24h14.73l1.337-4.682H8.33V0ZM12 1.516c-.913 0-1.798.112-2.648.312v1.74a9.738 9.738 0 0 1 2.648-.368c5.267 0 9.536 4.184 9.536 9.348a9.203 9.203 0 0 1-2.3 6.086l-.273.954-.602 2.112c2.952-1.993 4.89-5.335 4.89-9.122C23.25 6.468 18.213 1.516 12 1.516Zm0 2.673c-.924 0-1.814.148-2.648.414v13.713h8.817a8.246 8.246 0 0 0 2.36-5.768c0-4.617-3.818-8.359-8.529-8.359zM2.104 7.312A10.858 10.858 0 0 0 .75 12.576c0 1.906.492 3.7 1.355 5.266z"/></svg>
+            <span className="leading-none sm:hidden" title="League of Legends">LoL</span>
+            <span className="leading-none hidden sm:inline">League of Legends</span>
           </button>
           <button
+            type="button"
             onClick={() => switchTab("fortnite")}
-            className={`flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-2.5 rounded-xl border px-2 sm:px-5 py-2.5 sm:py-3 text-[11px] sm:text-sm font-bold transition-all ${
+            className={`flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-xl px-2 sm:flex-1 sm:px-3 py-2.5 sm:py-2.5 text-xs sm:text-sm font-semibold tracking-tight transition-all duration-200 ${
               isFortnite
-                ? "shadow-[0_0_16px_hsl(265,80%,65%,0.2)]"
-                : "border-border bg-secondary/30 text-muted-foreground hover:border-foreground/30 hover:text-foreground"
+                ? "bg-[hsl(265,80%,65%,0.12)] text-[hsl(265,80%,65%)] ring-2 ring-[hsl(265,80%,65%,0.45)] ring-offset-2 ring-offset-background"
+                : "text-muted-foreground hover:bg-background/70 hover:text-foreground"
             }`}
-            style={isFortnite ? { borderColor: FN_PURPLE, background: `${FN_PURPLE}15`, color: FN_PURPLE } : {}}
           >
-            <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="m15.767 14.171.097-5.05H12.4V5.197h3.99L16.872 0H7.128v24l5.271-.985V14.17z"/></svg>
-            <span className="leading-tight">Fortnite</span>
+            <svg className="h-4 w-4 sm:h-[18px] sm:w-[18px] shrink-0 opacity-90" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="m15.767 14.171.097-5.05H12.4V5.197h3.99L16.872 0H7.128v24l5.271-.985V14.17z"/></svg>
+            <span className="leading-none">Fortnite</span>
           </button>
           <button
+            type="button"
             onClick={() => switchTab("minecraft")}
-            className={`flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-2.5 rounded-xl border px-2 sm:px-5 py-2.5 sm:py-3 text-[11px] sm:text-sm font-bold transition-all ${
+            className={`flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-xl px-2 sm:flex-1 sm:px-3 py-2.5 sm:py-2.5 text-xs sm:text-sm font-semibold tracking-tight transition-all duration-200 ${
               isMinecraft
-                ? ""
-                : "border-border bg-secondary/30 text-muted-foreground hover:border-foreground/30 hover:text-foreground"
+                ? "ring-2 ring-offset-2 ring-offset-background"
+                : "text-muted-foreground hover:bg-background/70 hover:text-foreground"
             }`}
-            style={isMinecraft ? { borderColor: MC_GREEN, background: `${MC_GREEN}15`, color: MC_GREEN, boxShadow: `0 0 16px ${MC_GREEN}30` } : {}}
+            style={
+              isMinecraft
+                ? { background: `${MC_GREEN}18`, color: MC_GREEN, boxShadow: `0 0 0 2px ${MC_GREEN}66` }
+                : {}
+            }
           >
-            <svg className="h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" id="mdi-minecraft"><path d="M4,2H20A2,2 0 0,1 22,4V20A2,2 0 0,1 20,22H4A2,2 0 0,1 2,20V4A2,2 0 0,1 4,2M6,6V10H10V12H8V18H10V16H14V18H16V12H14V10H18V6H14V10H10V6H6Z" /></svg>
-            <span className="leading-tight">Minecraft</span>
+            <svg className="h-4 w-4 sm:h-[18px] sm:w-[18px] shrink-0 opacity-90" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M4,2H20A2,2 0 0,1 22,4V20A2,2 0 0,1 20,22H4A2,2 0 0,1 2,20V4A2,2 0 0,1 4,2M6,6V10H10V12H8V18H10V16H14V18H16V12H14V10H18V6H14V10H10V6H6Z" /></svg>
+            <span className="leading-none">Minecraft</span>
           </button>
-          
           <button
+            type="button"
             onClick={() => switchTab("steam")}
-            className={`flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-2.5 rounded-xl border px-2 sm:px-5 py-2.5 sm:py-3 text-[11px] sm:text-sm font-bold transition-all ${
+            className={`flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-xl px-2 sm:flex-1 sm:px-3 py-2.5 sm:py-2.5 text-xs sm:text-sm font-semibold tracking-tight transition-all duration-200 sm:col-span-1 col-span-2 ${
               isSteam
-                ? "border-[hsl(210,100%,50%)] bg-[hsl(210,100%,50%,0.1)] text-[hsl(210,100%,50%)] shadow-[0_0_16px_hsl(210,100%,50%,0.2)]"
-                : "border-border bg-secondary/30 text-muted-foreground hover:border-foreground/30 hover:text-foreground"
+                ? "bg-[hsl(210,100%,50%,0.12)] text-[hsl(210,100%,55%)] ring-2 ring-[hsl(210,100%,50%,0.35)] ring-offset-2 ring-offset-background"
+                : "text-muted-foreground hover:bg-background/70 hover:text-foreground"
             }`}
           >
-            <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M11.968 0C5.358 0 0 5.358 0 11.968c0 3.336 1.365 6.353 3.568 8.529l.068.068.034.034 4.545 1.5c1.465-1.295 2.193-3.239 2.193-4.908V17.15c0-.602-.454-1.056-1.057-1.056H8.25c-.602 0-1.057-.454-1.057-1.057V12.1c0-.602-.454-1.057-.852-1.057H5.284C4.68 11.043 4.227 10.59 4.227 9.986V7.15c0-.603.454-1.057 1.057-1.057H7.15c.603 0 1.057-.454 1.057-1.057v-1.1c0-.603.454-1.057 1.057-1.057h3.705c.603 0 1.057.454 1.057 1.057v1.1c0 .603.454 1.057 1.057 1.057h1.864c.603 0 1.057.454 1.057 1.057v2.836c0 .603-.454 1.057-1.057 1.057H15.11c-.432 0-.853.454-.853 1.057v2.932c0 .603.454 1.057 1.057 1.057h1.1c.603 0 1.057.454 1.057 1.057v.1c0 1.669.728 3.613 2.193 4.908l4.545-1.5.034-.034.068-.068C22.635 18.32 24 15.304 24 11.968 24 5.358 18.642 0 12.032 0h-.064z" /></svg>
-            <span className="leading-tight">Steam</span>
+            <svg className="h-4 w-4 sm:h-[18px] sm:w-[18px] shrink-0 opacity-90" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M11.968 0C5.358 0 0 5.358 0 11.968c0 3.336 1.365 6.353 3.568 8.529l.068.068.034.034 4.545 1.5c1.465-1.295 2.193-3.239 2.193-4.908V17.15c0-.602-.454-1.056-1.057-1.056H8.25c-.602 0-1.057-.454-1.057-1.057V12.1c0-.602-.454-1.057-.852-1.057H5.284C4.68 11.043 4.227 10.59 4.227 9.986V7.15c0-.603.454-1.057 1.057-1.057H7.15c.603 0 1.057-.454 1.057-1.057v-1.1c0-.603.454-1.057 1.057-1.057h3.705c.603 0 1.057.454 1.057 1.057v1.1c0 .603.454 1.057 1.057 1.057h1.864c.603 0 1.057.454 1.057 1.057v2.836c0 .603-.454 1.057-1.057 1.057H15.11c-.432 0-.853.454-.853 1.057v2.932c0 .603.454 1.057 1.057 1.057h1.1c.603 0 1.057.454 1.057 1.057v.1c0 1.669.728 3.613 2.193 4.908l4.545-1.5.034-.034.068-.068C22.635 18.32 24 15.304 24 11.968 24 5.358 18.642 0 12.032 0h-.064z" /></svg>
+            <span className="leading-none">Steam</span>
           </button>
-        </div>
+          </div>
+        </nav>
 
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="text-sm font-medium uppercase tracking-[0.3em]" style={{ color: accentColor }}>
-              {isValorant ? "Valorant" : isFortnite ? "Fortnite" : isMinecraft ? "Minecraft" : isSteam ? "Steam" : "League of Legends"}
+            <p className="text-[11px] sm:text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
+              Marketplace ·{" "}
+              <span style={{ color: accentColor }}>
+                {isValorant ? "Valorant" : isFortnite ? "Fortnite" : isMinecraft ? "Minecraft" : isSteam ? "Steam / CS2" : "League of Legends"}
+              </span>
             </p>
-            <h1 className="mt-2 text-3xl font-bold text-foreground md:text-4xl" style={{ fontFamily: "'Valorant', sans-serif" }}>
-              {isValorant ? "CONTAS VALORANT" : isFortnite ? "CONTAS FORTNITE" : isMinecraft ? "CONTAS MINECRAFT" : isSteam ? "CONTAS STEAM" : "CONTAS LOL"}
+            <h1
+              className={`mt-1.5 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl md:text-4xl ${isValorant ? "" : "font-sans"}`}
+              style={isValorant ? { fontFamily: "'Valorant', sans-serif" } : undefined}
+            >
+              {isValorant
+                ? "Contas Valorant"
+                : isFortnite
+                  ? "Contas Fortnite"
+                  : isMinecraft
+                    ? "Contas Minecraft"
+                    : isSteam
+                      ? "Contas Steam"
+                      : "Contas League of Legends"}
             </h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {streamError ? "Erro ao buscar contas" : isLoading ? "Buscando contas..." : `${allItems.length} contas · Página ${displayPage} de ${totalDisplayPages}`}
+            <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">
+              {streamError ? "Não foi possível carregar a lista. Tente atualizar." : isLoading ? "Buscando contas disponíveis…" : `${allItems.length} ${allItems.length === 1 ? "conta listada" : "contas listadas"} · página ${displayPage} de ${totalDisplayPages}`}
             </p>
           </div>
           <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
