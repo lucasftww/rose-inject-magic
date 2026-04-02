@@ -331,7 +331,11 @@ Deno.serve(async (req) => {
     const NEW_TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzUxMiJ9.eyJzdWIiOjEwNDIzOTg5LCJpc3MiOiJsenQiLCJpYXQiOjE3NzUwNjY2MzcsImp0aSI6Ijk1NDQwMiIsInNjb3BlIjoiYmFzaWMgcmVhZCBwb3N0IGNvbnZlcnNhdGUgcGF5bWVudCBpbnZvaWNlIGNoYXRib3ggbWFya2V0IiwiZXhwIjoxOTMyNzQ2NjM3fQ.urPp0RWVn3WaBCsrJCISf1EW5zSnkx-Fjz-QkohjkbO-HdpUNICHbKTtto5liF50OrIOufBZkqWQdG8rD36xsrFTE6ONeWehQzQbPSxK4ophWhaJ8mI2gGYX7eFKLZIYWBA9AjcPpEHovnImvV12AApsVmJZJhrI6eczqyX65Vo";
     const NEW_CLIENT_ID = "a3ryez9tif";
 
-    const token = tokenFromDb || Deno.env.get("LZT_MARKET_TOKEN") || NEW_TOKEN;
+    const token =
+      tokenFromDb ||
+      Deno.env.get("LZT_MARKET_TOKEN")?.trim() ||
+      Deno.env.get("LZT_API_TOKEN")?.trim() ||
+      NEW_TOKEN;
     const clientId = clientIdRow?.data?.value || Deno.env.get("LZT_CLIENT_ID") || NEW_CLIENT_ID;
 
     if (!token) {

@@ -20,8 +20,8 @@ Deno.serve(async (req) => {
 
   try {
     const [capiTokenRow, pixelIdRow] = await Promise.all([
-      supabaseAdmin.from("system_credentials").select("value").eq("key", "META_ACCESS_TOKEN").maybeSingle(),
-      supabaseAdmin.from("system_credentials").select("value").eq("key", "META_PIXEL_ID").maybeSingle(),
+      supabaseAdmin.from("system_credentials").select("value").eq("env_key", "META_ACCESS_TOKEN").maybeSingle(),
+      supabaseAdmin.from("system_credentials").select("value").eq("env_key", "META_PIXEL_ID").maybeSingle(),
     ]);
 
     const ACCESS_TOKEN = capiTokenRow.data?.value || Deno.env.get("META_ACCESS_TOKEN");

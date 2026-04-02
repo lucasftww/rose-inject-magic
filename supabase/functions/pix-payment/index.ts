@@ -83,8 +83,11 @@ async function getLztMarketToken(supabaseAdmin: any): Promise<string | null> {
   const legacy = byKey.get("LZT_MARKET_TOKEN");
   if (legacy) return legacy;
 
-  const env = Deno.env.get("LZT_MARKET_TOKEN")?.trim();
-  return env || null;
+  return (
+    Deno.env.get("LZT_MARKET_TOKEN")?.trim() ||
+    Deno.env.get("LZT_API_TOKEN")?.trim() ||
+    null
+  );
 }
 
 function robotAuthHeader(creds: RobotCredentials) {
