@@ -76,6 +76,7 @@ import StickyMobileCTA from "@/components/landing/StickyMobileCTA";
 import Footer from "@/components/landing/Footer";
 import ReviewsSection from "@/components/landing/ReviewsSection";
 import FaqSection from "@/components/landing/FaqSection";
+import CtaSection from "@/components/landing/CtaSection";
 import HowItWorksSection from "@/components/landing/HowItWorksSection";
 import { fadeUp, staggerContainer, scaleIn, slideInLeft } from "@/components/landing/animations";
 
@@ -620,6 +621,7 @@ const Index = () => {
       <ReviewsSection />
       <HowItWorksSection />
       <FaqSection />
+      <CtaSection />
       <Footer />
       <FloatingWidgets />
       <StickyMobileCTA />

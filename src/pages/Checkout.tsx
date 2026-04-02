@@ -53,16 +53,21 @@ const Checkout = () => {
   const couponId = searchParams.get("coupon_id");
   // Snapshot of cart items for Purchase tracking (survives clearCart)
   const [cartSnapshot, setCartSnapshot] = useState<typeof items>([]);
-  // Price is calculated from cart items — never trust URL params
-  const cartTotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  // Price is calculated from cart items — never trust URL params (guard NaN from bad state)
+  const cartTotal = items.reduce((sum, i) => {
+    const p = Number.isFinite(i.price) && i.price >= 0 ? i.price : 0;
+    const q = Number.isFinite(i.quantity) && i.quantity >= 1 ? Math.floor(i.quantity) : 0;
+    return sum + p * q;
+  }, 0);
+  const safeCartTotal = Number.isFinite(cartTotal) ? cartTotal : 0;
   // Discount is only trusted from server response; URL param is used as a hint for display
   const urlDiscount = parseFloat(searchParams.get("discount") || "0");
   // Cap URL discount to never exceed cart total and never be negative
-  const discountAmount = Math.max(0, Math.min(urlDiscount, cartTotal));
-  const cartFinalPrice = Math.max(0, cartTotal - discountAmount);
+  const discountAmount = Math.max(0, Math.min(urlDiscount, safeCartTotal));
+  const cartFinalPrice = Math.max(0, safeCartTotal - discountAmount);
   // Store the display price so it survives cart clearing
   const [displayPrice, setDisplayPrice] = useState<{ total: number; final: number; discount: number } | null>(null);
-  const totalPrice = displayPrice?.total ?? cartTotal;
+  const totalPrice = displayPrice?.total ?? safeCartTotal;
   const finalPrice = displayPrice?.final ?? cartFinalPrice;
 
   // Prevent duplicate InitiateCheckout events when cart/price state updates.
