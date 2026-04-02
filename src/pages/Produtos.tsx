@@ -36,6 +36,7 @@ import swFivem from "@/assets/games/sw-fivem.webp";
 import swPubg from "@/assets/games/sw-pubg.webp";
 import swMarvelRivals from "@/assets/games/sw-marvel-rivals.webp";
 import swDayz from "@/assets/games/sw-dayz.webp";
+import swSquad from "@/assets/games/sw-squad.webp";
 import swArcRaiders from "@/assets/games/sw-arc-raiders.webp";
 import swArenaBreakout from "@/assets/games/sw-arena-breakout.webp";
 import swSpoofers from "@/assets/games/sw-spoofers.webp";
@@ -126,7 +127,6 @@ const softwareImageMap: Record<string, string> = {
   'overwatch 2': swOverwatch,
   'overwatch-2': swOverwatch,
   fivem: swFivem,
-  fivem: swFivem,
   pubg: swPubg,
   dayz: swDayz,
   squad: swSquad,
@@ -159,7 +159,6 @@ const softwareCharacterOverlayMap: Record<string, { bg: string; character: strin
   'counter-strike 2 (free)': { bg: bgCardCs2, character: cs2Normal, characterHover: cs2Hover },
   rust: { bg: bgCardRust, character: rustNormal, characterHover: rustHover },
   dayz: { bg: bgCardDayz, character: dayzNormal, characterHover: dayzHover },
-  fivem: { bg: bgCardFivem, character: fivemNormal, characterHover: fivemHover },
   fivem: { bg: bgCardFivem, character: fivemNormal, characterHover: fivemHover },
   'marvel rivals': { bg: bgCardRivals, character: rivalsNormal, characterHover: rivalsHover },
   'marvel-rivals': { bg: bgCardRivals, character: rivalsNormal, characterHover: rivalsHover },
