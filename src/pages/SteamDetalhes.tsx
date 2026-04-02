@@ -4,37 +4,55 @@ import { useQuery } from "@tanstack/react-query";
 import { safeJsonFetch, ApiError } from "@/lib/apiUtils";
 import Header from "@/components/Header";
 import {
-  ArrowLeft, Shield, Loader2, ChevronLeft, ChevronRight,
-  CheckCircle2, ShoppingCart, Star, X, Zap, Trophy, Globe, History,
-  Gamepad2, AlertTriangle, ExternalLink, Swords
+  ArrowLeft,
+  Shield,
+  ShoppingCart,
+  CheckCircle2,
+  Zap,
+  Trophy,
+  Globe,
+  History,
+  Gamepad2,
+  AlertTriangle,
+  ExternalLink,
+  Swords,
+  Search,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "@/hooks/use-toast";
 import { useLztMarkup } from "@/hooks/useLztMarkup";
 import { trackViewContent, trackInitiateCheckout } from "@/lib/metaPixel";
 import { checkLztAvailability } from "@/lib/lztAvailability";
+import { formatSteamPlaytime, normalizeSteamGamesFromRaw, type SteamLibGame } from "@/lib/steamLzt";
+
+const PROJECT_FALLBACK = "https://cthqzetkshrbsjulfytl.supabase.co";
 
 const getProxiedImageUrl = (url: string) => {
   if (!url) return "";
-  if (url.includes("lzt.market") || url.includes("img.lzt.market") || url.includes("steamstatic.com") || url.includes("akamaihd.net")) {
-    const projectUrl = import.meta.env.VITE_SUPABASE_URL;
+  if (
+    url.includes("lzt.market") ||
+    url.includes("img.lzt.market") ||
+    url.includes("steamstatic.com") ||
+    url.includes("akamaihd.net") ||
+    url.includes("capes.dev")
+  ) {
+    const projectUrl = import.meta.env.VITE_SUPABASE_URL || PROJECT_FALLBACK;
     return `${projectUrl}/functions/v1/lzt-market?action=image-proxy&url=${encodeURIComponent(url)}`;
   }
   return url;
 };
 
 const fetchAccountDetail = async (itemId: string) => {
-  const projectUrl = import.meta.env.VITE_SUPABASE_URL || 'https://cthqzetkshrbsjulfytl.supabase.co';
+  const projectUrl = import.meta.env.VITE_SUPABASE_URL || PROJECT_FALLBACK;
   const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-  
+
   try {
     return await safeJsonFetch(
       `${projectUrl}/functions/v1/lzt-market?action=detail&item_id=${encodeURIComponent(itemId)}&game_type=steam`,
-      { headers: { apikey: anonKey } }
+      { headers: { apikey: anonKey } },
     );
-  } catch (err: any) {
+  } catch (err: unknown) {
     if (err instanceof ApiError) {
       if (err.status === 410) {
         throw new Error("Esta conta já foi vendida ou não está mais disponível.");
@@ -45,11 +63,17 @@ const fetchAccountDetail = async (itemId: string) => {
   }
 };
 
+type InvRow = { image?: string; name?: string; type?: string; rarity_color?: string };
+
+const LIBRARY_PAGE = 36;
+
 const SteamDetalhes = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { getPrice, getDisplayPrice } = useLztMarkup();
   const { addItem } = useCart();
+  const [libraryQuery, setLibraryQuery] = useState("");
+  const [libraryVisible, setLibraryVisible] = useState(LIBRARY_PAGE);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["lzt-account-detail", "steam", id],
@@ -60,37 +84,58 @@ const SteamDetalhes = () => {
   });
 
   const item = data?.item;
-  const raw = item || {};
+  const raw = (item || {}) as Record<string, unknown>;
 
-  // Steam specific data
-  const steamGames = useMemo(() => {
-    if (Array.isArray(raw.steamGames)) return raw.steamGames;
-    if (raw.steam_games_list) return raw.steam_games_list;
-    return [];
-  }, [raw.steamGames, raw.steam_games_list]);
+  const steamGames: SteamLibGame[] = useMemo(
+    () => normalizeSteamGamesFromRaw((item || {}) as Record<string, unknown>),
+    [item],
+  );
 
-  const steamLevel = raw.steam_level || 0;
+  const gameCountListed = useMemo(() => {
+    const r = (item || {}) as Record<string, unknown>;
+    const n = Number(r.steam_games_count ?? r.games_count ?? r.total_games);
+    if (Number.isFinite(n) && n > 0) return Math.min(Math.floor(n), 99999);
+    return steamGames.length;
+  }, [item, steamGames.length]);
+
+  useEffect(() => {
+    setLibraryQuery("");
+    setLibraryVisible(LIBRARY_PAGE);
+  }, [id]);
+
+  const steamLevel = Number(raw.steam_level || 0);
   const hasPrime = raw.steam_prime === "Yes" || raw.steam_prime === true || !!raw.cs2_prime;
   const hasVac = !!raw.steam_vac_ban;
+  const hasCommunityBan = !!raw.steam_community_ban;
   const steamId = raw.steam_id;
-  
-  // CS2 Specifics from raw data
+  const invCount = Number(raw.steam_inventory_items_count || 0);
+
   const cs2Elo = raw.premier_elo || raw.cs2_elo || raw.premier_elo_min;
   const cs2Wins = raw.cs2_win || raw.cs2_wins || raw.cs2_win_min;
   const faceitLevel = raw.faceit_lvl || raw.faceit_level || raw.faceit_lvl_min;
   const medalsCount = raw.medals_count || raw.medals || raw.medals_min;
 
+  const hasCs2Stats = !!(cs2Elo || cs2Wins || faceitLevel || medalsCount || hasPrime);
+
   const cleanedTitle = useMemo(() => {
-    let t = item?.title || "";
-    // Remove cyrillic
-    t = t.replace(/[А-Яа-я]/g, '').trim();
+    let t = String(item?.title || "");
+    t = t.replace(/[А-Яа-я]/g, "").trim();
     if (!t || t.toLowerCase() === "kuki" || t.length < 3) {
-      const eloPart = cs2Elo ? ` [${cs2Elo} ELO]` : "";
-      const medalsPart = medalsCount ? ` [${medalsCount} Medalhas]` : "";
-      return `Conta Steam / CS2${eloPart}${medalsPart}`;
+      const parts = ["Conta Steam"];
+      if (steamLevel > 0) parts.push(`Nv.${steamLevel}`);
+      if (gameCountListed > 0) parts.push(`${gameCountListed} jogos`);
+      if (cs2Elo) parts.push(`CS2 ${cs2Elo} ELO`);
+      else if (invCount > 0) parts.push(`${invCount} itens inv.`);
+      return parts.join(" · ");
     }
     return t;
-  }, [item?.title, cs2Elo, medalsCount]);
+  }, [item?.title, steamLevel, gameCountListed, cs2Elo, invCount]);
+
+  const filteredGames = useMemo(() => {
+    const q = libraryQuery.trim().toLowerCase();
+    if (!q) return steamGames;
+    return steamGames.filter((g) => (g.name || "").toLowerCase().includes(q) || String(g.appid || "").includes(q));
+  }, [steamGames, libraryQuery]);
 
   const viewTracked = useRef(false);
   useEffect(() => {
@@ -102,15 +147,15 @@ const SteamDetalhes = () => {
       trackViewContent({
         contentName: cleanedTitle,
         contentIds: [String(item.item_id)],
-        value: getPrice(item),
-        currency: "BRL"
+        value: getPrice(item, "steam"),
+        currency: "BRL",
       });
     }
   }, [item, getPrice, cleanedTitle]);
 
   const handleAddToCart = async () => {
     if (!item) return;
-    
+
     const isStillAvailable = await checkLztAvailability(String(item.item_id), "steam");
     if (!isStillAvailable) {
       toast({
@@ -124,8 +169,8 @@ const SteamDetalhes = () => {
     trackInitiateCheckout({
       contentName: cleanedTitle,
       contentIds: [item.item_id],
-      value: getPrice(item),
-      currency: "BRL"
+      value: getPrice(item, "steam"),
+      currency: "BRL",
     });
 
     addItem({
@@ -133,12 +178,12 @@ const SteamDetalhes = () => {
       productName: cleanedTitle,
       productImage: "",
       planId: "steam-account",
-      planName: "Conta Steam / CS2",
-      price: getPrice(item),
+      planName: "Conta Steam",
+      price: getPrice(item, "steam"),
       type: "lzt-account",
-      lztItemId: item.item_id
+      lztItemId: item.item_id,
     });
-    
+
     toast({
       title: "Adicionado ao carrinho",
       description: "A conta Steam foi adicionada com sucesso.",
@@ -151,16 +196,16 @@ const SteamDetalhes = () => {
       <div className="min-h-screen bg-background">
         <Header />
         <div className="container mx-auto px-4 pt-24 pb-12">
-          <div className="flex flex-col lg:flex-row gap-8">
-            <div className="lg:w-2/3 space-y-6">
-              <div className="h-64 sm:h-96 w-full rounded-2xl bg-secondary/30 animate-pulse" />
+          <div className="flex flex-col gap-8 lg:flex-row">
+            <div className="space-y-6 lg:w-2/3">
+              <div className="h-64 w-full animate-pulse rounded-2xl bg-secondary/30 sm:h-96" />
               <div className="space-y-4">
-                <div className="h-8 w-3/4 bg-secondary/30 animate-pulse rounded" />
-                <div className="h-4 w-1/2 bg-secondary/30 animate-pulse rounded" />
+                <div className="h-8 w-3/4 animate-pulse rounded bg-secondary/30" />
+                <div className="h-4 w-1/2 animate-pulse rounded bg-secondary/30" />
               </div>
             </div>
             <div className="lg:w-1/3">
-              <div className="h-80 w-full rounded-2xl bg-secondary/30 animate-pulse" />
+              <div className="h-80 w-full animate-pulse rounded-2xl bg-secondary/30" />
             </div>
           </div>
         </div>
@@ -173,14 +218,17 @@ const SteamDetalhes = () => {
       <div className="min-h-screen bg-background">
         <Header />
         <div className="container mx-auto px-4 pt-32 text-center">
-          <div className="inline-flex h-20 w-20 items-center justify-center rounded-full bg-destructive/10 mb-6">
+          <div className="mb-6 inline-flex h-20 w-20 items-center justify-center rounded-full bg-destructive/10">
             <AlertTriangle className="h-10 w-10 text-destructive" />
           </div>
-          <h1 className="text-2xl font-bold mb-2">Ops! Algo deu errado</h1>
-          <p className="text-muted-foreground mb-8">
+          <h1 className="mb-2 text-2xl font-bold">Ops! Algo deu errado</h1>
+          <p className="mb-8 text-muted-foreground">
             {error instanceof Error ? error.message : "Não conseguimos carregar os detalhes desta conta."}
           </p>
-          <button onClick={() => navigate("/contas?game=steam")} className="rounded-xl bg-primary px-8 py-3 font-bold text-white transition-all hover:opacity-90 active:scale-95">
+          <button
+            onClick={() => navigate("/contas?game=steam")}
+            className="rounded-xl bg-primary px-8 py-3 font-bold text-white transition-all hover:opacity-90 active:scale-95"
+          >
             Voltar para a loja
           </button>
         </div>
@@ -188,12 +236,14 @@ const SteamDetalhes = () => {
     );
   }
 
+  const inventory = Array.isArray(raw.inventory) ? (raw.inventory as InvRow[]) : [];
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-24 sm:pb-12">
       <Header />
-      
+
       <div className="container mx-auto px-4 pt-24 pb-12">
-        <button 
+        <button
           onClick={() => navigate(-1)}
           className="group mb-6 flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
         >
@@ -203,18 +253,17 @@ const SteamDetalhes = () => {
           Voltar para listagem
         </button>
 
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Main Content */}
-          <div className="lg:w-2/3 space-y-8">
-            {/* Hero Section */}
+        <div className="flex flex-col gap-8 lg:flex-row">
+          <div className="space-y-8 lg:w-2/3">
             <div className="relative overflow-hidden rounded-3xl border border-border bg-card">
-              {/* Product Preview Image */}
-              <div className="relative h-64 sm:h-80 w-full overflow-hidden bg-secondary/20">
+              <div className="relative h-64 w-full overflow-hidden bg-secondary/20 sm:h-80">
                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(210,100%,50%,0.1),transparent_70%)]" />
                 {item.imagePreviewLinks?.direct?.main || item.imagePreviewLinks?.direct?.weapons ? (
-                  <img 
-                    src={getProxiedImageUrl(item.imagePreviewLinks?.direct?.main || item.imagePreviewLinks?.direct?.weapons)} 
-                    alt="Preview" 
+                  <img
+                    src={getProxiedImageUrl(
+                      item.imagePreviewLinks?.direct?.main || item.imagePreviewLinks?.direct?.weapons || "",
+                    )}
+                    alt="Preview"
                     className="h-full w-full object-contain p-4 drop-shadow-2xl"
                   />
                 ) : (
@@ -225,102 +274,133 @@ const SteamDetalhes = () => {
                 <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-card to-transparent" />
               </div>
 
-              <div className="relative z-10 p-6 sm:p-10 pt-0 -mt-12">
+              <div className="relative z-10 -mt-12 p-6 pt-0 sm:p-10">
                 <div className="mb-4 flex flex-wrap gap-2">
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-[hsl(210,100%,50%,0.1)] px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[hsl(210,100%,50%)]">
                     <Globe className="h-3 w-3" />
-                     CONTA STEAM / CS2
+                    Conta Steam
                   </span>
                   {hasPrime && (
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-500">
                       <Zap className="h-3 w-3" />
-                      Status Prime
+                      Prime
                     </span>
                   )}
                   {hasVac && (
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-destructive/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-destructive">
                       <AlertTriangle className="h-3 w-3" />
-                      Possui Banimento
+                      VAC
+                    </span>
+                  )}
+                  {hasCommunityBan && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-600">
+                      <AlertTriangle className="h-3 w-3" />
+                      Ban comunidade
                     </span>
                   )}
                 </div>
-                
-                <h1 className="text-2xl sm:text-4xl font-black text-foreground mb-4 leading-tight">
-                  {cleanedTitle}
-                </h1>
-                
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8">
-                  <div className="rounded-2xl bg-secondary/40 p-4 border border-border/50">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Nível Steam</p>
+
+                <h1 className="mb-2 text-2xl font-black leading-tight text-foreground sm:text-4xl">{cleanedTitle}</h1>
+                <p className="text-sm text-muted-foreground">
+                  Biblioteca e estatísticas conforme dados públicos agregados pelo LZT. CS2 aparece quando a conta tem stats
+                  de Counter-Strike 2.
+                </p>
+
+                <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
+                  <div className="rounded-2xl border border-border/50 bg-secondary/40 p-4">
+                    <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Nível Steam</p>
                     <p className="text-xl font-black text-foreground">{String(steamLevel)}</p>
                   </div>
-                  <div className="rounded-2xl bg-secondary/40 p-4 border border-border/50">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Jogos</p>
-                    <p className="text-xl font-black text-foreground">{steamGames.length}</p>
+                  <div className="rounded-2xl border border-border/50 bg-secondary/40 p-4">
+                    <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Jogos</p>
+                    <p className="text-xl font-black text-foreground">{gameCountListed}</p>
                   </div>
-                  <div className="rounded-2xl bg-secondary/40 p-4 border border-border/50">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Premier ELO</p>
-                    <p className="text-xl font-black text-primary">{cs2Elo ? `${cs2Elo}` : "N/A"}</p>
+                  <div className="rounded-2xl border border-border/50 bg-secondary/40 p-4">
+                    <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Itens inv. CS</p>
+                    <p className="text-xl font-black text-foreground">{invCount > 0 ? String(invCount) : "—"}</p>
                   </div>
-                  <div className="rounded-2xl bg-secondary/40 p-4 border border-border/50">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Região</p>
-                    <p className="text-sm font-black text-foreground">{item.steam_country === 'Bra' ? 'Brasil' : (item.steam_country || "Global")}</p>
+                  <div className="rounded-2xl border border-border/50 bg-secondary/40 p-4">
+                    <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Região</p>
+                    <p className="text-sm font-black text-foreground">
+                      {item.steam_country === "Bra" ? "Brasil" : item.steam_country || "—"}
+                    </p>
                   </div>
                 </div>
 
-                {(cs2Wins || faceitLevel || medalsCount) && (
-                  <div className="mt-4 flex flex-wrap gap-4">
-                    {cs2Wins && (
-                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-primary/5 border border-primary/10">
-                        <Swords className="h-3.5 w-3.5 text-primary" />
-                        <span className="text-xs font-bold text-foreground">{String(cs2Wins)} Vitórias</span>
-                      </div>
-                    )}
-                    {faceitLevel && (
-                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-orange-500/5 border border-orange-500/10">
-                        <Trophy className="h-3.5 w-3.5 text-orange-500" />
-                        <span className="text-xs font-bold text-foreground">Faceit Level {String(faceitLevel)}</span>
-                      </div>
-                    )}
-                    {medalsCount && (
-                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500/5 border border-amber-500/10">
-                        <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
-                        <span className="text-xs font-bold text-foreground">{String(medalsCount)} Medalhas</span>
-                      </div>
-                    )}
+                {hasCs2Stats && (
+                  <div className="mt-6 rounded-2xl border border-primary/20 bg-primary/5 p-4 sm:p-5">
+                    <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-foreground">
+                      <Swords className="h-4 w-4 text-primary" />
+                      Counter-Strike 2
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {cs2Elo != null && cs2Elo !== "" && (
+                        <span className="rounded-lg bg-card px-3 py-1.5 text-xs font-bold border border-border">
+                          Premier ELO: {String(cs2Elo)}
+                        </span>
+                      )}
+                      {cs2Wins != null && cs2Wins !== "" && (
+                        <span className="rounded-lg bg-card px-3 py-1.5 text-xs font-bold border border-border">
+                          Vitórias: {String(cs2Wins)}
+                        </span>
+                      )}
+                      {faceitLevel != null && faceitLevel !== "" && (
+                        <span className="rounded-lg bg-orange-500/10 px-3 py-1.5 text-xs font-bold text-orange-700 dark:text-orange-300 border border-orange-500/20">
+                          Faceit: {String(faceitLevel)}
+                        </span>
+                      )}
+                      {medalsCount != null && medalsCount !== "" && (
+                        <span className="rounded-lg bg-amber-500/10 px-3 py-1.5 text-xs font-bold border border-amber-500/20">
+                          Medalhas: {String(medalsCount)}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Inventory Section */}
-            {raw.inventory && Array.isArray(raw.inventory) && raw.inventory.length > 0 && (
+            {inventory.length > 0 && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-bold flex items-center gap-2">
+                  <h2 className="flex items-center gap-2 text-xl font-bold">
                     <Trophy className="h-5 w-5 text-amber-500" />
-                    Inventário e Skins
+                    Inventário CS2 (skins / itens)
                   </h2>
-                  <span className="text-xs text-muted-foreground font-medium">{raw.inventory.length} itens encontrados</span>
+                  <span className="text-xs font-medium text-muted-foreground">{inventory.length} itens</span>
                 </div>
-                
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                  {raw.inventory.map((invItem: any, idx: number) => (
-                    <div key={idx} className="flex flex-col rounded-xl border border-border bg-card overflow-hidden hover:border-primary/30 transition-all group">
-                      <div className="aspect-square relative bg-secondary/10 flex items-center justify-center p-4">
-                        <img 
-                          src={getProxiedImageUrl(invItem.image)} 
-                          alt={invItem.name} 
-                          className="w-full h-full object-contain group-hover:scale-110 transition-transform"
-                          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-                        />
-                        <div className="absolute bottom-1 right-1">
-                           <span className={invItem.rarity_color ? `h-2 w-2 rounded-full block shadow-[0_0_8px_currentColor]` : ""} style={{ color: invItem.rarity_color }} />
-                        </div>
+
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+                  {inventory.map((invItem, idx) => (
+                    <div
+                      key={`${invItem.name || "i"}-${idx}`}
+                      className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card transition-all hover:border-primary/30"
+                    >
+                      <div className="relative flex aspect-square items-center justify-center bg-secondary/10 p-4">
+                        {invItem.image ? (
+                          <img
+                            src={getProxiedImageUrl(invItem.image)}
+                            alt={invItem.name || ""}
+                            className="h-full w-full object-contain transition-transform group-hover:scale-110"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).style.display = "none";
+                            }}
+                          />
+                        ) : (
+                          <Gamepad2 className="h-8 w-8 text-muted-foreground/40" />
+                        )}
+                        {invItem.rarity_color ? (
+                          <div
+                            className="absolute bottom-1 right-1 h-2 w-2 rounded-full shadow-[0_0_8px_currentColor]"
+                            style={{ backgroundColor: String(invItem.rarity_color) }}
+                          />
+                        ) : null}
                       </div>
-                      <div className="p-2 border-t border-border/50">
-                        <p className="text-[10px] font-bold truncate text-foreground leading-tight">{invItem.name}</p>
-                        {invItem.type && <p className="text-[8px] text-muted-foreground font-medium truncate mt-0.5">{invItem.type}</p>}
+                      <div className="border-t border-border/50 p-2">
+                        <p className="truncate text-[10px] font-bold leading-tight text-foreground">{invItem.name || "Item"}</p>
+                        {invItem.type ? (
+                          <p className="mt-0.5 truncate text-[8px] font-medium text-muted-foreground">{invItem.type}</p>
+                        ) : null}
                       </div>
                     </div>
                   ))}
@@ -328,87 +408,124 @@ const SteamDetalhes = () => {
               </div>
             )}
 
-            {/* Games Section */}
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold flex items-center gap-2">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <h2 className="flex items-center gap-2 text-xl font-bold">
                   <Gamepad2 className="h-5 w-5 text-[hsl(210,100%,50%)]" />
-                  Biblioteca de Jogos
+                  Biblioteca de jogos
                 </h2>
-                <span className="text-xs text-muted-foreground font-medium">{steamGames.length} títulos encontrados</span>
+                <span className="text-xs font-medium text-muted-foreground">
+                  {filteredGames.length} de {steamGames.length} listados
+                </span>
               </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {steamGames.length > 0 ? (
-                  steamGames.slice(0, 12).map((game: any, idx: number) => (
-                    <div key={idx} className="flex items-center gap-4 rounded-xl border border-border bg-card p-3 hover:border-primary/30 transition-colors group">
-                      <div className="flex h-12 w-20 shrink-0 items-center justify-center rounded-lg bg-secondary/50 text-muted-foreground group-hover:text-primary transition-colors overflow-hidden">
-                        {game.appid || game.id ? (
-                          <img 
-                            src={`https://cdn.akamai.steamstatic.com/steam/apps/${game.appid || game.id}/header.jpg`}
-                            alt={game.name || "Game"}
-                            className="h-full w-full object-cover"
-                            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-                          />
-                        ) : (
-                          <Gamepad2 className="h-5 w-5" />
-                        )}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-bold truncate text-foreground">{game.name || game}</p>
-                        {game.hours && <p className="text-[10px] text-muted-foreground font-medium">{Math.floor(game.hours / 60)} horas jogadas</p>}
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="col-span-full py-12 text-center border-2 border-dashed border-border rounded-2xl">
-                    <History className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
-                    <p className="text-sm text-muted-foreground font-medium">Nenhum jogo detalhado disponível</p>
+
+              {steamGames.length > 0 ? (
+                <>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <input
+                      type="search"
+                      placeholder="Buscar jogo ou appid…"
+                      value={libraryQuery}
+                      onChange={(e) => {
+                        setLibraryQuery(e.target.value);
+                        setLibraryVisible(LIBRARY_PAGE);
+                      }}
+                      className="w-full rounded-xl border border-border bg-secondary/30 py-2.5 pl-10 pr-4 text-sm text-foreground outline-none focus:border-primary/50"
+                    />
                   </div>
-                )}
-              </div>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    {filteredGames.slice(0, libraryVisible).map((game, idx) => (
+                      <div
+                        key={`${game.appid ?? "g"}-${game.name ?? idx}-${idx}`}
+                        className="group flex items-center gap-4 rounded-xl border border-border bg-card p-3 transition-colors hover:border-primary/30"
+                      >
+                        <div className="flex h-12 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-secondary/50 text-muted-foreground transition-colors group-hover:text-primary">
+                          {game.appid ? (
+                            <img
+                              src={`https://cdn.akamai.steamstatic.com/steam/apps/${game.appid}/header.jpg`}
+                              alt={game.name || "Game"}
+                              className="h-full w-full object-cover"
+                              onError={(e) => {
+                                (e.currentTarget as HTMLImageElement).style.display = "none";
+                              }}
+                            />
+                          ) : (
+                            <Gamepad2 className="h-5 w-5" />
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-bold text-foreground">{game.name || `App ${game.appid ?? "?"}`}</p>
+                          {game.appid ? (
+                            <p className="text-[10px] text-muted-foreground">appid {game.appid}</p>
+                          ) : null}
+                          {formatSteamPlaytime(game.playtimeMinutes) ? (
+                            <p className="text-[10px] font-medium text-muted-foreground">
+                              {formatSteamPlaytime(game.playtimeMinutes)} jogadas
+                            </p>
+                          ) : null}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {filteredGames.length > libraryVisible ? (
+                    <button
+                      type="button"
+                      onClick={() => setLibraryVisible((v) => v + LIBRARY_PAGE)}
+                      className="w-full rounded-xl border border-border py-3 text-sm font-semibold text-foreground transition-colors hover:bg-secondary/50"
+                    >
+                      Carregar mais ({filteredGames.length - libraryVisible} restantes)
+                    </button>
+                  ) : null}
+                </>
+              ) : (
+                <div className="rounded-2xl border-2 border-dashed border-border py-12 text-center">
+                  <History className="mx-auto mb-3 h-10 w-10 text-muted-foreground/30" />
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Nenhum jogo detalhado nesta resposta. O anúncio ainda pode incluir jogos — dados vêm do snapshot LZT.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Sidebar / Actions */}
           <div className="lg:w-1/3">
             <div className="sticky top-28 space-y-6">
               <div className="overflow-hidden rounded-3xl border border-border bg-card shadow-xl shadow-primary/5">
                 <div className="p-6 sm:p-8">
                   <div className="mb-6">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] mb-2">Preço Promocional</p>
-                    <div className="flex items-center gap-3">
-                      <h2 className="text-4xl sm:text-5xl font-black text-foreground tracking-tighter">
-                        {getDisplayPrice(item)}
-                      </h2>
-                      <div className="flex flex-col">
-                        <span className="text-xs font-bold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded italic">-35% hoje</span>
-                      </div>
-                    </div>
+                    <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Preço</p>
+                    <h2 className="text-4xl font-black tracking-tighter text-foreground sm:text-5xl">
+                      {getDisplayPrice(item, "steam")}
+                    </h2>
                   </div>
 
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between text-sm py-2 border-b border-border/50">
-                      <span className="text-muted-foreground font-medium">Entrega</span>
-                      <span className="text-emerald-500 font-bold flex items-center gap-1.5"><Zap className="h-3.5 w-3.5 fill-current" /> Instantânea</span>
+                    <div className="flex items-center justify-between border-b border-border/50 py-2 text-sm">
+                      <span className="font-medium text-muted-foreground">Entrega</span>
+                      <span className="flex items-center gap-1.5 font-bold text-emerald-500">
+                        <Zap className="h-3.5 w-3.5 fill-current" /> Instantânea
+                      </span>
                     </div>
-                    <div className="flex items-center justify-between text-sm py-2 border-b border-border/50">
-                      <span className="text-muted-foreground font-medium">Disponibilidade</span>
-                      <span className="text-foreground font-bold flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-primary" /> Em estoque</span>
+                    <div className="flex items-center justify-between border-b border-border/50 py-2 text-sm">
+                      <span className="font-medium text-muted-foreground">Disponibilidade</span>
+                      <span className="flex items-center gap-1.5 font-bold text-foreground">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-primary" /> Em estoque
+                      </span>
                     </div>
-                    {steamId && (
-                      <div className="flex items-center justify-between text-sm py-2 border-b border-border/50">
-                        <span className="text-muted-foreground font-medium">Steam ID</span>
-                        <a 
-                          href={`https://steamcommunity.com/profiles/${steamId}`} 
-                          target="_blank" 
+                    {steamId ? (
+                      <div className="flex items-center justify-between border-b border-border/50 py-2 text-sm">
+                        <span className="font-medium text-muted-foreground">Steam ID</span>
+                        <a
+                          href={`https://steamcommunity.com/profiles/${steamId}`}
+                          target="_blank"
                           rel="noreferrer"
-                          className="text-primary hover:underline font-bold flex items-center gap-1"
+                          className="flex items-center gap-1 font-bold text-primary hover:underline"
                         >
-                          {String(steamId).slice(0, 10)}... <ExternalLink className="h-3 w-3" />
+                          {String(steamId).slice(0, 10)}… <ExternalLink className="h-3 w-3" />
                         </a>
                       </div>
-                    )}
+                    ) : null}
                   </div>
 
                   <button
@@ -420,28 +537,31 @@ const SteamDetalhes = () => {
                       Comprar agora
                     </div>
                   </button>
-                  
-                  <div className="mt-6 flex items-center justify-center gap-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                    <span className="flex items-center gap-1"><Shield className="h-3 w-3 text-emerald-500" /> Garantia Vitalícia</span>
+
+                  <div className="mt-6 flex items-center justify-center gap-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Shield className="h-3 w-3 text-emerald-500" /> Garantia
+                    </span>
                     <span className="h-1 w-1 rounded-full bg-border" />
-                    <span className="flex items-center gap-1"><Zap className="h-3 w-3 text-amber-500" /> Auto-entrega</span>
+                    <span className="flex items-center gap-1">
+                      <Zap className="h-3 w-3 text-amber-500" /> Auto-entrega
+                    </span>
                   </div>
                 </div>
               </div>
 
-              {/* Badges Box */}
               <div className="rounded-2xl border border-border bg-secondary/20 p-5">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-card border border-border">
+                <div className="mb-3 flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-card">
                     <Shield className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <p className="text-xs font-black text-foreground uppercase tracking-tight">Compra 100% Segura</p>
-                    <p className="text-[10px] text-muted-foreground">Sistema de criptografia SSL</p>
+                    <p className="text-xs font-black uppercase tracking-tight text-foreground">Compra segura</p>
+                    <p className="text-[10px] text-muted-foreground">Checkout criptografado</p>
                   </div>
                 </div>
-                <p className="text-[10px] leading-relaxed text-muted-foreground opacity-80 italic">
-                  * Todas as nossas contas Steam acompanham os dados originais (E-mail OG) para sua total segurança.
+                <p className="text-[10px] italic leading-relaxed text-muted-foreground opacity-80">
+                  Contas Steam com dados de entrega após a compra. Verifique VAC / ban antes de comprar.
                 </p>
               </div>
             </div>
@@ -449,28 +569,22 @@ const SteamDetalhes = () => {
         </div>
       </div>
 
-      {/* Sticky mobile bottom bar */}
-      {item && (
+      {item ? (
         <div className="fixed bottom-0 left-0 right-0 z-40 sm:hidden">
-          <div className="border-t border-border bg-card/95 backdrop-blur-xl px-4 py-3 safe-area-bottom">
+          <div className="safe-area-bottom border-t border-border bg-card/95 px-4 py-3 backdrop-blur-xl">
             <div className="flex items-center gap-3">
-              <div className="flex flex-col min-w-0">
-                <span className="text-lg font-bold leading-tight text-primary">
-                  {getDisplayPrice(item)}
-                </span>
-              </div>
+              <span className="min-w-0 text-lg font-bold leading-tight text-primary">{getDisplayPrice(item, "steam")}</span>
               <button
                 onClick={handleAddToCart}
-                className="flex flex-1 items-center justify-center gap-2 rounded-lg py-3 text-sm font-bold uppercase tracking-wider text-white transition-all active:scale-[0.98] bg-primary"
-                style={{ fontFamily: "'Valorant', sans-serif" }}
+                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary py-3 text-sm font-bold uppercase tracking-wider text-white transition-all active:scale-[0.98]"
               >
                 <ShoppingCart className="h-4 w-4" />
-                Comprar Agora
+                Comprar
               </button>
             </div>
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 };

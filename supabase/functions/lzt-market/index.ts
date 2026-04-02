@@ -160,6 +160,19 @@ function getContentCeilingBrl(item: LztItem, gameType?: string) {
     else if (rankStr.includes("VIP")) ceiling += 8;
     return Math.max(ceiling, MIN_PRICE_BRL);
   }
+  if (gameType === "steam" || gameType === "csgo" || gameType === "cs2") {
+    const inv = Number(item.steam_inventory_items_count || 0);
+    const steamLvl = Math.min(Number(item.steam_level || 0), 10000);
+    const games = Number(item.steam_games_count || item.games_count || 0);
+    let ceiling = inv * 1.2 + steamLvl * 0.4 + games * 2;
+    const elo = Number(item.premier_elo || item.cs2_elo || item.premier_elo_min || 0);
+    if (elo >= 20000) ceiling += 200;
+    else if (elo >= 12000) ceiling += 120;
+    else if (elo >= 8000) ceiling += 80;
+    else if (elo > 0) ceiling += 40;
+    if (item.cs2_prime === "1" || item.cs2_prime === true || item.steam_prime === "Yes") ceiling += 25;
+    return Math.max(ceiling, MIN_PRICE_BRL);
+  }
   // Valorant
   const skins = Number(item.riot_valorant_skin_count || 0);
   const knives = Number(item.riot_valorant_knife || item.riot_valorant_knife_count || 0);
@@ -303,7 +316,7 @@ Deno.serve(async (req) => {
     const [credRow, clientIdRow, lztConfigRow] = await Promise.all([
       supabaseAdmin.from("system_credentials").select("value").eq("env_key", "LZT_API_TOKEN").maybeSingle(),
       supabaseAdmin.from("system_credentials").select("value").eq("env_key", "LZT_CLIENT_ID").maybeSingle(),
-      supabaseAdmin.from("lzt_config").select("max_fetch_price, currency, markup_multiplier, markup_valorant, markup_lol, markup_fortnite, markup_minecraft").limit(1).maybeSingle(),
+      supabaseAdmin.from("lzt_config").select("max_fetch_price, currency, markup_multiplier, markup_valorant, markup_lol, markup_fortnite, markup_minecraft, markup_steam").limit(1).maybeSingle(),
     ]);
 
     // Provided token as fallback if DB is empty
@@ -519,6 +532,7 @@ Deno.serve(async (req) => {
     else if (gameType === "lol" && lztConfig?.markup_lol) activeMarkup = Number(lztConfig.markup_lol);
     else if (gameType === "minecraft" && lztConfig?.markup_minecraft) activeMarkup = Number(lztConfig.markup_minecraft);
     else if ((gameType === "riot" || gameType === "valorant") && lztConfig?.markup_valorant) activeMarkup = Number(lztConfig.markup_valorant);
+    else if ((gameType === "steam" || gameType === "csgo" || gameType === "cs2") && lztConfig?.markup_steam) activeMarkup = Number(lztConfig.markup_steam);
     else if (lztConfig?.markup_multiplier) activeMarkup = Number(lztConfig.markup_multiplier);
 
     // DETAIL: Get single item
@@ -556,6 +570,8 @@ Deno.serve(async (req) => {
         "faceit_lvl_min", "faceit_lvl_max",
         "steam_level_min", "steam_level_max",
         "cs2_prime",
+        "medals_min",
+        "medals_max",
       ];
 
       for (const p of allowedParams) {

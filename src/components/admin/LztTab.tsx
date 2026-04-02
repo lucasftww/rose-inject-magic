@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchAllRows } from "@/lib/supabaseAllRows";
 import { Loader2, DollarSign, TrendingUp, Settings, Save, ShoppingCart, RefreshCw, Copy, ExternalLink, ChevronLeft, ChevronRight, Search, Gamepad2, Tag } from "lucide-react";
@@ -13,6 +13,7 @@ interface LztConfig {
   markup_lol: number;
   markup_fortnite: number;
   markup_minecraft: number;
+  markup_steam: number;
 }
 
 interface LztSale {
@@ -37,6 +38,7 @@ const DEFAULT_CONFIG: LztConfig = {
   markup_lol: 3,
   markup_fortnite: 3,
   markup_minecraft: 3,
+  markup_steam: 3,
 };
 
 const gameMarkupFields = [
@@ -44,6 +46,7 @@ const gameMarkupFields = [
   { key: "markup_lol" as const, label: "League of Legends", color: "text-warning" },
   { key: "markup_fortnite" as const, label: "Fortnite", color: "text-info" },
   { key: "markup_minecraft" as const, label: "Minecraft", color: "text-positive" },
+  { key: "markup_steam" as const, label: "Steam", color: "text-cyan-400" },
 ];
 
 const LztTab = () => {
@@ -76,10 +79,11 @@ const LztTab = () => {
       markup_lol: String(resolved.markup_lol ?? resolved.markup_multiplier),
       markup_fortnite: String(resolved.markup_fortnite ?? resolved.markup_multiplier),
       markup_minecraft: String(resolved.markup_minecraft ?? resolved.markup_multiplier),
+      markup_steam: String(resolved.markup_steam ?? resolved.markup_multiplier),
     });
   };
 
-  const fetchOverrides = async () => {
+  const fetchOverrides = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from("lzt_price_overrides")
@@ -102,7 +106,7 @@ const LztTab = () => {
     } catch {
       setOverrides([]);
     }
-  };
+  }, []);
 
   // Per-game markup state
   const [markups, setMarkups] = useState({
@@ -110,16 +114,17 @@ const LztTab = () => {
     markup_lol: "2",
     markup_fortnite: "2",
     markup_minecraft: "2",
+    markup_steam: "2",
   });
 
   // Aggregated stats from DB (accurate, no row limit)
-  const [dbStats, setDbStats] = useState<any>(null);
+  const [dbStats, setDbStats] = useState<Record<string, unknown> | null>(null);
   const totalBought = dbStats ? Number(dbStats.total_bought) : 0;
   const totalSold = dbStats ? Number(dbStats.total_sold) : 0;
   const totalProfit = dbStats ? Number(dbStats.total_profit) : 0;
   const totalSalesCount = dbStats ? Number(dbStats.total_count) : allSales.length;
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const [configRes, statsRes] = await Promise.all([
@@ -149,9 +154,22 @@ const LztTab = () => {
             select: "id, metadata, created_at",
             order: { column: "created_at", ascending: false },
           });
-          const lztTickets = tickets.filter((t: any) => (t.metadata as any)?.type === "lzt-account");
-          sales = lztTickets.map((t: any) => {
-            const meta = t.metadata as any;
+          type TicketRow = { id: string; metadata?: unknown; created_at: string };
+          type LztMeta = {
+            type?: string;
+            lzt_item_id?: string;
+            price_paid?: number;
+            sell_price?: number;
+            account_name?: string;
+            title?: string;
+            game?: string | null;
+          };
+          const lztTickets = (tickets as TicketRow[]).filter((t) => {
+            const m = t.metadata as LztMeta | null | undefined;
+            return m?.type === "lzt-account";
+          });
+          sales = lztTickets.map((t) => {
+            const meta = t.metadata as LztMeta | undefined;
             return {
               id: t.id,
               lzt_item_id: meta?.lzt_item_id || "",
@@ -170,17 +188,21 @@ const LztTab = () => {
       }
 
       setAllSales(sales);
-    } catch (err: any) {
-      toast({ title: "Erro ao carregar dados LZT", description: err?.message || "Tente novamente.", variant: "destructive" });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Tente novamente.";
+      toast({ title: "Erro ao carregar dados LZT", description: msg, variant: "destructive" });
       applyConfig(null);
       setAllSales([]);
       setDbStats(null);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  useEffect(() => { fetchData(); fetchOverrides(); }, []);
+  useEffect(() => {
+    void fetchData();
+    void fetchOverrides();
+  }, [fetchData, fetchOverrides]);
 
   const handleSaveConfig = async () => {
     if (!config) return;
@@ -206,7 +228,7 @@ const LztTab = () => {
       max_fetch_price: p,
       currency: config.currency,
       ...parsedMarkups,
-    } as any;
+    };
 
     let error = null;
     let savedConfig: Partial<LztConfig> | null = null;
@@ -243,14 +265,11 @@ const LztTab = () => {
     toast({ title: "Copiado!" });
   };
 
-  const filteredSales = allSales.filter(sale => {
+  const filteredSales = allSales.filter((sale) => {
     if (!salesSearch.trim()) return true;
     const q = salesSearch.toLowerCase();
-    return (
-      sale.lzt_item_id.toLowerCase().includes(q) ||
-      (sale.title || "").toLowerCase().includes(q) ||
-      (sale.buyer_user_id || "").toLowerCase().includes(q)
-    );
+    const id = (sale.lzt_item_id || "").toLowerCase();
+    return id.includes(q) || (sale.title || "").toLowerCase().includes(q) || (sale.buyer_user_id || "").toLowerCase().includes(q);
   });
 
   const totalPages = Math.max(1, Math.ceil(filteredSales.length / SALES_PER_PAGE));
@@ -300,7 +319,7 @@ const LztTab = () => {
             <p className="text-xs text-muted-foreground mt-1">
               Defina o multiplicador de preço para cada jogo. Ex: 2x = conta de R$10 vende por R$20.
             </p>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
               {gameMarkupFields.map((field) => (
                 <div key={field.key} className="rounded-lg border border-border bg-secondary/30 p-4">
                   <label className={`text-xs font-bold ${field.color}`}>{field.label}</label>
@@ -439,8 +458,12 @@ const LztTab = () => {
                   setPriceItemId("");
                   setNewPrice("");
                   fetchOverrides();
-                } catch (err: any) {
-                  toast({ title: "Erro ao salvar", description: err.message, variant: "destructive" });
+                } catch (err: unknown) {
+                  toast({
+                    title: "Erro ao salvar",
+                    description: err instanceof Error ? err.message : "Falha desconhecida",
+                    variant: "destructive",
+                  });
                 }
                 setChangingPrice(false);
               }}

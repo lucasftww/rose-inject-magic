@@ -71,15 +71,17 @@ export function initErrorTracker() {
         });
       }
       return response;
-    } catch (err: any) {
+    } catch (err: unknown) {
       const url = typeof args[0] === 'string' ? args[0] : args[0] instanceof Request ? args[0].url : String(args[0]);
+      const message = err instanceof Error ? err.message : 'Network request failed';
+      const stack = err instanceof Error ? err.stack : undefined;
       saveError({
         id: typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Math.random().toString(36).substring(2),
         timestamp: new Date().toISOString(),
         type: 'network-error',
-        message: err?.message || 'Network request failed',
+        message,
         url,
-        stack: err?.stack,
+        stack,
       });
       throw err;
     }

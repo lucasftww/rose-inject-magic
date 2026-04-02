@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import { ChevronLeft, ChevronRight, ChevronDown, Search, SlidersHorizontal, DollarSign, Crosshair, Loader2, RefreshCw, Globe, TrendingUp, Star, Shield, Trophy, AlertTriangle, X, ArrowRight, Zap, Swords } from "lucide-react";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { throwApiError } from "@/lib/apiErrors";
+import { countSteamGamesOnListItem } from "@/lib/steamLzt";
 import { translateRegion } from "@/lib/regionTranslation";
 import { motion } from "framer-motion";
 import { Link, useSearchParams } from "react-router-dom";
@@ -309,6 +310,13 @@ interface LztItem {
   cs2_wins?: number;
   faceit_lvl?: number;
   faceit_level?: number;
+  steam_inventory_items_count?: number;
+  steam_games_count?: number;
+  games_count?: number;
+  steam_community_ban?: boolean;
+  steamGames?: unknown;
+  steam_games_list?: unknown;
+  steam_games?: unknown;
 }
 
 type LztMarketListResponse = {
@@ -414,7 +422,7 @@ const ValorantCard = memo(({ item, skinsMap, formatPrice }: { item: LztItem; ski
       return `Conta Valorant [${rankName}] [${skinCount} Skins]`;
     };
     if (shouldReplaceListingTitle(item.title, "valorant")) return synth();
-    let t = (item.title || "").replace(/[А-Яа-я]/g, "").trim();
+    const t = (item.title || "").replace(/[А-Яа-я]/g, "").trim();
     return t || synth();
   }, [item.title, rank, skinCount]);
 
@@ -682,18 +690,24 @@ LolCard.displayName = "LolCard";
 
 // ─── Steam Card ───
 const SteamCard = memo(({ item, formatPrice }: { item: LztItem; formatPrice: (price: number, currency?: string) => string }) => {
+  const gameCount = useMemo(() => countSteamGamesOnListItem(item as unknown as Record<string, unknown>), [item]);
+  const invSkins = item.steam_inventory_items_count ?? 0;
+  const steamLvl = item.steam_level ?? 0;
+
   const cleanedTitle = useMemo(() => {
     const synth = () => {
+      const parts: string[] = ["Conta Steam"];
+      if (steamLvl > 0) parts.push(`Nv.${steamLvl}`);
+      if (gameCount > 0) parts.push(`${gameCount} jogos`);
+      if (invSkins > 0) parts.push(`${invSkins} itens inv.`);
       const elo = item.premier_elo || item.cs2_elo || item.premier_elo_min;
-      const medals = item.medals_count || item.medals || item.medals_min;
-      const eloPart = elo ? ` [${elo} ELO]` : "";
-      const medalsPart = medals ? ` [${medals} Medalhas]` : "";
-      return `Conta Steam / CS2${eloPart}${medalsPart}`;
+      if (elo) parts.push(`CS2 ${elo} ELO`);
+      return parts.join(" · ");
     };
     if (shouldReplaceListingTitle(item.title, "steam")) return synth();
     const t = (item.title || "").replace(/[А-Яа-я]/g, "").trim();
     return t || synth();
-  }, [item.title, item.premier_elo, item.cs2_elo, item.premier_elo_min, item.medals_count, item.medals, item.medals_min]);
+  }, [item.title, item.premier_elo, item.cs2_elo, item.premier_elo_min, gameCount, invSkins, steamLvl]);
 
   const previewImage = item.imagePreviewLinks?.direct?.weapons || item.imagePreviewLinks?.direct?.main;
 
@@ -709,13 +723,23 @@ const SteamCard = memo(({ item, formatPrice }: { item: LztItem; formatPrice: (pr
         ) : (
           <div className="flex flex-col h-full w-full items-center justify-center gap-2 p-4 text-center">
             <Globe className="h-10 w-10 text-muted-foreground/30" />
-            <span className="text-[10px] font-medium text-muted-foreground/60 uppercase tracking-wider">Conta Steam / CS2</span>
+            <span className="text-[10px] font-medium text-muted-foreground/60 uppercase tracking-wider">Biblioteca Steam</span>
           </div>
         )}
-        <div className="absolute top-2 left-2 flex flex-col gap-1 z-[2]">
+        <div className="absolute top-2 left-2 flex flex-col gap-1 z-[2] max-w-[55%]">
+          {steamLvl > 0 && (
+            <span className="bg-[hsl(210,100%,50%)]/90 text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow-lg uppercase">
+              Nv. {steamLvl}
+            </span>
+          )}
+          {gameCount > 0 && (
+            <span className="bg-secondary/95 text-foreground text-[8px] font-bold px-1.5 py-0.5 rounded border border-border">
+              {gameCount} jogos
+            </span>
+          )}
           {(item.premier_elo_min || item.premier_elo || item.cs2_elo) && (
             <span className="bg-primary/90 text-primary-foreground text-[8px] font-black px-1.5 py-0.5 rounded shadow-lg uppercase">
-              {String(item.premier_elo || item.cs2_elo || item.premier_elo_min)} ELO
+              CS2 {String(item.premier_elo || item.cs2_elo || item.premier_elo_min)}
             </span>
           )}
           {(item.cs2_prime === "1" || item.cs2_prime === true || item.steam_prime === "Yes") && (
@@ -726,7 +750,17 @@ const SteamCard = memo(({ item, formatPrice }: { item: LztItem; formatPrice: (pr
         </div>
       </div>
       <div className="p-3 flex flex-col flex-1 gap-2">
-        <h3 className="text-xs font-bold text-foreground line-clamp-1">{cleanedTitle}</h3>
+        <h3 className="text-xs font-bold text-foreground line-clamp-2 leading-snug">{cleanedTitle}</h3>
+        {(invSkins > 0 || !!item.faceit_lvl || !!item.faceit_level) && (
+          <div className="flex flex-wrap gap-1 text-[9px] text-muted-foreground">
+            {invSkins > 0 && <span className="rounded bg-secondary/80 px-1.5 py-0.5">{invSkins} skins CS</span>}
+            {(item.faceit_lvl || item.faceit_level) != null && (
+              <span className="rounded bg-orange-500/10 px-1.5 py-0.5 text-orange-600 dark:text-orange-400">
+                Faceit {String(item.faceit_lvl ?? item.faceit_level)}
+              </span>
+            )}
+          </div>
+        )}
         <div className="flex items-center justify-between mt-auto pt-2 border-t border-border/30">
           <p className="text-sm sm:text-base font-bold text-[hsl(210,100%,50%)] tracking-tight">{formatPrice(item.price, item.price_currency)}</p>
           <ArrowRight className="h-3 w-3 text-muted-foreground group-hover:text-primary transition-colors" />
@@ -1106,37 +1140,64 @@ const Contas = () => {
   
   // ─── Persistent Cache (Session Storage) ───
   // Use session storage so when users navigate away and back, it's instant.
-  const fetchCacheRef = useRef(new Map<string, { items: LztItem[]; hasNextPage: boolean; currentPage: number; timestamp: number }>());
-  const MAX_CACHE_ENTRIES = 20;
+  type CacheEntry = { items: LztItem[]; hasNextPage: boolean; currentPage: number; timestamp: number };
 
-  // Hydrate memory cache once on mount
-  useEffect(() => {
+  const readLztCacheFromSession = (): Map<string, CacheEntry> => {
+    if (typeof window === "undefined") return new Map();
     try {
       const stored = sessionStorage.getItem("royal_lzt_cache");
       if (stored) {
-        const parsed = JSON.parse(stored);
-        fetchCacheRef.current = new Map(parsed);
+        const parsed = JSON.parse(stored) as [string, CacheEntry][];
+        return new Map(parsed);
       }
+    } catch { /* silent */ }
+    return new Map();
+  };
+
+  const fetchCacheRef = useRef(readLztCacheFromSession());
+  const MAX_CACHE_ENTRIES = 20;
+  const persistSessionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const flushCacheToSession = useCallback(() => {
+    try {
+      sessionStorage.setItem("royal_lzt_cache", JSON.stringify(Array.from(fetchCacheRef.current.entries())));
     } catch { /* silent */ }
   }, []);
 
-  const cacheSet = useCallback((key: string, value: { items: LztItem[]; hasNextPage: boolean; currentPage: number; timestamp: number }) => {
-    const cache = fetchCacheRef.current;
-    cache.set(key, value);
-    // Evict oldest entries
-    if (cache.size > MAX_CACHE_ENTRIES) {
-      let oldestKey = '';
-      let oldestTs = Infinity;
-      for (const [k, v] of cache) {
-        if (v.timestamp < oldestTs) { oldestTs = v.timestamp; oldestKey = k; }
+  useEffect(
+    () => () => {
+      if (persistSessionTimerRef.current) {
+        clearTimeout(persistSessionTimerRef.current);
+        persistSessionTimerRef.current = null;
       }
-      if (oldestKey) cache.delete(oldestKey);
-    }
-    // Persist to session storage
-    try {
-      sessionStorage.setItem("royal_lzt_cache", JSON.stringify(Array.from(cache.entries())));
-    } catch { /* silent */ }
-  }, []);
+      flushCacheToSession();
+    },
+    [flushCacheToSession],
+  );
+
+  const cacheSet = useCallback(
+    (key: string, value: CacheEntry) => {
+      const cache = fetchCacheRef.current;
+      cache.set(key, value);
+      if (cache.size > MAX_CACHE_ENTRIES) {
+        let oldestKey = "";
+        let oldestTs = Infinity;
+        for (const [k, v] of cache) {
+          if (v.timestamp < oldestTs) {
+            oldestTs = v.timestamp;
+            oldestKey = k;
+          }
+        }
+        if (oldestKey) cache.delete(oldestKey);
+      }
+      if (persistSessionTimerRef.current) clearTimeout(persistSessionTimerRef.current);
+      persistSessionTimerRef.current = setTimeout(() => {
+        persistSessionTimerRef.current = null;
+        flushCacheToSession();
+      }, 450);
+    },
+    [flushCacheToSession],
+  );
   const MAX_PAGES = 8;
   const [firstPageLoaded, setFirstPageLoaded] = useState(false);
 
@@ -1277,19 +1338,24 @@ const Contas = () => {
   );
   const [debouncedParamsKey, setDebouncedParamsKey] = useState(paramsKey);
   const prevNonTextRef = useRef(nonTextParamsKey);
+  const prevSearchTrimRef = useRef(searchQuery.trim());
   useEffect(() => {
-    // If non-text params changed (tab switch, rank click, etc.), fire immediately
     if (prevNonTextRef.current !== nonTextParamsKey) {
       prevNonTextRef.current = nonTextParamsKey;
       setDebouncedParamsKey(paramsKey);
+      prevSearchTrimRef.current = searchQuery.trim();
       return;
     }
-    // Only debounce text input changes (search, price, level fields)
-    const handler = setTimeout(() => {
+    const clearedSearch = prevSearchTrimRef.current !== "" && searchQuery.trim() === "";
+    prevSearchTrimRef.current = searchQuery.trim();
+    if (clearedSearch) {
       setDebouncedParamsKey(paramsKey);
-    }, 700); // Increased debounce to 700ms for better performance
+      return;
+    }
+    const delay = 320;
+    const handler = setTimeout(() => setDebouncedParamsKey(paramsKey), delay);
     return () => clearTimeout(handler);
-  }, [paramsKey, nonTextParamsKey]);
+  }, [paramsKey, nonTextParamsKey, searchQuery]);
 
   const fetchWithRetry = useCallback(
     async (
@@ -1422,7 +1488,7 @@ const Contas = () => {
       if (tab === "valorant") qp.append("country[]", "Bra");
       if (tab === "lol") qp.append("lol_region[]", "BR1");
 
-      const delayMs = delayMultiplier * 2500;
+      const delayMs = delayMultiplier * 900;
       const timeoutId = setTimeout(() => {
         if (runId !== prefetchRunIdRef.current) return;
         void (async () => {
@@ -1466,19 +1532,22 @@ const Contas = () => {
       setDisplayPage(1);
       setFirstPageLoaded(true);
       setHasNextPage(prefetched.hasNextPage);
-      // Still fetch fresh data in background
-      try {
-        const data = await fetchWithRetry(buildParams(1), controller);
-        if (controller.signal.aborted) return;
-        const items: LztItem[] = data?.items ?? [];
-        const hasMore = data?.hasNextPage ?? items.length >= 15;
-        // Don't wipe items, just silently update
-        setStreamedItems(items);
-        setHasNextPage(hasMore);
-        setCurrentPage(1);
-        cacheSet(cacheKey, { items, hasNextPage: hasMore, currentPage: 1, timestamp: Date.now() });
-      } catch { /* silent */ }
       prevGameTabRef.current = gameTab;
+      const paramsSnapshot = buildParams(1);
+      void (async () => {
+        try {
+          const data = await fetchWithRetry(paramsSnapshot, controller);
+          if (controller.signal.aborted) return;
+          const items: LztItem[] = data?.items ?? [];
+          const hasMore = data?.hasNextPage ?? items.length >= 15;
+          setStreamedItems(items);
+          setHasNextPage(hasMore);
+          setCurrentPage(1);
+          cacheSet(cacheKey, { items, hasNextPage: hasMore, currentPage: 1, timestamp: Date.now() });
+        } catch {
+          /* silent */
+        }
+      })();
       return;
     }
 
@@ -1498,7 +1567,7 @@ const Contas = () => {
   useEffect(() => {
     if (firstPageLoaded && streamedItems.length > 0) {
       // Re-enabled Staggered Prefetch (Safe from 429 API Rate Limit)
-      const timer = setTimeout(prefetchAdjacentTabs, 1500);
+      const timer = setTimeout(prefetchAdjacentTabs, 500);
       return () => clearTimeout(timer);
     }
   }, [firstPageLoaded, gameTab, prefetchAdjacentTabs]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -1551,7 +1620,7 @@ const Contas = () => {
       lol: "Contas LoL | Royal Store",
       fortnite: "Contas Fortnite | Royal Store",
       minecraft: "Contas Minecraft | Royal Store",
-      steam: "Contas CS2 / Steam | Royal Store",
+      steam: "Contas Steam | Royal Store",
     };
     document.title = titles[gameTab];
     return () => { document.title = "Royal Store"; };
@@ -1626,12 +1695,19 @@ const Contas = () => {
     }
     if (gameTab === "steam") {
       return filtered.sort((a, b) => {
-        // High quality score based on ELO and Prime status
+        const lvlA = Number(a.steam_level || 0);
+        const lvlB = Number(b.steam_level || 0);
+        const gamesA = countSteamGamesOnListItem(a as unknown as Record<string, unknown>);
+        const gamesB = countSteamGamesOnListItem(b as unknown as Record<string, unknown>);
+        const invA = Number(a.steam_inventory_items_count || 0);
+        const invB = Number(b.steam_inventory_items_count || 0);
         const primeA = (a.cs2_prime === "1" || a.cs2_prime === true || a.steam_prime === "Yes") ? 1 : 0;
         const primeB = (b.cs2_prime === "1" || b.cs2_prime === true || b.steam_prime === "Yes") ? 1 : 0;
         const eloA = Number(a.premier_elo || a.cs2_elo || a.premier_elo_min || 0);
         const eloB = Number(b.premier_elo || b.cs2_elo || b.premier_elo_min || 0);
-        
+        if (lvlB !== lvlA) return lvlB - lvlA;
+        if (gamesB !== gamesA) return gamesB - gamesA;
+        if (invB !== invA) return invB - invA;
         if (primeB !== primeA) return primeB - primeA;
         return eloB - eloA || getBrlPrice(a) - getBrlPrice(b);
       });
@@ -1955,73 +2031,79 @@ const Contas = () => {
         </>
       )}
 
-      {/* CS2 / Steam filters */}
+      {/* Steam: perfil + CS2 opcional */}
       {gameTab === "steam" && (
         <div className="space-y-4">
-          <div className="mt-6">
+          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-2">Conta Steam</p>
+          <div>
+            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
+              <Zap className="h-3.5 w-3.5 text-amber-500" /> Nível Steam (mín.)
+            </p>
+            <input type="number" placeholder="Ex: 10" value={steamLvlMin} onChange={(e) => { setSteamLvlMin(e.target.value); setDisplayPage(1); }}
+              className="w-full rounded-xl border border-border bg-secondary/30 py-2.5 px-4 text-sm text-foreground outline-none focus:border-primary/50 transition-all" />
+          </div>
+
+          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pt-2 border-t border-border/60">Counter-Strike 2 (opcional)</p>
+          <p className="text-[10px] text-muted-foreground leading-relaxed">
+            Filtros abaixo restringem contas com CS2 na biblioteca / stats de CS2. Deixe em branco para ver todo o catálogo Steam.
+          </p>
+
+          <div>
             <label className="flex cursor-pointer items-center gap-3">
               <div className="relative">
                 <input type="checkbox" checked={cs2Only} onChange={(e) => { setCs2Only(e.target.checked); setDisplayPage(1); }} className="peer sr-only" />
                 <div className="h-5 w-9 rounded-full border border-border bg-secondary transition-colors peer-checked:border-[hsl(210,100%,50%)] peer-checked:bg-[hsl(210,100%,50%)]" />
                 <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-foreground/60 transition-all peer-checked:left-[18px] peer-checked:bg-white" />
               </div>
-              <span className="text-xs font-bold text-foreground italic flex items-center gap-1.5"><Globe className="h-3.5 w-3.5 text-primary" /> Apenas CS2</span>
+              <span className="text-xs font-bold text-foreground flex items-center gap-1.5"><Swords className="h-3.5 w-3.5 text-primary" /> Só contas com CS2 (app 730)</span>
             </label>
           </div>
-          
-          <div className="mt-3">
+
+          <div>
             <label className="flex cursor-pointer items-center gap-3">
               <div className="relative">
                 <input type="checkbox" checked={cs2Prime} onChange={(e) => { setCs2Prime(e.target.checked); setDisplayPage(1); }} className="peer sr-only" />
                 <div className="h-5 w-9 rounded-full border border-border bg-secondary transition-colors peer-checked:border-emerald-500 peer-checked:bg-emerald-500" />
                 <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-foreground/60 transition-all peer-checked:left-[18px] peer-checked:bg-white" />
               </div>
-              <span className="text-xs font-bold text-foreground italic flex items-center gap-1.5"><Zap className="h-3.5 w-3.5 text-emerald-500" /> Apenas Prime</span>
+              <span className="text-xs font-bold text-foreground flex items-center gap-1.5"><Zap className="h-3.5 w-3.5 text-emerald-500" /> CS2 Prime / Steam Prime</span>
             </label>
           </div>
 
-          <div className="mt-4">
+          <div>
             <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
-              <Trophy className="h-3.5 w-3.5 text-primary" /> Premier ELO (Min)
+              <Trophy className="h-3.5 w-3.5 text-primary" /> Premier ELO CS2 (mín.)
             </p>
             <input type="number" placeholder="Ex: 15000" value={cs2EloMin} onChange={(e) => { setCs2EloMin(e.target.value); setDisplayPage(1); }}
               className="w-full rounded-xl border border-border bg-secondary/30 py-2.5 px-4 text-sm text-foreground placeholder:text-muted-foreground/40 outline-none focus:border-primary/50 transition-all" />
           </div>
 
-          <div className="grid grid-cols-2 gap-3 mt-4">
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2 flex items-center gap-1.5">
-                <Swords className="h-3 w-3" /> Wins
+                <Swords className="h-3 w-3" /> Vitórias CS2 (mín.)
               </p>
               <input type="number" placeholder="Min" value={cs2WinsMin} onChange={(e) => { setCs2WinsMin(e.target.value); setDisplayPage(1); }}
                 className="w-full rounded-xl border border-border bg-secondary/30 py-2 px-3 text-sm text-foreground outline-none focus:border-primary/50 transition-all" />
             </div>
             <div>
               <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2 flex items-center gap-1.5">
-                <Star className="h-3 w-3" /> Medals
+                <Star className="h-3 w-3" /> Medalhas (mín.)
               </p>
               <input type="number" placeholder="Min" value={cs2MedalsMin} onChange={(e) => { setCs2MedalsMin(e.target.value); setDisplayPage(1); }}
                 className="w-full rounded-xl border border-border bg-secondary/30 py-2 px-3 text-sm text-foreground outline-none focus:border-primary/50 transition-all" />
             </div>
           </div>
 
-          <div className="mt-4">
+          <div>
             <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
-              Nível Faceit (Mín)
+              Nível Faceit (mín.)
             </p>
             <select value={cs2FaceitLvlMin} onChange={(e) => { setCs2FaceitLvlMin(e.target.value); setDisplayPage(1); }}
               className="w-full rounded-xl border border-border bg-secondary/30 py-2.5 px-4 text-sm text-foreground outline-none focus:border-primary/50 transition-all">
-              <option value="">Qualquer Level</option>
-              {[1,2,3,4,5,6,7,8,9,10].map(l => <option key={l} value={l}>Level {l}</option>)}
+              <option value="">Qualquer</option>
+              {[1,2,3,4,5,6,7,8,9,10].map(l => <option key={l} value={l}>Nível {l}</option>)}
             </select>
-          </div>
-
-          <div className="mt-4">
-            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
-              <Zap className="h-3.5 w-3.5 text-amber-500" /> Nível Steam (Mín)
-            </p>
-            <input type="number" placeholder="Ex: 50" value={steamLvlMin} onChange={(e) => { setSteamLvlMin(e.target.value); setDisplayPage(1); }}
-              className="w-full rounded-xl border border-border bg-secondary/30 py-2.5 px-4 text-sm text-foreground outline-none focus:border-primary/50 transition-all" />
           </div>
         </div>
       )}
@@ -2146,7 +2228,7 @@ const Contas = () => {
             }`}
           >
             <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M11.968 0C5.358 0 0 5.358 0 11.968c0 3.336 1.365 6.353 3.568 8.529l.068.068.034.034 4.545 1.5c1.465-1.295 2.193-3.239 2.193-4.908V17.15c0-.602-.454-1.056-1.057-1.056H8.25c-.602 0-1.057-.454-1.057-1.057V12.1c0-.602-.454-1.057-.852-1.057H5.284C4.68 11.043 4.227 10.59 4.227 9.986V7.15c0-.603.454-1.057 1.057-1.057H7.15c.603 0 1.057-.454 1.057-1.057v-1.1c0-.603.454-1.057 1.057-1.057h3.705c.603 0 1.057.454 1.057 1.057v1.1c0 .603.454 1.057 1.057 1.057h1.864c.603 0 1.057.454 1.057 1.057v2.836c0 .603-.454 1.057-1.057 1.057H15.11c-.432 0-.853.454-.853 1.057v2.932c0 .603.454 1.057 1.057 1.057h1.1c.603 0 1.057.454 1.057 1.057v.1c0 1.669.728 3.613 2.193 4.908l4.545-1.5.034-.034.068-.068C22.635 18.32 24 15.304 24 11.968 24 5.358 18.642 0 12.032 0h-.064z" /></svg>
-            <span className="leading-tight">Steam / CS2</span>
+            <span className="leading-tight">Steam</span>
           </button>
         </div>
 
@@ -2156,7 +2238,7 @@ const Contas = () => {
               {isValorant ? "Valorant" : isFortnite ? "Fortnite" : isMinecraft ? "Minecraft" : isSteam ? "Steam" : "League of Legends"}
             </p>
             <h1 className="mt-2 text-3xl font-bold text-foreground md:text-4xl" style={{ fontFamily: "'Valorant', sans-serif" }}>
-              {isValorant ? "CONTAS VALORANT" : isFortnite ? "CONTAS FORTNITE" : isMinecraft ? "CONTAS MINECRAFT" : isSteam ? "CONTAS STEAM / CS2" : "CONTAS LOL"}
+              {isValorant ? "CONTAS VALORANT" : isFortnite ? "CONTAS FORTNITE" : isMinecraft ? "CONTAS MINECRAFT" : isSteam ? "CONTAS STEAM" : "CONTAS LOL"}
             </h1>
             <p className="mt-2 text-sm text-muted-foreground">
               {streamError ? "Erro ao buscar contas" : isLoading ? "Buscando contas..." : `${allItems.length} contas · Página ${displayPage} de ${totalDisplayPages}`}
