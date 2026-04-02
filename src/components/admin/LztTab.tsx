@@ -136,7 +136,7 @@ const LztTab = () => {
       applyConfig((configRes.data as LztConfig | null) || null);
 
       if (statsRes.error) throw statsRes.error;
-      setDbStats(statsRes.data);
+      setDbStats(statsRes.data as Record<string, unknown>);
 
       let sales: LztSale[];
       try {

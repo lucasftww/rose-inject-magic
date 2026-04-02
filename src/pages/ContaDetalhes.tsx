@@ -355,7 +355,7 @@ const fetchValorantSkins = async (uuids: string[]) => {
   return final;
 };
 
-type SimpleGalleryItem = { name: string; image: string };
+type SimpleGalleryItem = { name: string; image: string; rarity?: { name: string; color: string } };
 
 const fetchValorantAgents = async (uuids: string[]): Promise<SimpleGalleryItem[]> => {
   const res = await fetch("https://valorant-api.com/v1/agents?isPlayableCharacter=true&language=pt-BR");
@@ -481,17 +481,24 @@ const ContaDetalhes = () => {
   const inventory = item?.valorantInventory;
 
   // ViewContent tracking
-  useEffect(() => {
+   useEffect(() => {
     if (item && !viewTracked.current) {
       viewTracked.current = true;
       const priceBRL = getPrice(item, "valorant");
+      let titleForTracking = item?.title || "";
+      titleForTracking = titleForTracking.replace(/[А-Яа-я]/g, '').trim();
+      if (!titleForTracking || titleForTracking.toLowerCase() === "kuki" || titleForTracking.length < 3) {
+        const rName = rank?.name || "Unranked";
+        const sc = item?.riot_valorant_skin_count ?? 0;
+        titleForTracking = `Conta Valorant [${rName}] [${sc} Skins]`;
+      }
       trackViewContent({
-        contentName: cleanedTitle,
+        contentName: titleForTracking,
         contentIds: [`lzt-${item.item_id}`],
         value: priceBRL
       });
     }
-  }, [item, getPrice, cleanedTitle]);
+  }, [item, getPrice, rank]);
 
   // Gallery from screenshots
   const gallery = useMemo(() => {
