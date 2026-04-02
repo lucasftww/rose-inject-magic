@@ -181,6 +181,12 @@ const en = {
     loading: "Loading...",
     skins: "skins",
   },
+  games: {
+    software: "software",
+    softwares: "softwares",
+    comingSoon: "Coming soon",
+    viewSoftwares: "View softwares",
+  },
 };
 
 export default en;

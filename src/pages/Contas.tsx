@@ -444,7 +444,13 @@ const ValorantCard = memo(({ item, skinsMap, formatPrice }: { item: LztItem; ski
           <p className="text-sm sm:text-base font-bold text-success tracking-tight">{formatPrice(item.price, item.price_currency)}</p>
           <button className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg bg-success py-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-success-foreground">
             Ver conta <ArrowRight className="h-2.5 w-2.5" />
-          </button>
+           </button>
+        </div>
+      </div>
+    </div>
+  );
+});
+
 const normalizeChampName = (name: string) => {
   if (!name) return "";
   // DDragon expects capitalized names, e.g. "Vayne", "Karma"
@@ -628,7 +634,7 @@ const SteamCard = memo(({ item, formatPrice }: { item: LztItem; formatPrice: (pr
     return t;
   }, [item.title, item.premier_elo, item.cs2_elo, item.premier_elo_min, item.medals_count, item.medals, item.medals_min]);
 
-  const previewImage = item.imagePreviewLinks?.direct?.weapons || item.imagePreviewLinks?.direct?.main;
+  const previewImage = item.imagePreviewLinks?.direct?.weapons || (item.imagePreviewLinks?.direct as any)?.main;
 
   return (
     <div
