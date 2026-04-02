@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef, useMemo, memo } from "react";
-import { useLztMarkup } from "@/hooks/useLztMarkup";
+import { useLztMarkup, getLztItemBrlPrice } from "@/hooks/useLztMarkup";
 import Header from "@/components/Header";
 import { ChevronLeft, ChevronRight, ChevronDown, Search, SlidersHorizontal, DollarSign, Crosshair, Loader2, RefreshCw, Globe, TrendingUp, Star, Shield, Trophy, AlertTriangle, X, ArrowRight, Zap, Swords } from "lucide-react";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -56,7 +56,6 @@ const getProxiedImageUrl = (url: string) => {
   return url;
 };
 
-import { checkLztAvailability } from "@/lib/lztAvailability";
 const MC_GREEN = "hsl(120,60%,45%)";
 
 // ─── Region options ───
@@ -229,9 +228,16 @@ interface LztItem {
   published_date?: number;
   view_count?: number;
   // Fortnite
+  fortnite_balance?: number;
   fortnite_vbucks?: number;
   fortnite_level?: number;
   fortnite_skin_count?: number;
+  fortniteSkins?: Array<{ id: string; title?: string }>;
+  fortnitePickaxe?: Array<{ id: string; title?: string }>;
+  lolInventory?: {
+    Champion?: number[];
+    Skin?: number[] | Record<string, number>;
+  } | null;
   valorantInventory?: {
     WeaponSkins?: string[];
     Agent?: string[];
@@ -240,7 +246,7 @@ interface LztItem {
     Skin?: string[];
   };
   imagePreviewLinks?: {
-    direct?: { weapons?: string; agents?: string; buddies?: string };
+    direct?: { weapons?: string; agents?: string; buddies?: string; main?: string };
   };
   // Server-calculated BRL price (with correct markup)
   price_brl?: number;
@@ -262,6 +268,14 @@ interface LztItem {
   faceit_lvl?: number;
   faceit_level?: number;
 }
+
+type LztMarketListResponse = {
+  items?: LztItem[];
+  hasNextPage?: boolean;
+  page?: number;
+  perPage?: number;
+  totalItems?: number;
+};
 
 // ─── Data fetchers ───
 
@@ -295,9 +309,14 @@ const fetchLolChampKeyMap = async (): Promise<Map<number, string>> => {
 
     const data = await safeJsonFetch(`https://ddragon.leagueoflegends.com/cdn/${version}/data/en_US/champion.json`);
     const map = new Map<number, string>();
-    for (const [internalName, champ] of Object.entries(data.data as Record<string, any>)) {
+    type ChampEntry = { key?: string };
+    const champions = (data?.data as Record<string, ChampEntry> | undefined) ?? {};
+    for (const [internalName, champ] of Object.entries(champions)) {
       // champ.key is the numeric ID as a string (e.g., "103")
-      map.set(parseInt((champ as any).key), internalName);
+      const keyStr = champ.key;
+      if (!keyStr) continue;
+      const parsed = parseInt(keyStr, 10);
+      if (Number.isFinite(parsed)) map.set(parsed, internalName);
     }
     return map;
   } catch (err) {
@@ -497,7 +516,7 @@ const LolCard = memo(({ item, champKeyMap, formatPrice }: { item: LztItem; champ
 
   // Resolve LoL skin IDs via lolInventory (não valorantInventory!)
   // skinId = champKey * 1000 + skinNum
-  const lolInventory = (item as any).lolInventory as { Champion?: number[]; Skin?: number[] | Record<string, number> } | null | undefined;
+  const lolInventory = item.lolInventory;
   const skinPreviews = useMemo(() => {
     // Tenta skins primeiro; se vazio, mostra campeões como preview
     // Skin pode vir como array ou objeto {"0": 555016, ...} — normaliza para array
@@ -544,7 +563,7 @@ const LolCard = memo(({ item, champKeyMap, formatPrice }: { item: LztItem; champ
     }
 
     return results;
-  }, [lolInventory?.Skin, lolInventory?.Champion, champKeyMap]);
+  }, [lolInventory, champKeyMap]);
 
   return (
     <div
@@ -654,7 +673,7 @@ const SteamCard = memo(({ item, formatPrice }: { item: LztItem; formatPrice: (pr
     return t;
   }, [item.title, item.premier_elo, item.cs2_elo, item.premier_elo_min, item.medals_count, item.medals, item.medals_min]);
 
-  const previewImage = item.imagePreviewLinks?.direct?.weapons || (item.imagePreviewLinks?.direct as any)?.main;
+  const previewImage = item.imagePreviewLinks?.direct?.weapons || item.imagePreviewLinks?.direct?.main;
 
   return (
     <div
@@ -699,10 +718,9 @@ SteamCard.displayName = "SteamCard";
 // ─── Fortnite Card ───
 const FortniteCard = memo(({ item, skinsDb, formatPrice }: { item: LztItem; skinsDb: Map<string, { name: string; image: string }>; formatPrice: (price: number, currency?: string) => string }) => {
   const navigate = useNavigate();
-  const raw = item as any;
-  const vbucks = raw.fortnite_balance ?? raw.fortnite_vbucks ?? 0;
-  const skinCount = raw.fortnite_skin_count ?? 0;
-  const level = raw.fortnite_level ?? 0;
+  const vbucks = item.fortnite_balance ?? item.fortnite_vbucks ?? 0;
+  const skinCount = item.fortnite_skin_count ?? 0;
+  const level = item.fortnite_level ?? 0;
 
   const cleanedTitle = useMemo(() => {
     let t = item.title || "";
@@ -716,7 +734,7 @@ const FortniteCard = memo(({ item, skinsDb, formatPrice }: { item: LztItem; skin
 
   // fortniteSkins is an array of { id, title, rarity } from LZT API
   const skinPreviews = useMemo(() => {
-    const fortniteSkins: { id: string; title: string }[] = Array.isArray(raw.fortniteSkins) ? raw.fortniteSkins : [];
+    const fortniteSkins: Array<{ id: string; title?: string }> = Array.isArray(item.fortniteSkins) ? item.fortniteSkins : [];
     const results: { name: string; image: string }[] = [];
     for (const s of fortniteSkins) {
       const found = skinsDb.get(String(s.id).toLowerCase());
@@ -733,7 +751,7 @@ const FortniteCard = memo(({ item, skinsDb, formatPrice }: { item: LztItem; skin
     }
     // If no skins, try pickaxes
     if (results.length === 0) {
-      const pickaxes: { id: string; title: string }[] = Array.isArray(raw.fortnitePickaxe) ? raw.fortnitePickaxe : [];
+      const pickaxes: Array<{ id: string; title?: string }> = Array.isArray(item.fortnitePickaxe) ? item.fortnitePickaxe : [];
       for (const p of pickaxes) {
         if (p.id === "defaultpickaxe") continue;
         const found = skinsDb.get(String(p.id).toLowerCase());
@@ -749,7 +767,7 @@ const FortniteCard = memo(({ item, skinsDb, formatPrice }: { item: LztItem; skin
       }
     }
     return results;
-  }, [raw.fortniteSkins, raw.fortnitePickaxe, skinsDb]);
+  }, [item.fortniteSkins, item.fortnitePickaxe, skinsDb]);
 
   return (
     <div
@@ -932,7 +950,10 @@ const waitWithAbort = (ms: number, signal: AbortSignal) =>
     signal.addEventListener("abort", onAbort, { once: true });
   });
 
-const fetchAccountsRaw = async (params: Record<string, string | string[]>, signal?: AbortSignal) => {
+const fetchAccountsRaw = async (
+  params: Record<string, string | string[]>,
+  signal?: AbortSignal
+): Promise<LztMarketListResponse> => {
   const queryParams = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) {
     if (Array.isArray(v)) v.forEach(val => queryParams.append(k, val));
@@ -943,18 +964,17 @@ const fetchAccountsRaw = async (params: Record<string, string | string[]>, signa
   const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
   
   try {
-    return await safeJsonFetch(`${projectUrl}/functions/v1/lzt-market?${queryParams.toString()}`, {
+    return await safeJsonFetch<LztMarketListResponse>(
+      `${projectUrl}/functions/v1/lzt-market?${queryParams.toString()}`,
+      {
       headers: { apikey: anonKey },
       signal,
-    });
-  } catch (err: any) {
+    }
+    );
+  } catch (err: unknown) {
     if (err instanceof ApiError) {
       if (err.status === 404) {
         throw new Error("O serviço de mercado não foi encontrado. Verifique a configuração da Supabase.");
-      }
-      const body = (err as any).response?.json().catch(() => null);
-      if (body?.detail) {
-        throw new Error(`${body.detail}`);
       }
       throwApiError(err.status || 500);
     }
@@ -1215,19 +1235,30 @@ const Contas = () => {
     return () => clearTimeout(handler);
   }, [paramsKey, nonTextParamsKey]);
 
-  const fetchWithRetry = useCallback(async (params: Record<string, string | string[]>, controller: AbortController, retries = 3): Promise<any> => {
+  const fetchWithRetry = useCallback(
+    async (
+      params: Record<string, string | string[]>,
+      controller: AbortController,
+      retries = 3
+    ): Promise<LztMarketListResponse> => {
     for (let attempt = 0; attempt <= retries; attempt++) {
       if (controller.signal.aborted) throw new Error("aborted");
       try {
         return await fetchAccountsRaw(params, controller.signal);
-      } catch (err: any) {
-        if (controller.signal.aborted || err?.name === "AbortError") throw err;
+      } catch (err: unknown) {
+        const errName =
+          typeof err === "object" && err !== null && "name" in err
+            ? String((err as { name?: unknown }).name ?? "")
+            : "";
+        if (controller.signal.aborted || errName === "AbortError") throw err;
         if (attempt >= retries) throw err;
         // Exponential backoff: 1s, 2s, 4s
         await waitWithAbort(1000 * Math.pow(2, attempt), controller.signal);
       }
     }
-  }, []);
+  },
+    [],
+  );
 
   const fetchMultiplePages = useCallback(async (controller: AbortController) => {
     const cacheKey = debouncedParamsKey;
@@ -1288,15 +1319,15 @@ const Contas = () => {
         currentPage: 1,
         timestamp: Date.now(),
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (!controller.signal.aborted) {
         setFirstPageLoaded(true);
         setIsRefetching(false);
-        setStreamError(err);
+        setStreamError(err instanceof Error ? err : new Error(String(err)));
         setStreamingDone(true);
       }
     }
-  }, [buildParams, debouncedParamsKey, fetchWithRetry, cacheSet]);
+  }, [buildParams, debouncedParamsKey, fetchWithRetry, cacheSet, gameTab]);
 
   // Prefetch adjacent game tabs in background for instant switching (staggered to avoid 429 Rate Limits)
   const prefetchRef = useRef(new Set<string>());
@@ -1420,8 +1451,10 @@ const Contas = () => {
         });
         return merged;
       });
-    } catch (err: any) {
-      if (!controller.signal.aborted) setStreamError(err);
+    } catch (err: unknown) {
+      if (!controller.signal.aborted) {
+        setStreamError(err instanceof Error ? err : new Error(String(err)));
+      }
     } finally {
       setLoadingMore(false);
     }
@@ -1445,10 +1478,15 @@ const Contas = () => {
     return () => { document.title = "Royal Store"; };
   }, [gameTab]);
 
-  // Helper: get BRL price for sorting (matches what user sees on screen)
-  const getBrlPrice = useCallback((item: LztItem): number => {
-    return item.price_brl && item.price_brl > 0 ? item.price_brl : 20;
-  }, []);
+  // Helper: get BRL price for sorting (same rules as getDisplayPrice / getPrice)
+  const getBrlPrice = useCallback(
+    (item: LztItem): number =>
+      getLztItemBrlPrice(
+        { price: item.price, price_currency: item.price_currency, price_brl: item.price_brl },
+        gameTab,
+      ),
+    [gameTab],
+  );
 
   const allItems = useMemo(() => {
     let filtered = [...streamedItems];
@@ -1488,8 +1526,8 @@ const Contas = () => {
     }
     if (gameTab === "fortnite") {
       return filtered.sort((a, b) => {
-        const skinsA = (a as any).fortnite_skin_count ?? 0;
-        const skinsB = (b as any).fortnite_skin_count ?? 0;
+        const skinsA = a.fortnite_skin_count ?? 0;
+        const skinsB = b.fortnite_skin_count ?? 0;
         const hasSkinA = skinsA > 0;
         const hasSkinB = skinsB > 0;
         if (hasSkinA && !hasSkinB) return -1;

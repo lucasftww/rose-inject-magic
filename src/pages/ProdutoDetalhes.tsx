@@ -191,6 +191,9 @@ const ProdutoDetalhes = () => {
 
   const viewTracked = useRef(false);
   useEffect(() => {
+    viewTracked.current = false;
+  }, [id]);
+  useEffect(() => {
     if (product && game && sortedPlans.length > 0 && !viewTracked.current) {
       viewTracked.current = true;
       const plan = sortedPlans[0];

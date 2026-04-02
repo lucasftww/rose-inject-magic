@@ -174,6 +174,9 @@ const FortniteDetalhes = () => {
   // ViewContent tracking
   const viewTracked = useRef(false);
   useEffect(() => {
+    viewTracked.current = false;
+  }, [id]);
+  useEffect(() => {
     if (item && !viewTracked.current) {
       viewTracked.current = true;
       const priceBRL = getPrice(item, "fortnite");
@@ -183,7 +186,7 @@ const FortniteDetalhes = () => {
         value: priceBRL,
       });
     }
-  }, [item, getPrice]);
+  }, [item, getPrice, cleanedTitle]);
 
   const [checkingAvailability, setCheckingAvailability] = useState(false);
 

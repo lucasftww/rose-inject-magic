@@ -9,7 +9,7 @@ import {
   Gamepad2, AlertTriangle, ExternalLink, Swords
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "@/hooks/use-toast";
 import { useLztMarkup } from "@/hooks/useLztMarkup";
@@ -92,11 +92,16 @@ const SteamDetalhes = () => {
     return t;
   }, [item?.title, cs2Elo, medalsCount]);
 
+  const viewTracked = useRef(false);
   useEffect(() => {
-    if (item) {
+    viewTracked.current = false;
+  }, [id]);
+  useEffect(() => {
+    if (item && !viewTracked.current) {
+      viewTracked.current = true;
       trackViewContent({
         contentName: cleanedTitle,
-        contentIds: [item.item_id],
+        contentIds: [String(item.item_id)],
         value: getPrice(item),
         currency: "BRL"
       });
@@ -106,7 +111,7 @@ const SteamDetalhes = () => {
   const handleAddToCart = async () => {
     if (!item) return;
     
-    const isStillAvailable = await checkLztAvailability(item.item_id, "steam");
+    const isStillAvailable = await checkLztAvailability(String(item.item_id), "steam");
     if (!isStillAvailable) {
       toast({
         title: "Conta indisponível",

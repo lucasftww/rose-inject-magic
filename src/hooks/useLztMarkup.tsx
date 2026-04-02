@@ -2,61 +2,73 @@ export type GameCategory = "valorant" | "lol" | "fortnite" | "minecraft" | "stea
 
 const MIN_PRICE_BRL = 20;
 
+export type LztPriceInput = {
+  price?: number;
+  price_currency?: string;
+  price_brl?: number;
+};
+
+function isValidPriceBrl(v: unknown): v is number {
+  return typeof v === "number" && Number.isFinite(v) && v > 0;
+}
+
+function coalesceNum(v: unknown, fallback = 0): number {
+  const n = Number(v);
+  return Number.isFinite(n) && n >= 0 ? n : fallback;
+}
+
+/**
+ * Fallback BRL when `price_brl` from the API is missing — keep in sync with edge `lzt-market` heuristics as much as practical.
+ */
+export function calcLztFallbackBrl(price: number, currency?: string, _game?: GameCategory): number {
+  const raw = coalesceNum(price);
+  const RUB_TO_BRL = 0.055;
+  const USD_TO_BRL = 6.10;
+  const MARKUP = 3.0;
+  const cur = String(currency || "rub").toLowerCase();
+
+  let brl = raw;
+  if (cur === "rub") brl = raw * RUB_TO_BRL * MARKUP;
+  else if (cur === "usd") brl = raw * USD_TO_BRL * MARKUP;
+  else brl = raw * 2.0;
+
+  const costBrl = cur === "rub" ? raw * RUB_TO_BRL : cur === "usd" ? raw * USD_TO_BRL : raw;
+  const minPrice = costBrl * 2.0;
+  if (brl < minPrice) brl = minPrice;
+
+  return brl < MIN_PRICE_BRL ? MIN_PRICE_BRL : brl;
+}
+
+/**
+ * Numeric BRL for display/sorting — prefers API `price_brl`, else fallback conversion.
+ */
+export function getLztItemBrlPrice(item: LztPriceInput, game?: GameCategory): number {
+  if (isValidPriceBrl(item.price_brl)) return item.price_brl;
+  return calcLztFallbackBrl(coalesceNum(item.price), item.price_currency, game);
+}
+
 export const useLztMarkup = () => {
-  /**
-   * Fallback only — prefer using item.price_brl from the API.
-   */
-  const calcPrice = (price: number, currency?: string, _game?: GameCategory): number => {
-    const RUB_TO_BRL = 0.055;
-    const USD_TO_BRL = 6.10;
-    const MARKUP = 3.0;
-    const cur = String(currency || "rub").toLowerCase();
-    
-    let brl = price;
-    if (cur === "rub") brl = price * RUB_TO_BRL * MARKUP;
-    else if (cur === "usd") brl = price * USD_TO_BRL * MARKUP;
-    else brl = price * 2.00; // BRL: increased to 2.00 for 50% margin
-    
-    // Safety: ensure minimum 50% margin even on fallback calculations
-    const costBrl = cur === "rub" ? price * RUB_TO_BRL : cur === "usd" ? price * USD_TO_BRL : price;
-    const minPrice = costBrl * 2.00; // Guarantee 50% margin
-    if (brl < minPrice) brl = minPrice;
-
-
-    return brl < MIN_PRICE_BRL ? MIN_PRICE_BRL : brl;
-  };
-
+  const calcPrice = (price: number, currency?: string, game?: GameCategory): number =>
+    calcLztFallbackBrl(price, currency, game);
 
   const formatPrice = (price: number, currency?: string, game?: GameCategory): string => {
-    return `R$ ${calcPrice(price, currency, game).toFixed(2)}`;
+    return `R$ ${calcLztFallbackBrl(coalesceNum(price), currency, game).toFixed(2)}`;
   };
 
-  /**
-   * Format a pre-calculated BRL price (from API's price_brl field).
-   * This is the PREFERRED method — uses server-side markup.
-   */
   const formatPriceBrl = (priceBrl: number): string => {
+    if (!Number.isFinite(priceBrl)) return "R$ —";
     return `R$ ${priceBrl.toFixed(2)}`;
   };
 
-  /**
-   * Smart price formatter: uses price_brl if available, falls back to calcPrice.
-   */
-  const getDisplayPrice = (item: { price: number; price_currency?: string; price_brl?: number }, game?: GameCategory): string => {
-    if (item.price_brl && item.price_brl > 0) {
+  const getDisplayPrice = (item: LztPriceInput, game?: GameCategory): string => {
+    if (isValidPriceBrl(item.price_brl)) {
       return formatPriceBrl(item.price_brl);
     }
-    return formatPrice(item.price, item.price_currency, game);
+    return formatPrice(coalesceNum(item.price), item.price_currency, game);
   };
 
-  /**
-   * Smart price calculator: uses price_brl if available, falls back to calcPrice.
-   */
-  const getPrice = (item: { price: number; price_currency?: string; price_brl?: number }, game?: GameCategory): number => {
-    if (item.price_brl && item.price_brl > 0) {
-      return item.price_brl;
-    }
-    return calcPrice(item.price, item.price_currency, game);
+  const getPrice = (item: LztPriceInput, game?: GameCategory): number => {
+    return getLztItemBrlPrice(item, game);
   };
 
   return { calcPrice, formatPrice, formatPriceBrl, getDisplayPrice, getPrice, getMarkupForGame: () => 3.0, config: null, markup: 3.0 };

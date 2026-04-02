@@ -48,11 +48,17 @@ const AdminGuard = ({ children }: { children: ReactNode }) => {
         }
 
         const layer1 = !roleCheck.error && !!roleCheck.data;
-        const layer2 = !adminVerify.error &&
-          typeof adminVerify.data === "object" &&
-          adminVerify.data !== null &&
-          (adminVerify.data as any).verified === true &&
-          (adminVerify.data as any).uid === user.id;
+
+        type AdminVerifyPayload = { verified?: boolean; uid?: string };
+        const payload =
+          typeof adminVerify.data === "object" && adminVerify.data !== null
+            ? (adminVerify.data as AdminVerifyPayload)
+            : null;
+        const layer2 =
+          !adminVerify.error &&
+          payload !== null &&
+          payload.verified === true &&
+          payload.uid === user.id;
 
         if (!cancelled) {
           setServerVerified(layer1 && layer2);

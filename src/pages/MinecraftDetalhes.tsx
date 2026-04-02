@@ -113,6 +113,9 @@ const MinecraftDetalhes = () => {
   // ViewContent tracking
   const viewTracked = useRef(false);
   useEffect(() => {
+    viewTracked.current = false;
+  }, [id]);
+  useEffect(() => {
     if (item && !viewTracked.current) {
       viewTracked.current = true;
       const priceBRL = getPrice(item, "minecraft");
@@ -122,7 +125,7 @@ const MinecraftDetalhes = () => {
         value: priceBRL,
       });
     }
-  }, [item, nickname, getPrice]);
+  }, [item, nickname, getPrice, cleanedTitle]);
 
   const [checkingAvailability, setCheckingAvailability] = useState(false);
 

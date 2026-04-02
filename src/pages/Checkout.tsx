@@ -65,9 +65,15 @@ const Checkout = () => {
   const totalPrice = displayPrice?.total ?? cartTotal;
   const finalPrice = displayPrice?.final ?? cartFinalPrice;
 
+  // Prevent duplicate InitiateCheckout events when cart/price state updates.
+  const didTrackInitiateCheckoutRef = useRef(false);
+
   // Track InitiateCheckout once when component mounts and items are loaded
   useEffect(() => {
-    if (!authLoading && user && items.length > 0) {
+    if (!authLoading && user?.id && items.length > 0) {
+      if (didTrackInitiateCheckoutRef.current) return;
+      didTrackInitiateCheckoutRef.current = true;
+
       const firstItem = items[0];
       import("@/lib/metaPixel").then(({ trackInitiateCheckout }) => {
         trackInitiateCheckout({
@@ -78,7 +84,7 @@ const Checkout = () => {
         });
       });
     }
-  }, [authLoading, !!user, items.length === 0]);
+  }, [authLoading, user?.id, items, cartFinalPrice]);
 
   // Eagerly set Advanced Matching as soon as form is semi-valid to warm up CAPI identity
   useEffect(() => {
@@ -100,7 +106,7 @@ const Checkout = () => {
     if (user?.email && !formData.email) {
       setFormData(prev => ({ ...prev, email: user.email! }));
     }
-  }, [authLoading, user, items.length, navigate, paymentId]);
+  }, [authLoading, user, items.length, navigate, paymentId, formData.email]);
 
   useEffect(() => {
     const isValid = 
@@ -109,13 +115,15 @@ const Checkout = () => {
       formData.phone.replace(/\D/g, "").length >= 10 &&
       formData.document.replace(/\D/g, "").length === 11;
     setFormValid(isValid);
-  }, [formData]);
+  }, [formData.name, formData.email, formData.phone, formData.document]);
 
   useEffect(() => {
     supabase.from("payment_settings").select("method, enabled").then(({ data }) => {
       if (data) {
         const map: Record<string, boolean> = {};
-        data.forEach((r: any) => { map[r.method] = r.enabled; });
+        (data as Array<{ method: string; enabled: boolean }>).forEach((r) => {
+          map[r.method] = r.enabled;
+        });
         setEnabledMethods(map);
       }
     });
@@ -123,7 +131,7 @@ const Checkout = () => {
 
   const buildCartSnapshot = () =>
     items.map((i) => {
-      const base: Record<string, any> = {
+      const base: Record<string, unknown> = {
         productId: i.productId,
         productName: i.productName,
         productImage: i.productImage,
@@ -134,7 +142,7 @@ const Checkout = () => {
       if (i.type === "lzt-account") {
         base.type = i.type;
         base.lztItemId = i.lztItemId;
-        base.lztGame = i.lztGame || (i as any).gameCategory || "";
+        base.lztGame = i.lztGame || "";
         // Send the displayed price so server can lock it (server still validates profitability)
         base.price = i.price;
         base.lztPrice = i.lztPrice;
@@ -191,9 +199,10 @@ const Checkout = () => {
       setDisplayPrice({ total: serverTotal + serverDiscount, final: serverTotal, discount: serverDiscount });
       setCartSnapshot([...items]);
       clearCart();
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
       console.error(err);
-      toast({ title: "Erro ao gerar PIX", description: err.message, variant: "destructive" });
+      toast({ title: "Erro ao gerar PIX", description: message, variant: "destructive" });
       setPaymentMethod(null);
     } finally {
       setLoading(false);
@@ -237,9 +246,10 @@ const Checkout = () => {
       clearCart();
       // Open the checkout URL in a new tab
       window.open(result.paymentUrl, "_blank");
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
       console.error(err);
-      toast({ title: "Erro ao gerar pagamento com cartão", description: err.message, variant: "destructive" });
+      toast({ title: "Erro ao gerar pagamento com cartão", description: message, variant: "destructive" });
       setPaymentMethod(null);
     } finally {
       setLoading(false);
@@ -281,9 +291,10 @@ const Checkout = () => {
       setDisplayPrice({ total: serverTotal + serverDiscount, final: serverTotal, discount: serverDiscount });
       setCartSnapshot([...items]);
       clearCart();
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
       console.error(err);
-      toast({ title: "Erro ao gerar pagamento USDT", description: err.message, variant: "destructive" });
+      toast({ title: "Erro ao gerar pagamento USDT", description: message, variant: "destructive" });
       setPaymentMethod(null);
     } finally {
       setLoading(false);

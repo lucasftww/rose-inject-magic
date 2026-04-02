@@ -76,21 +76,30 @@ const collectUuidStrings = (raw: unknown): string[] => {
   return Array.from(new Set(out));
 };
 
-// Resolve the best image from a skin object
-const resolveSkinImage = (s: any): string | null => {
-  if (s.displayIcon) return s.displayIcon;
+type SkinLike = {
+  displayIcon?: string | null;
+  levels?: Array<{ displayIcon?: string | null }>;
+  chromas?: Array<{ fullRender?: string | null; displayIcon?: string | null; swatch?: string | null }>;
+};
 
-  if (s.levels) {
-    for (const lvl of s.levels) {
-      if (lvl.displayIcon) return lvl.displayIcon;
+// Resolve the best image from a skin object
+const resolveSkinImage = (s: unknown): string | null => {
+  if (!s || typeof s !== "object") return null;
+  const skin = s as SkinLike;
+
+  if (skin.displayIcon) return skin.displayIcon;
+
+  if (Array.isArray(skin.levels)) {
+    for (const lvl of skin.levels) {
+      if (lvl?.displayIcon) return lvl.displayIcon;
     }
   }
 
-  if (s.chromas) {
-    for (const c of s.chromas) {
-      if (c.fullRender) return c.fullRender;
-      if (c.displayIcon) return c.displayIcon;
-      if (c.swatch) return c.swatch;
+  if (Array.isArray(skin.chromas)) {
+    for (const c of skin.chromas) {
+      if (c?.fullRender) return c.fullRender;
+      if (c?.displayIcon) return c.displayIcon;
+      if (c?.swatch) return c.swatch;
     }
   }
 
@@ -170,19 +179,31 @@ type ValorantSkinItem = {
   isPremiumHint: boolean;
 };
 
-const buildSkinLookup = (skins: any[]): Map<string, ValorantSkinItem> => {
+type ValorantSkinLike = {
+  contentTierUuid?: string | null;
+  displayName?: string;
+  uuid?: string | null;
+  levels?: Array<{ uuid?: string | null }>;
+  chromas?: Array<{ uuid?: string | null }>;
+};
+
+const buildSkinLookup = (skins: unknown[]): Map<string, ValorantSkinItem> => {
   const lookup = new Map<string, ValorantSkinItem>();
 
   for (const s of skins || []) {
     const image = resolveSkinImage(s);
     if (!image) continue;
 
-    const rawTier = (s.contentTierUuid || "").toLowerCase();
+    const skin = (s as Partial<ValorantSkinLike>) || {};
+    const displayName = typeof skin.displayName === "string" ? skin.displayName : "";
+    if (!displayName) continue;
+
+    const rawTier = (skin.contentTierUuid || "").toLowerCase();
     const rarityPriority = RARITY_PRIORITY[rawTier] || 0;
-    const { displayScore, isPremiumHint, lineageRank, weaponRank, effectiveRarity } = getSkinRankMeta(s.displayName, rarityPriority);
+    const { displayScore, isPremiumHint, lineageRank, weaponRank, effectiveRarity } = getSkinRankMeta(displayName, rarityPriority);
 
     const entry: ValorantSkinItem = {
-      name: s.displayName,
+      name: displayName,
       image,
       rarity: rawTier ? rarityMap[rawTier] || null : null,
       rarityPriority,
@@ -193,14 +214,18 @@ const buildSkinLookup = (skins: any[]): Map<string, ValorantSkinItem> => {
       isPremiumHint
     };
 
-    if (s.uuid) lookup.set(String(s.uuid).toLowerCase(), entry);
+    if (skin.uuid) lookup.set(String(skin.uuid).toLowerCase(), entry);
 
-    for (const level of s.levels || []) {
-      if (level?.uuid) lookup.set(String(level.uuid).toLowerCase(), entry);
+    if (Array.isArray(skin.levels)) {
+      for (const level of skin.levels) {
+        if (level?.uuid) lookup.set(String(level.uuid).toLowerCase(), entry);
+      }
     }
 
-    for (const chroma of s.chromas || []) {
-      if (chroma?.uuid) lookup.set(String(chroma.uuid).toLowerCase(), entry);
+    if (Array.isArray(skin.chromas)) {
+      for (const chroma of skin.chromas) {
+        if (chroma?.uuid) lookup.set(String(chroma.uuid).toLowerCase(), entry);
+      }
     }
   }
 
@@ -330,36 +355,63 @@ const fetchValorantSkins = async (uuids: string[]) => {
   return final;
 };
 
-const fetchValorantAgents = async (uuids: string[]) => {
+type SimpleGalleryItem = { name: string; image: string };
+
+const fetchValorantAgents = async (uuids: string[]): Promise<SimpleGalleryItem[]> => {
   const res = await fetch("https://valorant-api.com/v1/agents?isPlayableCharacter=true&language=pt-BR");
   if (!res.ok) return [];
-  const data = await res.json();
+  const data = (await res.json()) as unknown;
   const uuidSet = new Set(uuids.map((u) => u.toLowerCase()));
-  return (data.data || []).filter((a: any) => uuidSet.has(a.uuid?.toLowerCase())).map((a: any) => ({
-    name: a.displayName,
-    image: a.displayIcon
-  })).filter((a: any) => a.image);
+
+  const rows = typeof data === "object" && data && "data" in data ? (data as { data?: unknown }).data : undefined;
+  const list = Array.isArray(rows) ? rows : [];
+
+  return list
+    .filter((a): a is { uuid?: string; displayName?: string; displayIcon?: string } => {
+      if (!a || typeof a !== "object") return false;
+      const maybeUuid = (a as { uuid?: unknown }).uuid;
+      return typeof maybeUuid === "string" && uuidSet.has(maybeUuid.toLowerCase());
+    })
+    .map((a) => ({
+      name: typeof a.displayName === "string" ? a.displayName : "Agente",
+      image: typeof a.displayIcon === "string" ? a.displayIcon : "",
+    }))
+    .filter((a): a is SimpleGalleryItem => typeof a.image === "string" && a.image.length > 0);
 };
 
-const fetchValorantBuddies = async (uuids: string[]) => {
+const fetchValorantBuddies = async (uuids: string[]): Promise<SimpleGalleryItem[]> => {
   const res = await fetch("https://valorant-api.com/v1/buddies?language=pt-BR");
   if (!res.ok) return [];
-  const data = await res.json();
+  const data = (await res.json()) as unknown;
   // Buddy UUIDs from inventory might be level UUIDs, so check both
   const uuidSet = new Set(uuids.map((u) => u.toLowerCase()));
-  const matched: any[] = [];
-  for (const buddy of data.data || []) {
-    if (uuidSet.has(buddy.uuid?.toLowerCase())) {
-      matched.push({ name: buddy.displayName, image: buddy.displayIcon });
+  type BuddyLike = {
+    uuid?: string;
+    displayName?: string;
+    displayIcon?: string;
+    levels?: Array<{ uuid?: string; displayIcon?: string }>;
+  };
+
+  const rows = typeof data === "object" && data && "data" in data ? (data as { data?: unknown }).data : undefined;
+  const list = Array.isArray(rows) ? rows : [];
+
+  const typedMatched: SimpleGalleryItem[] = [];
+  for (const buddy of list) {
+    if (!buddy || typeof buddy !== "object") continue;
+    const b = buddy as BuddyLike;
+    if (typeof b.uuid === "string" && uuidSet.has(b.uuid.toLowerCase())) {
+      typedMatched.push({ name: b.displayName || "Buddy", image: b.displayIcon || "" });
     }
     // Also check levels
-    for (const level of buddy.levels || []) {
-      if (uuidSet.has(level.uuid?.toLowerCase())) {
-        matched.push({ name: buddy.displayName, image: level.displayIcon || buddy.displayIcon });
+    if (Array.isArray(b.levels)) {
+      for (const level of b.levels) {
+        if (level && typeof level.uuid === "string" && uuidSet.has(level.uuid.toLowerCase())) {
+          typedMatched.push({ name: b.displayName || "Buddy", image: level.displayIcon || b.displayIcon || "" });
+        }
       }
     }
   }
-  return matched.filter((b: any) => b.image);
+  return typedMatched.filter((x): x is SimpleGalleryItem => typeof x.image === "string" && x.image.length > 0);
 };
 
 const ContaDetalhes = () => {
@@ -369,15 +421,16 @@ const ContaDetalhes = () => {
   const [selectedSkin, setSelectedSkin] = useState(0);
   const [activeTab, setActiveTab] = useState<"skins" | "agents" | "buddies">("skins");
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const viewTracked = useRef(false);
 
   // Reset selectedSkin when account changes
   useEffect(() => {
     setSelectedSkin(0);
     setLightboxIndex(null);
     setActiveTab("skins");
+    viewTracked.current = false;
   }, [id]);
   const { addItem } = useCart();
-  const viewTracked = useRef(false);
 
   const [checkingAvailability, setCheckingAvailability] = useState(false);
 
@@ -438,7 +491,7 @@ const ContaDetalhes = () => {
         value: priceBRL
       });
     }
-  }, [item, getPrice]);
+  }, [item, getPrice, cleanedTitle]);
 
   // Gallery from screenshots
   const gallery = useMemo(() => {
@@ -783,7 +836,7 @@ const ContaDetalhes = () => {
                 {/* Items grid */}
                 {activeItems.length > 0 ?
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2.5 sm:gap-3">
-                    {activeItems.map((invItem: any, i: number) =>
+                    {activeItems.map((invItem, i) =>
               <motion.div
                 key={`${activeTab}-${i}`}
                 initial={{ opacity: 0, y: 10 }}
@@ -864,7 +917,7 @@ const ContaDetalhes = () => {
 
                           {/* Image */}
                           <div className="aspect-[4/3] bg-secondary/20 flex items-center justify-center p-8 border-b border-border">
-                            <img src={currentItem.image} alt={currentItem.name} className="max-h-full max-w-full object-contain" />
+                            <img src={getProxiedImageUrl(currentItem.image)} alt={currentItem.name} className="max-h-full max-w-full object-contain" />
                           </div>
 
                           {/* Info */}
