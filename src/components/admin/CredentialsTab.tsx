@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
 interface Credential {
-  id: string;
+  /** Opcional: bases legadas só têm env_key como chave única. */
+  id?: string;
   name: string;
   env_key: string;
   value: string;
@@ -64,6 +65,8 @@ const CredentialsTab = () => {
   const [visibleKeys, setVisibleKeys] = useState<Set<string>>(new Set());
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Credential | null>(null);
+  /** Linha em edição identificada por env_key (sempre existe; evita .eq("id", undefined) se não houver coluna id). */
+  const [editingRowEnvKey, setEditingRowEnvKey] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const [formName, setFormName] = useState("");
@@ -77,7 +80,12 @@ const CredentialsTab = () => {
       .from("system_credentials")
       .select("*")
       .order("created_at", { ascending: true });
-    if (!error && data) setCredentials(data as Credential[]);
+    if (error) {
+      toast({ title: "Erro ao carregar credenciais", description: error.message, variant: "destructive" });
+      setCredentials([]);
+    } else if (data) {
+      setCredentials(data as Credential[]);
+    }
     setLoading(false);
   };
 
@@ -104,16 +112,20 @@ const CredentialsTab = () => {
     setFormHelpUrl(preset.help_url);
     setFormValue("");
     setEditing(null);
+    setEditingRowEnvKey(null);
     setShowForm(true);
   };
 
   const resetForm = () => {
     setFormName(""); setFormEnvKey(""); setFormValue(""); setFormDescription(""); setFormHelpUrl("");
-    setEditing(null); setShowForm(false);
+    setEditing(null);
+    setEditingRowEnvKey(null);
+    setShowForm(false);
   };
 
   const openEdit = (cred: Credential) => {
     setEditing(cred);
+    setEditingRowEnvKey(cred.env_key);
     setFormName(cred.name);
     setFormEnvKey(cred.env_key);
     setFormValue(cred.value);
@@ -129,6 +141,12 @@ const CredentialsTab = () => {
     }
     setSaving(true);
     if (editing) {
+      const rowEnvKey = editingRowEnvKey || editing.env_key;
+      if (!rowEnvKey?.trim()) {
+        toast({ title: "Erro", description: "Chave ENV inválida para atualizar.", variant: "destructive" });
+        setSaving(false);
+        return;
+      }
       const { error } = await supabase
         .from("system_credentials")
         .update({
@@ -138,7 +156,7 @@ const CredentialsTab = () => {
           description: formDescription.trim() || null,
           help_url: formHelpUrl.trim() || null,
         })
-        .eq("id", editing.id);
+        .eq("env_key", rowEnvKey);
       if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
       else { toast({ title: "Credencial atualizada!" }); resetForm(); fetchCredentials(); }
     } else {
@@ -161,16 +179,16 @@ const CredentialsTab = () => {
 
   const handleDelete = async (cred: Credential) => {
     if (!confirm(`Excluir "${cred.name}"?`)) return;
-    const { error } = await supabase.from("system_credentials").delete().eq("id", cred.id);
+    const { error } = await supabase.from("system_credentials").delete().eq("env_key", cred.env_key);
     if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
     else { toast({ title: "Credencial excluída!" }); fetchCredentials(); }
   };
 
-  const toggleVisibility = (id: string) => {
+  const toggleVisibility = (envKey: string) => {
     setVisibleKeys((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(envKey)) next.delete(envKey);
+      else next.add(envKey);
       return next;
     });
   };
@@ -268,7 +286,7 @@ const CredentialsTab = () => {
             <p className="mt-1 text-sm">Clique em "Nova Credencial" para começar</p>
           </div>
         ) : credentials.map((cred) => (
-          <div key={cred.id} className="rounded-xl border border-border bg-card p-5">
+          <div key={cred.env_key} className="rounded-xl border border-border bg-card p-5">
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-start gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-success/10 text-success">
@@ -295,9 +313,9 @@ const CredentialsTab = () => {
                     <ExternalLink className="h-3.5 w-3.5" />
                   </a>
                 )}
-                <button onClick={() => toggleVisibility(cred.id)}
+                <button onClick={() => toggleVisibility(cred.env_key)}
                   className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground hover:border-success hover:text-success">
-                  {visibleKeys.has(cred.id) ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                  {visibleKeys.has(cred.env_key) ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                 </button>
                 <button onClick={() => openEdit(cred)}
                   className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground hover:border-accent hover:text-accent">
@@ -310,7 +328,7 @@ const CredentialsTab = () => {
               </div>
             </div>
 
-            {visibleKeys.has(cred.id) && (
+            {visibleKeys.has(cred.env_key) && (
               <div className="mt-3 rounded-lg border border-border bg-secondary/50 px-4 py-2.5">
                 <p className="text-xs font-mono text-foreground break-all">
                   {cred.value || <span className="text-muted-foreground italic">Sem valor definido</span>}
