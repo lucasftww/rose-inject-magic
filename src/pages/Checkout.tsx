@@ -190,6 +190,72 @@ const Checkout = () => {
     };
   };
 
+  const freeCheckoutClaimRef = useRef(false);
+
+  useEffect(() => {
+    if (authLoading || !user || items.length === 0 || paymentId || displayPrice !== null) return;
+    if (cartFinalPrice > 0) return;
+    if (freeCheckoutClaimRef.current) return;
+    freeCheckoutClaimRef.current = true;
+
+    void (async () => {
+      try {
+        const result = await safeJsonFetch<PixPaymentCreateResult>(
+          `${supabaseUrl}/functions/v1/pix-payment?action=create`,
+          {
+            method: "POST",
+            headers: await getAuthHeaders(),
+            body: JSON.stringify({
+              cart_snapshot: buildCartSnapshot(),
+              coupon_id: couponId,
+              meta_user_data: getUserData(),
+              customer_data: {
+                name: formData.name.trim() || user.email?.split("@")[0] || "Cliente",
+                email: formData.email.trim() || user.email || "",
+                phone: formData.phone,
+                document: formData.document,
+              },
+            }),
+          }
+        );
+        if (!result.success || !result.claimed_free) {
+          freeCheckoutClaimRef.current = false;
+          toast({
+            title: "Não foi possível concluir",
+            description: result.error || "Verifique o carrinho e tente de novo.",
+            variant: "destructive",
+          });
+          return;
+        }
+        clearCart();
+        if (result.ticket_id) {
+          toast({ title: "Pronto!", description: "Abrindo o pedido com o download." });
+          navigate(`/pedido/${result.ticket_id}`);
+        } else {
+          navigate("/meus-pedidos");
+        }
+      } catch (e: unknown) {
+        freeCheckoutClaimRef.current = false;
+        const msg = e instanceof Error ? e.message : String(e);
+        toast({ title: "Erro", description: msg, variant: "destructive" });
+      }
+    })();
+  }, [
+    authLoading,
+    user,
+    items,
+    paymentId,
+    displayPrice,
+    cartFinalPrice,
+    couponId,
+    formData.name,
+    formData.email,
+    formData.phone,
+    formData.document,
+    navigate,
+    clearCart,
+  ]);
+
   // PIX charge
   const createPixCharge = async () => {
     if (!user || loading) return;
@@ -218,6 +284,16 @@ const Checkout = () => {
         }
       );
       if (!result.success) throw new Error(result.error || "Erro ao criar cobrança");
+      if (result.claimed_free) {
+        clearCart();
+        if (result.ticket_id) {
+          toast({ title: "Pronto!", description: "Abrindo o pedido com o download." });
+          navigate(`/pedido/${result.ticket_id}`);
+        } else {
+          navigate("/meus-pedidos");
+        }
+        return;
+      }
       setPaymentId(result.payment_id ?? null);
       setChargeData(result.charge ?? null);
       // Use server-validated amount (price is locked to what customer saw)

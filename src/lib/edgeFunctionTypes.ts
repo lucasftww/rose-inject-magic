@@ -27,6 +27,9 @@ export interface PixPaymentCreateResult {
   charge?: PixPaymentCharge;
   paymentUrl?: string;
   crypto?: PixPaymentCrypto;
+  /** Carrinho R$ 0: servidor conclui sem PIX e entrega na hora */
+  claimed_free?: boolean;
+  ticket_id?: string | null;
 }
 
 export interface PixPaymentStatusResult {

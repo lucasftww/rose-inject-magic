@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef, useCallback, type ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
-import { Search, SlidersHorizontal, DollarSign, ArrowLeft, Loader2, Package, Tag, ArrowUpDown, UserCheck, X, ArrowRight, Star, Gamepad2, Gift, Shield } from "lucide-react";
+import { Search, SlidersHorizontal, DollarSign, ArrowLeft, Loader2, Package, Tag, ArrowUpDown, UserCheck, X, ArrowRight, Gamepad2, Gift, Shield, AlertCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -346,10 +346,16 @@ interface ProductFromDB {
   image_url: string | null;
   active: boolean;
   sort_order: number;
+  created_at?: string | null;
   robot_game_id: number | null;
   product_plans: ProductPlan[];
   _stockCount?: number;
 }
+
+const finitePlanPrice = (p: ProductPlan) => {
+  const n = Number(p.price);
+  return Number.isFinite(n) ? n : 0;
+};
 
 const fadeUp = {
   hidden: { opacity: 0, y: 15 },
@@ -379,9 +385,9 @@ const ProductCard = ({ product }: { product: ProductFromDB }) => {
   const lowestPrice = useMemo(() => {
     const activePlans = product.product_plans?.filter(p => p.active) || [];
     if (activePlans.length === 0) return null;
-    const paidPlans = activePlans.filter(p => Number(p.price) > 0);
-    if (paidPlans.length === 0) return Math.min(...activePlans.map(p => Number(p.price)));
-    return Math.min(...paidPlans.map(p => Number(p.price)));
+    const paidPlans = activePlans.filter(p => finitePlanPrice(p) > 0);
+    if (paidPlans.length === 0) return Math.min(...activePlans.map(p => finitePlanPrice(p)));
+    return Math.min(...paidPlans.map(p => finitePlanPrice(p)));
   }, [product.product_plans]);
 
   const isRobot = !!product.robot_game_id;
@@ -435,7 +441,19 @@ const ProductCard = ({ product }: { product: ProductFromDB }) => {
   );
 };
 
-const GameSelectScreen = ({ onSelect, games, loading }: { onSelect: (gameId: string) => void; games: GameFromDB[]; loading: boolean }) => {
+const GameSelectScreen = ({
+  onSelect,
+  games,
+  loading,
+  error,
+  onRetry,
+}: {
+  onSelect: (gameId: string) => void;
+  games: GameFromDB[];
+  loading: boolean;
+  error: string | null;
+  onRetry: () => void;
+}) => {
   const [gameSearch, setGameSearch] = useState("");
 
   const filteredBySearch = useMemo(() => {
@@ -487,7 +505,7 @@ const GameSelectScreen = ({ onSelect, games, loading }: { onSelect: (gameId: str
                 style={{ backdropFilter: 'blur(12px)' }}
               />
               {gameSearch && (
-                <button onClick={() => setGameSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md text-muted-foreground hover:text-foreground transition-colors">
+                <button type="button" onClick={() => setGameSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md text-muted-foreground hover:text-foreground transition-colors">
                   <X className="h-3.5 w-3.5" />
                 </button>
               )}
@@ -501,6 +519,23 @@ const GameSelectScreen = ({ onSelect, games, loading }: { onSelect: (gameId: str
           {Array.from({ length: 8 }).map((_, i) => (
              <Skeleton key={i} className="aspect-[16/11] w-full rounded-2xl" />
           ))}
+        </div>
+      ) : error ? (
+        <div className="mx-auto max-w-lg px-4 py-20 sm:py-28">
+          <div className="rounded-2xl border border-destructive/25 bg-destructive/[0.06] p-8 text-center">
+            <AlertCircle className="mx-auto h-11 w-11 text-destructive/85" aria-hidden />
+            <h2 className="mt-4 text-lg font-semibold text-foreground">Não foi possível carregar o catálogo</h2>
+            <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{error}</p>
+            <button
+              type="button"
+              onClick={onRetry}
+              disabled={loading}
+              className="mt-6 inline-flex items-center justify-center gap-2 rounded-xl bg-success px-5 py-2.5 text-sm font-bold text-success-foreground transition-opacity disabled:opacity-60 hover:opacity-95"
+            >
+              {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+              Tentar novamente
+            </button>
+          </div>
         </div>
       ) : filteredBySearch.length === 0 ? (
         <div className="py-32 text-center text-muted-foreground">
@@ -606,8 +641,10 @@ const Produtos = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [games, setGames] = useState<GameFromDB[]>([]);
   const [loadingGames, setLoadingGames] = useState(true);
+  const [gamesError, setGamesError] = useState<string | null>(null);
   const [products, setProducts] = useState<ProductFromDB[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
+  const [productsError, setProductsError] = useState<string | null>(null);
   const [selectedGame, setSelectedGame] = useState<string | null>(null);
   const [selectedPriceRange, setSelectedPriceRange] = useState(0);
   const [sortBy, setSortBy] = useState<typeof sortOptions[number]>("Mais Recentes");
@@ -616,82 +653,129 @@ const Produtos = () => {
   const [onlyWithPlans, setOnlyWithPlans] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
-  // Fetch games with real product counts
-  useEffect(() => {
-    const fetchGames = async () => {
+  const loadGames = useCallback(async () => {
+    setGamesError(null);
+    setLoadingGames(true);
+    try {
       const [gamesRes, productsRes] = await Promise.all([
         supabase.from("games").select("id, name, slug, image_url, active, sort_order").eq("active", true).order("sort_order", { ascending: true }),
         supabase.from("products").select("id, game_id").eq("active", true),
       ]);
 
-      if (gamesRes.data) {
-        const countMap: Record<string, number> = {};
-        (productsRes.data || []).forEach((p: any) => {
-          countMap[p.game_id] = (countMap[p.game_id] || 0) + 1;
-        });
-        setGames(gamesRes.data.map((g: any) => ({ ...g, product_count: countMap[g.id] || 0 })));
+      if (gamesRes.error) {
+        setGames([]);
+        setGamesError(gamesRes.error.message || "Não foi possível carregar a lista de jogos.");
+        return;
       }
+      if (productsRes.error) {
+        setGames([]);
+        setGamesError(
+          productsRes.error.message
+            ? `Não foi possível montar o catálogo: ${productsRes.error.message}`
+            : "Não foi possível carregar as informações dos produtos.",
+        );
+        return;
+      }
+
+      const countMap: Record<string, number> = {};
+      (productsRes.data || []).forEach((p: { game_id: string }) => {
+        countMap[p.game_id] = (countMap[p.game_id] || 0) + 1;
+      });
+      setGames((gamesRes.data || []).map((g: GameFromDB) => ({ ...g, product_count: countMap[g.id] || 0 })));
+    } catch (e) {
+      console.error("loadGames:", e);
+      setGames([]);
+      setGamesError(e instanceof Error ? e.message : "Erro de conexão. Verifique a internet e tente novamente.");
+    } finally {
       setLoadingGames(false);
-    };
-    fetchGames();
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadGames();
+  }, [loadGames]);
+
+  const loadProductsForGame = useCallback(async (gameId: string) => {
+    setProductsError(null);
+    setLoadingProducts(true);
+    try {
+      const { data, error } = await supabase
+        .from("products")
+        .select("id, name, description, image_url, active, sort_order, game_id, created_at, status, status_label, status_updated_at, features_text, robot_game_id, product_plans(*)")
+        .eq("game_id", gameId)
+        .eq("active", true)
+        .order("sort_order", { ascending: true });
+      if (error) {
+        setProducts([]);
+        setProductsError(error.message || "Não foi possível carregar os produtos deste jogo.");
+        return;
+      }
+      setProducts((data as ProductFromDB[]) ?? []);
+    } catch (e) {
+      console.error("loadProductsForGame:", e);
+      setProducts([]);
+      setProductsError(e instanceof Error ? e.message : "Erro de conexão. Verifique a internet e tente novamente.");
+    } finally {
+      setLoadingProducts(false);
+    }
   }, []);
 
   const handleGameSelect = useCallback(
     async (gameId: string) => {
-      const game = games.find((g) => g.id === gameId);
-      if (game && game.product_count === 1) {
-        const { data } = await supabase
-          .from("products")
-          .select("id")
-          .eq("game_id", gameId)
-          .eq("active", true)
-          .limit(1);
-        if (data && data.length === 1) {
-          navigate(`/produto/${data[0].id}`);
-          return;
+      try {
+        const game = games.find((g) => g.id === gameId);
+        if (game && game.product_count === 1) {
+          const { data } = await supabase
+            .from("products")
+            .select("id")
+            .eq("game_id", gameId)
+            .eq("active", true)
+            .limit(1);
+          if (data && data.length === 1) {
+            navigate(`/produto/${data[0].id}`);
+            return;
+          }
         }
+        setSelectedGame(gameId);
+      } catch (e) {
+        console.error("handleGameSelect:", e);
+        setSelectedGame(gameId);
       }
-      setSelectedGame(gameId);
     },
     [games, navigate],
   );
 
+  const deepLinkHandledParamRef = useRef<string | null>(null);
+
   // Deep link: /produtos?game=valorant (ou slug/nome) — igual aos cards da landing
   useEffect(() => {
+    const raw = searchParams.get("game")?.trim() ?? "";
+    if (!raw) {
+      deepLinkHandledParamRef.current = null;
+      return;
+    }
     if (loadingGames || games.length === 0 || selectedGame) return;
-    const raw = searchParams.get("game");
-    if (!raw?.trim()) return;
+    if (deepLinkHandledParamRef.current === raw) return;
     let decoded: string;
     try {
-      decoded = decodeURIComponent(raw.trim()).toLowerCase();
+      decoded = decodeURIComponent(raw).toLowerCase();
     } catch {
-      decoded = raw.trim().toLowerCase();
+      decoded = raw.toLowerCase();
     }
     const match = games.find((g) => getLookupKeys(g).some((k) => k === decoded));
-    if (match) void handleGameSelect(match.id);
+    if (!match) return;
+    deepLinkHandledParamRef.current = raw;
+    void handleGameSelect(match.id);
   }, [loadingGames, games, selectedGame, searchParams, handleGameSelect]);
 
-  // Fetch products when game is selected
   useEffect(() => {
-    if (!selectedGame) { setProducts([]); return; }
-    setLoadingProducts(true);
-    const fetchProducts = async () => {
-      try {
-        const { data } = await supabase
-          .from("products")
-          .select("id, name, description, image_url, active, sort_order, game_id, created_at, status, status_label, status_updated_at, features_text, robot_game_id, product_plans(*)")
-          .eq("game_id", selectedGame)
-          .eq("active", true)
-          .order("sort_order", { ascending: true });
-        if (data) setProducts(data as any);
-      } catch (err) {
-        console.error("Failed to fetch products:", err);
-      } finally {
-        setLoadingProducts(false);
-      }
-    };
-    fetchProducts();
-  }, [selectedGame]);
+    if (!selectedGame) {
+      setProducts([]);
+      setProductsError(null);
+      return;
+    }
+    void loadProductsForGame(selectedGame);
+  }, [selectedGame, loadProductsForGame]);
 
   // Available plan types from current products
   const availablePlanTypes = useMemo(() => {
@@ -722,22 +806,27 @@ const Produtos = () => {
         if (range.max === Infinity && range.min === 0) return true;
         const plans = p.product_plans?.filter(pl => pl.active) || [];
         if (plans.length === 0) return range.min === 0;
-        const lowest = Math.min(...plans.map(pl => Number(pl.price)));
+        const lowest = Math.min(...plans.map(pl => finitePlanPrice(pl)));
         return lowest >= range.min && lowest <= range.max;
       })
       .sort((a, b) => {
+        if (sortBy === "Mais Recentes") {
+          const aT = new Date(a.created_at || 0).getTime();
+          const bT = new Date(b.created_at || 0).getTime();
+          return bT - aT;
+        }
         if (sortBy === "Menor Preço") {
           const aPlans = a.product_plans?.filter(p => p.active) || [];
           const bPlans = b.product_plans?.filter(p => p.active) || [];
-          const aMin = aPlans.length ? Math.min(...aPlans.map(p => Number(p.price))) : Infinity;
-          const bMin = bPlans.length ? Math.min(...bPlans.map(p => Number(p.price))) : Infinity;
+          const aMin = aPlans.length ? Math.min(...aPlans.map(p => finitePlanPrice(p))) : Infinity;
+          const bMin = bPlans.length ? Math.min(...bPlans.map(p => finitePlanPrice(p))) : Infinity;
           return aMin - bMin;
         }
         if (sortBy === "Maior Preço") {
           const aPlans = a.product_plans?.filter(p => p.active) || [];
           const bPlans = b.product_plans?.filter(p => p.active) || [];
-          const aMax = aPlans.length ? Math.max(...aPlans.map(p => Number(p.price))) : -Infinity;
-          const bMax = bPlans.length ? Math.max(...bPlans.map(p => Number(p.price))) : -Infinity;
+          const aMax = aPlans.length ? Math.max(...aPlans.map(p => finitePlanPrice(p))) : -Infinity;
+          const bMax = bPlans.length ? Math.max(...bPlans.map(p => finitePlanPrice(p))) : -Infinity;
           return bMax - aMax;
         }
         return 0;
@@ -876,7 +965,15 @@ const Produtos = () => {
   };
 
   if (!selectedGame) {
-    return <GameSelectScreen onSelect={handleGameSelect} games={games} loading={loadingGames} />;
+    return (
+      <GameSelectScreen
+        onSelect={handleGameSelect}
+        games={games}
+        loading={loadingGames}
+        error={gamesError}
+        onRetry={() => void loadGames()}
+      />
+    );
   }
 
   return (
@@ -1004,6 +1101,21 @@ const Produtos = () => {
               {Array.from({ length: 6 }).map((_, i) => (
                  <Skeleton key={i} className="h-96 w-full rounded-lg" />
               ))}
+            </div>
+          ) : productsError ? (
+            <div className="flex-1 flex flex-col items-center justify-center rounded-xl border border-destructive/25 bg-destructive/[0.06] px-6 py-16 text-center min-h-[280px]">
+              <AlertCircle className="h-11 w-11 text-destructive/85 shrink-0" aria-hidden />
+              <p className="mt-4 text-lg font-semibold text-foreground">Erro ao carregar produtos</p>
+              <p className="mt-2 text-sm text-muted-foreground max-w-md leading-relaxed">{productsError}</p>
+              <button
+                type="button"
+                onClick={() => selectedGame && void loadProductsForGame(selectedGame)}
+                disabled={loadingProducts}
+                className="mt-6 inline-flex items-center justify-center gap-2 rounded-xl bg-success px-5 py-2.5 text-sm font-bold text-success-foreground transition-opacity disabled:opacity-60 hover:opacity-95"
+              >
+                {loadingProducts && <Loader2 className="h-4 w-4 animate-spin" />}
+                Tentar novamente
+              </button>
             </div>
           ) : (
             <motion.div

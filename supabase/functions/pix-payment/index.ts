@@ -1590,35 +1590,43 @@ async function validateAndCalculatePrice(
 
     const isRobotProduct = !!(productData?.robot_game_id && productData.robot_game_id > 0);
 
+    let robotSnapshotForPlan: Awaited<ReturnType<typeof fetchRobotGameSnapshot>> | null = null;
+
     if (isRobotProduct) {
       const creds = await getRobotCredentials(supabaseAdmin);
       if (!creds) {
         return { validatedAmount: 0, validatedDiscount: 0, validatedCart: [], error: "Credenciais da Robot Project não configuradas" };
       }
 
-      const robotSnapshot = await fetchRobotGameSnapshot(creds, productData.robot_game_id, plan.robot_duration_days || 30);
+      robotSnapshotForPlan = await fetchRobotGameSnapshot(creds, productData.robot_game_id, plan.robot_duration_days || 30);
       log("INFO", "validatePrice", "Robot product pre-check", {
         productId: plan.product_id,
         robotGameId: productData.robot_game_id,
         duration: plan.robot_duration_days || 30,
-        expectedPrice: robotSnapshot.expectedPrice,
-        balance: robotSnapshot.balance,
-        availableSlots: robotSnapshot.availableSlots,
-        reason: robotSnapshot.reason || null,
+        expectedPrice: robotSnapshotForPlan.expectedPrice,
+        balance: robotSnapshotForPlan.balance,
+        availableSlots: robotSnapshotForPlan.availableSlots,
+        reason: robotSnapshotForPlan.reason || null,
       });
 
-      if (robotSnapshot.reason) {
-        return { validatedAmount: 0, validatedDiscount: 0, validatedCart: [], error: robotSnapshot.reason };
+      if (robotSnapshotForPlan.reason) {
+        return { validatedAmount: 0, validatedDiscount: 0, validatedCart: [], error: robotSnapshotForPlan.reason };
       }
     }
 
-    // If price is 0 and product has robot markup, calculate from Robot API prices
+    // R$ 0: produto normal gratuito (stock/tutorial) OU jogo Robot marcado como is_free na API
     if (realPrice <= 0) {
-      if (productData?.robot_game_id && productData.robot_markup_percent && plan.robot_duration_days) {
+      const robotGameIsFree = !!(isRobotProduct && robotSnapshotForPlan?.game?.is_free);
+      const nonRobotFreeProduct = !isRobotProduct;
+
+      if (robotGameIsFree || nonRobotFreeProduct) {
+        realPrice = 0;
+      } else if (productData?.robot_game_id && productData.robot_markup_percent && plan.robot_duration_days) {
         const creds = await getRobotCredentials(supabaseAdmin);
         if (creds) {
           try {
-            const robotSnapshot = await fetchRobotGameSnapshot(creds, productData.robot_game_id, plan.robot_duration_days);
+            const robotSnapshot = robotSnapshotForPlan ||
+              await fetchRobotGameSnapshot(creds, productData.robot_game_id, plan.robot_duration_days);
             const basePriceUsd = robotSnapshot.expectedPrice;
             if (basePriceUsd !== null && basePriceUsd > 0) {
               const costPriceUsd = basePriceUsd * 0.6;
@@ -1641,7 +1649,7 @@ async function validateAndCalculatePrice(
         }
       }
 
-      if (realPrice <= 0) {
+      if (realPrice <= 0 && !robotGameIsFree && !nonRobotFreeProduct) {
         return { validatedAmount: 0, validatedDiscount: 0, validatedCart: [], error: `Plano "${plan.id}" tem preço R$ 0. Configure o preço no painel admin.` };
       }
     }
@@ -1709,7 +1717,9 @@ async function validateAndCalculatePrice(
     }
   }
 
-  const finalAmount = Math.max(100, totalAmount - validatedDiscount);
+  // Carrinho 100% gratuito (só planos R$ 0) → centavos 0. Pagos continuam com mínimo R$ 1,00.
+  const rawCents = totalAmount - validatedDiscount;
+  const finalAmount = totalAmount === 0 ? 0 : Math.max(100, rawCents);
 
   return {
     validatedAmount: finalAmount,
@@ -2088,19 +2098,10 @@ Deno.serve(async (req) => {
       const body = await req.json();
       const { cart_snapshot, coupon_id, meta_user_data, customer_data } = body;
 
-      // Run credentials fetch, price validation, and profile fetch in PARALLEL
-      const [misticCreds, validationResult, profileResult] = await Promise.all([
-        getMisticPayCredentials(supabaseAdmin),
+      const [validationResult, profileResult] = await Promise.all([
         validateAndCalculatePrice(supabaseAdmin, cart_snapshot, userId, coupon_id),
         supabaseAdmin.from("profiles").select("username").eq("user_id", userId).maybeSingle(),
       ]);
-
-      if (!misticCreds) {
-        return new Response(JSON.stringify({ error: "MisticPay credentials not configured (MISTICPAY_CLIENT_ID / MISTICPAY_CLIENT_SECRET)" }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
 
       const { validatedAmount, validatedDiscount, validatedCart, error: validationError } = validationResult;
 
@@ -2116,6 +2117,78 @@ Deno.serve(async (req) => {
       const profile = profileResult.data;
 
       const internalTxId = crypto.randomUUID();
+
+      if (amountCents === 0) {
+        const { data: payment, error: insertError } = await supabaseAdmin
+          .from("payments")
+          .insert({
+            user_id: userId,
+            charge_id: null,
+            external_id: `free-${internalTxId}`,
+            amount: 0,
+            status: "COMPLETED",
+            paid_at: new Date().toISOString(),
+            cart_snapshot: validatedCart,
+            coupon_id: coupon_id || null,
+            discount_amount: validatedDiscount,
+            payment_method: "free",
+            meta_tracking: meta_user_data || null,
+            customer_data: customer_data || null,
+          })
+          .select("*")
+          .single();
+
+        if (insertError) {
+          console.error("Free claim insert error:", insertError);
+          return new Response(JSON.stringify({ error: "Erro ao registrar produto gratuito" }), {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        await fulfillOrder(supabaseAdmin, payment);
+        await sendDiscordSaleNotification(supabaseAdmin, payment);
+        await sendServerPurchaseEvent(supabaseAdmin, payment, req);
+        await assignDiscordClientRole(supabaseAdmin, payment.user_id);
+
+        lastPaymentCreateMap.set(userId, Date.now());
+        cleanupMap(lastPaymentCreateMap, 2000);
+
+        const first = validatedCart[0] as { productId?: string; planId?: string } | undefined;
+        let ticketId: string | null = null;
+        if (first?.productId && first?.planId) {
+          const { data: trow } = await supabaseAdmin
+            .from("order_tickets")
+            .select("id")
+            .eq("user_id", userId)
+            .eq("product_id", first.productId)
+            .eq("product_plan_id", first.planId)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          ticketId = (trow as { id?: string } | null)?.id ?? null;
+        }
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            payment_id: payment.id,
+            validated_amount: 0,
+            validated_discount: validatedDiscount,
+            claimed_free: true,
+            ticket_id: ticketId,
+          }),
+          { status: 201, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      const misticCreds = await getMisticPayCredentials(supabaseAdmin);
+      if (!misticCreds) {
+        return new Response(JSON.stringify({ error: "MisticPay credentials not configured (MISTICPAY_CLIENT_ID / MISTICPAY_CLIENT_SECRET)" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
 
       const mpRes = await fetch(`${MISTICPAY_BASE_URL}/transactions/create`, {
         method: "POST",

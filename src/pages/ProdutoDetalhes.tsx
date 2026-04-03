@@ -3,7 +3,10 @@ import { useParams, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import { AlertTriangle, ArrowLeft, ChevronLeft, ChevronRight, Cpu, Download, Fingerprint, Loader2, Monitor, Package, Play, ShoppingCart, Sparkles, Star, UserCheck, Zap } from "lucide-react";
 import { motion } from "framer-motion";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
+import { safeJsonFetch } from "@/lib/apiUtils";
+import type { PixPaymentCreateResult } from "@/lib/edgeFunctionTypes";
+import { getUserData } from "@/lib/metaPixel";
 import { getYouTubeId, getYouTubeEmbedUrl, getYouTubeThumbnail } from "@/lib/videoUtils";
 import { useCart } from "@/hooks/useCart";
 import { useReseller } from "@/hooks/useReseller";
@@ -113,6 +116,7 @@ const ProdutoDetalhes = () => {
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
   const [reviews, setReviews] = useState<ReviewData[]>([]);
   const [robotNoStock, setRobotNoStock] = useState(false);
+  const [claimingFree, setClaimingFree] = useState(false);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -252,12 +256,77 @@ const ProdutoDetalhes = () => {
 
   const selectedPlan = sortedPlans.find(p => p.id === selectedPlanId);
 
-  const buyNow = () => {
-    if (!product || !selectedPlan) return;
+  const buyNow = async () => {
+    if (!product || !selectedPlan || claimingFree) return;
     const hasResellerDiscount = isReseller && isResellerForProduct(product.id);
     const finalItemPrice = hasResellerDiscount
       ? Number(selectedPlan.price) * (1 - discountPercent / 100)
       : Number(selectedPlan.price);
+    const isFreeProduct = Number(selectedPlan.price) === 0 || finalItemPrice <= 0;
+
+    if (isFreeProduct) {
+      if (robotNoStock) return;
+      setClaimingFree(true);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) {
+          toast({
+            title: "Entre na sua conta",
+            description: "Faça login para obter o download gratuito.",
+            variant: "destructive",
+          });
+          return;
+        }
+        const res = await safeJsonFetch<PixPaymentCreateResult>(
+          `${supabaseUrl}/functions/v1/pix-payment?action=create`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+              "Content-Type": "application/json",
+              apikey: supabaseAnonKey,
+            },
+            body: JSON.stringify({
+              cart_snapshot: [
+                {
+                  productId: product.id,
+                  productName: product.name,
+                  productImage: product.image_url,
+                  planId: selectedPlan.id,
+                  planName: selectedPlan.name,
+                  price: 0,
+                  quantity: 1,
+                },
+              ],
+              coupon_id: null,
+              meta_user_data: getUserData(),
+              customer_data: {
+                name: String(session.user.user_metadata?.full_name || session.user.email?.split("@")[0] || "Cliente"),
+                email: session.user.email || "",
+                phone: "",
+                document: "",
+              },
+            }),
+          }
+        );
+        if (!res.success) throw new Error(res.error || "Não foi possível concluir");
+        if (res.claimed_free && res.ticket_id) {
+          toast({ title: "Pronto!", description: "Abrindo o pedido com o link de download." });
+          navigate(`/pedido/${res.ticket_id}`);
+        } else if (res.claimed_free) {
+          toast({ title: "Pronto!", description: "Veja seus pedidos para o download." });
+          navigate("/meus-pedidos");
+        } else {
+          throw new Error("Resposta inesperada do servidor");
+        }
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        toast({ title: "Erro", description: msg, variant: "destructive" });
+      } finally {
+        setClaimingFree(false);
+      }
+      return;
+    }
 
     trackInitiateCheckout({
       contentName: product.name,
@@ -581,18 +650,27 @@ const ProdutoDetalhes = () => {
                       </div>
                     )}
                     <button
-                      onClick={buyNow}
-                      className={`flex w-full items-center justify-center gap-2 rounded-xl py-4 text-sm font-bold uppercase tracking-wider transition-all active:scale-[0.98] ${
+                      type="button"
+                      onClick={() => void buyNow()}
+                      disabled={claimingFree}
+                      className={`flex w-full items-center justify-center gap-2 rounded-xl py-4 text-sm font-bold uppercase tracking-wider transition-all active:scale-[0.98] disabled:opacity-60 ${
                         Number(selectedPlan.price) === 0
                           ? "bg-gradient-to-r from-emerald-500 to-cyan-500 text-white hover:shadow-[0_0_30px_hsl(160,80%,45%,0.4)]"
                           : "bg-success text-success-foreground hover:shadow-[0_0_30px_hsl(130,99%,41%,0.4)]"
                       }`}
                       style={{ fontFamily: "'Valorant', sans-serif" }}>
                       {Number(selectedPlan.price) === 0 ? (
-                        <>
-                          <Download className="h-4 w-4" />
-                          OBTER GRÁTIS
-                        </>
+                        claimingFree ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            A obter…
+                          </>
+                        ) : (
+                          <>
+                            <Download className="h-4 w-4" />
+                            OBTER GRÁTIS
+                          </>
+                        )
                       ) : (
                         <>
                           <Zap className="h-4 w-4" />
@@ -696,8 +774,10 @@ const ProdutoDetalhes = () => {
                 )}
               </div>
               <button
-                onClick={buyNow}
-                className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-bold uppercase tracking-wider transition-all active:scale-[0.98] ${
+                type="button"
+                onClick={() => void buyNow()}
+                disabled={claimingFree}
+                className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-bold uppercase tracking-wider transition-all active:scale-[0.98] disabled:opacity-60 ${
                   Number(selectedPlan.price) === 0
                     ? "bg-gradient-to-r from-emerald-500 to-cyan-500 text-white"
                     : "bg-success text-success-foreground"
@@ -705,10 +785,17 @@ const ProdutoDetalhes = () => {
                 style={{ fontFamily: "'Valorant', sans-serif" }}
               >
                 {Number(selectedPlan.price) === 0 ? (
-                  <>
-                    <Download className="h-4 w-4" />
-                    Obter Grátis
-                  </>
+                  claimingFree ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      A obter…
+                    </>
+                  ) : (
+                    <>
+                      <Download className="h-4 w-4" />
+                      Obter Grátis
+                    </>
+                  )
                 ) : (
                   <>
                     <ShoppingCart className="h-4 w-4" />
