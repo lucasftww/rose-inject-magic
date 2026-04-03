@@ -198,6 +198,20 @@ const softwareCharacterOverlayMap: Record<string, { bg: string; character: strin
   'arena breakout': { bg: bgCardArenabreakout, character: arenabreakoutNormal, characterHover: arenabreakoutHover },
   'arena-breakout': { bg: bgCardArenabreakout, character: arenabreakoutNormal, characterHover: arenabreakoutHover },
   'arena breakout infinite': { bg: bgCardArenabreakout, character: arenabreakoutNormal, characterHover: arenabreakoutHover },
+  'overwatch 2': { bg: bgCardOverwatch2, character: overwatch2Normal, characterHover: overwatch2Hover },
+  'overwatch-2': { bg: bgCardOverwatch2, character: overwatch2Normal, characterHover: overwatch2Hover },
+  overwatch: { bg: bgCardOverwatch2, character: overwatch2Normal, characterHover: overwatch2Hover },
+  'hell let loose': { bg: bgCardHellletloose, character: hellletlooseNormal, characterHover: hellletlooseHover },
+  'hell-let-loose': { bg: bgCardHellletloose, character: hellletlooseNormal, characterHover: hellletlooseHover },
+  squad: { bg: bgCardSquad, character: squadCharNormal, characterHover: squadCharHover },
+  'farlight 84': { bg: bgCardFarlight84, character: farlight84Normal, characterHover: farlight84Hover },
+  'farlight-84': { bg: bgCardFarlight84, character: farlight84Normal, characterHover: farlight84Hover },
+  bodycam: { bg: bgCardBodycam, character: bodycamNormal, characterHover: bodycamHover },
+  warface: { bg: bgCardWarface, character: warfaceNormal, characterHover: warfaceHover },
+  bloodhunt: { bg: bgCardBloodhunt, character: bloodhuntNormal, characterHover: bloodhuntHover },
+  'dead by daylight': { bg: bgCardDbd, character: dbdNormal, characterHover: dbdHover },
+  'dead-by-daylight': { bg: bgCardDbd, character: dbdNormal, characterHover: dbdHover },
+  spoofers: { bg: bgCardSpoofers, character: spoofersNormal, characterHover: spoofersHover },
 };
 
 const fadeUpShowcase = {
