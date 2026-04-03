@@ -678,10 +678,10 @@ const Produtos = () => {
       }
 
       const countMap: Record<string, number> = {};
-      (productsRes.data || []).forEach((p: { game_id: string }) => {
-        countMap[p.game_id] = (countMap[p.game_id] || 0) + 1;
+      (productsRes.data || []).forEach((p: { game_id: string | null }) => {
+        if (p.game_id) countMap[p.game_id] = (countMap[p.game_id] || 0) + 1;
       });
-      setGames((gamesRes.data || []).map((g: GameFromDB) => ({ ...g, product_count: countMap[g.id] || 0 })));
+      setGames((gamesRes.data || []).map((g) => ({ ...g, slug: g.slug ?? '', active: g.active ?? false, sort_order: g.sort_order ?? 0, product_count: countMap[g.id] || 0 } as GameFromDB)));
     } catch (e) {
       console.error("loadGames:", e);
       setGames([]);

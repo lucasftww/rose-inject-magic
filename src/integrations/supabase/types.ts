@@ -997,31 +997,31 @@ export type Database = {
       }
       system_credentials: {
         Row: {
-          id: string
-          name: string
-          env_key: string
-          value: string
-          description: string | null
-          help_url: string | null
           created_at: string | null
+          description: string | null
+          env_key: string
+          help_url: string | null
+          name: string
+          updated_at: string | null
+          value: string
         }
         Insert: {
-          id?: string
-          name: string
-          env_key: string
-          value?: string
-          description?: string | null
-          help_url?: string | null
           created_at?: string | null
+          description?: string | null
+          env_key: string
+          help_url?: string | null
+          name?: string
+          updated_at?: string | null
+          value: string
         }
         Update: {
-          id?: string
-          name?: string
-          env_key?: string
-          value?: string
-          description?: string | null
-          help_url?: string | null
           created_at?: string | null
+          description?: string | null
+          env_key?: string
+          help_url?: string | null
+          name?: string
+          updated_at?: string | null
+          value?: string
         }
         Relationships: []
       }
@@ -1274,6 +1274,7 @@ export type Database = {
         Args: { _reseller_id: string }
         Returns: undefined
       }
+      is_admin_session: { Args: never; Returns: boolean }
       validate_coupon: {
         Args: { _cart_product_ids?: string[]; _code: string; _user_id: string }
         Returns: Json
