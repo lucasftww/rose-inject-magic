@@ -316,7 +316,10 @@ const LztTab = () => {
               Defina o multiplicador de preço para cada jogo. Ex: 2x = conta de R$10 vende por R$20.
             </p>
             <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {gameMarkupFields.map((field) => (
+              {gameMarkupFields.map((field) => {
+                const parsed = parseFloat(markups[field.key]);
+                const previewMult = Number.isFinite(parsed) && parsed >= 1 ? parsed : 1;
+                return (
                 <div key={field.key} className="rounded-lg border border-border bg-secondary/30 p-4">
                   <label className={`text-xs font-bold ${field.color}`}>{field.label}</label>
                   <div className="mt-2 flex items-center gap-2">
@@ -331,11 +334,12 @@ const LztTab = () => {
                     <span className="text-sm font-bold text-muted-foreground">x</span>
                   </div>
                   <div className="mt-2 flex justify-between text-[10px] text-muted-foreground">
-                    <span>R$10 → <span className={field.color}>R${(10 * parseFloat(markups[field.key] || "1")).toFixed(0)}</span></span>
-                    <span>R$50 → <span className={field.color}>R${(50 * parseFloat(markups[field.key] || "1")).toFixed(0)}</span></span>
+                    <span>R$10 → <span className={field.color}>R${(10 * previewMult).toFixed(0)}</span></span>
+                    <span>R$50 → <span className={field.color}>R${(50 * previewMult).toFixed(0)}</span></span>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 

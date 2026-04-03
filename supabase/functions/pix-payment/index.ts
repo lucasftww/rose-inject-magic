@@ -1391,6 +1391,12 @@ async function validateAndCalculatePrice(
 
   let totalAmount = 0;
   const validatedCart: any[] = [];
+  /** Lazy FX for LZT cost — matches getLiveRates() (USD+RUB) instead of hardcoded RUB. */
+  let lztFxCache: { rub: number; usd: number } | null = null;
+  const getLztFxRates = async () => {
+    if (!lztFxCache) lztFxCache = await getLiveRates();
+    return lztFxCache;
+  };
 
   for (const item of cartSnapshot) {
     if (item.type === "raspadinha" || item.planId === "raspadinha") {
@@ -1413,6 +1419,16 @@ async function validateAndCalculatePrice(
       const lztItemId = item.lztItemId;
       if (!lztItemId) {
         return { validatedAmount: 0, validatedDiscount: 0, validatedCart: [], error: "ID da conta LZT não informado" };
+      }
+
+      const lztQty = Math.max(1, Math.floor(Number(item.quantity) || 1));
+      if (lztQty !== 1) {
+        return {
+          validatedAmount: 0,
+          validatedDiscount: 0,
+          validatedCart: [],
+          error: "Cada conta do mercado deve ser comprada com quantidade 1.",
+        };
       }
 
       const lztToken = await getLztMarketToken(supabaseAdmin);
@@ -1463,7 +1479,7 @@ async function validateAndCalculatePrice(
         .from("lzt_config")
         .select("markup_multiplier, markup_valorant, markup_lol, markup_fortnite, markup_minecraft")
         .limit(1)
-        .single();
+        .maybeSingle();
       
       // Check for admin price override
       const { data: priceOverride } = await supabaseAdmin
@@ -1476,23 +1492,27 @@ async function validateAndCalculatePrice(
       const overridePrice = hasOverride ? Number(priceOverride.custom_price_brl) : null;
 
       const gameCategory = item.lztGame || item.gameCategory || "";
-      let markup = lztConfig?.markup_multiplier || 3.0;
-      if (gameCategory === "valorant" && lztConfig?.markup_valorant) markup = lztConfig.markup_valorant;
-      else if (gameCategory === "lol" && lztConfig?.markup_lol) markup = lztConfig.markup_lol;
-      else if (gameCategory === "fortnite" && lztConfig?.markup_fortnite) markup = lztConfig.markup_fortnite;
-      else if (gameCategory === "minecraft" && lztConfig?.markup_minecraft) markup = lztConfig.markup_minecraft;
-      
-      const RUB_TO_BRL = 0.055;
-      let USD_TO_BRL = 6.10; // Updated fallback to be more realistic (6.10 is closer to current market)
-      try {
-        const fxRes = await fetch("https://economia.awesomeapi.com.br/json/last/USD-BRL");
-        if (fxRes.ok) {
-          const fxData = await fxRes.json();
-          const bid = Number(fxData?.USDBRL?.bid);
-          if (bid > 0) USD_TO_BRL = bid;
-        }
-      } catch (_) { /* use fallback */ }
-      const costBrl = realLztCurrency === "rub" ? realLztPrice * RUB_TO_BRL : realLztCurrency === "usd" ? realLztPrice * USD_TO_BRL : realLztPrice;
+      const toMarkup = (v: unknown, fallback: number): number => {
+        const n = Number(v);
+        return Number.isFinite(n) && n >= 1 ? n : fallback;
+      };
+      let markup = toMarkup(lztConfig?.markup_multiplier, 3.0);
+      if (gameCategory === "valorant" && lztConfig?.markup_valorant != null) {
+        markup = toMarkup(lztConfig.markup_valorant, markup);
+      } else if (gameCategory === "lol" && lztConfig?.markup_lol != null) {
+        markup = toMarkup(lztConfig.markup_lol, markup);
+      } else if (gameCategory === "fortnite" && lztConfig?.markup_fortnite != null) {
+        markup = toMarkup(lztConfig.markup_fortnite, markup);
+      } else if (gameCategory === "minecraft" && lztConfig?.markup_minecraft != null) {
+        markup = toMarkup(lztConfig.markup_minecraft, markup);
+      }
+
+      const { rub: RUB_TO_BRL, usd: USD_TO_BRL } = await getLztFxRates();
+      const costBrl = realLztCurrency === "rub"
+        ? realLztPrice * RUB_TO_BRL
+        : realLztCurrency === "usd"
+        ? realLztPrice * USD_TO_BRL
+        : realLztPrice;
       
       // The price the customer saw (sent from frontend)
       const clientDisplayPrice = Number(item.price) || 0;
@@ -1534,7 +1554,13 @@ async function validateAndCalculatePrice(
       }
       
       totalAmount += Math.round(finalPrice * 100);
-      validatedCart.push({ ...item, price: finalPrice, lztPrice: realLztPrice, lztCurrency: realLztCurrency });
+      validatedCart.push({
+        ...item,
+        price: finalPrice,
+        lztPrice: realLztPrice,
+        lztCurrency: realLztCurrency,
+        quantity: 1,
+      });
       continue;
     }
 

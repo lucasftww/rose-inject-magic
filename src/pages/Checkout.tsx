@@ -49,6 +49,8 @@ const Checkout = () => {
   const [checking, setChecking] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<string>("ACTIVE");
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  /** Prevents re-filling account email after the user clears the field (same session). */
+  const checkoutEmailUserIdRef = useRef<string | null>(null);
   const [enabledMethods, setEnabledMethods] = useState<Record<string, boolean>>({ pix: true, card: false, crypto: false });
   const hasLztItems = items.some((i) => i.type === "lzt-account");
   const couponId = searchParams.get("coupon_id");
@@ -107,12 +109,22 @@ const Checkout = () => {
   }, [formData.email, formData.name, user?.id]);
 
   useEffect(() => {
-    if (!authLoading && !user) navigate("/");
-    if (!authLoading && user && items.length === 0 && !paymentId) navigate("/");
-    if (user?.email && !formData.email) {
-      setFormData(prev => ({ ...prev, email: user.email! }));
+    if (!authLoading && !user) {
+      checkoutEmailUserIdRef.current = null;
+      navigate("/");
+      return;
     }
-  }, [authLoading, user, items.length, navigate, paymentId, formData.email]);
+    if (!authLoading && user && items.length === 0 && !paymentId) {
+      navigate("/");
+      return;
+    }
+    if (authLoading || !user?.email) return;
+
+    if (checkoutEmailUserIdRef.current !== user.id) {
+      checkoutEmailUserIdRef.current = user.id;
+      setFormData((prev) => ({ ...prev, email: user.email! }));
+    }
+  }, [authLoading, user, items.length, navigate, paymentId]);
 
   useEffect(() => {
     const isValid = 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { lazy, Suspense, useState, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import { useAuth } from "@/hooks/useAuth";
@@ -15,7 +15,8 @@ import {
   Info,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { AreaChart, Area, ResponsiveContainer } from "recharts";
+
+const StatSparkline = lazy(() => import("@/components/dashboard/StatSparkline"));
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -945,25 +946,13 @@ const OverviewStats = ({
         >
           {/* Sparkline background */}
           <div className="absolute inset-x-0 bottom-0 h-16 opacity-[0.08] group-hover:opacity-[0.15] transition-opacity duration-300">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={stat.sparkline}>
-                <defs>
-                  <linearGradient id={`grad-${i}`} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={stat.color} stopOpacity={1} />
-                    <stop offset="100%" stopColor={stat.color} stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <Area
-                  type="monotone"
-                  dataKey="v"
-                  stroke={stat.color}
-                  strokeWidth={1.5}
-                  fill={`url(#grad-${i})`}
-                  dot={false}
-                  isAnimationActive={false}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+            <Suspense fallback={<div className="h-full w-full" aria-hidden />}>
+              <StatSparkline
+                data={stat.sparkline}
+                color={stat.color}
+                gradientId={`dash-stat-${i}`}
+              />
+            </Suspense>
           </div>
 
           {/* Content */}

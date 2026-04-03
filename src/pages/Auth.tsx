@@ -22,6 +22,15 @@ function isTempEmail(email: string) {
   return BLOCKED_DOMAINS.some((b) => domain.includes(b));
 }
 
+/** In-app path only — avoids open redirects via ?redirect=https://… or //evil.com */
+function safeAuthRedirect(raw: string | null): string {
+  if (!raw) return "/";
+  const p = raw.trim();
+  if (p === "/") return "/";
+  if (!p.startsWith("/") || p.startsWith("//")) return "/";
+  return p;
+}
+
 // ── Types ───────────────────────────────────────────────────────────
 type Mode = "login" | "signup" | "recovery";
 
@@ -29,7 +38,7 @@ type Mode = "login" | "signup" | "recovery";
 const Auth = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const redirect = searchParams.get("redirect") || "/";
+  const redirect = safeAuthRedirect(searchParams.get("redirect"));
   const { user, loading, signIn, signUp, resetPassword } = useAuth();
   const { t } = useTranslation();
 

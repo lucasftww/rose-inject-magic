@@ -997,25 +997,31 @@ export type Database = {
       }
       system_credentials: {
         Row: {
-          created_at: string | null
-          description: string | null
-          key: string
-          updated_at: string | null
+          id: string
+          name: string
+          env_key: string
           value: string
+          description: string | null
+          help_url: string | null
+          created_at: string | null
         }
         Insert: {
-          created_at?: string | null
+          id?: string
+          name: string
+          env_key: string
+          value?: string
           description?: string | null
-          key: string
-          updated_at?: string | null
-          value: string
+          help_url?: string | null
+          created_at?: string | null
         }
         Update: {
-          created_at?: string | null
-          description?: string | null
-          key?: string
-          updated_at?: string | null
+          id?: string
+          name?: string
+          env_key?: string
           value?: string
+          description?: string | null
+          help_url?: string | null
+          created_at?: string | null
         }
         Relationships: []
       }

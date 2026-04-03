@@ -1,0 +1,11 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": ["src/main.tsx"],
+  "project": ["src/**/*.{ts,tsx}"],
+  "ignore": [
+    "supabase/functions/**",
+    "src/components/ui/**",
+    "src/integrations/supabase/types.ts"
+  ],
+  "ignoreDependencies": ["@fontsource/space-grotesk"]
+}

@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 
-export interface CartItem {
+interface CartItem {
   productId: string;
   productName: string;
   productImage: string | null;
@@ -66,6 +66,7 @@ function normalizeCartItemsFromStorage(parsed: unknown): CartItem[] {
 
     if (o.type === "lzt-account") {
       item.type = "lzt-account";
+      item.quantity = 1;
       if (typeof o.lztItemId === "string" && o.lztItemId) item.lztItemId = o.lztItemId;
       if (typeof o.lztGame === "string") item.lztGame = o.lztGame;
       const lp = Number(o.lztPrice);
@@ -146,11 +147,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
     setItems((prev) =>
-      prev.map((i) =>
-        i.productId === productId && i.planId === planId
-          ? { ...i, quantity: q }
-          : i
-      )
+      prev.map((i) => {
+        if (i.productId !== productId || i.planId !== planId) return i;
+        if (i.type === "lzt-account") return { ...i, quantity: 1 };
+        return { ...i, quantity: q };
+      })
     );
   };
 

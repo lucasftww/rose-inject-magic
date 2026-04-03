@@ -23,5 +23,3 @@ i18n
       lookupLocalStorage: "i18nextLng",
     },
   });
-
-export default i18n;

@@ -56,6 +56,7 @@ O app estará disponível em `http://localhost:8080` (porta definida em `vite.co
 | `npm run typecheck` | Verificação TypeScript (`tsc --noEmit`) |
 | `npm run test` | Rodar testes com Vitest |
 | `npm run supabase:repair-migrations` | Alinhar histórico de migrações local/remoto (só metadados; requer `supabase link` + login) |
+| `npm run knip` | Procurar exports/ficheiros não usados (shadcn e `types.ts` gerado ignorados em `knip.json`) |
 
 ### Supabase (produção)
 

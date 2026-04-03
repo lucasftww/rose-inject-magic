@@ -4,7 +4,7 @@ export type GameCategory = "valorant" | "lol" | "fortnite" | "minecraft";
 
 const MIN_PRICE_BRL = 20;
 
-export type LztPriceInput = {
+type LztPriceInput = {
   price?: number;
   price_currency?: string;
   price_brl?: number;

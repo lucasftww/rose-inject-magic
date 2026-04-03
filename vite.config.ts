@@ -19,14 +19,16 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
+    target: "es2020",
+    cssMinify: true,
     rollupOptions: {
       output: {
         manualChunks: {
           "vendor-react": ["react", "react-dom", "react-router-dom"],
-          "vendor-motion": ["framer-motion"],
+          // framer-motion: não forçar chunk próprio — manualChunks puxava jsx/runtime para o entry
           "vendor-query": ["@tanstack/react-query"],
           "vendor-supabase": ["@supabase/supabase-js"],
-          "vendor-charts": ["recharts"],
+          // recharts: chunk manual puxava o pacote para o entry; fica só nos chunks lazy (Dashboard/FinanceTab)
           "vendor-i18n": ["i18next", "react-i18next", "i18next-browser-languagedetector"],
         },
       },

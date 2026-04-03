@@ -52,8 +52,6 @@ sha256("br").then((h) => { _countryHash = h; });
 
 // ─── Cached user identity ───────────────────────────────────────────────────
 
-// ─── Cached user identity ───────────────────────────────────────────────────
-
 let _cachedUserData: { em?: string; external_id?: string; ph?: string; fn?: string; ln?: string } = {};
 let _pixelInitWithAM = false;
 let _identityReadyPromise: Promise<void> | null = null;
@@ -88,7 +86,7 @@ const restoreUserData = () => {
 restoreUserData();
 
 /** Ensures that the identity (at least from storage) is ready */
-export const ensureIdentityReady = async () => {
+const ensureIdentityReady = async () => {
   if (_identityReadyPromise) return _identityReadyPromise;
   
   _identityReadyPromise = (async () => {
@@ -168,7 +166,7 @@ export const setAdvancedMatching = async (userData: {
 };
 
 /** Initialize the Pixel with cached data or default settings */
-export const initPixel = () => {
+const initPixel = () => {
   if (typeof window === "undefined" || !window.fbq || _pixelInitWithAM) return;
 
   const matchData: Record<string, string> = {};
@@ -303,7 +301,7 @@ const generateEventId = (prefix: string): string => {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 };
 
-export interface TrackingData {
+interface TrackingData {
   contentName: string;
   contentIds: string[];
   value: number;
@@ -508,4 +506,4 @@ export const trackPurchase = (
 };
 
 
-
+

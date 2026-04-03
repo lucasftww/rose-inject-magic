@@ -31,6 +31,12 @@ npx supabase secrets set NOME_DO_SECRET=valor
 
 ## Como resolver o que “falta” (LZT, Meta, etc.)
 
+**Importante:** ninguém pode “colocar” por ti os JWT/tokens reais — tens de os gerar nas contas LZT, Meta e MisticPay e colar no painel (ou nos secrets).
+
+### Linhas vazias na base (migração)
+
+A migração `20260404140000_seed_system_credentials_placeholders.sql` cria em `system_credentials` as chaves esperadas com `value` vazio (idempotente: `ON CONFLICT DO NOTHING`). Depois de `db push` ou SQL aplicado, no **Admin → Credenciais** vês cada linha e só preenches o valor.
+
 Tens **duas formas** equivalentes para a maioria das chaves: **tabela `system_credentials` no painel** (recomendado para LZT e Meta com o teu Pixel) ou **secrets da Edge** (CLI/Dashboard). O código tenta primeiro a tabela e depois o secret.
 
 ### Opção A — Painel da loja (recomendado)

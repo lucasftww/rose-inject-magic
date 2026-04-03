@@ -1,6 +1,6 @@
 // Shared reviews data — single source of truth for mobile + desktop
 
-export interface Review {
+interface Review {
   name: string;
   text: string;
   rating: number;

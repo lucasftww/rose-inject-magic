@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Key, Eye, EyeOff, CheckCircle, ExternalLink, Plus, Pencil, Trash2, Loader2, X, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -8,9 +8,55 @@ interface Credential {
   name: string;
   env_key: string;
   value: string;
-  description: string;
-  help_url: string;
+  description: string | null;
+  help_url: string | null;
 }
+
+/** Modelos com os nomes exatos que pix-payment / lzt-market leem na base. */
+const CREDENTIAL_PRESETS: { name: string; env_key: string; description: string; help_url: string }[] = [
+  {
+    name: "LZT Market — JWT",
+    env_key: "LZT_MARKET_TOKEN",
+    description: "JWT da API LZT. Alternativa: cria também LZT_API_TOKEN com o mesmo valor se preferires esse nome.",
+    help_url: "https://lzt.market",
+  },
+  {
+    name: "Meta — CAPI Access Token",
+    env_key: "META_ACCESS_TOKEN",
+    description: "Token Graph API para eventos de conversão (compras).",
+    help_url: "https://developers.facebook.com/docs/marketing-api/conversions-api/get-started",
+  },
+  {
+    name: "Meta — Pixel ID",
+    env_key: "META_PIXEL_ID",
+    description: "ID numérico do teu Pixel (o mesmo do site).",
+    help_url: "https://business.facebook.com/events_manager",
+  },
+  {
+    name: "MisticPay — Client ID",
+    env_key: "MISTICPAY_CLIENT_ID",
+    description: "Client ID do gateway MisticPay.",
+    help_url: "",
+  },
+  {
+    name: "MisticPay — Client Secret",
+    env_key: "MISTICPAY_CLIENT_SECRET",
+    description: "Client Secret do MisticPay.",
+    help_url: "",
+  },
+  {
+    name: "Robot API — utilizador",
+    env_key: "ROBOT_API_USERNAME",
+    description: "Utilizador da API Robot (cheats), se usares.",
+    help_url: "",
+  },
+  {
+    name: "Robot API — palavra-passe",
+    env_key: "ROBOT_API_PASSWORD",
+    description: "Palavra-passe da API Robot.",
+    help_url: "",
+  },
+];
 
 const CredentialsTab = () => {
   const [credentials, setCredentials] = useState<Credential[]>([]);
@@ -31,11 +77,35 @@ const CredentialsTab = () => {
       .from("system_credentials")
       .select("*")
       .order("created_at", { ascending: true });
-    if (!error && data) setCredentials(data as unknown as Credential[]);
+    if (!error && data) setCredentials(data as Credential[]);
     setLoading(false);
   };
 
   useEffect(() => { fetchCredentials(); }, []);
+
+  const existingEnvKeys = useMemo(
+    () => new Set(credentials.map((c) => c.env_key.toUpperCase())),
+    [credentials],
+  );
+
+  const hasLztToken = existingEnvKeys.has("LZT_MARKET_TOKEN") || existingEnvKeys.has("LZT_API_TOKEN");
+
+  const missingPresets = useMemo(() => {
+    return CREDENTIAL_PRESETS.filter((p) => {
+      if (p.env_key === "LZT_MARKET_TOKEN") return !hasLztToken;
+      return !existingEnvKeys.has(p.env_key);
+    });
+  }, [existingEnvKeys, hasLztToken]);
+
+  const openPreset = (preset: (typeof CREDENTIAL_PRESETS)[0]) => {
+    setFormName(preset.name);
+    setFormEnvKey(preset.env_key);
+    setFormDescription(preset.description);
+    setFormHelpUrl(preset.help_url);
+    setFormValue("");
+    setEditing(null);
+    setShowForm(true);
+  };
 
   const resetForm = () => {
     setFormName(""); setFormEnvKey(""); setFormValue(""); setFormDescription(""); setFormHelpUrl("");
@@ -59,26 +129,26 @@ const CredentialsTab = () => {
     }
     setSaving(true);
     if (editing) {
-      const { error } = await (supabase.from("system_credentials") as any)
+      const { error } = await supabase
+        .from("system_credentials")
         .update({
           name: formName.trim(),
           env_key: formEnvKey.trim().toUpperCase(),
           value: formValue,
-          description: formDescription.trim(),
-          help_url: formHelpUrl.trim(),
+          description: formDescription.trim() || null,
+          help_url: formHelpUrl.trim() || null,
         })
         .eq("id", editing.id);
       if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
       else { toast({ title: "Credencial atualizada!" }); resetForm(); fetchCredentials(); }
     } else {
-      const { error } = await (supabase.from("system_credentials") as any)
-        .insert({
-          name: formName.trim(),
-          env_key: formEnvKey.trim().toUpperCase(),
-          value: formValue,
-          description: formDescription.trim(),
-          help_url: formHelpUrl.trim(),
-        });
+      const { error } = await supabase.from("system_credentials").insert({
+        name: formName.trim(),
+        env_key: formEnvKey.trim().toUpperCase(),
+        value: formValue,
+        description: formDescription.trim() || null,
+        help_url: formHelpUrl.trim() || null,
+      });
       if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
       else { toast({ title: "Credencial criada!" }); resetForm(); fetchCredentials(); }
     }
@@ -87,9 +157,7 @@ const CredentialsTab = () => {
 
   const handleDelete = async (cred: Credential) => {
     if (!confirm(`Excluir "${cred.name}"?`)) return;
-    const { error } = await (supabase.from("system_credentials") as any)
-      .delete()
-      .eq("id", cred.id);
+    const { error } = await supabase.from("system_credentials").delete().eq("id", cred.id);
     if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
     else { toast({ title: "Credencial excluída!" }); fetchCredentials(); }
   };
@@ -116,7 +184,30 @@ const CredentialsTab = () => {
       </div>
       <p className="mt-2 text-sm text-muted-foreground">
         Gerencie as chaves de API e credenciais do sistema. As credenciais são armazenadas de forma segura no banco de dados.
+        O código das funções Edge lê primeiro esta tabela e só depois os secrets do Supabase.
       </p>
+
+      {missingPresets.length > 0 && (
+        <div className="mt-5 rounded-xl border border-warning/30 bg-warning/5 p-4">
+          <p className="text-sm font-semibold text-foreground">Sugestão — ainda falta configurar</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Clica num modelo para abrir o formulário com a chave (ENV) correta; depois cola o valor real e guarda.
+            Eu não tenho acesso aos teus tokens: tens de os copiar de LZT Market, Meta Business e MisticPay.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {missingPresets.map((p) => (
+              <button
+                key={p.env_key}
+                type="button"
+                onClick={() => openPreset(p)}
+                className="rounded-lg border border-border bg-card px-3 py-1.5 text-left text-[11px] font-mono text-foreground hover:border-success/50 hover:bg-success/5"
+              >
+                + {p.env_key}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Form */}
       {showForm && (
