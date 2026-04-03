@@ -31,22 +31,38 @@
       async
       defer
     ></script>
-    <!-- Meta Pixel: after load + idle to reduce main-thread work during first paint -->
+    <!--
+      Meta Pixel: carrega após idle. Se vires ERR_BLOCKED_BY_CLIENT ou falta de fbevents.js,
+      é bloqueador de anúncios / modo estrito — não é bug da app. Erros tipo "Receiving end does
+      not exist" ou css-procedural.js vêm de extensões do browser.
+    -->
     <script>
     (function(){
+      var PIXEL_ID = '4378225905838577';
       function bootMetaPixel(){
-        if(window.fbq)return;
-        !function(f,b,e,v,n,t,s)
-        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-        n.queue=[];t=b.createElement(e);t.async=!0;
-        t.src=v;s=b.getElementsByTagName(e)[0];
-        s.parentNode.insertBefore(t,s)}(window, document,'script',
-        'https://connect.facebook.net/en_US/fbevents.js');
-        fbq('set', 'autoConfig', false, '4378225905838577');
-        fbq('init', '4378225905838577');
-        fbq('track', 'PageView');
+        try {
+          if (window.fbq) return;
+          !function(f,b,e,v,n,t,s){
+            if (f.fbq) return;
+            n = f.fbq = function(){
+              n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
+            };
+            if (!f._fbq) f._fbq = n;
+            n.push = n;
+            n.loaded = !0;
+            n.version = '2.0';
+            n.queue = [];
+            t = b.createElement(e);
+            t.async = !0;
+            t.src = v;
+            t.onerror = function(){ try { f.__fbPixelLoadFailed = !0; } catch (e) {} };
+            s = b.getElementsByTagName(e)[0];
+            s.parentNode.insertBefore(t, s);
+          }(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
+          fbq('set', 'autoConfig', false, PIXEL_ID);
+          fbq('init', PIXEL_ID);
+          fbq('track', 'PageView');
+        } catch (e) { /* Pixel opcional: não quebrar a página */ }
       }
       function schedule(){
         var ric = window.requestIdleCallback;
