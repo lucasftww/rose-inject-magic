@@ -286,10 +286,7 @@ const SoftwareShowcaseCard = ({ game, index, isFree, description, onSelect }: { 
   const [isHovered, setIsHovered] = useState(false);
   const { image, character, characterHover } = getShowcaseAssets(game);
   const hasProducts = game.product_count > 0;
-  const isSpoofer = game.name.toLowerCase().includes('spoof');
-  const characterPositionClass = isSpoofer
-    ? 'absolute bottom-[-6%] right-[-8%] z-[8] w-[58%] sm:w-[52%]'
-    : 'absolute bottom-0 right-[-14%] z-[8] w-[72%] sm:right-[-10%] sm:w-[62%]';
+  const characterPositionClass = 'absolute bottom-0 right-0 z-[8] w-[55%] sm:w-[50%]';
 
   return (
     <TiltCard index={index}>
