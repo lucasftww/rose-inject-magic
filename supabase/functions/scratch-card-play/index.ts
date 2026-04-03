@@ -73,6 +73,7 @@ function buildWinningGrid(prize: {
       name: prize.name,
       image_url: prize.image_url,
       prize_value: prize.prize_value ?? 0,
+      nothingIcon: NOTHING_ICONS[0],
     };
   }
   return grid;
