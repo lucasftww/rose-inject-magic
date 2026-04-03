@@ -1,11 +1,10 @@
 import { useState, useCallback, useEffect, useRef, useMemo, memo } from "react";
-import { useLztMarkup, getLztItemBrlPrice } from "@/hooks/useLztMarkup";
+import { useLztMarkup, getLztItemBrlPrice, type GameCategory } from "@/hooks/useLztMarkup";
 import Header from "@/components/Header";
 import { ChevronLeft, ChevronRight, ChevronDown, Search, SlidersHorizontal, DollarSign, Crosshair, Loader2, RefreshCw, Globe, TrendingUp, Star, Shield, Trophy, AlertTriangle, X, ArrowRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { throwApiError } from "@/lib/apiErrors";
 import { translateRegion } from "@/lib/regionTranslation";
-import { motion } from "framer-motion";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { safeJsonFetch, ApiError } from "@/lib/apiUtils";
@@ -356,19 +355,6 @@ const fetchLolChampKeyMap = async (): Promise<Map<number, string>> => {
   }
 };
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 15 },
-  visible: (i: number = 0) => ({
-    opacity: 1, y: 0,
-    transition: { duration: 0.25, delay: i * 0.03, ease: "easeOut" as const },
-  }),
-};
-
-const staggerContainer = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.03, delayChildren: 0 } },
-};
-
 // Helper: LZT preview image with fallback to placeholder on error
 const LztPreviewImage = ({ url }: { url: string }) => {
   const [failed, setFailed] = useState(false);
@@ -392,7 +378,7 @@ const LztPreviewImage = ({ url }: { url: string }) => {
   );
 };
 
-const ValorantCard = memo(({ item, skinsMap, formatPrice }: { item: LztItem; skinsMap: Map<string, SkinEntry>; formatPrice: (price: number, currency?: string) => string }) => {
+const ValorantCard = memo(({ item, skinsMap, priceLabel }: { item: LztItem; skinsMap: Map<string, SkinEntry>; priceLabel: string }) => {
   const rank = item.riot_valorant_rank ? rankMap[item.riot_valorant_rank] : null;
   const skinCount = item.riot_valorant_skin_count ?? 0;
   const hasKnife = (item.riot_valorant_knife ?? 0) > 0;
@@ -428,7 +414,7 @@ const ValorantCard = memo(({ item, skinsMap, formatPrice }: { item: LztItem; ski
   return (
     <Link
       to={`/conta/${item.item_id}`}
-      className="group cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-success/50 hover:shadow-[0_4px_24px_hsl(var(--success)/0.12)] flex flex-col h-full no-underline text-inherit"
+      className="group touch-manipulation cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-success/50 hover:shadow-[0_4px_24px_hsl(var(--success)/0.12)] flex flex-col h-full no-underline text-inherit"
     >
       <div className="relative flex h-28 sm:h-36 items-center justify-center overflow-hidden bg-secondary/20">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--success)/0.06),transparent_70%)]" />
@@ -499,7 +485,7 @@ const ValorantCard = memo(({ item, skinsMap, formatPrice }: { item: LztItem; ski
         )}
         <div className="mt-auto pt-1.5 border-t border-border/30">
           <h3 className="text-[11px] sm:text-xs font-semibold text-foreground line-clamp-2 leading-snug tracking-tight mb-1">{cleanedTitle}</h3>
-          <p className="text-sm sm:text-base font-bold text-success tracking-tight">{formatPrice(item.price, item.price_currency)}</p>
+          <p className="text-sm sm:text-base font-bold text-success tracking-tight">{priceLabel}</p>
           <span className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg bg-success py-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-success-foreground">
             Ver conta <ArrowRight className="h-2.5 w-2.5" />
           </span>
@@ -508,9 +494,10 @@ const ValorantCard = memo(({ item, skinsMap, formatPrice }: { item: LztItem; ski
     </Link>
   );
 });
+ValorantCard.displayName = "ValorantCard";
 
 // ─── LoL Card ───
-const LolCard = memo(({ item, champKeyMap, formatPrice }: { item: LztItem; champKeyMap: Map<number, string>; formatPrice: (price: number, currency?: string) => string }) => {
+const LolCard = memo(({ item, champKeyMap, priceLabel }: { item: LztItem; champKeyMap: Map<number, string>; priceLabel: string }) => {
   const rankText = item.riot_lol_rank || "Unranked";
   const rankFilterId = lolRankToFilterId(rankText);
   const rankFilterData = lolRankFilters.find(r => r.id === rankFilterId);
@@ -585,7 +572,7 @@ const LolCard = memo(({ item, champKeyMap, formatPrice }: { item: LztItem; champ
   return (
     <Link
       to={`/lol/${item.item_id}`}
-      className="group cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-[hsl(198,100%,45%)/50%] hover:shadow-[0_4px_24px_hsl(198,100%,45%,0.12)] flex flex-col h-full no-underline text-inherit"
+      className="group touch-manipulation cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-[hsl(198,100%,45%)/50%] hover:shadow-[0_4px_24px_hsl(198,100%,45%,0.12)] flex flex-col h-full no-underline text-inherit"
     >
       <div className="relative flex h-28 sm:h-36 items-center justify-center overflow-hidden bg-secondary/20">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(198,100%,45%,0.08),transparent_70%)]" />
@@ -647,10 +634,14 @@ const LolCard = memo(({ item, champKeyMap, formatPrice }: { item: LztItem; champ
             <Trophy className="h-2.5 w-2.5 text-primary" />
             {champCount} champs
           </span>
-          {winRate != null && (
+          {winRate != null && winRate !== "" && (
             <span className="flex items-center gap-1">
               <TrendingUp className="h-2.5 w-2.5 text-primary" />
-              {winRate}% WR
+              {typeof winRate === "number"
+                ? `${winRate}% WR`
+                : String(winRate).includes("%")
+                  ? String(winRate)
+                  : `${winRate}% WR`}
             </span>
           )}
           {item.riot_lol_region && (
@@ -662,7 +653,7 @@ const LolCard = memo(({ item, champKeyMap, formatPrice }: { item: LztItem; champ
         </div>
         <div className="mt-auto pt-1.5 border-t border-border/30">
           <h3 className="text-[11px] sm:text-xs font-semibold text-foreground line-clamp-2 leading-snug tracking-tight mb-1">{cleanedTitle}</h3>
-          <p className="text-sm sm:text-base font-bold text-[hsl(198,100%,45%)] tracking-tight">{formatPrice(item.price, item.price_currency)}</p>
+          <p className="text-sm sm:text-base font-bold text-[hsl(198,100%,45%)] tracking-tight">{priceLabel}</p>
           <span className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg py-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-white" style={{ background: "hsl(198,100%,45%)" }}>
             Ver conta <ArrowRight className="h-2.5 w-2.5" />
           </span>
@@ -674,7 +665,7 @@ const LolCard = memo(({ item, champKeyMap, formatPrice }: { item: LztItem; champ
 LolCard.displayName = "LolCard";
 
 // ─── Fortnite Card ───
-const FortniteCard = memo(({ item, skinsDb, formatPrice }: { item: LztItem; skinsDb: Map<string, { name: string; image: string }>; formatPrice: (price: number, currency?: string) => string }) => {
+const FortniteCard = memo(({ item, skinsDb, priceLabel }: { item: LztItem; skinsDb: Map<string, { name: string; image: string }>; priceLabel: string }) => {
   const vbucks = item.fortnite_balance ?? item.fortnite_vbucks ?? 0;
   const skinCount = item.fortnite_skin_count ?? 0;
   const level = item.fortnite_level ?? 0;
@@ -726,7 +717,7 @@ const FortniteCard = memo(({ item, skinsDb, formatPrice }: { item: LztItem; skin
   return (
     <Link
       to={`/fortnite/${item.item_id}`}
-      className="group cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-[hsl(265,80%,65%)/50%] hover:shadow-[0_4px_24px_hsl(265,80%,65%,0.12)] flex flex-col h-full no-underline text-inherit"
+      className="group touch-manipulation cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-[hsl(265,80%,65%)/50%] hover:shadow-[0_4px_24px_hsl(265,80%,65%,0.12)] flex flex-col h-full no-underline text-inherit"
     >
       <div className="relative flex h-28 sm:h-36 items-center justify-center overflow-hidden bg-secondary/20">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(265,80%,65%,0.08),transparent_70%)]" />
@@ -790,7 +781,7 @@ const FortniteCard = memo(({ item, skinsDb, formatPrice }: { item: LztItem; skin
         </div>
         <div className="mt-auto pt-1.5 border-t border-border/30">
           <h3 className="text-[11px] sm:text-xs font-semibold text-foreground line-clamp-2 leading-snug tracking-tight mb-1">{cleanedTitle}</h3>
-          <p className="text-sm sm:text-base font-bold tracking-tight" style={{ color: FN_PURPLE }}>{formatPrice(item.price, item.price_currency)}</p>
+          <p className="text-sm sm:text-base font-bold tracking-tight" style={{ color: FN_PURPLE }}>{priceLabel}</p>
           <span className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg py-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-white" style={{ background: FN_PURPLE }}>
             Ver conta <ArrowRight className="h-2.5 w-2.5" />
           </span>
@@ -802,7 +793,7 @@ const FortniteCard = memo(({ item, skinsDb, formatPrice }: { item: LztItem; skin
 FortniteCard.displayName = "FortniteCard";
 
 // ─── Minecraft Card ───
-const MinecraftCard = memo(({ item, formatPrice }: { item: LztItem; formatPrice: (price: number, currency?: string) => string }) => {
+const MinecraftCard = memo(({ item, priceLabel }: { item: LztItem; priceLabel: string }) => {
   const nickname = item.minecraft_nickname;
   const hasJava = (item.minecraft_java ?? 0) > 0;
   const hasBedrock = (item.minecraft_bedrock ?? 0) > 0;
@@ -829,7 +820,7 @@ const MinecraftCard = memo(({ item, formatPrice }: { item: LztItem; formatPrice:
   return (
     <Link
       to={`/minecraft/${item.item_id}`}
-      className="group cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all flex flex-col h-full no-underline text-inherit"
+      className="group touch-manipulation cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all flex flex-col h-full no-underline text-inherit"
       style={{ ['--hover-shadow' as string]: `0 0 24px ${MC_GREEN}15` }}
       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = `${MC_GREEN}80`; (e.currentTarget as HTMLElement).style.boxShadow = `0 4px 24px ${MC_GREEN}15`; }}
       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = ''; (e.currentTarget as HTMLElement).style.boxShadow = ''; }}
@@ -869,7 +860,7 @@ const MinecraftCard = memo(({ item, formatPrice }: { item: LztItem; formatPrice:
         </div>
         <div className="mt-auto pt-1.5 border-t border-border/30">
           <h3 className="text-[11px] sm:text-xs font-semibold text-foreground line-clamp-2 leading-snug tracking-tight mb-1">{cleanedTitle}</h3>
-          <p className="text-sm sm:text-base font-bold tracking-tight" style={{ color: MC_GREEN }}>{formatPrice(item.price, item.price_currency)}</p>
+          <p className="text-sm sm:text-base font-bold tracking-tight" style={{ color: MC_GREEN }}>{priceLabel}</p>
           <span className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg py-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-white" style={{ background: MC_GREEN }}>
             Ver conta <ArrowRight className="h-2.5 w-2.5" />
           </span>
@@ -1379,7 +1370,7 @@ const Contas = () => {
       if (tab === "valorant") qp.append("country[]", "Bra");
       if (tab === "lol") qp.append("lol_region[]", "BR1");
 
-      const delayMs = delayMultiplier * 900;
+      const delayMs = delayMultiplier * 550;
       const timeoutId = setTimeout(() => {
         if (runId !== prefetchRunIdRef.current) return;
         void (async () => {
@@ -1593,6 +1584,21 @@ const Contas = () => {
   }, [totalDisplayPages, displayPage]);
 
   const items = allItems.slice((displayPage - 1) * ITEMS_PER_PAGE, displayPage * ITEMS_PER_PAGE);
+
+  const catalogGame: GameCategory =
+    gameTab === "valorant" ? "valorant" : gameTab === "fortnite" ? "fortnite" : gameTab === "minecraft" ? "minecraft" : "lol";
+
+  const gridRows = useMemo(
+    () =>
+      items.map((item) => ({
+        item,
+        priceLabel: getDisplayPrice(
+          { price: item.price, price_currency: item.price_currency, price_brl: item.price_brl },
+          catalogGame,
+        ),
+      })),
+    [items, getDisplayPrice, catalogGame],
+  );
 
   const refetch = () => {
     abortRef.current?.abort();
@@ -1965,7 +1971,7 @@ const Contas = () => {
           <button
             type="button"
             onClick={() => switchTab("valorant")}
-            className={`flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-xl px-2 sm:flex-1 sm:px-3 py-2.5 sm:py-2.5 text-xs sm:text-sm font-semibold tracking-tight transition-all duration-200 ${
+            className={`touch-manipulation flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-xl px-2 sm:flex-1 sm:px-3 py-2.5 sm:py-2.5 text-xs sm:text-sm font-semibold tracking-tight transition-all duration-200 ${
               isValorant
                 ? "bg-success/15 text-success ring-2 ring-success/35 ring-offset-2 ring-offset-background"
                 : "text-muted-foreground hover:bg-background/70 hover:text-foreground"
@@ -1977,7 +1983,7 @@ const Contas = () => {
           <button
             type="button"
             onClick={() => switchTab("lol")}
-            className={`flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-xl px-2 sm:flex-1 sm:px-3 py-2.5 sm:py-2.5 text-xs sm:text-sm font-semibold tracking-tight transition-all duration-200 ${
+            className={`touch-manipulation flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-xl px-2 sm:flex-1 sm:px-3 py-2.5 sm:py-2.5 text-xs sm:text-sm font-semibold tracking-tight transition-all duration-200 ${
               gameTab === "lol"
                 ? "bg-[hsl(198,100%,45%,0.12)] text-[hsl(198,100%,48%)] ring-2 ring-[hsl(198,100%,45%,0.35)] ring-offset-2 ring-offset-background"
                 : "text-muted-foreground hover:bg-background/70 hover:text-foreground"
@@ -1990,7 +1996,7 @@ const Contas = () => {
           <button
             type="button"
             onClick={() => switchTab("fortnite")}
-            className={`flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-xl px-2 sm:flex-1 sm:px-3 py-2.5 sm:py-2.5 text-xs sm:text-sm font-semibold tracking-tight transition-all duration-200 ${
+            className={`touch-manipulation flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-xl px-2 sm:flex-1 sm:px-3 py-2.5 sm:py-2.5 text-xs sm:text-sm font-semibold tracking-tight transition-all duration-200 ${
               isFortnite
                 ? "bg-[hsl(265,80%,65%,0.12)] text-[hsl(265,80%,65%)] ring-2 ring-[hsl(265,80%,65%,0.45)] ring-offset-2 ring-offset-background"
                 : "text-muted-foreground hover:bg-background/70 hover:text-foreground"
@@ -2002,7 +2008,7 @@ const Contas = () => {
           <button
             type="button"
             onClick={() => switchTab("minecraft")}
-            className={`flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-xl px-2 sm:flex-1 sm:px-3 py-2.5 sm:py-2.5 text-xs sm:text-sm font-semibold tracking-tight transition-all duration-200 ${
+            className={`touch-manipulation flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-xl px-2 sm:flex-1 sm:px-3 py-2.5 sm:py-2.5 text-xs sm:text-sm font-semibold tracking-tight transition-all duration-200 ${
               isMinecraft
                 ? "ring-2 ring-offset-2 ring-offset-background"
                 : "text-muted-foreground hover:bg-background/70 hover:text-foreground"
@@ -2141,7 +2147,7 @@ const Contas = () => {
           <div className="flex-1">
             {isLoading && (
               <div className="grid grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3">
-                {Array.from({ length: 6 }).map((_, i) => (
+                {Array.from({ length: 12 }).map((_, i) => (
                   <div key={i} className="animate-pulse rounded-xl border border-border/40 bg-card overflow-hidden">
                     <div className="h-28 sm:h-36 bg-secondary/30" />
                     <div className="flex items-center justify-between px-2.5 py-1.5 bg-secondary/20">
@@ -2183,31 +2189,23 @@ const Contas = () => {
 
             {!isLoading && !streamError && (
               <>
-                <motion.div
-                  className={`grid grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3 transition-opacity duration-300 relative ${isRefetching ? "opacity-60" : ""}`}
-                  initial="hidden"
-                  animate="visible"
-                  variants={staggerContainer}
+                <div
+                  className={`grid grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3 transition-opacity duration-200 relative ${isRefetching ? "opacity-60" : ""}`}
                 >
-                  {items.map((item) => (
-                    <motion.div
-                      key={item.item_id}
-                      initial={{ opacity: 0, y: 15, scale: 0.97 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      transition={{ duration: 0.3, ease: "easeOut" }}
-                    >
+                  {gridRows.map(({ item, priceLabel }) => (
+                    <div key={item.item_id}>
                       {isValorant ? (
-                        <ValorantCard item={item} skinsMap={skinsMap} formatPrice={(p, c) => getDisplayPrice({ price: p, price_currency: c, price_brl: item.price_brl }, "valorant")} />
+                        <ValorantCard item={item} skinsMap={skinsMap} priceLabel={priceLabel} />
                       ) : isFortnite ? (
-                        <FortniteCard item={item} skinsDb={fnSkinsDb} formatPrice={(p, c) => getDisplayPrice({ price: p, price_currency: c, price_brl: item.price_brl }, "fortnite")} />
+                        <FortniteCard item={item} skinsDb={fnSkinsDb} priceLabel={priceLabel} />
                       ) : isMinecraft ? (
-                        <MinecraftCard item={item} formatPrice={(p, c) => getDisplayPrice({ price: p, price_currency: c, price_brl: item.price_brl }, "minecraft")} />
+                        <MinecraftCard item={item} priceLabel={priceLabel} />
                       ) : (
-                        <LolCard item={item} champKeyMap={champKeyMap} formatPrice={(p, c) => getDisplayPrice({ price: p, price_currency: c, price_brl: item.price_brl }, "lol")} />
+                        <LolCard item={item} champKeyMap={champKeyMap} priceLabel={priceLabel} />
                       )}
-                    </motion.div>
+                    </div>
                   ))}
-                </motion.div>
+                </div>
 
                 {items.length === 0 && allItems.length === 0 && streamingDone && (
                   <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">

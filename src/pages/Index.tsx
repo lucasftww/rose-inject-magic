@@ -2,10 +2,10 @@ import { useMemo, useState, useRef, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import { Star, ArrowRight, Loader2, Zap, Shield, Clock, Users, CheckCircle } from "lucide-react";
-import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 
 // Game card images (accounts)
 import valorantCardImg from "@/assets/games/valorant-card.webp";
@@ -78,8 +78,6 @@ import ReviewsSection from "@/components/landing/ReviewsSection";
 import FaqSection from "@/components/landing/FaqSection";
 import CtaSection from "@/components/landing/CtaSection";
 import HowItWorksSection from "@/components/landing/HowItWorksSection";
-import { fadeUp, staggerContainer, scaleIn, slideInLeft } from "@/components/landing/animations";
-
 // Local images map for software game cards (fallbacks when no character overlay)
 const softwareImageMap: Record<string, string> = {
   valorant: swValorant,
@@ -185,12 +183,12 @@ const GAME_CATEGORIES = [
 
 // ─── Shared Section Header ──────────────────────────────────────────────────
 const SectionHeader = ({ subtitle, title }: { subtitle: string; title: string }) => (
-  <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-80px" }} variants={slideInLeft} className="text-center sm:text-left">
+  <div className="text-center sm:text-left">
     <p className="text-[10px] sm:text-sm font-medium uppercase tracking-[0.3em] text-success">{subtitle}</p>
     <h2 className="mt-1.5 sm:mt-3 text-xl sm:text-4xl font-bold tracking-tight text-foreground md:text-6xl" style={{ fontFamily: "'Valorant', sans-serif" }}>
       {title}
     </h2>
-  </motion.div>
+  </div>
 );
 
 // ─── Accounts Section ───────────────────────────────────────────────────────
@@ -203,16 +201,19 @@ const ContasSection = () => {
       <div className="mx-auto max-w-7xl">
         <SectionHeader subtitle={t("accounts.subtitle")} title={t("accounts.title")} />
 
-        <motion.div
-          className="mt-5 sm:mt-12 grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4"
-          initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-40px" }} variants={staggerContainer}
-        >
-          {GAME_CATEGORIES.map((game, idx) => (
-            <motion.div
+        <div className="mt-5 sm:mt-12 grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4">
+          {GAME_CATEGORIES.map((game) => (
+            <div
               key={game.tab}
-              variants={fadeUp}
-              custom={idx}
-              className="group relative cursor-pointer overflow-hidden rounded-xl border border-border/40 bg-card transition-all duration-300 hover:border-success/40 hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)]"
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  navigate(`/contas?game=${game.tab}`);
+                }
+              }}
+              className="group relative touch-manipulation cursor-pointer overflow-hidden rounded-xl border border-border/40 bg-card transition-all duration-300 hover:border-success/40 hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)]"
               onClick={() => navigate(`/contas?game=${game.tab}`)}
             >
               <div className="relative aspect-[3/4] overflow-hidden">
@@ -236,27 +237,27 @@ const ContasSection = () => {
                   </div>
                 </div>
               </div>
-            </motion.div>
+            </div>
           ))}
-        </motion.div>
+        </div>
 
-        <motion.div className="mt-6 sm:mt-10 flex justify-center" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
+        <div className="mt-6 sm:mt-10 flex justify-center">
           <Link
             to="/contas"
-            className="flex w-full sm:w-auto items-center justify-center gap-2 border border-foreground/15 px-6 sm:px-12 py-2.5 sm:py-3.5 text-[10px] sm:text-sm font-bold uppercase tracking-[0.2em] text-foreground/80 transition-all hover:border-success hover:text-success rounded-xl"
+            className="touch-manipulation flex w-full sm:w-auto items-center justify-center gap-2 border border-foreground/15 px-6 sm:px-12 py-2.5 sm:py-3.5 text-[10px] sm:text-sm font-bold uppercase tracking-[0.2em] text-foreground/80 transition-all hover:border-success hover:text-success rounded-xl"
             style={{ fontFamily: "'Valorant', sans-serif" }}
           >
             {t("accounts.exploreAccounts")}
             <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4" />
           </Link>
-        </motion.div>
+        </div>
       </div>
     </section>
   );
 };
 
 // ─── TiltCard (3D tilt on hover) ────────────────────────────────────────────
-const TiltCard = ({ children, index }: { children: React.ReactNode; index: number }) => {
+const TiltCard = ({ children }: { children: React.ReactNode }) => {
   const cardRef = useRef<HTMLDivElement>(null);
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
@@ -278,16 +279,14 @@ const TiltCard = ({ children, index }: { children: React.ReactNode; index: numbe
   }, []);
 
   return (
-    <motion.div
+    <div
       ref={cardRef}
-      variants={scaleIn}
-      custom={index}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       style={{ transition: "transform 0.15s ease-out", transformStyle: "preserve-3d" }}
     >
       {children}
-    </motion.div>
+    </div>
   );
 };
 
@@ -304,7 +303,7 @@ interface GameCardGame {
   characterHover?: string;
 }
 
-function GameCard({ game, count, t, index }: { game: GameCardGame; count: number; t: any; index: number }) {
+function GameCard({ game, count, t }: { game: GameCardGame; count: number; t: TFunction }) {
   const hasProducts = count > 0;
   const [isHovered, setIsHovered] = useState(false);
   const isSpoofer = game.name === "Spoofer";
@@ -314,7 +313,7 @@ function GameCard({ game, count, t, index }: { game: GameCardGame; count: number
     : "absolute bottom-0 right-[-125px] md:right-[-105px] lg:right-[-125px] w-[162.5%]";
 
   return (
-    <TiltCard index={index}>
+    <TiltCard>
       <div
         className="relative"
         onMouseEnter={() => setIsHovered(true)}
@@ -326,7 +325,7 @@ function GameCard({ game, count, t, index }: { game: GameCardGame; count: number
               ? `/produtos?game=${encodeURIComponent(game.keywords[0])}`
               : "/produtos"
           }
-          className="group relative block rounded-2xl border border-border/50 hover:border-primary/50 transition-all duration-500 bg-card h-full overflow-hidden"
+          className="group touch-manipulation relative block rounded-2xl border border-border/50 hover:border-primary/50 transition-all duration-500 bg-card h-full overflow-hidden"
         >
           {/* Image / gradient background */}
           <div className="relative aspect-[16/11] overflow-hidden">
@@ -485,26 +484,23 @@ const SoftwareSection = () => {
         ) : gameCards.length === 0 ? (
           <div className="mt-10 text-center text-muted-foreground text-sm">{t("products.empty")}</div>
         ) : (
-          <motion.div
-            className="mt-5 sm:mt-12 grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4"
-            initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-60px" }} variants={staggerContainer}
-          >
-            {gameCards.map((gc, idx) => (
-              <GameCard key={gc.id} game={gc} count={gc.count} t={t} index={idx} />
+          <div className="mt-5 sm:mt-12 grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4">
+            {gameCards.map((gc) => (
+              <GameCard key={gc.id} game={gc} count={gc.count} t={t} />
             ))}
-          </motion.div>
+          </div>
         )}
 
-        <motion.div className="mt-6 sm:mt-10 flex justify-center" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
+        <div className="mt-6 sm:mt-10 flex justify-center">
           <Link
             to="/produtos"
-            className="flex w-full sm:w-auto items-center justify-center gap-2 border border-foreground/15 px-6 sm:px-12 py-2.5 sm:py-3.5 text-[10px] sm:text-sm font-bold uppercase tracking-[0.2em] text-foreground/80 transition-all hover:border-success hover:text-success rounded-xl"
+            className="touch-manipulation flex w-full sm:w-auto items-center justify-center gap-2 border border-foreground/15 px-6 sm:px-12 py-2.5 sm:py-3.5 text-[10px] sm:text-sm font-bold uppercase tracking-[0.2em] text-foreground/80 transition-all hover:border-success hover:text-success rounded-xl"
             style={{ fontFamily: "'Valorant', sans-serif" }}
           >
             {t("products.viewAll")}
             <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4" />
           </Link>
-        </motion.div>
+        </div>
       </div>
     </section>
   );
@@ -544,47 +540,47 @@ const Index = () => {
         <div className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[350px] sm:h-[600px] w-[450px] sm:w-[900px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,_hsl(197,100%,50%,0.12)_0%,_transparent_55%)]" />
 
         {/* Badge */}
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.15 }} className="z-10 mb-4 sm:mb-6 flex items-center gap-1.5 rounded-full border border-success/20 bg-success/[0.06] px-3 sm:px-4 py-1 sm:py-1.5">
+        <div className="z-10 mb-4 sm:mb-6 flex items-center gap-1.5 rounded-full border border-success/20 bg-success/[0.06] px-3 sm:px-4 py-1 sm:py-1.5">
           <Star className="h-3 w-3 sm:h-3.5 sm:w-3.5 fill-success text-success" />
           <span className="text-[9px] sm:text-xs font-semibold tracking-wide text-success">{t("hero.badge")}</span>
-        </motion.div>
+        </div>
 
         {/* Title */}
-        <motion.h1 initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.3 }} className="z-10 mx-auto max-w-3xl text-[1.6rem] leading-[1.08] sm:text-5xl font-bold tracking-tight text-foreground md:text-6xl lg:text-7xl">
+        <h1 className="z-10 mx-auto max-w-3xl text-[1.6rem] leading-[1.08] sm:text-5xl font-bold tracking-tight text-foreground md:text-6xl lg:text-7xl">
           {t("hero.titlePre")}{" "}
-          <span className="inline-block bg-gradient-to-r from-success via-[hsl(197,100%,70%)] to-success bg-[length:200%_100%] bg-clip-text text-transparent animate-[text-shine_4s_ease-in-out_infinite]" style={{ fontFamily: "'Valorant', sans-serif" }}>
+          <span className="inline-block bg-gradient-to-r from-success via-[hsl(197,100%,70%)] to-success bg-[length:200%_100%] bg-clip-text text-transparent animate-[text-shine_4s_ease-in-out_infinite] motion-reduce:animate-none" style={{ fontFamily: "'Valorant', sans-serif" }}>
             Royal Store
           </span>
-        </motion.h1>
+        </h1>
 
         {/* Subtitle */}
-        <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.5 }} className="z-10 mt-3 sm:mt-6 mx-auto max-w-xl text-[11px] leading-relaxed sm:text-base text-muted-foreground md:text-lg px-2 sm:px-0">
+        <p className="z-10 mt-3 sm:mt-6 mx-auto max-w-xl text-[11px] leading-relaxed sm:text-base text-muted-foreground md:text-lg px-2 sm:px-0">
           <span className="hidden sm:inline">{t("hero.descDesktop")}{" "}
           <span className="text-foreground font-medium">{t("hero.undetectable")}</span>,{" "}
           <span className="text-foreground font-medium">{t("hero.constantUpdates")}</span>{" "}{t("common.and") || "e"}{" "}
           <span className="text-foreground font-medium">{t("hero.dedicatedSupport")}</span>.
           {" "}{t("hero.descDesktopEnd")}</span>
           <span className="sm:hidden">{t("hero.descMobilePre")}{" "}<span className="text-foreground font-medium">{t("hero.instantDelivery")}</span>, <span className="text-foreground font-medium">{t("hero.support247")}</span>{" "}{t("auth.and") || "e"}{" "}<span className="text-foreground font-medium">{t("hero.totalGuarantee")}</span>. {t("hero.descMobileEnd")}</span>
-        </motion.p>
+        </p>
 
         {/* CTAs */}
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.65 }} className="z-10 mt-5 sm:mt-10 flex w-full max-w-xs sm:max-w-md flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-3 mx-auto">
-          <Link to="/produtos" className="btn-shine group relative flex w-full sm:w-auto items-center justify-center gap-2 bg-success px-6 sm:px-8 py-3 sm:py-3.5 text-[12px] sm:text-sm font-semibold tracking-wide text-success-foreground transition-all hover:shadow-[0_0_30px_hsl(197,100%,50%,0.4)] rounded-xl shadow-[0_4px_20px_hsl(197,100%,50%,0.25)]">
+        <div className="z-10 mt-5 sm:mt-10 flex w-full max-w-xs sm:max-w-md flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-3 mx-auto">
+          <Link to="/produtos" className="btn-shine touch-manipulation group relative flex w-full sm:w-auto items-center justify-center gap-2 bg-success px-6 sm:px-8 py-3 sm:py-3.5 text-[12px] sm:text-sm font-semibold tracking-wide text-success-foreground transition-all hover:shadow-[0_0_30px_hsl(197,100%,50%,0.4)] rounded-xl shadow-[0_4px_20px_hsl(197,100%,50%,0.25)]">
             <span className="pointer-events-none absolute inset-0 rounded-xl bg-[radial-gradient(circle_at_30%_50%,_hsl(197,100%,70%,0.2)_0%,_transparent_60%)]" />
             <span className="relative flex items-center gap-2">
               {t("hero.viewProducts")}
               <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 transition-transform group-hover:translate-x-0.5" />
             </span>
           </Link>
-          <Link to="/contas" className="w-full sm:w-auto border border-success/30 px-6 sm:px-8 py-3 sm:py-3.5 text-[12px] sm:text-sm font-medium text-success transition-all hover:border-success hover:bg-success/[0.06] rounded-xl text-center">
+          <Link to="/contas" className="touch-manipulation w-full sm:w-auto border border-success/30 px-6 sm:px-8 py-3 sm:py-3.5 text-[12px] sm:text-sm font-medium text-success transition-all hover:border-success hover:bg-success/[0.06] rounded-xl text-center">
             {t("hero.viewAccounts")}
           </Link>
-        </motion.div>
+        </div>
 
         {/* Trust badges — compact row */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.85 }} className="z-10 mt-8 sm:mt-14 mx-auto flex items-center justify-center gap-4 sm:gap-8">
-          {trustBadges.map((item, idx) => (
-            <motion.div key={item.highlight} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.85 + idx * 0.1 }} className="flex items-center gap-1.5 sm:gap-2.5">
+        <div className="z-10 mt-8 sm:mt-14 mx-auto flex items-center justify-center gap-4 sm:gap-8">
+          {trustBadges.map((item) => (
+            <div key={item.highlight} className="flex items-center gap-1.5 sm:gap-2.5">
               <div className="flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-lg bg-success/[0.08] border border-success/10">
                 <item.icon className="h-3 w-3 sm:h-4 sm:w-4 text-success" />
               </div>
@@ -592,27 +588,27 @@ const Index = () => {
                 <p className="text-[8px] sm:text-[11px] font-bold tracking-wide text-foreground leading-tight" style={{ fontFamily: "'Valorant', sans-serif" }}>{item.highlight}</p>
                 <span className="text-[7px] sm:text-[10px] text-muted-foreground leading-tight">{item.label}</span>
               </div>
-            </motion.div>
+            </div>
           ))}
-        </motion.div>
+        </div>
 
         {/* Rating row */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 1.1 }} className="z-10 mt-4 sm:mt-8 flex items-center gap-1.5 text-muted-foreground">
+        <div className="z-10 mt-4 sm:mt-8 flex items-center gap-1.5 text-muted-foreground">
           <div className="flex">
             {[...Array(5)].map((_, i) => (
               <Star key={i} className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 fill-success text-success" />
             ))}
           </div>
           <span className="text-[9px] sm:text-xs">{t("hero.ratingText")}</span>
-        </motion.div>
+        </div>
 
         {/* Scroll indicator — desktop only */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 1.3 }} className="z-10 mt-6 sm:mt-10 hidden sm:flex animate-bounce flex-col items-center gap-1 text-muted-foreground/40">
+        <div className="z-10 mt-6 sm:mt-10 hidden sm:flex motion-reduce:animate-none animate-bounce flex-col items-center gap-1 text-muted-foreground/40">
           <span className="text-[9px] tracking-widest uppercase">{t("hero.explore")}</span>
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 5v14M19 12l-7 7-7-7"/>
           </svg>
-        </motion.div>
+        </div>
       </main>
 
       {/* ═══ SECTIONS ═══ */}

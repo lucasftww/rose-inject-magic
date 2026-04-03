@@ -1,3 +1,5 @@
+import { useCallback, useMemo } from "react";
+
 export type GameCategory = "valorant" | "lol" | "fortnite" | "minecraft";
 
 const MIN_PRICE_BRL = 20;
@@ -48,28 +50,40 @@ export function getLztItemBrlPrice(item: LztPriceInput, game?: GameCategory): nu
 }
 
 export const useLztMarkup = () => {
-  const calcPrice = (price: number, currency?: string, game?: GameCategory): number =>
-    calcLztFallbackBrl(price, currency, game);
-
-  const formatPrice = (price: number, currency?: string, game?: GameCategory): string => {
-    return `R$ ${calcLztFallbackBrl(coalesceNum(price), currency, game).toFixed(2)}`;
-  };
-
-  const formatPriceBrl = (priceBrl: number): string => {
+  const formatPriceBrl = useCallback((priceBrl: number): string => {
     if (!Number.isFinite(priceBrl)) return "R$ —";
     return `R$ ${priceBrl.toFixed(2)}`;
-  };
+  }, []);
 
-  const getDisplayPrice = (item: LztPriceInput, game?: GameCategory): string => {
-    if (isValidPriceBrl(item.price_brl)) {
-      return formatPriceBrl(item.price_brl);
-    }
-    return formatPrice(coalesceNum(item.price), item.price_currency, game);
-  };
+  const calcPrice = useCallback((price: number, currency?: string, game?: GameCategory): number => calcLztFallbackBrl(price, currency, game), []);
 
-  const getPrice = (item: LztPriceInput, game?: GameCategory): number => {
-    return getLztItemBrlPrice(item, game);
-  };
+  const formatPrice = useCallback((price: number, currency?: string, game?: GameCategory): string => {
+    return `R$ ${calcLztFallbackBrl(coalesceNum(price), currency, game).toFixed(2)}`;
+  }, []);
 
-  return { calcPrice, formatPrice, formatPriceBrl, getDisplayPrice, getPrice, getMarkupForGame: () => 3.0, config: null, markup: 3.0 };
+  const getDisplayPrice = useCallback(
+    (item: LztPriceInput, game?: GameCategory): string => {
+      if (isValidPriceBrl(item.price_brl)) {
+        return formatPriceBrl(item.price_brl);
+      }
+      return formatPrice(coalesceNum(item.price), item.price_currency, game);
+    },
+    [formatPrice, formatPriceBrl],
+  );
+
+  const getPrice = useCallback((item: LztPriceInput, game?: GameCategory): number => getLztItemBrlPrice(item, game), []);
+
+  return useMemo(
+    () => ({
+      calcPrice,
+      formatPrice,
+      formatPriceBrl,
+      getDisplayPrice,
+      getPrice,
+      getMarkupForGame: () => 3.0,
+      config: null,
+      markup: 3.0,
+    }),
+    [calcPrice, formatPrice, formatPriceBrl, getDisplayPrice, getPrice],
+  );
 };
