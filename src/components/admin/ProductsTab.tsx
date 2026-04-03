@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useAdminGames, useAdminProductsWithPlans, useInvalidateAdminCache } from "@/hooks/useAdminData";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, supabaseAnonKey } from "@/integrations/supabase/client";
 import {
   Plus, Pencil, Trash2, Loader2, Upload, Link, X,
   Package, ChevronDown, ChevronUp, DollarSign, GripVertical, Film, Sparkles, FileText, Globe, RefreshCw,
@@ -180,7 +180,7 @@ const ProductsTab = () => {
       if (!fnBase) {
         toast({
           title: "Configuração incompleta",
-          description: "Defina VITE_SUPABASE_URL (ou VITE_SUPABASE_PROJECT_ID) no .env para carregar jogos Robot.",
+          description: "Configure VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY no .env (produção) para carregar jogos Robot.",
           variant: "destructive",
         });
         return;
@@ -190,7 +190,7 @@ const ProductsTab = () => {
           headers: {
             Authorization: `Bearer ${session.access_token}`,
             "Content-Type": "application/json",
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            apikey: supabaseAnonKey,
           },
         }),
         fetchExchangeRate(),

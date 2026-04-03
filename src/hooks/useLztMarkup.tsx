@@ -58,7 +58,9 @@ export const useLztMarkup = () => {
   const calcPrice = useCallback((price: number, currency?: string, game?: GameCategory): number => calcLztFallbackBrl(price, currency, game), []);
 
   const formatPrice = useCallback((price: number, currency?: string, game?: GameCategory): string => {
-    return `R$ ${calcLztFallbackBrl(coalesceNum(price), currency, game).toFixed(2)}`;
+    const brl = calcLztFallbackBrl(coalesceNum(price), currency, game);
+    if (!Number.isFinite(brl)) return "R$ —";
+    return `R$ ${brl.toFixed(2)}`;
   }, []);
 
   const getDisplayPrice = useCallback(

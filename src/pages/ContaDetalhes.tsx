@@ -12,15 +12,14 @@ import { toast } from "@/hooks/use-toast";
 import { useLztMarkup } from "@/hooks/useLztMarkup";
 import { trackViewContent, trackInitiateCheckout } from "@/lib/metaPixel";
 import { checkLztAvailability } from "@/lib/lztAvailability";
+import { supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
 
 import { rankMap, rarityMap, fetchAllValorantSkins, rankUnranked, RARITY_PRIORITY, type SkinEntry } from "@/lib/valorantData";
 
 const fetchAccountDetail = async (itemId: string) => {
-  const projectUrl = import.meta.env.VITE_SUPABASE_URL;
-  const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
   const res = await fetch(
-    `${projectUrl}/functions/v1/lzt-market?action=detail&item_id=${encodeURIComponent(itemId)}&game_type=valorant`,
-    { headers: { "Content-Type": "application/json", apikey: anonKey } }
+    `${supabaseUrl}/functions/v1/lzt-market?action=detail&item_id=${encodeURIComponent(itemId)}&game_type=valorant`,
+    { headers: { "Content-Type": "application/json", apikey: supabaseAnonKey } }
   );
   if (!res.ok) {
     const body = await res.json().catch(() => null);
@@ -40,8 +39,7 @@ const fetchAccountDetail = async (itemId: string) => {
 const getProxiedImageUrl = (url: string) => {
   if (!url) return "";
   if (url.includes("lzt.market") || url.includes("img.lzt.market") || url.includes("mineskin.eu")) {
-    const projectUrl = import.meta.env.VITE_SUPABASE_URL;
-    return `${projectUrl}/functions/v1/lzt-market?action=image-proxy&url=${encodeURIComponent(url)}`;
+    return `${supabaseUrl}/functions/v1/lzt-market?action=image-proxy&url=${encodeURIComponent(url)}`;
   }
   return url;
 };

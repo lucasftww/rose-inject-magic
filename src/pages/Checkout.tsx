@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Copy, Check, Clock, ArrowLeft, Package, ShieldCheck, Zap, CreditCard, Wallet, Sparkles, ChevronRight, ExternalLink } from "lucide-react";
 import logoRoyal from "@/assets/logo-royal.png";
@@ -64,7 +64,8 @@ const Checkout = () => {
   }, 0);
   const safeCartTotal = Number.isFinite(cartTotal) ? cartTotal : 0;
   // Discount is only trusted from server response; URL param is used as a hint for display
-  const urlDiscount = parseFloat(searchParams.get("discount") || "0");
+  const rawUrlDiscount = parseFloat(searchParams.get("discount") || "0");
+  const urlDiscount = Number.isFinite(rawUrlDiscount) ? rawUrlDiscount : 0;
   // Cap URL discount to never exceed cart total and never be negative
   const discountAmount = Math.max(0, Math.min(urlDiscount, safeCartTotal));
   const cartFinalPrice = Math.max(0, safeCartTotal - discountAmount);
@@ -178,8 +179,8 @@ const Checkout = () => {
     if (!token) {
       throw new Error("Sessão expirada. Entre novamente para continuar.");
     }
-    const apikey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-    if (typeof apikey !== "string" || !apikey.trim()) {
+    const apikey = supabaseAnonKey;
+    if (!apikey.trim()) {
       throw new Error("Configuração do aplicativo incompleta.");
     }
     return {
@@ -204,7 +205,7 @@ const Checkout = () => {
 
     try {
       const result = await safeJsonFetch<PixPaymentCreateResult>(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pix-payment?action=create`,
+        `${supabaseUrl}/functions/v1/pix-payment?action=create`,
         {
           method: "POST",
           headers: await getAuthHeaders(),
@@ -250,7 +251,7 @@ const Checkout = () => {
 
     try {
       const result = await safeJsonFetch<PixPaymentCreateResult>(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pix-payment?action=create-card`,
+        `${supabaseUrl}/functions/v1/pix-payment?action=create-card`,
         {
           method: "POST",
           headers: await getAuthHeaders(),
@@ -297,7 +298,7 @@ const Checkout = () => {
 
     try {
       const result = await safeJsonFetch<PixPaymentCreateResult>(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pix-payment?action=create-crypto`,
+        `${supabaseUrl}/functions/v1/pix-payment?action=create-crypto`,
         {
           method: "POST",
           headers: await getAuthHeaders(),
@@ -351,11 +352,11 @@ const Checkout = () => {
       setChecking(true);
       try {
         const data = await safeJsonFetch<PixPaymentStatusResult>(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pix-payment?action=${statusAction}&payment_id=${paymentId}`,
+          `${supabaseUrl}/functions/v1/pix-payment?action=${statusAction}&payment_id=${paymentId}`,
           {
             headers: {
               Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-              apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+              apikey: supabaseAnonKey,
             },
           }
         );

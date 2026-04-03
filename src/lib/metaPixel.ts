@@ -1,3 +1,5 @@
+import { supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
+
 /**
  * Meta Pixel + Conversions API (CAPI) — Enterprise-grade tracking
  * Pixel ID: 4378225905838577
@@ -357,10 +359,9 @@ const sendCAPI = async (
   customData: Record<string, any>
 ) => {
   try {
-    const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-    if (!projectId) return;
+    if (!supabaseAnonKey.trim()) return;
 
-    const url = `https://${projectId}.supabase.co/functions/v1/server-relay`;
+    const url = `${new URL(supabaseUrl).origin}/functions/v1/server-relay`;
 
     // Wait for initial hashing to finish if it's the first event
     await ensureIdentityReady();
@@ -384,7 +385,7 @@ const sendCAPI = async (
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || "",
+        apikey: supabaseAnonKey,
       },
       body,
       keepalive: true,
@@ -412,7 +413,7 @@ const sendCAPI = async (
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || "",
+                apikey: supabaseAnonKey,
               },
               body: retryBody,
               keepalive: true,

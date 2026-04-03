@@ -8,6 +8,7 @@ import { translateRegion } from "@/lib/regionTranslation";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { safeJsonFetch, ApiError } from "@/lib/apiUtils";
+import { supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
 import type {
   DDragonChampionJson,
   DDragonVersionList,
@@ -63,8 +64,7 @@ const getProxiedImageUrl = (url: string) => {
     url.includes("fortnite-api.com") ||
     url.includes("capes.dev")
   ) {
-    const projectUrl = import.meta.env.VITE_SUPABASE_URL || "https://cthqzetkshrbsjulfytl.supabase.co";
-    return `${projectUrl}/functions/v1/lzt-market?action=image-proxy&url=${encodeURIComponent(url)}`;
+    return `${supabaseUrl}/functions/v1/lzt-market?action=image-proxy&url=${encodeURIComponent(url)}`;
   }
   return url;
 };
@@ -913,14 +913,11 @@ const fetchAccountsRaw = async (
     else queryParams.set(k, v);
   }
   
-  const projectUrl = import.meta.env.VITE_SUPABASE_URL || 'https://cthqzetkshrbsjulfytl.supabase.co';
-  const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-  
   try {
     return await safeJsonFetch<LztMarketListResponse>(
-      `${projectUrl}/functions/v1/lzt-market?${queryParams.toString()}`,
+      `${supabaseUrl}/functions/v1/lzt-market?${queryParams.toString()}`,
       {
-      headers: { apikey: anonKey },
+      headers: { apikey: supabaseAnonKey },
       signal,
     }
     );
@@ -1363,9 +1360,6 @@ const Contas = () => {
 
     const allTabs: GameTab[] = ["valorant", "lol", "fortnite", "minecraft"];
     const otherTabs = allTabs.filter(t => t !== gameTab);
-    const projectUrl = import.meta.env.VITE_SUPABASE_URL || "https://cthqzetkshrbsjulfytl.supabase.co";
-    const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-
     let delayMultiplier = 0;
 
     for (const tab of otherTabs) {
@@ -1386,8 +1380,8 @@ const Contas = () => {
         if (runId !== prefetchRunIdRef.current) return;
         void (async () => {
           try {
-            const res = await fetch(`${projectUrl}/functions/v1/lzt-market?${qp.toString()}`, {
-              headers: { "Content-Type": "application/json", apikey: anonKey },
+            const res = await fetch(`${supabaseUrl}/functions/v1/lzt-market?${qp.toString()}`, {
+              headers: { "Content-Type": "application/json", apikey: supabaseAnonKey },
             });
             if (runId !== prefetchRunIdRef.current) return;
             if (!res.ok) return;

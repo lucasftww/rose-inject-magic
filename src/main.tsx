@@ -3,10 +3,11 @@ import App from "./App.tsx";
 import "./index.css";
 import "./i18n";
 import { initErrorTracker } from "./lib/errorTracker";
+import { supabaseUrl } from "./integrations/supabase/client";
 
 function injectResourceHints() {
   if (typeof document === "undefined") return;
-  const url = import.meta.env.VITE_SUPABASE_URL;
+  const url = supabaseUrl;
   if (typeof url === "string" && url.startsWith("https://")) {
     try {
       const origin = new URL(url).origin;

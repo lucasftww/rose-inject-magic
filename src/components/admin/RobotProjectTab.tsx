@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
 import { fetchAllRows } from "@/lib/supabaseAllRows";
 import { Loader2, RefreshCw, Wifi, WifiOff, Gamepad2, AlertTriangle, CheckCircle, Package, DollarSign, Clock, Zap, Gift, TrendingUp, BarChart3, RotateCw } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
@@ -70,11 +70,11 @@ const RobotProjectTab = () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/robot-project?action=ping`,
+        `${supabaseUrl}/functions/v1/robot-project?action=ping`,
         {
           headers: {
             Authorization: `Bearer ${session?.access_token}`,
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            apikey: supabaseAnonKey,
           },
         }
       );
@@ -89,11 +89,11 @@ const RobotProjectTab = () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/robot-project?action=list-games`,
+        `${supabaseUrl}/functions/v1/robot-project?action=list-games`,
         {
           headers: {
             Authorization: `Bearer ${session?.access_token}`,
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            apikey: supabaseAnonKey,
           },
         }
       );
@@ -345,12 +345,12 @@ const RobotProjectTab = () => {
       setRetryingTicketId(ticketId);
       const { data: { session } } = await supabase.auth.getSession();
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pix-payment?action=retry-robot`,
+        `${supabaseUrl}/functions/v1/pix-payment?action=retry-robot`,
         {
           method: "POST",
           headers: {
             Authorization: `Bearer ${session?.access_token}`,
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            apikey: supabaseAnonKey,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ ticket_id: ticketId }),

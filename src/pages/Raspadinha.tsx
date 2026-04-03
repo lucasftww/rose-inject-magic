@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Gift, Trophy, Frown, Ticket, History, Star, X, Flower2, Copy, Check, Plus, Minus, Package, User, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -166,8 +166,8 @@ const Raspadinha = () => {
     if (!token) {
       throw new Error("Sessão expirada. Entre novamente.");
     }
-    const apikey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-    if (typeof apikey !== "string" || !apikey.trim()) {
+    const apikey = supabaseAnonKey;
+    if (!apikey.trim()) {
       throw new Error("Configuração do aplicativo incompleta.");
     }
     return {
@@ -212,7 +212,7 @@ const Raspadinha = () => {
           try {
             const headers = await getAuthHeaders();
             const data = await safeJsonFetch<PixPaymentStatusResult>(
-              `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pix-payment?action=status&payment_id=${payment.id}`,
+              `${supabaseUrl}/functions/v1/pix-payment?action=status&payment_id=${payment.id}`,
               { headers }
             );
             if (data.status === "COMPLETED") {
@@ -301,7 +301,7 @@ const Raspadinha = () => {
       const totalAmount = Math.round(unitPrice * quantity * 100);
       const label = mode === "contas" ? "Raspadinha de Contas" : "Raspadinha da Sorte";
       const data = await safeJsonFetch<PixPaymentCreateResult>(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pix-payment?action=create`,
+        `${supabaseUrl}/functions/v1/pix-payment?action=create`,
         {
           method: "POST",
           headers: await getAuthHeaders(),
@@ -343,7 +343,7 @@ const Raspadinha = () => {
       try {
         const headers = await getAuthHeaders();
         const data = await safeJsonFetch<PixPaymentStatusResult>(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pix-payment?action=status&payment_id=${pId}`,
+          `${supabaseUrl}/functions/v1/pix-payment?action=status&payment_id=${pId}`,
           { headers }
         );
         if (data.status === "COMPLETED") {
@@ -424,7 +424,7 @@ const Raspadinha = () => {
     try {
       const headers = await getAuthHeaders();
       const data = await safeJsonFetch<ScratchCardPlayResult>(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/scratch-card-play`,
+        `${supabaseUrl}/functions/v1/scratch-card-play`,
         {
           method: "POST",
           headers,
@@ -571,7 +571,7 @@ const Raspadinha = () => {
     try {
       const headers = await getAuthHeaders();
       const data = await safeJsonFetch<ScratchCardPlayResult>(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/scratch-card-play`,
+        `${supabaseUrl}/functions/v1/scratch-card-play`,
         {
           method: "POST",
           headers,

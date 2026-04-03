@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
 import { useCallback } from "react";
 import { safeJsonFetch } from "@/lib/apiUtils";
 import type { PixPaymentVerifyResult } from "@/lib/edgeFunctionTypes";
@@ -103,19 +103,18 @@ export async function verifyPayment(
   const token = session?.access_token;
   if (!token) throw new Error("No active session");
 
-  const apikey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-  if (typeof apikey !== "string" || !apikey.trim()) {
-    throw new Error("Missing VITE_SUPABASE_PUBLISHABLE_KEY");
+  if (!supabaseAnonKey.trim()) {
+    throw new Error("Missing Supabase anon key (configure VITE_SUPABASE_PUBLISHABLE_KEY for production).");
   }
 
   const action = method === "card" ? "card-status" : method === "crypto" ? "crypto-status" : "status";
   
   const result = await safeJsonFetch<PixPaymentVerifyResult>(
-    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pix-payment?action=${action}&payment_id=${paymentId}`,
+    `${supabaseUrl}/functions/v1/pix-payment?action=${action}&payment_id=${paymentId}`,
     {
       headers: {
         Authorization: `Bearer ${token}`,
-        apikey,
+        apikey: supabaseAnonKey,
       },
     }
   );

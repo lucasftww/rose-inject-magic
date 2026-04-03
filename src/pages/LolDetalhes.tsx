@@ -15,12 +15,12 @@ import { toast } from "@/hooks/use-toast";
 import { useLztMarkup } from "@/hooks/useLztMarkup";
 import { trackViewContent, trackInitiateCheckout } from "@/lib/metaPixel";
 import { checkLztAvailability } from "@/lib/lztAvailability";
+import { supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
 
 const getProxiedImageUrl = (url: string) => {
   if (!url) return "";
   if (url.includes("lzt.market") || url.includes("img.lzt.market") || url.includes("ddragon.leagueoflegends.com")) {
-    const projectUrl = import.meta.env.VITE_SUPABASE_URL;
-    return `${projectUrl}/functions/v1/lzt-market?action=image-proxy&url=${encodeURIComponent(url)}`;
+    return `${supabaseUrl}/functions/v1/lzt-market?action=image-proxy&url=${encodeURIComponent(url)}`;
   }
   return url;
 };
@@ -90,13 +90,10 @@ const fetchChampKeyMap = async (): Promise<Map<number, string>> => {
 };
 
 const fetchAccountDetail = async (itemId: string) => {
-  const projectUrl = import.meta.env.VITE_SUPABASE_URL || 'https://cthqzetkshrbsjulfytl.supabase.co';
-  const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-  
   try {
     return await safeJsonFetch<LztMarketLolDetailResponse>(
-      `${projectUrl}/functions/v1/lzt-market?action=detail&item_id=${encodeURIComponent(itemId)}&game_type=lol`,
-      { headers: { apikey: anonKey } }
+      `${supabaseUrl}/functions/v1/lzt-market?action=detail&item_id=${encodeURIComponent(itemId)}&game_type=lol`,
+      { headers: { apikey: supabaseAnonKey } }
     );
   } catch (err: unknown) {
     if (err instanceof ApiError) {

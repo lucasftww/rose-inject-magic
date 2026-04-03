@@ -1,4 +1,5 @@
 import { toast } from "@/hooks/use-toast";
+import { supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
 
 type LztDetailErrorBody = {
   error?: string;
@@ -40,11 +41,9 @@ function isSoldMessage(body: LztDetailErrorBody | null): boolean {
 export const checkLztAvailability = async (itemId: string, gameType: string): Promise<boolean> => {
   const normalizedId = String(itemId);
   try {
-    const projectUrl = import.meta.env.VITE_SUPABASE_URL;
-    const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
     const res = await fetch(
-      `${projectUrl}/functions/v1/lzt-market?action=detail&item_id=${encodeURIComponent(normalizedId)}&game_type=${encodeURIComponent(gameType)}`,
-      { headers: { "Content-Type": "application/json", apikey: anonKey } }
+      `${supabaseUrl}/functions/v1/lzt-market?action=detail&item_id=${encodeURIComponent(normalizedId)}&game_type=${encodeURIComponent(gameType)}`,
+      { headers: { "Content-Type": "application/json", apikey: supabaseAnonKey } }
     );
     if (!res.ok) {
       const errBody = await readJsonErrorBody(res);
