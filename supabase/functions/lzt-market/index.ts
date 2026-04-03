@@ -9,7 +9,7 @@ const corsHeaders = {
 const LZT_ALLOWED_IMAGE_DOMAINS = [
   "lzt.market", "api.lzt.market", "s.lzt.market", "img.lzt.market",
   "ddragon.leagueoflegends.com", "fortnite-api.com", "mineskin.eu",
-  "steamstatic.com", "akamaihd.net", "capes.dev",
+  "akamaihd.net", "capes.dev",
 ];
 const RETRYABLE_STATUSES = [429, 502, 503, 504];
 let RUB_TO_BRL = 0.055; // Updated fallback
@@ -109,11 +109,6 @@ function getContentFloorBrl(item: LztItem, gameType?: string) {
   const skins = Number(item.riot_valorant_skin_count || 0);
   const knives = Number(item.riot_valorant_knife || item.riot_valorant_knife_count || 0);
   const level = Math.min(Number(item.riot_valorant_level || 0), 500);
-  // Support for CS2 / Steam (if applicable)
-  if (gameType === "steam" || gameType === "csgo" || gameType === "cs2") {
-    const csSkins = Number(item.steam_inventory_items_count || 0);
-    return csSkins * 0.1 + 10;
-  }
   return skins * 0.6 + knives * 5 + level * 0.08;
 }
 
@@ -158,19 +153,6 @@ function getContentCeilingBrl(item: LztItem, gameType?: string) {
     else if (rankStr.includes("MVP")) ceiling += 25;
     else if (rankStr.includes("VIP+")) ceiling += 15;
     else if (rankStr.includes("VIP")) ceiling += 8;
-    return Math.max(ceiling, MIN_PRICE_BRL);
-  }
-  if (gameType === "steam" || gameType === "csgo" || gameType === "cs2") {
-    const inv = Number(item.steam_inventory_items_count || 0);
-    const steamLvl = Math.min(Number(item.steam_level || 0), 10000);
-    const games = Number(item.steam_games_count || item.games_count || 0);
-    let ceiling = inv * 1.2 + steamLvl * 0.4 + games * 2;
-    const elo = Number(item.premier_elo || item.cs2_elo || item.premier_elo_min || 0);
-    if (elo >= 20000) ceiling += 200;
-    else if (elo >= 12000) ceiling += 120;
-    else if (elo >= 8000) ceiling += 80;
-    else if (elo > 0) ceiling += 40;
-    if (item.cs2_prime === "1" || item.cs2_prime === true || item.steam_prime === "Yes") ceiling += 25;
     return Math.max(ceiling, MIN_PRICE_BRL);
   }
   // Valorant
@@ -262,10 +244,6 @@ function shouldKeepItem(item: LztItem, gameType: string, _displayedPriceBrl: num
     const skins = Number(item.fortnite_skin_count || item.fortnite_outfit_count || 0);
     if (skins < 3) return false;
   }
-  
-  if (gameType === "steam" || gameType === "csgo" || gameType === "cs2") {
-    if (item.steam_vac_ban || item.steam_community_ban) return false;
-  }
 
   return true;
 }
@@ -316,7 +294,7 @@ Deno.serve(async (req) => {
     const [lztCredsRes, clientIdRow, lztConfigRow] = await Promise.all([
       supabaseAdmin.from("system_credentials").select("env_key, value").in("env_key", ["LZT_API_TOKEN", "LZT_MARKET_TOKEN"]),
       supabaseAdmin.from("system_credentials").select("value").eq("env_key", "LZT_CLIENT_ID").maybeSingle(),
-      supabaseAdmin.from("lzt_config").select("max_fetch_price, currency, markup_multiplier, markup_valorant, markup_lol, markup_fortnite, markup_minecraft, markup_steam").limit(1).maybeSingle(),
+      supabaseAdmin.from("lzt_config").select("max_fetch_price, currency, markup_multiplier, markup_valorant, markup_lol, markup_fortnite, markup_minecraft").limit(1).maybeSingle(),
     ]);
 
     const byLztKey = new Map<string, string>();
@@ -407,6 +385,14 @@ Deno.serve(async (req) => {
           "Content-Type": contentType,
           "Cache-Control": "public, max-age=86400, s-maxage=86400",
         },
+      });
+    }
+
+    const disabledLztGameTypes = new Set(["steam", "csgo", "cs2"]);
+    if (disabledLztGameTypes.has(String(gameType).toLowerCase())) {
+      return new Response(JSON.stringify({ error: "Contas Steam/CS2 não estão mais disponíveis." }), {
+        status: 410,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -544,7 +530,6 @@ Deno.serve(async (req) => {
     else if (gameType === "lol" && lztConfig?.markup_lol) activeMarkup = Number(lztConfig.markup_lol);
     else if (gameType === "minecraft" && lztConfig?.markup_minecraft) activeMarkup = Number(lztConfig.markup_minecraft);
     else if ((gameType === "riot" || gameType === "valorant") && lztConfig?.markup_valorant) activeMarkup = Number(lztConfig.markup_valorant);
-    else if ((gameType === "steam" || gameType === "csgo" || gameType === "cs2") && lztConfig?.markup_steam) activeMarkup = Number(lztConfig.markup_steam);
     else if (lztConfig?.markup_multiplier) activeMarkup = Number(lztConfig.markup_multiplier);
 
     // DETAIL: Get single item
@@ -576,14 +561,6 @@ Deno.serve(async (req) => {
         "orange_min", "orange_max",
         "mythic_min", "mythic_max",
         "riot_min", "riot_max",
-        // CS2 / Steam params
-        "cs2_win_min", "cs2_win_max",
-        "premier_elo_min", "premier_elo_max",
-        "faceit_lvl_min", "faceit_lvl_max",
-        "steam_level_min", "steam_level_max",
-        "cs2_prime",
-        "medals_min",
-        "medals_max",
       ];
 
       for (const p of allowedParams) {
@@ -726,15 +703,6 @@ Deno.serve(async (req) => {
         params.delete("inv_min");
         params.delete("inv_max");
         apiUrl = `https://api.lzt.market/riot?${params.toString()}`;
-      } else if (gameType === "steam" || gameType === "csgo" || gameType === "cs2") {
-        // Steam/CSGO/CS2 specific
-        // TEMPORARILY DISABLED: country[]=Bra might be too restrictive or incorrect for /steam endpoint
-        /*
-        if (!params.get("country[]") && !params.get("country")) {
-          params.set("country[]", "Bra");
-        }
-        */
-        apiUrl = `https://api.lzt.market/steam?${params.toString()}`;
       } else {
         // Valorant: remove LoL-specific params only
         params.delete("lol_smin");

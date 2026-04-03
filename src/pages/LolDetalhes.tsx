@@ -293,7 +293,7 @@ const LolDetalhes = () => {
       <Header />
       <div className="mx-auto max-w-6xl px-4 sm:px-6 pt-4 pb-28 sm:pb-20">
         <button
-          onClick={() => navigate("/contas")}
+          onClick={() => navigate("/contas?game=lol")}
           className="mb-5 flex items-center gap-2 rounded-lg border border-border bg-card/50 px-4 py-2 text-sm text-muted-foreground transition-all hover:border-[hsl(198,100%,45%)/40%] hover:text-[hsl(198,100%,45%)]"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -320,7 +320,7 @@ const LolDetalhes = () => {
             <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
               <button onClick={() => navigate("/")} className="hover:text-foreground transition-colors">Início</button>
               <ChevronRight className="h-3 w-3" />
-              <button onClick={() => navigate("/contas")} className="hover:text-foreground transition-colors">Contas</button>
+              <button onClick={() => navigate("/contas?game=lol")} className="hover:text-foreground transition-colors">Contas</button>
               <ChevronRight className="h-3 w-3" />
               <span style={{ color: LOL_BLUE }} className="font-medium">LoL — {rankText}</span>
             </div>

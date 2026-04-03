@@ -13,7 +13,6 @@ interface LztConfig {
   markup_lol: number;
   markup_fortnite: number;
   markup_minecraft: number;
-  markup_steam: number;
 }
 
 interface LztSale {
@@ -38,7 +37,6 @@ const DEFAULT_CONFIG: LztConfig = {
   markup_lol: 3,
   markup_fortnite: 3,
   markup_minecraft: 3,
-  markup_steam: 3,
 };
 
 const gameMarkupFields = [
@@ -46,7 +44,6 @@ const gameMarkupFields = [
   { key: "markup_lol" as const, label: "League of Legends", color: "text-warning" },
   { key: "markup_fortnite" as const, label: "Fortnite", color: "text-info" },
   { key: "markup_minecraft" as const, label: "Minecraft", color: "text-positive" },
-  { key: "markup_steam" as const, label: "Steam", color: "text-cyan-400" },
 ];
 
 const LztTab = () => {
@@ -79,7 +76,6 @@ const LztTab = () => {
       markup_lol: String(resolved.markup_lol ?? resolved.markup_multiplier),
       markup_fortnite: String(resolved.markup_fortnite ?? resolved.markup_multiplier),
       markup_minecraft: String(resolved.markup_minecraft ?? resolved.markup_multiplier),
-      markup_steam: String(resolved.markup_steam ?? resolved.markup_multiplier),
     });
   };
 
@@ -114,7 +110,6 @@ const LztTab = () => {
     markup_lol: "2",
     markup_fortnite: "2",
     markup_minecraft: "2",
-    markup_steam: "2",
   });
 
   // Aggregated stats from DB (accurate, no row limit)
@@ -319,7 +314,7 @@ const LztTab = () => {
             <p className="text-xs text-muted-foreground mt-1">
               Defina o multiplicador de preço para cada jogo. Ex: 2x = conta de R$10 vende por R$20.
             </p>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {gameMarkupFields.map((field) => (
                 <div key={field.key} className="rounded-lg border border-border bg-secondary/30 p-4">
                   <label className={`text-xs font-bold ${field.color}`}>{field.label}</label>
