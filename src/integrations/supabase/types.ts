@@ -214,6 +214,7 @@ export type Database = {
           markup_lol: number | null
           markup_minecraft: number | null
           markup_multiplier: number | null
+          markup_steam: number | null
           markup_valorant: number | null
           max_fetch_price: number | null
         }
@@ -225,6 +226,7 @@ export type Database = {
           markup_lol?: number | null
           markup_minecraft?: number | null
           markup_multiplier?: number | null
+          markup_steam?: number | null
           markup_valorant?: number | null
           max_fetch_price?: number | null
         }
@@ -236,6 +238,7 @@ export type Database = {
           markup_lol?: number | null
           markup_minecraft?: number | null
           markup_multiplier?: number | null
+          markup_steam?: number | null
           markup_valorant?: number | null
           max_fetch_price?: number | null
         }
