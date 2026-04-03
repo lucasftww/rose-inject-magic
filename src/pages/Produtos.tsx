@@ -80,6 +80,33 @@ import arcraidersNormal from "@/assets/games/arcraiders-normal.png";
 import arcraidersHover from "@/assets/games/arcraiders-hover.png";
 import arenabreakoutNormal from "@/assets/games/arenabreakout-normal.png";
 import arenabreakoutHover from "@/assets/games/arenabreakout-hover.png";
+import overwatch2Normal from "@/assets/games/overwatch2-normal.png";
+import overwatch2Hover from "@/assets/games/overwatch2-hover.png";
+import bgCardOverwatch2 from "@/assets/games/bg-card-overwatch2.png";
+import hellletlooseNormal from "@/assets/games/hellletloose-normal.png";
+import hellletlooseHover from "@/assets/games/hellletloose-hover.png";
+import bgCardHellletloose from "@/assets/games/bg-card-hellletloose.png";
+import squadCharNormal from "@/assets/games/squad-normal.png";
+import squadCharHover from "@/assets/games/squad-hover.png";
+import bgCardSquad from "@/assets/games/bg-card-squad.png";
+import farlight84Normal from "@/assets/games/farlight84-normal.png";
+import farlight84Hover from "@/assets/games/farlight84-hover.png";
+import bgCardFarlight84 from "@/assets/games/bg-card-farlight84.png";
+import bodycamNormal from "@/assets/games/bodycam-normal.png";
+import bodycamHover from "@/assets/games/bodycam-hover.png";
+import bgCardBodycam from "@/assets/games/bg-card-bodycam.png";
+import warfaceNormal from "@/assets/games/warface-normal.png";
+import warfaceHover from "@/assets/games/warface-hover.png";
+import bgCardWarface from "@/assets/games/bg-card-warface.png";
+import bloodhuntNormal from "@/assets/games/bloodhunt-normal.png";
+import bloodhuntHover from "@/assets/games/bloodhunt-hover.png";
+import bgCardBloodhunt from "@/assets/games/bg-card-bloodhunt.png";
+import dbdNormal from "@/assets/games/dbd-normal.png";
+import dbdHover from "@/assets/games/dbd-hover.png";
+import bgCardDbd from "@/assets/games/bg-card-dbd.png";
+import spoofersNormal from "@/assets/games/spoofers-normal.png";
+import spoofersHover from "@/assets/games/spoofers-hover.png";
+import bgCardSpoofers from "@/assets/games/bg-card-spoofers.png";
 
 const localImageMap: Record<string, string> = {
   'Valorant': imgValorant,
