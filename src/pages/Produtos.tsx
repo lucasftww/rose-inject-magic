@@ -268,7 +268,7 @@ const SoftwareShowcaseCard = ({ game, index, isFree, description, onSelect }: { 
             </div>
           )}
 
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/35 to-background/[0.02]" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-background/10" />
 
           {character && (
             <div className={`${characterPositionClass} pointer-events-none transition-opacity duration-500 ease-out`} style={{ opacity: isHovered ? 0 : 1 }}>
