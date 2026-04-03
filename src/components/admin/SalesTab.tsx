@@ -95,6 +95,11 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
       });
     } catch (err) {
       console.error("fetchSales order_tickets error:", err);
+      toast({
+        title: "Erro ao carregar vendas",
+        description: err instanceof Error ? err.message : "Tente atualizar a página.",
+        variant: "destructive",
+      });
       setLoading(false);
       return;
     }

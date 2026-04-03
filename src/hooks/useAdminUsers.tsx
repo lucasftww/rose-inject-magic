@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface AdminUser {
@@ -8,15 +8,16 @@ interface AdminUser {
   [key: string]: unknown;
 }
 
-// Module-level cache so data persists across tab switches without refetching
 let cachedUsers: AdminUser[] | null = null;
 let cacheTimestamp = 0;
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL = 5 * 60 * 1000;
+
+/** Single in-flight list request so parallel callers share one fetch; `force` waits then re-fetches. */
+let listUsersInFlight: Promise<AdminUser[]> | null = null;
 
 export function useAdminUsers() {
   const [users, setUsers] = useState<AdminUser[]>(cachedUsers || []);
   const [loading, setLoading] = useState(!cachedUsers);
-  const fetchingRef = useRef(false);
 
   const fetchUsers = useCallback(async (force = false) => {
     const now = Date.now();
@@ -26,40 +27,45 @@ export function useAdminUsers() {
       return cachedUsers;
     }
 
-    if (fetchingRef.current) return cachedUsers;
-    fetchingRef.current = true;
-    setLoading(true);
-
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { setLoading(false); fetchingRef.current = false; return []; }
-
-      const res = await supabase.functions.invoke<AdminUser[]>("admin-users", {
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      });
-
-      if (res.error) throw res.error;
-
-      const data = Array.isArray(res.data) ? res.data : [];
-      cachedUsers = data;
-      cacheTimestamp = Date.now();
-      setUsers(data);
-      setLoading(false);
-      fetchingRef.current = false;
-      return data;
-    } catch {
-      setLoading(false);
-      fetchingRef.current = false;
-      return cachedUsers || [];
+    if (listUsersInFlight) {
+      const done = await listUsersInFlight;
+      if (!force) return done;
     }
+
+    listUsersInFlight = (async (): Promise<AdminUser[]> => {
+      setLoading(true);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          return [];
+        }
+
+        const res = await supabase.functions.invoke<AdminUser[]>("admin-users", {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+
+        if (res.error) throw res.error;
+
+        const data = Array.isArray(res.data) ? res.data : [];
+        cachedUsers = data;
+        cacheTimestamp = Date.now();
+        setUsers(data);
+        return data;
+      } catch {
+        return cachedUsers || [];
+      } finally {
+        setLoading(false);
+        listUsersInFlight = null;
+      }
+    })();
+
+    return listUsersInFlight;
   }, []);
 
   useEffect(() => {
-    fetchUsers();
+    void fetchUsers();
   }, [fetchUsers]);
 
-  // Use useMemo instead of refs so consumers get stable references
-  // that only change when users actually change
   const emailMap = useMemo(() => {
     const map = new Map<string, string>();
     for (const u of users) {

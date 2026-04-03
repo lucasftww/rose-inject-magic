@@ -7,6 +7,7 @@ import {
   Search, Filter, Eye, EyeOff, Layers, Settings2, Save, ArrowLeft
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { getSupabaseFunctionsBaseUrl } from "@/lib/apiUtils";
 import { getYouTubeId, getYouTubeThumbnail, detectMediaType } from "@/lib/videoUtils";
 
 interface Game {
@@ -175,9 +176,17 @@ const ProductsTab = () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
-      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const fnBase = getSupabaseFunctionsBaseUrl();
+      if (!fnBase) {
+        toast({
+          title: "Configuração incompleta",
+          description: "Defina VITE_SUPABASE_URL (ou VITE_SUPABASE_PROJECT_ID) no .env para carregar jogos Robot.",
+          variant: "destructive",
+        });
+        return;
+      }
       const [res] = await Promise.all([
-        fetch(`https://${projectId}.supabase.co/functions/v1/robot-project?action=list-games`, {
+        fetch(`${fnBase}/robot-project?action=list-games`, {
           headers: {
             Authorization: `Bearer ${session.access_token}`,
             "Content-Type": "application/json",

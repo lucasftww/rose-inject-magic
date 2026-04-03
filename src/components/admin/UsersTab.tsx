@@ -76,7 +76,7 @@ const UsersTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
     if (res.error || res.data?.error) {
       toast({ title: "Erro", description: res.data?.error || String(res.error), variant: "destructive" });
     } else {
-      toast({ title: res.data.message });
+      toast({ title: typeof res.data?.message === "string" ? res.data.message : "Concluído" });
       await fetchUsers();
       if (selectedUser?.id === targetUserId) {
         setSelectedUser(null);
@@ -98,9 +98,10 @@ const UsersTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
   };
 
   const filtered = users.filter((u) => {
+    const roles = Array.isArray(u.roles) ? u.roles : [];
     if (filterStatus === "banned" && !u.banned) return false;
-    if (filterStatus === "admin" && !u.roles.includes("admin")) return false;
-    if (filterStatus === "normal" && (u.banned || u.roles.includes("admin"))) return false;
+    if (filterStatus === "admin" && !roles.includes("admin")) return false;
+    if (filterStatus === "normal" && (u.banned || roles.includes("admin"))) return false;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       return u.email.toLowerCase().includes(q) || (u.username && u.username.toLowerCase().includes(q));

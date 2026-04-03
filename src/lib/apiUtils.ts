@@ -58,3 +58,20 @@ export const safeJsonFetch = async <T = unknown>(
     );
   }
 };
+
+/** Base URL for Supabase Edge Functions (prefers VITE_SUPABASE_URL over project id). */
+export function getSupabaseFunctionsBaseUrl(): string | null {
+  const rawUrl = import.meta.env.VITE_SUPABASE_URL;
+  if (typeof rawUrl === "string" && rawUrl.trim()) {
+    try {
+      return `${new URL(rawUrl.trim()).origin}/functions/v1`;
+    } catch {
+      /* invalid URL */
+    }
+  }
+  const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+  if (typeof projectId === "string" && projectId.trim()) {
+    return `https://${projectId.trim()}.supabase.co/functions/v1`;
+  }
+  return null;
+}
