@@ -286,10 +286,7 @@ const SoftwareShowcaseCard = ({ game, index, isFree, description, onSelect }: { 
   const [isHovered, setIsHovered] = useState(false);
   const { image, character, characterHover } = getShowcaseAssets(game);
   const hasProducts = game.product_count > 0;
-  const isSpoofer = game.name.toLowerCase().includes('spoof');
-  const characterPositionClass = isSpoofer
-    ? 'absolute bottom-[-6%] right-[-8%] z-[8] w-[58%] sm:w-[52%]'
-    : 'absolute bottom-0 right-[-14%] z-[8] w-[72%] sm:right-[-10%] sm:w-[62%]';
+  const characterPositionClass = 'absolute bottom-0 right-0 z-[8] w-[55%] sm:w-[50%]';
 
   return (
     <TiltCard index={index}>
@@ -322,8 +319,8 @@ const SoftwareShowcaseCard = ({ game, index, isFree, description, onSelect }: { 
               className={`${characterPositionClass} pointer-events-none z-[9] transition-all duration-500 ease-out`}
               style={{
                 opacity: isHovered ? 1 : 0,
-                transformOrigin: 'bottom center',
-                transform: isHovered ? 'scale(1.14)' : 'scale(1)',
+                transformOrigin: 'bottom right',
+                transform: isHovered ? 'scale(1.08)' : 'scale(0.95)',
               }}
             >
               <img src={characterHover} alt="" loading="lazy" className="w-full h-auto object-contain" style={{ filter: 'drop-shadow(0 12px 32px rgba(0,0,0,0.6))' }} />
