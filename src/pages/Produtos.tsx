@@ -319,8 +319,8 @@ const SoftwareShowcaseCard = ({ game, index, isFree, description, onSelect }: { 
               className={`${characterPositionClass} pointer-events-none z-[9] transition-all duration-500 ease-out`}
               style={{
                 opacity: isHovered ? 1 : 0,
-                transformOrigin: 'bottom center',
-                transform: isHovered ? 'scale(1.14)' : 'scale(1)',
+                transformOrigin: 'bottom right',
+                transform: isHovered ? 'scale(1.08)' : 'scale(0.95)',
               }}
             >
               <img src={characterHover} alt="" loading="lazy" className="w-full h-auto object-contain" style={{ filter: 'drop-shadow(0 12px 32px rgba(0,0,0,0.6))' }} />
