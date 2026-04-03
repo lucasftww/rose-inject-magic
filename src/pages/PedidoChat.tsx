@@ -264,7 +264,7 @@ const PedidoChat = () => {
           setSignedUrls(prev => {
             const next = { ...prev };
             data.forEach(item => {
-              if (item.signedUrl) {
+              if (item.path && item.signedUrl) {
                 next[item.path] = item.signedUrl;
               }
             });

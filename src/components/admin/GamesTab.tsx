@@ -34,14 +34,16 @@ const GamesTab = () => {
 
   const invalidateAdmin = useInvalidateAdminCache();
 
-  const fetchGames = async (shouldInvalidate = false) => {
+  const fetchGames = useCallback(async (shouldInvalidate = false) => {
     const { data, error } = await supabase.from("games").select("*").order("sort_order", { ascending: true });
     if (!error && data) setGames(data as Game[]);
     setLoadingGames(false);
     if (shouldInvalidate) invalidateAdmin();
-  };
+  }, [invalidateAdmin]);
 
-  useEffect(() => { fetchGames(); }, []);
+  useEffect(() => {
+    void fetchGames();
+  }, [fetchGames]);
 
   const resetForm = () => { setFormName(""); setFormSlug(""); setFormImageUrl(""); setFormActive(true); setEditingGame(null); setShowForm(false); setImageMode("url"); setAiPrompt(""); setImagePreview(null); };
 
@@ -114,8 +116,9 @@ const GamesTab = () => {
       setFormImageUrl(urlData.publicUrl);
       setImagePreview(urlData.publicUrl);
       toast({ title: "Imagem gerada com IA!" });
-    } catch (err: any) {
-      toast({ title: "Erro ao gerar", description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Erro";
+      toast({ title: "Erro ao gerar", description: msg, variant: "destructive" });
     }
     setGeneratingAI(false);
   };

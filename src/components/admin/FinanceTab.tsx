@@ -250,7 +250,11 @@ const FinanceTab = () => {
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    void fetchData();
+    // Intentional: single load on mount; fetchData is stable for dashboard totals.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ─── Filtered data ───
   const fp = useMemo(() => filterByPeriod(payments, period), [payments, period]);
@@ -361,8 +365,8 @@ const FinanceTab = () => {
   }, [fp, period]);
 
   // ─── Revenue pie data ───
-  const revenuePieData = useMemo(() => {
-    const data = [];
+  const revenuePieData = useMemo((): { name: string; value: number }[] => {
+    const data: { name: string; value: number }[] = [];
     if (revenueBreakdown.stock > 0) data.push({ name: "Estoque", value: revenueBreakdown.stock });
     if (revenueBreakdown.robot > 0) data.push({ name: "Cheats", value: revenueBreakdown.robot });
     if (revenueBreakdown.lzt > 0) data.push({ name: "Contas LZT", value: revenueBreakdown.lzt });

@@ -2,6 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { throwApiError } from "@/lib/apiErrors";
 import { useQuery } from "@tanstack/react-query";
 import { safeJsonFetch, ApiError } from "@/lib/apiUtils";
+import type { DDragonChampionJson, DDragonVersionList, LztMarketLolDetailResponse } from "@/lib/edgeFunctionTypes";
 import Header from "@/components/Header";
 import {
   ArrowLeft, Shield, Loader2, ChevronLeft, ChevronRight,
@@ -68,12 +69,18 @@ const lolRankToKey = (rank: string): string => {
 // ─── DDragon helpers ───
 const fetchChampKeyMap = async (): Promise<Map<number, string>> => {
   try {
-    const versions = await safeJsonFetch("https://ddragon.leagueoflegends.com/api/versions.json");
+    const versions = await safeJsonFetch<DDragonVersionList>("https://ddragon.leagueoflegends.com/api/versions.json");
     const version = versions[0];
-    const data = await safeJsonFetch(`https://ddragon.leagueoflegends.com/cdn/${version}/data/en_US/champion.json`);
+    if (!version) return new Map();
+    const data = await safeJsonFetch<DDragonChampionJson>(
+      `https://ddragon.leagueoflegends.com/cdn/${version}/data/en_US/champion.json`
+    );
     const map = new Map<number, string>();
-    for (const [internalName, champ] of Object.entries(data.data as Record<string, any>)) {
-      map.set(parseInt((champ as any).key), internalName);
+    for (const [internalName, champ] of Object.entries(data.data)) {
+      const keyStr = champ.key;
+      if (!keyStr) continue;
+      const parsed = parseInt(keyStr, 10);
+      if (Number.isFinite(parsed)) map.set(parsed, internalName);
     }
     return map;
   } catch (err) {
@@ -87,11 +94,11 @@ const fetchAccountDetail = async (itemId: string) => {
   const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
   
   try {
-    return await safeJsonFetch(
+    return await safeJsonFetch<LztMarketLolDetailResponse>(
       `${projectUrl}/functions/v1/lzt-market?action=detail&item_id=${encodeURIComponent(itemId)}&game_type=lol`,
       { headers: { apikey: anonKey } }
     );
-  } catch (err: any) {
+  } catch (err: unknown) {
     if (err instanceof ApiError) {
       if (err.status === 410) {
         throw new Error("Esta conta já foi vendida ou não está mais disponível.");
@@ -148,10 +155,18 @@ const LolDetalhes = () => {
     Skin?: number[] | Record<string, number>;
   } | null | undefined;
 
+  const lolSkinKey = JSON.stringify(lolInventory?.Skin ?? null);
+  const lolChampionKey = JSON.stringify(lolInventory?.Champion ?? null);
+
   // ─── Skins: ID = champKey * 1000 + skinNum ───
   // Skin vem como objeto {"0": 555016, "10": 42006, ...} → pegar os VALUES
   const skinPreviews = useMemo((): SkinPreview[] => {
-    const raw = lolInventory?.Skin;
+    let raw: number[] | Record<string, number> | null | undefined;
+    try {
+      raw = JSON.parse(lolSkinKey) as number[] | Record<string, number> | null;
+    } catch {
+      raw = undefined;
+    }
     let skinIds: number[] = [];
     if (Array.isArray(raw)) {
       skinIds = raw.map(Number);
@@ -176,12 +191,17 @@ const LolDetalhes = () => {
       }
     }
     return results;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(lolInventory?.Skin), champKeyMap]);
+  }, [lolSkinKey, champKeyMap]);
 
   // ─── Champions: IDs numéricos diretos ───
   const champPreviews = useMemo((): ChampPreview[] => {
-    const ids = Array.isArray(lolInventory?.Champion) ? lolInventory!.Champion! : [];
+    let ids: number[] = [];
+    try {
+      const parsed = JSON.parse(lolChampionKey) as unknown;
+      if (Array.isArray(parsed)) ids = parsed.map((x) => Number(x));
+    } catch {
+      ids = [];
+    }
     const results: ChampPreview[] = [];
     for (const champId of ids) {
       const champName = champKeyMap.get(Number(champId));
@@ -193,7 +213,7 @@ const LolDetalhes = () => {
       }
     }
     return results;
-  }, [JSON.stringify(lolInventory?.Champion), champKeyMap]);
+  }, [lolChampionKey, champKeyMap]);
 
   const rankText = item?.riot_lol_rank || "Unranked";
   const rankKey = lolRankToKey(rankText);

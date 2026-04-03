@@ -59,10 +59,13 @@ const PaymentsListTab = () => {
       });
       fetchPayments();
       if (selectedPayment?.id === p.id) {
-         setSelectedPayment(prev => prev ? { ...prev, status: res.status } : null);
+        setSelectedPayment((prev) =>
+          prev ? { ...prev, status: res.status ?? prev.status } : null
+        );
       }
-    } catch (err: any) {
-      toast({ title: "Erro na verificação", description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      toast({ title: "Erro na verificação", description: message, variant: "destructive" });
     } finally {
       setVerifying(prev => ({ ...prev, [p.id]: false }));
     }

@@ -49,18 +49,18 @@ const Auth = () => {
     if (!loading && user) navigate(redirect, { replace: true });
   }, [loading, user, navigate, redirect]);
 
-  function validateEmail(v: string): string | null {
+  const validateEmail = useCallback((v: string): string | null => {
     if (!v.trim()) return null;
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return t("auth.invalidEmail");
     if (isTempEmail(v)) return t("auth.tempEmailBlocked");
     return null;
-  }
+  }, [t]);
 
-  function validatePassword(v: string): string | null {
+  const validatePassword = useCallback((v: string): string | null => {
     if (!v) return null;
     if (v.length < 6) return t("auth.minChars");
     return null;
-  }
+  }, [t]);
 
   const emailError = touchedEmail ? validateEmail(email) : null;
   const passwordError = touchedPassword ? validatePassword(password) : null;
@@ -72,7 +72,7 @@ const Auth = () => {
     if (password.length < 6) return false;
     if (mode === "signup" && password !== confirmPassword) return false;
     return true;
-  }, [email, password, confirmPassword, mode]);
+  }, [email, password, confirmPassword, mode, validateEmail]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,8 +95,9 @@ const Auth = () => {
         if (error) throw error;
         setRecoverySent(true);
       }
-    } catch (error: any) {
-      toast.error(error?.message || t("auth.error"));
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : t("auth.error");
+      toast.error(msg);
     } finally {
       setIsSubmitting(false);
     }

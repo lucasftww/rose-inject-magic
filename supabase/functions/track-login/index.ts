@@ -19,12 +19,21 @@ serve(async (req) => {
       });
     }
 
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const anonKey =
+      Deno.env.get("SUPABASE_ANON_KEY")?.trim() ||
+      Deno.env.get("SUPABASE_PUBLISHABLE_KEY")?.trim();
+    if (!supabaseUrl || !anonKey) {
+      console.error("track-login: missing SUPABASE_URL or anon/publishable key");
+      return new Response(JSON.stringify({ error: "Server misconfiguration" }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Use anon client with user token to validate session
-    const supabaseAnon = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
+    const supabaseAnon = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
 
     const token = authHeader.replace("Bearer ", "");
     const { data: claimsData, error: claimsError } = await supabaseAnon.auth.getClaims(token);
@@ -35,12 +44,21 @@ serve(async (req) => {
     }
 
     const userId = claimsData.claims.sub;
+    if (typeof userId !== "string" || !userId) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
-    // Use service role for DB writes
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")?.trim();
+    if (!serviceKey) {
+      console.error("track-login: missing SUPABASE_SERVICE_ROLE_KEY");
+      return new Response(JSON.stringify({ error: "Server misconfiguration" }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabase = createClient(supabaseUrl, serviceKey);
 
     // Get client IP
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()

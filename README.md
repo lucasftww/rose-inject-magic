@@ -43,7 +43,7 @@ cp .env.example .env
 npm run dev
 ```
 
-O app estará disponível em `http://localhost:5173`.
+O app estará disponível em `http://localhost:8080` (porta definida em `vite.config.ts`).
 
 ### Scripts disponíveis
 
@@ -53,7 +53,14 @@ O app estará disponível em `http://localhost:5173`.
 | `npm run build` | Build de produção |
 | `npm run preview` | Preview do build de produção |
 | `npm run lint` | Análise estática com ESLint |
+| `npm run typecheck` | Verificação TypeScript (`tsc --noEmit`) |
 | `npm run test` | Rodar testes com Vitest |
+| `npm run supabase:repair-migrations` | Alinhar histórico de migrações local/remoto (só metadados; requer `supabase link` + login) |
+
+### Supabase (produção)
+
+- Secrets das Edge Functions e credenciais em DB: ver [supabase/EDGE_SECRETS.md](supabase/EDGE_SECRETS.md).
+- Migrações: `npx supabase db push` (após histórico alinhado). Se o CLI reclamar de versões, usa `npm run supabase:repair-migrations` e volta a validar com `npx supabase db push --dry-run --yes`.
 
 ## 📁 Estrutura do Projeto
 

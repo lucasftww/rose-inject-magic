@@ -133,7 +133,7 @@ const TicketsTab = ({
           setSignedUrls(prev => {
             const next = { ...prev };
             data.forEach(item => {
-              if (item.signedUrl) {
+              if (item.path && item.signedUrl) {
                 next[item.path] = item.signedUrl;
               }
             });
@@ -322,6 +322,7 @@ const TicketsTab = ({
       clearInterval(pollInterval);
       supabase.removeChannel(channel);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-subscribe only when ticket id changes
   }, [selectedTicket?.id]);
 
   useEffect(() => {
@@ -382,8 +383,9 @@ const TicketsTab = ({
       } else if (insertedMsg) {
         setMessages(prev => prev.some(m => m.id === insertedMsg.id) ? prev : [...prev, insertedMsg as Message]);
       }
-    } catch (err: any) {
-      toast({ title: "Erro", description: err?.message || "Erro ao enviar áudio", variant: "destructive" });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Erro ao enviar áudio";
+      toast({ title: "Erro", description: msg, variant: "destructive" });
     } finally {
       setUploadingFile(false);
       setSending(false);

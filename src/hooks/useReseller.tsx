@@ -54,9 +54,9 @@ export const useReseller = () => {
       setReseller({
         id: r.id,
         discount_percent: Number(r.discount_percent),
-        active: r.active,
+        active: r.active === true,
         expires_at: r.expires_at,
-        productIds: (prodData || []).map((p) => p.product_id),
+        productIds: (prodData || []).map((p) => p.product_id).filter((id): id is string => typeof id === "string"),
       });
       setLoading(false);
     };

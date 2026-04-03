@@ -8,6 +8,12 @@ import { translateRegion } from "@/lib/regionTranslation";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { safeJsonFetch, ApiError } from "@/lib/apiUtils";
+import type {
+  DDragonChampionJson,
+  DDragonVersionList,
+  FortniteCosmeticItem,
+  FortniteCosmeticsResponse,
+} from "@/lib/edgeFunctionTypes";
 
 import lolRankFerroImg from "@/assets/lol-rank-ferro.png";
 import lolRankBronzeImg from "@/assets/lol-rank-bronze.webp";
@@ -314,9 +320,11 @@ type LztMarketListResponse = {
 // Fortnite-API: fetch all BR cosmetics (smallIcon)
 const fetchFortniteSkins = async (): Promise<Map<string, { name: string; image: string }>> => {
   try {
-    const data = await safeJsonFetch("https://fortnite-api.com/v2/cosmetics/br?language=pt-BR");
+    const data = await safeJsonFetch<FortniteCosmeticsResponse>("https://fortnite-api.com/v2/cosmetics/br?language=pt-BR");
     const map = new Map<string, { name: string; image: string }>();
-    for (const item of (data.data || [])) {
+    const raw = data.data;
+    const list: FortniteCosmeticItem[] = Array.isArray(raw) ? raw : raw?.items ?? [];
+    for (const item of list) {
       const image = item.images?.smallIcon || item.images?.icon;
       if (image && item.id) {
         map.set(item.id.toLowerCase(), { name: item.name || item.id, image });
@@ -334,13 +342,15 @@ const fetchFortniteSkins = async (): Promise<Map<string, { name: string; image: 
 // Loading art URL: https://ddragon.leagueoflegends.com/cdn/img/champion/loading/{Name}_{skinNum}.jpg
 const fetchLolChampKeyMap = async (): Promise<Map<number, string>> => {
   try {
-    const versions = await safeJsonFetch("https://ddragon.leagueoflegends.com/api/versions.json");
+    const versions = await safeJsonFetch<DDragonVersionList>("https://ddragon.leagueoflegends.com/api/versions.json");
     const version = versions[0];
+    if (!version) return new Map();
 
-    const data = await safeJsonFetch(`https://ddragon.leagueoflegends.com/cdn/${version}/data/en_US/champion.json`);
+    const data = await safeJsonFetch<DDragonChampionJson>(
+      `https://ddragon.leagueoflegends.com/cdn/${version}/data/en_US/champion.json`
+    );
     const map = new Map<number, string>();
-    type ChampEntry = { key?: string };
-    const champions = (data?.data as Record<string, ChampEntry> | undefined) ?? {};
+    const champions = data.data ?? {};
     for (const [internalName, champ] of Object.entries(champions)) {
       // champ.key is the numeric ID as a string (e.g., "103")
       const keyStr = champ.key;
@@ -634,7 +644,7 @@ const LolCard = memo(({ item, champKeyMap, priceLabel }: { item: LztItem; champK
             <Trophy className="h-2.5 w-2.5 text-primary" />
             {champCount} champs
           </span>
-          {winRate != null && winRate !== "" && (
+          {winRate != null && (
             <span className="flex items-center gap-1">
               <TrendingUp className="h-2.5 w-2.5 text-primary" />
               {typeof winRate === "number"
@@ -1260,6 +1270,7 @@ const Contas = () => {
         await waitWithAbort(1000 * Math.pow(2, attempt), controller.signal);
       }
     }
+    throw new Error("fetchWithRetry: retries exhausted");
   },
     [],
   );

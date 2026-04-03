@@ -89,7 +89,10 @@ const ResellersTab = () => {
     setLoading(false);
   };
 
-  useEffect(() => { if (adminUsersData.length > 0) fetchResellers(); }, [adminUsersData]);
+  useEffect(() => {
+    if (adminUsersData.length > 0) void fetchResellers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchResellers closes over latest adminUsersData
+  }, [adminUsersData]);
 
   const searchUsers = async () => {
     if (searchEmail.trim().length < 2) return;
@@ -103,8 +106,11 @@ const ResellersTab = () => {
   };
 
   useEffect(() => {
-    const t = setTimeout(() => { if (searchEmail.trim().length >= 2) searchUsers(); }, 400);
+    const t = setTimeout(() => {
+      if (searchEmail.trim().length >= 2) void searchUsers();
+    }, 400);
     return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- debounced; uses latest adminUsersData via closure
   }, [searchEmail]);
 
   const handleAddReseller = async () => {

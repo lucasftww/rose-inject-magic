@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import type { PostgrestError } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchAllRows } from "@/lib/supabaseAllRows";
 import { Loader2, DollarSign, TrendingUp, Settings, Save, ShoppingCart, RefreshCw, Copy, ExternalLink, ChevronLeft, ChevronRight, Search, Gamepad2, Tag } from "lucide-react";
@@ -225,7 +226,7 @@ const LztTab = () => {
       ...parsedMarkups,
     };
 
-    let error = null;
+    let error: PostgrestError | null = null;
     let savedConfig: Partial<LztConfig> | null = null;
 
     if (config.id) {

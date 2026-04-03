@@ -5,7 +5,7 @@ interface AdminUser {
   id: string;
   email: string;
   username?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 // Module-level cache so data persists across tab switches without refetching

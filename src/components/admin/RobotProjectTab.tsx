@@ -362,8 +362,9 @@ const RobotProjectTab = () => {
       }
       toast({ title: "Entrega Robot reprocessada", description: result.message || "Verifique o ticket do pedido." });
       await refreshAll();
-    } catch (error: any) {
-      toast({ title: "Falha ao reprocessar", description: error.message, variant: "destructive" });
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "Falha";
+      toast({ title: "Falha ao reprocessar", description: msg, variant: "destructive" });
     } finally {
       setRetryingTicketId(null);
     }
@@ -378,7 +379,10 @@ const RobotProjectTab = () => {
     setLoading(false);
   };
 
-  useEffect(() => { refreshAll(); }, []);
+  useEffect(() => {
+    void refreshAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- initial Robot Project load
+  }, []);
 
   return (
     <div>

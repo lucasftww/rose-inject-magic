@@ -206,15 +206,13 @@ async function sendServerPurchaseEvent(supabaseAdmin: any, payment: any, req: Re
       .eq("env_key", "META_PIXEL_ID")
       .maybeSingle();
 
-    // Novo Pixel/Token (Março 2026) - Hardcoded para segurança máxima
-    const HARDCODED_PIXEL_ID = '843361478785940';
-    const HARDCODED_TOKEN = 'EAAXCTJFcZAckBRNKsxI3MuVp51Mv3IQVcMC6nZCv3JvqjAxeVC1ZCmPfa4AfiJFaXSRlmIHrFalKLxo0symr2jjjC00fzogCx63GZBadtsLHtQk0JeDK7nqs1EjVPPggKjBi0QZAUXM2ZAPY0qxdtYB01G8XcVvZAQqh3PedZC0ZAgz88yYZC1wdt4hghS4RVUWgZDZD';
-
-    const accessToken = capiTokenRow?.value || Deno.env.get("META_ACCESS_TOKEN") || HARDCODED_TOKEN;
-    const pixelId = pixelIdRow?.value || Deno.env.get("META_PIXEL_ID") || HARDCODED_PIXEL_ID;
+    const accessToken =
+      String(capiTokenRow?.value || "").trim() || Deno.env.get("META_ACCESS_TOKEN")?.trim() || "";
+    const pixelId =
+      String(pixelIdRow?.value || "").trim() || Deno.env.get("META_PIXEL_ID")?.trim() || "";
 
     if (!accessToken || !pixelId) {
-      console.warn("CAPI Purchase skipped: Meta credentials not found in DB, Env, or Fallback.");
+      console.warn("CAPI Purchase skipped: set META_ACCESS_TOKEN and META_PIXEL_ID in system_credentials or Edge secrets.");
       return;
     }
 
@@ -1780,8 +1778,15 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-  const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const SUPABASE_URL = Deno.env.get("SUPABASE_URL")?.trim();
+  const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")?.trim();
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    console.error("pix-payment: missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
+    return new Response(JSON.stringify({ error: "Server misconfiguration" }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   const url = new URL(req.url);
   const action = url.searchParams.get("action");
@@ -1936,22 +1941,37 @@ Deno.serve(async (req) => {
     });
   }
 
-  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_PUBLISHABLE_KEY")!;
+  const anonKey =
+    Deno.env.get("SUPABASE_ANON_KEY")?.trim() || Deno.env.get("SUPABASE_PUBLISHABLE_KEY")?.trim();
+  if (!anonKey) {
+    console.error("pix-payment: missing SUPABASE_ANON_KEY or SUPABASE_PUBLISHABLE_KEY");
+    return new Response(JSON.stringify({ error: "Server misconfiguration" }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   const supabaseUser = createClient(SUPABASE_URL, anonKey, {
     global: { headers: { Authorization: authHeader } },
   });
 
   const token = authHeader.replace("Bearer ", "");
   const { data: claimsData, error: claimsError } = await supabaseUser.auth.getClaims(token);
-  console.log("Auth result:", { userId: claimsData?.claims?.sub, error: claimsError?.message, authHeader: authHeader?.substring(0, 30) });
   if (claimsError || !claimsData?.claims) {
-    return new Response(JSON.stringify({ error: "Unauthorized", detail: claimsError?.message || "Auth session missing!" }), {
+    if (claimsError?.message) console.warn("pix-payment auth:", claimsError.message);
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
   const userId = claimsData.claims.sub;
+  if (typeof userId !== "string" || !userId) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
   const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
   // ==================== USER RATE LIMIT (20/min) ====================

@@ -10,6 +10,7 @@ import logoRoyal from "@/assets/logo-royal.png";
 import { motion } from "framer-motion";
 import { trackPurchase, getUserData, setAdvancedMatching } from "@/lib/metaPixel";
 import { safeJsonFetch, ApiError } from "@/lib/apiUtils";
+import type { PixPaymentCreateResult, PixPaymentStatusResult } from "@/lib/edgeFunctionTypes";
 
 type PaymentMethod = "pix" | "card" | "crypto" | null;
 
@@ -160,11 +161,19 @@ const Checkout = () => {
     });
 
   const getAuthHeaders = async () => {
-    const session = (await supabase.auth.getSession()).data.session;
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    if (!token) {
+      throw new Error("Sessão expirada. Entre novamente para continuar.");
+    }
+    const apikey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    if (typeof apikey !== "string" || !apikey.trim()) {
+      throw new Error("Configuração do aplicativo incompleta.");
+    }
     return {
-      Authorization: `Bearer ${session?.access_token}`,
+      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
-      apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      apikey,
     };
   };
 
@@ -182,7 +191,7 @@ const Checkout = () => {
     });
 
     try {
-      const result = await safeJsonFetch(
+      const result = await safeJsonFetch<PixPaymentCreateResult>(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pix-payment?action=create`,
         {
           method: "POST",
@@ -196,8 +205,8 @@ const Checkout = () => {
         }
       );
       if (!result.success) throw new Error(result.error || "Erro ao criar cobrança");
-      setPaymentId(result.payment_id);
-      setChargeData(result.charge);
+      setPaymentId(result.payment_id ?? null);
+      setChargeData(result.charge ?? null);
       // Use server-validated amount (price is locked to what customer saw)
       const serverTotal = result.validated_amount ?? cartFinalPrice;
       const serverDiscount = result.validated_discount ?? discountAmount;
@@ -228,7 +237,7 @@ const Checkout = () => {
     });
 
     try {
-      const result = await safeJsonFetch(
+      const result = await safeJsonFetch<PixPaymentCreateResult>(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pix-payment?action=create-card`,
         {
           method: "POST",
@@ -242,15 +251,15 @@ const Checkout = () => {
         }
       );
       if (!result.success) throw new Error(result.error || "Erro ao criar cobrança");
-      setPaymentId(result.payment_id);
-      setCardPaymentUrl(result.paymentUrl);
+      setPaymentId(result.payment_id ?? null);
+      setCardPaymentUrl(result.paymentUrl ?? null);
       const serverTotal = result.validated_amount ?? cartFinalPrice;
       const serverDiscount = result.validated_discount ?? discountAmount;
       setDisplayPrice({ total: serverTotal + serverDiscount, final: serverTotal, discount: serverDiscount });
       setCartSnapshot([...items]);
       clearCart();
       // Open the checkout URL in a new tab
-      window.open(result.paymentUrl, "_blank");
+      if (result.paymentUrl) window.open(result.paymentUrl, "_blank");
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       console.error(err);
@@ -275,7 +284,7 @@ const Checkout = () => {
     });
 
     try {
-      const result = await safeJsonFetch(
+      const result = await safeJsonFetch<PixPaymentCreateResult>(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pix-payment?action=create-crypto`,
         {
           method: "POST",
@@ -289,8 +298,8 @@ const Checkout = () => {
         }
       );
       if (!result.success) throw new Error(result.error || "Erro ao criar cobrança");
-      setPaymentId(result.payment_id);
-      setCryptoData(result.crypto);
+      setPaymentId(result.payment_id ?? null);
+      setCryptoData(result.crypto ?? null);
       const serverTotal = result.validated_amount ?? cartFinalPrice;
       const serverDiscount = result.validated_discount ?? discountAmount;
       setDisplayPrice({ total: serverTotal + serverDiscount, final: serverTotal, discount: serverDiscount });
@@ -329,7 +338,7 @@ const Checkout = () => {
     const checkStatus = async () => {
       setChecking(true);
       try {
-        const data = await safeJsonFetch(
+        const data = await safeJsonFetch<PixPaymentStatusResult>(
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pix-payment?action=${statusAction}&payment_id=${paymentId}`,
           {
             headers: {

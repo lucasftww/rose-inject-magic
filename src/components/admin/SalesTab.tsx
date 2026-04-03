@@ -23,7 +23,7 @@ interface SaleTicket {
   product_image?: string | null;
   plan_name?: string;
   plan_price?: number;
-  username?: string;
+  username?: string | null;
   email?: string;
   stock_content?: string | null;
 }

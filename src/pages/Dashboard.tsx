@@ -872,7 +872,7 @@ const Dashboard = () => {
 
 /* ── Mini sparkline data generator (seeded for stability) ── */
 const generateSparkline = (count: number, trend: "up" | "down" | "flat" = "up", seed: number = 0) => {
-  const data = [];
+  const data: { v: number }[] = [];
   let val = trend === "up" ? 20 : trend === "down" ? 80 : 50;
   let s = seed || 1;
   const pseudoRandom = () => {

@@ -14,7 +14,7 @@ export class ApiError extends Error {
  * Fetches JSON from a URL and verifies the response is actually JSON.
  * Throws an ApiError if the response is not JSON or the request fails.
  */
-export const safeJsonFetch = async <T = any>(
+export const safeJsonFetch = async <T = unknown>(
   url: string,
   options: RequestInit = {}
 ): Promise<T> => {
@@ -47,7 +47,7 @@ export const safeJsonFetch = async <T = any>(
   }
 
   try {
-    return await response.json();
+    return (await response.json()) as T;
   } catch (err) {
     const text = await response.text().catch(() => "Could not read response body");
     console.error(`JSON parse error from ${url}. Body: ${text.substring(0, 200)}`, err);

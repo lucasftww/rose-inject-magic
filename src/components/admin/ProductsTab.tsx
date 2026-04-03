@@ -221,7 +221,10 @@ const ProductsTab = () => {
     setLoading(false);
   };
 
-  useEffect(() => { if (!cachedProducts) fetchData(); }, []);
+  useEffect(() => {
+    if (!cachedProducts) void fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- bootstrap when React Query cache empty
+  }, []);
 
   useEffect(() => {
     if (!robotEnabled || !formRobotGameId || formRobotMarkup === null || robotGames.length === 0) return;

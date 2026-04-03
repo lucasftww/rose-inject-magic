@@ -131,12 +131,20 @@ const ProdutoDetalhes = () => {
 
       setProduct(data as any);
 
-      const { data: gameData } = await supabase
-        .from("games")
-        .select("id, name, slug")
-        .eq("id", data.game_id)
-        .maybeSingle();
-      if (gameData) setGame(gameData);
+      if (data.game_id) {
+        const { data: gameData } = await supabase
+          .from("games")
+          .select("id, name, slug")
+          .eq("id", data.game_id)
+          .maybeSingle();
+        if (gameData) {
+          setGame({
+            id: gameData.id,
+            name: gameData.name,
+            slug: gameData.slug ?? "",
+          });
+        }
+      }
 
       const { data: reviewsData } = await supabase
         .from("public_product_reviews" as any)

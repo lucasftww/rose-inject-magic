@@ -54,7 +54,7 @@ const UsersTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
 
   useEffect(() => {
     if (!loadingAdminUsers) {
-      setUsers(adminUsersRaw as UserData[]);
+      setUsers(adminUsersRaw as unknown as UserData[]);
       setLoadingUsers(false);
     }
   }, [adminUsersRaw, loadingAdminUsers]);

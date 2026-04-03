@@ -27,6 +27,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { t } = useTranslation();
   const trackedSessionRef = useRef<string | null>(null);
   const isMountedRef = useRef(true);
+  const sessionInitInFlightRef = useRef(false);
 
   const fetchProfile = async (userId: string) => {
     if (!supabase) return;
@@ -127,12 +128,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // Initial session restore
     const initializeAuth = async () => {
-      // Failsafe: force loading off after 5 seconds
+      sessionInitInFlightRef.current = true;
+      // Failsafe if getSession hangs (avoid stale `loading` from hook closure)
       const timeout = setTimeout(() => {
-        if (isMountedRef.current && loading) {
+        if (isMountedRef.current && sessionInitInFlightRef.current) {
+          sessionInitInFlightRef.current = false;
           setLoading(false);
         }
-      }, 2000);
+      }, 8000);
 
       try {
         const { data: { session: initialSession } } = await supabase.auth.getSession();
@@ -155,6 +158,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.error("Session restore failed:", error);
       } finally {
         clearTimeout(timeout);
+        sessionInitInFlightRef.current = false;
         if (isMountedRef.current) setLoading(false);
       }
     };

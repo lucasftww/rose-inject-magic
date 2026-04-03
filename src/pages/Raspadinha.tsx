@@ -7,6 +7,7 @@ import { toast } from "@/hooks/use-toast";
 import { Loader2, Gift, Trophy, Frown, Ticket, History, Star, X, Flower2, Copy, Check, Plus, Minus, Package, User, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { safeJsonFetch, ApiError } from "@/lib/apiUtils";
+import type { PixPaymentCreateResult, PixPaymentStatusResult, ScratchCardPlayResult } from "@/lib/edgeFunctionTypes";
 
 interface Prize {
   id: string;
@@ -32,6 +33,7 @@ interface GridCell {
   name: string;
   image_url?: string | null;
   nothingIcon: "x" | "flower" | "skull";
+  prize_value?: number;
 }
 
 type RaspadinhaMode = "produtos" | "contas";
@@ -158,6 +160,23 @@ const Raspadinha = () => {
 
   const [checkingPayments, setCheckingPayments] = useState(false);
 
+  const getAuthHeaders = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    if (!token) {
+      throw new Error("Sessão expirada. Entre novamente.");
+    }
+    const apikey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    if (typeof apikey !== "string" || !apikey.trim()) {
+      throw new Error("Configuração do aplicativo incompleta.");
+    }
+    return {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      apikey,
+    };
+  };
+
   // Check for paid-but-unplayed scratch card payments AND active payments that may have been paid
   const checkPendingPayments = useCallback(async (silent = false) => {
     if (!user) return;
@@ -191,15 +210,10 @@ const Raspadinha = () => {
         // If payment is still ACTIVE, re-check status with the gateway
         if (payment.status === "ACTIVE") {
           try {
-            const session = (await supabase.auth.getSession()).data.session;
-            const data = await safeJsonFetch(
+            const headers = await getAuthHeaders();
+            const data = await safeJsonFetch<PixPaymentStatusResult>(
               `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pix-payment?action=status&payment_id=${payment.id}`,
-              {
-                headers: {
-                  Authorization: `Bearer ${session?.access_token}`,
-                  apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-                },
-              }
+              { headers }
             );
             if (data.status === "COMPLETED") {
               const paymentMode = raspadinhaItem.planId?.includes("contas") ? "contas" : "produtos";
@@ -260,15 +274,6 @@ const Raspadinha = () => {
   // Grid generation and win determination are handled server-side only.
   // See edge function scratch-card-play for the secure implementation.
 
-  const getAuthHeaders = async () => {
-    const session = (await supabase.auth.getSession()).data.session;
-    return {
-      Authorization: `Bearer ${session?.access_token}`,
-      "Content-Type": "application/json",
-      apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-    };
-  };
-
   const handlePlay = async () => {
     if (!user) {
       navigateAuth("/auth?redirect=/raspadinha");
@@ -295,7 +300,7 @@ const Raspadinha = () => {
     try {
       const totalAmount = Math.round(unitPrice * quantity * 100);
       const label = mode === "contas" ? "Raspadinha de Contas" : "Raspadinha da Sorte";
-      const data = await safeJsonFetch(
+      const data = await safeJsonFetch<PixPaymentCreateResult>(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pix-payment?action=create`,
         {
           method: "POST",
@@ -316,10 +321,11 @@ const Raspadinha = () => {
         }
       );
       if (!data.success) throw new Error(data.error || "Erro ao criar cobrança");
+      if (!data.payment_id) throw new Error("Resposta sem payment_id");
 
       setPaymentId(data.payment_id);
       paymentIdRef.current = data.payment_id;
-      setChargeData(data.charge);
+      setChargeData(data.charge ?? null);
       setPaymentPhase("paying");
       setPlaying(false);
 
@@ -335,15 +341,10 @@ const Raspadinha = () => {
     if (pollRef.current) clearInterval(pollRef.current);
     const check = async () => {
       try {
-        const session = (await supabase.auth.getSession()).data.session;
-        const data = await safeJsonFetch(
+        const headers = await getAuthHeaders();
+        const data = await safeJsonFetch<PixPaymentStatusResult>(
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pix-payment?action=status&payment_id=${pId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${session?.access_token}`,
-              apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            },
-          }
+          { headers }
         );
         if (data.status === "COMPLETED") {
           if (pollRef.current) clearInterval(pollRef.current);
@@ -421,16 +422,12 @@ const Raspadinha = () => {
     toast({ title: "Pagamento confirmado! 🎉", description: qty > 1 ? `Processando ${qty} raspadinhas...` : "Raspe para revelar!" });
 
     try {
-      // Call server-side edge function for secure win determination
-      const session = (await supabase.auth.getSession()).data.session;
-      const data = await safeJsonFetch(
+      const headers = await getAuthHeaders();
+      const data = await safeJsonFetch<ScratchCardPlayResult>(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/scratch-card-play`,
         {
           method: "POST",
-          headers: {
-            Authorization: `Bearer ${session?.access_token}`,
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          },
+          headers,
           body: JSON.stringify({
             payment_id: paymentIdRef.current,
             mode: currentMode,
@@ -442,7 +439,19 @@ const Raspadinha = () => {
 
       const newGrid: GridCell[] = data.grid;
       setGrid(newGrid);
-      setResult({ won: data.won, prize: data.prize || undefined });
+      const p = data.prize;
+      setResult({
+        won: data.won,
+        prize: p
+          ? {
+              id: p.id ?? "",
+              name: p.name ?? "",
+              description: null,
+              image_url: p.image_url ?? null,
+              prize_value: p.prize_value,
+            }
+          : undefined,
+      });
     } catch (err: any) {
       console.error("scratch-card-play error:", err);
       toast({ title: "Erro ao processar raspadinha", description: err.message, variant: "destructive" });
@@ -560,15 +569,12 @@ const Raspadinha = () => {
     toast({ title: "Carregando sua raspadinha! 🎉" });
 
     try {
-      const session = (await supabase.auth.getSession()).data.session;
-      const data = await safeJsonFetch(
+      const headers = await getAuthHeaders();
+      const data = await safeJsonFetch<ScratchCardPlayResult>(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/scratch-card-play`,
         {
           method: "POST",
-          headers: {
-            Authorization: `Bearer ${session?.access_token}`,
-            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          },
+          headers,
           body: JSON.stringify({
             payment_id: pendingPayment.id,
             mode: currentMode,
@@ -580,7 +586,19 @@ const Raspadinha = () => {
 
       const newGrid: GridCell[] = data.grid;
       setGrid(newGrid);
-      setResult({ won: data.won, prize: data.prize || undefined });
+      const p = data.prize;
+      setResult({
+        won: data.won,
+        prize: p
+          ? {
+              id: p.id ?? "",
+              name: p.name ?? "",
+              description: null,
+              image_url: p.image_url ?? null,
+              prize_value: p.prize_value,
+            }
+          : undefined,
+      });
     } catch (err: any) {
       console.error("scratch-card-play replay error:", err);
       toast({ title: "Erro ao processar raspadinha", description: err.message, variant: "destructive" });
