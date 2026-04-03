@@ -58,6 +58,30 @@ O app estará disponível em `http://localhost:8080` (porta definida em `vite.co
 | `npm run supabase:repair-migrations` | Alinhar histórico de migrações local/remoto (só metadados; requer `supabase link` + login) |
 | `npm run knip` | Procurar exports/ficheiros não usados (shadcn e `types.ts` gerado ignorados em `knip.json`) |
 
+### Validação do projeto
+
+Antes de um PR ou deploy, confirma que os quatro passos terminam sem erros:
+
+```sh
+npm run typecheck && npm run lint && npm run test && npm run build
+```
+
+- **`typecheck`** — TypeScript (`tsc --noEmit`)
+- **`lint`** — ESLint
+- **`test`** — Vitest
+- **`build`** — bundle de produção com Vite
+
+### Frontend, Supabase e Meta CAPI (browser)
+
+O ficheiro `src/integrations/supabase/client.ts` exporta **`supabaseUrl`** e **`supabaseAnonKey`**, derivados de `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY`. Fora de produção, o mesmo módulo pode aplicar fallbacks de desenvolvimento para não precisares de `.env` só para testar localmente.
+
+Chamadas do browser às Edge Functions (pagamentos, `lzt-market`, etc.) e o envio **Meta CAPI** via função **`server-relay`** (`src/lib/metaPixel.ts`) usam **sempre** esses exports. Assim, URL e chave anónima coincidem com o `createClient` do Supabase e evitas o cenário em que a sessão funciona mas as funções falham por URL/key diferentes.
+
+- **`VITE_SUPABASE_PROJECT_ID` deixou de ser necessário para a CAPI no frontend.** Antes era possível montar a URL do relay só com o ID do projeto; agora a origem vem de `supabaseUrl`, como nas restantes integrações.
+- **Em produção**, o build continua a depender de `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` definidos no hosting (ex.: Vercel). Sem eles, o cliente lança erro ao arrancar.
+
+Tokens e secrets da Meta no servidor (Edge) mantêm-se documentados em [supabase/EDGE_SECRETS.md](supabase/EDGE_SECRETS.md).
+
 ### Supabase (produção)
 
 - Secrets das Edge Functions e credenciais em DB: ver [supabase/EDGE_SECRETS.md](supabase/EDGE_SECRETS.md).
