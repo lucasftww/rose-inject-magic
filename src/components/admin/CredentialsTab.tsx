@@ -142,15 +142,19 @@ const CredentialsTab = () => {
       if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
       else { toast({ title: "Credencial atualizada!" }); resetForm(); fetchCredentials(); }
     } else {
-      const { error } = await supabase.from("system_credentials").insert({
+      // Upsert: seed/migrations may already have a row for this env_key (empty value) — insert would duplicate or hit RLS confusion
+      const row = {
         name: formName.trim(),
         env_key: formEnvKey.trim().toUpperCase(),
         value: formValue,
         description: formDescription.trim() || null,
         help_url: formHelpUrl.trim() || null,
+      };
+      const { error } = await supabase.from("system_credentials").upsert(row, {
+        onConflict: "env_key",
       });
       if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
-      else { toast({ title: "Credencial criada!" }); resetForm(); fetchCredentials(); }
+      else { toast({ title: "Credencial guardada!" }); resetForm(); fetchCredentials(); }
     }
     setSaving(false);
   };
