@@ -301,13 +301,13 @@ function GameCard({ game, count, t }: { game: GameCardGame; count: number; t: TF
   const isSpoofer = game.name === "Spoofer";
 
   const characterPositionClass = isSpoofer
-    ? "absolute bottom-[-6px] right-[-64px] md:right-[-52px] lg:right-[-62px] w-[124%]"
-    : "absolute bottom-0 right-[-125px] md:right-[-105px] lg:right-[-125px] w-[162.5%]";
+    ? "absolute bottom-0 right-0 w-[60%]"
+    : "absolute bottom-0 right-0 w-[55%] sm:w-[50%]";
 
   return (
     <TiltCard>
       <div
-        className="relative"
+        className="relative overflow-hidden rounded-2xl"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
@@ -379,7 +379,7 @@ function GameCard({ game, count, t }: { game: GameCardGame; count: number; t: TF
           {/* Character (inside card for non-spoofer) */}
           {game.character && !isSpoofer && (
             <div
-              className={`${characterPositionClass} pointer-events-none z-[5] transition-opacity duration-500 ease-out`}
+              className={`${characterPositionClass} pointer-events-none z-[8] transition-opacity duration-500 ease-out`}
               style={{ opacity: isHovered ? 0 : 1 }}
             >
               <img src={game.character} alt="" loading="lazy" decoding="async" className="w-full h-auto object-contain" style={{ filter: "drop-shadow(0 4px 20px rgba(0,0,0,0.6))" }} />
@@ -387,27 +387,26 @@ function GameCard({ game, count, t }: { game: GameCardGame; count: number; t: TF
           )}
         </Link>
 
-        {/* Spoofer character outside Link to avoid clipping */}
-        {game.character && isSpoofer && (
-          <div
-            className={`${characterPositionClass} pointer-events-none z-[12] transition-opacity duration-500 ease-out`}
-            style={{ opacity: isHovered ? 0 : 1 }}
-          >
-            <img src={game.character} alt="" loading="lazy" decoding="async" className="w-full h-auto object-contain" style={{ filter: "drop-shadow(0 4px 20px rgba(0,0,0,0.6))" }} />
-          </div>
-        )}
-
         {/* Hover character */}
         {game.characterHover && (
           <div
-            className={`${characterPositionClass} pointer-events-none z-[15] transition-all duration-500 ease-out`}
+            className={`${characterPositionClass} pointer-events-none z-[10] transition-all duration-500 ease-out`}
             style={{
               opacity: isHovered ? 1 : 0,
-              transformOrigin: "bottom center",
-              transform: isHovered ? `scale(${isSpoofer ? 1.08 : 1.2})` : "scale(1)",
+              transformOrigin: "bottom right",
+              transform: isHovered ? "scale(1.08)" : "scale(0.95)",
             }}
           >
             <img src={game.characterHover} alt="" loading="lazy" decoding="async" className="w-full h-auto object-contain" style={{ filter: "drop-shadow(0 4px 20px rgba(0,0,0,0.6))" }} />
+          </div>
+        )}
+        {/* Spoofer character (now inside overflow-hidden wrapper) */}
+        {game.character && isSpoofer && (
+          <div
+            className={`${characterPositionClass} pointer-events-none z-[8] transition-opacity duration-500 ease-out`}
+            style={{ opacity: isHovered ? 0 : 1 }}
+          >
+            <img src={game.character} alt="" loading="lazy" decoding="async" className="w-full h-auto object-contain" style={{ filter: "drop-shadow(0 4px 20px rgba(0,0,0,0.6))" }} />
           </div>
         )}
       </div>
