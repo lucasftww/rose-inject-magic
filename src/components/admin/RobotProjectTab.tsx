@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { supabase, supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
+import type { Database, Tables } from "@/integrations/supabase/types";
 import { fetchAllRows } from "@/lib/supabaseAllRows";
+import { paymentCartSnapshot } from "@/types/paymentCart";
+import { asOrderTicketMetadata } from "@/types/orderTicketMetadata";
 import { Loader2, RefreshCw, Wifi, WifiOff, Gamepad2, AlertTriangle, CheckCircle, Package, DollarSign, Clock, Zap, Gift, TrendingUp, BarChart3, RotateCw } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
@@ -10,7 +13,9 @@ interface RobotGame {
   version: string;
   status: string;
   icon: string;
-  is_free: boolean;
+  is_free?: boolean;
+  /** API pode enviar camelCase */
+  isFree?: boolean;
   prices: Record<string, number>;
   maxKeys: number | null;
   soldKeys: number;
@@ -101,7 +106,7 @@ const RobotProjectTab = () => {
         const data = await response.json();
         const games = Array.isArray(data) ? data : data.games || [];
         setRobotGames(games);
-        setFreeGamesCount(games.filter((g: RobotGame) => g.is_free).length);
+        setFreeGamesCount(games.filter((g: RobotGame) => g.is_free === true || g.isFree === true).length);
       } else {
         toast({ title: "Erro ao carregar jogos Robot", variant: "destructive" });
       }
@@ -200,10 +205,15 @@ const RobotProjectTab = () => {
         dateFilter = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
       }
 
+      type RobotTicketRow = Pick<
+        Database["public"]["Tables"]["order_tickets"]["Row"],
+        "id" | "created_at" | "product_id" | "product_plan_id" | "status" | "metadata" | "user_id"
+      >;
+
       // Get tickets for robot products (paginated, no 1000-row limit)
-      let allTickets: any[];
+      let allTickets: RobotTicketRow[];
       if (dateFilter) {
-        allTickets = await fetchAllRows("order_tickets", {
+        allTickets = await fetchAllRows<RobotTicketRow>("order_tickets", {
           select: "id, created_at, product_id, product_plan_id, status, metadata, user_id",
           filters: [
             { column: "status", op: "eq", value: "delivered" },
@@ -212,14 +222,16 @@ const RobotProjectTab = () => {
           order: { column: "created_at", ascending: false },
         });
       } else {
-        allTickets = await fetchAllRows("order_tickets", {
+        allTickets = await fetchAllRows<RobotTicketRow>("order_tickets", {
           select: "id, created_at, product_id, product_plan_id, status, metadata, user_id",
           filters: [{ column: "status", op: "eq", value: "delivered" }],
           order: { column: "created_at", ascending: false },
         });
       }
 
-      const tickets = allTickets.filter((t: any) => productIds.includes(t.product_id) && (t.metadata as any)?.type !== "lzt-account");
+      const tickets = allTickets.filter(
+        (t) => productIds.includes(t.product_id) && asOrderTicketMetadata(t.metadata).type !== "lzt-account",
+      );
       if (tickets.length === 0) {
         setRobotSales([]);
         setSalesLoading(false);
@@ -227,10 +239,12 @@ const RobotProjectTab = () => {
       }
 
       // Get plan names & prices
-      const planIds = [...new Set(tickets.map((t: any) => t.product_plan_id))];
-      
+      const planIds = [...new Set(tickets.map((t) => t.product_plan_id).filter(Boolean))];
+
       const [plansRes, robotPayments] = await Promise.all([
-        supabase.from("product_plans").select("id, name, price, robot_duration_days").in("id", planIds),
+        planIds.length > 0
+          ? supabase.from("product_plans").select("id, name, price, robot_duration_days").in("id", planIds)
+          : Promise.resolve({ data: [] as { id: string; name: string; price: number; robot_duration_days: number | null }[] }),
         fetchAllRows("payments", {
           select: "user_id, amount, cart_snapshot, status",
           filters: [{ column: "status", op: "eq", value: "COMPLETED" }],
@@ -243,9 +257,9 @@ const RobotProjectTab = () => {
       // Build paid price map from cart_snapshot (historical prices apportioned by discount)
       const paidPriceMap = new Map<string, number>();
       for (const pay of (robotPayments || [])) {
-        const snapshot = pay.cart_snapshot as any[];
-        if (!Array.isArray(snapshot)) continue;
-        
+        const snapshot = paymentCartSnapshot(pay.cart_snapshot);
+        if (snapshot.length === 0) continue;
+
         const cartTotal = snapshot.reduce((sum, item) => sum + (Number(item.price) || 0), 0);
         const actualPaid = pay.amount / 100;
 
@@ -261,7 +275,7 @@ const RobotProjectTab = () => {
       const sales: RobotSale[] = tickets.map(t => {
         const product = productMap[t.product_id];
         const plan = planMap[t.product_plan_id];
-        const meta = (t.metadata || {}) as Record<string, any>;
+        const meta = asOrderTicketMetadata(t.metadata);
         
         // Revenue = apportioned actual paid price. If missing (manual creation), revenue is 0.
         const revenue = paidPriceMap.has(`${t.user_id}|${t.product_id}|${t.product_plan_id}`) 
@@ -319,9 +333,15 @@ const RobotProjectTab = () => {
     const userIds = [...new Set(robotTickets.map((ticket: any) => ticket.user_id))];
 
     const [productsRes, plansRes, profilesRes] = await Promise.all([
-      supabase.from("products").select("id, name").in("id", productIds),
-      supabase.from("product_plans").select("id, name").in("id", planIds),
-      supabase.from("profiles").select("user_id, username").in("user_id", userIds),
+      productIds.length > 0
+        ? supabase.from("products").select("id, name").in("id", productIds)
+        : Promise.resolve({ data: [] as { id: string; name: string }[] }),
+      planIds.length > 0
+        ? supabase.from("product_plans").select("id, name").in("id", planIds)
+        : Promise.resolve({ data: [] as { id: string; name: string }[] }),
+      userIds.length > 0
+        ? supabase.from("profiles").select("user_id, username").in("user_id", userIds)
+        : Promise.resolve({ data: [] as { user_id: string; username: string | null }[] }),
     ]);
 
     const productMap = Object.fromEntries((productsRes.data || []).map((item) => [item.id, item.name]));
@@ -373,8 +393,10 @@ const RobotProjectTab = () => {
 
   const refreshAll = async () => {
     setLoading(true);
-    const [, , , rate] = await Promise.all([checkPing(), fetchRobotGames(), fetchProductsWithRobot(), fetchExchangeRate(), fetchPendingRobotTickets()] as const);
-    await fetchRobotSales(salesPeriod, rate as number);
+    const ratePromise = fetchExchangeRate();
+    await Promise.all([checkPing(), fetchRobotGames(), fetchProductsWithRobot(), fetchPendingRobotTickets()]);
+    const rate = await ratePromise;
+    await fetchRobotSales(salesPeriod, rate);
     setLastRefresh(new Date());
     setLoading(false);
   };

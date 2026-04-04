@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Key, Eye, EyeOff, CheckCircle, ExternalLink, Plus, Pencil, Trash2, Loader2, X, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Tables } from "@/integrations/supabase/types";
 import { toast } from "@/hooks/use-toast";
 
 interface Credential {
@@ -14,6 +15,19 @@ interface Credential {
 }
 
 /** Modelos com os nomes exatos que pix-payment / lzt-market leem na base. */
+type CredentialRow = Tables<"system_credentials">;
+
+function credentialFromRow(r: CredentialRow): Credential {
+  return {
+    id: r.id,
+    name: r.name,
+    env_key: r.env_key,
+    value: r.value,
+    description: r.description,
+    help_url: r.help_url,
+  };
+}
+
 const CREDENTIAL_PRESETS: { name: string; env_key: string; description: string; help_url: string }[] = [
   {
     name: "LZT Market — JWT",
@@ -84,7 +98,7 @@ const CredentialsTab = () => {
       toast({ title: "Erro ao carregar credenciais", description: error.message, variant: "destructive" });
       setCredentials([]);
     } else if (data) {
-      setCredentials(data as Credential[]);
+      setCredentials(data.map(credentialFromRow));
     }
     setLoading(false);
   };

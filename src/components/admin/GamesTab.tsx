@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Tables } from "@/integrations/supabase/types";
 import { useInvalidateAdminCache } from "@/hooks/useAdminData";
 import {
   Plus, Pencil, Trash2, GripVertical, ImageIcon, Loader2,
@@ -10,6 +11,17 @@ import { toast } from "@/hooks/use-toast";
 interface Game {
   id: string; name: string; slug: string | null; image_url: string | null;
   active: boolean; sort_order: number;
+}
+
+function mapGameRow(r: Tables<"games">): Game {
+  return {
+    id: r.id,
+    name: r.name,
+    slug: r.slug,
+    image_url: r.image_url,
+    active: r.active ?? false,
+    sort_order: r.sort_order ?? 0,
+  };
 }
 
 const GamesTab = () => {
@@ -36,7 +48,11 @@ const GamesTab = () => {
 
   const fetchGames = useCallback(async (shouldInvalidate = false) => {
     const { data, error } = await supabase.from("games").select("*").order("sort_order", { ascending: true });
-    if (!error && data) setGames(data as Game[]);
+    if (error) {
+      toast({ title: "Erro ao carregar jogos", description: error.message, variant: "destructive" });
+    } else if (data) {
+      setGames(data.map(mapGameRow));
+    }
     setLoadingGames(false);
     if (shouldInvalidate) invalidateAdmin();
   }, [invalidateAdmin]);

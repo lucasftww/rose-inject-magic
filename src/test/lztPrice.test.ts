@@ -16,4 +16,14 @@ describe("getLztItemBrlPrice", () => {
     expect(brl).toBeGreaterThanOrEqual(20);
     expect(Number.isFinite(brl)).toBe(true);
   });
+
+  it("fallback usd uses USD rate and markup", () => {
+    const brl = calcLztFallbackBrl(10, "usd");
+    expect(brl).toBeGreaterThanOrEqual(20);
+  });
+
+  it("fallback brl path doubles raw for margin heuristic", () => {
+    const brl = calcLztFallbackBrl(100, "brl");
+    expect(brl).toBe(200);
+  });
 });

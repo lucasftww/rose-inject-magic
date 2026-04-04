@@ -12,19 +12,7 @@ import { useCart } from "@/hooks/useCart";
 import { useReseller } from "@/hooks/useReseller";
 import { toast } from "@/hooks/use-toast";
 import { trackViewContent, trackInitiateCheckout } from "@/lib/metaPixel";
-
-interface Product {
-  id: string;
-  created_at: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  image_url: string | null;
-  active: boolean;
-  game_id: string;
-  robot_game_id: number | null;
-  features_text: string | null;
-}
+import { parseStoreProductDetail, type StoreProductDetail } from "@/types/supabaseQueryResults";
 
 interface PublicProductReview {
   id: string;
@@ -53,42 +41,6 @@ interface Reseller {
   active: boolean;
 }
 
-interface ProductPlan {
-  id: string;
-  name: string;
-  price: number;
-  active: boolean;
-  sort_order: number;
-}
-
-interface MediaItem {
-  id: string;
-  media_type: "image" | "video";
-  url: string;
-  sort_order: number;
-}
-
-interface FeatureItem {
-  id: string;
-  label: string;
-  value: string;
-  sort_order: number;
-}
-
-interface ProductDetail {
-  id: string;
-  game_id: string;
-  name: string;
-  description: string | null;
-  features_text: string | null;
-  image_url: string | null;
-  active: boolean;
-  robot_game_id: number | null;
-  product_plans: ProductPlan[];
-  product_media: MediaItem[];
-  product_features: FeatureItem[];
-}
-
 interface GameInfo {
   id: string;
   name: string;
@@ -109,7 +61,7 @@ const ProdutoDetalhes = () => {
   const navigate = useNavigate();
   const { addItem } = useCart();
   const { isReseller, isResellerForProduct, getDiscountedPrice, discountPercent } = useReseller();
-  const [product, setProduct] = useState<ProductDetail | null>(null);
+  const [product, setProduct] = useState<StoreProductDetail | null>(null);
   const [game, setGame] = useState<GameInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
@@ -133,7 +85,17 @@ const ProdutoDetalhes = () => {
         return;
       }
 
-      setProduct(data as any);
+      const parsed = parseStoreProductDetail(data);
+      if (!parsed) {
+        toast({
+          variant: "destructive",
+          title: "Produto indisponível",
+          description: "Os dados do produto estão incompletos. Tente outra página ou atualize.",
+        });
+        setLoading(false);
+        return;
+      }
+      setProduct(parsed);
 
       if (data.game_id) {
         const { data: gameData } = await supabase
@@ -151,16 +113,23 @@ const ProdutoDetalhes = () => {
       }
 
       const { data: reviewsData } = await supabase
-        .from("public_product_reviews" as any)
+        .from("public_product_reviews")
         .select("id, rating, comment, created_at, username")
         .eq("product_id", id)
         .order("created_at", { ascending: false });
 
       if (reviewsData && reviewsData.length > 0) {
-        setReviews(reviewsData.map((r: any) => ({
-          ...r,
-          username: r.username || "Usuário",
-        })));
+        setReviews(
+          reviewsData.map((r) => ({
+            id: r.id ?? "",
+            created_at: r.created_at ?? "",
+            product_id: r.product_id ?? "",
+            user_id: "",
+            rating: r.rating ?? 0,
+            comment: r.comment ?? null,
+            username: r.username || "Usuário",
+          })),
+        );
       }
 
       if (data.robot_game_id) {

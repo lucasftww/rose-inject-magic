@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Tables } from "@/integrations/supabase/types";
+import { isRecord } from "@/types/ticketChat";
 import { toast } from "@/hooks/use-toast";
 import { Pencil, Loader2, Gift, RefreshCw, Save } from "lucide-react";
 
@@ -18,6 +20,41 @@ interface Config {
   id: string;
   price: number;
   active: boolean;
+}
+
+type ScratchPrizeRow = Tables<"scratch_card_prizes">;
+type ScratchConfigRow = Tables<"scratch_card_config">;
+
+function mapScratchPrizeRow(r: ScratchPrizeRow): Prize {
+  return {
+    id: r.id,
+    name: r.name,
+    image_url: r.image_url,
+    win_percentage: r.win_percentage ?? 0,
+    prize_value: r.prize_value ?? 0,
+    active: r.active ?? false,
+    sort_order: r.sort_order ?? 0,
+    product_id: r.product_id,
+  };
+}
+
+function mapScratchConfigRow(r: ScratchConfigRow): Config {
+  return {
+    id: r.id,
+    price: r.price ?? 2.5,
+    active: r.active ?? false,
+  };
+}
+
+function parseAdminScratchStats(raw: unknown): { total_plays: number; total_wins: number; total_revenue: number } | null {
+  if (!isRecord(raw)) return null;
+  const s = raw;
+  if (s.error != null && s.error !== false && s.error !== "") return null;
+  return {
+    total_plays: Number(s.total_plays) || 0,
+    total_wins: Number(s.total_wins) || 0,
+    total_revenue: Number(s.total_revenue) || 0,
+  };
 }
 
 const ScratchCardTab = () => {
@@ -45,20 +82,18 @@ const ScratchCardTab = () => {
       // Use DB aggregation function for accurate stats (no 1000-row limit)
       supabase.rpc("admin_scratch_stats"),
     ]);
-    if (prizesData) setPrizes(prizesData as Prize[]);
+    if (prizesData) setPrizes(prizesData.map(mapScratchPrizeRow));
     if (configData) {
-      const c = configData as Config;
+      const c = mapScratchConfigRow(configData);
       setConfig(c);
       setConfigPrice(String(c.price));
       setConfigActive(c.active);
     }
-    if (statsRes.data) {
-      const s = statsRes.data as any;
-      if (!s.error) {
-        setTotalPlays(Number(s.total_plays));
-        setTotalWins(Number(s.total_wins));
-        setTotalRevenue(Number(s.total_revenue));
-      }
+    const stats = statsRes.data != null ? parseAdminScratchStats(statsRes.data) : null;
+    if (stats) {
+      setTotalPlays(stats.total_plays);
+      setTotalWins(stats.total_wins);
+      setTotalRevenue(stats.total_revenue);
     }
     setLoading(false);
   };

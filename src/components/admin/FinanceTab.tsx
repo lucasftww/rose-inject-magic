@@ -1,11 +1,15 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database, Json } from "@/integrations/supabase/types";
 import { fetchAllRows } from "@/lib/supabaseAllRows";
+import { paymentCartSnapshot, type PaymentCartLine } from "@/types/paymentCart";
+import { asOrderTicketMetadata, type OrderTicketMetadata } from "@/types/orderTicketMetadata";
 import {
   Loader2, DollarSign, TrendingUp, TrendingDown,
   Download, Wallet, Users, ArrowUp, ArrowDown, Minus, Gamepad2,
   Receipt, BarChart3, CalendarDays, Package, Zap, RefreshCw
 } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 import {
   PieChart as RechartsPie, Pie, Cell, Tooltip, ResponsiveContainer,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, AreaChart, Area, Legend
@@ -16,7 +20,7 @@ interface PaymentRow {
   status: string;
   created_at: string;
   paid_at: string | null;
-  cart_snapshot: any;
+  cart_snapshot: Json | null;
   payment_method: string | null;
   discount_amount: number;
   user_id: string;
@@ -42,7 +46,7 @@ interface RobotTicket {
   product_id: string;
   product_plan_id: string;
   user_id: string;
-  metadata: any;
+  metadata: OrderTicketMetadata;
   product_name: string;
   plan_name: string;
   revenue: number;
@@ -51,6 +55,13 @@ interface RobotTicket {
 }
 
 type Period = "24h" | "7d" | "30d" | "all";
+
+const PERIOD_OPTIONS = [
+  ["24h", "24h"],
+  ["7d", "7d"],
+  ["30d", "30d"],
+  ["all", "Tudo"],
+] as const satisfies ReadonlyArray<readonly [Period, string]>;
 
 const COLORS = [
   "hsl(197,100%,50%)", "hsl(142,71%,45%)", "hsl(38,92%,50%)",
@@ -87,7 +98,8 @@ const filterByPeriod = <T extends { created_at: string; paid_at?: string | null 
   const cutoff = Date.now() - ms;
   return items.filter(i => {
     const d = dateField === "paid_at" ? (i.paid_at || i.created_at) : i.created_at;
-    return new Date(d).getTime() >= cutoff;
+    const t = new Date(d).getTime();
+    return Number.isFinite(t) && t >= cutoff;
   });
 };
 
@@ -101,7 +113,7 @@ const getPreviousPeriodItems = <T extends { created_at: string; paid_at?: string
   return items.filter(i => {
     const d = dateField === "paid_at" ? (i.paid_at || i.created_at) : i.created_at;
     const t = new Date(d).getTime();
-    return t >= start && t < end;
+    return Number.isFinite(t) && t >= start && t < end;
   });
 };
 
@@ -180,13 +192,27 @@ const FinanceTab = () => {
     setLztSales(lztData);
     setResellerPurchases(resellerData);
 
+    if (robotProductsRes.error) {
+      console.warn("FinanceTab: produtos Robot", robotProductsRes.error.message);
+      toast({
+        title: "Métricas Robot incompletas",
+        description: robotProductsRes.error.message,
+        variant: "destructive",
+      });
+    }
+
     const robotProducts = robotProductsRes.data || [];
     if (robotProducts.length > 0) {
       const productIds = robotProducts.map(p => p.id);
       const productMap = Object.fromEntries(robotProducts.map(p => [p.id, p]));
 
+      type DelivTicketRow = Pick<
+        Database["public"]["Tables"]["order_tickets"]["Row"],
+        "id" | "created_at" | "product_id" | "product_plan_id" | "user_id" | "metadata" | "status"
+      >;
+
       const [ticketsRes, plansRes] = await Promise.all([
-        fetchAllRows("order_tickets", {
+        fetchAllRows<DelivTicketRow>("order_tickets", {
           select: "id, created_at, product_id, product_plan_id, user_id, metadata, status",
           filters: [{ column: "status", op: "eq", value: "delivered" }],
           order: { column: "created_at", ascending: false },
@@ -194,16 +220,16 @@ const FinanceTab = () => {
         supabase.from("product_plans").select("id, name, price, robot_duration_days").in("product_id", productIds),
       ]);
 
-      const robotTicketsRaw = (ticketsRes || []).filter((t: any) => 
-        productIds.includes(t.product_id) && (t.metadata as any)?.type !== "lzt-account"
+      const robotTicketsRaw = ticketsRes.filter(
+        (t) => productIds.includes(t.product_id) && asOrderTicketMetadata(t.metadata).type !== "lzt-account",
       );
-      const planMap = Object.fromEntries((plansRes.data || []).map((p: any) => [p.id, p]));
+      const planMap = Object.fromEntries((plansRes.data || []).map((p) => [p.id, p]));
 
       const paidPriceMap = new Map<string, number>();
       for (const pay of paymentsData) {
-        const snapshot = pay.cart_snapshot as any[];
-        if (!Array.isArray(snapshot)) continue;
-        
+        const snapshot = paymentCartSnapshot(pay.cart_snapshot);
+        if (snapshot.length === 0) continue;
+
         const cartTotal = snapshot.reduce((sum, item) => sum + (Number(item.price) || 0), 0);
         const actualPaid = pay.amount / 100;
 
@@ -216,10 +242,10 @@ const FinanceTab = () => {
         }
       }
 
-      const enriched: RobotTicket[] = robotTicketsRaw.map((t: any) => {
+      const enriched: RobotTicket[] = robotTicketsRaw.map((t) => {
         const product = productMap[t.product_id];
         const plan = planMap[t.product_plan_id];
-        const meta = (t.metadata || {}) as Record<string, any>;
+        const meta = asOrderTicketMetadata(t.metadata);
         
         const revenue = paidPriceMap.has(`${t.user_id}|${t.product_id}|${t.product_plan_id}`) 
           ? paidPriceMap.get(`${t.user_id}|${t.product_id}|${t.product_plan_id}`)! 
@@ -273,11 +299,11 @@ const FinanceTab = () => {
     // Build a set of robot product IDs for fast lookup
     const robotProductIds = new Set(robotTickets.map(r => r.product_id));
     fp.forEach(p => {
-      const cart = p.cart_snapshot as any[];
-      if (!Array.isArray(cart)) { stock += p.amount / 100; return; }
+      const cart: PaymentCartLine[] = paymentCartSnapshot(p.cart_snapshot);
+      if (cart.length === 0) { stock += p.amount / 100; return; }
       // Classify each payment by its cart items
-      const hasLzt = cart.some((i: any) => i.type === "lzt-account");
-      const hasRobot = cart.some((i: any) => robotProductIds.has(i.productId));
+      const hasLzt = cart.some((i) => i.type === "lzt-account");
+      const hasRobot = cart.some((i) => i.productId != null && robotProductIds.has(i.productId));
       if (hasLzt) lzt += p.amount / 100;
       else if (hasRobot) robot += p.amount / 100;
       else stock += p.amount / 100;
@@ -422,7 +448,7 @@ const FinanceTab = () => {
         <h2 className="text-lg font-bold text-foreground">Financeiro</h2>
         <div className="flex items-center gap-2">
           <div className="flex gap-0.5 bg-secondary rounded-lg p-0.5">
-            {([["24h", "24h"], ["7d", "7d"], ["30d", "30d"], ["all", "Tudo"]] as const).map(([key, label]) => (
+            {PERIOD_OPTIONS.map(([key, label]) => (
               <button
                 key={key}
                 onClick={() => setPeriod(key)}

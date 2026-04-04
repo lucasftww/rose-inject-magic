@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { throwApiError } from "@/lib/apiErrors";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Header from "@/components/Header";
 import {
   ArrowLeft, Loader2, ChevronLeft, ChevronRight,
@@ -14,6 +14,9 @@ import { useLztMarkup } from "@/hooks/useLztMarkup";
 import { trackViewContent, trackInitiateCheckout } from "@/lib/metaPixel";
 import { checkLztAvailability } from "@/lib/lztAvailability";
 import { supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
+import { getLztDetailDisplayTitle } from "@/lib/lztDisplayTitles";
+import { lztAccountDetailQueryKey } from "@/lib/lztAccountDetailQuery";
+import type { LztFortniteCosmeticEntry, LztFortniteItemExtras } from "@/types/lztGameDetailExtras";
 
 const getProxiedImageUrl = (url: string) => {
   if (!url) return "";
@@ -65,15 +68,6 @@ const fetchFortniteCosmetics = async (): Promise<Map<string, { name: string; ima
   }
 };
 
-interface CosmeticItem {
-  id: string;
-  title: string;
-  rarity?: string;
-  type?: string;
-  from_shop?: number;
-  shop_price?: number;
-}
-
 interface CosmeticPreview {
   id: string;
   name: string;
@@ -104,9 +98,10 @@ const FortniteDetalhes = () => {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<InventoryTab>("skins");
   const { addItem } = useCart();
+  const queryClient = useQueryClient();
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["lzt-account-detail", "fortnite", id],
+    queryKey: lztAccountDetailQueryKey("fortnite", id ?? ""),
     queryFn: () => fetchAccountDetail(id!),
     enabled: !!id,
     staleTime: 1000 * 30, // 30 seconds
@@ -120,10 +115,10 @@ const FortniteDetalhes = () => {
   });
 
   const item = data?.item;
-  const raw = item as any;
+  const raw = item as LztFortniteItemExtras | undefined;
 
   // Build preview list from a cosmetics array (fortniteSkins, fortnitePickaxe, etc.)
-  const buildPreviews = useCallback((arr: CosmeticItem[], skipDefault = true): CosmeticPreview[] => {
+  const buildPreviews = useCallback((arr: LztFortniteCosmeticEntry[], skipDefault = true): CosmeticPreview[] => {
     const results: CosmeticPreview[] = [];
     for (const c of (arr || [])) {
       if (skipDefault && (c.id === "defaultpickaxe" || c.id === "defaultglider")) continue;
@@ -156,15 +151,23 @@ const FortniteDetalhes = () => {
   const skinCount = raw?.fortnite_skin_count ?? 0;
   const level = raw?.fortnite_level ?? 0;
 
-  const cleanedTitle = useMemo(() => {
-    let t = item?.title || "";
-    // Remove cyrillic
-    t = t.replace(/[А-Яа-я]/g, '').trim();
-    if (!t || t.toLowerCase() === "kuki" || t.length < 3) {
-      return `Conta Fortnite [${skinCount} Skins] [${vbucks} VB]`;
-    }
-    return t;
-  }, [item?.title, skinCount, vbucks]);
+  const cleanedTitle = useMemo(
+    () =>
+      getLztDetailDisplayTitle(item?.title, {
+        game: "fortnite",
+        skinCount: raw?.fortnite_skin_count ?? raw?.fortnite_outfit_count ?? 0,
+        level: raw?.fortnite_level ?? 0,
+        vbucks: raw?.fortnite_balance ?? raw?.fortnite_vbucks ?? 0,
+      }),
+    [
+      item?.title,
+      raw?.fortnite_skin_count,
+      raw?.fortnite_outfit_count,
+      raw?.fortnite_level,
+      raw?.fortnite_balance,
+      raw?.fortnite_vbucks,
+    ],
+  );
 
   // Gallery uses skins, fallback to pickaxes
   const galleryPreviews = skinPreviews.length > 0 ? skinPreviews : pickaxePreviews;
@@ -191,10 +194,9 @@ const FortniteDetalhes = () => {
   const handleBuyNow = async () => {
     if (!item || checkingAvailability) return;
     setCheckingAvailability(true);
-    const available = await checkLztAvailability(String(item.item_id), "fortnite");
+    const available = await checkLztAvailability(String(item.item_id), "fortnite", { queryClient });
     setCheckingAvailability(false);
     if (!available) return;
-    const title = `Conta Fortnite${vbucks > 0 ? ` | ${vbucks} V-Bucks` : ""}${skinCount > 0 ? ` | ${skinCount} Skins` : ""}`;
     const priceBRL = getPrice(item, "fortnite");
 
     trackInitiateCheckout({
@@ -383,8 +385,10 @@ const FortniteDetalhes = () => {
                   </div>
 
                   <button
+                    type="button"
                     onClick={handleBuyNow}
                     disabled={checkingAvailability}
+                    aria-busy={checkingAvailability}
                     className="group relative flex w-full items-center justify-center gap-2 border-2 px-5 py-3 text-xs font-bold uppercase tracking-[0.25em] rounded-lg transition-all hover:shadow-lg disabled:opacity-60"
                     style={{
                       borderColor: "rgba(255,255,255,0.2)",
@@ -594,8 +598,10 @@ const FortniteDetalhes = () => {
                 </span>
               </div>
               <button
+                type="button"
                 onClick={handleBuyNow}
                 disabled={checkingAvailability}
+                aria-busy={checkingAvailability}
                 className="flex flex-1 items-center justify-center gap-2 rounded-lg py-3 text-sm font-bold uppercase tracking-wider text-white transition-all active:scale-[0.98] disabled:opacity-60"
                 style={{ background: FN_PURPLE, fontFamily: "'Valorant', sans-serif" }}
               >

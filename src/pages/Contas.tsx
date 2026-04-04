@@ -31,6 +31,7 @@ import {
   rankUnranked, rankMap, fetchAllValorantSkins,
   type SkinEntry,
 } from "@/lib/valorantData";
+import { getListingCardTitle } from "@/lib/lztDisplayTitles";
 
 import weaponAres from "@/assets/weapon-ares.png";
 import weaponBandit from "@/assets/weapon-bandit.png";
@@ -71,29 +72,6 @@ const getProxiedImageUrl = (url: string) => {
 
 /** Data Dragon champion keys from champion.json are already valid (e.g. LeeSin); do not sentence-case them. */
 const ddragonChampionId = (internalNameFromMap: string) => internalNameFromMap;
-
-function shouldReplaceListingTitle(raw: string | undefined, game: GameTab): boolean {
-  const t = (raw || "").replace(/[А-Яа-я]/g, "").trim();
-  const lower = t.toLowerCase();
-  if (!t || lower === "kuki" || lower === "waiting" || lower === "lol" || t.length < 3) return true;
-  if (/^[\s|+\-_.:0-9]{1,24}$/.test(t)) return true;
-  const compact = t.replace(/\s/g, "");
-  if (/^\|+$/.test(compact) || compact === "||") return true;
-  if (game === "lol") {
-    // Lixo comum do LZT: "(23)_1", "12_3", títulos só com números e símbolos
-    if (/^\(\d+\)_\d+$/.test(t)) return true;
-    if (/^\d+_\d+$/.test(t)) return true;
-    const letters = (t.match(/[a-zA-ZÀ-ÿ]/g) || []).length;
-    if (letters < 2 && t.length <= 16) return true;
-  }
-  if (game === "lol" && /\b\d+\s*knives?\b/i.test(t) && !/\b(champion|league|lol|skin)\b/i.test(t)) return true;
-  if (game === "minecraft") {
-    if (/^[\s|\-:]+$/.test(t) || /^.?\|.?\|/.test(t)) return true;
-    const letters = (t.match(/[a-zA-ZÀ-ÿ]/g) || []).length;
-    if (letters < 4 && t.length < 28) return true;
-  }
-  return false;
-}
 
 /** Drop obvious Valorant listings that leak into LoL API responses. */
 function isLikelyWrongGameInLolList(item: LztItem): boolean {
@@ -393,15 +371,7 @@ const ValorantCard = memo(({ item, skinsMap, priceLabel }: { item: LztItem; skin
   const skinCount = item.riot_valorant_skin_count ?? 0;
   const hasKnife = (item.riot_valorant_knife ?? 0) > 0;
 
-  const cleanedTitle = useMemo(() => {
-    const synth = () => {
-      const rankName = rank?.name || "Unranked";
-      return `Conta Valorant [${rankName}] [${skinCount} Skins]`;
-    };
-    if (shouldReplaceListingTitle(item.title, "valorant")) return synth();
-    const t = (item.title || "").replace(/[А-Яа-я]/g, "").trim();
-    return t || synth();
-  }, [item.title, rank, skinCount]);
+  const cleanedTitle = getListingCardTitle(item, "valorant");
 
   const skinPreviews = useMemo(() => {
     const results: SkinEntry[] = [];
@@ -494,7 +464,7 @@ const ValorantCard = memo(({ item, skinsMap, priceLabel }: { item: LztItem; skin
           </div>
         )}
         <div className="mt-auto pt-1.5 border-t border-border/30">
-          <h3 className="text-[11px] sm:text-xs font-semibold text-foreground line-clamp-2 leading-snug tracking-tight mb-1">{cleanedTitle}</h3>
+          <h3 className="text-[11px] sm:text-xs font-semibold text-foreground line-clamp-2 text-balance leading-snug tracking-tight mb-1">{cleanedTitle}</h3>
           <p className="text-sm sm:text-base font-bold text-success tracking-tight">{priceLabel}</p>
           <span className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg bg-success py-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-success-foreground">
             Ver conta <ArrowRight className="h-2.5 w-2.5" />
@@ -517,16 +487,7 @@ const LolCard = memo(({ item, champKeyMap, priceLabel }: { item: LztItem; champK
   const level = item.riot_lol_level ?? 0;
   const winRate = item.riot_lol_rank_win_rate;
 
-  const cleanedTitle = useMemo(() => {
-    const rankShort = rankText.split(/\s+/)[0] || rankText;
-    const synth = () => {
-      const skinLabel = skinCount === 1 ? "1 skin" : `${skinCount} skins`;
-      return `Conta LoL · Full acesso · ${skinLabel} · ${rankShort} · Nv.${level}`;
-    };
-    if (shouldReplaceListingTitle(item.title, "lol")) return synth();
-    const t = (item.title || "").replace(/[А-Яа-я]/g, "").trim();
-    return t || synth();
-  }, [item.title, rankText, level, skinCount]);
+  const cleanedTitle = getListingCardTitle(item, "lol");
 
   // Resolve LoL skin IDs via lolInventory (não valorantInventory!)
   // skinId = champKey * 1000 + skinNum
@@ -662,7 +623,7 @@ const LolCard = memo(({ item, champKeyMap, priceLabel }: { item: LztItem; champK
           )}
         </div>
         <div className="mt-auto pt-1.5 border-t border-border/30">
-          <h3 className="text-[11px] sm:text-xs font-semibold text-foreground line-clamp-2 leading-snug tracking-tight mb-1">{cleanedTitle}</h3>
+          <h3 className="text-[11px] sm:text-xs font-semibold text-foreground line-clamp-2 text-balance leading-snug tracking-tight mb-1">{cleanedTitle}</h3>
           <p className="text-sm sm:text-base font-bold text-[hsl(198,100%,45%)] tracking-tight">{priceLabel}</p>
           <span className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg py-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-white" style={{ background: "hsl(198,100%,45%)" }}>
             Ver conta <ArrowRight className="h-2.5 w-2.5" />
@@ -680,12 +641,7 @@ const FortniteCard = memo(({ item, skinsDb, priceLabel }: { item: LztItem; skins
   const skinCount = item.fortnite_skin_count ?? 0;
   const level = item.fortnite_level ?? 0;
 
-  const cleanedTitle = useMemo(() => {
-    const synth = () => `Conta Fortnite [${skinCount} Skins] [${vbucks} VB]`;
-    if (shouldReplaceListingTitle(item.title, "fortnite")) return synth();
-    const t = (item.title || "").replace(/[А-Яа-я]/g, "").trim();
-    return t || synth();
-  }, [item.title, skinCount, vbucks]);
+  const cleanedTitle = getListingCardTitle(item, "fortnite");
 
   // fortniteSkins is an array of { id, title, rarity } from LZT API
   const skinPreviews = useMemo(() => {
@@ -790,7 +746,7 @@ const FortniteCard = memo(({ item, skinsDb, priceLabel }: { item: LztItem; skins
           <span className="text-[9px] sm:text-[11px] text-muted-foreground">Full Acesso · Entrega Automática</span>
         </div>
         <div className="mt-auto pt-1.5 border-t border-border/30">
-          <h3 className="text-[11px] sm:text-xs font-semibold text-foreground line-clamp-2 leading-snug tracking-tight mb-1">{cleanedTitle}</h3>
+          <h3 className="text-[11px] sm:text-xs font-semibold text-foreground line-clamp-2 text-balance leading-snug tracking-tight mb-1">{cleanedTitle}</h3>
           <p className="text-sm sm:text-base font-bold tracking-tight" style={{ color: FN_PURPLE }}>{priceLabel}</p>
           <span className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg py-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-white" style={{ background: FN_PURPLE }}>
             Ver conta <ArrowRight className="h-2.5 w-2.5" />
@@ -812,15 +768,7 @@ const MinecraftCard = memo(({ item, priceLabel }: { item: LztItem; priceLabel: s
   const capes = item.minecraft_capes_count ?? 0;
   const banned = (item.minecraft_hypixel_ban ?? 0) > 0;
 
-  const cleanedTitle = useMemo(() => {
-    const synth = () => {
-      const edition = hasJava && hasBedrock ? "Java + Bedrock" : hasJava ? "Java" : hasBedrock ? "Bedrock" : "MC";
-      return `Conta Minecraft [${nickname || "Standard"}] [${edition}]`;
-    };
-    if (shouldReplaceListingTitle(item.title, "minecraft")) return synth();
-    const t = (item.title || "").replace(/[А-Яа-я]/g, "").trim();
-    return t || synth();
-  }, [item.title, nickname, hasJava, hasBedrock]);
+  const cleanedTitle = getListingCardTitle(item, "minecraft");
 
   // mineskin.eu avatar (body render)
   const skinUrl = nickname
@@ -869,7 +817,7 @@ const MinecraftCard = memo(({ item, priceLabel }: { item: LztItem; priceLabel: s
           <span className="text-[9px] sm:text-[11px] text-muted-foreground">Full Acesso · Entrega Automática</span>
         </div>
         <div className="mt-auto pt-1.5 border-t border-border/30">
-          <h3 className="text-[11px] sm:text-xs font-semibold text-foreground line-clamp-2 leading-snug tracking-tight mb-1">{cleanedTitle}</h3>
+          <h3 className="text-[11px] sm:text-xs font-semibold text-foreground line-clamp-2 text-balance leading-snug tracking-tight mb-1">{cleanedTitle}</h3>
           <p className="text-sm sm:text-base font-bold tracking-tight" style={{ color: MC_GREEN }}>{priceLabel}</p>
           <span className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg py-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-white" style={{ background: MC_GREEN }}>
             Ver conta <ArrowRight className="h-2.5 w-2.5" />
@@ -1195,8 +1143,8 @@ const Contas = () => {
   }, [currentPage, searchQuery, onlyKnife, selectedRank, selectedWeapon, invMin, invMax, lvlMin, lvlMax, gameTab, lolRank, lolChampMin, lolSkinsMin, fnVbMin, fnSkinsMin, mcJava, mcBedrock, mcHypixelLvlMin, mcCapesMin, mcNoBan, lolRegion, valRegion, sortBy, priceMin, priceMax]);
 
   const paramsKey = JSON.stringify(buildParams(1)) + gameTab;
-  // Campos de texto / número digitados: debounce. Resto (aba, rank, sort, toggles): dispara na hora.
-  const nonTextParamsKey = useMemo(
+  // Só o campo "busca por título" usa debounce. Preço, inv, nível, mínimos etc. disparam fetch na hora (mais fluido).
+  const nonSearchParamsKey = useMemo(
     () =>
       JSON.stringify({
         gameTab,
@@ -1207,9 +1155,21 @@ const Contas = () => {
         valRegion,
         lolRank,
         lolRegion,
+        lolChampMin,
+        lolSkinsMin,
         mcJava,
         mcBedrock,
         mcNoBan,
+        mcHypixelLvlMin,
+        mcCapesMin,
+        priceMin,
+        priceMax,
+        invMin,
+        invMax,
+        lvlMin,
+        lvlMax,
+        fnVbMin,
+        fnSkinsMin,
       }),
     [
       gameTab,
@@ -1220,17 +1180,29 @@ const Contas = () => {
       valRegion,
       lolRank,
       lolRegion,
+      lolChampMin,
+      lolSkinsMin,
       mcJava,
       mcBedrock,
       mcNoBan,
+      mcHypixelLvlMin,
+      mcCapesMin,
+      priceMin,
+      priceMax,
+      invMin,
+      invMax,
+      lvlMin,
+      lvlMax,
+      fnVbMin,
+      fnSkinsMin,
     ],
   );
   const [debouncedParamsKey, setDebouncedParamsKey] = useState(paramsKey);
-  const prevNonTextRef = useRef(nonTextParamsKey);
+  const prevNonSearchRef = useRef(nonSearchParamsKey);
   const prevSearchTrimRef = useRef(searchQuery.trim());
   useEffect(() => {
-    if (prevNonTextRef.current !== nonTextParamsKey) {
-      prevNonTextRef.current = nonTextParamsKey;
+    if (prevNonSearchRef.current !== nonSearchParamsKey) {
+      prevNonSearchRef.current = nonSearchParamsKey;
       setDebouncedParamsKey(paramsKey);
       prevSearchTrimRef.current = searchQuery.trim();
       return;
@@ -1241,10 +1213,10 @@ const Contas = () => {
       setDebouncedParamsKey(paramsKey);
       return;
     }
-    const delay = 320;
+    const delay = 280;
     const handler = setTimeout(() => setDebouncedParamsKey(paramsKey), delay);
     return () => clearTimeout(handler);
-  }, [paramsKey, nonTextParamsKey, searchQuery]);
+  }, [paramsKey, nonSearchParamsKey, searchQuery]);
 
   const fetchWithRetry = useCallback(
     async (

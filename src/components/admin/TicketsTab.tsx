@@ -1,6 +1,15 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database, Json } from "@/integrations/supabase/types";
 import { fetchAllRows } from "@/lib/supabaseAllRows";
+import { asOrderTicketMetadata } from "@/types/orderTicketMetadata";
+import {
+  mapTicketMessageRow,
+  mapTicketMessageRows,
+  parseTicketMessageDeleteId,
+  parseTicketMessageRealtime,
+  type TicketChatMessage,
+} from "@/types/ticketChat";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminUsers } from "@/hooks/useAdminUsers";
 import { toast } from "@/hooks/use-toast";
@@ -30,16 +39,7 @@ interface Ticket {
   plan_price?: number;
   buyer_email?: string;
   buyer_username?: string;
-  metadata?: any;
-}
-
-interface Message {
-  id: string;
-  ticket_id: string;
-  sender_id: string;
-  sender_role: string;
-  message: string;
-  created_at: string;
+  metadata?: Json | null;
 }
 
 // ─── Constants ──────────────────────────────────────────────────────────────
@@ -56,6 +56,10 @@ const statusOptions = [
 ];
 
 const ITEMS_PER_PAGE = 10;
+
+const EMPTY_PRODUCT_NAMES: { id: string; name: string }[] = [];
+const EMPTY_PLAN_ROWS: { id: string; name: string; price: number }[] = [];
+const EMPTY_PROFILE_ROWS: { user_id: string; username: string | null }[] = [];
 
 const QUICK_REPLIES = [
   "Precisa de ajuda?",
@@ -86,7 +90,7 @@ const TicketsTab = ({
   const [tickets, setTickets] = useState<Ticket[]>(_cachedTickets || []);
   const [loading, setLoading] = useState(!_cachedTickets);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<TicketChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -163,7 +167,8 @@ const TicketsTab = ({
     }
 
     setLoading(true);
-    const data = await fetchAllRows("order_tickets", {
+    type OrderTicketRow = Database["public"]["Tables"]["order_tickets"]["Row"];
+    const data = await fetchAllRows<OrderTicketRow>("order_tickets", {
       select: "*",
       order: { column: "created_at", ascending: false },
       limit: 500,
@@ -173,18 +178,27 @@ const TicketsTab = ({
     });
 
     if (data) {
-      const productIds = [...new Set(data.map((t: any) => t.product_id))] as string[];
-      const planIds = [...new Set(data.map((t: any) => t.product_plan_id))] as string[];
-      const userIds = [...new Set(data.map((t: any) => t.user_id))] as string[];
+      const productIds = [...new Set(data.map((t) => t.product_id))];
+      const planIds = [...new Set(data.map((t) => t.product_plan_id))];
+      const userIds = [...new Set(data.map((t) => t.user_id))];
 
       const lztItemIds = data
-        .filter((t: any) => t.metadata?.type === "lzt-account" && t.metadata?.lzt_item_id)
-        .map((t: any) => String(t.metadata.lzt_item_id));
+        .filter((t) => {
+          const m = asOrderTicketMetadata(t.metadata);
+          return m.type === "lzt-account" && m.lzt_item_id != null;
+        })
+        .map((t) => String(asOrderTicketMetadata(t.metadata).lzt_item_id));
 
       const [productsRes, plansRes, profilesData, lztSalesData] = await Promise.all([
-        supabase.from("products").select("id, name").in("id", productIds),
-        supabase.from("product_plans").select("id, name, price").in("id", planIds),
-        supabase.from("profiles").select("user_id, username").in("user_id", userIds),
+        productIds.length > 0
+          ? supabase.from("products").select("id, name").in("id", productIds)
+          : Promise.resolve({ data: EMPTY_PRODUCT_NAMES }),
+        planIds.length > 0
+          ? supabase.from("product_plans").select("id, name, price").in("id", planIds)
+          : Promise.resolve({ data: EMPTY_PLAN_ROWS }),
+        userIds.length > 0
+          ? supabase.from("profiles").select("user_id, username").in("user_id", userIds)
+          : Promise.resolve({ data: EMPTY_PROFILE_ROWS }),
         lztItemIds.length > 0
           ? supabase.from("lzt_sales").select("lzt_item_id, sell_price").in("lzt_item_id", lztItemIds)
           : Promise.resolve({ data: [] }),
@@ -194,13 +208,15 @@ const TicketsTab = ({
       const planMap: Record<string, { name: string; price: number }> = {};
       const profileMap: Record<string, string> = {};
       const lztSalesMap = new Map<string, number>();
-      productsRes.data?.forEach((p: any) => { productMap[p.id] = p.name; });
-      plansRes.data?.forEach((p: any) => { planMap[p.id] = { name: p.name, price: p.price }; });
-      (profilesData.data || []).forEach((p: any) => { profileMap[p.user_id] = p.username || "—"; });
-      (lztSalesData.data || []).forEach((s: any) => { lztSalesMap.set(String(s.lzt_item_id), Number(s.sell_price)); });
+      productsRes.data?.forEach((p) => { productMap[p.id] = p.name; });
+      plansRes.data?.forEach((p) => { planMap[p.id] = { name: p.name, price: p.price }; });
+      (profilesData.data || []).forEach((p) => { profileMap[p.user_id] = p.username || "—"; });
+      (lztSalesData.data || []).forEach((s) => {
+        if (s.lzt_item_id != null) lztSalesMap.set(String(s.lzt_item_id), Number(s.sell_price));
+      });
 
-      const mapped = data.map((t: any) => {
-        const meta = t.metadata as any;
+      const mapped = data.map((t) => {
+        const meta = asOrderTicketMetadata(t.metadata);
         const isLzt = meta?.type === "lzt-account";
         const lztItemId = meta?.lzt_item_id;
         const lztPrice = lztItemId ? (lztSalesMap.get(String(lztItemId)) || meta?.price || meta?.sell_price || 0) : 0;
@@ -247,16 +263,18 @@ const TicketsTab = ({
       .select("*")
       .eq("ticket_id", ticket.id)
       .order("created_at", { ascending: true });
-    if (data) setMessages(data as Message[]);
+    if (data) setMessages(mapTicketMessageRows(data));
 
-    if (ticket.stock_item_id) {
+    const meta = asOrderTicketMetadata(ticket.metadata);
+    const skipStockForFreeRobot = meta.type === "robot-project" && meta.is_free === true;
+    if (ticket.stock_item_id && !skipStockForFreeRobot) {
       const { data: stockData } = await supabase
         .from("stock_items")
         .select("content")
         .eq("id", ticket.stock_item_id)
         .maybeSingle();
       if (stockData) {
-        const raw = (stockData as any).content;
+        const raw = stockData.content;
         setStockContent(typeof raw === "string" ? raw : JSON.stringify(raw));
       }
     }
@@ -289,12 +307,13 @@ const TicketsTab = ({
       }, (payload) => {
         if (payload.eventType === "INSERT") {
           setMessages((prev) => {
-            const newMsg = payload.new as Message;
-            if (prev.some(m => m.id === newMsg.id)) return prev;
+            const newMsg = parseTicketMessageRealtime(payload.new);
+            if (!newMsg || prev.some((m) => m.id === newMsg.id)) return prev;
             return [...prev, newMsg];
           });
         } else if (payload.eventType === "DELETE") {
-          setMessages((prev) => prev.filter(m => m.id !== (payload.old as any).id));
+          const oldId = parseTicketMessageDeleteId(payload.old);
+          if (oldId) setMessages((prev) => prev.filter((m) => m.id !== oldId));
         }
       })
       .subscribe();
@@ -307,11 +326,12 @@ const TicketsTab = ({
         .eq("ticket_id", selectedTicket.id)
         .order("created_at", { ascending: true });
       if (data && !cancelled) {
-        setMessages(prev => {
-          if (data.length !== prev.length) return data as Message[];
-          const lastNew = data[data.length - 1];
+        setMessages((prev) => {
+          const mapped = mapTicketMessageRows(data);
+          if (mapped.length !== prev.length) return mapped;
+          const lastNew = mapped[mapped.length - 1];
           const lastOld = prev[prev.length - 1];
-          if (lastNew && lastOld && lastNew.id !== lastOld.id) return data as Message[];
+          if (lastNew && lastOld && lastNew.id !== lastOld.id) return mapped;
           return prev;
         });
       }
@@ -381,7 +401,8 @@ const TicketsTab = ({
       if (error) {
         toast({ title: "Erro", description: error.message, variant: "destructive" });
       } else if (insertedMsg) {
-        setMessages(prev => prev.some(m => m.id === insertedMsg.id) ? prev : [...prev, insertedMsg as Message]);
+        const mapped = mapTicketMessageRow(insertedMsg);
+        setMessages((prev) => (prev.some((m) => m.id === mapped.id) ? prev : [...prev, mapped]));
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Erro ao enviar áudio";
@@ -427,7 +448,10 @@ const TicketsTab = ({
       message: fullMessage,
     }).select().single();
     if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
-    else if (insertedMsg) setMessages(prev => prev.some(m => m.id === insertedMsg.id) ? prev : [...prev, insertedMsg as Message]);
+    else if (insertedMsg) {
+      const mapped = mapTicketMessageRow(insertedMsg);
+      setMessages((prev) => (prev.some((m) => m.id === mapped.id) ? prev : [...prev, mapped]));
+    }
     setNewMessage("");
     setSending(false);
   };
@@ -449,7 +473,7 @@ const TicketsTab = ({
   };
 
   const archiveTicket = async (ticketId: string) => {
-    const { error } = await supabase.from("order_tickets").update({ status: "archived" as any, status_label: "Arquivado" }).eq("id", ticketId);
+    const { error } = await supabase.from("order_tickets").update({ status: "archived", status_label: "Arquivado" }).eq("id", ticketId);
     if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } else {
@@ -460,7 +484,7 @@ const TicketsTab = ({
   };
 
   const unarchiveTicket = async (ticketId: string) => {
-    const { error } = await supabase.from("order_tickets").update({ status: "open" as any, status_label: "Aberto" }).eq("id", ticketId);
+    const { error } = await supabase.from("order_tickets").update({ status: "open", status_label: "Aberto" }).eq("id", ticketId);
     if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } else {
@@ -993,7 +1017,7 @@ const TicketsTab = ({
                 p === "..." ? (
                   <span key={`dots-${i}`} className="px-1.5 text-xs text-muted-foreground/40">…</span>
                 ) : (
-                  <button key={p} onClick={() => setCurrentPage(p as number)}
+                  <button key={p} onClick={() => { if (typeof p === "number") setCurrentPage(p); }}
                     className={`rounded-lg px-2.5 py-1 text-xs font-bold ${p === currentPage ? "bg-success text-success-foreground" : "border border-border text-muted-foreground hover:text-foreground"}`}>{p}</button>
                 )
               )}

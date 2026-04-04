@@ -42,6 +42,7 @@ const PaymentsListTab = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
   const [verifying, setVerifying] = useState<Record<string, boolean>>({});
+  const [selectedPayment, setSelectedPayment] = useState<PaymentRow | null>(null);
 
   const handleVerify = async (p: PaymentRow) => {
     if (p.status !== "ACTIVE" && p.status !== "PENDING") {
@@ -81,6 +82,11 @@ const PaymentsListTab = () => {
       setPayments(data || []);
     } catch (err) {
       console.error("fetchPayments error:", err);
+      toast({
+        title: "Erro ao carregar pagamentos",
+        description: err instanceof Error ? err.message : "Tente novamente.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -107,8 +113,6 @@ const PaymentsListTab = () => {
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
   const paginated = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
-
-  const [selectedPayment, setSelectedPayment] = useState<PaymentRow | null>(null);
 
   return (
     <div className="space-y-5">

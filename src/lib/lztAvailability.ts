@@ -1,5 +1,7 @@
+import type { QueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import { supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
+import { lztAccountDetailQueryKey } from "@/lib/lztAccountDetailQuery";
 
 type LztDetailErrorBody = {
   error?: string;
@@ -34,12 +36,72 @@ function isSoldMessage(body: LztDetailErrorBody | null): boolean {
   );
 }
 
+type LztDetailItem = {
+  item_id?: string | number;
+  item_state?: string;
+  buyer?: unknown;
+  canBuyItem?: boolean;
+};
+
+/** Mesma regra da resposta `detail` após JSON ok (sem toast). */
+export function isLztDetailItemPurchasable(item: LztDetailItem | null | undefined): boolean {
+  if (!item) return false;
+  if (item.item_state && item.item_state !== "active") return false;
+  if (item.buyer) return false;
+  if (item.canBuyItem === false) return false;
+  return true;
+}
+
+function toastItemNotPurchasable(item: LztDetailItem) {
+  if (item.buyer) {
+    toast({
+      title: "Conta já vendida",
+      description: "Esta conta foi vendida recentemente. Escolha outra.",
+      variant: "destructive",
+    });
+    return;
+  }
+  if (item.canBuyItem === false) {
+    toast({
+      title: "Conta indisponível",
+      description: "Esta conta não pode ser comprada no momento.",
+      variant: "destructive",
+    });
+    return;
+  }
+  toast({
+    title: "Conta indisponível",
+    description: "Esta conta não está mais disponível para compra.",
+    variant: "destructive",
+  });
+}
+
 /**
  * Checks if an LZT account is still available for purchase.
  * Returns true if available, false if sold/unavailable.
  */
-export const checkLztAvailability = async (itemId: string, gameType: string): Promise<boolean> => {
+export const checkLztAvailability = async (
+  itemId: string,
+  gameType: string,
+  options?: {
+    /** Se a query de detalhe ainda está fresca (`staleTime`), reaproveita cache e evita um segundo GET. */
+    queryClient?: QueryClient;
+  },
+): Promise<boolean> => {
   const normalizedId = String(itemId);
+  const qc = options?.queryClient;
+  if (qc) {
+    const key = lztAccountDetailQueryKey(gameType, normalizedId);
+    const state = qc.getQueryState(key);
+    const data = qc.getQueryData<{ item?: LztDetailItem }>(key);
+    const cached = data?.item;
+    if (state && data && cached && String(cached.item_id) === normalizedId && !state.isStale) {
+      if (isLztDetailItemPurchasable(cached)) return true;
+      toastItemNotPurchasable(cached);
+      return false;
+    }
+  }
+
   try {
     const res = await fetch(
       `${supabaseUrl}/functions/v1/lzt-market?action=detail&item_id=${encodeURIComponent(normalizedId)}&game_type=${encodeURIComponent(gameType)}`,
@@ -67,25 +129,14 @@ export const checkLztAvailability = async (itemId: string, gameType: string): Pr
       return false;
     }
     const data = await res.json();
-    const item = data?.item;
+    const item = data?.item as LztDetailItem | undefined;
     if (!item) {
       toast({ title: "Conta indisponível", description: "Esta conta não está mais disponível para compra.", variant: "destructive" });
       return false;
     }
-    // Check item_state (closed = sold, deleted = removed)
-    if (item.item_state && item.item_state !== "active") {
-      toast({ title: "Conta indisponível", description: "Esta conta não está mais disponível para compra.", variant: "destructive" });
-      return false;
-    }
-    if (item.buyer) {
-      toast({ title: "Conta já vendida", description: "Esta conta foi vendida recentemente. Escolha outra.", variant: "destructive" });
-      return false;
-    }
-    if (item.canBuyItem === false) {
-      toast({ title: "Conta indisponível", description: "Esta conta não pode ser comprada no momento.", variant: "destructive" });
-      return false;
-    }
-    return true;
+    if (isLztDetailItemPurchasable(item)) return true;
+    toastItemNotPurchasable(item);
+    return false;
   } catch {
     toast({ title: "Erro de conexão", description: "Não foi possível verificar a disponibilidade.", variant: "destructive" });
     return false;

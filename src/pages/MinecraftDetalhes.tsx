@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { throwApiError } from "@/lib/apiErrors";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Header from "@/components/Header";
 import { ArrowLeft, Loader2, ChevronRight, CheckCircle2, Shield, ShoppingCart, Zap } from "lucide-react";
 import { motion } from "framer-motion";
@@ -11,6 +11,9 @@ import { useLztMarkup } from "@/hooks/useLztMarkup";
 import { trackViewContent, trackInitiateCheckout } from "@/lib/metaPixel";
 import { checkLztAvailability } from "@/lib/lztAvailability";
 import { supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
+import { getLztDetailDisplayTitle } from "@/lib/lztDisplayTitles";
+import { lztAccountDetailQueryKey } from "@/lib/lztAccountDetailQuery";
+import type { LztMinecraftCapeEntry, LztMinecraftItemExtras } from "@/types/lztGameDetailExtras";
 
 const getProxiedImageUrl = (url: string) => {
   if (!url) return "";
@@ -57,9 +60,10 @@ const MinecraftDetalhes = () => {
   const navigate = useNavigate();
   const { getPrice, getDisplayPrice } = useLztMarkup();
   const { addItem } = useCart();
+  const queryClient = useQueryClient();
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["lzt-account-detail", "minecraft", id],
+    queryKey: lztAccountDetailQueryKey("minecraft", id ?? ""),
     queryFn: () => fetchAccountDetail(id!),
     enabled: !!id,
     staleTime: 1000 * 30, // 30 seconds
@@ -67,7 +71,7 @@ const MinecraftDetalhes = () => {
   });
 
   const item = data?.item;
-  const raw = item as any;
+  const raw = item as LztMinecraftItemExtras | undefined;
   const nickname = raw?.minecraft_nickname;
 
   const { data: capesData } = useQuery({
@@ -85,7 +89,7 @@ const MinecraftDetalhes = () => {
   const hypixelAchievement = raw?.minecraft_hypixel_achievement ?? 0;
   const capes = raw?.minecraft_capes_count ?? 0;
   const capesList: string[] = Array.isArray(raw?.minecraft_capes)
-    ? raw.minecraft_capes.map((c: any) => typeof c === "string" ? c : (c?.name || c?.rendered || "Cape"))
+    ? raw.minecraft_capes.map((c: LztMinecraftCapeEntry) => typeof c === "string" ? c : (c?.name || c?.rendered || "Cape"))
     : [];
   const banned = (raw?.minecraft_hypixel_ban ?? 0) > 0;
   const banReason = raw?.minecraft_hypixel_ban_reason;
@@ -97,16 +101,16 @@ const MinecraftDetalhes = () => {
   const bodyUrl = nickname ? `https://mineskin.eu/body/${encodeURIComponent(nickname)}/200.png` : null;
   const headUrl = nickname ? `https://mineskin.eu/helm/${encodeURIComponent(nickname)}/100.png` : null;
 
-  const cleanedTitle = useMemo(() => {
-    let t = item?.title || "";
-    // Remove cyrillic
-    t = t.replace(/[А-Яа-я]/g, '').trim();
-    if (!t || t.toLowerCase() === "kuki" || t.length < 3) {
-      const edition = hasJava && hasBedrock ? "Java + Bedrock" : hasJava ? "Java Edition" : hasBedrock ? "Bedrock Edition" : "Full Access";
-      return `Conta Minecraft [${nickname || "Standard"}] [${edition}]`;
-    }
-    return t;
-  }, [item?.title, nickname, hasJava, hasBedrock]);
+  const cleanedTitle = useMemo(
+    () =>
+      getLztDetailDisplayTitle(item?.title, {
+        game: "minecraft",
+        nickname,
+        hasJava,
+        hasBedrock,
+      }),
+    [item?.title, nickname, hasJava, hasBedrock],
+  );
 
   // ViewContent tracking
   const viewTracked = useRef(false);
@@ -130,10 +134,9 @@ const MinecraftDetalhes = () => {
   const handleBuyNow = async () => {
     if (!item || checkingAvailability) return;
     setCheckingAvailability(true);
-    const available = await checkLztAvailability(String(item.item_id), "minecraft");
+    const available = await checkLztAvailability(String(item.item_id), "minecraft", { queryClient });
     setCheckingAvailability(false);
     if (!available) return;
-    const title = `Conta Minecraft${nickname ? ` · ${nickname}` : ""}${hasJava ? " · Java" : ""}${hasBedrock ? " · Bedrock" : ""}`;
     const priceBRL = getPrice(item, "minecraft");
 
     trackInitiateCheckout({
@@ -410,8 +413,10 @@ const MinecraftDetalhes = () => {
                   </div>
 
                   <button
+                    type="button"
                     onClick={handleBuyNow}
                     disabled={checkingAvailability}
+                    aria-busy={checkingAvailability}
                     className="group relative flex w-full items-center justify-center gap-2 border-2 px-5 py-3 text-xs font-bold uppercase tracking-[0.25em] rounded-lg transition-all hover:shadow-lg disabled:opacity-60"
                     style={{
                       borderColor: "rgba(255,255,255,0.2)",
@@ -482,8 +487,10 @@ const MinecraftDetalhes = () => {
                 </span>
               </div>
               <button
+                type="button"
                 onClick={handleBuyNow}
                 disabled={checkingAvailability}
+                aria-busy={checkingAvailability}
                 className="flex flex-1 items-center justify-center gap-2 rounded-lg py-3 text-sm font-bold uppercase tracking-wider text-white transition-all active:scale-[0.98] disabled:opacity-60"
                 style={{ background: MC_GREEN, fontFamily: "'Valorant', sans-serif" }}
               >

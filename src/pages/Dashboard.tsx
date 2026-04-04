@@ -4,6 +4,8 @@ import Header from "@/components/Header";
 import { useAuth } from "@/hooks/useAuth";
 import { useReseller } from "@/hooks/useReseller";
 import { supabase } from "@/integrations/supabase/client";
+import type { Tables } from "@/integrations/supabase/types";
+import { asOrderTicketMetadata } from "@/types/orderTicketMetadata";
 import { motion } from "framer-motion";
 import {
   User, Shield, Lock, Package, BarChart3, Settings,
@@ -23,7 +25,13 @@ const fadeUp = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
 };
 
-type Tab = "overview" | "purchases" | "security" | "settings";
+const DASHBOARD_TABS = ["overview", "purchases", "security", "settings"] as const;
+type Tab = (typeof DASHBOARD_TABS)[number];
+
+function tabFromSearchParam(raw: string | null): Tab {
+  if (raw && (DASHBOARD_TABS as readonly string[]).includes(raw)) return raw as Tab;
+  return "overview";
+}
 
 const Dashboard = () => {
   const { user, profile, loading: authLoading, isAdmin } = useAuth();
@@ -31,7 +39,7 @@ const Dashboard = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const initialTab = (searchParams.get("tab") as Tab) || "overview";
+  const initialTab = tabFromSearchParam(searchParams.get("tab"));
   const [activeTab, setActiveTab] = useState<Tab>(initialTab);
 
   // Security state
@@ -44,35 +52,17 @@ const Dashboard = () => {
   const [showNewPass, setShowNewPass] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
 
-  // Tickets (pedidos) state
-  interface Ticket {
-    id: string;
-    product_id: string;
-    product_plan_id: string;
-    status: string;
-    status_label: string;
-    created_at: string;
+  type OrderTicketRow = Tables<"order_tickets">;
+  type DashboardTicket = OrderTicketRow & {
     product_name?: string;
     plan_name?: string;
     image_url?: string | null;
     plan_price?: number;
-    metadata?: any;
-  }
-  const [tickets, setTickets] = useState<Ticket[]>([]);
+  };
+  const [tickets, setTickets] = useState<DashboardTicket[]>([]);
   const [loadingTickets, setLoadingTickets] = useState(false);
 
-  // Payments/invoices state
-  interface Payment {
-    id: string;
-    amount: number;
-    status: string;
-    created_at: string;
-    paid_at: string | null;
-    charge_id: string;
-    discount_amount: number;
-    cart_snapshot: any;
-  }
-  const [payments, setPayments] = useState<Payment[]>([]);
+  const [payments, setPayments] = useState<Tables<"payments">[]>([]);
   const [loadingPayments, setLoadingPayments] = useState(false);
 
   const statusColors: Record<string, string> = {
@@ -106,7 +96,7 @@ const Dashboard = () => {
         .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
-      if (data) setPayments(data as Payment[]);
+      if (data) setPayments(data);
       setLoadingPayments(false);
     };
     fetchPayments();
@@ -128,45 +118,59 @@ const Dashboard = () => {
         .order("created_at", { ascending: false });
 
       if (data) {
-        const regularTickets = data.filter((t: any) => !t.metadata?.type || t.metadata?.type === "robot-project");
-        const productIds = [...new Set(regularTickets.map((t: any) => t.product_id))];
-        const planIds = [...new Set(regularTickets.map((t: any) => t.product_plan_id))];
+        const rows: OrderTicketRow[] = data;
+        const regularTickets = rows.filter((t) => {
+          const m = asOrderTicketMetadata(t.metadata);
+          return !m.type || m.type === "robot-project";
+        });
+        const productIds = [...new Set(regularTickets.map((t) => t.product_id))];
+        const planIds = [...new Set(regularTickets.map((t) => t.product_plan_id))];
 
         const [productsRes, plansRes] = await Promise.all([
-          productIds.length > 0 ? supabase.from("products").select("id, name, image_url").in("id", productIds) : { data: [] },
-          planIds.length > 0 ? supabase.from("product_plans").select("id, name, price").in("id", planIds) : { data: [] },
+          productIds.length > 0 ? supabase.from("products").select("id, name, image_url").in("id", productIds) : { data: [] as const },
+          planIds.length > 0 ? supabase.from("product_plans").select("id, name, price").in("id", planIds) : { data: [] as const },
         ]);
 
         const productMap: Record<string, { name: string; image_url: string | null }> = {};
         const planMap: Record<string, { name: string; price: number }> = {};
-        productsRes.data?.forEach((p: any) => { productMap[p.id] = { name: p.name, image_url: p.image_url }; });
-        plansRes.data?.forEach((p: any) => { planMap[p.id] = { name: p.name, price: p.price }; });
+        productsRes.data?.forEach((p) => {
+          productMap[p.id] = { name: p.name, image_url: p.image_url };
+        });
+        plansRes.data?.forEach((p) => {
+          planMap[p.id] = { name: p.name, price: Number(p.price ?? 0) };
+        });
 
-        setTickets(data.map((t: any) => {
-          const isLzt = t.metadata?.type === "lzt-account";
-          const isRobot = t.metadata?.type === "robot-project";
-          if (isLzt) {
-            const lztGameLabels: Record<string, string> = {
-              valorant: "Conta Valorant", lol: "Conta LoL", fortnite: "Conta Fortnite", minecraft: "Conta Minecraft",
-            };
-            const lztGameLabel = lztGameLabels[t.metadata?.game] || "Conta LZT";
+        setTickets(
+          rows.map((t): DashboardTicket => {
+            const meta = asOrderTicketMetadata(t.metadata);
+            const isLzt = meta.type === "lzt-account";
+            const isRobot = meta.type === "robot-project";
+            if (isLzt) {
+              const lztGameLabels: Record<string, string> = {
+                valorant: "Conta Valorant",
+                lol: "Conta LoL",
+                fortnite: "Conta Fortnite",
+                minecraft: "Conta Minecraft",
+              };
+              const lztGameLabel = (meta.game && lztGameLabels[meta.game]) || "Conta LZT";
+              return {
+                ...t,
+                product_name: meta.account_name || meta.title || lztGameLabel,
+                plan_name: lztGameLabel,
+                image_url: meta.account_image ?? null,
+                plan_price: Number(meta.price_paid || meta.sell_price || 0),
+              };
+            }
+            const duration = isRobot && meta.duration ? ` (${meta.duration} dias)` : "";
             return {
               ...t,
-              product_name: t.metadata.account_name || t.metadata.title || lztGameLabel,
-              plan_name: lztGameLabel,
-              image_url: t.metadata.account_image || null,
-              plan_price: t.metadata.price_paid || t.metadata.sell_price || 0,
+              product_name: productMap[t.product_id]?.name || (isRobot ? meta.game_name || "Produto Robot" : "Produto"),
+              plan_name: (planMap[t.product_plan_id]?.name || "Plano") + duration,
+              image_url: productMap[t.product_id]?.image_url ?? null,
+              plan_price: planMap[t.product_plan_id]?.price ?? 0,
             };
-          }
-          const duration = isRobot && t.metadata?.duration ? ` (${t.metadata.duration} dias)` : "";
-          return {
-            ...t,
-            product_name: productMap[t.product_id]?.name || (isRobot ? t.metadata?.game_name || "Produto Robot" : "Produto"),
-            plan_name: (planMap[t.product_plan_id]?.name || "Plano") + duration,
-            image_url: productMap[t.product_id]?.image_url || null,
-            plan_price: planMap[t.product_plan_id]?.price || 0,
-          };
-        }));
+          }),
+        );
       }
       setLoadingTickets(false);
     };

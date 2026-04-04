@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchAllRows } from "@/lib/supabaseAllRows";
 import { useAdminProductsWithPlans } from "@/hooks/useAdminData";
+import type { AdminProductWithPlansRow } from "@/types/supabaseQueryResults";
 import { toast } from "@/hooks/use-toast";
 import { Package, ChevronDown, ChevronRight, Plus, Trash2, Loader2, Sparkles, AlertTriangle } from "lucide-react";
 
@@ -31,7 +32,7 @@ interface StockItem {
 const ITEMS_PER_PAGE = 5;
 
 const StockTab = () => {
-  const { data: cachedProducts } = useAdminProductsWithPlans();
+  const { data: cachedProducts, isError, isLoading, error: productsQueryError } = useAdminProductsWithPlans();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedProduct, setExpandedProduct] = useState<string | null>(null);
@@ -47,7 +48,10 @@ const StockTab = () => {
 
   const fetchStockCounts = async (prods: Product[]) => {
     const planIds = prods.flatMap((p) => p.product_plans.map((pl) => pl.id));
-    if (planIds.length === 0) return;
+    if (planIds.length === 0) {
+      setStockCounts({});
+      return;
+    }
 
     // Use head:true count queries per plan to avoid 1000-row cap
     const counts: Record<string, { total: number; available: number }> = {};
@@ -69,17 +73,34 @@ const StockTab = () => {
   };
 
   useEffect(() => {
-    if (cachedProducts) {
-      const mapped = cachedProducts.map((p: any) => ({
-        id: p.id,
-        name: p.name,
-        image_url: p.image_url,
-        product_plans: p.product_plans || [],
-      }));
-      setProducts(mapped);
-      fetchStockCounts(mapped).then(() => setLoading(false));
+    if (isError) {
+      setProducts([]);
+      setStockCounts({});
+      setLoading(false);
+      toast({
+        title: "Erro ao carregar produtos",
+        description:
+          productsQueryError instanceof Error
+            ? productsQueryError.message
+            : "Tente atualizar ou verifique permissões.",
+        variant: "destructive",
+      });
+      return;
     }
-  }, [cachedProducts]);
+    if (isLoading) return;
+    if (!cachedProducts) {
+      setLoading(false);
+      return;
+    }
+    const mapped = cachedProducts.map((p: AdminProductWithPlansRow) => ({
+      id: p.id,
+      name: p.name,
+      image_url: p.image_url,
+      product_plans: p.product_plans ?? [],
+    }));
+    setProducts(mapped);
+    void fetchStockCounts(mapped).then(() => setLoading(false));
+  }, [cachedProducts, isError, isLoading, productsQueryError]);
 
   const fetchStockForPlan = async (planId: string) => {
     setLoadingStock(planId);

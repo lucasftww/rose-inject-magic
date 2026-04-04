@@ -1,17 +1,9 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminProductsStatus, useInvalidateAdminCache } from "@/hooks/useAdminData";
+import type { ProductStatusListItem } from "@/types/supabaseQueryResults";
 import { Loader2, ShieldCheck, ShieldAlert, RefreshCw, Clock, Save } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-
-interface ProductRow {
-  id: string;
-  name: string;
-  image_url: string | null;
-  status: string;
-  status_label: string;
-  game_name: string;
-}
 
 const statusOptions = [
   { value: "undetected", label: "Indetectável", color: "text-success", icon: ShieldCheck },
@@ -23,7 +15,7 @@ const statusOptions = [
 const StatusTab = () => {
   const { data: fetchedProducts, isLoading: queryLoading, refetch } = useAdminProductsStatus();
   const invalidateAdmin = useInvalidateAdminCache();
-  const [products, setProducts] = useState<ProductRow[]>([]);
+  const [products, setProducts] = useState<ProductStatusListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
   const [edits, setEdits] = useState<Record<string, { status: string; status_label: string }>>({});
@@ -107,7 +99,7 @@ const StatusTab = () => {
 
   if (loading) return <div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-success" /></div>;
 
-  const grouped = products.reduce<Record<string, ProductRow[]>>((acc, p) => {
+  const grouped = products.reduce<Record<string, ProductStatusListItem[]>>((acc, p) => {
     if (!acc[p.game_name]) acc[p.game_name] = [];
     acc[p.game_name].push(p);
     return acc;
@@ -144,8 +136,8 @@ const StatusTab = () => {
               <div className="space-y-2">
                 {prods.map((product) => {
                   const edit = edits[product.id];
-                  const currentStatus = edit?.status || product.status;
-                  const currentLabel = edit?.status_label || product.status_label;
+                  const currentStatus = edit?.status || product.status || "undetected";
+                  const currentLabel = edit?.status_label || product.status_label || "";
                   const opt = statusOptions.find(o => o.value === currentStatus);
                   const Icon = opt?.icon || ShieldCheck;
                   const hasChange = !!edit;

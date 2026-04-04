@@ -115,7 +115,7 @@ const Avaliacoes = () => {
     const fetchReviews = async () => {
       // Use secure view (no user_id exposed)
       const { data } = await supabase
-        .from("public_product_reviews" as any)
+        .from("public_product_reviews")
         .select("id, rating, comment, created_at, product_id, username")
         .order("created_at", { ascending: false });
 

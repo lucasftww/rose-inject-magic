@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import { useAuth } from "@/hooks/useAuth";
@@ -10,6 +10,7 @@ import logoRoyal from "@/assets/logo-royal.png";
 import { motion } from "framer-motion";
 import { trackPurchase, getUserData, setAdvancedMatching } from "@/lib/metaPixel";
 import { safeJsonFetch, ApiError } from "@/lib/apiUtils";
+import { buildCartSnapshotFromItems } from "@/lib/buildCartSnapshot";
 import type { PixPaymentCreateResult, PixPaymentStatusResult } from "@/lib/edgeFunctionTypes";
 
 type PaymentMethod = "pix" | "card" | "crypto" | null;
@@ -138,40 +139,18 @@ const Checkout = () => {
 
   useEffect(() => {
     supabase.from("payment_settings").select("method, enabled").then(({ data }) => {
-      if (data) {
-        const map: Record<string, boolean> = {};
-        (data as Array<{ method: string; enabled: boolean }>).forEach((r) => {
-          map[r.method] = r.enabled;
-        });
-        setEnabledMethods(map);
+      if (!data) return;
+      const map: Record<string, boolean> = {};
+      for (const r of data) {
+        if (typeof r.method === "string") {
+          map[r.method] = r.enabled ?? false;
+        }
       }
+      setEnabledMethods(map);
     });
   }, []);
 
-  const buildCartSnapshot = () =>
-    items.map((i) => {
-      const base: Record<string, unknown> = {
-        productId: i.productId,
-        productName: i.productName,
-        productImage: i.productImage,
-        planId: i.planId,
-        planName: i.planName,
-        quantity: i.quantity,
-      };
-      if (i.type === "lzt-account") {
-        base.type = i.type;
-        base.lztItemId = i.lztItemId;
-        base.lztGame = i.lztGame || "";
-        // Send the displayed price so server can lock it (server still validates profitability)
-        base.price = i.price;
-        base.lztPrice = i.lztPrice;
-        base.lztCurrency = i.lztCurrency;
-        if (i.skinsCount != null) base.skinsCount = i.skinsCount;
-      } else {
-        base.price = i.price;
-      }
-      return base;
-    });
+  const buildCartSnapshot = useCallback(() => buildCartSnapshotFromItems(items), [items]);
 
   const getAuthHeaders = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -254,6 +233,7 @@ const Checkout = () => {
     formData.document,
     navigate,
     clearCart,
+    buildCartSnapshot,
   ]);
 
   // PIX charge
@@ -416,6 +396,8 @@ const Checkout = () => {
   const cartSnapshotRef = useRef(cartSnapshot);
   const finalPriceRef = useRef(finalPrice);
   const paymentIdRef = useRef(paymentId);
+  const statusPollFailCountRef = useRef(0);
+  const statusPollNotifiedRef = useRef(false);
   useEffect(() => { cartSnapshotRef.current = cartSnapshot; }, [cartSnapshot]);
   useEffect(() => { finalPriceRef.current = finalPrice; }, [finalPrice]);
   useEffect(() => { paymentIdRef.current = paymentId; }, [paymentId]);
@@ -423,6 +405,8 @@ const Checkout = () => {
   // Poll status (works for PIX, card, and crypto)
   useEffect(() => {
     if (!paymentId || paymentStatus !== "ACTIVE") return;
+    statusPollFailCountRef.current = 0;
+    statusPollNotifiedRef.current = false;
     const statusAction = paymentMethod === "card" ? "card-status" : paymentMethod === "crypto" ? "crypto-status" : "status";
     const checkStatus = async () => {
       setChecking(true);
@@ -436,6 +420,7 @@ const Checkout = () => {
             },
           }
         );
+        statusPollFailCountRef.current = 0;
         if (data.status && data.status !== "ACTIVE") {
           setPaymentStatus(data.status);
           // Stop polling on any terminal status (COMPLETED, EXPIRED, CANCELLED, etc.)
@@ -453,7 +438,18 @@ const Checkout = () => {
             }
           }
         }
-      } catch { /* silent */ }
+      } catch (e: unknown) {
+        statusPollFailCountRef.current += 1;
+        console.error("Checkout payment status poll failed:", e);
+        if (statusPollFailCountRef.current >= 5 && !statusPollNotifiedRef.current) {
+          statusPollNotifiedRef.current = true;
+          toast({
+            title: "Não foi possível verificar o pagamento",
+            description: "Verifique sua conexão. O status será atualizado quando a rede voltar.",
+            variant: "destructive",
+          });
+        }
+      }
       setChecking(false);
     };
     intervalRef.current = setInterval(checkStatus, 3000);
@@ -825,11 +821,15 @@ const Checkout = () => {
         {/* Loading state — animated progress steps */}
         {loading && (
           <motion.div
+            role="status"
+            aria-live="polite"
+            aria-busy="true"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
             className="flex flex-col items-center justify-center py-16"
           >
+            <span className="sr-only">Processando pagamento, aguarde.</span>
             {/* Pulsing ring */}
             <div className="relative mb-10">
               <motion.div

@@ -1,37 +1,35 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database, Tables } from "@/integrations/supabase/types";
 import { fetchAllRows } from "@/lib/supabaseAllRows";
+import { paymentCartSnapshot } from "@/types/paymentCart";
+import { asOrderTicketMetadata } from "@/types/orderTicketMetadata";
 import { useAdminUsers } from "@/hooks/useAdminUsers";
 import {
   Loader2, DollarSign, ShoppingCart, Users,
   Package, Receipt, RefreshCw, TrendingUp, Clock,
   AlertTriangle
 } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
-interface OrderTicket {
-  id: string;
-  product_id: string;
-  product_plan_id: string;
-  status: string;
-  status_label: string;
-  created_at: string;
-  user_id: string;
+type OrderTicketRow = Database["public"]["Tables"]["order_tickets"]["Row"];
+
+interface OrderTicket extends OrderTicketRow {
   product_name?: string;
   product_image?: string | null;
   plan_name?: string;
   username?: string;
 }
 
-interface Payment {
-  id: string;
-  amount: number;
-  status: string;
-  created_at: string;
-  paid_at: string | null;
-  user_id: string;
-  cart_snapshot: any;
-  discount_amount: number;
-}
+type PaymentRow = Database["public"]["Tables"]["payments"]["Row"];
+
+type LztSalesCostRow = Pick<Tables<"lzt_sales">, "buy_price" | "created_at">;
+
+/** Linhas agregadas (fetchAllRows) — sem exigir todos os campos da tabela */
+type PaymentAggregate = Pick<
+  PaymentRow,
+  "amount" | "discount_amount" | "user_id" | "cart_snapshot" | "status" | "created_at" | "paid_at"
+>;
 
 const statusColors: Record<string, string> = {
   open: "bg-warning/15 text-warning border-warning/20",
@@ -71,15 +69,23 @@ const fmt = (v: number) => v.toLocaleString("pt-BR", { minimumFractionDigits: 2,
 
 type Period = "24h" | "7d" | "30d" | "all";
 
-const filterByPeriod = <T extends { created_at?: string; paid_at?: string | null }>(
+const PERIOD_OPTIONS = [
+  ["24h", "24h"],
+  ["7d", "7d"],
+  ["30d", "30d"],
+  ["all", "Tudo"],
+] as const satisfies ReadonlyArray<readonly [Period, string]>;
+
+const filterByPeriod = <T extends { created_at?: string | null; paid_at?: string | null }>(
   items: T[], period: Period, dateField: "created_at" | "paid_at" = "paid_at"
 ): T[] => {
   if (period === "all") return items;
   const ms = period === "24h" ? 86400000 : period === "7d" ? 7 * 86400000 : 30 * 86400000;
   const cutoff = Date.now() - ms;
   return items.filter(i => {
-    const d = dateField === "paid_at" ? ((i as any).paid_at || (i as any).created_at) : (i as any).created_at;
-    return new Date(d).getTime() >= cutoff;
+    const d = dateField === "paid_at" ? (i.paid_at ?? i.created_at) : i.created_at;
+    const t = d ? new Date(d).getTime() : NaN;
+    return Number.isFinite(t) && t >= cutoff;
   });
 };
 
@@ -90,9 +96,9 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
   const [period, setPeriod] = useState<Period>("24h");
   const [openTickets, setOpenTickets] = useState(0);
   const [allOrders, setAllOrders] = useState<OrderTicket[]>([]);
-  const [allPayments, setAllPayments] = useState<Payment[]>([]);
+  const [allPayments, setAllPayments] = useState<PaymentAggregate[]>([]);
   const [recentOrders, setRecentOrders] = useState<OrderTicket[]>([]);
-  const [recentPayments, setRecentPayments] = useState<Payment[]>([]);
+  const [recentPayments, setRecentPayments] = useState<PaymentRow[]>([]);
 
   // Granular cost data for period filtering
   const [lztSales, setLztSales] = useState<{ buy_price: number; created_at: string }[]>([]);
@@ -101,6 +107,7 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
   useEffect(() => {
     const fetchAll = async () => {
       setLoading(true);
+      setRobotCosts([]);
       try {
 
       let usdToBrl = 6.10;
@@ -120,10 +127,10 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
         }),
         supabase.from("products").select("id, name, robot_game_id, robot_markup_percent").not("robot_game_id", "is", null),
         supabase.from("order_tickets").select("id", { count: "exact", head: true }).in("status", ["open", "waiting", "waiting_staff"]),
-        fetchAllRows("order_tickets", {
+        fetchAllRows<OrderTicketRow>("order_tickets", {
           select: "id, product_id, product_plan_id, user_id, metadata, status, created_at, status_label",
         }),
-        fetchAllRows("lzt_sales", {
+        fetchAllRows<LztSalesCostRow>("lzt_sales", {
           select: "buy_price, created_at",
         }),
       ]);
@@ -131,24 +138,43 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
       setOpenTickets(openTicketsRes.count ?? 0);
       setAllPayments(allPaymentsRes || []);
       setAllOrders(allOrdersRes || []);
-      setLztSales((lztSalesRes || []).map((s: any) => ({ buy_price: Number(s.buy_price) || 0, created_at: s.created_at })));
+      setLztSales(
+        (lztSalesRes || []).map((s) => ({
+          buy_price: Number(s.buy_price) || 0,
+          created_at: String(s.created_at ?? ""),
+        })),
+      );
+
+      if (robotProductsRes.error) {
+        console.warn("OverviewTab: produtos Robot", robotProductsRes.error.message);
+        toast({
+          title: "Visão geral: métricas Robot incompletas",
+          description: robotProductsRes.error.message,
+          variant: "destructive",
+        });
+      }
 
       // Robot costs with timestamps
       const robotProducts = robotProductsRes.data || [];
       if (robotProducts.length > 0) {
-        const productIds = robotProducts.map((p: any) => p.id);
-        const productMap = Object.fromEntries(robotProducts.map((p: any) => [p.id, p]));
+        const productIds = robotProducts.map((p) => p.id);
+        const productMap = Object.fromEntries(robotProducts.map((p) => [p.id, p]));
 
         const plansRes = await supabase.from("product_plans").select("id, name, price").in("product_id", productIds);
 
-        const robotTickets = (allOrdersRes || []).filter((t: any) => t.status === "delivered" && productIds.includes(t.product_id) && (t.metadata as any)?.type !== "lzt-account");
-        const planMap = Object.fromEntries((plansRes.data || []).map((p: any) => [p.id, p]));
+        const robotTickets = (allOrdersRes || []).filter(
+          (t) =>
+            t.status === "delivered" &&
+            productIds.includes(t.product_id) &&
+            asOrderTicketMetadata(t.metadata).type !== "lzt-account",
+        );
+        const planMap = Object.fromEntries((plansRes.data || []).map((p) => [p.id, p]));
 
         const paidPriceMap = new Map<string, number>();
         for (const pay of (allPaymentsRes || [])) {
-          const snapshot = pay.cart_snapshot as any[];
-          if (!Array.isArray(snapshot)) continue;
-          const cartTotal = snapshot.reduce((sum: number, item: any) => sum + (Number(item.price) || 0), 0);
+          const snapshot = paymentCartSnapshot(pay.cart_snapshot);
+          if (snapshot.length === 0) continue;
+          const cartTotal = snapshot.reduce((sum, item) => sum + (Number(item.price) || 0), 0);
           const actualPaid = Number(pay.amount) / 100;
           for (const item of snapshot) {
             const key = `${pay.user_id}|${item.productId}|${item.planId}`;
@@ -160,10 +186,10 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
         }
 
         const costs: { cost: number; created_at: string }[] = [];
-        robotTickets.forEach((t: any) => {
+        robotTickets.forEach((t) => {
           const product = productMap[t.product_id];
           const plan = planMap[t.product_plan_id];
-          const meta = (t.metadata || {}) as Record<string, any>;
+          const meta = asOrderTicketMetadata(t.metadata);
           const revenue = paidPriceMap.get(`${t.user_id}|${t.product_id}|${t.product_plan_id}`) ?? 0;
           let cost = 0;
           if (meta.amount_spent && Number(meta.amount_spent) > 0) {
@@ -178,33 +204,36 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
       }
 
       if (recentOrdersRes.data) {
-        const productIds = [...new Set((recentOrdersRes.data as any[]).map((t: any) => t.product_id))];
-        const planIds = [...new Set((recentOrdersRes.data as any[]).map((t: any) => t.product_plan_id))];
+        const rows: OrderTicketRow[] = recentOrdersRes.data;
+        const productIds = [...new Set(rows.map((t) => t.product_id))];
+        const planIds = [...new Set(rows.map((t) => t.product_plan_id))];
         const [prodsRes, plansRes] = await Promise.all([
           productIds.length > 0 ? supabase.from("products").select("id, name, image_url").in("id", productIds) : { data: [] },
           planIds.length > 0 ? supabase.from("product_plans").select("id, name").in("id", planIds) : { data: [] },
         ]);
         const prodMap: Record<string, { name: string; image_url: string | null }> = {};
         const planMap: Record<string, string> = {};
-        prodsRes.data?.forEach((p: any) => { prodMap[p.id] = { name: p.name, image_url: p.image_url }; });
-        plansRes.data?.forEach((p: any) => { planMap[p.id] = p.name; });
+        prodsRes.data?.forEach((p) => { prodMap[p.id] = { name: p.name, image_url: p.image_url }; });
+        plansRes.data?.forEach((p) => { planMap[p.id] = p.name; });
 
-        setRecentOrders((recentOrdersRes.data as any[]).map((t: any) => {
-          const meta = t.metadata as any;
-          const isLzt = meta?.type === "lzt-account";
-          const prod = prodMap[t.product_id];
-          return {
-            ...t,
-            product_name: isLzt ? (meta?.title || meta?.account_name || "Conta LZT") : (prod?.name || "Produto"),
-            product_image: isLzt ? null : (prod?.image_url || null),
-            plan_name: isLzt ? "Conta LZT" : (planMap[t.product_plan_id] || "Plano"),
-            username: "...",
-          };
-        }));
+        setRecentOrders(
+          rows.map((t) => {
+            const meta = asOrderTicketMetadata(t.metadata);
+            const isLzt = meta.type === "lzt-account";
+            const prod = prodMap[t.product_id];
+            return {
+              ...t,
+              product_name: isLzt ? (meta.title || meta.account_name || "Conta LZT") : (prod?.name || "Produto"),
+              product_image: isLzt ? null : (prod?.image_url || null),
+              plan_name: isLzt ? "Conta LZT" : (planMap[t.product_plan_id] || "Plano"),
+              username: "...",
+            };
+          }),
+        );
       }
 
       if (recentPaymentsRes.data) {
-        setRecentPayments(recentPaymentsRes.data as Payment[]);
+        setRecentPayments(recentPaymentsRes.data);
       }
 
       } catch (err) {
@@ -220,9 +249,9 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
   // Removed usernameMap useEffect to prevent race condition
 
   // Period-filtered metrics
-  const filteredPayments = filterByPeriod(allPayments as any[], period);
-  const filteredOrders = filterByPeriod(allOrders as any[], period, "created_at");
-  const periodRevenue = filteredPayments.reduce((s: number, p: any) => s + Number(p.amount) / 100, 0);
+  const filteredPayments = filterByPeriod(allPayments, period);
+  const filteredOrders = filterByPeriod(allOrders, period, "created_at");
+  const periodRevenue = filteredPayments.reduce((s, p) => s + Number(p.amount) / 100, 0);
   const periodOrderCount = filteredOrders.length;
   const periodPaidCount = filteredPayments.length;
 
@@ -261,10 +290,10 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
         <h2 className="text-lg font-bold text-foreground">Visão Geral</h2>
         <div className="flex items-center gap-2">
           <div className="flex gap-0.5 bg-secondary rounded-lg p-0.5">
-            {([["24h", "24h"], ["7d", "7d"], ["30d", "30d"], ["all", "Tudo"]] as const).map(([key, label]) => (
+            {PERIOD_OPTIONS.map(([key, label]) => (
               <button
                 key={key}
-                onClick={() => setPeriod(key as Period)}
+                onClick={() => setPeriod(key)}
                 className={`rounded-md px-3 py-1.5 text-[11px] font-semibold ${
                   period === key ? "bg-success text-success-foreground" : "text-muted-foreground hover:text-foreground"
                 }`}
@@ -412,7 +441,7 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
             {recentPayments.length === 0 ? (
               <p className="py-8 text-center text-sm text-muted-foreground">Nenhuma venda encontrada.</p>
             ) : recentPayments.map((p) => {
-              const cartItems = Array.isArray(p.cart_snapshot) ? p.cart_snapshot : [];
+              const cartItems = paymentCartSnapshot(p.cart_snapshot);
               const productName = cartItems[0]?.productName || "—";
 
               return (

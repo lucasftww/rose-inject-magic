@@ -1,12 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { parseAdminUsersResponse, type UserData } from "@/types/adminUsersPayload";
 
-interface AdminUser {
-  id: string;
-  email: string;
-  username?: string;
-  [key: string]: unknown;
-}
+export type AdminUser = UserData;
 
 let cachedUsers: AdminUser[] | null = null;
 let cacheTimestamp = 0;
@@ -40,13 +36,13 @@ export function useAdminUsers() {
           return [];
         }
 
-        const res = await supabase.functions.invoke<AdminUser[]>("admin-users", {
+        const res = await supabase.functions.invoke("admin-users", {
           headers: { Authorization: `Bearer ${session.access_token}` },
         });
 
         if (res.error) throw res.error;
 
-        const data = Array.isArray(res.data) ? res.data : [];
+        const data = parseAdminUsersResponse(res.data);
         cachedUsers = data;
         cacheTimestamp = Date.now();
         setUsers(data);

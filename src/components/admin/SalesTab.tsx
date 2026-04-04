@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo, Fragment } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database, Json } from "@/integrations/supabase/types";
 import { fetchAllRows } from "@/lib/supabaseAllRows";
+import { asOrderTicketMetadata, type OrderTicketMetadata } from "@/types/orderTicketMetadata";
 import { useAdminUsers } from "@/hooks/useAdminUsers";
 import {
   Loader2, Search, ShoppingBag, Package, DollarSign, Users,
@@ -9,16 +11,13 @@ import {
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
-interface SaleTicket {
-  id: string;
-  product_id: string;
-  product_plan_id: string;
-  status: string;
-  status_label: string;
-  created_at: string;
-  user_id: string;
-  stock_item_id: string | null;
-  metadata: any;
+type OrderTicketRow = Database["public"]["Tables"]["order_tickets"]["Row"];
+type ProductMini = Pick<Database["public"]["Tables"]["products"]["Row"], "id" | "name" | "image_url">;
+type PlanMini = Pick<Database["public"]["Tables"]["product_plans"]["Row"], "id" | "name" | "price">;
+type LztSaleMini = Pick<Database["public"]["Tables"]["lzt_sales"]["Row"], "lzt_item_id" | "sell_price">;
+
+interface SaleTicket extends OrderTicketRow {
+  metadata: Json | null;
   product_name?: string;
   product_image?: string | null;
   plan_name?: string;
@@ -59,7 +58,7 @@ let _salesCacheTs = 0;
 const SALES_CACHE_TTL = 3 * 60 * 1000;
 
 /** Get purchase type label */
-const getPurchaseType = (meta: any): { label: string; icon: typeof Package; color: string } => {
+const getPurchaseType = (meta: OrderTicketMetadata | null | undefined): { label: string; icon: typeof Package; color: string } => {
   if (meta?.type === "lzt-account") return { label: "Conta LZT", icon: Globe, color: "text-info" };
   if (meta?.type === "robot-project") return { label: "Robot", icon: Bot, color: "text-accent-foreground" };
   return { label: "Estoque", icon: Package, color: "text-success" };
@@ -87,9 +86,9 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
 
     setLoading(true);
 
-    let rawTickets: any[];
+    let rawTickets: OrderTicketRow[];
     try {
-      rawTickets = await fetchAllRows("order_tickets", {
+      rawTickets = await fetchAllRows<OrderTicketRow>("order_tickets", {
         select: "*",
         order: { column: "created_at", ascending: false },
       });
@@ -108,56 +107,76 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
     const planIds = [...new Set(rawTickets.map((t) => t.product_plan_id))];
 
     const lztItemIds = rawTickets
-      .filter((t) => t.metadata?.type === "lzt-account" && t.metadata?.lzt_item_id)
-      .map((t) => String(t.metadata.lzt_item_id));
+      .filter((t) => {
+        const m = asOrderTicketMetadata(t.metadata);
+        return m.type === "lzt-account" && m.lzt_item_id != null;
+      })
+      .map((t) => String(asOrderTicketMetadata(t.metadata).lzt_item_id));
 
     // Chunk large .in() queries to avoid Supabase 1000-row response limit
     const CHUNK = 500;
-    const fetchInChunks = async <R,>(table: string, select: string, column: string, ids: string[]): Promise<R[]> => {
+    type PublicTable = keyof Database["public"]["Tables"];
+    const fetchInChunks = async <R,>(
+      table: PublicTable,
+      select: string,
+      column: string,
+      ids: string[],
+    ): Promise<R[]> => {
       if (ids.length === 0) return [];
       const results: R[] = [];
       for (let i = 0; i < ids.length; i += CHUNK) {
         const chunk = ids.slice(i, i + CHUNK);
-        const { data } = await (supabase.from as any)(table).select(select).in(column, chunk);
-        if (data) results.push(...data);
+        const { data } = await supabase.from(table).select(select).in(column, chunk);
+        if (data) results.push(...(data as R[]));
       }
       return results;
     };
 
     const [productsData, plansData, lztSalesRaw] = await Promise.all([
-      fetchInChunks<any>("products", "id, name, image_url", "id", productIds),
-      fetchInChunks<any>("product_plans", "id, name, price", "id", planIds),
+      fetchInChunks<ProductMini>("products", "id, name, image_url", "id", productIds),
+      fetchInChunks<PlanMini>("product_plans", "id, name, price", "id", planIds),
       lztItemIds.length > 0
-        ? fetchInChunks<any>("lzt_sales", "lzt_item_id, sell_price", "lzt_item_id", lztItemIds)
-        : Promise.resolve([]),
+        ? fetchInChunks<LztSaleMini>("lzt_sales", "lzt_item_id, sell_price", "lzt_item_id", lztItemIds)
+        : Promise.resolve([] as LztSaleMini[]),
     ]);
 
-    const productsMap = new Map(productsData.map((p: any) => [p.id, p]));
-    const plansMap = new Map(plansData.map((p: any) => [p.id, p]));
-    const lztSalesMap = new Map((lztSalesRaw || []).map((s: any) => [s.lzt_item_id, Number(s.sell_price)]));
+    const productsMap = new Map(productsData.map((p) => [p.id, p]));
+    const plansMap = new Map(plansData.map((p) => [p.id, p]));
+    const lztSalesMap = new Map(
+      (lztSalesRaw || [])
+        .filter((s): s is LztSaleMini & { lzt_item_id: string } => s.lzt_item_id != null)
+        .map((s) => [s.lzt_item_id, Number(s.sell_price)]),
+    );
 
-    const stockIds = rawTickets.filter((t) => t.stock_item_id).map((t) => t.stock_item_id as string);
+    const stockIds = rawTickets.flatMap((t) => (t.stock_item_id ? [t.stock_item_id] : []));
     const stockMap = new Map<string, string>();
     if (stockIds.length > 0) {
       try {
         const CHUNK_SIZE = 100;
         for (let i = 0; i < stockIds.length; i += CHUNK_SIZE) {
           const chunk = stockIds.slice(i, i + CHUNK_SIZE);
-          const stockData = await fetchAllRows("stock_items", {
+          const stockData = await fetchAllRows<{ id: string; content: string | null }>("stock_items", {
             select: "id, content",
             filters: [{ column: "id", op: "in", value: chunk }],
           });
-          (stockData || []).forEach((s: any) => { stockMap.set(s.id, s.content); });
+          (stockData || []).forEach((s) => {
+            if (s.content != null) stockMap.set(s.id, s.content);
+          });
         }
       } catch (err) {
         console.error("fetchSales stock_items error:", err);
+        toast({
+          title: "Conteúdo de alguns pedidos não carregou",
+          description: err instanceof Error ? err.message : "Dados de estoque indisponíveis; tente atualizar.",
+          variant: "destructive",
+        });
       }
     }
 
     const enriched: SaleTicket[] = rawTickets.map((t) => {
       const product = productsMap.get(t.product_id);
       const plan = plansMap.get(t.product_plan_id);
-      const meta = t.metadata as any;
+      const meta = asOrderTicketMetadata(t.metadata);
       const isLzt = meta?.type === "lzt-account";
       const lztItemId = meta?.lzt_item_id;
       const lztPrice = lztItemId ? (lztSalesMap.get(String(lztItemId)) || meta?.price_paid || meta?.price || meta?.sell_price || 0) : 0;
@@ -171,7 +190,10 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
         plan_price: isLzt ? lztPrice : (metaPrice ?? plan?.price ?? 0),
         username: null,
         email: null,
-        stock_content: t.stock_item_id ? (stockMap.get(t.stock_item_id) || null) : null,
+        stock_content:
+          t.stock_item_id && !(meta?.type === "robot-project" && meta?.is_free)
+            ? (stockMap.get(t.stock_item_id) || null)
+            : null,
       };
     });
 
@@ -362,7 +384,7 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
                 </tr>
               ) : (
                 paginated.map((sale) => {
-                  const purchaseType = getPurchaseType(sale.metadata);
+                  const purchaseType = getPurchaseType(asOrderTicketMetadata(sale.metadata));
                   const TypeIcon = purchaseType.icon;
                   return (
                     <Fragment key={sale.id}>

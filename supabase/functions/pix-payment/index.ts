@@ -94,6 +94,25 @@ function robotAuthHeader(creds: RobotCredentials) {
   return `Basic ${btoa(`${creds.username}:${creds.password}`)}`;
 }
 
+/** Loader URL / filename from Robot GET /games or buy payload (field names vary). */
+function robotGameDownloadFields(game: Record<string, unknown> | null | undefined): { downloadUrl: string | null; fileName: string | null } {
+  if (!game || typeof game !== "object") return { downloadUrl: null, fileName: null };
+  const g = game as Record<string, unknown>;
+  const downloadUrl = [g.downloadUrl, g.download_url, g.loaderUrl, g.loader_url].find((v) => typeof v === "string" && (v as string).trim().length > 0) as
+    | string
+    | undefined;
+  const fileName = [g.fileName, g.file_name, g.loaderFileName].find((v) => typeof v === "string" && (v as string).trim().length > 0) as string | undefined;
+  return {
+    downloadUrl: downloadUrl?.trim() || null,
+    fileName: fileName?.trim() || null,
+  };
+}
+
+function robotGameIsFreeFlag(game: Record<string, unknown> | null | undefined): boolean {
+  if (!game || typeof game !== "object") return false;
+  return game.is_free === true || game.isFree === true;
+}
+
 async function fetchRobotGameSnapshot(
   creds: RobotCredentials,
   robotGameId: number,
@@ -144,7 +163,8 @@ async function fetchRobotGameSnapshot(
     return { game, balance, expectedPrice, availableSlots, reason: "Produto offline no provedor no momento." };
   }
 
-  if (!game.is_free && (expectedPrice === null || expectedPrice <= 0)) {
+  const gameIsFree = game.is_free === true || game.isFree === true;
+  if (!gameIsFree && (expectedPrice === null || expectedPrice <= 0)) {
     return {
       game,
       balance,
@@ -154,11 +174,11 @@ async function fetchRobotGameSnapshot(
     };
   }
 
-  if (!game.is_free && availableSlots !== null && availableSlots <= 0) {
+  if (!gameIsFree && availableSlots !== null && availableSlots <= 0) {
     return { game, balance, expectedPrice, availableSlots, reason: "Sem slots disponíveis no provedor no momento." };
   }
 
-  if (!game.is_free && balance !== null && expectedPrice !== null && balance < expectedPrice) {
+  if (!gameIsFree && balance !== null && expectedPrice !== null && balance < expectedPrice) {
     return {
       game,
       balance,
@@ -1187,6 +1207,56 @@ async function fulfillRobotProduct(supabaseAdmin: any, payment: any, item: any, 
       return;
     }
 
+    const snapDl = robotGameDownloadFields(robotSnapshot.game);
+    const snapshotGameFree = robotGameIsFreeFlag(robotSnapshot.game);
+    // Jogos is_free: entrega só o loader — não chama /buy (evita gerar key APIF-… só para “liberar” download)
+    if (snapshotGameFree && snapDl.downloadUrl) {
+      log("INFO", "fulfillRobot", "Free game: skip Robot /buy, loader-only delivery", { robotGameId, duration });
+      const { data: ticket } = await supabaseAdmin
+        .from("order_tickets")
+        .insert({
+          user_id: payment.user_id,
+          product_id: item.productId,
+          product_plan_id: item.planId,
+          stock_item_id: null,
+          status: "delivered",
+          status_label: "Entregue",
+          metadata: {
+            type: "robot-project",
+            robot_game_id: robotGameId,
+            duration,
+            key: null,
+            amount_spent: 0,
+            game_name: robotSnapshot.game?.name || item.productName || "",
+            robot_balance: robotSnapshot.balance,
+            is_free: true,
+            download_url: snapDl.downloadUrl,
+            file_name: snapDl.fileName,
+            loader_only: true,
+          },
+        })
+        .select("id")
+        .single();
+
+      if (ticket) {
+        let deliveryMsg =
+          `✅ Produto gratuito liberado!\n\n📥 Baixe o loader no link abaixo e crie sua conta no programa — **não use chave** (modo gratuito).\n\n📥 **Download:** ${snapDl.downloadUrl}`;
+        if (snapDl.fileName) deliveryMsg += `\n📄 Arquivo: ${snapDl.fileName}`;
+        await supabaseAdmin.from("ticket_messages").insert({
+          ticket_id: ticket.id,
+          sender_id: payment.user_id,
+          sender_role: "staff",
+          message: deliveryMsg,
+        });
+      }
+      console.log(`Robot fulfillment success (free, skip-buy): gameId=${robotGameId}`);
+      return;
+    }
+
+    if (snapshotGameFree && !snapDl.downloadUrl) {
+      log("WARN", "fulfillRobot", "Free game without downloadUrl on /games; falling back to /buy (key will be suppressed)", { robotGameId });
+    }
+
     const buyRes = await fetch(`https://api.robotproject.com.br/buy/${encodeURIComponent(robotGameId)}`, {
       method: "POST",
       headers: {
@@ -1259,21 +1329,24 @@ async function fulfillRobotProduct(supabaseAdmin: any, payment: any, item: any, 
       return;
     }
 
-    // Success! Deliver the key (or keyless for free games)
-    // Robot API returns keys without dashes (e.g. "APIBF6A6FBEB89A8")
-    // but they should be formatted as "APIB-F6A6-FBEB-89A8" (groups of 4)
-    // NOTE: Since API update, free games no longer return keys — clients create
-    // an account in the loader and log in without key activation.
-    const rawKey = buyData.data?.key || "";
-    const key = rawKey.length >= 8 && !rawKey.includes("-")
+    // Success! Paid: deliver key. Free (fallback): never expose key — só loader / conta no programa.
+    const rawKey = String(buyData.data?.key || "");
+    const formattedKey = rawKey.length >= 8 && !rawKey.includes("-")
       ? rawKey.match(/.{1,4}/g)?.join("-") || rawKey
       : rawKey;
     const gameName = buyData.data?.gameName || item.productName || "";
     const amountSpent = buyData.data?.amountSpent || 0;
     const robotBalance = buyData.data?.balance ?? null;
-    const isFreeGame = buyData.data?.game?.free === true || buyData.data?.finalAmount === 0;
-    const downloadUrl = buyData.data?.game?.downloadUrl || buyData.data?.downloadUrl || null;
-    const fileName = buyData.data?.game?.fileName || buyData.data?.fileName || null;
+    const buyGame = buyData.data?.game as Record<string, unknown> | undefined;
+    const isFreeGame =
+      snapshotGameFree ||
+      buyGame?.free === true ||
+      robotGameIsFreeFlag(buyGame) ||
+      buyData.data?.finalAmount === 0;
+    const buyDl = robotGameDownloadFields(buyGame);
+    const downloadUrl = buyDl.downloadUrl || snapDl.downloadUrl || null;
+    const fileName = buyDl.fileName || snapDl.fileName || null;
+    const key = isFreeGame ? "" : formattedKey;
     const hasKey = key.length > 0;
 
     // Store stock item only if there's an actual key
@@ -1313,6 +1386,7 @@ async function fulfillRobotProduct(supabaseAdmin: any, payment: any, item: any, 
           is_free: isFreeGame,
           download_url: downloadUrl,
           file_name: fileName,
+          loader_only: isFreeGame && !hasKey,
         },
       })
       .select("id")
@@ -1321,9 +1395,9 @@ async function fulfillRobotProduct(supabaseAdmin: any, payment: any, item: any, 
     if (ticket) {
       // Build delivery message
       let deliveryMsg: string;
-      if (isFreeGame && !hasKey) {
-        // Free game without key — user must create account in the loader
-        deliveryMsg = `✅ Produto gratuito liberado!\n\n📥 Faça o download do programa e crie sua conta no loader para começar a usar. Não é necessário ativação de chave.`;
+      if (isFreeGame) {
+        deliveryMsg =
+          `✅ Produto gratuito liberado!\n\n📥 Baixe o loader e crie sua conta no programa — **não é necessário chave** neste modo.`;
       } else if (hasKey) {
         deliveryMsg = `✅ Seu produto foi entregue automaticamente!\n\n🔑 **Key:** \`${key}\`\n⏱️ Duração: ${duration} dias`;
       } else {
@@ -1335,7 +1409,7 @@ async function fulfillRobotProduct(supabaseAdmin: any, payment: any, item: any, 
           deliveryMsg += `\n📄 Arquivo: ${fileName}`;
         }
       }
-      if (hasKey) {
+      if (hasKey && !isFreeGame) {
         deliveryMsg += `\n\nVeja a chave acima para ativar.`;
       }
 
@@ -1616,7 +1690,7 @@ async function validateAndCalculatePrice(
 
     // R$ 0: produto normal gratuito (stock/tutorial) OU jogo Robot marcado como is_free na API
     if (realPrice <= 0) {
-      const robotGameIsFree = !!(isRobotProduct && robotSnapshotForPlan?.game?.is_free);
+      const robotGameIsFree = !!(isRobotProduct && robotGameIsFreeFlag(robotSnapshotForPlan?.game));
       const nonRobotFreeProduct = !isRobotProduct;
 
       if (robotGameIsFree || nonRobotFreeProduct) {

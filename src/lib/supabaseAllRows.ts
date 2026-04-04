@@ -1,11 +1,14 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
+
+type PublicTable = keyof Database["public"]["Tables"];
 
 /**
  * Fetches ALL rows from a Supabase table, bypassing the 1000-row default limit.
  * Uses .range() pagination internally.
  */
-export async function fetchAllRows<T = any>(
-  tableName: string,
+export async function fetchAllRows<T = unknown>(
+  tableName: PublicTable,
   {
     select = "*",
     filters,
@@ -13,7 +16,7 @@ export async function fetchAllRows<T = any>(
     limit,
   }: {
     select?: string;
-    filters?: { column: string; op: "eq" | "neq" | "gt" | "gte" | "lt" | "lte" | "in"; value: any }[];
+    filters?: { column: string; op: "eq" | "neq" | "gt" | "gte" | "lt" | "lte" | "in"; value: unknown }[];
     order?: { column: string; ascending?: boolean };
     limit?: number;
   } = {}
@@ -23,7 +26,7 @@ export async function fetchAllRows<T = any>(
   let from = 0;
 
   while (true) {
-    let query = (supabase.from as any)(tableName).select(select);
+    let query = supabase.from(tableName).select(select);
 
     if (filters) {
       for (const f of filters) {

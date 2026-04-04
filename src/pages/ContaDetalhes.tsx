@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { throwApiError } from "@/lib/apiErrors";
 import { translateRegion } from "@/lib/regionTranslation";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Header from "@/components/Header";
 import { ArrowLeft, Shield, Loader2, ChevronRight, ChevronLeft, CheckCircle2, ShoppingCart, Swords, Users, Star, X, Zap } from "lucide-react";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -15,6 +15,8 @@ import { checkLztAvailability } from "@/lib/lztAvailability";
 import { supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
 
 import { rankMap, rarityMap, fetchAllValorantSkins, rankUnranked, RARITY_PRIORITY, type SkinEntry } from "@/lib/valorantData";
+import { getLztDetailDisplayTitle } from "@/lib/lztDisplayTitles";
+import { lztAccountDetailQueryKey } from "@/lib/lztAccountDetailQuery";
 
 const fetchAccountDetail = async (itemId: string) => {
   const res = await fetch(
@@ -230,16 +232,60 @@ const buildSkinLookup = (skins: unknown[]): Map<string, ValorantSkinItem> => {
   return lookup;
 };
 
+/** Valorant API catálogo muda raramente — cache 1h reduz payload repetido em cada detalhe. */
+const VALORANT_API_CACHE_MS = 1000 * 60 * 60;
+let weaponSkinsCatalogCache: { data: unknown[]; expiry: number } | null = null;
+let skinLevelsCatalogCache: { data: unknown[]; expiry: number } | null = null;
+let skinChromasCatalogCache: { data: unknown[]; expiry: number } | null = null;
+
+async function getWeaponSkinsCatalog(): Promise<unknown[]> {
+  const now = Date.now();
+  if (weaponSkinsCatalogCache && weaponSkinsCatalogCache.expiry > now) {
+    return weaponSkinsCatalogCache.data;
+  }
+  const skinsRes = await fetch("https://valorant-api.com/v1/weapons/skins?language=pt-BR");
+  if (!skinsRes.ok) return [];
+  const skinsData = await skinsRes.json();
+  const data = Array.isArray(skinsData.data) ? skinsData.data : [];
+  weaponSkinsCatalogCache = { data, expiry: now + VALORANT_API_CACHE_MS };
+  return data;
+}
+
+async function getSkinLevelsCatalog(): Promise<unknown[]> {
+  const now = Date.now();
+  if (skinLevelsCatalogCache && skinLevelsCatalogCache.expiry > now) {
+    return skinLevelsCatalogCache.data;
+  }
+  const res = await fetch("https://valorant-api.com/v1/weapons/skinlevels?language=pt-BR");
+  if (!res.ok) return [];
+  const json = await res.json();
+  const data = Array.isArray(json.data) ? json.data : [];
+  skinLevelsCatalogCache = { data, expiry: now + VALORANT_API_CACHE_MS };
+  return data;
+}
+
+async function getSkinChromasCatalog(): Promise<unknown[]> {
+  const now = Date.now();
+  if (skinChromasCatalogCache && skinChromasCatalogCache.expiry > now) {
+    return skinChromasCatalogCache.data;
+  }
+  const res = await fetch("https://valorant-api.com/v1/weapons/skinchromas?language=pt-BR");
+  if (!res.ok) return [];
+  const json = await res.json();
+  const data = Array.isArray(json.data) ? json.data : [];
+  skinChromasCatalogCache = { data, expiry: now + VALORANT_API_CACHE_MS };
+  return data;
+}
+
 // Fetch skin details from valorant-api.com
 const fetchValorantSkins = async (uuids: string[]) => {
   const normalizedUuids = Array.from(new Set((uuids || []).map((u) => String(u).toLowerCase()).filter((u) => UUID_REGEX.test(u))));
   if (normalizedUuids.length === 0) return [];
 
-  const skinsRes = await fetch("https://valorant-api.com/v1/weapons/skins?language=pt-BR");
-  if (!skinsRes.ok) return [];
+  const skinsCatalog = await getWeaponSkinsCatalog();
+  if (skinsCatalog.length === 0) return [];
 
-  const skinsData = await skinsRes.json();
-  const skinLookup = buildSkinLookup(skinsData.data || []);
+  const skinLookup = buildSkinLookup(skinsCatalog);
 
   const matched: ValorantSkinItem[] = [];
   const missing: string[] = [];
@@ -261,16 +307,15 @@ const fetchValorantSkins = async (uuids: string[]) => {
   // Fallback for edge cases where UUID exists only in flat endpoints
   if (missing.length > 0) {
     try {
-      const [levelsRes, chromasRes] = await Promise.all([
-      fetch("https://valorant-api.com/v1/weapons/skinlevels?language=pt-BR"),
-      fetch("https://valorant-api.com/v1/weapons/skinchromas?language=pt-BR")]
-      );
+      const [levelsData, chromasData] = await Promise.all([
+        getSkinLevelsCatalog(),
+        getSkinChromasCatalog(),
+      ]);
 
       const fallbackByUuid = new Map<string, ValorantSkinItem>();
 
-      if (levelsRes.ok) {
-        const levelsData = await levelsRes.json();
-        for (const lvl of levelsData.data || []) {
+      if (levelsData.length > 0) {
+        for (const lvl of levelsData) {
           const id = String(lvl?.uuid || "").toLowerCase();
           if (!id || !UUID_REGEX.test(id)) continue;
           const image = lvl.displayIcon || null;
@@ -291,9 +336,8 @@ const fetchValorantSkins = async (uuids: string[]) => {
         }
       }
 
-      if (chromasRes.ok) {
-        const chromasData = await chromasRes.json();
-        for (const c of chromasData.data || []) {
+      if (chromasData.length > 0) {
+        for (const c of chromasData) {
           const id = String(c?.uuid || "").toLowerCase();
           if (!id || !UUID_REGEX.test(id)) continue;
           const image = c.fullRender || c.displayIcon || c.swatch || null;
@@ -434,11 +478,12 @@ const ContaDetalhes = () => {
     viewTracked.current = false;
   }, [id]);
   const { addItem } = useCart();
+  const queryClient = useQueryClient();
 
   const [checkingAvailability, setCheckingAvailability] = useState(false);
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["lzt-account-detail", "valorant", id],
+    queryKey: lztAccountDetailQueryKey("valorant", id ?? ""),
     queryFn: () => fetchAccountDetail(id!),
     enabled: !!id,
     staleTime: 1000 * 30, // 30 seconds
@@ -450,20 +495,20 @@ const ContaDetalhes = () => {
   const inventory = item?.valorantInventory;
   const skinCount = item?.riot_valorant_skin_count ?? 0;
 
-  const cleanedTitle = useMemo(() => {
-    let t = item?.title || "";
-    t = t.replace(/[А-Яа-я]/g, "").trim();
-    if (!t || t.toLowerCase() === "kuki" || t.length < 3) {
-      const rName = rank?.name || "Unranked";
-      return `Conta Valorant [${rName}] [${skinCount} Skins]`;
-    }
-    return t;
-  }, [item?.title, rank, skinCount]);
+  const cleanedTitle = useMemo(
+    () =>
+      getLztDetailDisplayTitle(item?.title, {
+        game: "valorant",
+        rankName: rank?.name || "Unranked",
+        skinCount,
+      }),
+    [item?.title, rank?.name, skinCount],
+  );
 
   const handleBuyNow = async () => {
     if (!item || checkingAvailability) return;
     setCheckingAvailability(true);
-    const available = await checkLztAvailability(String(item.item_id), "valorant");
+    const available = await checkLztAvailability(String(item.item_id), "valorant", { queryClient });
     setCheckingAvailability(false);
     if (!available) return;
     const priceBRL = getPrice(item, "valorant");
@@ -533,7 +578,7 @@ const ContaDetalhes = () => {
   const { data: agentItems = [], isLoading: agentsLoading, isError: agentsError } = useQuery({
     queryKey: ["valorant-agents", agentUuids],
     queryFn: () => fetchValorantAgents(agentUuids),
-    enabled: agentUuids.length > 0,
+    enabled: activeTab === "agents" && agentUuids.length > 0,
     staleTime: 1000 * 60 * 30,
     retry: 2
   });
@@ -541,7 +586,7 @@ const ContaDetalhes = () => {
   const { data: buddyItems = [], isLoading: buddiesLoading, isError: buddiesError } = useQuery({
     queryKey: ["valorant-buddies", buddyUuids],
     queryFn: () => fetchValorantBuddies(buddyUuids),
-    enabled: buddyUuids.length > 0,
+    enabled: activeTab === "buddies" && buddyUuids.length > 0,
     staleTime: 1000 * 60 * 30,
     retry: 2
   });
@@ -564,9 +609,9 @@ const ContaDetalhes = () => {
   const handleNext = () => setSelectedSkin((p) => p < galleryLength - 1 ? p + 1 : 0);
 
   const tabs = [
-  { key: "skins" as const, label: "Skins", icon: <Swords className="h-4 w-4" />, count: skinItems.length },
-  { key: "agents" as const, label: "Agentes", icon: <Users className="h-4 w-4" />, count: agentItems.length },
-  { key: "buddies" as const, label: "Buddies", icon: <Star className="h-4 w-4" />, count: buddyItems.length }];
+  { key: "skins" as const, label: "Skins", icon: <Swords className="h-4 w-4" />, count: skinItems.length > 0 ? skinItems.length : skinUuids.length },
+  { key: "agents" as const, label: "Agentes", icon: <Users className="h-4 w-4" />, count: agentItems.length > 0 ? agentItems.length : agentUuids.length },
+  { key: "buddies" as const, label: "Buddies", icon: <Star className="h-4 w-4" />, count: buddyItems.length > 0 ? buddyItems.length : buddyUuids.length }];
 
 
   const activeItems = activeTab === "skins" ? skinItems : activeTab === "agents" ? agentItems : buddyItems;
@@ -765,8 +810,10 @@ const ContaDetalhes = () => {
                   </div>
 
                   <button
+                  type="button"
                   onClick={handleBuyNow}
                   disabled={checkingAvailability}
+                  aria-busy={checkingAvailability}
                   className="btn-shine group relative flex w-full items-center justify-center gap-2 rounded-xl bg-success py-3.5 text-sm font-bold uppercase tracking-[0.2em] text-success-foreground transition-all hover:shadow-[0_0_30px_hsl(var(--success)/0.4)] active:scale-[0.98] disabled:opacity-60"
                   style={{ fontFamily: "'Valorant', sans-serif" }}>
                   
@@ -977,8 +1024,10 @@ const ContaDetalhes = () => {
                 </span>
               </div>
               <button
+              type="button"
               onClick={handleBuyNow}
               disabled={checkingAvailability}
+              aria-busy={checkingAvailability}
               className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-success py-3.5 text-sm font-bold uppercase tracking-wider text-success-foreground transition-all active:scale-[0.98] disabled:opacity-60"
               style={{ fontFamily: "'Valorant', sans-serif" }}>
               

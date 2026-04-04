@@ -8,6 +8,8 @@ import { Loader2, Gift, Trophy, Frown, Ticket, History, Star, X, Flower2, Copy, 
 import { motion, AnimatePresence } from "framer-motion";
 import { safeJsonFetch, ApiError } from "@/lib/apiUtils";
 import type { PixPaymentCreateResult, PixPaymentStatusResult, ScratchCardPlayResult } from "@/lib/edgeFunctionTypes";
+import type { Json, Tables } from "@/integrations/supabase/types";
+import { paymentCartSnapshot } from "@/types/paymentCart";
 
 interface Prize {
   id: string;
@@ -18,13 +20,37 @@ interface Prize {
   prize_value?: number;
 }
 
+type ScratchPlayRow = Tables<"scratch_card_plays">;
+type PublicScratchPrizeRow = Tables<"public_scratch_card_prizes">;
+
 interface Play {
   id: string;
   won: boolean;
   prize_id: string | null;
   amount_paid: number;
-  grid_data: any;
+  grid_data: Json | null;
   created_at: string;
+}
+
+function mapPublicScratchPrizeRow(r: PublicScratchPrizeRow): Prize | null {
+  if (r.id == null || r.name == null || r.id === "" || r.name === "") return null;
+  return {
+    id: r.id,
+    name: r.name,
+    description: r.description ?? null,
+    image_url: r.image_url ?? null,
+  };
+}
+
+function mapScratchPlayRow(r: ScratchPlayRow): Play {
+  return {
+    id: r.id,
+    won: r.won ?? false,
+    prize_id: r.prize_id,
+    amount_paid: Number(r.amount_paid ?? 0),
+    grid_data: r.grid_data,
+    created_at: r.created_at ?? "",
+  };
 }
 
 interface GridCell {
@@ -37,6 +63,10 @@ interface GridCell {
 }
 
 type RaspadinhaMode = "produtos" | "contas";
+
+function coerceRaspadinhaMode(m: string): RaspadinhaMode {
+  return m === "contas" ? "contas" : "produtos";
+}
 
 
 
@@ -111,6 +141,8 @@ const Raspadinha = () => {
   const [chargeData, setChargeData] = useState<{ brCode: string; qrCodeImage: string; expiresAt: string } | null>(null);
   const [copied, setCopied] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const raspadinhaPollFailCountRef = useRef(0);
+  const raspadinhaPollNotifiedRef = useRef(false);
   const pendingQuantityRef = useRef(1);
   const pendingModeRef = useRef<RaspadinhaMode>("produtos");
   const [pendingPayment, setPendingPayment] = useState<{ id: string; mode: string; quantity: number } | null>(null);
@@ -131,11 +163,22 @@ const Raspadinha = () => {
   useEffect(() => {
     const fetchData = async () => {
       const [{ data: prizesData }, { data: configData }] = await Promise.all([
-        supabase.from("public_scratch_card_prizes" as any).select("id, name, description, image_url").eq("active", true).order("sort_order"),
+        supabase.from("public_scratch_card_prizes").select("id, name, description, image_url").eq("active", true).order("sort_order"),
         supabase.from("scratch_card_config").select("price, active").limit(1).maybeSingle(),
       ]);
-      if (prizesData) setPrizes(prizesData as unknown as Prize[]);
-      if (configData) setConfig(configData as any);
+      if (prizesData) {
+        setPrizes(
+          prizesData
+            .map(mapPublicScratchPrizeRow)
+            .filter((p): p is Prize => p !== null),
+        );
+      }
+      if (configData) {
+        setConfig({
+          price: configData.price ?? 2.5,
+          active: configData.active ?? false,
+        });
+      }
       setLoading(false);
     };
     fetchData();
@@ -153,7 +196,7 @@ const Raspadinha = () => {
         .order("created_at", { ascending: false })
         .limit(20)
         .then(({ data }) => {
-          if (data) setHistory(data as Play[]);
+          if (data) setHistory(data.map(mapScratchPlayRow));
         });
     }
   }, [user, result]);
@@ -202,9 +245,9 @@ const Raspadinha = () => {
       }
       
       for (const payment of payments) {
-        const cart = payment.cart_snapshot as any[];
-        if (!cart || !Array.isArray(cart)) continue;
-        const raspadinhaItem = cart.find((item: any) => item.type === "raspadinha");
+        const cart = paymentCartSnapshot(payment.cart_snapshot);
+        if (cart.length === 0) continue;
+        const raspadinhaItem = cart.find((item) => item.type === "raspadinha");
         if (!raspadinhaItem) continue;
 
         // If payment is still ACTIVE, re-check status with the gateway
@@ -223,7 +266,9 @@ const Raspadinha = () => {
               setCheckingPayments(false);
               return;
             }
-          } catch { /* silent */ }
+          } catch (e: unknown) {
+            console.warn("checkPendingPayments status poll failed:", e);
+          }
           continue;
         }
         
@@ -246,7 +291,16 @@ const Raspadinha = () => {
       if (!silent) {
         toast({ title: "Nenhum pagamento pendente encontrado" });
       }
-    } catch { /* silent */ }
+    } catch (e: unknown) {
+      console.error("checkPendingPayments failed:", e);
+      if (!silent) {
+        toast({
+          title: "Erro ao verificar pagamentos",
+          description: e instanceof Error ? e.message : "Tente novamente.",
+          variant: "destructive",
+        });
+      }
+    }
     setCheckingPayments(false);
   }, [user]);
 
@@ -330,15 +384,18 @@ const Raspadinha = () => {
       setPlaying(false);
 
       startPolling(data.payment_id);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      toast({ title: "Erro ao gerar pagamento", description: err.message, variant: "destructive" });
+      const message = err instanceof Error ? err.message : String(err);
+      toast({ title: "Erro ao gerar pagamento", description: message, variant: "destructive" });
       setPlaying(false);
     }
   };
 
   const startPolling = (pId: string) => {
     if (pollRef.current) clearInterval(pollRef.current);
+    raspadinhaPollFailCountRef.current = 0;
+    raspadinhaPollNotifiedRef.current = false;
     const check = async () => {
       try {
         const headers = await getAuthHeaders();
@@ -346,6 +403,7 @@ const Raspadinha = () => {
           `${supabaseUrl}/functions/v1/pix-payment?action=status&payment_id=${pId}`,
           { headers }
         );
+        raspadinhaPollFailCountRef.current = 0;
         if (data.status === "COMPLETED") {
           if (pollRef.current) clearInterval(pollRef.current);
           onPaymentCompleted();
@@ -355,7 +413,18 @@ const Raspadinha = () => {
           setChargeData(null);
           toast({ title: "Pagamento expirado ou cancelado", variant: "destructive" });
         }
-      } catch { /* silent */ }
+      } catch (e: unknown) {
+        raspadinhaPollFailCountRef.current += 1;
+        console.error("Raspadinha payment status poll failed:", e);
+        if (raspadinhaPollFailCountRef.current >= 5 && !raspadinhaPollNotifiedRef.current) {
+          raspadinhaPollNotifiedRef.current = true;
+          toast({
+            title: "Não foi possível verificar o pagamento",
+            description: "Verifique sua conexão. Atualize a página se já pagou.",
+            variant: "destructive",
+          });
+        }
+      }
     };
     pollRef.current = setInterval(check, 10000);
     check();
@@ -452,9 +521,10 @@ const Raspadinha = () => {
             }
           : undefined,
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("scratch-card-play error:", err);
-      toast({ title: "Erro ao processar raspadinha", description: err.message, variant: "destructive" });
+      const message = err instanceof Error ? err.message : String(err);
+      toast({ title: "Erro ao processar raspadinha", description: message, variant: "destructive" });
       resetGame();
       return;
     }
@@ -556,8 +626,8 @@ const Raspadinha = () => {
     setPaymentId(pendingPayment.id);
     paymentIdRef.current = pendingPayment.id;
     pendingQuantityRef.current = pendingPayment.quantity;
-    pendingModeRef.current = pendingPayment.mode as RaspadinhaMode;
-    setMode(pendingPayment.mode as RaspadinhaMode);
+    pendingModeRef.current = coerceRaspadinhaMode(pendingPayment.mode);
+    setMode(coerceRaspadinhaMode(pendingPayment.mode));
     setQuantity(pendingPayment.quantity);
     setPendingPayment(null);
     
@@ -599,9 +669,10 @@ const Raspadinha = () => {
             }
           : undefined,
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("scratch-card-play replay error:", err);
-      toast({ title: "Erro ao processar raspadinha", description: err.message, variant: "destructive" });
+      const message = err instanceof Error ? err.message : String(err);
+      toast({ title: "Erro ao processar raspadinha", description: message, variant: "destructive" });
       resetGame();
       return;
     }

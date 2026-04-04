@@ -1,5 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useAdminGames, useAdminProductsWithPlans, useInvalidateAdminCache } from "@/hooks/useAdminData";
+import {
+  narrowMediaType,
+  type AdminProductWithPlansRow,
+  type ProductFeatureRow,
+  type ProductMediaRow,
+  type ProductPlanRow,
+} from "@/types/supabaseQueryResults";
 import { supabase, supabaseAnonKey } from "@/integrations/supabase/client";
 import {
   Plus, Pencil, Trash2, Loader2, Upload, Link, X,
@@ -40,19 +47,8 @@ interface FeatureItem {
   _key?: string;
 }
 
-interface Product {
-  id: string;
-  game_id: string;
-  name: string;
-  description: string | null;
-  features_text: string | null;
-  image_url: string | null;
-  active: boolean;
-  sort_order: number;
-  robot_game_id: number | null;
-  robot_markup_percent: number | null;
-  product_plans?: ProductPlan[];
-}
+/** Lista admin: linha `products` + `product_plans(*)` do hook. */
+type Product = AdminProductWithPlansRow;
 
 interface RobotGame {
   id: number;
@@ -60,10 +56,16 @@ interface RobotGame {
   version: string;
   status: string;
   icon: string;
-  is_free: boolean;
+  is_free?: boolean;
+  isFree?: boolean;
   prices: Record<string, number>;
   maxKeys: number | null;
   soldKeys: number;
+}
+
+function robotGameIsFreeAdmin(g: RobotGame | null | undefined): boolean {
+  if (!g) return false;
+  return g.is_free === true || g.isFree === true;
 }
 
 const defaultPlans: ProductPlan[] = [
@@ -203,8 +205,9 @@ const ProductsTab = () => {
         const games = Array.isArray(data) ? data : data.games || [];
         setRobotGames(games);
       }
-    } catch (err: any) {
-      toast({ title: "Erro Robot", description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      toast({ title: "Erro Robot", description: message, variant: "destructive" });
     }
     setLoadingRobotGames(false);
   };
@@ -219,7 +222,7 @@ const ProductsTab = () => {
 
   useEffect(() => {
     if (cachedProducts) {
-      setProducts(cachedProducts as any);
+      setProducts(cachedProducts);
       setLoading(false);
     }
   }, [cachedProducts]);
@@ -271,7 +274,7 @@ const ProductsTab = () => {
     setFormDescription(product.description || "");
     setFormFeaturesText(product.features_text || "");
     setFormImageUrl(product.image_url || "");
-    setFormGameId(product.game_id);
+    setFormGameId(product.game_id ?? "");
     setFormActive(product.active);
     setImagePreview(product.image_url || null);
     setImageMode("url");
@@ -291,12 +294,38 @@ const ProductsTab = () => {
       supabase.from("product_features").select("*").eq("product_id", product.id).order("sort_order"),
     ]);
     if (plansRes.data && plansRes.data.length > 0) {
-      setFormPlans(plansRes.data.map((p: any) => ({ id: p.id, name: p.name, price: Number(p.price), active: p.active, sort_order: p.sort_order, robot_duration_days: p.robot_duration_days || null, _key: p.id })));
+      setFormPlans(
+        plansRes.data.map((p: ProductPlanRow) => ({
+          id: p.id,
+          name: p.name,
+          price: Number(p.price),
+          active: p.active ?? false,
+          sort_order: p.sort_order ?? 0,
+          robot_duration_days: p.robot_duration_days ?? null,
+          _key: p.id,
+        })),
+      );
     } else {
       setFormPlans([...defaultPlans]);
     }
-    setFormMedia((mediaRes.data || []).map((m: any) => ({ id: m.id, media_type: m.media_type, url: m.url, sort_order: m.sort_order, _key: m.id })));
-    setFormFeatures((featuresRes.data || []).map((f: any) => ({ id: f.id, label: f.label, value: f.value, sort_order: f.sort_order, _key: f.id })));
+    setFormMedia(
+      (mediaRes.data || []).map((m: ProductMediaRow) => ({
+        id: m.id,
+        media_type: narrowMediaType(m.media_type ?? "image"),
+        url: m.url,
+        sort_order: m.sort_order ?? 0,
+        _key: m.id,
+      })),
+    );
+    setFormFeatures(
+      (featuresRes.data || []).map((f: ProductFeatureRow) => ({
+        id: f.id,
+        label: f.label,
+        value: f.value,
+        sort_order: f.sort_order ?? 0,
+        _key: f.id,
+      })),
+    );
     setShowForm(true);
   };
 
@@ -321,9 +350,9 @@ const ProductsTab = () => {
     if (file) uploadFile(file);
   };
 
-  const updatePlan = (index: number, field: keyof ProductPlan, value: any) => {
+  const updatePlan = <K extends keyof ProductPlan>(index: number, field: K, value: ProductPlan[K]) => {
     const updated = [...formPlans];
-    (updated[index] as any)[field] = value;
+    updated[index] = { ...updated[index], [field]: value };
     setFormPlans(updated);
   };
 
@@ -368,7 +397,7 @@ const ProductsTab = () => {
 
     if (robotEnabled && formRobotGameId && robotGames.length > 0) {
       const rg = robotGames.find(g => Number(g.id) === Number(formRobotGameId));
-      if (rg?.prices && !rg.is_free) {
+      if (rg?.prices && !robotGameIsFreeAdmin(rg)) {
         for (const plan of formPlans) {
           if (!plan.active || !plan.robot_duration_days) continue;
           const fullPriceUsd = rg.prices[String(plan.robot_duration_days)];
@@ -396,14 +425,14 @@ const ProductsTab = () => {
           image_url: formImageUrl.trim() || null, game_id: formGameId, active: formActive,
           robot_game_id: robotEnabled && formRobotGameId ? formRobotGameId : null,
           robot_markup_percent: robotEnabled && formRobotMarkup != null ? formRobotMarkup : null,
-        } as any).eq("id", editing.id);
+        }).eq("id", editing.id);
         if (error) throw error;
 
-        await supabase.from("product_tutorials" as any).upsert({
+        await supabase.from("product_tutorials").upsert({
           product_id: editing.id,
           tutorial_text: formTutorialText.trim() || null,
           tutorial_file_url: formTutorialFileUrl.trim() || null,
-        } as any, { onConflict: "product_id" });
+        }, { onConflict: "product_id" });
 
         const validPlans = formPlans.filter(p => p.name.trim());
         const existingPlanIds = validPlans.filter(p => p.id).map(p => p.id!);
@@ -421,12 +450,12 @@ const ProductsTab = () => {
             await supabase.from("product_plans").update({
               name: p.name.trim(), price: p.price, active: p.active, sort_order: i,
               robot_duration_days: p.robot_duration_days || null,
-            } as any).eq("id", p.id);
+            }).eq("id", p.id);
           } else {
             await supabase.from("product_plans").insert({
               product_id: editing.id, name: p.name.trim(), price: p.price, active: p.active, sort_order: i,
               robot_duration_days: p.robot_duration_days || null,
-            } as any);
+            });
           }
         }
         await supabase.from("product_media").delete().eq("product_id", editing.id);
@@ -454,15 +483,15 @@ const ProductsTab = () => {
           sort_order: products.length,
           robot_game_id: robotEnabled && formRobotGameId ? formRobotGameId : null,
           robot_markup_percent: robotEnabled && formRobotMarkup != null ? formRobotMarkup : null,
-        } as any).select().single();
+        }).select().single();
         if (error) throw error;
 
         if (formTutorialText.trim() || formTutorialFileUrl.trim()) {
-          await supabase.from("product_tutorials" as any).insert({
+          await supabase.from("product_tutorials").insert({
             product_id: data.id,
             tutorial_text: formTutorialText.trim() || null,
             tutorial_file_url: formTutorialFileUrl.trim() || null,
-          } as any);
+          });
         }
 
         const plansToInsert = formPlans.filter(p => p.name.trim()).map((p, i) => ({
@@ -520,10 +549,10 @@ const ProductsTab = () => {
     else { toast({ title: "Excluído!" }); fetchData(true); }
   };
 
-  const getGameName = (gameId: string) => games.find(g => g.id === gameId)?.name || "—";
+  const getGameName = (gameId: string | null | undefined) => games.find(g => g.id === (gameId ?? ""))?.name || "—";
 
   const filtered = (() => {
-    let list = filterGameId === "all" ? products : products.filter(p => p.game_id === filterGameId);
+    let list = filterGameId === "all" ? products : products.filter((p) => p.game_id === filterGameId);
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       list = list.filter(p => p.name.toLowerCase().includes(q) || getGameName(p.game_id).toLowerCase().includes(q));
@@ -666,9 +695,9 @@ const ProductsTab = () => {
                     <p className="mt-0.5 text-xs text-muted-foreground truncate">
                       {getGameName(product.game_id)} · {product.product_plans?.length || 0} planos
                       {(() => {
-                        const activePaidPlans = (product.product_plans as any[] || []).filter((p: any) => p.active && Number(p.price) > 0);
+                        const activePaidPlans = (product.product_plans ?? []).filter((p) => p.active && Number(p.price) > 0);
                         if (activePaidPlans.length === 0) return null;
-                        const minPrice = Math.min(...activePaidPlans.map((p: any) => Number(p.price)));
+                        const minPrice = Math.min(...activePaidPlans.map((p) => Number(p.price)));
                         return (
                           <> · a partir de <span className="font-semibold text-success">R$ {minPrice.toFixed(2)}</span></>
                         );
@@ -697,7 +726,7 @@ const ProductsTab = () => {
                   <div className="border-t border-border/30 bg-muted/10 px-4 sm:px-5 py-3">
                     <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 mb-2.5">Planos</p>
                     <div className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
-                      {(product.product_plans as any[]).sort((a: any, b: any) => a.sort_order - b.sort_order).map((plan: any) => (
+                      {[...(product.product_plans ?? [])].sort((a, b) => a.sort_order - b.sort_order).map((plan) => (
                         <div key={plan.id} className="flex items-center justify-between rounded-lg bg-background/60 border border-border/30 px-3 py-2">
                           <div className="flex items-center gap-2 min-w-0">
                             <div className={`h-1.5 w-1.5 rounded-full shrink-0 ${plan.active ? "bg-success" : "bg-destructive"}`} />
@@ -824,7 +853,7 @@ const ProductsTab = () => {
           {/* Plans */}
           {(() => {
             const selectedRobotGameGlobal = robotEnabled && formRobotGameId ? robotGames.find(g => Number(g.id) === Number(formRobotGameId)) : null;
-            const isRobotFree = !!selectedRobotGameGlobal?.is_free;
+            const isRobotFree = robotGameIsFreeAdmin(selectedRobotGameGlobal);
 
             return (
               <SectionCard title="Planos / Sub-produtos" icon={Layers} actions={
@@ -944,7 +973,7 @@ const ProductsTab = () => {
           <SectionCard title="Robot Project (Revenda)" icon={Globe}>
             {(() => {
               const selectedRG = robotEnabled && formRobotGameId ? robotGames.find(g => Number(g.id) === Number(formRobotGameId)) : null;
-              const isFree = !!selectedRG?.is_free;
+              const isFree = robotGameIsFreeAdmin(selectedRG);
 
               return (
                 <div className="space-y-4">
@@ -975,7 +1004,7 @@ const ProductsTab = () => {
                             <option value="">Selecione o jogo...</option>
                             {robotGames.map(g => (
                               <option key={g.id} value={g.id}>
-                                {g.name} {g.status === "off" ? "(OFF)" : ""} {g.is_free ? "(FREE)" : ""}
+                                {g.name} {g.status === "off" ? "(OFF)" : ""} {robotGameIsFreeAdmin(g) ? "(FREE)" : ""}
                               </option>
                             ))}
                           </select>
@@ -1016,7 +1045,18 @@ const ProductsTab = () => {
                       {!isFree && (
                         <div>
                           <label className="mb-1.5 block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Markup %</label>
-                          <input type="number" value={formRobotMarkup || ""} onChange={(e) => setFormRobotMarkup(Number(e.target.value) || null)}
+                          <input
+                            type="number"
+                            value={formRobotMarkup === null || formRobotMarkup === undefined ? "" : String(formRobotMarkup)}
+                            onChange={(e) => {
+                              const raw = e.target.value;
+                              if (raw === "") {
+                                setFormRobotMarkup(null);
+                                return;
+                              }
+                              const n = Number(raw);
+                              setFormRobotMarkup(Number.isFinite(n) ? n : null);
+                            }}
                             min="0" max="500" step="1" placeholder="Ex: 30 (30% de lucro)" className={inputClass} />
                           <p className="text-[10px] text-muted-foreground/50 mt-1.5">Preço API × câmbio × (1 + markup/100). 40% volta como cashback.</p>
                         </div>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAdminProductsList } from "@/hooks/useAdminData";
 import { supabase } from "@/integrations/supabase/client";
-import { useAdminUsers } from "@/hooks/useAdminUsers";
+import { useAdminUsers, type AdminUser } from "@/hooks/useAdminUsers";
 import { toast } from "@/hooks/use-toast";
 import {
   Plus, Trash2, Loader2, Search, ChevronDown, ChevronRight,
@@ -80,9 +80,19 @@ const ResellersTab = () => {
       .order("created_at", { ascending: false });
 
     if (!error && data) {
-      const enriched = (data as any[]).map((r: any) => {
-        const user = adminUsersData.find((u: any) => u.id === r.user_id);
-        return { ...r, username: user?.username || null, email: user?.email || "?" };
+      const enriched: Reseller[] = data.map((r) => {
+        const user = adminUsersData.find((u: AdminUser) => u.id === r.user_id);
+        return {
+          id: r.id,
+          user_id: r.user_id,
+          discount_percent: r.discount_percent ?? 0,
+          active: r.active ?? false,
+          expires_at: r.expires_at,
+          total_purchases: r.total_purchases ?? 0,
+          created_at: r.created_at ?? "",
+          username: user?.username ?? undefined,
+          email: user?.email ?? "?",
+        };
       });
       setResellers(enriched);
     }
@@ -97,11 +107,11 @@ const ResellersTab = () => {
   const searchUsers = async () => {
     if (searchEmail.trim().length < 2) return;
     setSearching(true);
-    const users = adminUsersData.filter((u: any) =>
+    const users = adminUsersData.filter((u: AdminUser) =>
       u.email?.toLowerCase().includes(searchEmail.toLowerCase()) ||
       u.username?.toLowerCase().includes(searchEmail.toLowerCase())
     );
-    setSearchResults(users.slice(0, 5).map((u: any) => ({ id: u.id, email: u.email, username: u.username || "" })));
+    setSearchResults(users.slice(0, 5).map((u: AdminUser) => ({ id: u.id, email: u.email, username: u.username || "" })));
     setSearching(false);
   };
 
@@ -166,20 +176,22 @@ const ResellersTab = () => {
     ]);
 
     if (prodRes.data) {
-      setResellerProducts(prev => ({ ...prev, [reseller.id]: (prodRes.data as any[]).map((p: any) => p.product_id) }));
+      setResellerProducts(prev => ({
+        ...prev,
+        [reseller.id]: prodRes.data.map((p: { product_id: string }) => p.product_id),
+      }));
     }
 
     if (purchRes.data) {
-      // Enrich with plan names
-      const purchases = (purchRes.data as any[]).map((p: any) => ({
+      const purchases: Purchase[] = purchRes.data.map((p) => ({
         id: p.id,
-        original_price: p.original_price,
-        paid_price: p.paid_price,
-        created_at: p.created_at,
+        original_price: p.original_price ?? 0,
+        paid_price: p.paid_price ?? 0,
+        created_at: p.created_at ?? "",
         plan_name: "",
         stock_content: "",
       }));
-      setResellerPurchases(prev => ({ ...prev, [reseller.id]: purchases }));
+      setResellerPurchases((prev) => ({ ...prev, [reseller.id]: purchases }));
     }
 
     // Set edit state

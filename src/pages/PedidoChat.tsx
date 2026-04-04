@@ -3,39 +3,29 @@ import { useParams, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import type { Tables } from "@/integrations/supabase/types";
+import { asOrderTicketMetadata } from "@/types/orderTicketMetadata";
+import {
+  mapTicketMessageRow,
+  mapTicketMessageRows,
+  parseOrderTicketRealtimePatch,
+  parseTicketMessageRealtime,
+  type TicketChatMessage,
+} from "@/types/ticketChat";
 import { ArrowLeft, Copy, Check, Eye, EyeOff, Loader2, Lock, MessageSquare, Package, Send, ShieldCheck, Calendar, Hash, DollarSign, Clock, CreditCard, Star, BookOpen, FolderDown, Download, ExternalLink, Mail, KeyRound, ChevronDown, ChevronUp, CheckCircle, Paperclip, X, FileText, Mic, Square, Trash2 } from "lucide-react";
 import { useAudioRecorder, formatDuration } from "@/hooks/useAudioRecorder";
 import { motion } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
 import AudioMessagePlayer from "@/components/AudioMessagePlayer";
 
-interface TicketData {
-  id: string;
-  user_id: string;
-  product_id: string;
-  product_plan_id: string;
-  stock_item_id: string | null;
-  status: string;
-  status_label: string;
-  created_at: string;
-  metadata?: any;
-}
-
-interface Message {
-  id: string;
-  ticket_id: string;
-  sender_id: string;
-  sender_role: string;
-  message: string;
-  created_at: string;
-}
+type TicketData = Tables<"order_tickets">;
 
 const PedidoChat = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const [ticket, setTicket] = useState<TicketData | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<TicketChatMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
@@ -68,7 +58,7 @@ const PedidoChat = () => {
   const [showReviewModal, setShowReviewModal] = useState(false);
 
   // Only staff can close — chat is locked only on closed/banned/finished
-  const isLocked = ticket && ["closed", "banned", "finished"].includes(ticket.status);
+  const isLocked = ticket && ["closed", "banned", "finished"].includes(ticket.status ?? "");
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/");
@@ -84,9 +74,9 @@ const PedidoChat = () => {
         .maybeSingle();
 
       if (!ticketData) { setLoading(false); return; }
-      setTicket(ticketData as any);
+      setTicket(ticketData);
 
-      const meta = ticketData.metadata as any;
+      const meta = asOrderTicketMetadata(ticketData.metadata);
       const isLzt = meta?.type === "lzt-account";
       const isRobot = meta?.type === "robot-project";
 
@@ -106,32 +96,29 @@ const PedidoChat = () => {
         setPlanName(gameLabel);
         setPlanPrice(meta?.price_paid || meta?.sell_price || 0);
       } else if (isRobot) {
-        if (prodRes.data) setProductName((prodRes.data as any).name);
+        if (prodRes.data) setProductName(prodRes.data.name);
         if (planRes.data) {
-          const duration = meta?.duration;
-          setPlanName(duration ? `${(planRes.data as any).name} (${duration} dias)` : (planRes.data as any).name);
-          setPlanPrice((planRes.data as any).price);
+          const duration = meta.duration;
+          setPlanName(duration ? `${planRes.data.name} (${duration} dias)` : planRes.data.name);
+          setPlanPrice(planRes.data.price);
         }
-        // If key is in metadata, use it directly as stock content
-        // Free games may not have a key (API change: no more APIF-000 keys)
-        if (meta?.key && !ticketData.stock_item_id) {
+        // Gratuito Robot: só loader / conta no app — não exibir chave (mesmo legado com key em metadata)
+        if (meta?.is_free) {
+          setIsFreeNoKey(true);
+        } else if (meta?.key && !ticketData.stock_item_id) {
           setStockContent(`Key: ${meta.key}`);
         }
-        // Detect free game without key — show download/loader instructions instead
-        if (meta?.is_free && !meta?.key && !ticketData.stock_item_id) {
-          setIsFreeNoKey(true);
-        }
       } else {
-        if (prodRes.data) setProductName((prodRes.data as any).name);
+        if (prodRes.data) setProductName(prodRes.data.name);
         if (planRes.data) {
-          setPlanName((planRes.data as any).name);
-          setPlanPrice((planRes.data as any).price);
+          setPlanName(planRes.data.name);
+          setPlanPrice(planRes.data.price);
         }
       }
       // Always load tutorial from product_tutorials table first
       if (tutorialRes.data) {
-        setTutorialText((tutorialRes.data as any).tutorial_text || null);
-        setTutorialFileUrl((tutorialRes.data as any).tutorial_file_url || null);
+        setTutorialText(tutorialRes.data.tutorial_text || null);
+        setTutorialFileUrl(tutorialRes.data.tutorial_file_url || null);
       }
       // For Robot products, also use download_url from metadata if product_tutorials has no file
       if (isRobot && meta?.download_url && !tutorialRes.data?.tutorial_file_url) {
@@ -140,16 +127,16 @@ const PedidoChat = () => {
           setTutorialText(`Arquivo: ${meta.file_name}`);
         }
       }
-      if (messagesRes.data) setMessages(messagesRes.data as any[]);
+      if (messagesRes.data) setMessages(mapTicketMessageRows(messagesRes.data));
 
-      if (ticketData.stock_item_id) {
+      if (ticketData.stock_item_id && !asOrderTicketMetadata(ticketData.metadata).is_free) {
         const { data: stockData } = await supabase
           .from("stock_items")
           .select("content")
           .eq("id", ticketData.stock_item_id)
           .maybeSingle();
         if (stockData) {
-          const raw = (stockData as any).content;
+          const raw = stockData.content;
           setStockContent(typeof raw === "string" ? raw : JSON.stringify(raw));
         }
       }
@@ -162,9 +149,13 @@ const PedidoChat = () => {
         .eq("user_id", user.id)
         .maybeSingle();
       if (reviewData) {
-        setExistingReview(reviewData as any);
-        setReviewRating((reviewData as any).rating);
-        setReviewComment((reviewData as any).comment || "");
+        setExistingReview({
+          id: reviewData.id,
+          rating: reviewData.rating,
+          comment: reviewData.comment,
+        });
+        setReviewRating(reviewData.rating);
+        setReviewComment(reviewData.comment || "");
       }
       setLoadingReview(false);
 
@@ -187,8 +178,8 @@ const PedidoChat = () => {
         filter: `ticket_id=eq.${id}`,
       }, (payload) => {
         setMessages((prev) => {
-          const newMsg = payload.new as Message;
-          if (prev.some(m => m.id === newMsg.id)) return prev;
+          const newMsg = parseTicketMessageRealtime(payload.new);
+          if (!newMsg || prev.some((m) => m.id === newMsg.id)) return prev;
           return [...prev, newMsg];
         });
       })
@@ -198,7 +189,10 @@ const PedidoChat = () => {
         table: "order_tickets",
         filter: `id=eq.${id}`,
       }, (payload) => {
-        setTicket(payload.new as any);
+        const patch = parseOrderTicketRealtimePatch(payload.new);
+        if (patch?.id) {
+          setTicket((prev) => (prev && patch.id === prev.id ? { ...prev, ...patch } : prev));
+        }
       })
       .subscribe();
 
@@ -211,11 +205,12 @@ const PedidoChat = () => {
         .eq("ticket_id", id)
         .order("created_at", { ascending: true });
       if (data && !cancelled) {
-        setMessages(prev => {
-          if (data.length !== prev.length) return data as Message[];
-          const lastNew = data[data.length - 1];
+        setMessages((prev) => {
+          const mapped = mapTicketMessageRows(data);
+          if (mapped.length !== prev.length) return mapped;
+          const lastNew = mapped[mapped.length - 1];
           const lastOld = prev[prev.length - 1];
-          if (lastNew && lastOld && lastNew.id !== lastOld.id) return data as Message[];
+          if (lastNew && lastOld && lastNew.id !== lastOld.id) return mapped;
           return prev;
         });
       }
@@ -326,7 +321,8 @@ const PedidoChat = () => {
       if (error) {
         toast({ title: "Erro ao enviar", description: error.message, variant: "destructive" });
       } else if (insertedMsg) {
-        setMessages(prev => prev.some(m => m.id === insertedMsg.id) ? prev : [...prev, insertedMsg as Message]);
+        const mapped = mapTicketMessageRow(insertedMsg);
+        setMessages((prev) => (prev.some((m) => m.id === mapped.id) ? prev : [...prev, mapped]));
       }
     } catch (err: any) {
       toast({ title: "Erro", description: err?.message || "Erro ao enviar áudio", variant: "destructive" });
@@ -379,7 +375,8 @@ const PedidoChat = () => {
       if (error) {
         toast({ title: "Erro ao enviar", description: error.message, variant: "destructive" });
       } else if (insertedMsg) {
-        setMessages(prev => prev.some(m => m.id === insertedMsg.id) ? prev : [...prev, insertedMsg as Message]);
+        const mapped = mapTicketMessageRow(insertedMsg);
+        setMessages((prev) => (prev.some((m) => m.id === mapped.id) ? prev : [...prev, mapped]));
       }
       setNewMessage("");
     } catch (err: any) {
@@ -418,7 +415,7 @@ const PedidoChat = () => {
       if (error) {
         toast({ title: "Erro", description: error.message, variant: "destructive" });
       } else if (data) {
-        setExistingReview(data as any);
+        setExistingReview({ id: data.id, rating: data.rating, comment: data.comment });
         toast({ title: "Avaliação enviada!" });
       }
     }
@@ -590,7 +587,7 @@ const PedidoChat = () => {
       const emailPassword = typeof emailVal === "object" && emailVal?.password ? emailVal.password : "";
       
       // Detect game from credential JSON or from ticket metadata
-      const game = creds.game || (ticket?.metadata as any)?.game || "";
+      const game = creds.game || asOrderTicketMetadata(ticket?.metadata).game || "";
       const cfg = getGameConfig(game);
       
       return (
@@ -875,9 +872,11 @@ const PedidoChat = () => {
               <div className="min-w-0">
                 <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Data</p>
                 <p className="text-sm font-bold text-foreground truncate">
-                  {new Date(ticket.created_at).toLocaleDateString("pt-BR", {
-                    day: "2-digit", month: "2-digit", year: "numeric"
-                  })}
+                  {ticket.created_at
+                    ? new Date(ticket.created_at).toLocaleDateString("pt-BR", {
+                        day: "2-digit", month: "2-digit", year: "numeric",
+                      })
+                    : "—"}
                 </p>
               </div>
             </div>
@@ -905,7 +904,9 @@ const PedidoChat = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-foreground">Parabéns! Seu produto foi entregue 🎉</p>
-                  <p className="text-[10px] text-muted-foreground">{isFreeNoKey && !stockContent ? "Clique para ver instruções de download" : "Clique para ver sua chave, tutorial e arquivos"}</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {isFreeNoKey ? "Clique para baixar o loader e ver instruções" : "Clique para ver sua chave, tutorial e arquivos"}
+                  </p>
                 </div>
                 <div className={`flex h-7 w-7 items-center justify-center rounded-lg border border-success/30 bg-success/10 transition-transform duration-300 shrink-0 ${expandedSection === "delivery" ? "rotate-180" : ""}`}>
                   <ChevronDown className="h-3.5 w-3.5 text-success" />
@@ -921,15 +922,31 @@ const PedidoChat = () => {
                 >
                   <div className="p-4 space-y-4">
                     {/* Free game without key — loader instructions */}
-                    {isFreeNoKey && !stockContent && (
+                    {isFreeNoKey && (
                       <div>
                         <p className="text-[11px] font-bold uppercase tracking-wider text-success mb-2 flex items-center gap-1.5">
                           <Download className="h-3.5 w-3.5" />
                           Produto Gratuito
                         </p>
-                        <div className="rounded-xl border border-success/20 bg-card p-4 text-sm text-foreground space-y-2">
-                          <p>📥 Faça o download do programa abaixo e crie sua conta diretamente no loader.</p>
-                          <p className="text-muted-foreground text-xs">Não é necessário ativação de chave — basta criar conta e logar!</p>
+                        <div className="rounded-xl border border-success/20 bg-card p-4 text-sm text-foreground space-y-3">
+                          <p>Baixe o loader e abra o programa — crie sua conta ali. <strong>Não use chave</strong> no modo gratuito.</p>
+                          <p className="text-muted-foreground text-xs">Se o download não iniciar sozinho, use o botão abaixo ou o link em &quot;Arquivo&quot;.</p>
+                          {tutorialFileUrl && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const a = document.createElement("a");
+                                a.href = tutorialFileUrl;
+                                a.target = "_blank";
+                                a.rel = "noopener noreferrer";
+                                a.click();
+                              }}
+                              className="flex w-full items-center justify-center gap-2 rounded-xl bg-success py-3 text-sm font-bold text-success-foreground transition-opacity hover:opacity-95"
+                            >
+                              <Download className="h-4 w-4" />
+                              Baixar loader agora
+                            </button>
+                          )}
                         </div>
                       </div>
                     )}

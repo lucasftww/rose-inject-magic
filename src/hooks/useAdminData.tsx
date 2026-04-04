@@ -3,6 +3,12 @@ import { supabase, supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/
 import { useCallback } from "react";
 import { safeJsonFetch } from "@/lib/apiUtils";
 import type { PixPaymentVerifyResult } from "@/lib/edgeFunctionTypes";
+import {
+  mapProductStatusRows,
+  parseAdminProductsWithPlans,
+  type AdminProductWithPlansRow,
+  type ProductStatusListItem,
+} from "@/types/supabaseQueryResults";
 
 /**
  * Shared admin data hooks using React Query.
@@ -32,13 +38,13 @@ export function useAdminProductsList() {
 export function useAdminProductsWithPlans() {
   return useQuery({
     queryKey: ["admin", "products-with-plans"],
-    queryFn: async () => {
+    queryFn: async (): Promise<AdminProductWithPlansRow[]> => {
       const { data, error } = await supabase
         .from("products")
         .select("id, name, image_url, sort_order, active, description, features_text, game_id, status, status_label, status_updated_at, robot_game_id, robot_markup_percent, product_plans(*)")
         .order("sort_order", { ascending: true });
       if (error) throw error;
-      return data ?? [];
+      return parseAdminProductsWithPlans(data ?? []);
     },
     staleTime: ADMIN_STALE_TIME,
   });
@@ -64,20 +70,13 @@ export function useAdminGames() {
 export function useAdminProductsStatus() {
   return useQuery({
     queryKey: ["admin", "products-status"],
-    queryFn: async () => {
+    queryFn: async (): Promise<ProductStatusListItem[]> => {
       const { data, error } = await supabase
         .from("products")
         .select("id, name, image_url, status, status_label, games(name)")
         .order("sort_order");
       if (error) throw error;
-      return (data ?? []).map((p: any) => ({
-        id: p.id,
-        name: p.name,
-        image_url: p.image_url,
-        status: p.status,
-        status_label: p.status_label,
-        game_name: p.games?.name || "",
-      }));
+      return mapProductStatusRows(data ?? []);
     },
     staleTime: ADMIN_STALE_TIME,
   });

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Tables } from "@/integrations/supabase/types";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, QrCode, CreditCard, Bitcoin } from "lucide-react";
 
@@ -8,6 +9,15 @@ interface PaymentSetting {
   method: string;
   enabled: boolean;
   label: string;
+}
+
+function mapPaymentSettingRow(r: Tables<"payment_settings">): PaymentSetting {
+  return {
+    id: r.id,
+    method: r.method,
+    enabled: r.enabled ?? false,
+    label: r.label ?? r.method,
+  };
 }
 
 const methodIcons: Record<string, typeof QrCode> = {
@@ -26,7 +36,11 @@ const PaymentsTab = () => {
       .from("payment_settings")
       .select("*")
       .order("method");
-    if (!error && data) setSettings(data as PaymentSetting[]);
+    if (error) {
+      toast({ title: "Erro ao carregar métodos de pagamento", description: error.message, variant: "destructive" });
+    } else if (data) {
+      setSettings(data.map(mapPaymentSettingRow));
+    }
     setLoading(false);
   };
 

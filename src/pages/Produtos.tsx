@@ -5,6 +5,7 @@ import { Search, SlidersHorizontal, DollarSign, ArrowLeft, Loader2, Package, Tag
 import { Skeleton } from "@/components/ui/Skeleton";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
+import type { Tables } from "@/integrations/supabase/types";
 import { useReseller } from "@/hooks/useReseller";
 
 // Local game images
@@ -391,6 +392,31 @@ interface ProductFromDB {
   _stockCount?: number;
 }
 
+type ProductWithPlansRow = Tables<"products"> & {
+  product_plans: Tables<"product_plans">[] | null;
+};
+
+function mapProductWithPlansToCatalog(row: ProductWithPlansRow): ProductFromDB {
+  return {
+    id: row.id,
+    game_id: row.game_id ?? "",
+    name: row.name,
+    description: row.description,
+    image_url: row.image_url,
+    active: row.active ?? false,
+    sort_order: row.sort_order ?? 0,
+    created_at: row.created_at,
+    robot_game_id: row.robot_game_id,
+    product_plans: (row.product_plans ?? []).map((p) => ({
+      id: p.id,
+      name: p.name,
+      price: Number(p.price ?? 0),
+      active: p.active ?? false,
+      sort_order: p.sort_order ?? 0,
+    })),
+  };
+}
+
 const finitePlanPrice = (p: ProductPlan) => {
   const n = Number(p.price);
   return Number.isFinite(n) ? n : 0;
@@ -717,10 +743,20 @@ const Produtos = () => {
       }
 
       const countMap: Record<string, number> = {};
-      (productsRes.data || []).forEach((p: { game_id: string | null }) => {
-        if (p.game_id) countMap[p.game_id] = (countMap[p.game_id] || 0) + 1;
+      (productsRes.data || []).forEach((p) => {
+        const gid = p.game_id;
+        if (gid) countMap[gid] = (countMap[gid] || 0) + 1;
       });
-      setGames((gamesRes.data || []).map((g) => ({ ...g, slug: g.slug ?? '', active: g.active ?? false, sort_order: g.sort_order ?? 0, product_count: countMap[g.id] || 0 } as GameFromDB)));
+      setGames(
+        (gamesRes.data || []).map((g) => ({
+          id: g.id,
+          name: g.name,
+          slug: g.slug ?? "",
+          image_url: g.image_url,
+          product_count: countMap[g.id] || 0,
+          active: g.active ?? false,
+        })),
+      );
     } catch (e) {
       console.error("loadGames:", e);
       setGames([]);
@@ -749,7 +785,7 @@ const Produtos = () => {
         setProductsError(error.message || "Não foi possível carregar os produtos deste jogo.");
         return;
       }
-      setProducts((data as ProductFromDB[]) ?? []);
+      setProducts((data ?? []).map(mapProductWithPlansToCatalog));
     } catch (e) {
       console.error("loadProductsForGame:", e);
       setProducts([]);

@@ -250,6 +250,48 @@ function shouldKeepItem(item: LztItem, gameType: string, _displayedPriceBrl: num
 
 const globalLztCache = new Map<string, { data: any; expiry: number }>();
 
+function lztTokenFromCredentialRows(rows: unknown[] | null | undefined): string {
+  const byLztKey = new Map<string, string>();
+  for (const r of rows || []) {
+    const row = r as { env_key?: string; value?: string };
+    const k = String(row?.env_key || "");
+    const v = String(row?.value || "").trim();
+    if (k && v) byLztKey.set(k, v);
+  }
+  return byLztKey.get("LZT_API_TOKEN") || byLztKey.get("LZT_MARKET_TOKEN") || "";
+}
+
+/** Short TTL: image-proxy runs very often; avoid hitting DB on every <img> request. */
+let lztTokenMemoryCache: { token: string; expiry: number } | null = null;
+const LZT_TOKEN_MEMORY_TTL_MS = 5 * 60 * 1000;
+
+async function resolveLztTokenMinimal(supabaseUrl: string, serviceRoleKey: string): Promise<string> {
+  const now = Date.now();
+  if (lztTokenMemoryCache && lztTokenMemoryCache.expiry > now) {
+    return lztTokenMemoryCache.token;
+  }
+  const admin = createClient(supabaseUrl, serviceRoleKey);
+  const { data } = await admin
+    .from("system_credentials")
+    .select("env_key, value")
+    .in("env_key", ["LZT_API_TOKEN", "LZT_MARKET_TOKEN"]);
+  const fromDb = lztTokenFromCredentialRows(data);
+  const token =
+    fromDb ||
+    Deno.env.get("LZT_MARKET_TOKEN")?.trim() ||
+    Deno.env.get("LZT_API_TOKEN")?.trim() ||
+    "";
+  if (token) {
+    lztTokenMemoryCache = { token, expiry: now + LZT_TOKEN_MEMORY_TTL_MS };
+  }
+  return token;
+}
+
+function rememberLztToken(token: string) {
+  if (!token) return;
+  lztTokenMemoryCache = { token, expiry: Date.now() + LZT_TOKEN_MEMORY_TTL_MS };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -267,79 +309,21 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const authHeader = req.headers.get("Authorization");
-
-    // Helper: authenticate user (returns null if not authenticated)
-    const getAuthUser = async () => {
-      try {
-        if (!authHeader?.startsWith("Bearer ")) return null;
-        const supabaseUser = createClient(supabaseUrl, anonKey, {
-          global: { headers: { Authorization: authHeader } },
-        });
-        const { data, error } = await supabaseUser.auth.getUser();
-        if (error || !data) return null;
-        return data.user;
-      } catch (e) {
-        console.warn("getAuthUser failed:", e);
-        return null;
-      }
-    };
-
-    // Fetch LZT token from system_credentials table
-    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
-
-    // Update rates and fetch configs in parallel with overall timeout
-    try {
-      console.log("Starting backend fetch tasks...");
-      await Promise.race([
-        updateRates(),
-        new Promise((_, reject) => setTimeout(() => reject(new Error("Rates timeout")), 5000))
-      ]).catch(e => console.warn("Rates fetch timed out or failed:", e));
-    } catch (e) { 
-      console.warn("Critical error in rate update loop:", e);
-    }
-
-    const [lztCredsRes, lztConfigRow] = await Promise.all([
-      supabaseAdmin.from("system_credentials").select("env_key, value").in("env_key", ["LZT_API_TOKEN", "LZT_MARKET_TOKEN"]),
-      supabaseAdmin.from("lzt_config").select("max_fetch_price, currency, markup_multiplier, markup_valorant, markup_lol, markup_fortnite, markup_minecraft").limit(1).maybeSingle(),
-    ]);
-
-    const byLztKey = new Map<string, string>();
-    for (const r of lztCredsRes?.data || []) {
-      const k = String((r as { env_key?: string }).env_key || "");
-      const v = String((r as { value?: string }).value || "").trim();
-      if (k && v) byLztKey.set(k, v);
-    }
-    const tokenFromDb = byLztKey.get("LZT_API_TOKEN") || byLztKey.get("LZT_MARKET_TOKEN") || "";
-
-    const token =
-      tokenFromDb ||
-      Deno.env.get("LZT_MARKET_TOKEN")?.trim() ||
-      Deno.env.get("LZT_API_TOKEN")?.trim() ||
-      "";
-
-    if (!token) {
-      console.error("LZT token missing: configure system_credentials or LZT_MARKET_TOKEN / LZT_API_TOKEN secret");
-      return new Response(JSON.stringify({ error: "LZT token not configured" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    console.log("Authentication and credentials loaded successfully");
 
     const url = new URL(req.url);
     const action = url.searchParams.get("action") || "list";
-    const itemId = url.searchParams.get("item_id");
-    const gameType = url.searchParams.get("game_type") || "riot";
-    const previewMode = url.searchParams.get("preview") === "1";
-    const requestedLimit = Number(url.searchParams.get("limit") || (previewMode ? "6" : "0"));
-    const responseLimit = Number.isFinite(requestedLimit)
-      ? Math.max(0, Math.min(Math.trunc(requestedLimit), 24))
-      : 0;
 
-    // IMAGE PROXY: Public read for allowlisted hosts only (<img src> cannot send user JWT).
-    // LZT image hosts still use the market Bearer token upstream.
+    // IMAGE PROXY FIRST: skip FX rates + lzt_config (many parallel <img> hits per page).
     if (action === "image-proxy") {
+      const token = await resolveLztTokenMinimal(supabaseUrl, serviceRoleKey);
+      if (!token) {
+        console.error("LZT token missing: configure system_credentials or LZT_MARKET_TOKEN / LZT_API_TOKEN secret");
+        return new Response(JSON.stringify({ error: "LZT token not configured" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       const imageUrl = url.searchParams.get("url");
       if (!imageUrl) {
         return new Response(JSON.stringify({ error: "url parameter required" }), {
@@ -389,6 +373,69 @@ Deno.serve(async (req) => {
         },
       });
     }
+
+    const authHeader = req.headers.get("Authorization");
+
+    // Helper: authenticate user (returns null if not authenticated)
+    const getAuthUser = async () => {
+      try {
+        if (!authHeader?.startsWith("Bearer ")) return null;
+        const supabaseUser = createClient(supabaseUrl, anonKey, {
+          global: { headers: { Authorization: authHeader } },
+        });
+        const { data, error } = await supabaseUser.auth.getUser();
+        if (error || !data) return null;
+        return data.user;
+      } catch (e) {
+        console.warn("getAuthUser failed:", e);
+        return null;
+      }
+    };
+
+    // Fetch LZT token from system_credentials table
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
+
+    // Update rates and fetch configs in parallel with overall timeout
+    try {
+      console.log("Starting backend fetch tasks...");
+      await Promise.race([
+        updateRates(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("Rates timeout")), 5000))
+      ]).catch(e => console.warn("Rates fetch timed out or failed:", e));
+    } catch (e) { 
+      console.warn("Critical error in rate update loop:", e);
+    }
+
+    const [lztCredsRes, lztConfigRow] = await Promise.all([
+      supabaseAdmin.from("system_credentials").select("env_key, value").in("env_key", ["LZT_API_TOKEN", "LZT_MARKET_TOKEN"]),
+      supabaseAdmin.from("lzt_config").select("max_fetch_price, currency, markup_multiplier, markup_valorant, markup_lol, markup_fortnite, markup_minecraft").limit(1).maybeSingle(),
+    ]);
+
+    const tokenFromDb = lztTokenFromCredentialRows(lztCredsRes?.data);
+
+    const token =
+      tokenFromDb ||
+      Deno.env.get("LZT_MARKET_TOKEN")?.trim() ||
+      Deno.env.get("LZT_API_TOKEN")?.trim() ||
+      "";
+
+    if (!token) {
+      console.error("LZT token missing: configure system_credentials or LZT_MARKET_TOKEN / LZT_API_TOKEN secret");
+      return new Response(JSON.stringify({ error: "LZT token not configured" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    rememberLztToken(token);
+    console.log("Authentication and credentials loaded successfully");
+
+    const itemId = url.searchParams.get("item_id");
+    const gameType = url.searchParams.get("game_type") || "riot";
+    const previewMode = url.searchParams.get("preview") === "1";
+    const requestedLimit = Number(url.searchParams.get("limit") || (previewMode ? "6" : "0"));
+    const responseLimit = Number.isFinite(requestedLimit)
+      ? Math.max(0, Math.min(Math.trunc(requestedLimit), 24))
+      : 0;
 
     const disabledLztGameTypes = new Set(["steam", "csgo", "cs2"]);
     if (disabledLztGameTypes.has(String(gameType).toLowerCase())) {
@@ -719,6 +766,9 @@ Deno.serve(async (req) => {
 
     const shouldCache = action !== "detail" && action !== "fast-buy" && action !== "change-price" && action !== "image-proxy";
     const cacheKey = apiUrl + "|" + activeMarkup;
+    // Align in-memory + CDN TTL with fresh responses (preview 60s, list 30s; detail bypasses this cache)
+    const listCacheMaxAge = previewMode ? 60 : 30;
+    const listMemoryTtlMs = previewMode ? 60_000 : 30_000;
 
     if (shouldCache) {
       const cached = globalLztCache.get(cacheKey);
@@ -728,7 +778,7 @@ Deno.serve(async (req) => {
           headers: {
             ...corsHeaders,
             "Content-Type": "application/json",
-            "Cache-Control": "public, max-age=60, s-maxage=60",
+            "Cache-Control": `public, max-age=${listCacheMaxAge}, s-maxage=${listCacheMaxAge}`,
           },
         });
       }
@@ -954,8 +1004,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Shorter cache: list cached 30s, detail cached 10s
-    const cacheMaxAge = action === "detail" ? 10 : previewMode ? 60 : 30;
+    // Shorter cache: list 30s (60s preview), detail 10s
+    const cacheMaxAge = action === "detail" ? 10 : listCacheMaxAge;
 
     if (shouldCache) {
       // Free up memory if cache gets too large (>200 items)
@@ -963,7 +1013,7 @@ Deno.serve(async (req) => {
         const oldestKey = globalLztCache.keys().next().value;
         if (oldestKey) globalLztCache.delete(oldestKey);
       }
-      globalLztCache.set(cacheKey, { data, expiry: Date.now() + 30_000 }); // 30s in-memory
+      globalLztCache.set(cacheKey, { data, expiry: Date.now() + listMemoryTtlMs });
     }
 
     return new Response(JSON.stringify(data), {

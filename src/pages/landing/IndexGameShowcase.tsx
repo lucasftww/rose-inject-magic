@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Tables } from "@/integrations/supabase/types";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 
@@ -163,6 +164,22 @@ interface GameFromDB {
   sort_order: number | null;
   active: boolean | null;
   products: { id: string; active: boolean | null }[];
+}
+
+type LandingGameQueryRow = Tables<"games"> & {
+  products: Pick<Tables<"public_products">, "id" | "active">[] | null;
+};
+
+function toLandingGameFromRow(g: LandingGameQueryRow): GameFromDB {
+  return {
+    id: g.id,
+    name: g.name,
+    slug: g.slug,
+    image_url: g.image_url,
+    sort_order: g.sort_order,
+    active: g.active,
+    products: (g.products ?? []).map((p) => ({ id: p.id, active: p.active })),
+  };
 }
 
 // ─── Game Categories for Accounts ───────────────────────────────────────────
@@ -426,7 +443,7 @@ const SoftwareSection = () => {
         .select("id, name, slug, image_url, sort_order, active, products:public_products(id, active)")
         .eq("active", true)
         .order("sort_order", { ascending: true });
-      return (data || []) as GameFromDB[];
+      return (data ?? []).map(toLandingGameFromRow);
     },
     staleTime: 1000 * 60 * 5,
   });
@@ -453,7 +470,7 @@ const SoftwareSection = () => {
       return {
         id: game.id,
         name: game.name,
-        keywords: [game.slug || game.name].filter(Boolean) as string[],
+        keywords: [game.slug || game.name].filter((s): s is string => Boolean(s)),
         image,
         descKey: `products.desc_${slugKey}`,
         fallbackDesc: LANDING_SOFTWARE_BLURB[slug] || `Softwares premium para ${game.name}`,

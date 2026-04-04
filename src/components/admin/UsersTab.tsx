@@ -2,33 +2,12 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminUsers } from "@/hooks/useAdminUsers";
 import { supabase } from "@/integrations/supabase/client";
+import type { UserData } from "@/types/adminUsersPayload";
 import {
   Loader2, Users, Mail, Calendar, Clock, Search, Shield, Ban, ShieldCheck,
   ShieldOff, Globe, RefreshCw, X, Package, Tag
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-
-interface RecentPayment {
-  amount: number; status: string; created_at: string;
-  cart_snapshot: { productName?: string; planName?: string; quantity?: number }[];
-}
-
-interface UserOrder {
-  id: string; product_name: string; product_image: string | null;
-  plan_name: string; plan_price: number; status: string; status_label: string;
-  created_at: string; stock_content: string | null;
-}
-
-interface UserData {
-  id: string; email: string; created_at: string; last_sign_in_at: string | null;
-  email_confirmed_at: string | null; username: string | null; avatar_url: string | null;
-  banned: boolean; banned_at: string | null; banned_reason: string | null;
-  roles: string[]; provider: string;
-  login_ips: { ip_address: string; logged_at: string }[];
-  total_spent: number; total_orders: number;
-  recent_payments: RecentPayment[];
-  orders: UserOrder[];
-}
 
 const InfoCard = ({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) => (
   <div className="rounded-lg border border-border bg-secondary/30 p-3">
@@ -54,7 +33,7 @@ const UsersTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
 
   useEffect(() => {
     if (!loadingAdminUsers) {
-      setUsers(adminUsersRaw as unknown as UserData[]);
+      setUsers(adminUsersRaw);
       setLoadingUsers(false);
     }
   }, [adminUsersRaw, loadingAdminUsers]);
@@ -104,7 +83,9 @@ const UsersTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
     if (filterStatus === "normal" && (u.banned || roles.includes("admin"))) return false;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      return u.email.toLowerCase().includes(q) || (u.username && u.username.toLowerCase().includes(q));
+      const email = (u.email || "").toLowerCase();
+      const uname = (u.username || "").toLowerCase();
+      return email.includes(q) || uname.includes(q) || u.id.toLowerCase().includes(q);
     }
     return true;
   });
@@ -208,22 +189,22 @@ const UsersTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
               <div>
                 <p className="text-xs font-medium text-muted-foreground mb-1">Roles</p>
                 <div className="flex gap-2">
-                  {selectedUser.roles.length > 0 ? selectedUser.roles.map((r) => (
+                  {Array.isArray(selectedUser.roles) && selectedUser.roles.length > 0 ? selectedUser.roles.map((r) => (
                     <span key={r} className="rounded bg-success/20 px-2 py-0.5 text-xs font-bold text-success">{r}</span>
                   )) : <span className="text-xs text-muted-foreground">Nenhuma role</span>}
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <InfoCard icon={<Tag className="h-4 w-4 text-success" />} label="Total Gasto" value={`R$ ${(selectedUser.total_spent / 100).toFixed(2)}`} />
-                <InfoCard icon={<Package className="h-4 w-4 text-success" />} label="Total de Pedidos" value={String(selectedUser.total_orders)} />
+                <InfoCard icon={<Tag className="h-4 w-4 text-success" />} label="Total Gasto" value={`R$ ${((Number(selectedUser.total_spent) || 0) / 100).toFixed(2)}`} />
+                <InfoCard icon={<Package className="h-4 w-4 text-success" />} label="Total de Pedidos" value={String(Number(selectedUser.total_orders) || 0)} />
               </div>
 
               <div>
                 <p className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
                   <Tag className="h-3.5 w-3.5 text-success" /> Últimas 5 Vendas
                 </p>
-                {selectedUser.recent_payments.length > 0 ? (
+                {Array.isArray(selectedUser.recent_payments) && selectedUser.recent_payments.length > 0 ? (
                   <div className="space-y-1.5">
                     {selectedUser.recent_payments.map((p, i) => (
                       <div key={i} className="flex items-center justify-between rounded bg-secondary/50 px-3 py-2 border border-border">
@@ -251,7 +232,7 @@ const UsersTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
                 <p className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
                   <Globe className="h-3.5 w-3.5 text-success" /> IP de Login
                 </p>
-                {selectedUser.login_ips.length > 0 ? (
+                {Array.isArray(selectedUser.login_ips) && selectedUser.login_ips.length > 0 ? (
                   <div className="space-y-1.5">
                     {selectedUser.login_ips.map((ip, i) => (
                       <div key={i} className="flex items-center justify-between rounded bg-secondary/50 px-3 py-1.5 border border-border">
@@ -297,7 +278,7 @@ const UsersTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
                     )
                   )}
                   {selectedUser.id !== currentUser?.id && (
-                    selectedUser.roles.includes("admin") ? (
+                    (Array.isArray(selectedUser.roles) ? selectedUser.roles : []).includes("admin") ? (
                       <button
                         onClick={() => { executeAction("remove_admin", selectedUser.id); setSelectedUser(null); }}
                         disabled={actionLoading !== null}
@@ -341,20 +322,20 @@ const UsersTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <p className="text-sm font-bold text-foreground truncate">{u.username || u.email.split("@")[0]}</p>
-                {u.roles.includes("admin") && <span className="rounded bg-success/20 px-1.5 py-0.5 text-[10px] font-bold text-success">Admin</span>}
+                <p className="text-sm font-bold text-foreground truncate">{u.username || (u.email ? u.email.split("@")[0] : "—")}</p>
+                {(Array.isArray(u.roles) ? u.roles : []).includes("admin") && <span className="rounded bg-success/20 px-1.5 py-0.5 text-[10px] font-bold text-success">Admin</span>}
                 {u.banned && <span className="rounded bg-destructive/20 px-1.5 py-0.5 text-[10px] font-bold text-destructive">Banido</span>}
               </div>
               <p className="text-xs text-muted-foreground truncate">{u.email}</p>
               <div className="flex items-center gap-3 mt-1">
-                <span className="text-[10px] text-success font-semibold">R$ {(u.total_spent / 100).toFixed(2)}</span>
-                <span className="text-[10px] text-muted-foreground">{u.total_orders} pedido{u.total_orders !== 1 ? "s" : ""}</span>
+                <span className="text-[10px] text-success font-semibold">R$ {((Number(u.total_spent) || 0) / 100).toFixed(2)}</span>
+                <span className="text-[10px] text-muted-foreground">{Number(u.total_orders) || 0} pedido{(Number(u.total_orders) || 0) !== 1 ? "s" : ""}</span>
               </div>
             </div>
             <div className="hidden sm:flex flex-col items-end gap-0.5 shrink-0">
               <p className="text-[10px] text-muted-foreground">Criado: {formatDate(u.created_at)}</p>
               <p className="text-[10px] text-muted-foreground">Login: {formatDate(u.last_sign_in_at)}</p>
-              {u.login_ips.length > 0 && <p className="text-[10px] font-mono text-muted-foreground/60">{u.login_ips[0].ip_address}</p>}
+              {Array.isArray(u.login_ips) && u.login_ips.length > 0 && <p className="text-[10px] font-mono text-muted-foreground/60">{u.login_ips[0].ip_address}</p>}
             </div>
           </button>
         ))}

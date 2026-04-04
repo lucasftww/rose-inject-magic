@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import type { PostgrestError } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import type { Tables } from "@/integrations/supabase/types";
 import { fetchAllRows } from "@/lib/supabaseAllRows";
+import { asOrderTicketMetadata } from "@/types/orderTicketMetadata";
+import { isRecord } from "@/types/ticketChat";
 import { Loader2, DollarSign, TrendingUp, Settings, Save, ShoppingCart, RefreshCw, Copy, ExternalLink, ChevronLeft, ChevronRight, Search, Gamepad2, Tag } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
@@ -39,6 +42,27 @@ const DEFAULT_CONFIG: LztConfig = {
   markup_fortnite: 3,
   markup_minecraft: 3,
 };
+
+function mapLztConfigRow(row: Tables<"lzt_config"> | null | undefined): Partial<LztConfig> | null {
+  if (!row) return null;
+  const mult = row.markup_multiplier ?? 3;
+  return {
+    id: row.id,
+    markup_multiplier: Number(row.markup_multiplier ?? mult),
+    max_fetch_price: Number(row.max_fetch_price ?? 500),
+    currency: row.currency || "rub",
+    markup_valorant: Number(row.markup_valorant ?? mult),
+    markup_lol: Number(row.markup_lol ?? mult),
+    markup_fortnite: Number(row.markup_fortnite ?? mult),
+    markup_minecraft: Number(row.markup_minecraft ?? mult),
+  };
+}
+
+function parseAdminLztStatsPayload(data: unknown): Record<string, unknown> | null {
+  return isRecord(data) ? data : null;
+}
+
+type LztTicketFallbackRow = Pick<Tables<"order_tickets">, "id" | "metadata" | "created_at">;
 
 const gameMarkupFields = [
   { key: "markup_valorant" as const, label: "Valorant", color: "text-destructive" },
@@ -91,10 +115,12 @@ const LztTab = () => {
 
       const deduped = new Map<string, { lzt_item_id: string; custom_price_brl: number }>();
       for (const row of data || []) {
+        const price = Number(row.custom_price_brl);
+        if (!Number.isFinite(price) || price <= 0) continue;
         if (!deduped.has(row.lzt_item_id)) {
           deduped.set(row.lzt_item_id, {
             lzt_item_id: row.lzt_item_id,
-            custom_price_brl: Number(row.custom_price_brl),
+            custom_price_brl: price,
           });
         }
       }
@@ -129,10 +155,10 @@ const LztTab = () => {
       ]);
 
       if (configRes.error) throw configRes.error;
-      applyConfig((configRes.data as LztConfig | null) || null);
+      applyConfig(mapLztConfigRow(configRes.data));
 
       if (statsRes.error) throw statsRes.error;
-      setDbStats(statsRes.data as Record<string, unknown>);
+      setDbStats(parseAdminLztStatsPayload(statsRes.data));
 
       let sales: LztSale[];
       try {
@@ -146,37 +172,25 @@ const LztTab = () => {
 
       if (sales.length === 0) {
         try {
-          const tickets = await fetchAllRows("order_tickets", {
+          const tickets = await fetchAllRows<LztTicketFallbackRow>("order_tickets", {
             select: "id, metadata, created_at",
             order: { column: "created_at", ascending: false },
           });
-          type TicketRow = { id: string; metadata?: unknown; created_at: string };
-          type LztMeta = {
-            type?: string;
-            lzt_item_id?: string;
-            price_paid?: number;
-            sell_price?: number;
-            account_name?: string;
-            title?: string;
-            game?: string | null;
-          };
-          const lztTickets = (tickets as TicketRow[]).filter((t) => {
-            const m = t.metadata as LztMeta | null | undefined;
-            return m?.type === "lzt-account";
-          });
-          sales = lztTickets.map((t) => {
-            const meta = t.metadata as LztMeta | undefined;
+          const lztTickets = tickets.filter((t) => asOrderTicketMetadata(t.metadata).type === "lzt-account");
+          sales = lztTickets.map((t): LztSale => {
+            const meta = asOrderTicketMetadata(t.metadata);
+            const sell = Number(meta.price_paid || meta.sell_price || 0);
             return {
               id: t.id,
-              lzt_item_id: meta?.lzt_item_id || "",
+              lzt_item_id: meta.lzt_item_id != null ? String(meta.lzt_item_id) : "",
               buy_price: 0,
-              sell_price: Number(meta?.price_paid || meta?.sell_price || 0),
-              profit: Number(meta?.price_paid || meta?.sell_price || 0),
-              title: meta?.account_name || meta?.title || "Conta LZT",
-              game: meta?.game || null,
+              sell_price: sell,
+              profit: sell,
+              title: meta.account_name || meta.title || "Conta LZT",
+              game: meta.game ?? null,
               buyer_user_id: null,
-              created_at: t.created_at,
-            } as LztSale;
+              created_at: t.created_at ?? "",
+            };
           });
         } catch {
           sales = [];
@@ -227,7 +241,7 @@ const LztTab = () => {
     };
 
     let error: PostgrestError | null = null;
-    let savedConfig: Partial<LztConfig> | null = null;
+    let savedRow: Tables<"lzt_config"> | null = null;
 
     if (config.id) {
       const result = await supabase
@@ -237,7 +251,7 @@ const LztTab = () => {
         .select("*")
         .single();
       error = result.error;
-      savedConfig = result.data as Partial<LztConfig> | null;
+      savedRow = result.data;
     } else {
       const result = await supabase
         .from("lzt_config")
@@ -245,13 +259,13 @@ const LztTab = () => {
         .select("*")
         .single();
       error = result.error;
-      savedConfig = result.data as Partial<LztConfig> | null;
+      savedRow = result.data;
     }
 
     if (error) toast({ title: "Erro ao salvar", description: error.message, variant: "destructive" });
     else {
       toast({ title: "Configurações salvas!" });
-      applyConfig(savedConfig);
+      applyConfig(mapLztConfigRow(savedRow));
     }
     setSaving(false);
   };

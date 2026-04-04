@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { throwApiError } from "@/lib/apiErrors";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { safeJsonFetch, ApiError } from "@/lib/apiUtils";
 import type { DDragonChampionJson, DDragonVersionList, LztMarketLolDetailResponse } from "@/lib/edgeFunctionTypes";
 import Header from "@/components/Header";
@@ -16,6 +16,8 @@ import { useLztMarkup } from "@/hooks/useLztMarkup";
 import { trackViewContent, trackInitiateCheckout } from "@/lib/metaPixel";
 import { checkLztAvailability } from "@/lib/lztAvailability";
 import { supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
+import { getLztDetailDisplayTitle } from "@/lib/lztDisplayTitles";
+import { lztAccountDetailQueryKey } from "@/lib/lztAccountDetailQuery";
 
 const getProxiedImageUrl = (url: string) => {
   if (!url) return "";
@@ -127,10 +129,11 @@ const LolDetalhes = () => {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const { addItem } = useCart();
+  const queryClient = useQueryClient();
 
   // Fetch account detail
   const { data, isLoading, error } = useQuery({
-    queryKey: ["lzt-account-detail", "lol", id],
+    queryKey: lztAccountDetailQueryKey("lol", id ?? ""),
     queryFn: () => fetchAccountDetail(id!),
     enabled: !!id,
     staleTime: 1000 * 30, // 30 seconds
@@ -224,15 +227,16 @@ const LolDetalhes = () => {
   const orangeEssence = item?.riot_lol_wallet_orange;
   const region = item?.riot_lol_region;
 
-  const cleanedTitle = useMemo(() => {
-    let t = item?.title || "";
-    // Remove cyrillic
-    t = t.replace(/[А-Яа-я]/g, '').trim();
-    if (!t || t.toLowerCase() === "kuki" || t.length < 3) {
-      return `Conta LoL [${rankText}] [Nv. ${level}] [${skinCount} Skins]`;
-    }
-    return t;
-  }, [item?.title, rankText, level, skinCount]);
+  const cleanedTitle = useMemo(
+    () =>
+      getLztDetailDisplayTitle(item?.title, {
+        game: "lol",
+        rankText,
+        level,
+        skinCount,
+      }),
+    [item?.title, rankText, level, skinCount],
+  );
 
   // Se não há skins mas há campeões, muda aba padrão
   useEffect(() => {
@@ -275,10 +279,9 @@ const LolDetalhes = () => {
   const handleBuyNow = async () => {
     if (!item || checkingAvailability) return;
     setCheckingAvailability(true);
-    const available = await checkLztAvailability(String(item.item_id), "lol");
+    const available = await checkLztAvailability(String(item.item_id), "lol", { queryClient });
     setCheckingAvailability(false);
     if (!available) return;
-    const title = `Conta LoL ${rankText} Nv. ${level} | ${champCount} Campeões | ${skinCount} Skins`;
     const priceBRL = getPrice(item, "lol");
 
     trackInitiateCheckout({
@@ -481,8 +484,10 @@ const LolDetalhes = () => {
                   </div>
 
                   <button
+                    type="button"
                     onClick={handleBuyNow}
                     disabled={checkingAvailability}
+                    aria-busy={checkingAvailability}
                     className="group relative flex w-full items-center justify-center gap-2 border-2 px-5 py-3 text-xs font-bold uppercase tracking-[0.25em] rounded-lg transition-all hover:shadow-lg disabled:opacity-60"
                     style={{
                       borderColor: "rgba(255,255,255,0.2)",
@@ -677,8 +682,10 @@ const LolDetalhes = () => {
                 </span>
               </div>
               <button
+                type="button"
                 onClick={handleBuyNow}
                 disabled={checkingAvailability}
+                aria-busy={checkingAvailability}
                 className="flex flex-1 items-center justify-center gap-2 rounded-lg py-3 text-sm font-bold uppercase tracking-wider text-white transition-all active:scale-[0.98] disabled:opacity-60"
                 style={{ background: LOL_BLUE, fontFamily: "'Valorant', sans-serif" }}
               >

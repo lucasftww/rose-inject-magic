@@ -100,7 +100,9 @@ export const fetchAllValorantSkins = async (): Promise<Map<string, SkinEntry>> =
         }
       }
     }
-  } catch { /* ignore */ }
+  } catch (e: unknown) {
+    console.warn("valorant-api skins fetch failed:", e);
+  }
 
   try {
     const res = await fetch("https://valorant-api.com/v1/agents?isPlayableCharacter=true&language=pt-BR");
@@ -112,7 +114,9 @@ export const fetchAllValorantSkins = async (): Promise<Map<string, SkinEntry>> =
         map.set(a.uuid.toLowerCase(), { name: a.displayName, image, rarity: 0 });
       }
     }
-  } catch { /* ignore */ }
+  } catch (e: unknown) {
+    console.warn("valorant-api agents fetch failed:", e);
+  }
 
   try {
     const res = await fetch("https://valorant-api.com/v1/buddies?language=pt-BR");
@@ -128,7 +132,9 @@ export const fetchAllValorantSkins = async (): Promise<Map<string, SkinEntry>> =
         }
       }
     }
-  } catch { /* ignore */ }
+  } catch (e: unknown) {
+    console.warn("valorant-api buddies fetch failed:", e);
+  }
 
   return map;
 };

@@ -34,6 +34,10 @@ const STORAGE_KEY_PH = "_meta_ph";
 const STORAGE_KEY_FN = "_meta_fn";
 const STORAGE_KEY_LN = "_meta_ln";
 
+const devLog = (label: string, err?: unknown) => {
+  if (import.meta.env.DEV) console.debug(`[metaPixel] ${label}`, err);
+};
+
 // ─── SHA-256 Hashing ────────────────────────────────────────────────────────
 
 const sha256 = async (message: string): Promise<string> => {
@@ -43,7 +47,8 @@ const sha256 = async (message: string): Promise<string> => {
     return Array.from(new Uint8Array(hashBuffer))
       .map((b) => b.toString(16).padStart(2, "0"))
       .join("");
-  } catch {
+  } catch (e: unknown) {
+    devLog("sha256 failed", e);
     return "";
   }
 };
@@ -65,7 +70,9 @@ const persistUserData = () => {
     if (_cachedUserData.ph) localStorage.setItem(STORAGE_KEY_PH, _cachedUserData.ph);
     if (_cachedUserData.fn) localStorage.setItem(STORAGE_KEY_FN, _cachedUserData.fn);
     if (_cachedUserData.ln) localStorage.setItem(STORAGE_KEY_LN, _cachedUserData.ln);
-  } catch (_) { /* ignore */ }
+  } catch (e: unknown) {
+    devLog("persistUserData failed", e);
+  }
 };
 
 const restoreUserData = () => {
@@ -81,7 +88,9 @@ const restoreUserData = () => {
     if (ph) _cachedUserData.ph = ph;
     if (fn) _cachedUserData.fn = fn;
     if (ln) _cachedUserData.ln = ln;
-  } catch (_) { /* ignore */ }
+  } catch (e: unknown) {
+    devLog("restoreUserData failed", e);
+  }
 };
 
 // Initialize identity from storage immediately
@@ -197,7 +206,9 @@ export const clearAdvancedMatching = () => {
     localStorage.removeItem(STORAGE_KEY_PH);
     localStorage.removeItem(STORAGE_KEY_FN);
     localStorage.removeItem(STORAGE_KEY_LN);
-  } catch (_) { /* ignore */ }
+  } catch (e: unknown) {
+    devLog("clearAdvancedMatching storage failed", e);
+  }
 };
 
 // ─── First-Party Tracking ID ────────────────────────────────────────────────
@@ -224,7 +235,8 @@ const getOrCreateTrackingId = (): string => {
     const expires = new Date(Date.now() + TRACKING_COOKIE_DAYS * 86400000).toUTCString();
     document.cookie = `${TRACKING_ID_KEY}=${id}; path=/; expires=${expires}; SameSite=Lax; Secure`;
     return id;
-  } catch {
+  } catch (e: unknown) {
+    devLog("getOrCreateTrackingId failed", e);
     return "";
   }
 };
@@ -248,7 +260,9 @@ const setFbcCookie = (fbc: string) => {
   try {
     const expires = new Date(Date.now() + 90 * 86400000).toUTCString();
     document.cookie = `_fbc=${fbc}; path=/; expires=${expires}; SameSite=Lax; Secure`;
-  } catch { /* cookie write failed */ }
+  } catch (e: unknown) {
+    devLog("setFbcCookie failed", e);
+  }
 };
 
 const getFbc = (): string => {
@@ -265,7 +279,9 @@ const getFbc = (): string => {
       try {
         localStorage.setItem("fbclid", fbclidFromUrl);
         sessionStorage.setItem("_ck_fbclid", fbclidFromUrl);
-      } catch { /* storage write failed */ }
+      } catch (e: unknown) {
+        devLog("fbclid storage write failed", e);
+      }
       // Persist as cookie so Meta Pixel can read it
       setFbcCookie(fbc);
       return fbc;
@@ -281,7 +297,9 @@ const getFbc = (): string => {
       setFbcCookie(fbc);
       return fbc;
     }
-  } catch { /* cookie/storage read failed */ }
+  } catch (e: unknown) {
+    devLog("getFbc read failed", e);
+  }
   return "";
 };
 
@@ -292,7 +310,8 @@ const getFbp = (): string => {
   try {
     const fbpMatch = document.cookie.match(/(?:^|;\s*)_fbp=([^;]*)/);
     return fbpMatch?.[1] || "";
-  } catch (_) {
+  } catch (e: unknown) {
+    devLog("getFbp failed", e);
     return "";
   }
 };
@@ -345,7 +364,9 @@ export const getUserData = (): Record<string, string> => {
 
     // Country — always "br" (hashed for CAPI)
     if (_countryHash) data.country = _countryHash;
-  } catch (_) { /* ignore */ }
+  } catch (e: unknown) {
+    devLog("getUserData failed", e);
+  }
   return data;
 };
 
@@ -390,7 +411,7 @@ const sendCAPI = async (
       body,
       keepalive: true,
       credentials: "omit",
-    }).catch(() => { /* ignore */ });
+    }).catch((e: unknown) => devLog("CAPI relay fetch failed", e));
 
     // If fbp or fbc was missing, retry at 1s and 3s (Meta Pixel may need time to set cookies)
     if (!userData.fbp || !userData.fbc) {
@@ -418,12 +439,14 @@ const sendCAPI = async (
               body: retryBody,
               keepalive: true,
               credentials: "omit",
-            }).catch(() => {});
+            }).catch((e: unknown) => devLog("CAPI relay retry failed", e));
           }
         }, delay);
       }
     }
-  } catch (_) { /* ignore */ }
+  } catch (e: unknown) {
+    devLog("sendCAPI failed", e);
+  }
 };
 
 // ─── Event Tracking ─────────────────────────────────────────────────────────
@@ -486,7 +509,9 @@ export const trackPurchase = (
   try {
     if (sessionStorage.getItem(storageKey)) return;
     sessionStorage.setItem(storageKey, eventId);
-  } catch (_) { /* ignore */ }
+  } catch (e: unknown) {
+    devLog("trackPurchase sessionStorage failed", e);
+  }
 
   const customData: Record<string, any> = {
     content_name: data.contentName,
