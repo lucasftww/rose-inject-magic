@@ -2057,6 +2057,12 @@ const Contas = () => {
             <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">
               {streamError ? "Não foi possível carregar a lista. Tente atualizar." : isLoading ? "Buscando contas disponíveis…" : `${allItems.length} ${allItems.length === 1 ? "conta listada" : "contas listadas"} · página ${displayPage} de ${totalDisplayPages}`}
             </p>
+            <p className="mt-2 max-w-2xl text-xs leading-relaxed text-muted-foreground/85">
+              Esta página lista apenas contas do <span className="font-medium text-foreground/80">LZT Market</span> (compra de conta do jogo).
+              Produtos com entrega via <span className="font-medium text-foreground/80">Robot Project</span> (software / loader) estão em{" "}
+              <Link to="/produtos" className="text-success underline-offset-2 hover:underline">Produtos</Link>
+              {" "}— catálogo, preço e checkout diferentes.
+            </p>
           </div>
           <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
             <button
