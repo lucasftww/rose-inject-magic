@@ -773,10 +773,11 @@ const ContaDetalhes = () => {
                 </div>
               </div>
 
-              {/* RIGHT: Purchase + Rank + Stats + Full Acesso */}
+              {/* RIGHT: Purchase + Full Acesso */}
               <div className="lg:col-span-2 space-y-4 sm:space-y-4">
+                <div className="lg:sticky lg:top-20 space-y-4">
                 {/* Title + Purchase */}
-                <div className="rounded-xl border border-border/60 bg-card p-5 sm:p-5 space-y-4">
+                <div className="rounded-xl border border-success/20 bg-card p-5 sm:p-5 space-y-4 shadow-[0_0_40px_hsl(var(--success)/0.05)]">
                   <h1 className="text-lg sm:text-lg font-bold text-foreground leading-snug">{cleanedTitle}</h1>
 
                   <div className="flex flex-wrap gap-2">
@@ -793,32 +794,49 @@ const ContaDetalhes = () => {
                   <div className="space-y-1.5 text-sm text-muted-foreground">
                     <p className="flex items-center gap-2.5"><span className="text-success font-bold">✓</span> Entrega automática</p>
                     <p className="flex items-center gap-2.5"><span className="text-success font-bold">✓</span> Liberação instantânea</p>
+                    <p className="flex items-center gap-2.5"><span className="text-success font-bold">✓</span> Garantia de acesso</p>
                   </div>
 
                   <div className="rounded-xl bg-secondary/30 p-4 flex items-end justify-between">
                     <div>
                       <p className="text-[11px] text-muted-foreground mb-1">Por apenas</p>
-                      <p className="text-2xl sm:text-2xl font-bold text-success">
+                      <p className="text-2xl sm:text-3xl font-bold text-success">
                         {getDisplayPrice(item, "valorant")}
                       </p>
                     </div>
                   </div>
 
                   <button
-                  type="button"
-                  onClick={handleBuyNow}
-                  disabled={checkingAvailability}
-                  aria-busy={checkingAvailability}
-                  className="btn-shine group relative flex w-full items-center justify-center gap-2 rounded-xl bg-success py-3.5 text-sm font-bold uppercase tracking-[0.2em] text-success-foreground transition-all hover:shadow-[0_0_30px_hsl(var(--success)/0.4)] active:scale-[0.98] disabled:opacity-60"
-                  style={{ fontFamily: "'Valorant', sans-serif" }}>
-                  
-                    {checkingAvailability ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+                    type="button"
+                    onClick={handleBuyNow}
+                    disabled={checkingAvailability}
+                    aria-busy={checkingAvailability}
+                    className="btn-shine group relative flex w-full items-center justify-center gap-2.5 rounded-xl bg-success py-4 text-sm font-bold uppercase tracking-[0.2em] text-success-foreground transition-all hover:shadow-[0_0_40px_hsl(var(--success)/0.4)] active:scale-[0.98] disabled:opacity-60"
+                    style={{ fontFamily: "'Valorant', sans-serif" }}
+                  >
+                    {checkingAvailability ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4 group-hover:animate-pulse" />}
                     {checkingAvailability ? "VERIFICANDO..." : "COMPRAR AGORA"}
                   </button>
 
-                  {item.item_id &&
-                <p className="text-[10px] text-muted-foreground/40 text-center break-all">Código: {item.item_id}</p>
-                }
+                  {/* Trust signals */}
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="flex flex-col items-center gap-1.5 rounded-xl bg-secondary/20 py-3 px-2">
+                      <Zap className="h-4 w-4 text-success" />
+                      <span className="text-[9px] sm:text-[10px] text-muted-foreground text-center leading-tight font-medium">Entrega<br/>Instantânea</span>
+                    </div>
+                    <div className="flex flex-col items-center gap-1.5 rounded-xl bg-secondary/20 py-3 px-2">
+                      <Shield className="h-4 w-4 text-success" />
+                      <span className="text-[9px] sm:text-[10px] text-muted-foreground text-center leading-tight font-medium">Pagamento<br/>Seguro</span>
+                    </div>
+                    <div className="flex flex-col items-center gap-1.5 rounded-xl bg-secondary/20 py-3 px-2">
+                      <Star className="h-4 w-4 text-success" />
+                      <span className="text-[9px] sm:text-[10px] text-muted-foreground text-center leading-tight font-medium">Suporte<br/>24/7</span>
+                    </div>
+                  </div>
+
+                  {item.item_id && (
+                    <p className="text-[10px] text-muted-foreground/40 text-center break-all">Código: {item.item_id}</p>
+                  )}
 
                   <div className="grid grid-cols-4 rounded-xl overflow-hidden bg-secondary/20">
                     <HighlightStat label="Skins" value={item.riot_valorant_skin_count ?? 0} />
@@ -829,19 +847,20 @@ const ContaDetalhes = () => {
                 </div>
 
                 {/* Full Acesso */}
-                <div className="rounded-xl border border-border/60 bg-card p-5 sm:p-6 pb-8 sm:pb-14">
+                <div className="rounded-xl border border-border/60 bg-card p-5 sm:p-6">
                   <div className="flex items-center gap-3 mb-4">
-                    <CheckCircle2 className="h-6 w-6 sm:h-8 sm:w-8 text-success" />
-                    <h3 className="text-lg sm:text-xl font-bold text-foreground">Conta FULL ACESSO</h3>
+                    <CheckCircle2 className="h-6 w-6 sm:h-7 sm:w-7 text-success" />
+                    <h3 className="text-base sm:text-lg font-bold text-foreground">Conta FULL ACESSO</h3>
                   </div>
-                  <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
+                  <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
                     Acesso total: email original, alteração de senha e dados, sem enrolação.
                   </p>
-                  <ul className="space-y-3 text-sm text-muted-foreground">
+                  <ul className="space-y-2.5 text-sm text-muted-foreground">
                     <li className="flex items-center gap-3"><span className="text-success text-lg">•</span> Email e senha inclusos</li>
                     <li className="flex items-center gap-3"><span className="text-success text-lg">•</span> Senha alterável</li>
                     <li className="flex items-center gap-3"><span className="text-success text-lg">•</span> Conta verificável</li>
                   </ul>
+                </div>
                 </div>
               </div>
             </div>
