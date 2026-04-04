@@ -94,14 +94,34 @@ function robotAuthHeader(creds: RobotCredentials) {
   return `Basic ${btoa(`${creds.username}:${creds.password}`)}`;
 }
 
-/** Loader URL / filename from Robot GET /games or buy payload (field names vary). */
+/** Loader URL / filename from Robot GET /games or buy payload (field names vary — see Robot API docs). */
 function robotGameDownloadFields(game: Record<string, unknown> | null | undefined): { downloadUrl: string | null; fileName: string | null } {
   if (!game || typeof game !== "object") return { downloadUrl: null, fileName: null };
   const g = game as Record<string, unknown>;
-  const downloadUrl = [g.downloadUrl, g.download_url, g.loaderUrl, g.loader_url].find((v) => typeof v === "string" && (v as string).trim().length > 0) as
-    | string
-    | undefined;
-  const fileName = [g.fileName, g.file_name, g.loaderFileName].find((v) => typeof v === "string" && (v as string).trim().length > 0) as string | undefined;
+  const downloadUrl = [
+    g.downloadUrl,
+    g.download_url,
+    g.loaderUrl,
+    g.loader_url,
+    g.downloadLink,
+    g.download_link,
+    g.programUrl,
+    g.program_url,
+    g.loaderDownload,
+    g.loader_download,
+    g.loaderLink,
+    g.loader_link,
+    g.fileUrl,
+    g.file_url,
+  ].find((v) => typeof v === "string" && (v as string).trim().length > 0) as string | undefined;
+  const fileName = [
+    g.fileName,
+    g.file_name,
+    g.loaderFileName,
+    g.loader_file_name,
+    g.programName,
+    g.program_name,
+  ].find((v) => typeof v === "string" && (v as string).trim().length > 0) as string | undefined;
   return {
     downloadUrl: downloadUrl?.trim() || null,
     fileName: fileName?.trim() || null,
@@ -1209,9 +1229,79 @@ async function fulfillRobotProduct(supabaseAdmin: any, payment: any, item: any, 
 
     const snapDl = robotGameDownloadFields(robotSnapshot.game);
     const snapshotGameFree = robotGameIsFreeFlag(robotSnapshot.game);
-    // Jogos is_free: entrega só o loader — não chama /buy (evita gerar key APIF-… só para “liberar” download)
-    if (snapshotGameFree && snapDl.downloadUrl) {
-      log("INFO", "fulfillRobot", "Free game: skip Robot /buy, loader-only delivery", { robotGameId, duration });
+
+    // Jogos is_free (API Robot): não retornam mais chaves (ex.: prefixo APIF-*). Entrega = apenas link do loader;
+    // o cliente cria conta no loader e entra sem ativação por key. Nunca chamar POST /buy para is_free.
+    if (snapshotGameFree) {
+      let freeDownloadUrl = snapDl.downloadUrl;
+      const freeFileName = snapDl.fileName;
+
+      if (!freeDownloadUrl) {
+        const { data: tutorialRow } = await supabaseAdmin
+          .from("product_tutorials")
+          .select("tutorial_file_url")
+          .eq("product_id", item.productId)
+          .maybeSingle();
+        const tu = tutorialRow?.tutorial_file_url;
+        if (typeof tu === "string") {
+          const t = tu.trim();
+          if (t.startsWith("http://") || t.startsWith("https://")) {
+            freeDownloadUrl = t;
+          }
+        }
+      }
+
+      if (freeDownloadUrl) {
+        log("INFO", "fulfillRobot", "Free game: skip Robot /buy, loader-only delivery", {
+          robotGameId,
+          duration,
+          source: snapDl.downloadUrl ? "robot_api" : "product_tutorial",
+        });
+        const { data: ticket } = await supabaseAdmin
+          .from("order_tickets")
+          .insert({
+            user_id: payment.user_id,
+            product_id: item.productId,
+            product_plan_id: item.planId,
+            stock_item_id: null,
+            status: "delivered",
+            status_label: "Entregue",
+            metadata: {
+              type: "robot-project",
+              robot_game_id: robotGameId,
+              duration,
+              key: null,
+              amount_spent: 0,
+              game_name: robotSnapshot.game?.name || item.productName || "",
+              robot_balance: robotSnapshot.balance,
+              is_free: true,
+              download_url: freeDownloadUrl,
+              file_name: freeFileName,
+              loader_only: true,
+            },
+          })
+          .select("id")
+          .single();
+
+        if (ticket) {
+          let deliveryMsg =
+            `✅ Produto gratuito liberado!\n\n📥 Baixe o loader no link abaixo, crie sua conta no programa e faça login — **não há chave**; a API Robot não emite keys para jogos gratuitos.\n\n📥 **Download:** ${freeDownloadUrl}`;
+          if (freeFileName) deliveryMsg += `\n📄 Arquivo: ${freeFileName}`;
+          await supabaseAdmin.from("ticket_messages").insert({
+            ticket_id: ticket.id,
+            sender_id: payment.user_id,
+            sender_role: "staff",
+            message: deliveryMsg,
+          });
+        }
+        console.log(`Robot fulfillment success (free, skip-buy): gameId=${robotGameId}`);
+        return;
+      }
+
+      const reason =
+        "Jogo gratuito sem URL de download: configure o link do loader na API Robot (GET /games) ou em Tutorial → arquivo do produto.";
+      log("ERROR", "fulfillRobot", "Free game: no loader URL (skip /buy per Robot API)", { robotGameId, duration });
+
       const { data: ticket } = await supabaseAdmin
         .from("order_tickets")
         .insert({
@@ -1219,42 +1309,60 @@ async function fulfillRobotProduct(supabaseAdmin: any, payment: any, item: any, 
           product_id: item.productId,
           product_plan_id: item.planId,
           stock_item_id: null,
-          status: "delivered",
-          status_label: "Entregue",
+          status: "open",
+          status_label: "Entrega Manual",
           metadata: {
             type: "robot-project",
             robot_game_id: robotGameId,
             duration,
-            key: null,
-            amount_spent: 0,
-            game_name: robotSnapshot.game?.name || item.productName || "",
-            robot_balance: robotSnapshot.balance,
             is_free: true,
-            download_url: snapDl.downloadUrl,
-            file_name: snapDl.fileName,
             loader_only: true,
+            error: reason,
           },
         })
         .select("id")
         .single();
 
       if (ticket) {
-        let deliveryMsg =
-          `✅ Produto gratuito liberado!\n\n📥 Baixe o loader no link abaixo e crie sua conta no programa — **não use chave** (modo gratuito).\n\n📥 **Download:** ${snapDl.downloadUrl}`;
-        if (snapDl.fileName) deliveryMsg += `\n📄 Arquivo: ${snapDl.fileName}`;
         await supabaseAdmin.from("ticket_messages").insert({
           ticket_id: ticket.id,
           sender_id: payment.user_id,
           sender_role: "staff",
-          message: deliveryMsg,
+          message:
+            `✅ Pagamento confirmado!\n\n⚠️ Este jogo é **gratuito** na Robot: a API não envia mais chave — só o download do loader. Não encontramos o link automático.\n\nNossa equipe vai enviar o link do loader ou orientação em breve. Enquanto isso, verifique a documentação da API Robot ou o tutorial cadastrado no produto.`,
         });
       }
-      console.log(`Robot fulfillment success (free, skip-buy): gameId=${robotGameId}`);
-      return;
-    }
 
-    if (snapshotGameFree && !snapDl.downloadUrl) {
-      log("WARN", "fulfillRobot", "Free game without downloadUrl on /games; falling back to /buy (key will be suppressed)", { robotGameId });
+      try {
+        const { data: webhookCred } = await supabaseAdmin
+          .from("system_credentials")
+          .select("value")
+          .eq("env_key", "DISCORD_WEBHOOK_URL")
+          .maybeSingle();
+        const wh = webhookCred?.value;
+        if (wh) {
+          await fetch(wh, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              content: "@everyone",
+              embeds: [{
+                title: "⚠️ Jogo Robot gratuito sem URL de loader",
+                description: "A API não retorna chave para free; configure download em GET /games ou tutorial do produto.",
+                color: 0xFF8800,
+                fields: [
+                  { name: "Produto", value: item.productName || "?", inline: true },
+                  { name: "game_id", value: String(robotGameId), inline: true },
+                  { name: "Ticket", value: ticket?.id?.substring(0, 8).toUpperCase() || "—", inline: true },
+                ],
+                timestamp: new Date().toISOString(),
+              }],
+            }),
+          });
+        }
+      } catch (_) { /* ignore */ }
+
+      return;
     }
 
     const buyRes = await fetch(`https://api.robotproject.com.br/buy/${encodeURIComponent(robotGameId)}`, {
@@ -2573,7 +2681,7 @@ Deno.serve(async (req) => {
           ticket_id: ticket.id,
           sender_id: userId,
           sender_role: "staff",
-          message: "🔄 Reprocessando entrega automática da sua key. Aguarde alguns instantes...",
+          message: "🔄 Reprocessando entrega automática. Aguarde alguns instantes...",
         });
 
       const item = {

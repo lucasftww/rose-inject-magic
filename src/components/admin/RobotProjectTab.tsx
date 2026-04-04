@@ -509,6 +509,10 @@ const RobotProjectTab = () => {
         </div>
       </div>
 
+      <p className="mt-3 text-[10px] text-muted-foreground/80 leading-relaxed">
+        Jogos marcados como grátis na API Robot não recebem chave (POST /buy não se aplica): a loja entrega só o link do loader; o cliente registra-se no programa sem ativação por key. Garanta URL de download em GET /games ou no tutorial do produto.
+      </p>
+
       {/* Robot Profit Tracker */}
       <div className="mt-8">
         <div className="flex items-center justify-between mb-4">

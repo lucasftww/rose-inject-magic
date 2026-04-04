@@ -991,7 +991,9 @@ const ProductsTab = () => {
                     <div>
                       <p className="text-sm font-medium text-foreground">Produto via Robot Project</p>
                       <p className="text-[11px] text-muted-foreground">
-                        {isFree ? "Jogo gratuito — sem chaves, apenas download + login no loader" : "Keys geradas automaticamente via API"}
+                        {isFree
+                          ? "Jogo gratuito — a API Robot não retorna chave; só link do loader (GET /games). Cliente cria conta no loader e entra sem key."
+                          : "Keys geradas automaticamente via API (POST /buy)"}
                       </p>
                     </div>
                   </button>

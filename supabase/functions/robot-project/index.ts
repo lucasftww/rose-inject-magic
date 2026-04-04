@@ -144,6 +144,30 @@ Deno.serve(async (req) => {
 
       log("INFO", "buy", "Robot buy request", { game_id, duration });
 
+      // Robot API: jogos is_free não retornam chave; POST /buy não deve ser usado — só loader via GET /games.
+      const gamesRes = await fetch(`${ROBOT_API_URL}/games`, {
+        headers: {
+          Authorization: robotAuthHeader(creds),
+          "Content-Type": "application/json",
+        },
+      });
+      if (gamesRes.ok) {
+        const gamesData = await gamesRes.json();
+        const games = Array.isArray(gamesData) ? gamesData : gamesData.games || [];
+        const g = games.find((x: { id?: unknown }) => Number(x.id) === Number(game_id)) as
+          | { id?: unknown; is_free?: boolean; isFree?: boolean }
+          | undefined;
+        if (g && (g.is_free === true || g.isFree === true)) {
+          return new Response(
+            JSON.stringify({
+              error:
+                "Jogo gratuito: a API Robot não emite chave nem deve receber POST /buy. Use o link do loader em GET /games; o cliente cria conta no loader sem ativação.",
+            }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+      }
+
       const response = await fetch(`${ROBOT_API_URL}/buy/${encodeURIComponent(game_id)}`, {
         method: "POST",
         headers: {
