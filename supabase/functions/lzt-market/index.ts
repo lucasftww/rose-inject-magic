@@ -39,6 +39,8 @@ async function updateRates() {
 const MIN_PRICE_BRL = 20;
 const DEFAULT_MARKUP = 3.0;
 const MIN_INACTIVE_DAYS = 30;
+/** Fortnite: mínimo de dias sem atividade na conta (parâmetro LZT `daybreak`). */
+const FORTNITE_MIN_INACTIVE_DAYS = 90;
 
 type LztItem = Record<string, any>;
 
@@ -222,9 +224,18 @@ function getDisplayedPriceBrl(item: LztItem, overridePrice?: number, gameType?: 
 
 // Fair price ceiling functions kept for potential future use in filtering overpriced items
 
+/** Se a API devolver explicitamente que a conta já foi vendida antes no LZT, removemos da lista/detalhe. */
+function itemFailsNotSoldBeforePolicy(item: LztItem): boolean {
+  const o = item as Record<string, unknown>;
+  if (o.not_sold_before === false || o.notSoldBefore === false) return true;
+  if (o.sold_before === true || o.soldBefore === true) return true;
+  return false;
+}
+
 function shouldKeepItem(item: LztItem, gameType: string, _displayedPriceBrl: number) {
   if (item.buyer) return false;
   if (item.canBuyItem === false) return false;
+  if (itemFailsNotSoldBeforePolicy(item)) return false;
 
   // Inactivity is now enforced by LZT API via `daybreak` parameter.
   // Minimum skins are also enforced by LZT API via `valorant_smin`/`lol_smin`.
@@ -617,11 +628,14 @@ Deno.serve(async (req) => {
         if (val) params.set(p, val);
       }
 
-      // Always enforce minimum 30 days offline (60 for Fortnite) via API param (server-side at LZT)
-      const minDays = gameType === "fortnite" ? 60 : MIN_INACTIVE_DAYS;
+      // Inatividade mínima via `daybreak` na API LZT (Fortnite: 90 dias; demais: 30).
+      const minDays = gameType === "fortnite" ? FORTNITE_MIN_INACTIVE_DAYS : MIN_INACTIVE_DAYS;
       if (!params.get("daybreak") || Number(params.get("daybreak")) < minDays) {
         params.set("daybreak", String(minDays));
       }
+
+      // Todas as categorias: apenas contas que nunca foram vendidas antes no LZT (`nsb`).
+      params.set("nsb", "1");
 
       // Always enforce minimum 3 skins via API params (server-side at LZT)
       if (gameType === "riot" || gameType === "valorant") {

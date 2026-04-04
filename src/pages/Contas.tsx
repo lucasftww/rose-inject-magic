@@ -1686,6 +1686,23 @@ const Contas = () => {
         />
       </div>
 
+      <p className="mt-3 rounded-lg border border-border/50 bg-secondary/25 px-3 py-2 text-[10px] leading-relaxed text-muted-foreground">
+        {isFortnite ? (
+          <>
+            <span className="font-medium text-foreground/85">Fortnite:</span> mínimo{" "}
+            <span className="font-semibold text-foreground/90">90 dias</span> sem atividade na conta (filtro LZT).{" "}
+            Todas as abas: apenas contas{" "}
+            <span className="font-semibold text-foreground/90">nunca vendidas antes</span> no mercado LZT.
+          </>
+        ) : (
+          <>
+            Apenas contas{" "}
+            <span className="font-semibold text-foreground/90">nunca vendidas antes</span> no LZT e com inatividade mínima
+            exigida pela loja (Fortnite: 90 dias; demais jogos: 30 dias).
+          </>
+        )}
+      </p>
+
       {/* Valorant filters */}
       {isValorant && (
         <>
