@@ -101,7 +101,7 @@ const characterOverlayMap: Record<string, { bg: string; character: string; chara
   cod: { bg: bgCardCod, character: codNormal, characterHover: codHover },
   pubg: { bg: bgCardPubg, character: pubgNormal, characterHover: pubgHover },
   fortnite: { bg: bgCardFortnite, character: fortniteNormal, characterHover: fortniteHover },
-  valorant: { bg: swValorant, character: valorantNormal, characterHover: valorantHover },
+  valorant: { bg: bgCardValorant, character: valorantNormal, characterHover: valorantHover },
   cs2: { bg: bgCardCs2, character: cs2Normal, characterHover: cs2Hover },
   "counter-strike 2": { bg: bgCardCs2, character: cs2Normal, characterHover: cs2Hover },
   "counter-strike-2": { bg: bgCardCs2, character: cs2Normal, characterHover: cs2Hover },
