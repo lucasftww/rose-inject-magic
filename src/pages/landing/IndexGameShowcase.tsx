@@ -31,8 +31,8 @@ import swSquad from "@/assets/games/sw-squad.webp";
 // Character overlay images — backgrounds
 import bgCardCod from "@/assets/games/bg-card-cod.png";
 import bgCardPubg from "@/assets/games/bg-card-pubg.png";
-import bgCardFortnite from "@/assets/games/bg-card-fortnite.png";
-// bg-card-valorant doesn't exist — we'll use the sw-valorant.webp fallback via softwareImageMap
+import bgCardFortnite from "@/assets/games/bg-card-fortnite-v2.png";
+import bgCardValorant from "@/assets/games/bg-card-valorant.png";
 import bgCardCs2 from "@/assets/games/bg-card-cs2.png";
 import bgCardRust from "@/assets/games/bg-card-rust.png";
 import bgCardDayz from "@/assets/games/bg-card-dayz.png";
