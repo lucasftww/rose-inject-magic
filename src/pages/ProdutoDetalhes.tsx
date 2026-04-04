@@ -346,11 +346,11 @@ const ProdutoDetalhes = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <div className="mx-auto max-w-7xl px-5 sm:px-6 pt-3 sm:pt-4 pb-36 sm:pb-20">
-        {/* Back button — clean pill style */}
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 pt-3 sm:pt-4 pb-36 sm:pb-20">
+        {/* Back button */}
         <button
           onClick={() => navigate(-1)}
-          className="mb-4 sm:mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-success"
+          className="mb-3 sm:mb-5 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-success"
         >
           <ArrowLeft className="h-4 w-4" />
           <span>Voltar</span>
@@ -358,7 +358,7 @@ const ProdutoDetalhes = () => {
 
         {/* Robot product no stock warning */}
         {robotNoStock && (
-          <div className="mb-4 flex items-center gap-3 rounded-xl bg-warning/5 px-4 py-3">
+          <div className="mb-4 flex items-center gap-3 rounded-xl bg-warning/5 border border-warning/20 px-4 py-3">
             <AlertTriangle className="h-5 w-5 text-warning shrink-0" />
             <div>
               <p className="text-sm font-semibold text-warning">Produto temporariamente sem estoque</p>
@@ -367,8 +367,8 @@ const ProdutoDetalhes = () => {
           </div>
         )}
 
-        {/* Breadcrumb — lighter, more spacing */}
-        <div className="mb-5 sm:mb-8 flex items-center gap-2 text-xs text-muted-foreground/70 overflow-x-auto scrollbar-hide">
+        {/* Breadcrumb */}
+        <div className="mb-4 sm:mb-6 flex items-center gap-2 text-xs text-muted-foreground/70 overflow-x-auto scrollbar-hide">
           <button onClick={() => navigate("/")} className="hover:text-foreground transition-colors shrink-0">Início</button>
           <span className="shrink-0 text-muted-foreground/40">›</span>
           {game && (
@@ -380,15 +380,16 @@ const ProdutoDetalhes = () => {
           <span className="text-foreground/80 truncate">{product.name}</span>
         </div>
 
-        <div className="grid gap-8 sm:gap-10 lg:grid-cols-2">
-          {/* Left: Media Gallery */}
+        <div className="grid gap-6 sm:gap-10 lg:grid-cols-5">
+          {/* Left: Media Gallery — 3 cols */}
           <motion.div
+            className="lg:col-span-3"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.25 }}
           >
-            {/* Main media viewer — clean rounded container */}
-            <div className="relative overflow-hidden rounded-2xl bg-secondary/10">
+            {/* Main media viewer */}
+            <div className="relative overflow-hidden rounded-2xl bg-secondary/10 border border-border/40">
               {selectedMedia ? (
                 selectedMedia.media_type === "video" ? (
                   (() => {
@@ -407,19 +408,11 @@ const ProdutoDetalhes = () => {
                       );
                     }
                     return (
-                      <video
-                        src={selectedMedia.url}
-                        controls
-                        className="w-full rounded-2xl"
-                      />
+                      <video src={selectedMedia.url} controls className="w-full rounded-2xl" />
                     );
                   })()
                 ) : (
-                  <img
-                    src={selectedMedia.url}
-                    alt={product.name}
-                    className="w-full"
-                  />
+                  <img src={selectedMedia.url} alt={product.name} className="w-full" />
                 )
               ) : (
                 <div className="flex h-48 w-full items-center justify-center">
@@ -427,25 +420,18 @@ const ProdutoDetalhes = () => {
                 </div>
               )}
 
-              {/* Nav arrows — subtle, no bg noise */}
+              {/* Nav arrows */}
               {allMedia.length > 1 && (
                 <>
-                  <button
-                    onClick={prevMedia}
-                    className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-background/60 backdrop-blur-sm text-foreground/80 transition-colors hover:text-success"
-                  >
+                  <button onClick={prevMedia} className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-background/60 backdrop-blur-sm text-foreground/80 transition-colors hover:text-success">
                     <ChevronLeft className="h-5 w-5" />
                   </button>
-                  <button
-                    onClick={nextMedia}
-                    className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-background/60 backdrop-blur-sm text-foreground/80 transition-colors hover:text-success"
-                  >
+                  <button onClick={nextMedia} className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-background/60 backdrop-blur-sm text-foreground/80 transition-colors hover:text-success">
                     <ChevronRight className="h-5 w-5" />
                   </button>
                 </>
               )}
 
-              {/* Counter badge */}
               {allMedia.length > 1 && (
                 <div className="absolute bottom-3 right-3 rounded-lg bg-background/60 backdrop-blur-sm px-2.5 py-1">
                   <span className="text-[11px] text-muted-foreground tabular-nums">{selectedMediaIndex + 1}/{allMedia.length}</span>
@@ -453,7 +439,7 @@ const ProdutoDetalhes = () => {
               )}
             </div>
 
-            {/* Thumbnails — more breathing room */}
+            {/* Thumbnails */}
             {allMedia.length > 1 && (
               <div className="mt-3 sm:mt-4 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
                 {allMedia.map((media, idx) => (
@@ -471,9 +457,7 @@ const ProdutoDetalhes = () => {
                         const ytId = getYouTubeId(media.url);
                         return (
                           <div className="flex h-full w-full items-center justify-center bg-secondary relative">
-                            {ytId ? (
-                              <img src={getYouTubeThumbnail(ytId)} alt="" className="h-full w-full object-cover" />
-                            ) : null}
+                            {ytId ? <img src={getYouTubeThumbnail(ytId)} alt="" className="h-full w-full object-cover" /> : null}
                             <Play className="h-4 w-4 text-foreground/70 absolute" />
                           </div>
                         );
@@ -486,17 +470,17 @@ const ProdutoDetalhes = () => {
               </div>
             )}
 
-            {/* Features text — cleaner divider */}
+            {/* Features text */}
             {product.features_text && (
-              <div className="mt-8 sm:mt-6">
+              <div className="mt-6 sm:mt-8">
                 <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-success mb-3">Detalhes</h2>
                 <p className="text-sm leading-relaxed text-muted-foreground">{product.features_text}</p>
               </div>
             )}
 
-            {/* Features cards — cleaner grid */}
+            {/* Features cards */}
             {sortedFeatures.length > 0 && (
-              <div className="mt-6 sm:mt-6 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div className="mt-5 sm:mt-6 grid grid-cols-2 gap-2.5">
                 {sortedFeatures.map((feat) => {
                   const iconMap: Record<string, React.ReactNode> = {
                     "GPU": <Sparkles className="h-4 w-4" />,
@@ -505,13 +489,9 @@ const ProdutoDetalhes = () => {
                     "HVCI (Core Isolation)": <Fingerprint className="h-4 w-4" />,
                   };
                   const icon = iconMap[feat.label] || <Zap className="h-4 w-4" />;
-
                   return (
-                    <div
-                      key={feat.id}
-                      className="flex items-center gap-3 rounded-xl bg-secondary/20 p-3.5 sm:p-4"
-                    >
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-success/10 text-success">
+                    <div key={feat.id} className="flex items-center gap-3 rounded-xl border border-border/40 bg-card p-3.5 sm:p-4">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-success/10 text-success">
                         {icon}
                       </div>
                       <div className="min-w-0">
@@ -523,148 +503,19 @@ const ProdutoDetalhes = () => {
                 })}
               </div>
             )}
-          </motion.div>
 
-          {/* Right: Product Info */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25, delay: 0.05 }}
-          >
-            {/* Game badge */}
-            {game && (
-              <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-success">{game.name}</p>
-            )}
-
-            <h1 className="mt-2 text-xl font-bold text-foreground sm:text-2xl md:text-3xl leading-tight">{product.name}</h1>
-
-            {product.description && (
-              <p className="mt-3 text-sm leading-relaxed text-muted-foreground/80">{product.description}</p>
-            )}
-
-            {/* Reseller badge */}
-            {isReseller && isResellerForProduct(product.id) && (
-              <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-accent/20 border border-accent/30 px-4 py-1.5">
-                <UserCheck className="h-4 w-4 text-accent-foreground" />
-                <span className="text-xs font-bold text-accent-foreground">Revendedor · -{discountPercent}%</span>
-              </div>
-            )}
-
-            {/* Plans selection — premium card feel */}
-            {sortedPlans.length > 0 && (
-              <div className="mt-7 sm:mt-8 rounded-2xl bg-card p-5 sm:p-6">
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 mb-4">Escolha seu plano</p>
-
-                <div className="space-y-2">
-                  {sortedPlans.map((plan) => (
-                    <button
-                      key={plan.id}
-                      onClick={() => setSelectedPlanId(plan.id)}
-                      className={`flex w-full items-center justify-between rounded-xl p-4 text-left transition-all ${
-                        selectedPlanId === plan.id
-                          ? "bg-success/10 ring-1 ring-success/40"
-                          : "bg-secondary/20 hover:bg-secondary/30"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={`flex h-[18px] w-[18px] items-center justify-center rounded-full border-2 transition-colors ${
-                          selectedPlanId === plan.id ? "border-success" : "border-muted-foreground/30"
-                        }`}>
-                          {selectedPlanId === plan.id && (
-                            <div className="h-2 w-2 rounded-full bg-success" />
-                          )}
-                        </div>
-                        <span className={`text-sm font-medium ${selectedPlanId === plan.id ? "text-success" : "text-foreground"}`}>
-                          {plan.name}
-                        </span>
-                      </div>
-                      <div className="text-right">
-                        {isReseller && isResellerForProduct(product.id) ? (
-                          <>
-                            <span className="text-xs text-muted-foreground line-through mr-2">R$ {Number(plan.price).toFixed(2)}</span>
-                            <span className={`text-base font-bold ${selectedPlanId === plan.id ? "text-success" : "text-foreground"}`}>
-                              R$ {(Number(plan.price) * (1 - discountPercent / 100)).toFixed(2)}
-                            </span>
-                          </>
-                        ) : (
-                          <span className={`text-base font-bold ${selectedPlanId === plan.id ? "text-success" : "text-foreground"}`}>
-                            R$ {Number(plan.price).toFixed(2)}
-                          </span>
-                        )}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-
-                {/* Total + CTA */}
-                {selectedPlan && (
-                  <div className="mt-6">
-                    {Number(selectedPlan.price) > 0 && (
-                      <div className="mb-4 flex items-end justify-between">
-                        <span className="text-sm text-muted-foreground">Total</span>
-                        {isReseller && isResellerForProduct(product.id) ? (
-                          <div className="text-right">
-                            <span className="text-sm text-muted-foreground line-through mr-2">R$ {Number(selectedPlan.price).toFixed(2)}</span>
-                            <span className="text-2xl font-bold text-success">R$ {(Number(selectedPlan.price) * (1 - discountPercent / 100)).toFixed(2)}</span>
-                          </div>
-                        ) : (
-                          <span className="text-2xl font-bold text-success">R$ {Number(selectedPlan.price).toFixed(2)}</span>
-                        )}
-                      </div>
-                    )}
-                    {Number(selectedPlan.price) === 0 && (
-                      <div className="mb-4 flex items-center gap-2 rounded-lg bg-emerald-500/10 px-4 py-3">
-                        <Download className="h-5 w-5 text-emerald-400" />
-                        <span className="text-sm text-emerald-300">Software gratuito — obtenha acesso instantâneo!</span>
-                      </div>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => void buyNow()}
-                      disabled={claimingFree}
-                      className={`flex w-full items-center justify-center gap-2 rounded-xl py-4 text-sm font-bold uppercase tracking-wider transition-all active:scale-[0.98] disabled:opacity-60 ${
-                        Number(selectedPlan.price) === 0
-                          ? "bg-gradient-to-r from-emerald-500 to-cyan-500 text-white hover:shadow-[0_0_30px_hsl(160,80%,45%,0.4)]"
-                          : "bg-success text-success-foreground hover:shadow-[0_0_30px_hsl(130,99%,41%,0.4)]"
-                      }`}
-                      style={{ fontFamily: "'Valorant', sans-serif" }}>
-                      {Number(selectedPlan.price) === 0 ? (
-                        claimingFree ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            A obter…
-                          </>
-                        ) : (
-                          <>
-                            <Download className="h-4 w-4" />
-                            OBTER GRÁTIS
-                          </>
-                        )
-                      ) : (
-                        <>
-                          <Zap className="h-4 w-4" />
-                          COMPRAR AGORA
-                        </>
-                      )}
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Customer Reviews — cleaner section */}
-            <div className="mt-8 sm:mt-8">
+            {/* Reviews — below gallery on desktop too */}
+            <div className="mt-8 sm:mt-10">
               <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-success mb-4">Avaliações ({reviews.length})</h2>
 
               {reviews.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-8 gap-2 rounded-2xl bg-card">
+                <div className="flex flex-col items-center justify-center py-8 gap-2 rounded-2xl bg-card border border-border/40">
                   <Star className="h-8 w-8 text-muted-foreground/20" />
                   <p className="text-sm text-muted-foreground">Nenhuma avaliação ainda.</p>
                 </div>
               ) : (
                 <>
-                  {/* Average rating summary */}
-                  <div className="mb-5 flex items-center gap-3 rounded-2xl bg-card p-4">
+                  <div className="mb-4 flex items-center gap-3 rounded-2xl bg-card border border-border/40 p-4">
                     <span className="text-3xl font-bold text-foreground">
                       {(reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)}
                     </span>
@@ -672,9 +523,7 @@ const ProdutoDetalhes = () => {
                       <div className="flex gap-0.5">
                         {Array.from({ length: 5 }).map((_, i) => {
                           const avg = reviews.reduce((s, r) => s + r.rating, 0) / reviews.length;
-                          return (
-                            <span key={i} className={`text-sm ${i < Math.round(avg) ? "text-warning" : "text-muted-foreground/30"}`}>★</span>
-                          );
+                          return <span key={i} className={`text-sm ${i < Math.round(avg) ? "text-warning" : "text-muted-foreground/30"}`}>★</span>;
                         })}
                       </div>
                       <p className="text-[10px] text-muted-foreground mt-0.5">{reviews.length} avaliações</p>
@@ -683,10 +532,7 @@ const ProdutoDetalhes = () => {
 
                   <div className="space-y-2.5">
                     {reviews.map((review) => (
-                      <div
-                        key={review.id}
-                        className="rounded-xl bg-card p-4"
-                      >
+                      <div key={review.id} className="rounded-xl bg-card border border-border/40 p-4">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2.5">
                             <div className="flex h-7 w-7 items-center justify-center rounded-full bg-success/10 text-[10px] font-bold text-success uppercase">
@@ -694,9 +540,7 @@ const ProdutoDetalhes = () => {
                             </div>
                             <div>
                               <span className="text-xs font-bold text-foreground">{review.username}</span>
-                              <p className="text-[9px] text-muted-foreground">
-                                {new Date(review.created_at).toLocaleDateString("pt-BR")}
-                              </p>
+                              <p className="text-[9px] text-muted-foreground">{new Date(review.created_at).toLocaleDateString("pt-BR")}</p>
                             </div>
                           </div>
                           <div className="flex gap-0.5">
@@ -715,18 +559,183 @@ const ProdutoDetalhes = () => {
               )}
             </div>
           </motion.div>
+
+          {/* Right: Product Info — 2 cols, sticky on desktop */}
+          <motion.div
+            className="lg:col-span-2"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, delay: 0.05 }}
+          >
+            <div className="lg:sticky lg:top-20 space-y-5">
+              {/* Product header card */}
+              <div className="rounded-2xl border border-border/50 bg-card p-5 sm:p-6">
+                {game && (
+                  <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-success">{game.name}</p>
+                )}
+                <h1 className="mt-1.5 text-xl font-bold text-foreground sm:text-2xl leading-tight">{product.name}</h1>
+
+                {product.description && (
+                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground/80">{product.description}</p>
+                )}
+
+                {/* Reseller badge */}
+                {isReseller && isResellerForProduct(product.id) && (
+                  <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-accent/20 border border-accent/30 px-4 py-1.5">
+                    <UserCheck className="h-4 w-4 text-accent-foreground" />
+                    <span className="text-xs font-bold text-accent-foreground">Revendedor · -{discountPercent}%</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Plans selection — purchase card */}
+              {sortedPlans.length > 0 && (
+                <div className="rounded-2xl border border-success/20 bg-card p-5 sm:p-6 shadow-[0_0_40px_hsl(var(--success)/0.05)]">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 mb-3">Escolha seu plano</p>
+
+                  <div className="space-y-2">
+                    {sortedPlans.map((plan, idx) => (
+                      <button
+                        key={plan.id}
+                        onClick={() => setSelectedPlanId(plan.id)}
+                        className={`flex w-full items-center justify-between rounded-xl p-3.5 sm:p-4 text-left transition-all relative ${
+                          selectedPlanId === plan.id
+                            ? "bg-success/10 ring-1 ring-success/40"
+                            : "bg-secondary/20 hover:bg-secondary/30"
+                        }`}
+                      >
+                        {/* Popular badge for best value (last plan usually) */}
+                        {idx === sortedPlans.length - 1 && sortedPlans.length > 1 && (
+                          <span className="absolute -top-2 right-3 rounded-full bg-success px-2 py-0.5 text-[8px] font-bold uppercase tracking-wider text-success-foreground">
+                            Melhor valor
+                          </span>
+                        )}
+                        <div className="flex items-center gap-3">
+                          <div className={`flex h-[18px] w-[18px] items-center justify-center rounded-full border-2 transition-colors ${
+                            selectedPlanId === plan.id ? "border-success" : "border-muted-foreground/30"
+                          }`}>
+                            {selectedPlanId === plan.id && <div className="h-2 w-2 rounded-full bg-success" />}
+                          </div>
+                          <span className={`text-sm font-medium ${selectedPlanId === plan.id ? "text-success" : "text-foreground"}`}>
+                            {plan.name}
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          {isReseller && isResellerForProduct(product.id) ? (
+                            <>
+                              <span className="text-xs text-muted-foreground line-through mr-2">R$ {Number(plan.price).toFixed(2)}</span>
+                              <span className={`text-base font-bold ${selectedPlanId === plan.id ? "text-success" : "text-foreground"}`}>
+                                R$ {(Number(plan.price) * (1 - discountPercent / 100)).toFixed(2)}
+                              </span>
+                            </>
+                          ) : (
+                            <span className={`text-base font-bold ${selectedPlanId === plan.id ? "text-success" : "text-foreground"}`}>
+                              R$ {Number(plan.price).toFixed(2)}
+                            </span>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Total + CTA */}
+                  {selectedPlan && (
+                    <div className="mt-5">
+                      {Number(selectedPlan.price) > 0 && (
+                        <div className="mb-4 flex items-end justify-between rounded-xl bg-secondary/20 p-4">
+                          <span className="text-sm text-muted-foreground">Total</span>
+                          {isReseller && isResellerForProduct(product.id) ? (
+                            <div className="text-right">
+                              <span className="text-sm text-muted-foreground line-through mr-2">R$ {Number(selectedPlan.price).toFixed(2)}</span>
+                              <span className="text-2xl font-bold text-success">R$ {(Number(selectedPlan.price) * (1 - discountPercent / 100)).toFixed(2)}</span>
+                            </div>
+                          ) : (
+                            <span className="text-2xl font-bold text-success">R$ {Number(selectedPlan.price).toFixed(2)}</span>
+                          )}
+                        </div>
+                      )}
+                      {Number(selectedPlan.price) === 0 && (
+                        <div className="mb-4 flex items-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-4 py-3">
+                          <Download className="h-5 w-5 text-emerald-400" />
+                          <span className="text-sm text-emerald-300">Software gratuito — acesso instantâneo!</span>
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => void buyNow()}
+                        disabled={claimingFree}
+                        className={`group flex w-full items-center justify-center gap-2.5 rounded-xl py-4 text-sm font-bold uppercase tracking-wider transition-all active:scale-[0.98] disabled:opacity-60 ${
+                          Number(selectedPlan.price) === 0
+                            ? "bg-gradient-to-r from-emerald-500 to-cyan-500 text-white hover:shadow-[0_0_40px_hsl(160,80%,45%,0.4)]"
+                            : "bg-success text-success-foreground hover:shadow-[0_0_40px_hsl(var(--success)/0.4)]"
+                        }`}
+                        style={{ fontFamily: "'Valorant', sans-serif" }}
+                      >
+                        {Number(selectedPlan.price) === 0 ? (
+                          claimingFree ? (
+                            <><Loader2 className="h-4 w-4 animate-spin" /> A obter…</>
+                          ) : (
+                            <><Download className="h-4 w-4" /> OBTER GRÁTIS</>
+                          )
+                        ) : (
+                          <><Zap className="h-4 w-4 group-hover:animate-pulse" /> COMPRAR AGORA</>
+                        )}
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Trust signals */}
+                  <div className="mt-5 grid grid-cols-3 gap-2">
+                    <div className="flex flex-col items-center gap-1.5 rounded-xl bg-secondary/20 py-3 px-2">
+                      <Zap className="h-4 w-4 text-success" />
+                      <span className="text-[9px] sm:text-[10px] text-muted-foreground text-center leading-tight font-medium">Entrega<br/>Instantânea</span>
+                    </div>
+                    <div className="flex flex-col items-center gap-1.5 rounded-xl bg-secondary/20 py-3 px-2">
+                      <ShoppingCart className="h-4 w-4 text-success" />
+                      <span className="text-[9px] sm:text-[10px] text-muted-foreground text-center leading-tight font-medium">Pagamento<br/>Seguro</span>
+                    </div>
+                    <div className="flex flex-col items-center gap-1.5 rounded-xl bg-secondary/20 py-3 px-2">
+                      <Star className="h-4 w-4 text-success" />
+                      <span className="text-[9px] sm:text-[10px] text-muted-foreground text-center leading-tight font-medium">Suporte<br/>24/7</span>
+                    </div>
+                  </div>
+
+                  {/* Social proof */}
+                  {reviews.length > 0 && (
+                    <div className="mt-4 flex items-center gap-2 rounded-xl bg-secondary/20 px-4 py-2.5">
+                      <div className="flex -space-x-1.5">
+                        {reviews.slice(0, 3).map((r, i) => (
+                          <div key={i} className="flex h-6 w-6 items-center justify-center rounded-full bg-success/20 border-2 border-card text-[8px] font-bold text-success">
+                            {(r.username || "U")[0]}
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <div className="flex gap-0.5">
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <span key={i} className="text-[9px] text-warning">★</span>
+                          ))}
+                        </div>
+                        <span className="text-[10px] text-muted-foreground">{reviews.length} avaliações verificadas</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </motion.div>
         </div>
       </div>
 
-      {/* Sticky mobile bottom bar — cleaner, more prominent */}
+      {/* Sticky mobile bottom bar */}
       {selectedPlan && (
         <div className="fixed bottom-0 left-0 right-0 z-40 sm:hidden">
-          <div className="border-t border-border/40 bg-background/95 backdrop-blur-xl px-5 py-3 safe-area-bottom">
-            <div className="flex items-center gap-4">
+          <div className="border-t border-border/40 bg-background/95 backdrop-blur-xl px-4 py-3 safe-area-bottom">
+            <div className="flex items-center gap-3">
               <div className="flex flex-col min-w-0">
                 {Number(selectedPlan.price) > 0 && (
                   <>
-                    <span className="text-[10px] text-muted-foreground/70 leading-none mb-1">Total</span>
+                    <span className="text-[10px] text-muted-foreground/70 leading-none mb-0.5">Total</span>
                     {isReseller && isResellerForProduct(product.id) ? (
                       <>
                         <span className="text-[10px] text-muted-foreground line-through leading-none">R$ {Number(selectedPlan.price).toFixed(2)}</span>
@@ -755,21 +764,12 @@ const ProdutoDetalhes = () => {
               >
                 {Number(selectedPlan.price) === 0 ? (
                   claimingFree ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      A obter…
-                    </>
+                    <><Loader2 className="h-4 w-4 animate-spin" /> A obter…</>
                   ) : (
-                    <>
-                      <Download className="h-4 w-4" />
-                      Obter Grátis
-                    </>
+                    <><Download className="h-4 w-4" /> Obter Grátis</>
                   )
                 ) : (
-                  <>
-                    <ShoppingCart className="h-4 w-4" />
-                    Comprar Agora
-                  </>
+                  <><ShoppingCart className="h-4 w-4" /> Comprar Agora</>
                 )}
               </button>
             </div>
