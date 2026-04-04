@@ -18,6 +18,12 @@ describe("isLztDetailItemPurchasable", () => {
     expect(isLztDetailItemPurchasable({ buyer: { id: 1 } })).toBe(false);
     expect(isLztDetailItemPurchasable({ canBuyItem: false })).toBe(false);
   });
+
+  it("rejects accounts sold before on LZT (policy flags)", () => {
+    expect(isLztDetailItemPurchasable({ item_state: "active", not_sold_before: false })).toBe(false);
+    expect(isLztDetailItemPurchasable({ item_state: "active", sold_before: true })).toBe(false);
+    expect(isLztDetailItemPurchasable({ item_state: "active", notSoldBefore: false })).toBe(false);
+  });
 });
 
 describe("lztAccountDetailQueryKey", () => {

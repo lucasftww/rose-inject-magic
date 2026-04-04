@@ -2,7 +2,11 @@ import type { QueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import { supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
 import { lztAccountDetailQueryKey } from "@/lib/lztAccountDetailQuery";
-import { type LztDetailItem, parseLztDetailResponseItem } from "@/lib/lztDetailItemParse";
+import {
+  type LztDetailItem,
+  itemFailsLztNotSoldBeforePolicy,
+  parseLztDetailResponseItem,
+} from "@/lib/lztDetailItemParse";
 import { isRecord } from "@/types/ticketChat";
 
 type LztDetailErrorBody = {
@@ -39,6 +43,7 @@ function isSoldMessage(body: LztDetailErrorBody | null): boolean {
 /** Mesma regra da resposta `detail` após JSON ok (sem toast). */
 export function isLztDetailItemPurchasable(item: LztDetailItem | null | undefined): boolean {
   if (!item) return false;
+  if (itemFailsLztNotSoldBeforePolicy(item as Record<string, unknown>)) return false;
   if (item.item_state && item.item_state !== "active") return false;
   if (item.buyer) return false;
   if (item.canBuyItem === false) return false;
@@ -46,6 +51,14 @@ export function isLztDetailItemPurchasable(item: LztDetailItem | null | undefine
 }
 
 function toastItemNotPurchasable(item: LztDetailItem) {
+  if (itemFailsLztNotSoldBeforePolicy(item as Record<string, unknown>)) {
+    toast({
+      title: "Conta indisponível",
+      description: "Esta conta já foi vendida antes no LZT e não entra na nossa seleção.",
+      variant: "destructive",
+    });
+    return;
+  }
   if (item.buyer) {
     toast({
       title: "Conta já vendida",

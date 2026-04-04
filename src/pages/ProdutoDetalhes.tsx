@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
-import { AlertTriangle, ArrowLeft, ChevronLeft, ChevronRight, Cpu, Download, Fingerprint, Loader2, Monitor, Package, Play, ShoppingCart, Sparkles, Star, UserCheck, Zap } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, Cpu, Download, Fingerprint, Loader2, Monitor, Package, Play, ShoppingCart, Sparkles, Star, UserCheck, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase, supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
 import { safeJsonFetch } from "@/lib/apiUtils";
@@ -67,7 +67,6 @@ const ProdutoDetalhes = () => {
   const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
   const [reviews, setReviews] = useState<ReviewData[]>([]);
-  const [robotNoStock, setRobotNoStock] = useState(false);
   const [claimingFree, setClaimingFree] = useState(false);
 
   useEffect(() => {
@@ -130,10 +129,6 @@ const ProdutoDetalhes = () => {
             username: r.username || "Usuário",
           })),
         );
-      }
-
-      if (data.robot_game_id) {
-        setRobotNoStock(false);
       }
 
       setLoading(false);
@@ -234,7 +229,6 @@ const ProdutoDetalhes = () => {
     const isFreeProduct = Number(selectedPlan.price) === 0 || finalItemPrice <= 0;
 
     if (isFreeProduct) {
-      if (robotNoStock) return;
       setClaimingFree(true);
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -355,17 +349,6 @@ const ProdutoDetalhes = () => {
           <ArrowLeft className="h-4 w-4" />
           <span>Voltar</span>
         </button>
-
-        {/* Robot product no stock warning */}
-        {robotNoStock && (
-          <div className="mb-4 flex items-center gap-3 rounded-xl bg-warning/5 border border-warning/20 px-4 py-3">
-            <AlertTriangle className="h-5 w-5 text-warning shrink-0" />
-            <div>
-              <p className="text-sm font-semibold text-warning">Produto temporariamente sem estoque</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Este produto será reabastecido em breve.</p>
-            </div>
-          </div>
-        )}
 
         {/* Breadcrumb */}
         <div className="mb-4 sm:mb-6 flex items-center gap-2 text-xs text-muted-foreground/70 overflow-x-auto scrollbar-hide">
