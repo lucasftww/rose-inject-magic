@@ -1,3 +1,5 @@
+import { isRecord } from "@/types/ticketChat";
+
 /** Subconjunto usado no admin / vendas para `order_tickets.metadata` (JSON). */
 export type OrderTicketMetadata = {
   type?: string;
@@ -16,13 +18,15 @@ export type OrderTicketMetadata = {
   plan_price?: number;
   amount_spent?: number;
   duration?: number;
+  /** Mensagem de falha (ex.: entrega Robot) */
+  error?: string;
   key?: string;
   download_url?: string;
   file_name?: string;
 };
 
 export function asOrderTicketMetadata(meta: unknown): OrderTicketMetadata {
-  if (meta != null && typeof meta === "object" && !Array.isArray(meta)) {
+  if (isRecord(meta)) {
     return meta as OrderTicketMetadata;
   }
   return {};

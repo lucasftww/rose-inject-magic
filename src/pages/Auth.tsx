@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Eye, EyeOff, ArrowRight, Check } from "lucide-react";
 import logoRoyal from "@/assets/logo-royal.png";
 import { useTranslation } from "react-i18next";
+import { safeAuthRedirect } from "@/lib/safeUrl";
 
 // ── Blocked temp-email domains ──────────────────────────────────────
 const BLOCKED_DOMAINS = [
@@ -20,15 +21,6 @@ const BLOCKED_DOMAINS = [
 function isTempEmail(email: string) {
   const domain = email.split("@")[1]?.toLowerCase() ?? "";
   return BLOCKED_DOMAINS.some((b) => domain.includes(b));
-}
-
-/** In-app path only — avoids open redirects via ?redirect=https://… or //evil.com */
-function safeAuthRedirect(raw: string | null): string {
-  if (!raw) return "/";
-  const p = raw.trim();
-  if (p === "/") return "/";
-  if (!p.startsWith("/") || p.startsWith("//")) return "/";
-  return p;
 }
 
 // ── Types ───────────────────────────────────────────────────────────

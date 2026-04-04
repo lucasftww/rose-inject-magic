@@ -10,6 +10,7 @@ import logoRoyal from "@/assets/logo-royal.png";
 import { motion } from "framer-motion";
 import { trackPurchase, getUserData, setAdvancedMatching } from "@/lib/metaPixel";
 import { safeJsonFetch, ApiError } from "@/lib/apiUtils";
+import { safeHttpUrl } from "@/lib/safeUrl";
 import { buildCartSnapshotFromItems } from "@/lib/buildCartSnapshot";
 import type { PixPaymentCreateResult, PixPaymentStatusResult } from "@/lib/edgeFunctionTypes";
 
@@ -321,14 +322,15 @@ const Checkout = () => {
       );
       if (!result.success) throw new Error(result.error || "Erro ao criar cobrança");
       setPaymentId(result.payment_id ?? null);
-      setCardPaymentUrl(result.paymentUrl ?? null);
+      const cardUrl = safeHttpUrl(result.paymentUrl ?? undefined);
+      setCardPaymentUrl(cardUrl);
       const serverTotal = result.validated_amount ?? cartFinalPrice;
       const serverDiscount = result.validated_discount ?? discountAmount;
       setDisplayPrice({ total: serverTotal + serverDiscount, final: serverTotal, discount: serverDiscount });
       setCartSnapshot([...items]);
       clearCart();
-      // Open the checkout URL in a new tab
-      if (result.paymentUrl) window.open(result.paymentUrl, "_blank");
+      if (cardUrl) window.open(cardUrl, "_blank", "noopener,noreferrer");
+      else if (result.paymentUrl) toast({ title: "URL de pagamento inválida", variant: "destructive" });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       console.error(err);

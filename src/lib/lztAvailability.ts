@@ -2,6 +2,8 @@ import type { QueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import { supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
 import { lztAccountDetailQueryKey } from "@/lib/lztAccountDetailQuery";
+import { type LztDetailItem, parseLztDetailResponseItem } from "@/lib/lztDetailItemParse";
+import { isRecord } from "@/types/ticketChat";
 
 type LztDetailErrorBody = {
   error?: string;
@@ -11,15 +13,13 @@ type LztDetailErrorBody = {
 async function readJsonErrorBody(res: Response): Promise<LztDetailErrorBody | null> {
   try {
     const data: unknown = await res.json();
-    if (data && typeof data === "object" && !Array.isArray(data)) {
-      const o = data as Record<string, unknown>;
-      const error = o.error;
-      const message = o.message;
-      return {
-        error: typeof error === "string" ? error : undefined,
-        message: typeof message === "string" ? message : undefined,
-      };
-    }
+    if (!isRecord(data)) return null;
+    const error = data.error;
+    const message = data.message;
+    return {
+      error: typeof error === "string" ? error : undefined,
+      message: typeof message === "string" ? message : undefined,
+    };
   } catch {
     /* ignore */
   }
@@ -35,13 +35,6 @@ function isSoldMessage(body: LztDetailErrorBody | null): boolean {
     t.includes("account already sold")
   );
 }
-
-type LztDetailItem = {
-  item_id?: string | number;
-  item_state?: string;
-  buyer?: unknown;
-  canBuyItem?: boolean;
-};
 
 /** Mesma regra da resposta `detail` após JSON ok (sem toast). */
 export function isLztDetailItemPurchasable(item: LztDetailItem | null | undefined): boolean {
@@ -128,8 +121,8 @@ export const checkLztAvailability = async (
       });
       return false;
     }
-    const data = await res.json();
-    const item = data?.item as LztDetailItem | undefined;
+    const data: unknown = await res.json();
+    const item = parseLztDetailResponseItem(data);
     if (!item) {
       toast({ title: "Conta indisponível", description: "Esta conta não está mais disponível para compra.", variant: "destructive" });
       return false;

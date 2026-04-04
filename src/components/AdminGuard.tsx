@@ -3,6 +3,15 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
+import { isRecord } from "@/types/ticketChat";
+
+function parseAdminVerifyPayload(data: unknown): { verified: boolean; uid: string } | null {
+  if (!isRecord(data)) return null;
+  if (data.verified !== true) return null;
+  const uid = data.uid;
+  if (typeof uid !== "string" || !uid) return null;
+  return { verified: true, uid };
+}
 
 /**
  * Centralized server-side admin guard with DOUBLE verification.
@@ -49,16 +58,8 @@ const AdminGuard = ({ children }: { children: ReactNode }) => {
 
         const layer1 = !roleCheck.error && !!roleCheck.data;
 
-        type AdminVerifyPayload = { verified?: boolean; uid?: string };
-        const payload =
-          typeof adminVerify.data === "object" && adminVerify.data !== null
-            ? (adminVerify.data as AdminVerifyPayload)
-            : null;
-        const layer2 =
-          !adminVerify.error &&
-          payload !== null &&
-          payload.verified === true &&
-          payload.uid === user.id;
+        const payload = parseAdminVerifyPayload(adminVerify.data);
+        const layer2 = !adminVerify.error && payload !== null && payload.uid === user.id;
 
         if (!cancelled) {
           setServerVerified(layer1 && layer2);

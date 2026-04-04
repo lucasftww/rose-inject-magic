@@ -6,6 +6,9 @@ type PublicTable = keyof Database["public"]["Tables"];
 /**
  * Fetches ALL rows from a Supabase table, bypassing the 1000-row default limit.
  * Uses .range() pagination internally.
+ *
+ * Prefer `fetchAllRows<"order_tickets">("order_tickets", …)` para `T` = linha completa;
+ * com `select` parcial, `T` pode ser um `Pick<Tables<…>, …>` compatível com o JSON devolvido.
  */
 export async function fetchAllRows<T = unknown>(
   tableName: PublicTable,

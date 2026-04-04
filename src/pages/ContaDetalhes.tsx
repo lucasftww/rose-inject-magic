@@ -17,6 +17,9 @@ import { supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
 import { rankMap, rarityMap, fetchAllValorantSkins, rankUnranked, RARITY_PRIORITY, type SkinEntry } from "@/lib/valorantData";
 import { getLztDetailDisplayTitle } from "@/lib/lztDisplayTitles";
 import { lztAccountDetailQueryKey } from "@/lib/lztAccountDetailQuery";
+import { getJsonDataArray } from "@/lib/jsonResponse";
+import { errorMessage } from "@/lib/errorMessage";
+import { isRecord } from "@/types/ticketChat";
 
 const fetchAccountDetail = async (itemId: string) => {
   const res = await fetch(
@@ -65,8 +68,8 @@ const collectUuidStrings = (raw: unknown): string[] => {
       return;
     }
 
-    if (typeof value === "object") {
-      for (const item of Object.values(value as Record<string, unknown>)) {
+    if (isRecord(value)) {
+      for (const item of Object.values(value)) {
         walk(item);
       }
     }
@@ -84,7 +87,7 @@ type SkinLike = {
 
 // Resolve the best image from a skin object
 const resolveSkinImage = (s: unknown): string | null => {
-  if (!s || typeof s !== "object") return null;
+  if (!isRecord(s)) return null;
   const skin = s as SkinLike;
 
   if (skin.displayIcon) return skin.displayIcon;
@@ -191,10 +194,11 @@ const buildSkinLookup = (skins: unknown[]): Map<string, ValorantSkinItem> => {
   const lookup = new Map<string, ValorantSkinItem>();
 
   for (const s of skins || []) {
+    if (!isRecord(s)) continue;
     const image = resolveSkinImage(s);
     if (!image) continue;
 
-    const skin = (s as Partial<ValorantSkinLike>) || {};
+    const skin = s as Partial<ValorantSkinLike>;
     const displayName = typeof skin.displayName === "string" ? skin.displayName : "";
     if (!displayName) continue;
 
@@ -407,16 +411,15 @@ type SimpleGalleryItem = {
 const fetchValorantAgents = async (uuids: string[]): Promise<SimpleGalleryItem[]> => {
   const res = await fetch("https://valorant-api.com/v1/agents?isPlayableCharacter=true&language=pt-BR");
   if (!res.ok) return [];
-  const data = (await res.json()) as unknown;
+  const data: unknown = await res.json();
   const uuidSet = new Set(uuids.map((u) => u.toLowerCase()));
 
-  const rows = typeof data === "object" && data && "data" in data ? (data as { data?: unknown }).data : undefined;
-  const list = Array.isArray(rows) ? rows : [];
+  const list = getJsonDataArray(data);
 
   return list
-    .filter((a): a is { uuid?: string; displayName?: string; displayIcon?: string } => {
-      if (!a || typeof a !== "object") return false;
-      const maybeUuid = (a as { uuid?: unknown }).uuid;
+    .filter((a): a is Record<string, unknown> => isRecord(a))
+    .filter((a) => {
+      const maybeUuid = a.uuid;
       return typeof maybeUuid === "string" && uuidSet.has(maybeUuid.toLowerCase());
     })
     .map((a) => ({
@@ -429,23 +432,15 @@ const fetchValorantAgents = async (uuids: string[]): Promise<SimpleGalleryItem[]
 const fetchValorantBuddies = async (uuids: string[]): Promise<SimpleGalleryItem[]> => {
   const res = await fetch("https://valorant-api.com/v1/buddies?language=pt-BR");
   if (!res.ok) return [];
-  const data = (await res.json()) as unknown;
-  // Buddy UUIDs from inventory might be level UUIDs, so check both
+  const data: unknown = await res.json();
   const uuidSet = new Set(uuids.map((u) => u.toLowerCase()));
-  type BuddyLike = {
-    uuid?: string;
-    displayName?: string;
-    displayIcon?: string;
-    levels?: Array<{ uuid?: string; displayIcon?: string }>;
-  };
 
-  const rows = typeof data === "object" && data && "data" in data ? (data as { data?: unknown }).data : undefined;
-  const list = Array.isArray(rows) ? rows : [];
+  const list = getJsonDataArray(data);
 
   const typedMatched: SimpleGalleryItem[] = [];
   for (const buddy of list) {
-    if (!buddy || typeof buddy !== "object") continue;
-    const b = buddy as BuddyLike;
+    if (!isRecord(buddy)) continue;
+    const b = buddy;
     if (typeof b.uuid === "string" && uuidSet.has(b.uuid.toLowerCase())) {
       typedMatched.push({ name: b.displayName || "Buddy", image: b.displayIcon || "" });
     }
@@ -639,7 +634,7 @@ const ContaDetalhes = () => {
         <div className="flex flex-col items-center justify-center py-32">
             <Shield className="h-10 w-10 text-muted-foreground mb-3" />
             <p className="text-lg font-semibold text-foreground">Conta indisponível</p>
-            <p className="mt-1 text-sm text-muted-foreground">{(error as Error).message}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{errorMessage(error)}</p>
             <button
               onClick={() => navigate("/contas")}
               className="mt-5 flex items-center gap-2 rounded-xl border border-border bg-card/50 px-5 py-2.5 text-sm text-muted-foreground transition-all hover:border-success/40 hover:text-success">

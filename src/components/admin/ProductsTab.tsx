@@ -16,6 +16,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { getSupabaseFunctionsBaseUrl } from "@/lib/apiUtils";
 import { getYouTubeId, getYouTubeThumbnail, detectMediaType } from "@/lib/videoUtils";
+import { safeHttpUrl } from "@/lib/safeUrl";
 
 interface Game {
   id: string; name: string;
@@ -1188,7 +1189,11 @@ const ProductsTab = () => {
                 {formTutorialFileUrl && (
                   <div className="mb-2 flex items-center gap-2 rounded-xl border border-success/20 bg-success/5 px-4 py-2.5">
                     <FileText className="h-4 w-4 text-success shrink-0" />
-                    <a href={formTutorialFileUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-success hover:underline truncate flex-1">{formTutorialFileUrl}</a>
+                    {safeHttpUrl(formTutorialFileUrl) ? (
+                      <a href={safeHttpUrl(formTutorialFileUrl)!} target="_blank" rel="noopener noreferrer" className="text-xs text-success hover:underline truncate flex-1">{formTutorialFileUrl}</a>
+                    ) : (
+                      <span className="text-xs text-muted-foreground truncate flex-1" title="URL inválida — use https://">{formTutorialFileUrl}</span>
+                    )}
                     <button type="button" onClick={() => setFormTutorialFileUrl("")} className="text-muted-foreground hover:text-destructive transition-colors"><X className="h-3.5 w-3.5" /></button>
                   </div>
                 )}

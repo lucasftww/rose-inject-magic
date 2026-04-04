@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
+import { isRecord } from "@/types/ticketChat";
 
 export interface CartItem {
   productId: string;
@@ -37,8 +38,8 @@ function normalizeCartItemsFromStorage(parsed: unknown): CartItem[] {
   if (!Array.isArray(parsed)) return [];
   const out: CartItem[] = [];
   for (const row of parsed) {
-    if (!row || typeof row !== "object") continue;
-    const o = row as Record<string, unknown>;
+    if (!isRecord(row)) continue;
+    const o = row;
     const productId = typeof o.productId === "string" ? o.productId : String(o.productId ?? "").trim();
     const planId = typeof o.planId === "string" ? o.planId : String(o.planId ?? "").trim();
     if (!productId || !planId) continue;

@@ -3,6 +3,7 @@ import { Key, Eye, EyeOff, CheckCircle, ExternalLink, Plus, Pencil, Trash2, Load
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { toast } from "@/hooks/use-toast";
+import { safeHttpUrl } from "@/lib/safeUrl";
 
 interface Credential {
   /** Opcional: bases legadas só têm env_key como chave única. */
@@ -299,7 +300,9 @@ const CredentialsTab = () => {
             <p className="font-semibold">Nenhuma credencial cadastrada</p>
             <p className="mt-1 text-sm">Clique em "Nova Credencial" para começar</p>
           </div>
-        ) : credentials.map((cred) => (
+        ) : credentials.map((cred) => {
+          const helpSafe = safeHttpUrl(cred.help_url);
+          return (
           <div key={cred.env_key} className="rounded-xl border border-border bg-card p-5">
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-start gap-3">
@@ -321,8 +324,8 @@ const CredentialsTab = () => {
                 </div>
               </div>
               <div className="flex items-center gap-1.5">
-                {cred.help_url && (
-                  <a href={cred.help_url} target="_blank" rel="noopener noreferrer"
+                {helpSafe && (
+                  <a href={helpSafe} target="_blank" rel="noopener noreferrer"
                     className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground hover:border-success hover:text-success">
                     <ExternalLink className="h-3.5 w-3.5" />
                   </a>
@@ -350,7 +353,8 @@ const CredentialsTab = () => {
               </div>
             )}
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

@@ -315,6 +315,11 @@ const RobotProjectTab = () => {
   };
 
   const fetchPendingRobotTickets = async () => {
+    type RobotTicketRow = Pick<
+      Tables<"order_tickets">,
+      "id" | "created_at" | "status" | "status_label" | "metadata" | "product_id" | "product_plan_id" | "user_id"
+    >;
+
     const { data: tickets } = await supabase
       .from("order_tickets")
       .select("id, created_at, status, status_label, metadata, product_id, product_plan_id, user_id")
@@ -322,15 +327,18 @@ const RobotProjectTab = () => {
       .order("created_at", { ascending: false })
       .limit(100);
 
-    const robotTickets = (tickets || []).filter((ticket: any) => ticket.metadata?.type === "robot-project");
+    const robotTickets = (tickets ?? []).filter((ticket): ticket is RobotTicketRow => {
+      const m = asOrderTicketMetadata(ticket.metadata);
+      return m.type === "robot-project";
+    });
     if (robotTickets.length === 0) {
       setPendingRobotTickets([]);
       return;
     }
 
-    const productIds = [...new Set(robotTickets.map((ticket: any) => ticket.product_id))];
-    const planIds = [...new Set(robotTickets.map((ticket: any) => ticket.product_plan_id))];
-    const userIds = [...new Set(robotTickets.map((ticket: any) => ticket.user_id))];
+    const productIds = [...new Set(robotTickets.map((ticket) => ticket.product_id))];
+    const planIds = [...new Set(robotTickets.map((ticket) => ticket.product_plan_id))];
+    const userIds = [...new Set(robotTickets.map((ticket) => ticket.user_id))];
 
     const [productsRes, plansRes, profilesRes] = await Promise.all([
       productIds.length > 0
@@ -348,16 +356,21 @@ const RobotProjectTab = () => {
     const planMap = Object.fromEntries((plansRes.data || []).map((item) => [item.id, item.name]));
     const profileMap = Object.fromEntries((profilesRes.data || []).map((item) => [item.user_id, item.username || item.user_id.slice(0, 8)]));
 
-    setPendingRobotTickets(robotTickets.map((ticket: any) => ({
-      id: ticket.id,
-      created_at: ticket.created_at || "",
-      status: ticket.status || "open",
-      status_label: ticket.status_label || "Entrega Manual",
-      error: String(ticket.metadata?.error || "Falha não informada"),
-      product_name: productMap[ticket.product_id] || "Produto desconhecido",
-      plan_name: planMap[ticket.product_plan_id] || "Plano desconhecido",
-      user_label: profileMap[ticket.user_id] || ticket.user_id.slice(0, 8),
-    })));
+    setPendingRobotTickets(
+      robotTickets.map((ticket) => {
+        const meta = asOrderTicketMetadata(ticket.metadata);
+        return {
+          id: ticket.id,
+          created_at: ticket.created_at || "",
+          status: ticket.status || "open",
+          status_label: ticket.status_label || "Entrega Manual",
+          error: String(meta.error ?? "Falha não informada"),
+          product_name: productMap[ticket.product_id] || "Produto desconhecido",
+          plan_name: planMap[ticket.product_plan_id] || "Plano desconhecido",
+          user_label: profileMap[ticket.user_id] || ticket.user_id.slice(0, 8),
+        };
+      }),
+    );
   };
 
   const retryRobotDelivery = async (ticketId: string) => {

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, Fragment } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { Database, Json } from "@/integrations/supabase/types";
+import type { Database, Json, Tables } from "@/integrations/supabase/types";
 import { fetchAllRows } from "@/lib/supabaseAllRows";
 import { asOrderTicketMetadata, type OrderTicketMetadata } from "@/types/orderTicketMetadata";
 import { useAdminUsers } from "@/hooks/useAdminUsers";
@@ -12,9 +12,6 @@ import {
 import { toast } from "@/hooks/use-toast";
 
 type OrderTicketRow = Database["public"]["Tables"]["order_tickets"]["Row"];
-type ProductMini = Pick<Database["public"]["Tables"]["products"]["Row"], "id" | "name" | "image_url">;
-type PlanMini = Pick<Database["public"]["Tables"]["product_plans"]["Row"], "id" | "name" | "price">;
-type LztSaleMini = Pick<Database["public"]["Tables"]["lzt_sales"]["Row"], "lzt_item_id" | "sell_price">;
 
 interface SaleTicket extends OrderTicketRow {
   metadata: Json | null;
@@ -116,35 +113,35 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
     // Chunk large .in() queries to avoid Supabase 1000-row response limit
     const CHUNK = 500;
     type PublicTable = keyof Database["public"]["Tables"];
-    const fetchInChunks = async <R,>(
-      table: PublicTable,
+    const fetchInChunks = async <T extends PublicTable>(
+      table: T,
       select: string,
       column: string,
       ids: string[],
-    ): Promise<R[]> => {
+    ): Promise<Tables<T>[]> => {
       if (ids.length === 0) return [];
-      const results: R[] = [];
+      const results: Tables<T>[] = [];
       for (let i = 0; i < ids.length; i += CHUNK) {
         const chunk = ids.slice(i, i + CHUNK);
         const { data } = await supabase.from(table).select(select).in(column, chunk);
-        if (data) results.push(...(data as R[]));
+        if (data) results.push(...(data as Tables<T>[]));
       }
       return results;
     };
 
     const [productsData, plansData, lztSalesRaw] = await Promise.all([
-      fetchInChunks<ProductMini>("products", "id, name, image_url", "id", productIds),
-      fetchInChunks<PlanMini>("product_plans", "id, name, price", "id", planIds),
+      fetchInChunks("products", "id, name, image_url", "id", productIds),
+      fetchInChunks("product_plans", "id, name, price", "id", planIds),
       lztItemIds.length > 0
-        ? fetchInChunks<LztSaleMini>("lzt_sales", "lzt_item_id, sell_price", "lzt_item_id", lztItemIds)
-        : Promise.resolve([] as LztSaleMini[]),
+        ? fetchInChunks("lzt_sales", "lzt_item_id, sell_price", "lzt_item_id", lztItemIds)
+        : Promise.resolve([] as Tables<"lzt_sales">[]),
     ]);
 
     const productsMap = new Map(productsData.map((p) => [p.id, p]));
     const plansMap = new Map(plansData.map((p) => [p.id, p]));
     const lztSalesMap = new Map(
       (lztSalesRaw || [])
-        .filter((s): s is LztSaleMini & { lzt_item_id: string } => s.lzt_item_id != null)
+        .filter((s): s is Tables<"lzt_sales"> & { lzt_item_id: string } => typeof s.lzt_item_id === "string" && s.lzt_item_id.length > 0)
         .map((s) => [s.lzt_item_id, Number(s.sell_price)]),
     );
 

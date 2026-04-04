@@ -17,6 +17,7 @@ import { useAudioRecorder, formatDuration } from "@/hooks/useAudioRecorder";
 import { motion } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
 import AudioMessagePlayer from "@/components/AudioMessagePlayer";
+import { safeHttpUrl } from "@/lib/safeUrl";
 
 type TicketData = Tables<"order_tickets">;
 
@@ -118,11 +119,11 @@ const PedidoChat = () => {
       // Always load tutorial from product_tutorials table first
       if (tutorialRes.data) {
         setTutorialText(tutorialRes.data.tutorial_text || null);
-        setTutorialFileUrl(tutorialRes.data.tutorial_file_url || null);
+        setTutorialFileUrl(safeHttpUrl(tutorialRes.data.tutorial_file_url ?? undefined));
       }
       // For Robot products, also use download_url from metadata if product_tutorials has no file
       if (isRobot && meta?.download_url && !tutorialRes.data?.tutorial_file_url) {
-        setTutorialFileUrl(meta.download_url);
+        setTutorialFileUrl(safeHttpUrl(meta.download_url));
         if (!tutorialRes.data?.tutorial_text && meta.file_name) {
           setTutorialText(`Arquivo: ${meta.file_name}`);
         }
@@ -935,11 +936,9 @@ const PedidoChat = () => {
                             <button
                               type="button"
                               onClick={() => {
-                                const a = document.createElement("a");
-                                a.href = tutorialFileUrl;
-                                a.target = "_blank";
-                                a.rel = "noopener noreferrer";
-                                a.click();
+                                const href = safeHttpUrl(tutorialFileUrl);
+                                if (!href) return;
+                                window.open(href, "_blank", "noopener,noreferrer");
                               }}
                               className="flex w-full items-center justify-center gap-2 rounded-xl bg-success py-3 text-sm font-bold text-success-foreground transition-opacity hover:opacity-95"
                             >

@@ -28,8 +28,12 @@ const fadeUp = {
 const DASHBOARD_TABS = ["overview", "purchases", "security", "settings"] as const;
 type Tab = (typeof DASHBOARD_TABS)[number];
 
+function isDashboardTab(s: string): s is Tab {
+  return (DASHBOARD_TABS as readonly string[]).includes(s);
+}
+
 function tabFromSearchParam(raw: string | null): Tab {
-  if (raw && (DASHBOARD_TABS as readonly string[]).includes(raw)) return raw as Tab;
+  if (raw && isDashboardTab(raw)) return raw;
   return "overview";
 }
 

@@ -7,7 +7,7 @@ import {
   CheckCircle2, Shield, ShoppingCart, X, Zap, Gift,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback, type CSSProperties } from "react";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "@/hooks/use-toast";
 import { useLztMarkup } from "@/hooks/useLztMarkup";
@@ -17,6 +17,9 @@ import { supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
 import { getLztDetailDisplayTitle } from "@/lib/lztDisplayTitles";
 import { lztAccountDetailQueryKey } from "@/lib/lztAccountDetailQuery";
 import type { LztFortniteCosmeticEntry, LztFortniteItemExtras } from "@/types/lztGameDetailExtras";
+import { lztItemAsFortniteExtras } from "@/lib/lztMergedItemExtras";
+import { hideImgOnError, setImgOpacityOnError, withHTMLElementTarget } from "@/lib/domEventHelpers";
+import { errorMessage } from "@/lib/errorMessage";
 
 const getProxiedImageUrl = (url: string) => {
   if (!url) return "";
@@ -115,7 +118,7 @@ const FortniteDetalhes = () => {
   });
 
   const item = data?.item;
-  const raw = item as LztFortniteItemExtras | undefined;
+  const raw: LztFortniteItemExtras | undefined = lztItemAsFortniteExtras(item);
 
   // Build preview list from a cosmetics array (fortniteSkins, fortnitePickaxe, etc.)
   const buildPreviews = useCallback((arr: LztFortniteCosmeticEntry[], skipDefault = true): CosmeticPreview[] => {
@@ -251,7 +254,7 @@ const FortniteDetalhes = () => {
         {error && (
           <div className="flex flex-col items-center justify-center py-32">
             <p className="text-lg font-semibold text-destructive">Erro ao carregar conta</p>
-            <p className="mt-1 text-sm text-muted-foreground">{(error as Error).message}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{errorMessage(error)}</p>
           </div>
         )}
 
@@ -288,7 +291,7 @@ const FortniteDetalhes = () => {
                           src={getProxiedImageUrl(galleryPreviews[selectedIndex].image)}
                           alt={galleryPreviews[selectedIndex].name}
                           className="relative z-[1] h-full w-auto max-w-full object-contain drop-shadow-2xl"
-                          onError={(e) => { (e.currentTarget as HTMLImageElement).style.opacity = "0.2"; }}
+                          onError={(e) => setImgOpacityOnError(e, "0.2")}
                         />
                       </motion.div>
                     </AnimatePresence>
@@ -465,9 +468,17 @@ const FortniteDetalhes = () => {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.15, delay: i * 0.008 }}
                       className="group rounded-lg border border-border bg-card overflow-hidden cursor-pointer transition-all hover:shadow-md"
-                      style={{ "--hover-border": `${FN_PURPLE}40` } as React.CSSProperties}
-                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = `${FN_PURPLE}50`; }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = ''; }}
+                      style={{ "--hover-border": `${FN_PURPLE}40` } as CSSProperties}
+                      onMouseEnter={(e) =>
+                        withHTMLElementTarget(e, (el) => {
+                          el.style.borderColor = `${FN_PURPLE}50`;
+                        })
+                      }
+                      onMouseLeave={(e) =>
+                        withHTMLElementTarget(e, (el) => {
+                          el.style.borderColor = "";
+                        })
+                      }
                       onClick={() => {
                         setActiveTab(activeTab);
                         setLightboxIndex(i);
@@ -484,9 +495,7 @@ const FortniteDetalhes = () => {
                           alt={cosmetic.name}
                           className="relative z-[1] h-full w-full object-contain group-hover:scale-110 transition-transform duration-300"
                           loading="lazy"
-                          onError={(e) => {
-                            (e.currentTarget as HTMLImageElement).style.opacity = "0.2";
-                          }}
+                          onError={(e) => setImgOpacityOnError(e, "0.2")}
                         />
                       </div>
                       <div className="p-1.5 border-t border-border">

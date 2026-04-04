@@ -91,10 +91,10 @@ function parseUserOrder(x: unknown): UserOrder | null {
   if (typeof x.created_at !== "string") return null;
   const plan_price = Number(x.plan_price);
   if (!Number.isFinite(plan_price)) return null;
-  const img = x.product_image;
-  const product_image = img === null || typeof img === "string" ? (img as string | null) : null;
-  const stock = x.stock_content;
-  const stock_content = stock === null || typeof stock === "string" ? (stock as string | null) : null;
+  const product_image: string | null =
+    typeof x.product_image === "string" ? x.product_image : x.product_image === null ? null : null;
+  const stock_content: string | null =
+    typeof x.stock_content === "string" ? x.stock_content : x.stock_content === null ? null : null;
   return {
     id: x.id,
     product_name: x.product_name,

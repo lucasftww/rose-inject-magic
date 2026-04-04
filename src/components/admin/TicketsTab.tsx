@@ -99,6 +99,10 @@ const TicketsTab = ({
   const [currentPage, setCurrentPage] = useState(1);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  /** Ignore stale async results when the admin switches tickets quickly */
+  const latestSelectionTicketIdRef = useRef<string | null>(null);
+  /** Avoid re-running deep-link open on every tickets[] refresh (e.g. email enrich) */
+  const lastHandledInitialTicketIdRef = useRef<string | null>(null);
   const [stockContent, setStockContent] = useState<string | null>(null);
   const [showDelivery, setShowDelivery] = useState(false);
   const [showStockKey, setShowStockKey] = useState(false);
@@ -177,6 +181,14 @@ const TicketsTab = ({
       return null;
     });
 
+    if (!data) {
+      toast({
+        title: "Não foi possível carregar os tickets",
+        description: "Verifique a conexão ou tente atualizar a página.",
+        variant: "destructive",
+      });
+    }
+
     if (data) {
       const productIds = [...new Set(data.map((t) => t.product_id))];
       const planIds = [...new Set(data.map((t) => t.product_plan_id))];
@@ -251,6 +263,7 @@ const TicketsTab = ({
   // ─── Ticket Selection & Realtime ────────────────────────────────────────
 
   const selectTicket = useCallback(async (ticket: Ticket) => {
+    latestSelectionTicketIdRef.current = ticket.id;
     setSelectedTicket(ticket);
     setStockContent(null);
     setShowDelivery(false);
@@ -258,12 +271,19 @@ const TicketsTab = ({
     // Revoke old object URLs to prevent memory leaks
     setPreviewUrls(prev => { prev.forEach(u => { if (u) URL.revokeObjectURL(u); }); return []; });
     setPendingFiles([]);
-    const { data } = await supabase
+    const ticketId = ticket.id;
+    const { data, error: msgErr } = await supabase
       .from("ticket_messages")
       .select("*")
-      .eq("ticket_id", ticket.id)
+      .eq("ticket_id", ticketId)
       .order("created_at", { ascending: true });
-    if (data) setMessages(mapTicketMessageRows(data));
+    if (latestSelectionTicketIdRef.current !== ticketId) return;
+    if (msgErr) {
+      toast({ title: "Erro ao carregar mensagens", description: msgErr.message, variant: "destructive" });
+      setMessages([]);
+    } else if (data) {
+      setMessages(mapTicketMessageRows(data));
+    }
 
     const meta = asOrderTicketMetadata(ticket.metadata);
     const skipStockForFreeRobot = meta.type === "robot-project" && meta.is_free === true;
@@ -273,6 +293,7 @@ const TicketsTab = ({
         .select("content")
         .eq("id", ticket.stock_item_id)
         .maybeSingle();
+      if (latestSelectionTicketIdRef.current !== ticketId) return;
       if (stockData) {
         const raw = stockData.content;
         setStockContent(typeof raw === "string" ? raw : JSON.stringify(raw));
@@ -281,16 +302,21 @@ const TicketsTab = ({
   }, []);
 
   useEffect(() => {
-    if (initialTicketId && tickets.length > 0) {
-      const found = tickets.find(t => t.id === initialTicketId);
-      if (found) {
-        selectTicket(found);
-        onTicketOpened?.();
-      } else {
-        setSearchQuery(initialTicketId.slice(0, 8));
-        onTicketOpened?.();
-      }
+    if (!initialTicketId) {
+      lastHandledInitialTicketIdRef.current = null;
+      return;
     }
+    if (tickets.length === 0) return;
+    if (lastHandledInitialTicketIdRef.current === initialTicketId) return;
+
+    const found = tickets.find(t => t.id === initialTicketId);
+    if (found) {
+      void selectTicket(found);
+    } else {
+      setSearchQuery(initialTicketId.slice(0, 8));
+    }
+    lastHandledInitialTicketIdRef.current = initialTicketId;
+    onTicketOpened?.();
   }, [initialTicketId, tickets, selectTicket, onTicketOpened]);
 
   useEffect(() => {
@@ -403,6 +429,8 @@ const TicketsTab = ({
       } else if (insertedMsg) {
         const mapped = mapTicketMessageRow(insertedMsg);
         setMessages((prev) => (prev.some((m) => m.id === mapped.id) ? prev : [...prev, mapped]));
+      } else {
+        toast({ title: "Mensagem não confirmada", description: "A mensagem pode ter sido enviada; atualize o chat.", variant: "destructive" });
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Erro ao enviar áudio";
@@ -447,10 +475,13 @@ const TicketsTab = ({
       sender_role: "staff",
       message: fullMessage,
     }).select().single();
-    if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
-    else if (insertedMsg) {
+    if (error) {
+      toast({ title: "Erro", description: error.message, variant: "destructive" });
+    } else if (insertedMsg) {
       const mapped = mapTicketMessageRow(insertedMsg);
       setMessages((prev) => (prev.some((m) => m.id === mapped.id) ? prev : [...prev, mapped]));
+    } else {
+      toast({ title: "Mensagem não confirmada", description: "A mensagem pode ter sido enviada; verifique o chat.", variant: "destructive" });
     }
     setNewMessage("");
     setSending(false);
@@ -489,6 +520,9 @@ const TicketsTab = ({
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Ticket restaurado" });
+      if (selectedTicket?.id === ticketId) {
+        setSelectedTicket(prev => (prev ? { ...prev, status: "open", status_label: "Aberto" } : null));
+      }
       fetchTickets(true);
     }
   };
@@ -514,6 +548,10 @@ const TicketsTab = ({
   const paginatedTickets = filteredTickets.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   useEffect(() => { setCurrentPage(1); }, [searchQuery, filterStatus, showArchived]);
+
+  useEffect(() => {
+    setCurrentPage((p) => (p > totalPages ? totalPages : p));
+  }, [totalPages]);
 
   // ─── Helpers ────────────────────────────────────────────────────────────
 

@@ -18,6 +18,8 @@ import { checkLztAvailability } from "@/lib/lztAvailability";
 import { supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
 import { getLztDetailDisplayTitle } from "@/lib/lztDisplayTitles";
 import { lztAccountDetailQueryKey } from "@/lib/lztAccountDetailQuery";
+import { parseLolSkinIdsFromJsonString, parseLolChampionIdsFromJsonString } from "@/lib/lolInventoryJson";
+import { errorMessage } from "@/lib/errorMessage";
 
 const getProxiedImageUrl = (url: string) => {
   if (!url) return "";
@@ -121,6 +123,11 @@ interface ChampPreview {
   image: string;
 }
 
+function lolGalleryHeroBgUrl(entry: SkinPreview | ChampPreview): string {
+  if ("splashImage" in entry && typeof entry.splashImage === "string") return entry.splashImage;
+  return entry.image;
+}
+
 const LolDetalhes = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -148,31 +155,14 @@ const LolDetalhes = () => {
   });
 
   const item = data?.item;
-  // API retorna lolInventory para contas LoL
-  // Skin pode ser objeto {index: skinId} ou array — normalize para array de valores
-  const lolInventory = item?.lolInventory as {
-    Champion?: number[];
-    Skin?: number[] | Record<string, number>;
-  } | null | undefined;
+  const lolInventory = item?.lolInventory;
 
   const lolSkinKey = JSON.stringify(lolInventory?.Skin ?? null);
   const lolChampionKey = JSON.stringify(lolInventory?.Champion ?? null);
 
   // ─── Skins: ID = champKey * 1000 + skinNum ───
-  // Skin vem como objeto {"0": 555016, "10": 42006, ...} → pegar os VALUES
   const skinPreviews = useMemo((): SkinPreview[] => {
-    let raw: number[] | Record<string, number> | null | undefined;
-    try {
-      raw = JSON.parse(lolSkinKey) as number[] | Record<string, number> | null;
-    } catch {
-      raw = undefined;
-    }
-    let skinIds: number[] = [];
-    if (Array.isArray(raw)) {
-      skinIds = raw.map(Number);
-    } else if (raw && typeof raw === "object") {
-      skinIds = Object.values(raw).map(Number);
-    }
+    const skinIds = parseLolSkinIdsFromJsonString(lolSkinKey);
 
     const results: SkinPreview[] = [];
     for (const skinId of skinIds) {
@@ -195,13 +185,7 @@ const LolDetalhes = () => {
 
   // ─── Champions: IDs numéricos diretos ───
   const champPreviews = useMemo((): ChampPreview[] => {
-    let ids: number[] = [];
-    try {
-      const parsed = JSON.parse(lolChampionKey) as unknown;
-      if (Array.isArray(parsed)) ids = parsed.map((x) => Number(x));
-    } catch {
-      ids = [];
-    }
+    const ids = parseLolChampionIdsFromJsonString(lolChampionKey);
     const results: ChampPreview[] = [];
     for (const champId of ids) {
       const champName = champKeyMap.get(Number(champId));
@@ -330,7 +314,7 @@ const LolDetalhes = () => {
         {error && (
           <div className="flex flex-col items-center justify-center py-32">
             <p className="text-lg font-semibold text-destructive">Erro ao carregar conta</p>
-            <p className="mt-1 text-sm text-muted-foreground">{(error as Error).message}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{errorMessage(error)}</p>
           </div>
         )}
 
@@ -365,7 +349,9 @@ const LolDetalhes = () => {
                       >
                         <div
                           className="absolute inset-0 bg-cover bg-center opacity-30 blur-sm scale-105"
-                          style={{ backgroundImage: `url(${getProxiedImageUrl('splashImage' in galleryItems[selectedIndex] ? (galleryItems[selectedIndex] as SkinPreview).splashImage : galleryItems[selectedIndex].image)})` }}
+                          style={{
+                            backgroundImage: `url(${getProxiedImageUrl(lolGalleryHeroBgUrl(galleryItems[selectedIndex]))})`,
+                          }}
                         />
                         {/* Loading art (portrait) na frente */}
                         <img
@@ -596,7 +582,7 @@ const LolDetalhes = () => {
                     {/* Lightbox */}
                 <AnimatePresence>
                   {lightboxIndex !== null && activeItems[lightboxIndex] && (() => {
-                    const cur = activeItems[lightboxIndex] as SkinPreview | ChampPreview;
+                    const cur = activeItems[lightboxIndex];
                     const total = activeItems.length;
                     const splashImg = 'splashImage' in cur ? cur.splashImage : cur.image;
                     const goPrev = () => setLightboxIndex(p => p !== null ? (p - 1 + total) % total : null);

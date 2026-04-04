@@ -182,13 +182,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         captchaToken,
       },
     });
-    return { error: error as Error | null };
+    return { error };
   };
 
   const signIn = async (email: string, password: string, captchaToken?: string) => {
     if (!supabase) return { error: new Error(t("auth.error")) };
     const { error } = await supabase.auth.signInWithPassword({ email, password, options: { captchaToken } });
-    return { error: error as Error | null };
+    return { error };
   };
 
   const signOut = async () => {
@@ -201,7 +201,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
-    return { error: error as Error | null };
+    return { error };
   };
 
   return (

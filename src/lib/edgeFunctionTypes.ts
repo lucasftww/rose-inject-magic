@@ -79,6 +79,12 @@ export interface FortniteCosmeticsResponse {
   data?: FortniteCosmeticItem[] | { items?: FortniteCosmeticItem[] };
 }
 
+/** Inventário bruto na resposta detail LoL (formatos variam na API). */
+export interface LztLolInventoryField {
+  Champion?: number[];
+  Skin?: number[] | Record<string, number>;
+}
+
 /** lzt-market `action=detail` (LoL page uses subset of fields) */
 export interface LztMarketLolDetailResponse {
   item?: {
@@ -87,7 +93,7 @@ export interface LztMarketLolDetailResponse {
     description?: string | null;
     price?: number;
     price_currency?: string;
-    lolInventory?: unknown;
+    lolInventory?: LztLolInventoryField;
     riot_lol_rank?: string;
     riot_lol_level?: number;
     riot_lol_champion_count?: number;

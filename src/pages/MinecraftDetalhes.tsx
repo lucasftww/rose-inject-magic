@@ -14,6 +14,9 @@ import { supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
 import { getLztDetailDisplayTitle } from "@/lib/lztDisplayTitles";
 import { lztAccountDetailQueryKey } from "@/lib/lztAccountDetailQuery";
 import type { LztMinecraftCapeEntry, LztMinecraftItemExtras } from "@/types/lztGameDetailExtras";
+import { lztItemAsMinecraftExtras } from "@/lib/lztMergedItemExtras";
+import { hideImgOnError, setImgOpacityOnError } from "@/lib/domEventHelpers";
+import { errorMessage } from "@/lib/errorMessage";
 
 const getProxiedImageUrl = (url: string) => {
   if (!url) return "";
@@ -71,7 +74,7 @@ const MinecraftDetalhes = () => {
   });
 
   const item = data?.item;
-  const raw = item as LztMinecraftItemExtras | undefined;
+  const raw: LztMinecraftItemExtras | undefined = lztItemAsMinecraftExtras(item);
   const nickname = raw?.minecraft_nickname;
 
   const { data: capesData } = useQuery({
@@ -183,7 +186,7 @@ const MinecraftDetalhes = () => {
         {error && (
           <div className="flex flex-col items-center justify-center py-32">
             <p className="text-lg font-semibold text-destructive">Erro ao carregar conta</p>
-            <p className="mt-1 text-sm text-muted-foreground">{(error as Error).message}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{errorMessage(error)}</p>
           </div>
         )}
 
@@ -217,7 +220,7 @@ const MinecraftDetalhes = () => {
                         alt={nickname || "Skin"}
                         className="h-full w-auto object-contain drop-shadow-2xl"
                         loading="lazy"
-                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.opacity = "0"; }}
+                        onError={(e) => setImgOpacityOnError(e, "0")}
                       />
                     </div>
                   ) : (
@@ -229,7 +232,7 @@ const MinecraftDetalhes = () => {
                   {/* Nickname badge */}
                   {nickname && (
                     <div className="absolute top-3 left-3 z-[2] rounded-lg bg-background/80 backdrop-blur-sm border border-border px-3 py-1.5 flex items-center gap-2">
-                      {headUrl && <img src={getProxiedImageUrl(headUrl)} alt="head" className="h-7 w-7 rounded object-contain" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />}
+                      {headUrl && <img src={getProxiedImageUrl(headUrl)} alt="head" className="h-7 w-7 rounded object-contain" onError={hideImgOnError} />}
                       <div>
                         <p className="text-xs font-bold text-foreground">{nickname}</p>
                         <p className="text-[10px] text-muted-foreground">
@@ -336,7 +339,7 @@ const MinecraftDetalhes = () => {
                                         alt={type}
                                         className="object-contain transition-transform group-hover:scale-105"
                                         style={{ maxHeight: 110, maxWidth: "100%", imageRendering: "pixelated" }}
-                                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                                        onError={hideImgOnError}
                                       />
                                     </div>
                                     <span className="text-[11px] font-semibold capitalize" style={{ color: MC_GREEN }}>{type}</span>

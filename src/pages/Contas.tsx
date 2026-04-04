@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef, useMemo, memo } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo, memo, type CSSProperties } from "react";
 import { useLztMarkup, getLztItemBrlPrice, type GameCategory } from "@/hooks/useLztMarkup";
 import Header from "@/components/Header";
 import { ChevronLeft, ChevronRight, ChevronDown, Search, SlidersHorizontal, DollarSign, Crosshair, Loader2, RefreshCw, Globe, TrendingUp, Star, Shield, Trophy, AlertTriangle, X, ArrowRight } from "lucide-react";
@@ -32,6 +32,15 @@ import {
   type SkinEntry,
 } from "@/lib/valorantData";
 import { getListingCardTitle } from "@/lib/lztDisplayTitles";
+import {
+  hideImgOnError,
+  setBorderAndBoxShadow,
+  clearBorderAndBoxShadow,
+  setLinkAccentHover,
+  clearLinkAccentHover,
+} from "@/lib/domEventHelpers";
+import { errorName } from "@/lib/errorMessage";
+import { isRecord } from "@/types/ticketChat";
 
 import weaponAres from "@/assets/weapon-ares.png";
 import weaponBandit from "@/assets/weapon-bandit.png";
@@ -377,7 +386,7 @@ const ValorantCard = memo(({ item, skinsMap, priceLabel }: { item: LztItem; skin
     const results: SkinEntry[] = [];
     const toUuids = (raw: unknown): string[] => {
       if (Array.isArray(raw)) return raw;
-      if (raw && typeof raw === "object") return Object.values(raw as Record<string, string>);
+      if (isRecord(raw)) return Object.values(raw).filter((v): v is string => typeof v === "string");
       return [];
     };
     const allUuids = toUuids(item.valorantInventory?.WeaponSkins);
@@ -779,15 +788,15 @@ const MinecraftCard = memo(({ item, priceLabel }: { item: LztItem; priceLabel: s
     <Link
       to={`/minecraft/${item.item_id}`}
       className="group touch-manipulation cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all flex flex-col h-full no-underline text-inherit"
-      style={{ ['--hover-shadow' as string]: `0 0 24px ${MC_GREEN}15` }}
-      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = `${MC_GREEN}80`; (e.currentTarget as HTMLElement).style.boxShadow = `0 4px 24px ${MC_GREEN}15`; }}
-      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = ''; (e.currentTarget as HTMLElement).style.boxShadow = ''; }}
+      style={{ "--hover-shadow": `0 0 24px ${MC_GREEN}15` } as CSSProperties}
+      onMouseEnter={(e) => setBorderAndBoxShadow(e, `${MC_GREEN}80`, `0 4px 24px ${MC_GREEN}15`)}
+      onMouseLeave={clearBorderAndBoxShadow}
     >
       <div className="relative flex h-28 sm:h-36 items-center justify-center overflow-hidden bg-secondary/20">
         <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse at center, ${MC_GREEN}0a, transparent 70%)` }} />
         {skinUrl ? (
           <div className="relative z-[1] flex items-end justify-center h-full pt-2 pb-1">
-            <img src={skinUrl} alt={nickname || "Skin"} className="h-full w-auto object-contain drop-shadow-2xl transition-transform duration-300 group-hover:scale-105" loading="lazy" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+            <img src={skinUrl} alt={nickname || "Skin"} className="h-full w-auto object-contain drop-shadow-2xl transition-transform duration-300 group-hover:scale-105" loading="lazy" onError={hideImgOnError} />
           </div>
         ) : (
           <div className="relative z-[1] flex items-center justify-center h-full">
@@ -916,7 +925,7 @@ const Contas = () => {
 
   // Scroll to top on mount
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+    window.scrollTo({ top: 0, behavior: "instant" });
   }, []);
 
   // ─── Valorant filters ───
@@ -999,8 +1008,17 @@ const Contas = () => {
     try {
       const stored = sessionStorage.getItem("royal_lzt_cache");
       if (stored) {
-        const parsed = JSON.parse(stored) as [string, CacheEntry][];
-        return new Map(parsed);
+        const parsed: unknown = JSON.parse(stored);
+        if (!Array.isArray(parsed)) return new Map();
+        const tuples = parsed.filter(
+          (row): row is [string, CacheEntry] =>
+            Array.isArray(row) &&
+            row.length >= 2 &&
+            typeof row[0] === "string" &&
+            row[1] !== null &&
+            typeof row[1] === "object",
+        );
+        return new Map(tuples);
       }
     } catch { /* silent */ }
     return new Map();
@@ -1229,10 +1247,7 @@ const Contas = () => {
       try {
         return await fetchAccountsRaw(params, controller.signal);
       } catch (err: unknown) {
-        const errName =
-          typeof err === "object" && err !== null && "name" in err
-            ? String((err as { name?: unknown }).name ?? "")
-            : "";
+        const errName = errorName(err);
         if (controller.signal.aborted || errName === "AbortError") throw err;
         if (attempt >= retries) throw err;
         // Exponential backoff: 1s, 2s, 4s
@@ -2030,9 +2045,9 @@ const Contas = () => {
             <button
               onClick={() => refetch()}
               className="flex h-9 w-9 items-center justify-center rounded border border-border text-muted-foreground transition-colors"
-              style={{ ['--hover-color' as string]: accentColor }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = accentColor; (e.currentTarget as HTMLElement).style.color = accentColor; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = ''; (e.currentTarget as HTMLElement).style.color = ''; }}
+              style={{ "--hover-color": accentColor } as CSSProperties}
+              onMouseEnter={(e) => setLinkAccentHover(e, accentColor)}
+              onMouseLeave={clearLinkAccentHover}
               title="Atualizar"
             >
               <RefreshCw className="h-4 w-4" />
@@ -2156,8 +2171,8 @@ const Contas = () => {
                 <button
                   onClick={() => refetch()}
                   className="mt-4 rounded border border-border px-4 py-2 text-xs font-medium transition-colors"
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = accentColor; (e.currentTarget as HTMLElement).style.color = accentColor; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = ''; (e.currentTarget as HTMLElement).style.color = ''; }}
+                  onMouseEnter={(e) => setLinkAccentHover(e, accentColor)}
+                  onMouseLeave={clearLinkAccentHover}
                 >
                   Tentar novamente
                 </button>
@@ -2199,15 +2214,16 @@ const Contas = () => {
                         onClick={() => { setDisplayPage(p => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                         disabled={displayPage <= 1}
                         className="flex h-9 w-9 items-center justify-center rounded border border-border text-muted-foreground transition-colors disabled:opacity-30 disabled:pointer-events-none"
-                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = accentColor; (e.currentTarget as HTMLElement).style.color = accentColor; }}
-                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = ''; (e.currentTarget as HTMLElement).style.color = ''; }}
+                        onMouseEnter={(e) => setLinkAccentHover(e, accentColor)}
+                        onMouseLeave={clearLinkAccentHover}
                       >
                         <ChevronLeft className="h-4 w-4" />
                       </button>
                       {Array.from({ length: totalDisplayPages }, (_, i) => i + 1)
                         .filter(p => p === 1 || p === totalDisplayPages || Math.abs(p - displayPage) <= 2)
-                        .reduce<(number | 'ellipsis')[]>((acc, p, i, arr) => {
-                          if (i > 0 && p - (arr[i - 1] as number) > 1) acc.push('ellipsis');
+                        .reduce<(number | "ellipsis")[]>((acc, p, i, arr) => {
+                          const prev = i > 0 ? arr[i - 1] : undefined;
+                          if (i > 0 && typeof prev === "number" && p - prev > 1) acc.push("ellipsis");
                           acc.push(p);
                           return acc;
                         }, [])
@@ -2217,11 +2233,20 @@ const Contas = () => {
                           ) : (
                             <button
                               key={p}
-                              onClick={() => { setDisplayPage(p as number); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                              onClick={() => {
+                                if (typeof p === "number") {
+                                  setDisplayPage(p);
+                                  window.scrollTo({ top: 0, behavior: "smooth" });
+                                }
+                              }}
                               className="flex h-9 w-9 items-center justify-center rounded border text-xs font-medium transition-colors"
                               style={displayPage === p ? { borderColor: accentColor, background: `${accentColor}15`, color: accentColor } : {}}
-                              onMouseEnter={e => { if (displayPage !== p) { (e.currentTarget as HTMLElement).style.borderColor = accentColor; (e.currentTarget as HTMLElement).style.color = accentColor; } }}
-                              onMouseLeave={e => { if (displayPage !== p) { (e.currentTarget as HTMLElement).style.borderColor = ''; (e.currentTarget as HTMLElement).style.color = ''; } }}
+                              onMouseEnter={(e) => {
+                                if (displayPage !== p) setLinkAccentHover(e, accentColor);
+                              }}
+                              onMouseLeave={(e) => {
+                                if (displayPage !== p) clearLinkAccentHover(e);
+                              }}
                             >
                               {p}
                             </button>
@@ -2231,8 +2256,8 @@ const Contas = () => {
                         onClick={() => { setDisplayPage(p => Math.min(totalDisplayPages, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                         disabled={displayPage >= totalDisplayPages}
                         className="flex h-9 w-9 items-center justify-center rounded border border-border text-muted-foreground transition-colors disabled:opacity-30 disabled:pointer-events-none"
-                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = accentColor; (e.currentTarget as HTMLElement).style.color = accentColor; }}
-                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = ''; (e.currentTarget as HTMLElement).style.color = ''; }}
+                        onMouseEnter={(e) => setLinkAccentHover(e, accentColor)}
+                        onMouseLeave={clearLinkAccentHover}
                       >
                         <ChevronRight className="h-4 w-4" />
                       </button>
@@ -2246,8 +2271,8 @@ const Contas = () => {
                         onClick={loadMorePages}
                         disabled={loadingMore || !!streamError}
                         className="flex items-center gap-2 rounded-lg border border-border bg-card px-6 py-2 text-xs font-medium text-muted-foreground transition-colors disabled:opacity-50"
-                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = accentColor; (e.currentTarget as HTMLElement).style.color = accentColor; }}
-                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = ''; (e.currentTarget as HTMLElement).style.color = ''; }}
+                        onMouseEnter={(e) => setLinkAccentHover(e, accentColor)}
+                        onMouseLeave={clearLinkAccentHover}
                       >
                         {loadingMore ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ChevronDown className="h-3.5 w-3.5" />}
                         {loadingMore ? "Carregando..." : "Buscar mais contas"}
