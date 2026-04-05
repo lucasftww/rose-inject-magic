@@ -359,7 +359,7 @@ const Dashboard = () => {
                           )}
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-foreground truncate group-hover:text-success transition-colors">{t.product_name}</p>
-                            <p className="text-[11px] text-muted-foreground">{t.plan_name} · {new Date(t.created_at).toLocaleDateString("pt-BR")}</p>
+                            <p className="text-[11px] text-muted-foreground">{t.plan_name} · {new Date(t.created_at || "").toLocaleDateString("pt-BR")}</p>
                           </div>
                           <div className="flex flex-col items-end gap-1">
                             <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${statusColors[t.status] || "bg-muted text-muted-foreground"}`}>
