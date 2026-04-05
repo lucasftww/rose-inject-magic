@@ -420,7 +420,7 @@ const MinecraftDetalhes = () => {
                   <div className="rounded-lg bg-card border border-border p-3 flex items-end justify-between">
                     <div>
                       <p className="text-[10px] text-muted-foreground mb-0.5">Por</p>
-                      <p className="text-2xl font-bold" style={{ color: MC_GREEN }}>{getDisplayPrice(item, "minecraft")}</p>
+                      <p className="text-2xl font-bold" style={{ color: MC_GREEN }}>{lockedPriceBrl !== null ? formatPriceBrl(lockedPriceBrl) : getDisplayPrice(item, "minecraft")}</p>
                     </div>
                   </div>
 
