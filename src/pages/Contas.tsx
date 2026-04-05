@@ -1131,35 +1131,41 @@ const Contas = () => {
   // Use session storage so when users navigate away and back, it's instant.
   type CacheEntry = { items: LztItem[]; hasNextPage: boolean; currentPage: number; timestamp: number };
 
-  const readLztCacheFromSession = (): Map<string, CacheEntry> => {
-    if (typeof window === "undefined") return new Map();
+  const fetchCacheRef = useRef<Map<string, CacheEntry>>(null!);
+  if (!fetchCacheRef.current) {
+    // Lazy init — runs only once (avoids re-parsing JSON on every render)
+    let map = new Map<string, CacheEntry>();
     try {
       const stored = sessionStorage.getItem("royal_lzt_cache");
       if (stored) {
         const parsed: unknown = JSON.parse(stored);
-        if (!Array.isArray(parsed)) return new Map();
-        const tuples = parsed.filter(
-          (row): row is [string, CacheEntry] =>
-            Array.isArray(row) &&
-            row.length >= 2 &&
-            typeof row[0] === "string" &&
-            row[1] !== null &&
-            typeof row[1] === "object",
-        );
-        return new Map(tuples);
+        if (Array.isArray(parsed)) {
+          const tuples = parsed.filter(
+            (row): row is [string, CacheEntry] =>
+              Array.isArray(row) &&
+              row.length >= 2 &&
+              typeof row[0] === "string" &&
+              row[1] !== null &&
+              typeof row[1] === "object",
+          );
+          map = new Map(tuples);
+        }
       }
     } catch { /* silent */ }
-    return new Map();
-  };
-
-  const fetchCacheRef = useRef(readLztCacheFromSession());
+    fetchCacheRef.current = map;
+  }
   const MAX_CACHE_ENTRIES = 20;
   const persistSessionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const flushCacheToSession = useCallback(() => {
     try {
-      sessionStorage.setItem("royal_lzt_cache", JSON.stringify(Array.from(fetchCacheRef.current.entries())));
-    } catch { /* silent */ }
+      // Strip heavy fields (screenshots/description) before serializing to reduce payload
+      const slim = Array.from(fetchCacheRef.current.entries()).map(([k, v]) => [
+        k,
+        { ...v, items: v.items.map(({ description, ...rest }) => rest) },
+      ]);
+      sessionStorage.setItem("royal_lzt_cache", JSON.stringify(slim));
+    } catch { /* silent — quota exceeded or unavailable */ }
   }, []);
 
   useEffect(
@@ -1192,7 +1198,7 @@ const Contas = () => {
       persistSessionTimerRef.current = setTimeout(() => {
         persistSessionTimerRef.current = null;
         flushCacheToSession();
-      }, 450);
+      }, 1500);
     },
     [flushCacheToSession],
   );
