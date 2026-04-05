@@ -239,23 +239,32 @@ function shouldKeepItem(item: LztItem, gameType: string, _displayedPriceBrl: num
   if (item.canBuyItem === false) return false;
   if (itemFailsNotSoldBeforePolicy(item)) return false;
 
-  // Inactivity is now enforced by LZT API via `daybreak` parameter.
-  // Minimum skins are also enforced by LZT API via `valorant_smin`/`lol_smin`.
-  // Keep client-side checks only as safety net for edge cases.
-
-  // Minimum 3 skins per game (safety net — API should already filter these)
+  // ── Quality gates: minimum content thresholds ──
   const isValorant = gameType === "riot" || gameType === "valorant";
   if (isValorant) {
     const skins = Number(item.riot_valorant_skin_count || 0);
-    if (skins < 3) return false;
+    if (skins < 10) return false;
   }
   if (gameType === "lol") {
     const skins = Number(item.riot_lol_skin_count || 0);
-    if (skins < 3) return false;
+    if (skins < 10) return false;
   }
   if (gameType === "fortnite") {
     const skins = Number(item.fortnite_skin_count || item.fortnite_outfit_count || 0);
-    if (skins < 3) return false;
+    if (skins < 10) return false;
+  }
+
+  // ── Value gate: reject overpriced accounts with poor content ──
+  // If the content ceiling (fair value) is less than 40% of the raw cost,
+  // the account is garbage listed at an inflated price — skip it.
+  const currency = String(item.price_currency || "rub").toLowerCase();
+  const rawPrice = Number(item.price || 0);
+  const costBrl = currency === "rub" ? rawPrice * RUB_TO_BRL
+    : currency === "usd" ? rawPrice * USD_TO_BRL
+    : rawPrice;
+  if (costBrl > 0) {
+    const contentCeiling = getContentCeilingBrl(item, gameType);
+    if (contentCeiling < costBrl * 0.4) return false;
   }
 
   return true;
@@ -639,21 +648,21 @@ Deno.serve(async (req) => {
       // Todas as categorias: apenas contas que nunca foram vendidas antes no LZT (`nsb`).
       params.set("nsb", "1");
 
-      // Always enforce minimum 3 skins via API params (server-side at LZT)
+      // Enforce minimum 10 skins via API params (server-side at LZT)
       if (gameType === "riot" || gameType === "valorant") {
-        if (!params.get("valorant_smin") || Number(params.get("valorant_smin")) < 3) {
-          params.set("valorant_smin", "3");
+        if (!params.get("valorant_smin") || Number(params.get("valorant_smin")) < 10) {
+          params.set("valorant_smin", "10");
         }
       } else if (gameType === "lol") {
-        if (!params.get("lol_smin") || Number(params.get("lol_smin")) < 3) {
-          params.set("lol_smin", "3");
+        if (!params.get("lol_smin") || Number(params.get("lol_smin")) < 10) {
+          params.set("lol_smin", "10");
         }
       }
 
-      // Also enforce minimum 3 skins for Fortnite
+      // Also enforce minimum 10 skins for Fortnite
       if (gameType === "fortnite") {
-        if (!params.get("smin") || Number(params.get("smin")) < 3) {
-          params.set("smin", "3");
+        if (!params.get("smin") || Number(params.get("smin")) < 10) {
+          params.set("smin", "10");
         }
       }
 
