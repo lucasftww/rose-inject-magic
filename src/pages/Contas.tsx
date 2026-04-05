@@ -2214,7 +2214,7 @@ const Contas = () => {
             {!isLoading && !streamError && (
               <>
                 <div
-                  className={`grid grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3 transition-opacity duration-200 relative ${isRefetching ? "opacity-40 pointer-events-none" : ""}`}
+                  className="grid grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3 relative"
                 >
                   {gridRows.map(({ item, priceLabel }) => (
                     <div key={item.item_id}>
