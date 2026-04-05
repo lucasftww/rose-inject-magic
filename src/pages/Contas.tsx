@@ -1005,6 +1005,14 @@ const Contas = () => {
   // page state removed — displayPage handles client-side pagination
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
+  // Lock body scroll when mobile filters are open
+  useEffect(() => {
+    if (mobileFiltersOpen) {
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = ''; };
+    }
+  }, [mobileFiltersOpen]);
+
   // ─── Sidebar collapse ───
   const [rankOpen, setRankOpen] = useState(true);
   const [skinsOpen, setSkinsOpen] = useState(true);
@@ -1336,10 +1344,11 @@ const Contas = () => {
         setCurrentPage(1);
         setLoadingMore(false);
         setDisplayPage(1);
-        if (streamedItems.length === 0) {
+        setStreamedItems(prev => {
           // Only show skeleton if we truly have nothing to display
-          setFirstPageLoaded(false);
-        }
+          if (prev.length === 0) setFirstPageLoaded(false);
+          return prev;
+        });
       } else {
         // Cache expirado: manter itens antigos e indicar refetch
         setIsRefetching(true);
@@ -1561,18 +1570,7 @@ const Contas = () => {
     }
 
     // Region filter is now done server-side via country[] API param
-
-    // Post-filter by BRL price range
-    const brlMin = priceMin ? Number(priceMin) : 0;
-    const brlMax = priceMax ? Number(priceMax) : 0;
-    if (brlMin > 0 || brlMax > 0) {
-      filtered = filtered.filter(item => {
-        const p = getBrlPrice(item);
-        if (brlMin > 0 && p < brlMin) return false;
-        if (brlMax > 0 && p > brlMax) return false;
-        return true;
-      });
-    }
+    // Price filtering is done server-side via pmin/pmax — no duplicate client-side filter needed
 
     // If user explicitly chose a price sort, use BRL display price for accurate ordering
     if (sortBy === "price_to_up") {
@@ -1612,7 +1610,7 @@ const Contas = () => {
       return filtered.sort((a, b) => getBrlPrice(a) - getBrlPrice(b));
     }
     return filtered;
-  }, [streamedItems, sortBy, gameTab, priceMin, priceMax, getBrlPrice]);
+  }, [streamedItems, sortBy, gameTab, getBrlPrice]);
   const totalDisplayPages = Math.max(1, Math.ceil(allItems.length / ITEMS_PER_PAGE));
 
   // Clamp displayPage when allItems shrinks (e.g. after price filtering)
@@ -2140,9 +2138,9 @@ const Contas = () => {
 
           {/* ─── Mobile Filter Bottom Sheet ─── */}
           {mobileFiltersOpen && (
-            <div className="fixed inset-0 z-50 lg:hidden">
+            <div className="fixed inset-0 z-50 lg:hidden" style={{ touchAction: 'none' }}>
               <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileFiltersOpen(false)} />
-              <div className="absolute bottom-0 left-0 right-0 max-h-[85vh] overflow-y-auto rounded-t-2xl bg-card border-t border-border animate-in slide-in-from-bottom duration-300">
+              <div className="absolute bottom-0 left-0 right-0 max-h-[85vh] overflow-y-auto rounded-t-2xl bg-card border-t border-border animate-in slide-in-from-bottom duration-300" style={{ touchAction: 'auto' }}>
                 <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card px-5 py-4 rounded-t-2xl">
                   <h3 className="flex items-center gap-2 text-base font-bold text-foreground">
                     <SlidersHorizontal className="h-4 w-4" style={{ color: accentColor }} />
@@ -2232,6 +2230,12 @@ const Contas = () => {
 
             {!isLoading && !streamError && (
               <>
+                {isRefetching && (
+                  <div className="mb-4 flex items-center gap-2 rounded-lg border border-border/50 bg-secondary/30 px-4 py-2.5 text-xs text-muted-foreground">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" style={{ color: accentColor }} />
+                    Atualizando contas…
+                  </div>
+                )}
                 <div
                  className="grid grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3 relative"
                   style={{ contentVisibility: 'auto', containIntrinsicSize: 'auto 400px' } as CSSProperties}
