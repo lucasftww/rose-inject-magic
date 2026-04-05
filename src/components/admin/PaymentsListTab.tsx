@@ -100,6 +100,9 @@ const PaymentsListTab = () => {
     return result;
   }, [payments, statusFilter, search, usernameMap]);
 
+  // Reset page when filters change
+  useEffect(() => { setPage(1); }, [statusFilter, search]);
+
   const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
   const paginated = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
 
