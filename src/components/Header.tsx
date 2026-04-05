@@ -120,7 +120,6 @@ const Header = () => {
                 width={36}
                 height={36}
                 decoding="async"
-                fetchPriority="high"
                 className="h-8 w-8 sm:h-9 sm:w-9 object-contain shrink-0 transition-transform duration-300 ease-out group-hover:-rotate-[8deg]"
               />
               <span
