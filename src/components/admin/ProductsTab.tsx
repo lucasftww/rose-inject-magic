@@ -1127,9 +1127,10 @@ const ProductsTab = () => {
             <button type="button" onClick={() => mediaFileInputRef.current?.click()} disabled={uploadingMedia}
               className="flex items-center gap-2 rounded-xl border-2 border-dashed border-border/40 px-4 py-3 text-xs font-medium text-muted-foreground hover:border-success/30 hover:text-foreground transition-colors w-full justify-center">
               {uploadingMedia ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
-              {uploadingMedia ? "Enviando..." : "Upload de arquivo"}
+              {uploadingMedia ? "Enviando..." : "Upload de imagem"}
             </button>
-            <input ref={mediaFileInputRef} type="file" accept="image/*,video/*" className="hidden"
+            <p className="text-[10px] text-muted-foreground mt-1">📹 Para vídeos: cole a URL do YouTube ou link MP4 no campo acima</p>
+            <input ref={mediaFileInputRef} type="file" accept="image/*" className="hidden"
               onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadMediaFile(f); e.target.value = ""; }} />
           </SectionCard>
 
