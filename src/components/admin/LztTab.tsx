@@ -279,7 +279,7 @@ const LztTab = () => {
     if (!salesSearch.trim()) return true;
     const q = salesSearch.toLowerCase();
     const id = (sale.lzt_item_id || "").toLowerCase();
-    return id.includes(q) || (sale.title || "").toLowerCase().includes(q) || (sale.buyer_user_id || "").toLowerCase().includes(q);
+    return id.includes(q) || (sale.title || "").toLowerCase().includes(q) || (sale.game || "").toLowerCase().includes(q) || (sale.buyer_user_id || "").toLowerCase().includes(q);
   });
 
   const totalPages = Math.max(1, Math.ceil(filteredSales.length / SALES_PER_PAGE));
@@ -548,6 +548,7 @@ const LztTab = () => {
                 <tr className="border-b border-border text-left">
                   <th className="pb-3 text-xs font-semibold text-muted-foreground">ID LZT</th>
                   <th className="pb-3 text-xs font-semibold text-muted-foreground">Título</th>
+                  <th className="pb-3 text-xs font-semibold text-muted-foreground">Jogo</th>
                   <th className="pb-3 text-xs font-semibold text-muted-foreground">Compra</th>
                   <th className="pb-3 text-xs font-semibold text-muted-foreground">Venda</th>
                   <th className="pb-3 text-xs font-semibold text-muted-foreground">Lucro</th>
@@ -558,7 +559,7 @@ const LztTab = () => {
               </thead>
               <tbody className="divide-y divide-border">
                 {paginatedSales.length === 0 ? (
-                  <tr><td colSpan={8} className="py-12 text-center text-sm text-muted-foreground">
+                  <tr><td colSpan={9} className="py-12 text-center text-sm text-muted-foreground">
                     {salesSearch ? "Nenhuma venda encontrada." : "Nenhuma venda registrada ainda."}
                   </td></tr>
                 ) : paginatedSales.map((sale) => (
@@ -572,6 +573,9 @@ const LztTab = () => {
                     </td>
                     <td className="py-3 pr-3">
                       <span className="text-sm text-foreground truncate block max-w-[200px]">{sale.title || "—"}</span>
+                    </td>
+                    <td className="py-3 pr-3">
+                      <span className="text-xs text-muted-foreground capitalize">{sale.game || "—"}</span>
                     </td>
                     <td className="py-3 pr-3">
                       <span className="text-xs font-bold text-destructive">R${Number(sale.buy_price).toFixed(2)}</span>
