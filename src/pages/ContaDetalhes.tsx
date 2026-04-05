@@ -730,42 +730,38 @@ const ContaDetalhes = () => {
               }
 
               {/* Rank + Stats */}
-                <div className="rounded-xl border border-border/60 bg-card p-5 sm:p-5 space-y-4 sm:space-y-4">
-                  <div className="flex items-center justify-center gap-6 sm:justify-between">
-                    {/* Último rank (esquerda) */}
-                    {item.riot_valorant_previous_rank && rankMap[item.riot_valorant_previous_rank] ?
-                  <div className="flex flex-col items-center gap-1.5">
-                        <img src={rankMap[item.riot_valorant_previous_rank].img} alt="" className="h-14 w-14 sm:h-16 sm:w-16 object-contain opacity-50" />
+                <div className="rounded-xl border border-border/40 bg-card overflow-hidden">
+                  {/* Rank display */}
+                  <div className="flex items-center justify-center gap-8 px-5 py-5">
+                    {item.riot_valorant_previous_rank && rankMap[item.riot_valorant_previous_rank] ? (
+                      <div className="flex flex-col items-center gap-2">
+                        <img src={rankMap[item.riot_valorant_previous_rank].img} alt="" className="h-12 w-12 sm:h-14 sm:w-14 object-contain opacity-40" />
                         <div className="text-center">
-                          <p className="text-[9px] text-muted-foreground uppercase tracking-wider">Último rank</p>
-                          <p className="text-xs sm:text-sm font-bold text-muted-foreground">{rankMap[item.riot_valorant_previous_rank].name}</p>
+                          <p className="text-[9px] text-muted-foreground/60 uppercase tracking-widest">Anterior</p>
+                          <p className="text-[11px] sm:text-xs font-semibold text-muted-foreground">{rankMap[item.riot_valorant_previous_rank].name}</p>
                         </div>
-                      </div> :
+                      </div>
+                    ) : <div />}
 
-                  <div />
-                  }
+                    <ChevronRight className="h-4 w-4 text-muted-foreground/30" />
 
-                    {/* Seta no meio */}
-                    <div className="flex items-center text-success">
-                      <ChevronRight className="h-6 w-6" />
-                    </div>
-
-                    {/* Rank atual (direita) */}
-                    <div className="flex flex-col items-center gap-1.5">
+                    <div className="flex flex-col items-center gap-2">
                       <img src={rank?.img || rankUnranked} alt={rank?.name || "Unranked"} className="h-14 w-14 sm:h-16 sm:w-16 object-contain" />
                       <div className="text-center">
-                        <p className="text-[9px] text-muted-foreground uppercase tracking-wider">Rank atual</p>
+                        <p className="text-[9px] text-muted-foreground/60 uppercase tracking-widest">Atual</p>
                         <p className="text-xs sm:text-sm font-bold text-foreground">{rank?.name || "Unranked"}</p>
                       </div>
                     </div>
                   </div>
-                  <div className="border-t border-border pt-4 sm:pt-4">
-                    <h3 className="text-sm font-bold text-foreground mb-3 sm:mb-3">Informações da Conta</h3>
-                    <div className="grid grid-cols-2 gap-2 sm:gap-2">
+
+                  {/* Stats grid */}
+                  <div className="border-t border-border/30 px-4 py-4 space-y-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">Detalhes</p>
+                    <div className="grid grid-cols-2 gap-1.5">
                       {item.valorantRegionPhrase && <StatCell label="Região" value={translateRegion(item.valorantRegionPhrase)} />}
-                      {item.riot_valorant_wallet_vp != null && <StatCell label="VP na conta" value={item.riot_valorant_wallet_vp} />}
-                      {item.riot_valorant_wallet_rp != null && item.riot_valorant_wallet_rp > 0 && <StatCell label="RP na conta" value={item.riot_valorant_wallet_rp} />}
-                      {item.riot_valorant_inventory_value != null && <StatCell label="Valor inventário" value={`$${item.riot_valorant_inventory_value}`} />}
+                      {item.riot_valorant_wallet_vp != null && <StatCell label="VP" value={item.riot_valorant_wallet_vp} />}
+                      {item.riot_valorant_wallet_rp != null && item.riot_valorant_wallet_rp > 0 && <StatCell label="RP" value={item.riot_valorant_wallet_rp} />}
+                      {item.riot_valorant_inventory_value != null && <StatCell label="Inventário" value={`$${item.riot_valorant_inventory_value}`} />}
                       {item.riot_valorant_level != null && <StatCell label="Nível" value={item.riot_valorant_level} />}
                       {item.riot_valorant_knife_count != null && item.riot_valorant_knife_count > 0 && <StatCell label="Knifes" value={item.riot_valorant_knife_count} />}
                     </div>
@@ -1057,9 +1053,9 @@ const ContaDetalhes = () => {
 };
 
 const StatCell = forwardRef<HTMLDivElement, {label: string;value: string | number;}>(({ label, value }, ref) =>
-<div ref={ref} className="flex items-center justify-between rounded-xl bg-secondary/30 px-4 py-3">
-    <span className="text-xs text-muted-foreground">{label}</span>
-    <span className="text-sm font-bold text-foreground">{value}</span>
+<div ref={ref} className="flex items-center justify-between rounded-lg bg-secondary/20 px-3 py-2.5">
+    <span className="text-[10px] text-muted-foreground/70">{label}</span>
+    <span className="text-xs font-semibold text-foreground">{value}</span>
   </div>);
 StatCell.displayName = "StatCell";
 
