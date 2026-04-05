@@ -1496,10 +1496,11 @@ const Contas = () => {
 
   useEffect(() => {
     abortRef.current?.abort();
+    loadMoreControllerRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
     fetchMultiplePagesWithPrefetch(controller);
-    return () => controller.abort();
+    return () => { controller.abort(); loadMoreControllerRef.current?.abort(); };
   }, [debouncedParamsKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Trigger prefetch after initial load completes
