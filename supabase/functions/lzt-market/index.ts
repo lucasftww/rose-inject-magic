@@ -951,11 +951,7 @@ Deno.serve(async (req) => {
         filteredByOther,
       });
 
-      // Cap max BRL price per game (accounts above this won't sell)
-      const GAME_PRICE_CAP_BRL: Record<string, number> = { fortnite: 1200 };
-      const priceCap = GAME_PRICE_CAP_BRL[gameType] ?? Infinity;
-
-      // Assign BRL prices and remove items above the cap
+      // Assign BRL prices
       for (const item of data.items) {
         item.price_brl = getDisplayedPriceBrl(item, overrideMap.get(String(item.item_id)), gameType, activeMarkup);
 
