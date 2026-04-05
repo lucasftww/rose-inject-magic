@@ -96,18 +96,22 @@ type InventoryTab = "skins" | "pickaxes" | "dances" | "gliders";
 const FortniteDetalhes = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getPrice, getDisplayPrice } = useLztMarkup();
+  const { getPrice, getDisplayPrice, formatPriceBrl } = useLztMarkup();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<InventoryTab>("skins");
   const { addItem } = useCart();
   const queryClient = useQueryClient();
 
+  // Price lock: prevents silent price changes from background React Query refetches
+  const [lockedPriceBrl, setLockedPriceBrl] = useState<number | null>(null);
+
   // Reset state when navigating between accounts
   useEffect(() => {
     setSelectedIndex(0);
     setLightboxIndex(null);
     setActiveTab("skins");
+    setLockedPriceBrl(null);
   }, [id]);
 
   const { data, isLoading, error } = useQuery({
@@ -182,37 +186,42 @@ const FortniteDetalhes = () => {
   // Gallery uses skins, fallback to pickaxes
   const galleryPreviews = skinPreviews.length > 0 ? skinPreviews : pickaxePreviews;
 
+  // Lock price on first load — ensures displayed price = cart price even if LZT price changes
+  useEffect(() => {
+    if (item && lockedPriceBrl === null) {
+      setLockedPriceBrl(getPrice(item, "fortnite"));
+    }
+  }, [item, getPrice, lockedPriceBrl]);
+
   // ViewContent tracking
   const viewTracked = useRef(false);
   useEffect(() => {
     viewTracked.current = false;
   }, [id]);
   useEffect(() => {
-    if (item && !viewTracked.current) {
+    if (item && lockedPriceBrl !== null && !viewTracked.current) {
       viewTracked.current = true;
-      const priceBRL = getPrice(item, "fortnite");
       trackViewContent({
         contentName: cleanedTitle,
         contentIds: [`lzt-fn-${item.item_id}`],
-        value: priceBRL,
+        value: lockedPriceBrl,
       });
     }
-  }, [item, getPrice, cleanedTitle]);
+  }, [item, lockedPriceBrl, cleanedTitle]);
 
   const [checkingAvailability, setCheckingAvailability] = useState(false);
 
   const handleBuyNow = async () => {
-    if (!item || checkingAvailability) return;
+    if (!item || checkingAvailability || lockedPriceBrl === null) return;
     setCheckingAvailability(true);
     const available = await checkLztAvailability(String(item.item_id), "fortnite", { queryClient });
     setCheckingAvailability(false);
     if (!available) return;
-    const priceBRL = getPrice(item, "fortnite");
 
     trackInitiateCheckout({
       contentName: cleanedTitle,
       contentIds: [`lzt-fn-${item.item_id}`],
-      value: priceBRL,
+      value: lockedPriceBrl,
     });
 
     const added = addItem({
@@ -221,7 +230,7 @@ const FortniteDetalhes = () => {
       productImage: null,
       planId: "lzt-fn-account",
       planName: "Conta Fortnite",
-      price: priceBRL,
+      price: lockedPriceBrl,
       type: "lzt-account",
       lztItemId: String(item.item_id),
       lztPrice: item.price,
@@ -390,7 +399,7 @@ const FortniteDetalhes = () => {
                   <div className="rounded-lg bg-card border border-border p-3 flex items-end justify-between">
                     <div>
                       <p className="text-[10px] text-muted-foreground mb-0.5">Por</p>
-                      <p className="text-2xl font-bold" style={{ color: FN_PURPLE }}>{getDisplayPrice(item, "fortnite")}</p>
+                      <p className="text-2xl font-bold" style={{ color: FN_PURPLE }}>{lockedPriceBrl !== null ? formatPriceBrl(lockedPriceBrl) : getDisplayPrice(item, "fortnite")}</p>
                     </div>
                   </div>
 
@@ -611,7 +620,7 @@ const FortniteDetalhes = () => {
             <div className="flex items-center gap-3">
               <div className="flex flex-col min-w-0">
                 <span className="text-lg font-bold leading-tight" style={{ color: FN_PURPLE }}>
-                  {getDisplayPrice(item, "fortnite")}
+                  {lockedPriceBrl !== null ? formatPriceBrl(lockedPriceBrl) : getDisplayPrice(item, "fortnite")}
                 </span>
               </div>
               <button

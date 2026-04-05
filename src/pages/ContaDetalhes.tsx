@@ -459,11 +459,14 @@ const fetchValorantBuddies = async (uuids: string[]): Promise<SimpleGalleryItem[
 const ContaDetalhes = () => {
   const { id } = useParams<{id: string;}>();
   const navigate = useNavigate();
-  const { getPrice, getDisplayPrice } = useLztMarkup();
+  const { getPrice, getDisplayPrice, formatPriceBrl } = useLztMarkup();
   const [selectedSkin, setSelectedSkin] = useState(0);
   const [activeTab, setActiveTab] = useState<"skins" | "agents" | "buddies">("skins");
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const viewTracked = useRef(false);
+
+  // Price lock: prevents silent price changes from background React Query refetches
+  const [lockedPriceBrl, setLockedPriceBrl] = useState<number | null>(null);
 
   // Reset selectedSkin when account changes
   useEffect(() => {
@@ -471,6 +474,7 @@ const ContaDetalhes = () => {
     setLightboxIndex(null);
     setActiveTab("skins");
     viewTracked.current = false;
+    setLockedPriceBrl(null);
   }, [id]);
   const { addItem } = useCart();
   const queryClient = useQueryClient();
@@ -500,18 +504,24 @@ const ContaDetalhes = () => {
     [item?.title, rank?.name, skinCount],
   );
 
+  // Lock price on first load — ensures displayed price = cart price even if LZT price changes
+  useEffect(() => {
+    if (item && lockedPriceBrl === null) {
+      setLockedPriceBrl(getPrice(item, "valorant"));
+    }
+  }, [item, getPrice, lockedPriceBrl]);
+
   const handleBuyNow = async () => {
-    if (!item || checkingAvailability) return;
+    if (!item || checkingAvailability || lockedPriceBrl === null) return;
     setCheckingAvailability(true);
     const available = await checkLztAvailability(String(item.item_id), "valorant", { queryClient });
     setCheckingAvailability(false);
     if (!available) return;
-    const priceBRL = getPrice(item, "valorant");
 
     trackInitiateCheckout({
       contentName: cleanedTitle,
       contentIds: [`lzt-${item.item_id}`],
-      value: priceBRL,
+      value: lockedPriceBrl,
     });
 
     const added = addItem({
@@ -520,7 +530,7 @@ const ContaDetalhes = () => {
       productImage: rank?.img || null,
       planId: "lzt-account",
       planName: "Conta Valorant",
-      price: priceBRL,
+      price: lockedPriceBrl,
       type: "lzt-account",
       lztItemId: String(item.item_id),
       lztPrice: item.price,
@@ -533,16 +543,15 @@ const ContaDetalhes = () => {
 
   // ViewContent tracking (cleanedTitle deve existir antes deste effect)
   useEffect(() => {
-    if (item && !viewTracked.current) {
+    if (item && lockedPriceBrl !== null && !viewTracked.current) {
       viewTracked.current = true;
-      const priceBRL = getPrice(item, "valorant");
       trackViewContent({
         contentName: cleanedTitle,
         contentIds: [`lzt-${item.item_id}`],
-        value: priceBRL,
+        value: lockedPriceBrl,
       });
     }
-  }, [item, getPrice, cleanedTitle]);
+  }, [item, lockedPriceBrl, cleanedTitle]);
 
   // Gallery from screenshots
   const gallery = useMemo(() => {
@@ -801,7 +810,7 @@ const ContaDetalhes = () => {
                     <div>
                       <p className="text-[11px] text-muted-foreground mb-1">Por apenas</p>
                       <p className="text-2xl sm:text-3xl font-bold text-success">
-                        {getDisplayPrice(item, "valorant")}
+                        {lockedPriceBrl !== null ? formatPriceBrl(lockedPriceBrl) : getDisplayPrice(item, "valorant")}
                       </p>
                     </div>
                   </div>
@@ -1040,7 +1049,7 @@ const ContaDetalhes = () => {
               <div className="flex flex-col min-w-0">
                 <span className="text-xs text-muted-foreground leading-none mb-0.5">Total</span>
                 <span className="text-xl font-bold text-success leading-tight">
-                  {getDisplayPrice(item, "valorant")}
+                  {lockedPriceBrl !== null ? formatPriceBrl(lockedPriceBrl) : getDisplayPrice(item, "valorant")}
                 </span>
               </div>
               <button
