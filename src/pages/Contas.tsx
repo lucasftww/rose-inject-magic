@@ -1383,7 +1383,7 @@ const Contas = () => {
       qp.set("page", "1");
       qp.set("order_by", "pdate_to_down");
       qp.set("game_type", gameTypeMap[tab]);
-      if (tab === "fortnite") qp.set("smin", "3");
+      if (tab === "fortnite") qp.set("smin", "10");
       if (tab === "valorant") qp.append("country[]", "Bra");
       if (tab === "lol") qp.append("lol_region[]", "BR1");
 
