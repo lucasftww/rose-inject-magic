@@ -1152,7 +1152,8 @@ const Contas = () => {
     const params: Record<string, string | string[]> = {};
     params.page = String(pageNum);
     // Send user's chosen sort to API (validated enum values from LZT API)
-    params.order_by = sortBy || "pdate_to_down";
+    // "best_value" is client-side only — use date order from API as base
+    params.order_by = sortBy === "best_value" ? "pdate_to_down" : (sortBy || "pdate_to_down");
     if (searchQuery) params.title = searchQuery;
 
     // Send price filters to API so server filters before returning
