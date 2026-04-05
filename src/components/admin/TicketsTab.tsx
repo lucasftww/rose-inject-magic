@@ -221,7 +221,7 @@ const TicketsTab = ({
       const profileMap: Record<string, string> = {};
       const lztSalesMap = new Map<string, number>();
       productsRes.data?.forEach((p) => { productMap[p.id] = p.name; });
-      plansRes.data?.forEach((p) => { planMap[p.id] = { name: p.name, price: p.price ?? 0 }; });
+      plansRes.data?.forEach((p) => { planMap[p.id] = { name: p.name, price: Number(p.price ?? 0) }; });
       (profilesData.data || []).forEach((p) => { profileMap[p.user_id] = p.username || "—"; });
       (lztSalesData.data || []).forEach((s) => {
         if (s.lzt_item_id != null) lztSalesMap.set(String(s.lzt_item_id), Number(s.sell_price));
