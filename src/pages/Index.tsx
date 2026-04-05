@@ -86,15 +86,14 @@ const Index = () => {
 
         {/* CTAs */}
         <div className="z-10 mt-5 sm:mt-10 flex w-full max-w-xs sm:max-w-md flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-3 mx-auto">
-          <Link to="/produtos" className="btn-shine touch-manipulation group relative flex w-full sm:w-auto items-center justify-center gap-2 bg-success px-6 sm:px-8 py-3 sm:py-3.5 text-[12px] sm:text-sm font-semibold tracking-wide text-success-foreground transition-all hover:shadow-[0_0_30px_hsl(197,100%,50%,0.4)] rounded-xl shadow-[0_4px_20px_hsl(197,100%,50%,0.25)]">
-            <span className="pointer-events-none absolute inset-0 rounded-xl bg-[radial-gradient(circle_at_30%_50%,_hsl(197,100%,70%,0.2)_0%,_transparent_60%)]" />
+          <Link to="/contas" className="touch-manipulation group relative flex w-full sm:w-auto items-center justify-center gap-2 bg-foreground px-6 sm:px-8 py-3 sm:py-3.5 text-[12px] sm:text-sm font-bold tracking-wide text-background transition-all hover:opacity-90 rounded-xl shadow-[0_4px_20px_rgba(255,255,255,0.15)]">
             <span className="relative flex items-center gap-2">
-              {t("hero.viewProducts")}
+              {t("hero.viewAccounts")}
               <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 transition-transform group-hover:translate-x-0.5" />
             </span>
           </Link>
-          <Link to="/contas" className="touch-manipulation w-full sm:w-auto border border-success/30 px-6 sm:px-8 py-3 sm:py-3.5 text-[12px] sm:text-sm font-medium text-success transition-all hover:border-success hover:bg-success/[0.06] rounded-xl text-center">
-            {t("hero.viewAccounts")}
+          <Link to="/produtos" className="touch-manipulation w-full sm:w-auto border border-foreground/20 bg-foreground/[0.06] px-6 sm:px-8 py-3 sm:py-3.5 text-[12px] sm:text-sm font-medium text-foreground/80 transition-all hover:bg-foreground/10 hover:border-foreground/30 rounded-xl text-center">
+            {t("hero.viewProducts")}
           </Link>
         </div>
 

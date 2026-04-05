@@ -10,18 +10,18 @@ const StickyMobileCTA = forwardRef<HTMLDivElement>((_, ref) => {
       <div className="bg-card/95 backdrop-blur-xl border-t border-border/60 px-4 py-2.5 safe-area-bottom">
         <div className="flex gap-2">
           <Link
-            to="/produtos"
-            className="btn-shine touch-manipulation flex-1 flex items-center justify-center gap-2 bg-success py-3 text-[13px] font-bold tracking-wide text-success-foreground rounded-xl shadow-[0_4px_20px_hsl(197,100%,50%,0.25)]"
+            to="/contas"
+            className="touch-manipulation flex-1 flex items-center justify-center gap-2 bg-foreground py-3 text-[13px] font-bold tracking-wide text-background rounded-xl shadow-[0_4px_16px_rgba(255,255,255,0.1)]"
           >
             <span className="relative flex items-center gap-2">
-              {t("mobileCta.viewProducts")}
+              {t("mobileCta.viewAccounts")}
             </span>
           </Link>
           <Link
-            to="/contas"
-            className="touch-manipulation flex-1 flex items-center justify-center gap-2 border-2 border-success/40 py-3 text-[13px] font-bold tracking-wide text-success rounded-xl"
+            to="/produtos"
+            className="touch-manipulation flex-1 flex items-center justify-center gap-2 border border-foreground/20 bg-foreground/[0.06] py-3 text-[13px] font-bold tracking-wide text-foreground/80 rounded-xl"
           >
-            {t("mobileCta.viewAccounts")}
+            {t("mobileCta.viewProducts")}
           </Link>
         </div>
       </div>
