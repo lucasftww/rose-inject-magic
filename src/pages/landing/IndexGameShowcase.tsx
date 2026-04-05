@@ -42,6 +42,11 @@ import bgCardBloodstrike from "@/assets/games/bg-card-bloodstrike.png";
 import bgCardApex from "@/assets/games/bg-card-apex.png";
 import bgCardArcraiders from "@/assets/games/bg-card-arcraiders.png";
 import bgCardArenabreakout from "@/assets/games/bg-card-arenabreakout.png";
+import bgCardOverwatch2 from "@/assets/games/bg-card-overwatch2.png";
+import bgCardSquad from "@/assets/games/bg-card-squad.png";
+import bgCardDbd from "@/assets/games/bg-card-dbd.png";
+import bgCardFarlight84 from "@/assets/games/bg-card-farlight84.png";
+import bgCardHellletloose from "@/assets/games/bg-card-hellletloose.png";
 
 // Character overlay images — normal + hover
 import codNormal from "@/assets/games/cod-normal.png";
@@ -70,6 +75,16 @@ import arcraidersNormal from "@/assets/games/arcraiders-normal.png";
 import arcraidersHover from "@/assets/games/arcraiders-hover.png";
 import arenabreakoutNormal from "@/assets/games/arenabreakout-normal.png";
 import arenabreakoutHover from "@/assets/games/arenabreakout-hover.png";
+import overwatch2Normal from "@/assets/games/overwatch2-normal.png";
+import overwatch2Hover from "@/assets/games/overwatch2-hover.png";
+import squadNormal from "@/assets/games/squad-normal.png";
+import squadHover from "@/assets/games/squad-hover.png";
+import dbdNormal from "@/assets/games/dbd-normal.png";
+import dbdHover from "@/assets/games/dbd-hover.png";
+import farlight84Normal from "@/assets/games/farlight84-normal.png";
+import farlight84Hover from "@/assets/games/farlight84-hover.png";
+import hellletlooseNormal from "@/assets/games/hellletloose-normal.png";
+import hellletlooseHover from "@/assets/games/hellletloose-hover.png";
 
 // Local images map for software game cards (fallbacks when no character overlay)
 const softwareImageMap: Record<string, string> = {
@@ -114,6 +129,15 @@ const characterOverlayMap: Record<string, { bg: string; character: string; chara
   apex: { bg: bgCardApex, character: apexNormal, characterHover: apexHover },
   "arc raiders": { bg: bgCardArcraiders, character: arcraidersNormal, characterHover: arcraidersHover },
   "arena breakout": { bg: bgCardArenabreakout, character: arenabreakoutNormal, characterHover: arenabreakoutHover },
+  "arena breakout infinite": { bg: bgCardArenabreakout, character: arenabreakoutNormal, characterHover: arenabreakoutHover },
+  "overwatch 2": { bg: bgCardOverwatch2, character: overwatch2Normal, characterHover: overwatch2Hover },
+  overwatch: { bg: bgCardOverwatch2, character: overwatch2Normal, characterHover: overwatch2Hover },
+  squad: { bg: bgCardSquad, character: squadNormal, characterHover: squadHover },
+  "dead by daylight": { bg: bgCardDbd, character: dbdNormal, characterHover: dbdHover },
+  dbd: { bg: bgCardDbd, character: dbdNormal, characterHover: dbdHover },
+  "farlight 84": { bg: bgCardFarlight84, character: farlight84Normal, characterHover: farlight84Hover },
+  farlight84: { bg: bgCardFarlight84, character: farlight84Normal, characterHover: farlight84Hover },
+  "hell let loose": { bg: bgCardHellletloose, character: hellletlooseNormal, characterHover: hellletlooseHover },
 };
 
 // Gradient fallbacks for games without images
@@ -314,7 +338,7 @@ interface GameCardGame {
 function GameCard({ game, count, t }: { game: GameCardGame; count: number; t: TFunction }) {
   const hasProducts = count > 0;
   const [isHovered, setIsHovered] = useState(false);
-  const characterPositionClass = "absolute bottom-0 right-0 w-[55%] sm:w-[50%]";
+  const characterPositionClass = "absolute bottom-0 right-0 w-[40%] sm:w-[50%]";
 
   return (
     <TiltCard>
@@ -324,12 +348,12 @@ function GameCard({ game, count, t }: { game: GameCardGame; count: number; t: TF
             ? `/produtos?game=${encodeURIComponent(game.keywords[0])}`
             : "/produtos"
         }
-        className="group touch-manipulation relative block rounded-2xl border border-border/50 hover:border-success/40 transition-all duration-500 bg-card overflow-hidden hover:shadow-[0_20px_50px_hsl(var(--foreground)/0.18)]"
+        className="group touch-manipulation relative block rounded-2xl border border-border/50 hover:border-success/40 transition-colors duration-200 sm:transition-all sm:duration-500 bg-card overflow-hidden sm:hover:shadow-[0_20px_50px_hsl(var(--foreground)/0.18)]"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
         {/* Image / gradient background */}
-        <div className="relative aspect-[16/11] overflow-hidden">
+        <div className="relative aspect-[4/3] sm:aspect-[16/11] overflow-hidden">
           {game.image ? (
             <img
               src={game.image}
@@ -338,7 +362,7 @@ function GameCard({ game, count, t }: { game: GameCardGame; count: number; t: TF
               decoding="async"
               width={400}
               height={275}
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+              className="w-full h-full object-cover sm:transition-transform sm:duration-700 sm:group-hover:scale-110"
             />
           ) : (
             <div className={`w-full h-full bg-gradient-to-br ${GAME_GRADIENTS[game.name] || "from-muted to-card"} flex items-center justify-center`}>
@@ -347,12 +371,12 @@ function GameCard({ game, count, t }: { game: GameCardGame; count: number; t: TF
               </span>
             </div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-background/10" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/5" />
 
           {/* Character normal */}
           {game.character && (
             <div
-              className={`${characterPositionClass} pointer-events-none z-[8] transition-opacity duration-500 ease-out`}
+              className={`${characterPositionClass} pointer-events-none z-[8] sm:transition-opacity sm:duration-500 sm:ease-out`}
               style={{ opacity: isHovered ? 0 : 1 }}
             >
               <img src={game.character} alt="" loading="lazy" decoding="async" className="w-full h-auto object-contain" style={{ filter: "drop-shadow(0 10px 28px rgba(0,0,0,0.55))" }} />
@@ -362,7 +386,7 @@ function GameCard({ game, count, t }: { game: GameCardGame; count: number; t: TF
           {/* Character hover */}
           {game.characterHover && (
             <div
-              className={`${characterPositionClass} pointer-events-none z-[9] transition-all duration-500 ease-out`}
+              className={`${characterPositionClass} pointer-events-none z-[9] sm:transition-all sm:duration-500 sm:ease-out`}
               style={{
                 opacity: isHovered ? 1 : 0,
                 transformOrigin: "bottom right",
@@ -374,9 +398,9 @@ function GameCard({ game, count, t }: { game: GameCardGame; count: number; t: TF
           )}
 
           {/* Badge top-left */}
-          <div className="absolute left-3 top-3 z-[12] flex flex-wrap gap-2">
+          <div className="absolute left-2 top-2 sm:left-3 sm:top-3 z-[12] flex flex-wrap gap-1.5 sm:gap-2">
             {hasProducts && (
-              <div className="flex items-center gap-1.5 rounded-full border border-border/50 bg-card/75 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-foreground shadow-lg backdrop-blur-sm">
+              <div className="flex items-center gap-1 sm:gap-1.5 rounded-full border border-border/50 bg-card/90 px-2 py-0.5 sm:px-2.5 sm:py-1 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-foreground shadow-lg">
                 <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
                 {count} {count === 1 ? t("games.software") : t("games.softwares")}
               </div>
@@ -384,16 +408,22 @@ function GameCard({ game, count, t }: { game: GameCardGame; count: number; t: TF
           </div>
 
           {/* Content overlay at bottom */}
-          <div className="absolute inset-x-0 bottom-0 z-[12] p-4 sm:p-5">
-            <h3 className="text-sm sm:text-lg lg:text-xl font-bold tracking-tight text-foreground drop-shadow-lg" style={{ fontFamily: "'Valorant', sans-serif" }}>
+          <div className="absolute inset-x-0 bottom-0 z-[12] p-3 sm:p-5">
+            <h3
+              className="text-xs sm:text-lg lg:text-xl font-bold tracking-tight text-foreground"
+              style={{ fontFamily: "'Valorant', sans-serif", textShadow: '0 2px 8px rgba(0,0,0,0.8), 0 0 2px rgba(0,0,0,0.9)' }}
+            >
               {game.name}
             </h3>
-            <p className="mt-1 max-w-[70%] text-[10px] sm:text-xs leading-relaxed text-muted-foreground/90 line-clamp-2">
+            <p
+              className="mt-0.5 sm:mt-1 max-w-[90%] text-[9px] sm:text-xs leading-snug sm:leading-relaxed text-muted-foreground line-clamp-2"
+              style={{ textShadow: '0 1px 4px rgba(0,0,0,0.7)' }}
+            >
               {t(game.descKey, { defaultValue: game.fallbackDesc })}
             </p>
-            <div className="mt-3 inline-flex items-center gap-2 text-[10px] sm:text-xs font-bold uppercase tracking-[0.18em] text-success transition-all group-hover:gap-3">
+            <div className="mt-2 sm:mt-3 inline-flex items-center gap-1.5 sm:gap-2 text-[9px] sm:text-xs font-bold uppercase tracking-[0.15em] sm:tracking-[0.18em] text-success sm:transition-all sm:group-hover:gap-3">
               <span>{t("games.viewSoftwares")} {game.name.split(" ")[0]}</span>
-              <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+              <ArrowRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 sm:transition-transform sm:group-hover:translate-x-1" />
             </div>
           </div>
         </div>
@@ -463,7 +493,7 @@ const SoftwareSection = () => {
         ) : gameCards.length === 0 ? (
           <div className="mt-10 text-center text-muted-foreground text-sm">{t("products.empty")}</div>
         ) : (
-          <div className="mt-5 sm:mt-12 grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4">
+          <div className="mt-5 sm:mt-12 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
             {gameCards.map((gc) => (
               <GameCard key={gc.id} game={gc} count={gc.count} t={t} />
             ))}
