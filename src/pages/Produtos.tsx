@@ -1243,7 +1243,12 @@ const Produtos = () => {
               variants={staggerContainer}
             >
               {filtered.map((product, idx) => (
-                <motion.div key={product.id} variants={fadeUp} custom={idx}>
+                <motion.div
+                  key={product.id}
+                  variants={fadeUp}
+                  custom={idx}
+                  style={{ contentVisibility: 'auto', containIntrinsicSize: 'auto 380px' } as CSSProperties}
+                >
                   <ProductCard product={product} />
                 </motion.div>
               ))}
