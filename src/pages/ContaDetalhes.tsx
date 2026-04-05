@@ -781,7 +781,7 @@ const ContaDetalhes = () => {
                   <h1 className="text-lg sm:text-lg font-bold text-foreground leading-snug">{cleanedTitle}</h1>
 
                   <div className="flex flex-wrap gap-2">
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-success/10 border border-success/30 px-3 py-1 text-[11px] font-semibold text-success">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-positive/10 border border-positive/30 px-3 py-1 text-[11px] font-semibold text-positive">
                       <CheckCircle2 className="h-3 w-3" />
                       FULL ACESSO
                     </span>
