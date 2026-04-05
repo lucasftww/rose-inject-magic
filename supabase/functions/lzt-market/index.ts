@@ -648,21 +648,21 @@ Deno.serve(async (req) => {
       // Todas as categorias: apenas contas que nunca foram vendidas antes no LZT (`nsb`).
       params.set("nsb", "1");
 
-      // Always enforce minimum 3 skins via API params (server-side at LZT)
+      // Enforce minimum 10 skins via API params (server-side at LZT)
       if (gameType === "riot" || gameType === "valorant") {
-        if (!params.get("valorant_smin") || Number(params.get("valorant_smin")) < 3) {
-          params.set("valorant_smin", "3");
+        if (!params.get("valorant_smin") || Number(params.get("valorant_smin")) < 10) {
+          params.set("valorant_smin", "10");
         }
       } else if (gameType === "lol") {
-        if (!params.get("lol_smin") || Number(params.get("lol_smin")) < 3) {
-          params.set("lol_smin", "3");
+        if (!params.get("lol_smin") || Number(params.get("lol_smin")) < 10) {
+          params.set("lol_smin", "10");
         }
       }
 
-      // Also enforce minimum 3 skins for Fortnite
+      // Also enforce minimum 10 skins for Fortnite
       if (gameType === "fortnite") {
-        if (!params.get("smin") || Number(params.get("smin")) < 3) {
-          params.set("smin", "3");
+        if (!params.get("smin") || Number(params.get("smin")) < 10) {
+          params.set("smin", "10");
         }
       }
 
