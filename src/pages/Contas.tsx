@@ -1319,7 +1319,7 @@ const Contas = () => {
   const fetchMultiplePages = useCallback(async (controller: AbortController) => {
     const cacheKey = debouncedParamsKey;
     const cached = fetchCacheRef.current.get(cacheKey);
-    const tabChanged = prevGameTabRef.current !== gameTab;
+    // (tabChanged is checked inside the branches below)
 
     // Show stale cache immediately (even if expired) while fetching fresh data
     if (cached) {
