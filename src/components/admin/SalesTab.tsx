@@ -122,13 +122,12 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
       ids: string[],
     ): Promise<Tables<T>[]> => {
       if (ids.length === 0) return [];
-      const results: Tables<T>[] = [];
-      for (let i = 0; i < ids.length; i += CHUNK) {
-        const chunk = ids.slice(i, i + CHUNK);
-        const { data } = await (supabase.from(table as any).select(select) as any).in(column, chunk);
-        if (data) results.push(...(data as Tables<T>[]));
-      }
-      return results;
+      const chunks: string[][] = [];
+      for (let i = 0; i < ids.length; i += CHUNK) chunks.push(ids.slice(i, i + CHUNK));
+      const results = await Promise.all(chunks.map(chunk =>
+        (supabase.from(table as any).select(select) as any).in(column, chunk).then((r: any) => (r.data ?? []) as Tables<T>[])
+      ));
+      return results.flat();
     };
 
     const [productsData, plansData, lztSalesRaw] = await Promise.all([
