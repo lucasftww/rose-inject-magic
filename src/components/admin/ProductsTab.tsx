@@ -276,7 +276,7 @@ const ProductsTab = () => {
     setFormFeaturesText(product.features_text || "");
     setFormImageUrl(product.image_url || "");
     setFormGameId(product.game_id ?? "");
-    setFormActive(product.active);
+    setFormActive(product.active ?? true);
     setImagePreview(product.image_url || null);
     setImageMode("url");
     const hasRobot = !!product.robot_game_id && product.robot_game_id > 0;
