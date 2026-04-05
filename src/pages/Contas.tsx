@@ -2226,13 +2226,13 @@ const Contas = () => {
                   {gridRows.map(({ item, priceLabel }) => (
                     <div key={item.item_id}>
                       {isValorant ? (
-                        <ValorantCard item={item} skinsMap={skinsMap} priceLabel={priceLabel} />
+                        <ValorantCard item={item} skinsMap={skinsMap} priceLabel={priceLabel} queryClient={queryClient} />
                       ) : isFortnite ? (
-                        <FortniteCard item={item} skinsDb={fnSkinsDb} priceLabel={priceLabel} />
+                        <FortniteCard item={item} skinsDb={fnSkinsDb} priceLabel={priceLabel} queryClient={queryClient} />
                       ) : isMinecraft ? (
-                        <MinecraftCard item={item} priceLabel={priceLabel} />
+                        <MinecraftCard item={item} priceLabel={priceLabel} queryClient={queryClient} />
                       ) : (
-                        <LolCard item={item} champKeyMap={champKeyMap} priceLabel={priceLabel} />
+                        <LolCard item={item} champKeyMap={champKeyMap} priceLabel={priceLabel} queryClient={queryClient} />
                       )}
                     </div>
                   ))}
