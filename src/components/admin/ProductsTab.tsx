@@ -174,14 +174,14 @@ const ProductsTab = () => {
     } catch (_) { /* use fallback */ }
   };
 
-  const fetchRobotGames = async () => {
+  const fetchRobotGames = async (silent = false) => {
     setLoadingRobotGames(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
       const fnBase = getSupabaseFunctionsBaseUrl();
       if (!fnBase) {
-        toast({
+        if (!silent) toast({
           title: "Configuração incompleta",
           description: "Configure VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY no .env (produção) para carregar jogos Robot.",
           variant: "destructive",
@@ -200,15 +200,17 @@ const ProductsTab = () => {
       ]);
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        toast({ title: "Erro ao carregar jogos Robot", description: err.error || `HTTP ${res.status}`, variant: "destructive" });
+        if (!silent) toast({ title: "Erro ao carregar jogos Robot", description: err.error || `HTTP ${res.status}`, variant: "destructive" });
       } else {
         const data = await res.json();
         const games = Array.isArray(data) ? data : data.games || [];
         setRobotGames(games);
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      toast({ title: "Erro Robot", description: message, variant: "destructive" });
+      if (!silent) {
+        const message = err instanceof Error ? err.message : String(err);
+        toast({ title: "Erro Robot", description: message, variant: "destructive" });
+      }
     }
     setLoadingRobotGames(false);
   };
