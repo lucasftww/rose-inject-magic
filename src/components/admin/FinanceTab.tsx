@@ -166,28 +166,46 @@ const FinanceTab = () => {
 
     let currentRate = usdToBrl;
     try {
-      const res = await fetch("https://economia.awesomeapi.com.br/json/last/USD-BRL");
-      const data = await res.json();
-      const bid = Number(data?.USDBRL?.bid);
-      if (bid > 0) { currentRate = bid; setUsdToBrl(currentRate); }
-    } catch (err) { console.warn("FinanceTab: failed to fetch USD-BRL rate", err); }
+      currentRate = await getUsdToBrl();
+      setUsdToBrl(currentRate);
+    } catch { /* fallback */ }
+
+    // Use shared cache for heavy queries
+    const CACHE_KEY_PAYMENTS = "admin_payments_completed";
+    const CACHE_KEY_LZT = "admin_lzt_sales_full";
+    const CACHE_KEY_RESELLER = "admin_reseller_purchases";
+
+    const cachedPayments = getCached<PaymentRow[]>(CACHE_KEY_PAYMENTS);
+    const cachedLzt = getCached<LztSale[]>(CACHE_KEY_LZT);
+    const cachedReseller = getCached<ResellerPurchase[]>(CACHE_KEY_RESELLER);
 
     const [paymentsData, lztData, resellerData, robotProductsRes] = await Promise.all([
-      fetchAllRows<PaymentRow>("payments", {
-        select: "amount, status, created_at, paid_at, cart_snapshot, payment_method, discount_amount, user_id",
-        filters: [{ column: "status", op: "eq", value: "COMPLETED" }],
-        order: { column: "paid_at", ascending: false },
-      }),
-      fetchAllRows<LztSale>("lzt_sales", {
-        select: "buy_price, sell_price, profit, created_at, game",
-        order: { column: "created_at", ascending: false },
-      }),
-      fetchAllRows<ResellerPurchase>("reseller_purchases", {
-        select: "original_price, paid_price, created_at",
-        order: { column: "created_at", ascending: false },
-      }),
+      cachedPayments
+        ? Promise.resolve(cachedPayments)
+        : fetchAllRows<PaymentRow>("payments", {
+            select: "amount, status, created_at, paid_at, cart_snapshot, payment_method, discount_amount, user_id",
+            filters: [{ column: "status", op: "eq", value: "COMPLETED" }],
+            order: { column: "paid_at", ascending: false },
+          }),
+      cachedLzt
+        ? Promise.resolve(cachedLzt)
+        : fetchAllRows<LztSale>("lzt_sales", {
+            select: "buy_price, sell_price, profit, created_at, game",
+            order: { column: "created_at", ascending: false },
+          }),
+      cachedReseller
+        ? Promise.resolve(cachedReseller)
+        : fetchAllRows<ResellerPurchase>("reseller_purchases", {
+            select: "original_price, paid_price, created_at",
+            order: { column: "created_at", ascending: false },
+          }),
       supabase.from("products").select("id, name, robot_game_id, robot_markup_percent").not("robot_game_id", "is", null),
     ]);
+
+    // Persist to shared cache
+    if (!cachedPayments) setCache(CACHE_KEY_PAYMENTS, paymentsData);
+    if (!cachedLzt) setCache(CACHE_KEY_LZT, lztData);
+    if (!cachedReseller) setCache(CACHE_KEY_RESELLER, resellerData);
 
     setPayments(paymentsData);
     setLztSales(lztData);
