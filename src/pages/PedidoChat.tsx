@@ -889,7 +889,7 @@ const PedidoChat = () => {
                 { icon: Hash, label: "Pedido", value: `#${ticket.id.slice(0, 8).toUpperCase()}` },
                 { icon: DollarSign, label: "Valor", value: planPrice !== null ? `R$ ${planPrice.toFixed(2).replace(".", ",")}` : "—" },
                 { icon: Calendar, label: "Data", value: ticket.created_at ? new Date(ticket.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" }) : "—" },
-                { icon: CreditCard, label: "Pagamento", value: (meta?.payment_method || "PIX").toUpperCase() },
+                { icon: CreditCard, label: "Pagamento", value: "PIX" },
               ].map((item) => (
                 <div key={item.label} className="flex items-center gap-1.5 rounded-lg bg-secondary/50 px-2.5 py-1.5">
                   <item.icon className="h-3 w-3 text-muted-foreground" />
