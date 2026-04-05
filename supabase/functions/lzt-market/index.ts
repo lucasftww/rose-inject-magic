@@ -126,8 +126,8 @@ function getContentCeilingBrl(item: LztItem, gameType?: string) {
     const skins = Number(item.fortnite_skin_count || item.fortnite_outfit_count || 0);
     const vbucks = Math.min(Number(item.fortnite_vbucks || 0), 50000);
     const level = Math.min(Number(item.fortnite_level || 0), 999);
-    // R$3/skin + vbucks value + level bonus
-    const ceiling = skins * 3 + vbucks * 0.02 + level * 0.2;
+    // R$10/skin (OG/rare skins worth much more) + vbucks value + level bonus
+    const ceiling = skins * 10 + vbucks * 0.02 + level * 0.5;
     return Math.max(ceiling, MIN_PRICE_BRL);
   }
   if (gameType === "lol") {
