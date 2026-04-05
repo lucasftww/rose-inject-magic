@@ -1341,19 +1341,25 @@ const Contas = () => {
 
     try {
       if (!cached) {
-        // Don't clear items on tab switch — show a loading overlay instead
-        // so the page remains interactive while the API responds
-        setIsRefetching(true);
+        const tabChanged = prevGameTabRef.current !== gameTab;
         setStreamingDone(false);
         setStreamError(null);
         setCurrentPage(1);
         setLoadingMore(false);
         setDisplayPage(1);
-        setStreamedItems(prev => {
-          // Only show skeleton if we truly have nothing to display
-          if (prev.length === 0) setFirstPageLoaded(false);
-          return prev;
-        });
+        if (tabChanged) {
+          // Tab changed with no cache: clear items to avoid rendering old-game data with new-game card components
+          setStreamedItems([]);
+          setFirstPageLoaded(false);
+          setIsRefetching(false);
+        } else {
+          // Same tab, filter change: keep existing items visible with refetching indicator
+          setIsRefetching(true);
+          setStreamedItems(prev => {
+            if (prev.length === 0) setFirstPageLoaded(false);
+            return prev;
+          });
+        }
       } else {
         // Cache expirado: manter itens antigos e indicar refetch
         setIsRefetching(true);
@@ -1509,12 +1515,16 @@ const Contas = () => {
     if (streamError || loadingMore || !hasNextPage) return;
     if (currentPage >= MAX_PAGES) return;
     setLoadingMore(true);
+    // Use the main abortRef so tab/filter changes cancel in-flight load-more requests
+    abortRef.current?.abort();
     const controller = new AbortController();
+    abortRef.current = controller;
+    const snapshotGameTab = gameTab;
     try {
       const cacheKey = debouncedParamsKey;
       const nextPageNum = currentPage + 1;
       const data = await fetchWithRetry(buildParams(nextPageNum), controller);
-      if (controller.signal.aborted) return;
+      if (controller.signal.aborted || snapshotGameTab !== gameTab) return;
       const pageItems: LztItem[] = data?.items ?? [];
       const nextHasPage = data?.hasNextPage ?? pageItems.length >= 15;
       setHasNextPage(nextHasPage);
@@ -1533,7 +1543,7 @@ const Contas = () => {
         return merged;
       });
     } catch (err: unknown) {
-      if (!controller.signal.aborted) {
+      if (!controller.signal.aborted && snapshotGameTab === gameTab) {
         setStreamError(err instanceof Error ? err : new Error(String(err)));
       }
     } finally {
