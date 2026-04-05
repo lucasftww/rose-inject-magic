@@ -1466,7 +1466,7 @@ const Contas = () => {
   useEffect(() => {
     if (firstPageLoaded && streamedItems.length > 0) {
       // Re-enabled Staggered Prefetch (Safe from 429 API Rate Limit)
-      const timer = setTimeout(prefetchAdjacentTabs, 500);
+      const timer = setTimeout(prefetchAdjacentTabs, 200);
       return () => clearTimeout(timer);
     }
   }, [firstPageLoaded, gameTab, prefetchAdjacentTabs]); // eslint-disable-line react-hooks/exhaustive-deps
