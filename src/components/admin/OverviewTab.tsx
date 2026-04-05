@@ -410,8 +410,8 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
                     </span>
                   </div>
                 </div>
-                <span className={`shrink-0 rounded-md border px-2 py-0.5 text-[10px] font-bold ${statusColors[order.status] || "bg-muted/50 text-muted-foreground border-border"}`}>
-                  {statusLabels[order.status] || order.status_label}
+                <span className={`shrink-0 rounded-md border px-2 py-0.5 text-[10px] font-bold ${statusColors[order.status || ""] || "bg-muted/50 text-muted-foreground border-border"}`}>
+                  {statusLabels[order.status || ""] || order.status_label}
                 </span>
               </div>
             ))}
