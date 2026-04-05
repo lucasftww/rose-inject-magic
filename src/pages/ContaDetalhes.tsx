@@ -1011,13 +1011,19 @@ const ContaDetalhes = () => {
               </div>
           }
 
-            {/* Description */}
-            {item.description &&
-          <div className="mt-4 sm:mt-6 rounded-lg border border-border bg-card p-4 sm:p-5">
-                <h3 className="text-xs sm:text-sm font-bold text-foreground mb-2">Descrição</h3>
-                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{item.description}</p>
-              </div>
-          }
+            {/* Description — hide LZT junk (BBCode, raw URLs, too short) */}
+            {item.description && (() => {
+              const raw = String(item.description).trim();
+              const stripped = raw.replace(/\[URL=[^\]]*\][^\[]*\[\/URL\]/gi, "").replace(/\[\/?\w+\]/g, "").replace(/https?:\/\/\S+/g, "").trim();
+              if (stripped.length < 10) return null;
+              return (
+                <div className="mt-4 sm:mt-6 rounded-lg border border-border bg-card p-4 sm:p-5">
+                  <h3 className="text-xs sm:text-sm font-bold text-foreground mb-2">Descrição</h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{stripped}</p>
+                </div>
+              );
+            })()
+            }
           </motion.div>
         }
       </div>
