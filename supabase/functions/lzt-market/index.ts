@@ -243,7 +243,7 @@ function shouldKeepItem(item: LztItem, gameType: string, _displayedPriceBrl: num
   const isValorant = gameType === "riot" || gameType === "valorant";
   if (isValorant) {
     const skins = Number(item.riot_valorant_skin_count || 0);
-    if (skins < 4) return false;
+    if (skins < 10) return false;
   }
   if (gameType === "lol") {
     const skins = Number(item.riot_lol_skin_count || 0);
