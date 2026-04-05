@@ -274,7 +274,7 @@ const ContasSection = () => {
         <div className="mt-6 sm:mt-10 flex justify-center">
           <Link
             to="/contas"
-            className="touch-manipulation flex w-full sm:w-auto items-center justify-center gap-2 border border-foreground/15 px-6 sm:px-12 py-2.5 sm:py-3.5 text-[10px] sm:text-sm font-bold uppercase tracking-[0.2em] text-foreground/80 transition-all hover:border-success hover:text-success rounded-xl"
+            className="touch-manipulation flex w-full sm:w-auto items-center justify-center gap-2 bg-foreground px-6 sm:px-12 py-2.5 sm:py-3.5 text-[10px] sm:text-sm font-bold uppercase tracking-[0.2em] text-background transition-all hover:opacity-90 rounded-xl shadow-[0_4px_16px_rgba(255,255,255,0.1)]"
             style={{ fontFamily: "'Valorant', sans-serif" }}
           >
             {t("accounts.exploreAccounts")}
