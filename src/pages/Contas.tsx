@@ -382,15 +382,22 @@ const ValorantCard = memo(({ item, skinsMap, priceLabel }: { item: LztItem; skin
 
   const cleanedTitle = getListingCardTitle(item, "valorant");
 
-  const skinPreviews = useMemo(() => {
-    const results: SkinEntry[] = [];
+  const inventoryUuids = useMemo(() => {
     const toUuids = (raw: unknown): string[] => {
       if (Array.isArray(raw)) return raw;
       if (isRecord(raw)) return Object.values(raw).filter((v): v is string => typeof v === "string");
       return [];
     };
-    const allUuids = toUuids(item.valorantInventory?.WeaponSkins);
-    for (const uuid of allUuids) {
+    return toUuids(item.valorantInventory?.WeaponSkins);
+  }, [item.valorantInventory]);
+
+  const hasInventoryData = inventoryUuids.length > 0;
+  const skinsMapReady = skinsMap.size > 0;
+
+  const skinPreviews = useMemo(() => {
+    if (!skinsMapReady) return [];
+    const results: SkinEntry[] = [];
+    for (const uuid of inventoryUuids) {
       if (typeof uuid !== "string") continue;
       const entry = skinsMap.get(uuid.toLowerCase());
       if (entry) results.push(entry);
@@ -398,7 +405,7 @@ const ValorantCard = memo(({ item, skinsMap, priceLabel }: { item: LztItem; skin
     results.sort((a, b) => b.rarity - a.rarity);
     const premium = results.filter(s => s.rarity >= 2);
     return (premium.length >= 4 ? premium : results.filter(s => s.rarity > 0).length >= 4 ? results.filter(s => s.rarity > 0) : results).slice(0, 6);
-  }, [item.valorantInventory, skinsMap]);
+  }, [inventoryUuids, skinsMap, skinsMapReady]);
 
   return (
     <Link
