@@ -166,8 +166,14 @@ interface GameFromDB {
   products: { id: string; active: boolean | null }[];
 }
 
-type LandingGameQueryRow = Tables<"games"> & {
-  products: Pick<Tables<"public_products">, "id" | "active">[] | null;
+type LandingGameQueryRow = {
+  id: string;
+  name: string;
+  slug: string | null;
+  image_url: string | null;
+  sort_order: number | null;
+  active: boolean | null;
+  products: { id: string | null; active: boolean | null }[] | null;
 };
 
 function toLandingGameFromRow(g: LandingGameQueryRow): GameFromDB {
