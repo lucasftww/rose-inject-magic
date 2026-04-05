@@ -96,7 +96,7 @@ type InventoryTab = "skins" | "pickaxes" | "dances" | "gliders";
 const FortniteDetalhes = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getPrice, getDisplayPrice } = useLztMarkup();
+  const { getPrice, getDisplayPrice, formatPriceBrl } = useLztMarkup();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<InventoryTab>("skins");
