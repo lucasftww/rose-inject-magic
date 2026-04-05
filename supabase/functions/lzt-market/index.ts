@@ -126,8 +126,8 @@ function getContentCeilingBrl(item: LztItem, gameType?: string) {
     const skins = Number(item.fortnite_skin_count || item.fortnite_outfit_count || 0);
     const vbucks = Math.min(Number(item.fortnite_vbucks || 0), 50000);
     const level = Math.min(Number(item.fortnite_level || 0), 999);
-    // R$3/skin + vbucks value + level bonus
-    const ceiling = skins * 3 + vbucks * 0.02 + level * 0.2;
+    // R$10/skin (OG/rare skins worth much more) + vbucks value + level bonus
+    const ceiling = skins * 10 + vbucks * 0.02 + level * 0.5;
     return Math.max(ceiling, MIN_PRICE_BRL);
   }
   if (gameType === "lol") {
@@ -255,8 +255,9 @@ function shouldKeepItem(item: LztItem, gameType: string, _displayedPriceBrl: num
   }
 
   // ── Value gate: reject overpriced accounts with poor content ──
-  // If the content ceiling (fair value) is less than 40% of the raw cost,
+  // If the content ceiling (fair value) is less than a threshold of the raw cost,
   // the account is garbage listed at an inflated price — skip it.
+  // Fortnite uses a lower threshold (0.2) because OG/rare skins have unpredictable value.
   const currency = String(item.price_currency || "rub").toLowerCase();
   const rawPrice = Number(item.price || 0);
   const costBrl = currency === "rub" ? rawPrice * RUB_TO_BRL
@@ -264,7 +265,8 @@ function shouldKeepItem(item: LztItem, gameType: string, _displayedPriceBrl: num
     : rawPrice;
   if (costBrl > 0) {
     const contentCeiling = getContentCeilingBrl(item, gameType);
-    if (contentCeiling < costBrl * 0.4) return false;
+    const valueGateRatio = gameType === "fortnite" ? 0.2 : 0.4;
+    if (contentCeiling < costBrl * valueGateRatio) return false;
   }
 
   return true;
