@@ -1511,14 +1511,23 @@ const Contas = () => {
     }
   }, [firstPageLoaded, gameTab, prefetchAdjacentTabs]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const loadMoreControllerRef = useRef<AbortController | null>(null);
+
   const loadMorePages = async () => {
     if (streamError || loadingMore || !hasNextPage) return;
     if (currentPage >= MAX_PAGES) return;
     setLoadingMore(true);
-    // Use the main abortRef so tab/filter changes cancel in-flight load-more requests
-    abortRef.current?.abort();
+    // Use a SEPARATE controller so load-more doesn't hijack the main abortRef
+    // The main abortRef is only used by fetchMultiplePages (tab/filter changes).
+    loadMoreControllerRef.current?.abort();
     const controller = new AbortController();
-    abortRef.current = controller;
+    loadMoreControllerRef.current = controller;
+
+    // Also abort load-more when the main controller aborts (tab/filter change)
+    const mainController = abortRef.current;
+    const onMainAbort = () => controller.abort();
+    mainController?.signal.addEventListener("abort", onMainAbort, { once: true });
+
     const snapshotGameTab = gameTab;
     try {
       const cacheKey = debouncedParamsKey;
@@ -1547,6 +1556,7 @@ const Contas = () => {
         setStreamError(err instanceof Error ? err : new Error(String(err)));
       }
     } finally {
+      mainController?.signal.removeEventListener("abort", onMainAbort);
       setLoadingMore(false);
     }
   };
