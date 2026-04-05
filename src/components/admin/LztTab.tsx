@@ -133,10 +133,10 @@ const LztTab = () => {
 
   // Per-game markup state
   const [markups, setMarkups] = useState({
-    markup_valorant: "2",
-    markup_lol: "2",
-    markup_fortnite: "2",
-    markup_minecraft: "2",
+    markup_valorant: String(DEFAULT_CONFIG.markup_valorant),
+    markup_lol: String(DEFAULT_CONFIG.markup_lol),
+    markup_fortnite: String(DEFAULT_CONFIG.markup_fortnite),
+    markup_minecraft: String(DEFAULT_CONFIG.markup_minecraft),
   });
 
   // Aggregated stats from DB (accurate, no row limit)
