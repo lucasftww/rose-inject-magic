@@ -23,7 +23,7 @@ import { errorMessage } from "@/lib/errorMessage";
 
 const getProxiedImageUrl = (url: string) => {
   if (!url) return "";
-  if (url.includes("lzt.market") || url.includes("img.lzt.market") || url.includes("ddragon.leagueoflegends.com")) {
+  if (url.includes("lzt.market") || url.includes("img.lzt.market")) {
     return `${supabaseUrl}/functions/v1/lzt-market?action=image-proxy&url=${encodeURIComponent(url)}`;
   }
   return url;
