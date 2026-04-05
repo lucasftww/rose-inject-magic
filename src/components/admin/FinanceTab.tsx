@@ -380,7 +380,17 @@ const FinanceTab = () => {
       return Object.values(hours);
     }
     const days: Record<string, { date: string; receita: number }> = {};
-    const numDays = period === "7d" ? 7 : period === "30d" ? 30 : 90;
+    // For "all" period, derive the actual range from data instead of hardcoding 90 days
+    const defaultDays = period === "7d" ? 7 : period === "30d" ? 30 : 90;
+    let numDays = defaultDays;
+    if (period === "all" && fp.length > 0) {
+      const oldest = fp.reduce((min, p) => {
+        const t = new Date(p.paid_at || p.created_at).getTime();
+        return Number.isFinite(t) && t < min ? t : min;
+      }, Date.now());
+      const span = Math.ceil((Date.now() - oldest) / 86400000) + 1;
+      numDays = Math.max(span, 1);
+    }
     for (let i = numDays - 1; i >= 0; i--) {
       const d = new Date(Date.now() - i * 86400000);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;

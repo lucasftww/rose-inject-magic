@@ -251,10 +251,10 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
 
   // Removed usernameMap useEffect to prevent race condition
 
-  // Period-filtered metrics
-  const filteredPayments = filterByPeriod(allPayments, period);
-  const filteredOrders = filterByPeriod(allOrders, period, "created_at");
-  const periodRevenue = filteredPayments.reduce((s, p) => s + Number(p.amount) / 100, 0);
+  // Period-filtered metrics (memoized to avoid recalculating on every render)
+  const filteredPayments = useMemo(() => filterByPeriod(allPayments, period), [allPayments, period]);
+  const filteredOrders = useMemo(() => filterByPeriod(allOrders, period, "created_at"), [allOrders, period]);
+  const periodRevenue = useMemo(() => filteredPayments.reduce((s, p) => s + Number(p.amount) / 100, 0), [filteredPayments]);
   const periodOrderCount = filteredOrders.length;
   const periodPaidCount = filteredPayments.length;
 
