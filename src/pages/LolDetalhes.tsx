@@ -659,7 +659,7 @@ const LolDetalhes = () => {
                 </div>
               );
             })()}
-            )}
+            }
           </motion.div>
         )}
       </div>
