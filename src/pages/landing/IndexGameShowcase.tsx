@@ -271,11 +271,13 @@ const ContasSection = () => {
   );
 };
 
-// ─── TiltCard (3D tilt on hover) ────────────────────────────────────────────
+// ─── TiltCard (3D tilt on hover — disabled on touch devices) ────────────────
 const TiltCard = ({ children }: { children: ReactNode }) => {
   const cardRef = useRef<HTMLDivElement>(null);
+  const isTouchDevice = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
 
   const handleMouseMove = useCallback((e: MouseEvent<HTMLDivElement>) => {
+    if (isTouchDevice) return;
     const card = cardRef.current;
     if (!card) return;
     const rect = card.getBoundingClientRect();
@@ -286,19 +288,19 @@ const TiltCard = ({ children }: { children: ReactNode }) => {
     const rotateX = centerY > 0 ? ((y - centerY) / centerY) * -8 : 0;
     const rotateY = centerX > 0 ? ((x - centerX) / centerX) * 8 : 0;
     card.style.transform = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02,1.02,1.02)`;
-  }, []);
+  }, [isTouchDevice]);
 
   const handleMouseLeave = useCallback(() => {
     const card = cardRef.current;
-    if (card) card.style.transform = "perspective(800px) rotateX(0deg) rotateY(0deg) scale3d(1,1,1)";
+    if (card) card.style.transform = "";
   }, []);
 
   return (
     <div
       ref={cardRef}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      style={{ transition: "transform 0.15s ease-out", transformStyle: "preserve-3d" }}
+      onMouseMove={isTouchDevice ? undefined : handleMouseMove}
+      onMouseLeave={isTouchDevice ? undefined : handleMouseLeave}
+      style={{ transition: "transform 0.15s ease-out", willChange: isTouchDevice ? "auto" : "transform" }}
     >
       {children}
     </div>

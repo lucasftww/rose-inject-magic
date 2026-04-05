@@ -250,8 +250,10 @@ const getShowcaseAssets = (game: Pick<GameFromDB, 'name' | 'slug' | 'image_url'>
 
 const TiltCard = ({ children, index }: { children: ReactNode; index: number }) => {
   const cardRef = useRef<HTMLDivElement>(null);
+  const isTouchDevice = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (isTouchDevice) return;
     const card = cardRef.current;
     if (!card) return;
 
@@ -263,11 +265,11 @@ const TiltCard = ({ children, index }: { children: ReactNode; index: number }) =
     const rotateX = centerY > 0 ? ((y - centerY) / centerY) * -7 : 0;
     const rotateY = centerX > 0 ? ((x - centerX) / centerX) * 7 : 0;
     card.style.transform = `perspective(900px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.015, 1.015, 1.015)`;
-  }, []);
+  }, [isTouchDevice]);
 
   const handleMouseLeave = useCallback(() => {
     const card = cardRef.current;
-    if (card) card.style.transform = 'perspective(900px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+    if (card) card.style.transform = '';
   }, []);
 
   return (
@@ -277,7 +279,7 @@ const TiltCard = ({ children, index }: { children: ReactNode; index: number }) =
       custom={index}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      style={{ transition: 'transform 0.18s ease-out', transformStyle: 'preserve-3d' }}
+      style={{ transition: 'transform 0.18s ease-out', willChange: isTouchDevice ? 'auto' : 'transform' }}
     >
       {children}
     </motion.div>
@@ -465,7 +467,7 @@ const ProductCard = ({ product }: { product: ProductFromDB }) => {
       onClick={() => navigate(`/produto/${product.id}`)}
       className="group cursor-pointer overflow-hidden rounded-lg border border-border bg-card transition-all hover:border-success/40 hover:shadow-[0_0_20px_hsl(var(--success)/0.1)]"
     >
-      <div className="relative flex h-72 items-center justify-center overflow-hidden bg-secondary/50">
+      <div className="relative flex h-36 sm:h-72 items-center justify-center overflow-hidden bg-secondary/50">
         {product.image_url ? (
           <img src={product.image_url} alt={product.name} className="h-full w-full object-cover" loading="lazy" />
         ) : (
@@ -477,26 +479,26 @@ const ProductCard = ({ product }: { product: ProductFromDB }) => {
           </span>
         )}
       </div>
-      <div className="p-5">
-        <h3 className="text-base font-bold text-foreground">{product.name}</h3>
+      <div className="p-2.5 sm:p-5">
+        <h3 className="text-xs sm:text-base font-bold text-foreground line-clamp-2">{product.name}</h3>
         {product.description && (
-          <p className="mt-1.5 text-xs text-muted-foreground line-clamp-2">{product.description}</p>
+          <p className="mt-0.5 sm:mt-1.5 text-[10px] sm:text-xs text-muted-foreground line-clamp-2 hidden sm:block">{product.description}</p>
         )}
 
         {lowestPrice !== null && (
-          <div className="mt-4 flex items-end justify-between">
+          <div className="mt-2 sm:mt-4 flex items-end justify-between">
             <div>
-              <p className="text-[10px] text-muted-foreground">A partir de</p>
+              <p className="text-[8px] sm:text-[10px] text-muted-foreground">A partir de</p>
               {discountedPrice !== null ? (
                 <div>
-                  <p className="text-xs text-muted-foreground line-through">R$ {lowestPrice.toFixed(2)}</p>
-                  <p className="text-xl font-bold text-success">R$ {discountedPrice.toFixed(2)}</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground line-through">R$ {lowestPrice.toFixed(2)}</p>
+                  <p className="text-sm sm:text-xl font-bold text-success">R$ {discountedPrice.toFixed(2)}</p>
                 </div>
               ) : (
-                <p className="text-xl font-bold text-success">R$ {lowestPrice.toFixed(2)}</p>
+                <p className="text-sm sm:text-xl font-bold text-success">R$ {lowestPrice.toFixed(2)}</p>
               )}
             </div>
-            <span className="flex items-center gap-1.5 rounded border border-border px-4 py-2 text-xs font-medium text-muted-foreground transition-colors group-hover:border-success group-hover:text-success">
+            <span className="hidden sm:flex items-center gap-1.5 rounded border border-border px-4 py-2 text-xs font-medium text-muted-foreground transition-colors group-hover:border-success group-hover:text-success">
               Ver produto
             </span>
           </div>
@@ -584,7 +586,7 @@ const GameSelectScreen = ({
       </section>
 
       {loading ? (
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 py-4 sm:py-8 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 py-4 sm:py-8 grid grid-cols-2 gap-2.5 sm:gap-5 lg:grid-cols-4">
           {Array.from({ length: 8 }).map((_, i) => (
              <Skeleton key={i} className="aspect-[16/11] w-full rounded-2xl" />
           ))}
@@ -648,7 +650,7 @@ const GameSelectScreen = ({
           return <SoftwareShowcaseCard key={game.id} game={game} index={idx} isFree={isFree} description={desc} onSelect={onSelect} />;
         };
 
-        const gridClasses = "grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4";
+        const gridClasses = "grid grid-cols-2 gap-2.5 sm:gap-5 lg:grid-cols-4";
 
         const renderSectionHeader = (icon: ReactNode, label: string, color: string) => (
           <div className="mb-5 flex items-center gap-3">
@@ -1182,7 +1184,7 @@ const Produtos = () => {
 
           {/* Products Grid */}
           {loadingProducts ? (
-            <div className="flex-1 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="flex-1 grid grid-cols-2 gap-2.5 sm:gap-6 xl:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (
                  <Skeleton key={i} className="h-96 w-full rounded-lg" />
               ))}
@@ -1204,7 +1206,7 @@ const Produtos = () => {
             </div>
           ) : (
             <motion.div
-              className="flex-1 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3"
+              className="flex-1 grid grid-cols-2 gap-2.5 sm:gap-6 xl:grid-cols-3"
               initial="hidden"
               animate="visible"
               variants={staggerContainer}
