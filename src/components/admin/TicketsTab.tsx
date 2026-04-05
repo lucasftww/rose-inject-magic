@@ -1009,7 +1009,7 @@ const TicketsTab = ({
                   {/* LZT item ID if applicable */}
                   {asOrderTicketMetadata(ticket.metadata)?.lzt_item_id && (
                     <div className="flex items-center gap-1 text-[10px] text-muted-foreground/50 font-mono mb-0.5">
-                      <span>LZT #{asOrderTicketMetadata(ticket.metadata)?.lzt_item_id}</span>
+                      <span>LZT #{String(asOrderTicketMetadata(ticket.metadata)?.lzt_item_id ?? "")}</span>
                     </div>
                   )}
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
