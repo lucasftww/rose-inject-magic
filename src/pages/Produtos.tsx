@@ -347,11 +347,11 @@ const SoftwareShowcaseCard = ({ game, index, isFree, description, onSelect }: { 
             )}
           </div>
 
-          <div className="absolute inset-x-0 bottom-0 z-[12] p-4 sm:p-5">
+          <div className="absolute inset-x-0 bottom-0 z-[12] flex flex-col items-center text-center p-4 sm:p-5">
             <h3 className="text-sm sm:text-lg lg:text-xl font-bold tracking-tight text-foreground drop-shadow-lg" style={{ fontFamily: "'Valorant', sans-serif" }}>
               {game.name}
             </h3>
-            <p className="mt-1 max-w-[70%] text-[10px] sm:text-xs leading-relaxed text-muted-foreground/90 line-clamp-2">{description}</p>
+            <p className="mt-1 max-w-[85%] text-[10px] sm:text-xs leading-relaxed text-muted-foreground/90 line-clamp-2">{description}</p>
             <div className="mt-3 inline-flex items-center gap-2 text-[10px] sm:text-xs font-bold uppercase tracking-[0.18em] text-success transition-all group-hover:gap-3">
               <span>Ver softwares</span>
               <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
