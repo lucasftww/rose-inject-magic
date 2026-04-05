@@ -408,7 +408,7 @@ const Dashboard = () => {
                                 R$ {(Number(p.amount) / 100).toFixed(2)}
                                 {(p.discount_amount ?? 0) > 0 && <span className="ml-1 text-[11px] text-success">(-R$ {Number(p.discount_amount ?? 0).toFixed(2)})</span>}
                               </p>
-                              <p className="text-[11px] text-muted-foreground">{new Date(p.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
+                              <p className="text-[11px] text-muted-foreground">{new Date(p.created_at || "").toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
                             </div>
                             <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${isPaid ? "bg-success/15 text-success" : isExpired ? "bg-destructive/15 text-destructive" : "bg-accent/20 text-accent-foreground"}`}>
                               {isPaid ? "Pago" : isExpired ? "Expirado" : "Pendente"}
