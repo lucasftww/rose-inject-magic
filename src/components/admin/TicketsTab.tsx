@@ -246,9 +246,9 @@ const TicketsTab = ({
           buyer_username: profileMap[t.user_id] || "—",
         } as Ticket;
       });
-      _cachedTickets = mapped;
+      _cachedTickets = mapped as Ticket[];
       _ticketsCacheTs = Date.now();
-      setTickets(mapped);
+      setTickets(mapped as Ticket[]);
     }
     setLoading(false);
   }, []);
