@@ -1519,7 +1519,7 @@ const Contas = () => {
       if (tab === "valorant") qp.append("country[]", "Bra");
       if (tab === "lol") qp.append("lol_region[]", "BR1");
 
-      const delayMs = delayMultiplier * 400;
+      const delayMs = delayMultiplier * 800; // 800ms stagger to reduce API load at 100k+ DAU
       const timeoutId = setTimeout(() => {
         if (runId !== prefetchRunIdRef.current) return;
         void (async () => {

@@ -46,25 +46,19 @@ const StockTab = () => {
   const [generatingAI, setGeneratingAI] = useState(false);
   const [aiLines, setAiLines] = useState(5);
 
-  const fetchStockCounts = async (prods: Product[]) => {
-    const planIds = prods.flatMap((p) => p.product_plans.map((pl) => pl.id));
-    if (planIds.length === 0) {
+  const fetchStockCounts = async (_prods: Product[]) => {
+    // Single RPC call replaces 2N individual queries
+    const { data, error } = await supabase.rpc("admin_stock_counts");
+    if (error) {
+      console.error("admin_stock_counts error:", error);
       setStockCounts({});
       return;
     }
-
-    // Run all count queries in parallel (no sequential batching)
     const counts: Record<string, { total: number; available: number }> = {};
-    await Promise.all(planIds.map(async (planId) => {
-      const [totalRes, availRes] = await Promise.all([
-        supabase.from("stock_items").select("id", { count: "exact", head: true }).eq("product_plan_id", planId),
-        supabase.from("stock_items").select("id", { count: "exact", head: true }).eq("product_plan_id", planId).eq("used", false),
-      ]);
-      counts[planId] = {
-        total: totalRes.count ?? 0,
-        available: availRes.count ?? 0,
-      };
-    }));
+    const rows = (data as unknown as { plan_id: string; total: number; available: number }[]) ?? [];
+    for (const row of rows) {
+      counts[row.plan_id] = { total: row.total, available: row.available };
+    }
     setStockCounts(counts);
   };
 
