@@ -467,7 +467,7 @@ const ProductCard = ({ product }: { product: ProductFromDB }) => {
   return (
     <div
       onClick={() => navigate(`/produto/${product.id}`)}
-      className="group relative cursor-pointer overflow-hidden rounded-xl border border-white/[0.06] bg-card flex flex-col transition-all duration-300 hover:border-white/[0.12] hover:shadow-[0_8px_30px_rgba(0,0,0,0.3)]"
+      className="group relative cursor-pointer overflow-hidden rounded-xl border border-white/[0.06] bg-card flex flex-col transition-colors duration-200 sm:hover:border-white/[0.12] sm:hover:shadow-[0_8px_30px_rgba(0,0,0,0.3)]"
     >
       {/* Image — square aspect ratio */}
       <div className="relative aspect-square w-full overflow-hidden bg-secondary/30">
