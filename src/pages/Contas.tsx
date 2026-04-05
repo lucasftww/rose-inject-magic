@@ -427,7 +427,7 @@ const ValorantCard = memo(({ item, skinsMap, priceLabel, queryClient }: { item: 
     <Link
       to={`/conta/${item.item_id}`}
       onPointerEnter={() => prefetchAccountDetail(queryClient, "valorant", item.item_id)}
-      className="group touch-manipulation cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-success/50 hover:shadow-[0_4px_24px_hsl(var(--success)/0.12)] flex flex-col h-full no-underline text-inherit"
+      className="group touch-manipulation cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-colors duration-200 hover:border-success/50 sm:hover:shadow-[0_4px_24px_hsl(var(--success)/0.12)] flex flex-col h-full no-underline text-inherit"
     >
       <div className="relative flex h-28 sm:h-36 items-center justify-center overflow-hidden bg-secondary/20">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--success)/0.06),transparent_70%)]" />
@@ -584,7 +584,7 @@ const LolCard = memo(({ item, champKeyMap, priceLabel, queryClient }: { item: Lz
     <Link
       to={`/lol/${item.item_id}`}
       onPointerEnter={() => prefetchAccountDetail(queryClient, "lol", item.item_id)}
-      className="group touch-manipulation cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-[hsl(198,100%,45%)/50%] hover:shadow-[0_4px_24px_hsl(198,100%,45%,0.12)] flex flex-col h-full no-underline text-inherit"
+      className="group touch-manipulation cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-colors duration-200 hover:border-[hsl(198,100%,45%)/50%] sm:hover:shadow-[0_4px_24px_hsl(198,100%,45%,0.12)] flex flex-col h-full no-underline text-inherit"
     >
       <div className="relative flex h-28 sm:h-36 items-center justify-center overflow-hidden bg-secondary/20">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(198,100%,45%,0.08),transparent_70%)]" />
@@ -735,7 +735,7 @@ const FortniteCard = memo(({ item, skinsDb, priceLabel, queryClient }: { item: L
     <Link
       to={`/fortnite/${item.item_id}`}
       onPointerEnter={() => prefetchAccountDetail(queryClient, "fortnite", item.item_id)}
-      className="group touch-manipulation cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-[hsl(265,80%,65%)/50%] hover:shadow-[0_4px_24px_hsl(265,80%,65%,0.12)] flex flex-col h-full no-underline text-inherit"
+      className="group touch-manipulation cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-colors duration-200 hover:border-[hsl(265,80%,65%)/50%] sm:hover:shadow-[0_4px_24px_hsl(265,80%,65%,0.12)] flex flex-col h-full no-underline text-inherit"
     >
       <div className="relative flex h-28 sm:h-36 items-center justify-center overflow-hidden bg-secondary/20">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(265,80%,65%,0.08),transparent_70%)]" />
@@ -831,7 +831,7 @@ const MinecraftCard = memo(({ item, priceLabel, queryClient }: { item: LztItem; 
     <Link
       to={`/minecraft/${item.item_id}`}
       onPointerEnter={() => prefetchAccountDetail(queryClient, "minecraft", item.item_id)}
-      className="group touch-manipulation cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all flex flex-col h-full no-underline text-inherit"
+      className="group touch-manipulation cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-colors duration-200 flex flex-col h-full no-underline text-inherit"
       style={{ "--hover-shadow": `0 0 24px ${MC_GREEN}15` } as CSSProperties}
       onMouseEnter={(e) => setBorderAndBoxShadow(e, `${MC_GREEN}80`, `0 4px 24px ${MC_GREEN}15`)}
       onMouseLeave={clearBorderAndBoxShadow}
@@ -2395,12 +2395,12 @@ const Contas = () => {
                     Atualizando contas…
                   </div>
                 )}
-                <div
-                 className="grid grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3 relative"
-                  style={{ contentVisibility: 'auto', containIntrinsicSize: 'auto 400px' } as CSSProperties}
-                >
+                <div className="grid grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3 relative">
                   {gridRows.map(({ item, priceLabel }) => (
-                    <div key={item.item_id}>
+                    <div
+                      key={item.item_id}
+                      style={{ contentVisibility: 'auto', containIntrinsicSize: 'auto 320px' } as CSSProperties}
+                    >
                       {isValorant ? (
                         <ValorantCard item={item} skinsMap={skinsMap} priceLabel={priceLabel} queryClient={queryClient} />
                       ) : isFortnite ? (

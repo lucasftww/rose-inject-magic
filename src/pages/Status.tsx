@@ -149,7 +149,7 @@ const Status = () => {
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: idx * 0.04 }}
-                        className={`relative flex flex-col items-center rounded-xl border ${cfg.border} bg-card overflow-hidden transition-all hover:shadow-md hover:scale-[1.02]`}
+                        className={`relative flex flex-col items-center rounded-xl border ${cfg.border} bg-card overflow-hidden sm:transition-transform sm:hover:shadow-md sm:hover:scale-[1.02]`}
                       >
                         <div className="w-full aspect-square overflow-hidden bg-secondary/50">
                           {product.image_url ? (
