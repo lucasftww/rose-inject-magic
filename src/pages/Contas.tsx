@@ -920,6 +920,7 @@ function gameTabFromSearchParams(sp: URLSearchParams): GameTab {
 }
 
 const Contas = () => {
+  const queryClient = useQueryClient();
   const { getDisplayPrice } = useLztMarkup();
   const [searchParams, setSearchParams] = useSearchParams();
   const [gameTab, setGameTab] = useState<GameTab>(() => gameTabFromSearchParams(searchParams));
