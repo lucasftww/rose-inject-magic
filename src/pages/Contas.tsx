@@ -2222,6 +2222,12 @@ const Contas = () => {
 
             {!isLoading && !streamError && (
               <>
+                {isRefetching && (
+                  <div className="mb-4 flex items-center gap-2 rounded-lg border border-border/50 bg-secondary/30 px-4 py-2.5 text-xs text-muted-foreground">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" style={{ color: accentColor }} />
+                    Atualizando contas…
+                  </div>
+                )}
                 <div
                  className="grid grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3 relative"
                   style={{ contentVisibility: 'auto', containIntrinsicSize: 'auto 400px' } as CSSProperties}
