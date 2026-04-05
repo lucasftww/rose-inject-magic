@@ -43,7 +43,7 @@ const statusLabels: Record<string, string> = {
   open: "Aberto",
   waiting: "Aguardando",
   waiting_staff: "Ag. Equipe",
-  closed: "Fechado",
+  closed: "Encerrado",
   resolved: "Resolvido",
   archived: "Arquivado",
   banned: "Banido",
