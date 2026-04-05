@@ -338,13 +338,6 @@ const SoftwareShowcaseCard = ({ game, index, isFree, description, onSelect }: { 
                 FREE
               </div>
             )}
-
-            {hasProducts && (
-              <div className="flex items-center gap-1 sm:gap-1.5 rounded-full border border-border/50 bg-card/90 px-2 py-0.5 sm:px-2.5 sm:py-1 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-foreground shadow-lg">
-                <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
-                {game.product_count} {game.product_count === 1 ? 'software' : 'softwares'}
-              </div>
-            )}
           </div>
 
           <div className="absolute inset-x-0 bottom-0 z-[12] flex flex-col items-center text-center p-3 sm:p-5">
