@@ -442,7 +442,7 @@ const fetchValorantBuddies = async (uuids: string[]): Promise<SimpleGalleryItem[
     if (!isRecord(buddy)) continue;
     const b = buddy;
     if (typeof b.uuid === "string" && uuidSet.has(b.uuid.toLowerCase())) {
-      typedMatched.push({ name: b.displayName || "Buddy", image: b.displayIcon || "" });
+      typedMatched.push({ name: String(b.displayName || "Buddy"), image: String(b.displayIcon || "") });
     }
     // Also check levels
     if (Array.isArray(b.levels)) {
