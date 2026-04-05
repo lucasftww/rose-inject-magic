@@ -157,7 +157,7 @@ const FortniteDetalhes = () => {
 
   const currentPreviews = tabPreviews[activeTab];
 
-  const vbucks = raw?.fortnite_balance ?? raw?.fortnite_vbucks ?? 0;
+  const vbucks = (raw?.fortnite_balance || raw?.fortnite_vbucks) ?? 0;
   const skinCount = raw?.fortnite_skin_count ?? 0;
   const level = raw?.fortnite_level ?? 0;
 
