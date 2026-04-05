@@ -161,6 +161,7 @@ const Dashboard = () => {
               const lztGameLabel = (meta.game && lztGameLabels[meta.game]) || "Conta de jogo";
               return {
                 ...t,
+                metadata: meta,
                 product_name: meta.account_name || meta.title || lztGameLabel,
                 plan_name: lztGameLabel,
                 image_url: meta.account_image ?? null,
@@ -170,6 +171,7 @@ const Dashboard = () => {
             const duration = isRobot && meta.duration ? ` (${meta.duration} dias)` : "";
             return {
               ...t,
+              metadata: meta,
               product_name: productMap[t.product_id]?.name || (isRobot ? meta.game_name || "Produto Robot" : "Produto"),
               plan_name: (planMap[t.product_plan_id]?.name || "Plano") + duration,
               image_url: productMap[t.product_id]?.image_url ?? null,
