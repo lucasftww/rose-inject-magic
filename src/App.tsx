@@ -23,32 +23,49 @@ const LocationAwareErrorBoundary = ({ children }: { children: React.ReactNode })
   );
 };
 
-// Lazy-load secondary routes
-const Produtos = lazy(() => import("./pages/Produtos"));
-const ProdutoDetalhes = lazy(() => import("./pages/ProdutoDetalhes"));
-const Contas = lazy(() => import("./pages/Contas"));
-const ContaDetalhes = lazy(() => import("./pages/ContaDetalhes"));
-const LolDetalhes = lazy(() => import("./pages/LolDetalhes"));
-const FortniteDetalhes = lazy(() => import("./pages/FortniteDetalhes"));
-const MinecraftDetalhes = lazy(() => import("./pages/MinecraftDetalhes"));
-const Status = lazy(() => import("./pages/Status"));
-const Dashboard = lazy(() => import("./pages/Dashboard"));
-const Avaliacoes = lazy(() => import("./pages/Avaliacoes"));
-const MeusPedidos = lazy(() => import("./pages/MeusPedidos"));
-const PedidoChat = lazy(() => import("./pages/PedidoChat"));
-const Checkout = lazy(() => import("./pages/Checkout"));
-const Raspadinha = lazy(() => import("./pages/Raspadinha"));
-const ResetPassword = lazy(() => import("./pages/ResetPassword"));
-const TermosDeUso = lazy(() => import("./pages/TermosDeUso"));
-const PoliticaPrivacidade = lazy(() => import("./pages/PoliticaPrivacidade"));
-const PoliticaReembolso = lazy(() => import("./pages/PoliticaReembolso"));
-const Garantia = lazy(() => import("./pages/Garantia"));
-const CentralAjuda = lazy(() => import("./pages/CentralAjuda"));
-const Auth = lazy(() => import("./pages/Auth"));
+// Retry wrapper for lazy imports — retries up to 3 times with delay to recover from transient network/chunk errors
+function lazyRetry<T extends { default: React.ComponentType<unknown> }>(
+  factory: () => Promise<T>,
+  retries = 3,
+): React.LazyExoticComponent<T["default"]> {
+  return lazy(() => {
+    const attempt = (remaining: number): Promise<T> =>
+      factory().catch((err) => {
+        if (remaining <= 0) throw err;
+        return new Promise<T>((resolve) =>
+          setTimeout(() => resolve(attempt(remaining - 1)), 1000),
+        );
+      });
+    return attempt(retries);
+  });
+}
+
+// Lazy-load secondary routes (with automatic retry on chunk load failure)
+const Produtos = lazyRetry(() => import("./pages/Produtos"));
+const ProdutoDetalhes = lazyRetry(() => import("./pages/ProdutoDetalhes"));
+const Contas = lazyRetry(() => import("./pages/Contas"));
+const ContaDetalhes = lazyRetry(() => import("./pages/ContaDetalhes"));
+const LolDetalhes = lazyRetry(() => import("./pages/LolDetalhes"));
+const FortniteDetalhes = lazyRetry(() => import("./pages/FortniteDetalhes"));
+const MinecraftDetalhes = lazyRetry(() => import("./pages/MinecraftDetalhes"));
+const Status = lazyRetry(() => import("./pages/Status"));
+const Dashboard = lazyRetry(() => import("./pages/Dashboard"));
+const Avaliacoes = lazyRetry(() => import("./pages/Avaliacoes"));
+const MeusPedidos = lazyRetry(() => import("./pages/MeusPedidos"));
+const PedidoChat = lazyRetry(() => import("./pages/PedidoChat"));
+const Checkout = lazyRetry(() => import("./pages/Checkout"));
+const Raspadinha = lazyRetry(() => import("./pages/Raspadinha"));
+const ResetPassword = lazyRetry(() => import("./pages/ResetPassword"));
+const TermosDeUso = lazyRetry(() => import("./pages/TermosDeUso"));
+const PoliticaPrivacidade = lazyRetry(() => import("./pages/PoliticaPrivacidade"));
+const PoliticaReembolso = lazyRetry(() => import("./pages/PoliticaReembolso"));
+const Garantia = lazyRetry(() => import("./pages/Garantia"));
+const CentralAjuda = lazyRetry(() => import("./pages/CentralAjuda"));
+const Auth = lazyRetry(() => import("./pages/Auth"));
 
 
 // Admin panel — lazy-loaded INSIDE AdminGuard so the bundle never downloads for non-admins
-const AdminPanel = lazy(() => import("./pages/AdminPanel"));
+const AdminPanel = lazyRetry(() => import("./pages/AdminPanel"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
