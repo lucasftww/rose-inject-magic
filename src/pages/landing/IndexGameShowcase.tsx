@@ -493,7 +493,7 @@ const SoftwareSection = () => {
         ) : gameCards.length === 0 ? (
           <div className="mt-10 text-center text-muted-foreground text-sm">{t("products.empty")}</div>
         ) : (
-          <div className="mt-5 sm:mt-12 grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4">
+          <div className="mt-5 sm:mt-12 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
             {gameCards.map((gc) => (
               <GameCard key={gc.id} game={gc} count={gc.count} t={t} />
             ))}
