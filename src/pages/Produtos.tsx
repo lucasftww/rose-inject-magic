@@ -462,45 +462,78 @@ const ProductCard = ({ product }: { product: ProductFromDB }) => {
   const isResellerProduct = isReseller && isResellerForProduct(product.id);
   const discountedPrice = lowestPrice !== null && isResellerProduct ? getDiscountedPrice(product.id, lowestPrice) : null;
 
+  const isFree = lowestPrice !== null && lowestPrice === 0;
+
   return (
     <div
       onClick={() => navigate(`/produto/${product.id}`)}
-      className="group cursor-pointer overflow-hidden rounded-lg border border-border bg-card transition-all hover:border-success/40 hover:shadow-[0_0_20px_hsl(var(--success)/0.1)] flex flex-col"
+      className="group relative cursor-pointer overflow-hidden rounded-xl border border-white/[0.06] bg-card flex flex-col transition-all duration-300 hover:border-white/[0.12] hover:shadow-[0_8px_30px_rgba(0,0,0,0.3)]"
     >
-      <div className="relative flex h-36 sm:h-72 items-center justify-center overflow-hidden bg-secondary/50">
+      {/* Image — square aspect ratio */}
+      <div className="relative aspect-square w-full overflow-hidden bg-secondary/30">
         {product.image_url ? (
-          <img src={product.image_url} alt={product.name} className="h-full w-full object-cover" loading="lazy" />
+          <img
+            src={product.image_url}
+            alt={product.name}
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            loading="lazy"
+          />
         ) : (
-          <Package className="h-12 w-12 text-muted-foreground/20" />
+          <div className="flex h-full w-full items-center justify-center">
+            <Package className="h-10 w-10 text-muted-foreground/15" />
+          </div>
         )}
+        {/* Gradient overlay for text readability */}
+        <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/50 to-transparent" />
         {isResellerProduct && (
-          <span className="absolute top-3 left-3 flex items-center gap-1 rounded-full bg-accent px-2.5 py-1 text-[10px] font-bold text-accent-foreground shadow-lg">
+          <span className="absolute top-2.5 left-2.5 flex items-center gap-1 rounded-md bg-accent/90 backdrop-blur-sm px-2 py-0.5 text-[10px] font-bold text-accent-foreground">
             <UserCheck className="h-3 w-3" /> Revendedor
           </span>
         )}
       </div>
-      <div className="flex flex-1 flex-col items-center text-center p-2.5 sm:p-5">
-        <h3 className="text-xs sm:text-base font-bold text-foreground line-clamp-2">{product.name}</h3>
+
+      {/* Content */}
+      <div className="flex flex-1 flex-col p-3 sm:p-4">
+        <h3 className="text-xs sm:text-sm font-semibold text-foreground line-clamp-1 tracking-tight">
+          {product.name}
+        </h3>
         {product.description && (
-          <p className="mt-0.5 sm:mt-1.5 text-[10px] sm:text-xs text-muted-foreground line-clamp-2 hidden sm:block">{product.description}</p>
+          <p className="mt-1 text-[10px] sm:text-xs text-muted-foreground/70 line-clamp-2 hidden sm:block leading-relaxed">
+            {product.description}
+          </p>
         )}
 
-        {lowestPrice !== null && (
-          <div className="mt-auto pt-2 sm:pt-4 flex flex-col items-center gap-1.5 sm:gap-2 w-full">
-            <p className="text-[8px] sm:text-[10px] text-muted-foreground">A partir de</p>
-            {discountedPrice !== null ? (
-              <div className="flex flex-col items-center">
-                <p className="text-[10px] sm:text-xs text-muted-foreground line-through">R$ {lowestPrice.toFixed(2)}</p>
-                <p className="text-sm sm:text-xl font-bold text-foreground">R$ {discountedPrice.toFixed(2)}</p>
-              </div>
-            ) : (
-              <p className="text-sm sm:text-xl font-bold text-foreground">R$ {lowestPrice.toFixed(2)}</p>
-            )}
-            <span className="hidden sm:inline-flex items-center gap-1.5 rounded border border-border px-4 py-2 text-xs font-medium text-foreground transition-colors group-hover:border-foreground/50">
-              Ver produto
-            </span>
+        {/* Price + CTA */}
+        <div className="mt-auto pt-3 sm:pt-4 flex items-end justify-between gap-2">
+          {lowestPrice !== null && (
+            <div className="min-w-0">
+              {!isFree && (
+                <p className="text-[9px] sm:text-[10px] text-muted-foreground/50 uppercase tracking-wider mb-0.5">
+                  A partir de
+                </p>
+              )}
+              {discountedPrice !== null ? (
+                <>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground/40 line-through">
+                    R$ {lowestPrice.toFixed(2)}
+                  </p>
+                  <p className="text-sm sm:text-lg font-bold text-foreground tabular-nums">
+                    R$ {discountedPrice.toFixed(2)}
+                  </p>
+                </>
+              ) : isFree ? (
+                <p className="text-sm sm:text-lg font-bold text-positive">GRÁTIS</p>
+              ) : (
+                <p className="text-sm sm:text-lg font-bold text-foreground tabular-nums">
+                  R$ {lowestPrice.toFixed(2)}
+                </p>
+              )}
+            </div>
+          )}
+          <div className="hidden sm:flex items-center justify-center rounded-lg bg-foreground px-3 py-1.5 text-[11px] font-semibold text-background transition-opacity group-hover:opacity-90 shrink-0">
+            Ver produto
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
