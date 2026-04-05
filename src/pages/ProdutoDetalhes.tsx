@@ -654,7 +654,7 @@ const ProdutoDetalhes = () => {
                         disabled={claimingFree}
                         className={`group flex w-full items-center justify-center gap-2.5 rounded-xl py-4 text-sm font-bold uppercase tracking-wider transition-all active:scale-[0.98] disabled:opacity-60 ${
                           Number(selectedPlan.price) === 0
-                            ? "bg-gradient-to-r from-emerald-500 to-cyan-500 text-white hover:shadow-[0_0_40px_hsl(160,80%,45%,0.4)]"
+                            ? "bg-gradient-to-r from-success to-success/70 text-success-foreground hover:shadow-[0_0_40px_hsl(var(--success)/0.4)]"
                             : "bg-success text-success-foreground hover:shadow-[0_0_40px_hsl(var(--success)/0.4)]"
                         }`}
                         style={{ fontFamily: "'Valorant', sans-serif" }}
