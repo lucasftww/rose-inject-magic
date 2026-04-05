@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { throwApiError } from "@/lib/apiErrors";
 import { translateRegion } from "@/lib/regionTranslation";
 import { Link, useSearchParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { safeJsonFetch, ApiError } from "@/lib/apiUtils";
 import { supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
 import type {
@@ -41,6 +41,7 @@ import {
 } from "@/lib/domEventHelpers";
 import { errorName } from "@/lib/errorMessage";
 import { isRecord } from "@/types/ticketChat";
+import { prefetchAccountDetail } from "@/lib/lztPrefetch";
 
 import weaponAres from "@/assets/weapon-ares.png";
 import weaponBandit from "@/assets/weapon-bandit.png";
@@ -368,7 +369,7 @@ const LztPreviewImage = ({ url }: { url: string }) => {
   );
 };
 
-const ValorantCard = memo(({ item, skinsMap, priceLabel }: { item: LztItem; skinsMap: Map<string, SkinEntry>; priceLabel: string }) => {
+const ValorantCard = memo(({ item, skinsMap, priceLabel, queryClient }: { item: LztItem; skinsMap: Map<string, SkinEntry>; priceLabel: string; queryClient: QueryClient }) => {
   const rank = item.riot_valorant_rank ? rankMap[item.riot_valorant_rank] : null;
   const skinCount = item.riot_valorant_skin_count ?? 0;
   const hasKnife = (item.riot_valorant_knife ?? 0) > 0;
@@ -403,6 +404,7 @@ const ValorantCard = memo(({ item, skinsMap, priceLabel }: { item: LztItem; skin
   return (
     <Link
       to={`/conta/${item.item_id}`}
+      onPointerEnter={() => prefetchAccountDetail(queryClient, "valorant", item.item_id)}
       className="group touch-manipulation cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-success/50 hover:shadow-[0_4px_24px_hsl(var(--success)/0.12)] flex flex-col h-full no-underline text-inherit"
     >
       <div className="relative flex h-28 sm:h-36 items-center justify-center overflow-hidden bg-secondary/20">
@@ -493,7 +495,7 @@ const ValorantCard = memo(({ item, skinsMap, priceLabel }: { item: LztItem; skin
 ValorantCard.displayName = "ValorantCard";
 
 // ─── LoL Card ───
-const LolCard = memo(({ item, champKeyMap, priceLabel }: { item: LztItem; champKeyMap: Map<number, string>; priceLabel: string }) => {
+const LolCard = memo(({ item, champKeyMap, priceLabel, queryClient }: { item: LztItem; champKeyMap: Map<number, string>; priceLabel: string; queryClient: QueryClient }) => {
   const rankText = item.riot_lol_rank || "Unranked";
   const rankFilterId = lolRankToFilterId(rankText);
   const rankFilterData = lolRankFilters.find(r => r.id === rankFilterId);
@@ -559,6 +561,7 @@ const LolCard = memo(({ item, champKeyMap, priceLabel }: { item: LztItem; champK
   return (
     <Link
       to={`/lol/${item.item_id}`}
+      onPointerEnter={() => prefetchAccountDetail(queryClient, "lol", item.item_id)}
       className="group touch-manipulation cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-[hsl(198,100%,45%)/50%] hover:shadow-[0_4px_24px_hsl(198,100%,45%,0.12)] flex flex-col h-full no-underline text-inherit"
     >
       <div className="relative flex h-28 sm:h-36 items-center justify-center overflow-hidden bg-secondary/20">
@@ -662,7 +665,7 @@ const LolCard = memo(({ item, champKeyMap, priceLabel }: { item: LztItem; champK
 LolCard.displayName = "LolCard";
 
 // ─── Fortnite Card ───
-const FortniteCard = memo(({ item, skinsDb, priceLabel }: { item: LztItem; skinsDb: Map<string, { name: string; image: string }>; priceLabel: string }) => {
+const FortniteCard = memo(({ item, skinsDb, priceLabel, queryClient }: { item: LztItem; skinsDb: Map<string, { name: string; image: string }>; priceLabel: string; queryClient: QueryClient }) => {
   const vbucks = item.fortnite_balance ?? item.fortnite_vbucks ?? 0;
   const skinCount = item.fortnite_skin_count ?? 0;
   const level = item.fortnite_level ?? 0;
@@ -709,6 +712,7 @@ const FortniteCard = memo(({ item, skinsDb, priceLabel }: { item: LztItem; skins
   return (
     <Link
       to={`/fortnite/${item.item_id}`}
+      onPointerEnter={() => prefetchAccountDetail(queryClient, "fortnite", item.item_id)}
       className="group touch-manipulation cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-[hsl(265,80%,65%)/50%] hover:shadow-[0_4px_24px_hsl(265,80%,65%,0.12)] flex flex-col h-full no-underline text-inherit"
     >
       <div className="relative flex h-28 sm:h-36 items-center justify-center overflow-hidden bg-secondary/20">
@@ -785,7 +789,7 @@ const FortniteCard = memo(({ item, skinsDb, priceLabel }: { item: LztItem; skins
 FortniteCard.displayName = "FortniteCard";
 
 // ─── Minecraft Card ───
-const MinecraftCard = memo(({ item, priceLabel }: { item: LztItem; priceLabel: string }) => {
+const MinecraftCard = memo(({ item, priceLabel, queryClient }: { item: LztItem; priceLabel: string; queryClient: QueryClient }) => {
   const nickname = item.minecraft_nickname;
   const hasJava = (item.minecraft_java ?? 0) > 0;
   const hasBedrock = (item.minecraft_bedrock ?? 0) > 0;
@@ -804,6 +808,7 @@ const MinecraftCard = memo(({ item, priceLabel }: { item: LztItem; priceLabel: s
   return (
     <Link
       to={`/minecraft/${item.item_id}`}
+      onPointerEnter={() => prefetchAccountDetail(queryClient, "minecraft", item.item_id)}
       className="group touch-manipulation cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all flex flex-col h-full no-underline text-inherit"
       style={{ "--hover-shadow": `0 0 24px ${MC_GREEN}15` } as CSSProperties}
       onMouseEnter={(e) => setBorderAndBoxShadow(e, `${MC_GREEN}80`, `0 4px 24px ${MC_GREEN}15`)}
@@ -915,6 +920,7 @@ function gameTabFromSearchParams(sp: URLSearchParams): GameTab {
 }
 
 const Contas = () => {
+  const queryClient = useQueryClient();
   const { getDisplayPrice } = useLztMarkup();
   const [searchParams, setSearchParams] = useSearchParams();
   const [gameTab, setGameTab] = useState<GameTab>(() => gameTabFromSearchParams(searchParams));
@@ -2220,13 +2226,13 @@ const Contas = () => {
                   {gridRows.map(({ item, priceLabel }) => (
                     <div key={item.item_id}>
                       {isValorant ? (
-                        <ValorantCard item={item} skinsMap={skinsMap} priceLabel={priceLabel} />
+                        <ValorantCard item={item} skinsMap={skinsMap} priceLabel={priceLabel} queryClient={queryClient} />
                       ) : isFortnite ? (
-                        <FortniteCard item={item} skinsDb={fnSkinsDb} priceLabel={priceLabel} />
+                        <FortniteCard item={item} skinsDb={fnSkinsDb} priceLabel={priceLabel} queryClient={queryClient} />
                       ) : isMinecraft ? (
-                        <MinecraftCard item={item} priceLabel={priceLabel} />
+                        <MinecraftCard item={item} priceLabel={priceLabel} queryClient={queryClient} />
                       ) : (
-                        <LolCard item={item} champKeyMap={champKeyMap} priceLabel={priceLabel} />
+                        <LolCard item={item} champKeyMap={champKeyMap} priceLabel={priceLabel} queryClient={queryClient} />
                       )}
                     </div>
                   ))}
