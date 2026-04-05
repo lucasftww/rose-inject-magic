@@ -368,18 +368,20 @@ const ProductsTab = () => {
   };
 
   const uploadMediaFile = async (file: File) => {
-    const isVideo = file.type.startsWith("video/");
-    const isImage = file.type.startsWith("image/");
-    if (!isVideo && !isImage) { toast({ title: "Apenas imagens ou vídeos", variant: "destructive" }); return; }
-    if (file.size > 50 * 1024 * 1024) { toast({ title: "Máximo 50MB", variant: "destructive" }); return; }
+    if (file.type.startsWith("video/")) {
+      toast({ title: "Para vídeos, cole a URL", description: "Use links do YouTube ou MP4 externo para não pesar o storage.", variant: "destructive" });
+      return;
+    }
+    if (!file.type.startsWith("image/")) { toast({ title: "Apenas imagens são aceitas para upload", variant: "destructive" }); return; }
+    if (file.size > 20 * 1024 * 1024) { toast({ title: "Máximo 20MB", variant: "destructive" }); return; }
     setUploadingMedia(true);
     const ext = file.name.split(".").pop() || "png";
     const path = `media/${crypto.randomUUID()}.${ext}`;
     const { error } = await supabase.storage.from("game-images").upload(path, file, { contentType: file.type });
     if (error) { toast({ title: "Erro no upload", description: error.message, variant: "destructive" }); setUploadingMedia(false); return; }
     const { data: urlData } = supabase.storage.from("game-images").getPublicUrl(path);
-    setFormMedia([...formMedia, { media_type: isVideo ? "video" : "image", url: urlData.publicUrl, sort_order: formMedia.length, _key: crypto.randomUUID() }]);
-    toast({ title: "Mídia enviada!" });
+    setFormMedia([...formMedia, { media_type: "image", url: urlData.publicUrl, sort_order: formMedia.length, _key: crypto.randomUUID() }]);
+    toast({ title: "Imagem enviada!" });
     setUploadingMedia(false);
   };
 
