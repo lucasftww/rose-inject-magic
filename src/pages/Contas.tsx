@@ -808,6 +808,7 @@ const MinecraftCard = memo(({ item, priceLabel, queryClient }: { item: LztItem; 
   return (
     <Link
       to={`/minecraft/${item.item_id}`}
+      onPointerEnter={() => prefetchAccountDetail(queryClient, "minecraft", item.item_id)}
       className="group touch-manipulation cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all flex flex-col h-full no-underline text-inherit"
       style={{ "--hover-shadow": `0 0 24px ${MC_GREEN}15` } as CSSProperties}
       onMouseEnter={(e) => setBorderAndBoxShadow(e, `${MC_GREEN}80`, `0 4px 24px ${MC_GREEN}15`)}
