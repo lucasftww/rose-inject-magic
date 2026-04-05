@@ -933,11 +933,14 @@ async function fulfillLztAccount(supabaseAdmin: SupabaseAdminClient, payment: Pa
       const detailRes = await fetch(`https://api.lzt.market/${encodeURIComponent(itemId)}`, {
         headers: { Authorization: `Bearer ${LZT_TOKEN}`, Accept: "application/json" },
       });
-      if (detailRes.ok) {
+      const detailCt = detailRes.headers.get("content-type") || "";
+      if (detailRes.ok && detailCt.includes("application/json")) {
         const detailData = await detailRes.json();
         price = detailData.item?.price;
         currency = detailData.item?.price_currency || currency;
         console.log(`Got price: ${price} ${currency}`);
+      } else {
+        console.warn(`LZT price fetch returned non-JSON (${detailRes.status})`);
       }
     } catch (err) {
       console.error("Failed to fetch LZT item price:", err);
@@ -956,9 +959,11 @@ async function fulfillLztAccount(supabaseAdmin: SupabaseAdminClient, payment: Pa
     const checkRes = await fetch(`https://api.lzt.market/${encodeURIComponent(itemId)}`, {
       headers: { Authorization: `Bearer ${LZT_TOKEN}`, Accept: "application/json" },
     });
-    if (checkRes.ok) {
-      const checkData = await checkRes.json();
-      const checkItem = checkData.item;
+    const checkCt = checkRes.headers.get("content-type") || "";
+    if (checkRes.ok && checkCt.includes("application/json")) {
+      let checkData: Record<string, unknown> | null = null;
+      try { checkData = await checkRes.json(); } catch { /* ignore */ }
+      const checkItem = (checkData?.item ?? null) as Record<string, unknown> | null;
       const checkState = checkItem?.item_state;
       if (checkItem?.buyer || (checkState && checkState !== "active")) {
         console.error(`LZT item ${itemId} already sold (buyer=${checkItem.buyer}, state=${checkState})`);
@@ -973,9 +978,11 @@ async function fulfillLztAccount(supabaseAdmin: SupabaseAdminClient, payment: Pa
       // Update price to latest if it changed
       if (checkItem?.price && checkItem.price !== price) {
         console.log(`Price changed from ${price} to ${checkItem.price} ${checkItem.price_currency || currency}`);
-        price = checkItem.price;
-        currency = checkItem.price_currency || currency;
+        price = checkItem.price as number;
+        currency = (checkItem.price_currency as string) || currency;
       }
+    } else {
+      console.warn(`LZT pre-check returned non-JSON or error (${checkRes.status}), proceeding anyway`);
     }
   } catch (err) {
     console.warn("Pre-check failed, proceeding with purchase anyway:", err);
@@ -988,6 +995,7 @@ async function fulfillLztAccount(supabaseAdmin: SupabaseAdminClient, payment: Pa
 
     // Retry fast-buy up to 4 times with exponential backoff
     // LZT API returns 403 "retry_request" as a temporary rate-limit signal
+    // LZT may also return HTML (Cloudflare challenge) instead of JSON — treat as retryable
     const RETRYABLE_BUY_STATUSES = [403, 429, 502, 503, 504];
     let buyRes: Response | null = null;
     let buyData: Record<string, unknown> | null = null;
@@ -1004,7 +1012,27 @@ async function fulfillLztAccount(supabaseAdmin: SupabaseAdminClient, payment: Pa
           Accept: "application/json",
         },
       });
-      buyData = await buyRes.json();
+
+      // Safely parse JSON — LZT may return HTML (Cloudflare challenge/error page)
+      const contentType = buyRes.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        const bodyPreview = await buyRes.text().then(t => t.substring(0, 200));
+        console.warn(`LZT fast-buy attempt ${attempt + 1}: non-JSON response (${contentType}): ${bodyPreview}`);
+        buyData = null;
+        // Treat HTML/non-JSON responses as retryable
+        if (attempt < 3) continue;
+        break;
+      }
+
+      try {
+        buyData = await buyRes.json();
+      } catch {
+        console.warn(`LZT fast-buy attempt ${attempt + 1}: JSON parse failed`);
+        buyData = null;
+        if (attempt < 3) continue;
+        break;
+      }
+
       console.log(`LZT fast-buy attempt ${attempt + 1}: ${buyRes.status}`, JSON.stringify(buyData).substring(0, 500));
 
       // If success or non-retryable error, stop
@@ -1017,8 +1045,10 @@ async function fulfillLztAccount(supabaseAdmin: SupabaseAdminClient, payment: Pa
       if (!isRetryableStatus && !isRetryableError) break; // non-retryable, stop
     }
 
-    if (!buyRes || !buyRes.ok) {
-      const reason = `HTTP ${buyRes?.status || 0}: ${JSON.stringify(buyData).substring(0, 300)}`;
+    if (!buyRes || !buyRes.ok || !buyData) {
+      const reason = buyData
+        ? `HTTP ${buyRes?.status || 0}: ${JSON.stringify(buyData).substring(0, 300)}`
+        : `HTTP ${buyRes?.status || 0}: LZT returned non-JSON response (Cloudflare/HTML) after all retries`;
       console.error("LZT fast-buy failed after retries:", reason);
       await createManualDeliveryTicket(reason);
       return;
