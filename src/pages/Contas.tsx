@@ -1596,6 +1596,19 @@ const Contas = () => {
     if (gameTab === "lol") {
       filtered = filtered.filter((item) => !isLikelyWrongGameInLolList(item));
     }
+    // Fortnite client-side filters (level & battle pass not available as API params)
+    if (gameTab === "fortnite") {
+      const lvlMin = Number(fnLevelMin) || 0;
+      if (lvlMin > 0) {
+        filtered = filtered.filter((item) => (item.fortnite_level ?? 0) >= lvlMin);
+      }
+      if (fnHasBattlePass) {
+        filtered = filtered.filter((item) => {
+          const seasons = item.fortnitePastSeasons;
+          return Array.isArray(seasons) && seasons.some((s: Record<string, unknown>) => s.purchasedVIP === true);
+        });
+      }
+    }
 
     // Region filter is now done server-side via country[] API param
     // Price filtering is done server-side via pmin/pmax — no duplicate client-side filter needed
