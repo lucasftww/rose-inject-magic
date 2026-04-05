@@ -988,7 +988,7 @@ const TicketsTab = ({
                   </div>
                   {/* Purchase type + plan + price */}
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-0.5">
-                    {asOrderTicketMetadata(ticket.metadata)?.type === "lzt-account" ? (
+                    {String(asOrderTicketMetadata(ticket.metadata)?.type) === "lzt-account" ? (
                       <span className="inline-flex items-center gap-1 text-blue-400 text-[10px] font-medium">
                         <Globe className="h-2.5 w-2.5" />LZT
                       </span>
