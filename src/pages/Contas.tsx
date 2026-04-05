@@ -1562,18 +1562,7 @@ const Contas = () => {
     }
 
     // Region filter is now done server-side via country[] API param
-
-    // Post-filter by BRL price range
-    const brlMin = priceMin ? Number(priceMin) : 0;
-    const brlMax = priceMax ? Number(priceMax) : 0;
-    if (brlMin > 0 || brlMax > 0) {
-      filtered = filtered.filter(item => {
-        const p = getBrlPrice(item);
-        if (brlMin > 0 && p < brlMin) return false;
-        if (brlMax > 0 && p > brlMax) return false;
-        return true;
-      });
-    }
+    // Price filtering is done server-side via pmin/pmax — no duplicate client-side filter needed
 
     // If user explicitly chose a price sort, use BRL display price for accurate ordering
     if (sortBy === "price_to_up") {
