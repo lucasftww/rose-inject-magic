@@ -103,6 +103,13 @@ const FortniteDetalhes = () => {
   const { addItem } = useCart();
   const queryClient = useQueryClient();
 
+  // Reset state when navigating between accounts
+  useEffect(() => {
+    setSelectedIndex(0);
+    setLightboxIndex(null);
+    setActiveTab("skins");
+  }, [id]);
+
   const { data, isLoading, error } = useQuery({
     queryKey: lztAccountDetailQueryKey("fortnite", id ?? ""),
     queryFn: () => fetchAccountDetail(id!),
