@@ -576,17 +576,26 @@ const ProductsTab = () => {
     if (dragIndex === null || dragOverIndex === null || dragIndex === dragOverIndex) {
       setDragIndex(null); setDragOverIndex(null); return;
     }
+    // Convert paginated indices to global filtered indices
+    const offset = (currentPage - 1) * ITEMS_PER_PAGE;
+    const globalFrom = offset + dragIndex;
+    const globalTo = offset + dragOverIndex;
     const reordered = [...filtered];
-    const [moved] = reordered.splice(dragIndex, 1);
-    reordered.splice(dragOverIndex, 0, moved);
+    const [moved] = reordered.splice(globalFrom, 1);
+    reordered.splice(globalTo, 0, moved);
     setDragIndex(null); setDragOverIndex(null);
-    const filteredIds = new Set(reordered.map(p => p.id));
-    const otherProducts = products.filter(p => !filteredIds.has(p.id));
-    const allReordered = [...reordered, ...otherProducts];
-    const updates = allReordered.map((p, i) => supabase.from("products").update({ sort_order: i }).eq("id", p.id));
-    await Promise.all(updates);
-    toast({ title: "Ordem atualizada!" });
-    fetchData(true);
+    // Only update items whose sort_order actually changed
+    const updates: Promise<unknown>[] = [];
+    for (let i = 0; i < reordered.length; i++) {
+      if (reordered[i].sort_order !== i) {
+        updates.push(supabase.from("products").update({ sort_order: i }).eq("id", reordered[i].id));
+      }
+    }
+    if (updates.length > 0) {
+      await Promise.all(updates);
+      toast({ title: "Ordem atualizada!" });
+      fetchData(true);
+    }
   };
 
   const activeCount = products.filter(p => p.active).length;
