@@ -268,7 +268,7 @@ async function getSkinLevelsCatalog(): Promise<Record<string, any>[]> {
   return data;
 }
 
-async function getSkinChromasCatalog(): Promise<unknown[]> {
+async function getSkinChromasCatalog(): Promise<Record<string, any>[]> {
   const now = Date.now();
   if (skinChromasCatalogCache && skinChromasCatalogCache.expiry > now) {
     return skinChromasCatalogCache.data;
