@@ -1143,7 +1143,7 @@ const Contas = () => {
     enabled: gameTab === "fortnite",
   });
 
-  const buildParams = useCallback((pageNum: number = currentPage): Record<string, string | string[]> => {
+  const buildParams = useCallback((pageNum: number = 1): Record<string, string | string[]> => {
     const params: Record<string, string | string[]> = {};
     params.page = String(pageNum);
     // Send user's chosen sort to API (validated enum values from LZT API)
@@ -1210,7 +1210,7 @@ const Contas = () => {
     }
 
     return params;
-  }, [currentPage, searchQuery, onlyKnife, selectedRank, selectedWeapon, invMin, invMax, lvlMin, lvlMax, gameTab, lolRank, lolChampMin, lolSkinsMin, fnVbMin, fnSkinsMin, mcJava, mcBedrock, mcHypixelLvlMin, mcCapesMin, mcNoBan, lolRegion, valRegion, sortBy, priceMin, priceMax]);
+  }, [searchQuery, onlyKnife, selectedRank, selectedWeapon, invMin, invMax, lvlMin, lvlMax, gameTab, lolRank, lolChampMin, lolSkinsMin, fnVbMin, fnSkinsMin, mcJava, mcBedrock, mcHypixelLvlMin, mcCapesMin, mcNoBan, lolRegion, valRegion, sortBy, priceMin, priceMax]);
 
   const paramsKey = JSON.stringify(buildParams(1)) + gameTab;
   // Só o campo "busca por título" usa debounce. Preço, inv, nível, mínimos etc. disparam fetch na hora (mais fluido).
@@ -1271,22 +1271,27 @@ const Contas = () => {
   const prevNonSearchRef = useRef(nonSearchParamsKey);
   const prevSearchTrimRef = useRef(searchQuery.trim());
   useEffect(() => {
+    // Non-search filter changes: apply immediately (no debounce)
     if (prevNonSearchRef.current !== nonSearchParamsKey) {
       prevNonSearchRef.current = nonSearchParamsKey;
       setDebouncedParamsKey(paramsKey);
       prevSearchTrimRef.current = searchQuery.trim();
       return;
     }
+    // Search cleared: apply immediately
     const clearedSearch = prevSearchTrimRef.current !== "" && searchQuery.trim() === "";
     prevSearchTrimRef.current = searchQuery.trim();
     if (clearedSearch) {
       setDebouncedParamsKey(paramsKey);
       return;
     }
+    // No actual change from current debounced value: skip debounce timer
+    if (debouncedParamsKey === paramsKey) return;
+    // Search text changed: debounce 280ms
     const delay = 280;
     const handler = setTimeout(() => setDebouncedParamsKey(paramsKey), delay);
     return () => clearTimeout(handler);
-  }, [paramsKey, nonSearchParamsKey, searchQuery]);
+  }, [paramsKey, nonSearchParamsKey, searchQuery, debouncedParamsKey]);
 
   const fetchWithRetry = useCallback(
     async (
