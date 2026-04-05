@@ -465,7 +465,7 @@ const ProductCard = ({ product }: { product: ProductFromDB }) => {
   return (
     <div
       onClick={() => navigate(`/produto/${product.id}`)}
-      className="group cursor-pointer overflow-hidden rounded-lg border border-border bg-card transition-all hover:border-success/40 hover:shadow-[0_0_20px_hsl(var(--success)/0.1)]"
+      className="group cursor-pointer overflow-hidden rounded-lg border border-border bg-card transition-all hover:border-success/40 hover:shadow-[0_0_20px_hsl(var(--success)/0.1)] flex flex-col"
     >
       <div className="relative flex h-36 sm:h-72 items-center justify-center overflow-hidden bg-secondary/50">
         {product.image_url ? (
@@ -479,26 +479,24 @@ const ProductCard = ({ product }: { product: ProductFromDB }) => {
           </span>
         )}
       </div>
-      <div className="p-2.5 sm:p-5">
+      <div className="flex flex-1 flex-col items-center text-center p-2.5 sm:p-5">
         <h3 className="text-xs sm:text-base font-bold text-foreground line-clamp-2">{product.name}</h3>
         {product.description && (
           <p className="mt-0.5 sm:mt-1.5 text-[10px] sm:text-xs text-muted-foreground line-clamp-2 hidden sm:block">{product.description}</p>
         )}
 
         {lowestPrice !== null && (
-          <div className="mt-2 sm:mt-4 flex items-end justify-between">
-            <div>
-              <p className="text-[8px] sm:text-[10px] text-muted-foreground">A partir de</p>
-              {discountedPrice !== null ? (
-                <div>
-                  <p className="text-[10px] sm:text-xs text-muted-foreground line-through">R$ {lowestPrice.toFixed(2)}</p>
-                  <p className="text-sm sm:text-xl font-bold text-foreground">R$ {discountedPrice.toFixed(2)}</p>
-                </div>
-              ) : (
-                <p className="text-sm sm:text-xl font-bold text-foreground">R$ {lowestPrice.toFixed(2)}</p>
-              )}
-            </div>
-            <span className="hidden sm:flex items-center gap-1.5 rounded border border-border px-4 py-2 text-xs font-medium text-foreground transition-colors group-hover:border-foreground/50">
+          <div className="mt-auto pt-2 sm:pt-4 flex flex-col items-center gap-1.5 sm:gap-2 w-full">
+            <p className="text-[8px] sm:text-[10px] text-muted-foreground">A partir de</p>
+            {discountedPrice !== null ? (
+              <div className="flex flex-col items-center">
+                <p className="text-[10px] sm:text-xs text-muted-foreground line-through">R$ {lowestPrice.toFixed(2)}</p>
+                <p className="text-sm sm:text-xl font-bold text-foreground">R$ {discountedPrice.toFixed(2)}</p>
+              </div>
+            ) : (
+              <p className="text-sm sm:text-xl font-bold text-foreground">R$ {lowestPrice.toFixed(2)}</p>
+            )}
+            <span className="hidden sm:inline-flex items-center gap-1.5 rounded border border-border px-4 py-2 text-xs font-medium text-foreground transition-colors group-hover:border-foreground/50">
               Ver produto
             </span>
           </div>
