@@ -825,99 +825,108 @@ const PedidoChat = () => {
     );
   }
 
+  const meta = asOrderTicketMetadata(ticket?.metadata);
+  const statusColor =
+    ticket.status === "delivered" || ticket.status === "closed" ? "text-success" :
+    ticket.status === "open" ? "text-warning" :
+    ticket.status === "banned" ? "text-destructive" : "text-muted-foreground";
+  const statusLabel = ticket.status_label || ticket.status || "—";
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <div className="mx-auto max-w-7xl px-3 pt-4 pb-8">
-        {/* Breadcrumb */}
-        <div className="mb-6 flex items-center gap-2 text-sm">
+
+      <div className="mx-auto max-w-4xl px-4 sm:px-6 pt-4 pb-10">
+        {/* ── Breadcrumb ── */}
+        <nav className="mb-5 flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
           <button
-            onClick={() => navigate("/dashboard?tab=purchases")}
-            className="flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-success"
+            onClick={() => navigate("/meus-pedidos")}
+            className="flex items-center gap-1.5 transition-colors hover:text-foreground"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
             Minhas Compras
           </button>
-          <span className="text-muted-foreground/40">›</span>
-          <span className="text-foreground font-medium">Pedido #{ticket.id.slice(0, 8).toUpperCase()}</span>
-        </div>
+          <span className="text-muted-foreground/30">/</span>
+          <span className="font-semibold text-foreground">Pedido #{ticket.id.slice(0, 8).toUpperCase()}</span>
+        </nav>
 
-        {/* Order Details - Horizontal Bar */}
-        <div className="mb-6 rounded-xl border border-border bg-card p-4">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-            <div className="flex items-center gap-2">
-              <Hash className="h-4 w-4 text-success shrink-0" />
-              <div className="min-w-0">
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Pedido</p>
-                <p className="text-sm font-bold font-mono text-foreground truncate">#{ticket.id.slice(0, 8).toUpperCase()}</p>
+        {/* ── Order Summary Card ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="mb-5 rounded-2xl border border-border bg-card overflow-hidden"
+        >
+          {/* Top accent line */}
+          <div className="h-0.5 bg-gradient-to-r from-success/60 via-success to-success/60" />
+
+          <div className="p-4 sm:p-5">
+            {/* Product title row */}
+            <div className="flex items-start justify-between gap-3 mb-4">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl bg-success/10 border border-success/20">
+                  <Package className="h-5 w-5 text-success" />
+                </div>
+                <div className="min-w-0">
+                  <h1 className="text-sm sm:text-base font-bold text-foreground truncate">{productName}</h1>
+                  <p className="text-[11px] sm:text-xs text-muted-foreground truncate">{planName}</p>
+                </div>
+              </div>
+              <div className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider ${
+                ticket.status === "delivered" || ticket.status === "closed"
+                  ? "border-success/30 bg-success/10 text-success"
+                  : ticket.status === "open"
+                  ? "border-warning/30 bg-warning/10 text-warning"
+                  : "border-border bg-muted text-muted-foreground"
+              }`}>
+                {statusLabel}
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Package className="h-4 w-4 text-success shrink-0" />
-              <div className="min-w-0">
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Produto</p>
-                <p className="text-sm font-bold text-foreground truncate">{productName}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-success shrink-0" />
-              <div className="min-w-0">
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Plano</p>
-                <p className="text-sm font-bold text-foreground truncate">{planName}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4 text-success shrink-0" />
-              <div className="min-w-0">
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Valor</p>
-                <p className="text-sm font-bold text-foreground truncate">
-                  {planPrice !== null ? `R$ ${planPrice.toFixed(2).replace(".", ",")}` : "—"}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-success shrink-0" />
-              <div className="min-w-0">
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Data</p>
-                <p className="text-sm font-bold text-foreground truncate">
-                  {ticket.created_at
-                    ? new Date(ticket.created_at).toLocaleDateString("pt-BR", {
-                        day: "2-digit", month: "2-digit", year: "numeric",
-                      })
-                    : "—"}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <CreditCard className="h-4 w-4 text-success shrink-0" />
-              <div className="min-w-0">
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Pagamento</p>
-                <p className="text-sm font-bold text-foreground truncate">PIX</p>
-              </div>
+
+            {/* Info pills */}
+            <div className="flex flex-wrap gap-2 sm:gap-3">
+              {[
+                { icon: Hash, label: "Pedido", value: `#${ticket.id.slice(0, 8).toUpperCase()}` },
+                { icon: DollarSign, label: "Valor", value: planPrice !== null ? `R$ ${planPrice.toFixed(2).replace(".", ",")}` : "—" },
+                { icon: Calendar, label: "Data", value: ticket.created_at ? new Date(ticket.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" }) : "—" },
+                { icon: CreditCard, label: "Pagamento", value: "PIX" },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center gap-1.5 rounded-lg bg-secondary/50 px-2.5 py-1.5">
+                  <item.icon className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-[10px] text-muted-foreground">{item.label}:</span>
+                  <span className="text-[10px] sm:text-[11px] font-bold text-foreground font-mono">{item.value}</span>
+                </div>
+              ))}
             </div>
           </div>
-        </div>
+        </motion.div>
 
-        {/* Chat - Full Width */}
-        <div className="flex max-h-[700px] min-h-[450px] flex-col rounded-xl border border-border bg-card overflow-hidden">
-          {/* Delivery banner inside chat */}
+        {/* ── Chat Container ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
+          className="flex flex-col rounded-2xl border border-border bg-card overflow-hidden"
+          style={{ height: "calc(100vh - 320px)", minHeight: 420, maxHeight: 750 }}
+        >
+          {/* ── Delivery Banner ── */}
           {(stockContent || isFreeNoKey || tutorialText || tutorialFileUrl) && (
             <>
               <button
                 onClick={() => setExpandedSection(expandedSection === "delivery" ? null : "delivery")}
-                className="w-full px-5 py-3 flex items-center gap-3 bg-success/10 border-b border-success/20 transition-colors hover:bg-success/15 text-left shrink-0"
+                className="w-full px-4 sm:px-5 py-3 flex items-center gap-3 bg-gradient-to-r from-success/10 to-success/5 border-b border-success/15 transition-colors hover:from-success/15 hover:to-success/10 text-left shrink-0"
               >
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-success/20 shrink-0">
-                  <CheckCircle className="h-5 w-5 text-success" />
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-success/20 shrink-0">
+                  <CheckCircle className="h-4 w-4 text-success" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-foreground">Parabéns! Seu produto foi entregue 🎉</p>
-                  <p className="text-[10px] text-muted-foreground">
-                    {isFreeNoKey ? "Clique para baixar o loader e ver instruções" : "Clique para ver sua chave, tutorial e arquivos"}
+                  <p className="text-xs sm:text-sm font-bold text-foreground">Parabéns! Seu produto foi entregue 🎉</p>
+                  <p className="text-[10px] text-muted-foreground/70">
+                    {isFreeNoKey ? "Toque para baixar o loader e ver instruções" : "Toque para ver sua chave, tutorial e arquivos"}
                   </p>
                 </div>
-                <div className={`flex h-7 w-7 items-center justify-center rounded-lg border border-success/30 bg-success/10 transition-transform duration-300 shrink-0 ${expandedSection === "delivery" ? "rotate-180" : ""}`}>
-                  <ChevronDown className="h-3.5 w-3.5 text-success" />
+                <div className={`flex h-6 w-6 items-center justify-center rounded-full bg-success/10 transition-transform duration-300 shrink-0 ${expandedSection === "delivery" ? "rotate-180" : ""}`}>
+                  <ChevronDown className="h-3 w-3 text-success" />
                 </div>
               </button>
 
@@ -926,10 +935,9 @@ const PedidoChat = () => {
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
                   transition={{ duration: 0.3 }}
-                  className="border-b border-success/20 bg-background/50 shrink-0 overflow-y-auto max-h-[300px]"
+                  className="border-b border-success/15 bg-background/50 shrink-0 overflow-y-auto max-h-[300px]"
                 >
                   <div className="p-4 space-y-4">
-                    {/* Free game without key — loader instructions */}
                     {isFreeNoKey && (
                       <div>
                         <p className="text-[11px] font-bold uppercase tracking-wider text-success mb-2 flex items-center gap-1.5">
@@ -938,7 +946,6 @@ const PedidoChat = () => {
                         </p>
                         <div className="rounded-xl border border-success/20 bg-card p-4 text-sm text-foreground space-y-3">
                           <p>Baixe o loader e abra o programa — crie sua conta ali. <strong>Não use chave</strong> no modo gratuito.</p>
-                          <p className="text-muted-foreground text-xs">Se o download não iniciar sozinho, use o botão abaixo ou o link em &quot;Arquivo&quot;.</p>
                           {tutorialFileUrl && (
                             <button
                               type="button"
@@ -957,38 +964,36 @@ const PedidoChat = () => {
                       </div>
                     )}
 
-                    {/* Product Key — only show if there's an actual key */}
                     {stockContent && (
-                    <div>
-                      <p className="text-[11px] font-bold uppercase tracking-wider text-success mb-2 flex items-center gap-1.5">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4"/><path d="m21 2-9.6 9.6"/><circle cx="7.5" cy="15.5" r="5.5"/></svg>
-                        Chave do Produto
-                      </p>
-                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 rounded-xl border border-success/20 bg-card p-3">
-                        <code className="flex-1 min-w-0 rounded-lg bg-secondary/50 px-3 py-2 text-sm font-mono text-foreground break-all">
-                          {showKey ? (typeof stockContent === "string" ? stockContent : JSON.stringify(stockContent)) : "••••••••••••••••••••••••"}
-                        </code>
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          <button
-                            onClick={(e) => { e.stopPropagation(); setShowKey(!showKey); }}
-                            className="flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground hover:border-success/40"
-                          >
-                            {showKey ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                            {showKey ? "Ocultar" : "Revelar"}
-                          </button>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); copyKey(); }}
-                            className="flex items-center gap-1 rounded-lg bg-success px-2.5 py-1.5 text-[11px] font-bold text-success-foreground transition-all hover:shadow-[0_0_20px_hsl(var(--success)/0.3)]"
-                          >
-                            {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                            {copied ? "Copiado!" : "Copiar"}
-                          </button>
+                      <div>
+                        <p className="text-[11px] font-bold uppercase tracking-wider text-success mb-2 flex items-center gap-1.5">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4"/><path d="m21 2-9.6 9.6"/><circle cx="7.5" cy="15.5" r="5.5"/></svg>
+                          Chave do Produto
+                        </p>
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 rounded-xl border border-success/20 bg-card p-3">
+                          <code className="flex-1 min-w-0 rounded-lg bg-secondary/50 px-3 py-2 text-sm font-mono text-foreground break-all">
+                            {showKey ? (typeof stockContent === "string" ? stockContent : JSON.stringify(stockContent)) : "••••••••••••••••••••••••"}
+                          </code>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setShowKey(!showKey); }}
+                              className="flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground hover:border-success/40"
+                            >
+                              {showKey ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                              {showKey ? "Ocultar" : "Revelar"}
+                            </button>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); copyKey(); }}
+                              className="flex items-center gap-1 rounded-lg bg-success px-2.5 py-1.5 text-[11px] font-bold text-success-foreground transition-all hover:brightness-110"
+                            >
+                              {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                              {copied ? "Copiado!" : "Copiar"}
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </div>
                     )}
 
-                    {/* Tutorial Text */}
                     {tutorialText && (
                       <div>
                         <div className="flex items-center gap-2 mb-2">
@@ -1001,7 +1006,6 @@ const PedidoChat = () => {
                       </div>
                     )}
 
-                    {/* Tutorial File */}
                     {tutorialFileUrl && (
                       <div>
                         <div className="flex items-center gap-2 mb-2">
@@ -1033,45 +1037,50 @@ const PedidoChat = () => {
               )}
             </>
           )}
-          {/* Chat Header */}
-          <div className="flex items-center justify-between border-b border-border px-5 py-3.5">
+
+          {/* ── Chat Header ── */}
+          <div className="flex items-center justify-between border-b border-border px-4 sm:px-5 py-3 bg-card shrink-0">
             <div className="flex items-center gap-2.5">
-              <MessageSquare className="h-4 w-4 text-success" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-success/10">
+                <MessageSquare className="h-4 w-4 text-success" />
+              </div>
               <div>
                 <span className="text-sm font-bold text-foreground">Chat do Pedido</span>
                 <p className="text-[10px] text-muted-foreground">{messages.length} mensagen{messages.length !== 1 ? "s" : ""}</p>
               </div>
             </div>
-            {/* Feedback button in header */}
             {!loadingReview && (
               existingReview ? (
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1.5">
                   <div className="flex items-center gap-0.5">
                     {[1, 2, 3, 4, 5].map((star) => (
-                      <Star key={star} className={`h-3.5 w-3.5 ${star <= existingReview.rating ? "fill-warning text-warning" : "text-muted-foreground/30"}`} />
+                      <Star key={star} className={`h-3 w-3 ${star <= existingReview.rating ? "fill-warning text-warning" : "text-muted-foreground/20"}`} />
                     ))}
                   </div>
-                  <span className="text-muted-foreground/60">Avaliado</span>
+                  <span className="text-[10px] text-muted-foreground/60">Avaliado</span>
                 </div>
               ) : (
                 <button
                   onClick={() => setShowReviewModal(true)}
-                  className="flex items-center gap-1.5 rounded-lg border border-success/30 bg-success/5 px-3 py-1.5 text-xs font-medium text-success transition-colors hover:bg-success/10"
+                  className="flex items-center gap-1.5 rounded-full border border-success/20 bg-success/5 px-3 py-1.5 text-[11px] font-medium text-success transition-all hover:bg-success/10 hover:border-success/30"
                 >
-                  <Star className="h-3.5 w-3.5" />
-                  Gostaria de dar feedback?
+                  <Star className="h-3 w-3" />
+                  <span className="hidden sm:inline">Dar feedback</span>
+                  <span className="sm:hidden">Feedback</span>
                 </button>
               )
             )}
           </div>
 
-          {/* Messages Area */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-background/50 scrollbar-chat">
+          {/* ── Messages Area ── */}
+          <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 bg-background/30 scrollbar-chat">
             {messages.length === 0 && (
               <div className="flex h-full flex-col items-center justify-center gap-3">
-                <MessageSquare className="h-10 w-10 text-muted-foreground/20" />
-                <p className="text-sm text-muted-foreground">Nenhuma mensagem ainda.</p>
-                <p className="text-xs text-muted-foreground/60">Inicie a conversa abaixo.</p>
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted/50">
+                  <MessageSquare className="h-7 w-7 text-muted-foreground/20" />
+                </div>
+                <p className="text-sm text-muted-foreground">Nenhuma mensagem ainda</p>
+                <p className="text-xs text-muted-foreground/50">Envie uma mensagem para iniciar a conversa</p>
               </div>
             )}
             {messages.map((msg) => {
@@ -1079,28 +1088,33 @@ const PedidoChat = () => {
               return (
                 <motion.div
                   key={msg.id}
-                  initial={{ opacity: 0, y: 8 }}
+                  initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className={`flex gap-3 ${isStaff ? "flex-row-reverse" : "flex-row"}`}
+                  transition={{ duration: 0.15 }}
+                  className={`flex gap-2.5 ${isStaff ? "flex-row-reverse" : "flex-row"}`}
                 >
-                  <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${
-                    isStaff ? "text-success border border-success/30" : "text-muted-foreground border border-border"
+                  {/* Avatar */}
+                  <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
+                    isStaff
+                      ? "bg-success/15 text-success ring-1 ring-success/30"
+                      : "bg-muted text-muted-foreground ring-1 ring-border"
                   }`}>
                     {isStaff ? "S" : "V"}
                   </div>
-                  <div className={`space-y-1 max-w-[80%]`}>
-                    <p className={`text-[10px] font-semibold ${isStaff ? "text-right text-success" : "text-left text-muted-foreground"}`}>
+
+                  {/* Bubble */}
+                  <div className={`space-y-0.5 max-w-[80%] sm:max-w-[75%]`}>
+                    <p className={`text-[10px] font-semibold px-1 ${isStaff ? "text-right text-success/80" : "text-left text-muted-foreground/70"}`}>
                       {isStaff ? "Staff" : "Você"}
                     </p>
-                    <div className={`rounded-2xl px-5 py-3 ${
+                    <div className={`rounded-2xl px-4 py-2.5 ${
                       isStaff
-                        ? "rounded-tr-sm bg-success/10 border border-success/20"
-                        : "rounded-tl-sm bg-accent/50 border border-border"
+                        ? "rounded-tr-md bg-success/8 border border-success/15"
+                        : "rounded-tl-md bg-muted/40 border border-border/60"
                     }`}>
                       {renderMessageContent(msg.message, isStaff)}
                     </div>
-                    <p className={`text-[10px] text-muted-foreground/60 ${isStaff ? "text-right" : "text-left"}`}>
+                    <p className={`text-[9px] text-muted-foreground/40 px-1 ${isStaff ? "text-right" : "text-left"}`}>
                       {new Date(msg.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                     </p>
                   </div>
@@ -1110,58 +1124,58 @@ const PedidoChat = () => {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input Area */}
+          {/* ── Input Area ── */}
           {isLocked ? (
-            <div className="border-t border-border px-5 py-4 flex items-center gap-2.5">
-              <Lock className="h-4 w-4 text-muted-foreground/60" />
-              <p className="text-sm text-muted-foreground">
-                Este pedido foi encerrado pelo staff — chat bloqueado.
+            <div className="border-t border-border px-5 py-4 flex items-center justify-center gap-2.5 bg-muted/20 shrink-0">
+              <Lock className="h-4 w-4 text-muted-foreground/50" />
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                Este pedido foi encerrado — chat bloqueado
               </p>
             </div>
           ) : (
-            <>
+            <div className="shrink-0">
               {/* Pending files preview */}
               {pendingFiles.length > 0 && (
-                <div className="border-t border-border px-4 py-2 bg-secondary/30 flex gap-2 flex-wrap">
+                <div className="border-t border-border px-4 py-2 bg-muted/20 flex gap-2 flex-wrap">
                   {pendingFiles.map((file, i) => (
                     <div key={i} className="relative group">
                       {file.type.startsWith("image/") ? (
-                        <img src={previewUrls[i]} alt={file.name} className="h-16 w-16 rounded-lg object-cover border border-border" />
+                        <img src={previewUrls[i]} alt={file.name} className="h-14 w-14 rounded-lg object-cover border border-border" />
                       ) : (
-                        <div className="h-16 w-16 rounded-lg border border-border bg-muted flex flex-col items-center justify-center gap-1">
-                          <FileText className="h-5 w-5 text-muted-foreground" />
-                          <span className="text-[8px] text-muted-foreground font-bold truncate max-w-[56px]">
+                        <div className="h-14 w-14 rounded-lg border border-border bg-muted flex flex-col items-center justify-center gap-0.5">
+                          <FileText className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-[7px] text-muted-foreground font-bold truncate max-w-[48px]">
                             {file.name.split(".").pop()?.toUpperCase()}
                           </span>
                         </div>
                       )}
                       <button
                         onClick={() => removePendingFile(i)}
-                        className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
                       >
-                        <X className="h-3 w-3" />
+                        <X className="h-2.5 w-2.5" />
                       </button>
                     </div>
                   ))}
                 </div>
               )}
-              <div className="border-t border-border p-3">
+              <div className="border-t border-border p-2.5 sm:p-3 bg-card">
                 {isRecording ? (
-                  <div className="flex items-center gap-3 rounded-2xl border border-destructive/40 bg-destructive/5 p-3">
-                    <div className="h-3 w-3 rounded-full bg-destructive animate-pulse" />
-                    <span className="text-sm font-medium text-foreground flex-1">Gravando... {formatDuration(recordingDuration)}</span>
-                    <button onClick={cancelRecording} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all" title="Cancelar">
+                  <div className="flex items-center gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-2.5 sm:p-3">
+                    <div className="h-2.5 w-2.5 rounded-full bg-destructive animate-pulse" />
+                    <span className="text-xs sm:text-sm font-medium text-foreground flex-1">Gravando... {formatDuration(recordingDuration)}</span>
+                    <button onClick={cancelRecording} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all" title="Cancelar">
                       <Trash2 className="h-4 w-4" />
                     </button>
-                    <button onClick={handleSendAudio} disabled={sending || uploadingFile} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-success text-success-foreground disabled:opacity-30 hover:brightness-110 transition-all" title="Enviar áudio">
+                    <button onClick={handleSendAudio} disabled={sending || uploadingFile} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-success text-success-foreground disabled:opacity-30 hover:brightness-110 transition-all" title="Enviar áudio">
                       {sending || uploadingFile ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                     </button>
                   </div>
                 ) : (
-                  <div className="flex items-end gap-2 rounded-2xl border border-border bg-background p-2 focus-within:border-success/40 focus-within:shadow-[0_0_0_3px_hsl(var(--success)/0.08)] transition-all">
+                  <div className="flex items-end gap-1.5 sm:gap-2 rounded-xl border border-border bg-background p-1.5 sm:p-2 focus-within:border-success/30 focus-within:shadow-[0_0_0_2px_hsl(var(--success)/0.06)] transition-all">
                     <input ref={fileInputRef} type="file" multiple accept="image/*,.pdf,.txt,.doc,.docx,.zip,.rar" className="hidden" onChange={handleFileSelect} />
-                    <button onClick={() => fileInputRef.current?.click()} disabled={uploadingFile} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all disabled:opacity-40" title="Anexar arquivo ou imagem">
-                      <Paperclip className="h-[18px] w-[18px]" />
+                    <button onClick={() => fileInputRef.current?.click()} disabled={uploadingFile} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all disabled:opacity-40" title="Anexar arquivo">
+                      <Paperclip className="h-4 w-4" />
                     </button>
                     <textarea
                       value={newMessage}
@@ -1169,62 +1183,70 @@ const PedidoChat = () => {
                       onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
                       placeholder="Digite sua mensagem..."
                       rows={1}
-                      className="flex-1 resize-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground/50 outline-none py-2 max-h-[120px]"
+                      className="flex-1 resize-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 outline-none py-1.5 max-h-[120px]"
                     />
                     <button
                       onClick={() => startRecording().catch(() => toast({ title: "Erro", description: "Permita o acesso ao microfone", variant: "destructive" }))}
                       disabled={sending || uploadingFile}
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all disabled:opacity-40"
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all disabled:opacity-40"
                       title="Gravar áudio"
                     >
-                      <Mic className="h-[18px] w-[18px]" />
+                      <Mic className="h-4 w-4" />
                     </button>
-                    <button onClick={sendMessage} disabled={sending || uploadingFile || (!newMessage.trim() && pendingFiles.length === 0)} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-success text-success-foreground disabled:opacity-30 hover:brightness-110 transition-all">
+                    <button onClick={sendMessage} disabled={sending || uploadingFile || (!newMessage.trim() && pendingFiles.length === 0)} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-success text-success-foreground disabled:opacity-30 hover:brightness-110 transition-all">
                       {sending || uploadingFile ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                     </button>
                   </div>
                 )}
               </div>
-            </>
+            </div>
           )}
-        </div>
+        </motion.div>
 
-        {/* Review Modal */}
+        {/* ── Review Modal ── */}
         {showReviewModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowReviewModal(false)}>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowReviewModal(false)}>
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="mx-4 w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl"
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
+              className="w-full max-w-md rounded-2xl border border-border bg-card p-5 sm:p-6 shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center gap-2 mb-5">
-                <Star className="h-5 w-5 text-success" />
-                <h3 className="text-lg font-bold text-foreground">Avaliar Produto</h3>
+              <div className="flex items-center gap-2.5 mb-5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-success/10">
+                  <Star className="h-4 w-4 text-success" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-foreground">Avaliar Produto</h3>
+                  <p className="text-[11px] text-muted-foreground">Como foi sua experiência?</p>
+                </div>
               </div>
 
-              <p className="text-sm text-muted-foreground mb-4">Como foi sua experiência com <strong className="text-foreground">{productName}</strong>?</p>
+              <p className="text-sm text-muted-foreground mb-4">
+                Produto: <strong className="text-foreground">{productName}</strong>
+              </p>
 
-              <div className="flex items-center gap-1 mb-4">
+              <div className="flex items-center gap-1.5 mb-5">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <button
                     key={star}
                     onClick={() => setReviewRating(star)}
                     onMouseEnter={() => setReviewHover(star)}
                     onMouseLeave={() => setReviewHover(0)}
-                    className="transition-transform hover:scale-110"
+                    className="transition-transform hover:scale-110 active:scale-95"
                   >
                     <Star
-                      className={`h-8 w-8 ${
+                      className={`h-8 w-8 sm:h-9 sm:w-9 transition-colors ${
                         star <= (reviewHover || reviewRating)
                           ? "fill-warning text-warning"
-                          : "text-muted-foreground/30"
+                          : "text-muted-foreground/20"
                       }`}
                     />
                   </button>
                 ))}
                 {reviewRating > 0 && (
-                  <span className="ml-3 text-sm font-medium text-muted-foreground">{reviewRating}/5</span>
+                  <span className="ml-3 text-sm font-bold text-foreground">{reviewRating}/5</span>
                 )}
               </div>
 
@@ -1233,13 +1255,13 @@ const PedidoChat = () => {
                 onChange={(e) => setReviewComment(e.target.value)}
                 placeholder="Deixe um comentário (opcional)..."
                 rows={3}
-                className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none transition-colors focus:border-success/40 resize-none mb-4"
+                className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/40 outline-none transition-colors focus:border-success/30 resize-none mb-5"
               />
 
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => setShowReviewModal(false)}
-                  className="flex-1 rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                  className="flex-1 rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground hover:bg-muted/30"
                 >
                   Cancelar
                 </button>
@@ -1249,9 +1271,9 @@ const PedidoChat = () => {
                     setShowReviewModal(false);
                   }}
                   disabled={!reviewRating || submittingReview}
-                  className="flex-1 rounded-xl bg-success px-4 py-2.5 text-sm font-bold text-success-foreground transition-all disabled:opacity-30 hover:shadow-[0_0_20px_hsl(var(--success)/0.3)]"
+                  className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-success px-4 py-2.5 text-sm font-bold text-success-foreground transition-all disabled:opacity-30 hover:brightness-110"
                 >
-                  {submittingReview ? <Loader2 className="h-4 w-4 animate-spin inline mr-2" /> : null}
+                  {submittingReview && <Loader2 className="h-4 w-4 animate-spin" />}
                   Enviar
                 </button>
               </div>
