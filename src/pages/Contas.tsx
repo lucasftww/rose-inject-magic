@@ -1744,7 +1744,7 @@ const Contas = () => {
     isMinecraft && mcHypixelLvlMin !== "",
     isMinecraft && mcCapesMin !== "",
     isMinecraft && mcNoBan,
-    priceMin !== "", priceMax !== "",
+    priceMin !== "" || priceMax !== "",
     searchQuery !== "",
     invMin !== "", invMax !== "",
     lvlMin !== "", lvlMax !== "",
