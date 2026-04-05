@@ -959,8 +959,11 @@ Deno.serve(async (req) => {
         filteredByOther,
       });
 
-      // Assign BRL prices
+      // Normalize Fortnite field aliases so the client always sees `fortnite_skin_count`
       for (const item of data.items) {
+        if (gameType === "fortnite" && item.fortnite_outfit_count != null && item.fortnite_skin_count == null) {
+          item.fortnite_skin_count = item.fortnite_outfit_count;
+        }
         item.price_brl = getDisplayedPriceBrl(item, overrideMap.get(String(item.item_id)), gameType, activeMarkup);
 
         // Strip heavy fields
