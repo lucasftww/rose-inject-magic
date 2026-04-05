@@ -168,7 +168,7 @@ export function parseStoreProductDetail(data: unknown): StoreProductDetail | nul
   return mapProductDetailQueryRow(data as ProductDetailQueryRow);
 }
 
-export function isValidProductStatusPayload(data: unknown): boolean {
+function isValidProductStatusPayload(data: unknown): boolean {
   if (!isRecord(data)) return false;
   if (typeof data.id !== "string" || typeof data.name !== "string") return false;
   const g = data.games;
