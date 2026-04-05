@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase, supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
-import type { Database, Tables } from "@/integrations/supabase/types";
+import type { Database, Json, Tables } from "@/integrations/supabase/types";
 import { fetchAllRows } from "@/lib/supabaseAllRows";
 import { paymentCartSnapshot } from "@/types/paymentCart";
 import { asOrderTicketMetadata } from "@/types/orderTicketMetadata";

@@ -101,7 +101,7 @@ export const checkLztAvailability = async (
     const state = qc.getQueryState(key);
     const data = qc.getQueryData<{ item?: LztDetailItem }>(key);
     const cached = data?.item;
-    if (state && data && cached && String(cached.item_id) === normalizedId && !state.isStale) {
+    if (state && data && cached && String(cached.item_id) === normalizedId && !(state as { isStale?: boolean }).isStale) {
       if (isLztDetailItemPurchasable(cached)) return true;
       toastItemNotPurchasable(cached);
       return false;
