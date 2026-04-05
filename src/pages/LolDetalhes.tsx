@@ -131,18 +131,22 @@ function lolGalleryHeroBgUrl(entry: SkinPreview | ChampPreview): string {
 const LolDetalhes = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getPrice, getDisplayPrice } = useLztMarkup();
+  const { getPrice, getDisplayPrice, formatPriceBrl } = useLztMarkup();
   const [activeTab, setActiveTab] = useState<"skins" | "champions">("skins");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const { addItem } = useCart();
   const queryClient = useQueryClient();
 
+  // Price lock: prevents silent price changes from background React Query refetches
+  const [lockedPriceBrl, setLockedPriceBrl] = useState<number | null>(null);
+
   // Reset state when navigating between accounts
   useEffect(() => {
     setSelectedIndex(0);
     setLightboxIndex(null);
     setActiveTab("skins");
+    setLockedPriceBrl(null);
   }, [id]);
 
   // Fetch account detail

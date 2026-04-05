@@ -61,9 +61,12 @@ const fetchAccountDetail = async (itemId: string) => {
 const MinecraftDetalhes = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getPrice, getDisplayPrice } = useLztMarkup();
+  const { getPrice, getDisplayPrice, formatPriceBrl } = useLztMarkup();
   const { addItem } = useCart();
   const queryClient = useQueryClient();
+
+  // Price lock: prevents silent price changes from background React Query refetches
+  const [lockedPriceBrl, setLockedPriceBrl] = useState<number | null>(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: lztAccountDetailQueryKey("minecraft", id ?? ""),

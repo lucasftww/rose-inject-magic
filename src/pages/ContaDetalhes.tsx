@@ -459,11 +459,14 @@ const fetchValorantBuddies = async (uuids: string[]): Promise<SimpleGalleryItem[
 const ContaDetalhes = () => {
   const { id } = useParams<{id: string;}>();
   const navigate = useNavigate();
-  const { getPrice, getDisplayPrice } = useLztMarkup();
+  const { getPrice, getDisplayPrice, formatPriceBrl } = useLztMarkup();
   const [selectedSkin, setSelectedSkin] = useState(0);
   const [activeTab, setActiveTab] = useState<"skins" | "agents" | "buddies">("skins");
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const viewTracked = useRef(false);
+
+  // Price lock: prevents silent price changes from background React Query refetches
+  const [lockedPriceBrl, setLockedPriceBrl] = useState<number | null>(null);
 
   // Reset selectedSkin when account changes
   useEffect(() => {
@@ -471,6 +474,7 @@ const ContaDetalhes = () => {
     setLightboxIndex(null);
     setActiveTab("skins");
     viewTracked.current = false;
+    setLockedPriceBrl(null);
   }, [id]);
   const { addItem } = useCart();
   const queryClient = useQueryClient();
