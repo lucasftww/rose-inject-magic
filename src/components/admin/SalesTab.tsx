@@ -123,7 +123,7 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
       const results: Tables<T>[] = [];
       for (let i = 0; i < ids.length; i += CHUNK) {
         const chunk = ids.slice(i, i + CHUNK);
-        const { data } = await supabase.from(table).select(select).in(column, chunk);
+        const { data } = await supabase.from(table).select(select).in(column, chunk as string[]);
         if (data) results.push(...(data as Tables<T>[]));
       }
       return results;
