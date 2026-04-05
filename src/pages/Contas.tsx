@@ -973,40 +973,44 @@ const Contas = () => {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, []);
 
+  // ─── Helper: read query param with default ───
+  const qp = (key: string, fallback: string = "") => searchParams.get(key) ?? fallback;
+  const qpBool = (key: string) => searchParams.get(key) === "1";
+
   // ─── Valorant filters ───
-  const [selectedRank, setSelectedRank] = useState("todos");
-  const [selectedWeapon, setSelectedWeapon] = useState("todos");
-  const [onlyKnife, setOnlyKnife] = useState(false);
-  const [valRegion, setValRegion] = useState("br");
+  const [selectedRank, setSelectedRank] = useState(() => qp("rank", "todos"));
+  const [selectedWeapon, setSelectedWeapon] = useState(() => qp("weapon", "todos"));
+  const [onlyKnife, setOnlyKnife] = useState(() => qpBool("knife"));
+  const [valRegion, setValRegion] = useState(() => qp("region", "br"));
 
   // ─── LoL filters ───
-  const [lolRank, setLolRank] = useState("todos");
-  const [lolChampMin, setLolChampMin] = useState("");
-  const [lolSkinsMin, setLolSkinsMin] = useState("");
-  const [lolRegion, setLolRegion] = useState("BR1");
+  const [lolRank, setLolRank] = useState(() => qp("rank", "todos"));
+  const [lolChampMin, setLolChampMin] = useState(() => qp("champMin"));
+  const [lolSkinsMin, setLolSkinsMin] = useState(() => qp("skinsMin"));
+  const [lolRegion, setLolRegion] = useState(() => qp("region", "BR1"));
 
   // ─── Fortnite filters ───
-  const [fnVbMin, setFnVbMin] = useState("");
-  const [fnSkinsMin, setFnSkinsMin] = useState("");
-  const [fnLevelMin, setFnLevelMin] = useState("");
-  const [fnHasBattlePass, setFnHasBattlePass] = useState(false);
+  const [fnVbMin, setFnVbMin] = useState(() => qp("vbMin"));
+  const [fnSkinsMin, setFnSkinsMin] = useState(() => qp("skinsMin"));
+  const [fnLevelMin, setFnLevelMin] = useState(() => qp("levelMin"));
+  const [fnHasBattlePass, setFnHasBattlePass] = useState(() => qpBool("battlePass"));
 
   // ─── Minecraft filters ───
-  const [mcJava, setMcJava] = useState(false);
-  const [mcBedrock, setMcBedrock] = useState(false);
-  const [mcHypixelLvlMin, setMcHypixelLvlMin] = useState("");
-  const [mcCapesMin, setMcCapesMin] = useState("");
-  const [mcNoBan, setMcNoBan] = useState(false);
+  const [mcJava, setMcJava] = useState(() => qpBool("java"));
+  const [mcBedrock, setMcBedrock] = useState(() => qpBool("bedrock"));
+  const [mcHypixelLvlMin, setMcHypixelLvlMin] = useState(() => qp("hypixelMin"));
+  const [mcCapesMin, setMcCapesMin] = useState(() => qp("capesMin"));
+  const [mcNoBan, setMcNoBan] = useState(() => qpBool("noBan"));
 
   // ─── Shared filters ───
-  const [priceMin, setPriceMin] = useState("");
-  const [priceMax, setPriceMax] = useState("");
-  const [sortBy, setSortBy] = useState<string>("pdate_to_down");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [lvlMin, setLvlMin] = useState("");
-  const [lvlMax, setLvlMax] = useState("");
-  const [invMin, setInvMin] = useState("");
-  const [invMax, setInvMax] = useState("");
+  const [priceMin, setPriceMin] = useState(() => qp("pmin"));
+  const [priceMax, setPriceMax] = useState(() => qp("pmax"));
+  const [sortBy, setSortBy] = useState<string>(() => qp("sort", "pdate_to_down"));
+  const [searchQuery, setSearchQuery] = useState(() => qp("q"));
+  const [lvlMin, setLvlMin] = useState(() => qp("lvlMin"));
+  const [lvlMax, setLvlMax] = useState(() => qp("lvlMax"));
+  const [invMin, setInvMin] = useState(() => qp("invMin"));
+  const [invMax, setInvMax] = useState(() => qp("invMax"));
   // page state removed — displayPage handles client-side pagination
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
@@ -1017,6 +1021,75 @@ const Contas = () => {
       return () => { document.body.style.overflow = ''; };
     }
   }, [mobileFiltersOpen]);
+
+  // ─── Sync filters → URL query params ───
+  const syncFiltersToUrlRef = useRef(false);
+  useEffect(() => {
+    // Skip first render (state was initialized from URL)
+    if (!syncFiltersToUrlRef.current) {
+      syncFiltersToUrlRef.current = true;
+      return;
+    }
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      // Helper: set or delete
+      const set = (k: string, v: string, def: string = "") => {
+        if (v && v !== def) next.set(k, v);
+        else next.delete(k);
+      };
+      const setBool = (k: string, v: boolean) => {
+        if (v) next.set(k, "1");
+        else next.delete(k);
+      };
+
+      // Shared
+      set("q", searchQuery);
+      set("sort", sortBy, "pdate_to_down");
+      set("pmin", priceMin);
+      set("pmax", priceMax);
+
+      // Game-specific — only write params relevant to the current tab
+      // Clear all game-specific keys first
+      ["rank", "weapon", "knife", "region", "champMin", "skinsMin", "vbMin",
+       "levelMin", "battlePass", "java", "bedrock", "hypixelMin", "capesMin",
+       "noBan", "lvlMin", "lvlMax", "invMin", "invMax"].forEach(k => next.delete(k));
+
+      if (gameTab === "valorant") {
+        set("rank", selectedRank, "todos");
+        set("weapon", selectedWeapon, "todos");
+        setBool("knife", onlyKnife);
+        set("region", valRegion, "br");
+        set("lvlMin", lvlMin); set("lvlMax", lvlMax);
+        set("invMin", invMin); set("invMax", invMax);
+      } else if (gameTab === "lol") {
+        set("rank", lolRank, "todos");
+        set("champMin", lolChampMin);
+        set("skinsMin", lolSkinsMin);
+        set("region", lolRegion, "BR1");
+        set("lvlMin", lvlMin); set("lvlMax", lvlMax);
+      } else if (gameTab === "fortnite") {
+        set("vbMin", fnVbMin);
+        set("skinsMin", fnSkinsMin);
+        set("levelMin", fnLevelMin);
+        setBool("battlePass", fnHasBattlePass);
+      } else if (gameTab === "minecraft") {
+        setBool("java", mcJava);
+        setBool("bedrock", mcBedrock);
+        set("hypixelMin", mcHypixelLvlMin);
+        set("capesMin", mcCapesMin);
+        setBool("noBan", mcNoBan);
+      }
+
+      return next;
+    }, { replace: true });
+  }, [
+    gameTab, searchQuery, sortBy, priceMin, priceMax,
+    selectedRank, selectedWeapon, onlyKnife, valRegion,
+    lolRank, lolChampMin, lolSkinsMin, lolRegion,
+    fnVbMin, fnSkinsMin, fnLevelMin, fnHasBattlePass,
+    mcJava, mcBedrock, mcHypixelLvlMin, mcCapesMin, mcNoBan,
+    lvlMin, lvlMax, invMin, invMax, setSearchParams,
+  ]);
 
   // ─── Sidebar collapse ───
   const [rankOpen, setRankOpen] = useState(true);
@@ -1713,11 +1786,12 @@ const Contas = () => {
   const switchTab = (tab: GameTab) => {
     if (tab === gameTab) return;
     setGameTab(tab);
+    // clearFilters resets all filter state; the sync effect will update URL params.
+    // We still need to set `game` param explicitly here for history navigation.
     setSearchParams(
-      (prev) => {
-        const next = new URLSearchParams(prev);
-        if (tab === "valorant") next.delete("game");
-        else next.set("game", tab);
+      () => {
+        const next = new URLSearchParams();
+        if (tab !== "valorant") next.set("game", tab);
         return next;
       },
       { replace: false },
