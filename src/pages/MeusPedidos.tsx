@@ -112,7 +112,7 @@ const MeusPedidos = () => {
       const productMap: Record<string, { name: string; image_url: string | null }> = {};
       const planMap: Record<string, { name: string; price: number }> = {};
       productsRes.data?.forEach((p) => { productMap[p.id] = { name: p.name, image_url: p.image_url }; });
-      plansRes.data?.forEach((p) => { planMap[p.id] = { name: p.name, price: p.price }; });
+      plansRes.data?.forEach((p) => { planMap[p.id] = { name: p.name, price: p.price ?? 0 }; });
 
       setTickets(
         rows.map((t) => {
@@ -148,7 +148,7 @@ const MeusPedidos = () => {
   }, [user]);
 
   const byType = useMemo(() =>
-    isContas ? tickets.filter(t => asOrderTicketMetadata(t.metadata)?.type === "lzt-account") : tickets.filter(t => !asOrderTicketMetadata(t.metadata)?.type || asOrderTicketMetadata(t.metadata)?.type === "robot-project"),
+    isContas ? tickets.filter(t => { const m = asOrderTicketMetadata(t.metadata); return m?.type === "lzt-account"; }) : tickets.filter(t => { const m = asOrderTicketMetadata(t.metadata); return !m?.type || m?.type === "robot-project"; }),
     [tickets, isContas]
   );
 
@@ -346,9 +346,9 @@ const MeusPedidos = () => {
                     <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent" />
 
                     {/* Status badge */}
-                    <span className={`absolute top-3 right-3 flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold ${statusColors[ticket.status] || statusColors.open}`}>
-                      {statusIcons[ticket.status]}
-                      {statusLabels[ticket.status] || ticket.status_label}
+                    <span className={`absolute top-3 right-3 flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold ${statusColors[ticket.status || ""] || statusColors.open}`}>
+                      {statusIcons[ticket.status || ""]}
+                      {statusLabels[ticket.status || ""] || ticket.status_label}
                     </span>
                   </div>
 
@@ -368,7 +368,7 @@ const MeusPedidos = () => {
 
                     <div className="mt-4 flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">
-                        {new Date(ticket.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
+                        {new Date(ticket.created_at || "").toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
                       </span>
                       <span className="flex items-center gap-1 text-xs font-semibold text-success group-hover:underline">
                         Ver detalhes <ChevronRight className="h-3.5 w-3.5" />

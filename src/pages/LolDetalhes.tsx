@@ -619,7 +619,7 @@ const LolDetalhes = () => {
                             {/* Splash blurred bg */}
                             <div
                               className="absolute inset-0 bg-cover bg-center opacity-30 blur-md scale-110"
-                              style={{ backgroundImage: `url(${getProxiedImageUrl(splashImg)})` }}
+                              style={{ backgroundImage: `url(${getProxiedImageUrl(splashImg as string)})` }}
                             />
                             <img src={getProxiedImageUrl(cur.image)} alt={cur.champName} className="relative z-[1] h-full w-full object-cover object-top" />
                           </div>

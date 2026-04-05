@@ -238,11 +238,11 @@ const buildSkinLookup = (skins: unknown[]): Map<string, ValorantSkinItem> => {
 
 /** Valorant API catálogo muda raramente — cache 1h reduz payload repetido em cada detalhe. */
 const VALORANT_API_CACHE_MS = 1000 * 60 * 60;
-let weaponSkinsCatalogCache: { data: unknown[]; expiry: number } | null = null;
-let skinLevelsCatalogCache: { data: unknown[]; expiry: number } | null = null;
-let skinChromasCatalogCache: { data: unknown[]; expiry: number } | null = null;
+let weaponSkinsCatalogCache: { data: Record<string, any>[]; expiry: number } | null = null;
+let skinLevelsCatalogCache: { data: Record<string, any>[]; expiry: number } | null = null;
+let skinChromasCatalogCache: { data: Record<string, any>[]; expiry: number } | null = null;
 
-async function getWeaponSkinsCatalog(): Promise<unknown[]> {
+async function getWeaponSkinsCatalog(): Promise<Record<string, any>[]> {
   const now = Date.now();
   if (weaponSkinsCatalogCache && weaponSkinsCatalogCache.expiry > now) {
     return weaponSkinsCatalogCache.data;
@@ -250,7 +250,7 @@ async function getWeaponSkinsCatalog(): Promise<unknown[]> {
   const skinsRes = await fetch("https://valorant-api.com/v1/weapons/skins?language=pt-BR");
   if (!skinsRes.ok) return [];
   const skinsData = await skinsRes.json();
-  const data = Array.isArray(skinsData.data) ? skinsData.data : [];
+  const data: Record<string, any>[] = Array.isArray(skinsData.data) ? skinsData.data : [];
   weaponSkinsCatalogCache = { data, expiry: now + VALORANT_API_CACHE_MS };
   return data;
 }

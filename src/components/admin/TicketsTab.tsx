@@ -221,7 +221,7 @@ const TicketsTab = ({
       const profileMap: Record<string, string> = {};
       const lztSalesMap = new Map<string, number>();
       productsRes.data?.forEach((p) => { productMap[p.id] = p.name; });
-      plansRes.data?.forEach((p) => { planMap[p.id] = { name: p.name, price: p.price ?? 0 }; });
+      plansRes.data?.forEach((p) => { planMap[p.id] = { name: p.name, price: Number(p.price ?? 0) }; });
       (profilesData.data || []).forEach((p) => { profileMap[p.user_id] = p.username || "—"; });
       (lztSalesData.data || []).forEach((s) => {
         if (s.lzt_item_id != null) lztSalesMap.set(String(s.lzt_item_id), Number(s.sell_price));
@@ -988,7 +988,7 @@ const TicketsTab = ({
                   </div>
                   {/* Purchase type + plan + price */}
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-0.5">
-                    {asOrderTicketMetadata(ticket.metadata)?.type === "lzt-account" ? (
+                    {String(asOrderTicketMetadata(ticket.metadata)?.type) === "lzt-account" ? (
                       <span className="inline-flex items-center gap-1 text-blue-400 text-[10px] font-medium">
                         <Globe className="h-2.5 w-2.5" />LZT
                       </span>
@@ -1009,7 +1009,7 @@ const TicketsTab = ({
                   {/* LZT item ID if applicable */}
                   {asOrderTicketMetadata(ticket.metadata)?.lzt_item_id && (
                     <div className="flex items-center gap-1 text-[10px] text-muted-foreground/50 font-mono mb-0.5">
-                      <span>LZT #{asOrderTicketMetadata(ticket.metadata)?.lzt_item_id}</span>
+                      <span>LZT #{String(asOrderTicketMetadata(ticket.metadata)?.lzt_item_id ?? "")}</span>
                     </div>
                   )}
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -1112,7 +1112,7 @@ const TicketsTab = ({
                       <span className="text-muted-foreground/20">·</span>
                       <span className="text-[11px] text-muted-foreground truncate max-w-[120px]">{selectedTicket.product_name}</span>
                       <span className="text-muted-foreground/20">·</span>
-                      <span className="text-[11px] font-semibold text-foreground/60">R$ {Number(selectedTicket.plan_price || 0).toFixed(2)}</span>
+                      <span className="text-[11px] font-semibold text-foreground/60">R$ {Number(selectedTicket.plan_price ?? 0).toFixed(2)}</span>
                       {asOrderTicketMetadata(selectedTicket?.metadata)?.lzt_item_id && (
                         <>
                           <span className="text-muted-foreground/20">·</span>
@@ -1122,7 +1122,7 @@ const TicketsTab = ({
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground hover:text-success font-mono"
                           >
-                            #{asOrderTicketMetadata(selectedTicket?.metadata)?.lzt_item_id}
+                            #{String(asOrderTicketMetadata(selectedTicket?.metadata)?.lzt_item_id ?? "")}
                             <ExternalLink className="h-2.5 w-2.5" />
                           </a>
                         </>

@@ -161,6 +161,7 @@ const Dashboard = () => {
               const lztGameLabel = (meta.game && lztGameLabels[meta.game]) || "Conta de jogo";
               return {
                 ...t,
+                metadata: meta,
                 product_name: meta.account_name || meta.title || lztGameLabel,
                 plan_name: lztGameLabel,
                 image_url: meta.account_image ?? null,
@@ -170,6 +171,7 @@ const Dashboard = () => {
             const duration = isRobot && meta.duration ? ` (${meta.duration} dias)` : "";
             return {
               ...t,
+              metadata: meta,
               product_name: productMap[t.product_id]?.name || (isRobot ? meta.game_name || "Produto Robot" : "Produto"),
               plan_name: (planMap[t.product_plan_id]?.name || "Plano") + duration,
               image_url: productMap[t.product_id]?.image_url ?? null,
@@ -357,11 +359,11 @@ const Dashboard = () => {
                           )}
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-foreground truncate group-hover:text-success transition-colors">{t.product_name}</p>
-                            <p className="text-[11px] text-muted-foreground">{t.plan_name} · {new Date(t.created_at).toLocaleDateString("pt-BR")}</p>
+                            <p className="text-[11px] text-muted-foreground">{t.plan_name} · {new Date(t.created_at || "").toLocaleDateString("pt-BR")}</p>
                           </div>
                           <div className="flex flex-col items-end gap-1">
-                            <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${statusColors[t.status] || "bg-muted text-muted-foreground"}`}>
-                              {statusLabels[t.status] || t.status_label}
+                            <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${statusColors[t.status || ""] || "bg-muted text-muted-foreground"}`}>
+                              {statusLabels[t.status || ""] || t.status_label}
                             </span>
                             {t.plan_price ? <span className="text-xs font-bold text-success">R$ {Number(t.plan_price).toFixed(2)}</span> : null}
                           </div>
@@ -404,9 +406,9 @@ const Dashboard = () => {
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-foreground">
                                 R$ {(Number(p.amount) / 100).toFixed(2)}
-                                {p.discount_amount > 0 && <span className="ml-1 text-[11px] text-success">(-R$ {Number(p.discount_amount).toFixed(2)})</span>}
+                                {(p.discount_amount ?? 0) > 0 && <span className="ml-1 text-[11px] text-success">(-R$ {Number(p.discount_amount ?? 0).toFixed(2)})</span>}
                               </p>
-                              <p className="text-[11px] text-muted-foreground">{new Date(p.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
+                              <p className="text-[11px] text-muted-foreground">{new Date(p.created_at || "").toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
                             </div>
                             <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${isPaid ? "bg-success/15 text-success" : isExpired ? "bg-destructive/15 text-destructive" : "bg-accent/20 text-accent-foreground"}`}>
                               {isPaid ? "Pago" : isExpired ? "Expirado" : "Pendente"}
@@ -599,10 +601,10 @@ const Dashboard = () => {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-foreground truncate">{t.product_name}</p>
-                          <p className="text-xs text-muted-foreground">{t.plan_name} · {new Date(t.created_at).toLocaleDateString("pt-BR")}</p>
+                          <p className="text-xs text-muted-foreground">{t.plan_name} · {new Date(t.created_at || "").toLocaleDateString("pt-BR")}</p>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
-                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${statusColors[t.status] || "bg-muted text-muted-foreground"}`}>{statusLabels[t.status] || t.status_label}</span>
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${statusColors[t.status || ""] || "bg-muted text-muted-foreground"}`}>{statusLabels[t.status || ""] || t.status_label}</span>
                           <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/30 group-hover:text-muted-foreground transition-colors" />
                         </div>
                       </motion.div>
