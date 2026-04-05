@@ -672,7 +672,7 @@ const LolCard = memo(({ item, champKeyMap, priceLabel, queryClient }: { item: Lz
         </div>
         <div className="mt-auto pt-1.5 border-t border-border/30">
           <h3 className="text-[11px] sm:text-xs font-semibold text-foreground line-clamp-2 text-balance leading-snug tracking-tight mb-1">{cleanedTitle}</h3>
-          <p className="text-sm sm:text-base font-bold text-[hsl(198,100%,45%)] tracking-tight">{priceLabel}</p>
+          <p className="text-sm sm:text-base font-bold text-positive tracking-tight">{priceLabel}</p>
           <span className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg bg-foreground py-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-background">
             Explorar detalhes <ArrowRight className="h-2.5 w-2.5" />
           </span>
