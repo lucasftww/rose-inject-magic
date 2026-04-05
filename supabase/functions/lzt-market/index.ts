@@ -92,7 +92,7 @@ async function parseJsonResponse(response: Response) {
 function getContentFloorBrl(item: LztItem, gameType?: string) {
   if (gameType === "fortnite") {
     const skins = Number(item.fortnite_skin_count || item.fortnite_outfit_count || 0);
-    const vbucks = Math.min(Number(item.fortnite_vbucks || 0), 50000);
+    const vbucks = Math.min(Number(item.fortnite_vbucks || item.fortnite_balance || 0), 50000);
     const level = Math.min(Number(item.fortnite_level || 0), 500);
     return skins * 0.35 + vbucks * 0.005 + level * 0.1;
   }
