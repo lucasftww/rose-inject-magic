@@ -430,12 +430,9 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
             </h3>
             <button 
               onClick={() => {
-                // This is a hack because we don't have easy access to setActiveTab from here
-                // but we can trigger a click on the sidebar button if needed, 
-                // or just rely on the user navigating via the sidebar.
-                // For now, I'll just add a "Ver tudo" label.
+                // No-op: the user should navigate via the sidebar to Histórico Pix.
               }}
-              className="text-[10px] font-bold text-success hover:underline uppercase"
+              className="text-[10px] font-bold text-success hover:underline uppercase hidden"
             >
               Ver tudo
             </button>
