@@ -789,7 +789,7 @@ const FortniteCard = memo(({ item, skinsDb, priceLabel, queryClient }: { item: L
 FortniteCard.displayName = "FortniteCard";
 
 // ─── Minecraft Card ───
-const MinecraftCard = memo(({ item, priceLabel }: { item: LztItem; priceLabel: string }) => {
+const MinecraftCard = memo(({ item, priceLabel, queryClient }: { item: LztItem; priceLabel: string; queryClient: QueryClient }) => {
   const nickname = item.minecraft_nickname;
   const hasJava = (item.minecraft_java ?? 0) > 0;
   const hasBedrock = (item.minecraft_bedrock ?? 0) > 0;
