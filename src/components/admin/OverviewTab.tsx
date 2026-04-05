@@ -453,7 +453,7 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
                     <p className="text-[13px] font-medium text-foreground truncate">{productName}</p>
                     <p className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">
                       <Clock className="h-2.5 w-2.5 inline opacity-50" />
-                      {p.paid_at ? timeAgo(p.paid_at) : timeAgo(p.created_at)}
+                      {p.paid_at ? timeAgo(p.paid_at) : timeAgo(p.created_at || new Date().toISOString())}
                     </p>
                   </div>
                   <span className="text-sm font-bold text-foreground shrink-0">R$ {(Number(p.amount) / 100).toFixed(2)}</span>

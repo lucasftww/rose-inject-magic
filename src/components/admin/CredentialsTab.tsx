@@ -20,7 +20,7 @@ type CredentialRow = Tables<"system_credentials">;
 
 function credentialFromRow(r: CredentialRow): Credential {
   return {
-    id: r.id,
+    id: (r as unknown as Record<string, unknown>).id as string | undefined,
     name: r.name,
     env_key: r.env_key,
     value: r.value,
