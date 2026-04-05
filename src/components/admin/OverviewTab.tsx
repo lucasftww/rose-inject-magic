@@ -136,7 +136,7 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
       ]);
 
       setOpenTickets(openTicketsRes.count ?? 0);
-      setAllPayments(allPaymentsRes || []);
+      setAllPayments((allPaymentsRes || []) as PaymentAggregate[]);
       setAllOrders(allOrdersRes || []);
       setLztSales(
         (lztSalesRes || []).map((s) => ({
