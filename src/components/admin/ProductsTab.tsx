@@ -285,7 +285,7 @@ const ProductsTab = () => {
     setRobotEnabled(hasRobot);
     setFormRobotGameId(product.robot_game_id || null);
     setFormRobotMarkup(product.robot_markup_percent || null);
-    if (hasRobot) fetchRobotGames();
+    if (hasRobot) fetchRobotGames(true);
 
     const { data: tutorialData } = await supabase.from("product_tutorials").select("tutorial_text, tutorial_file_url").eq("product_id", product.id).maybeSingle();
     setFormTutorialText(tutorialData?.tutorial_text || "");
