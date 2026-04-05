@@ -106,7 +106,7 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
-          <BrowserRouter>
+          <BrowserRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
             <RouteTracker />
             <Suspense fallback={<LazyFallback />}>
               <LocationAwareErrorBoundary>

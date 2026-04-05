@@ -52,7 +52,7 @@ const Index = () => {
             height={1080}
             className="h-full w-full object-cover object-center scale-110"
             style={{ filter: 'blur(2px) brightness(0.45) saturate(1.3)' }}
-            fetchPriority="high"
+            {...{ fetchpriority: "high" } as React.ImgHTMLAttributes<HTMLImageElement>}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-transparent to-transparent" />
