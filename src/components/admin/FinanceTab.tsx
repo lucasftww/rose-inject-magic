@@ -298,17 +298,20 @@ const FinanceTab = () => {
 
   const revenueBreakdown = useMemo(() => {
     let lzt = 0, stock = 0, robot = 0;
-    // Build a set of robot product IDs for fast lookup
     const robotProductIds = new Set(robotTickets.map(r => r.product_id));
     fp.forEach(p => {
       const cart: PaymentCartLine[] = paymentCartSnapshot(p.cart_snapshot);
       if (cart.length === 0) { stock += p.amount / 100; return; }
-      // Classify each payment by its cart items
-      const hasLzt = cart.some((i) => i.type === "lzt-account");
-      const hasRobot = cart.some((i) => i.productId != null && robotProductIds.has(i.productId));
-      if (hasLzt) lzt += p.amount / 100;
-      else if (hasRobot) robot += p.amount / 100;
-      else stock += p.amount / 100;
+      // Distribute revenue proportionally per cart item
+      const cartTotal = cart.reduce((sum, i) => sum + (Number(i.price) || 0), 0);
+      const actualPaid = p.amount / 100;
+      for (const item of cart) {
+        const proportion = cartTotal > 0 ? (Number(item.price) || 0) / cartTotal : 1 / cart.length;
+        const itemRevenue = actualPaid * proportion;
+        if (item.type === "lzt-account") lzt += itemRevenue;
+        else if (item.productId != null && robotProductIds.has(item.productId)) robot += itemRevenue;
+        else stock += itemRevenue;
+      }
     });
     return { lzt, robot, stock };
   }, [fp, robotTickets]);
