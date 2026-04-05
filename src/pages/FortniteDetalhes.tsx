@@ -245,13 +245,13 @@ const FortniteDetalhes = () => {
     <div className="min-h-screen bg-background">
       <Header />
       <div className="mx-auto max-w-6xl px-4 sm:px-6 pt-4 pb-28 sm:pb-20">
-        <button
-          onClick={() => navigate("/contas?game=fortnite")}
-          className="mb-5 flex items-center gap-2 rounded-lg border border-border bg-card/50 px-4 py-2 text-sm text-muted-foreground transition-all hover:text-foreground"
+        <Link
+          to="/contas?game=fortnite"
+          className="mb-5 inline-flex items-center gap-2 rounded-lg border border-border bg-card/50 px-4 py-2 text-sm text-muted-foreground transition-all hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
           Voltar para Contas Fortnite
-        </button>
+        </Link>
 
         {isLoading && (
           <div className="flex flex-col items-center justify-center py-32">
