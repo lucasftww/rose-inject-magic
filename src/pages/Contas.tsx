@@ -476,9 +476,9 @@ const ValorantCard = memo(({ item, skinsMap, priceLabel }: { item: LztItem; skin
         <span className="text-[9px] sm:text-[11px] font-semibold text-muted-foreground">{skinCount} skins</span>
       </div>
       <div className="p-2.5 sm:p-3 flex flex-col flex-1 gap-1.5">
-        <div className="flex items-center gap-1">
-          <svg className="h-2.5 w-2.5 text-success flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-          <span className="text-[9px] sm:text-[11px] text-muted-foreground">Full Acesso · Entrega Automática</span>
+        <div className="flex items-center gap-1.5 rounded-md bg-positive/10 border border-positive/20 px-2 py-1">
+          <svg className="h-3 w-3 text-positive flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+          <span className="text-[9px] sm:text-[11px] font-semibold text-positive">Full Acesso · Entrega Automática</span>
         </div>
         {item.valorantRegionPhrase && (
           <div className="flex items-center gap-1">
@@ -489,8 +489,8 @@ const ValorantCard = memo(({ item, skinsMap, priceLabel }: { item: LztItem; skin
         <div className="mt-auto pt-1.5 border-t border-border/30">
           <h3 className="text-[11px] sm:text-xs font-semibold text-foreground line-clamp-2 text-balance leading-snug tracking-tight mb-1">{cleanedTitle}</h3>
           <p className="text-sm sm:text-base font-bold text-success tracking-tight">{priceLabel}</p>
-          <span className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg bg-success py-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-success-foreground">
-            Ver conta <ArrowRight className="h-2.5 w-2.5" />
+          <span className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg bg-foreground py-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-background">
+            Explorar detalhes <ArrowRight className="h-2.5 w-2.5" />
           </span>
         </div>
       </div>
