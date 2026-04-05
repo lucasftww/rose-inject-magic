@@ -56,12 +56,12 @@ export class GlobalErrorBoundary extends Component<Props, State> {
   }
 
   private handleReload = () => {
-    if (this.state.isChunkError) {
-      // Force bypass browser cache for chunk errors
-      window.location.href = window.location.href;
-      // Fallback if href assignment doesn't trigger navigation (same URL)
-      setTimeout(() => window.location.reload(), 100);
-    } else {
+    // Force cache-busting reload by appending a unique query param
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set("_cb", String(Date.now()));
+      window.location.replace(url.toString());
+    } catch {
       window.location.reload();
     }
   };
