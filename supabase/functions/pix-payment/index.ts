@@ -933,11 +933,14 @@ async function fulfillLztAccount(supabaseAdmin: SupabaseAdminClient, payment: Pa
       const detailRes = await fetch(`https://api.lzt.market/${encodeURIComponent(itemId)}`, {
         headers: { Authorization: `Bearer ${LZT_TOKEN}`, Accept: "application/json" },
       });
-      if (detailRes.ok) {
+      const detailCt = detailRes.headers.get("content-type") || "";
+      if (detailRes.ok && detailCt.includes("application/json")) {
         const detailData = await detailRes.json();
         price = detailData.item?.price;
         currency = detailData.item?.price_currency || currency;
         console.log(`Got price: ${price} ${currency}`);
+      } else {
+        console.warn(`LZT price fetch returned non-JSON (${detailRes.status})`);
       }
     } catch (err) {
       console.error("Failed to fetch LZT item price:", err);
