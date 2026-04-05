@@ -196,9 +196,9 @@ const MinecraftDetalhes = () => {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
             {/* Breadcrumb */}
             <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
-              <button onClick={() => navigate("/")} className="hover:text-foreground transition-colors">Início</button>
+              <Link to="/" className="hover:text-foreground transition-colors">Início</Link>
               <ChevronRight className="h-3 w-3" />
-              <button onClick={() => navigate("/contas")} className="hover:text-foreground transition-colors">Contas</button>
+              <Link to="/contas" className="hover:text-foreground transition-colors">Contas</Link>
               <ChevronRight className="h-3 w-3" />
               <span style={{ color: MC_GREEN }} className="font-medium">Minecraft #{item.item_id}</span>
             </div>
