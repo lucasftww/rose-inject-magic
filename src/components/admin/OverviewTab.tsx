@@ -111,30 +111,44 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
       setRobotCosts([]);
       try {
 
-      let usdToBrl = 6.10;
-      try {
-        const res = await fetch("https://economia.awesomeapi.com.br/json/last/USD-BRL");
-        const data = await res.json();
-        const bid = Number(data?.USDBRL?.bid);
-        if (bid > 0) usdToBrl = bid;
-      } catch (err) { console.warn("OverviewTab: failed to fetch USD-BRL rate, using fallback", err); }
+      const usdToBrl = await getUsdToBrl();
+
+      // Use shared cache for heavy queries
+      const CACHE_KEY_PAYMENTS = "admin_payments_completed";
+      const CACHE_KEY_ORDERS = "admin_orders_all";
+      const CACHE_KEY_LZT_COSTS = "admin_lzt_costs";
+
+      const cachedPayments = getCached<PaymentAggregate[]>(CACHE_KEY_PAYMENTS);
+      const cachedOrders = getCached<OrderTicketRow[]>(CACHE_KEY_ORDERS);
+      const cachedLztCosts = getCached<LztSalesCostRow[]>(CACHE_KEY_LZT_COSTS);
 
       const [recentOrdersRes, recentPaymentsRes, allPaymentsRes, robotProductsRes, openTicketsRes, allOrdersRes, lztSalesRes] = await Promise.all([
         supabase.from("order_tickets").select("*").order("created_at", { ascending: false }).limit(6),
         supabase.from("payments").select("*").eq("status", "COMPLETED").order("paid_at", { ascending: false }).limit(12),
-        fetchAllRows("payments", {
-          select: "amount, discount_amount, user_id, cart_snapshot, status, created_at, paid_at",
-          filters: [{ column: "status", op: "eq", value: "COMPLETED" }],
-        }),
+        cachedPayments
+          ? Promise.resolve(cachedPayments)
+          : fetchAllRows<PaymentAggregate>("payments", {
+              select: "amount, discount_amount, user_id, cart_snapshot, status, created_at, paid_at",
+              filters: [{ column: "status", op: "eq", value: "COMPLETED" }],
+            }),
         supabase.from("products").select("id, name, robot_game_id, robot_markup_percent").not("robot_game_id", "is", null),
         supabase.from("order_tickets").select("id", { count: "exact", head: true }).in("status", ["open", "waiting", "waiting_staff"]),
-        fetchAllRows<OrderTicketRow>("order_tickets", {
-          select: "id, product_id, product_plan_id, user_id, metadata, status, created_at, status_label",
-        }),
-        fetchAllRows<LztSalesCostRow>("lzt_sales", {
-          select: "buy_price, created_at",
-        }),
+        cachedOrders
+          ? Promise.resolve(cachedOrders)
+          : fetchAllRows<OrderTicketRow>("order_tickets", {
+              select: "id, product_id, product_plan_id, user_id, metadata, status, created_at, status_label",
+            }),
+        cachedLztCosts
+          ? Promise.resolve(cachedLztCosts)
+          : fetchAllRows<LztSalesCostRow>("lzt_sales", {
+              select: "buy_price, created_at",
+            }),
       ]);
+
+      // Persist to shared cache
+      if (!cachedPayments && Array.isArray(allPaymentsRes)) setCache(CACHE_KEY_PAYMENTS, allPaymentsRes);
+      if (!cachedOrders && Array.isArray(allOrdersRes)) setCache(CACHE_KEY_ORDERS, allOrdersRes);
+      if (!cachedLztCosts && Array.isArray(lztSalesRes)) setCache(CACHE_KEY_LZT_COSTS, lztSalesRes);
 
       setOpenTickets(openTicketsRes.count ?? 0);
       setAllPayments((allPaymentsRes || []) as PaymentAggregate[]);
