@@ -559,7 +559,7 @@ const LztTab = () => {
               </thead>
               <tbody className="divide-y divide-border">
                 {paginatedSales.length === 0 ? (
-                  <tr><td colSpan={8} className="py-12 text-center text-sm text-muted-foreground">
+                  <tr><td colSpan={9} className="py-12 text-center text-sm text-muted-foreground">
                     {salesSearch ? "Nenhuma venda encontrada." : "Nenhuma venda registrada ainda."}
                   </td></tr>
                 ) : paginatedSales.map((sale) => (
