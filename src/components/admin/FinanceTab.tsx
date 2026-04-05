@@ -494,7 +494,7 @@ const FinanceTab = () => {
               </button>
             ))}
           </div>
-          <button onClick={() => fetchData()} className="rounded-lg border border-border bg-card p-1.5 text-muted-foreground hover:text-foreground">
+          <button onClick={() => { invalidateAdminCache(); fetchData(); }} className="rounded-lg border border-border bg-card p-1.5 text-muted-foreground hover:text-foreground">
             <RefreshCw className="h-3.5 w-3.5" />
           </button>
           <button onClick={generatePDF} className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1.5 text-[11px] font-medium text-muted-foreground hover:text-foreground">
