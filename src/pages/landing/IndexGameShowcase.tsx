@@ -492,7 +492,7 @@ const SoftwareSection = () => {
         <div className="mt-6 sm:mt-10 flex justify-center">
           <Link
             to="/produtos"
-            className="touch-manipulation flex w-full sm:w-auto items-center justify-center gap-2 border border-foreground/15 px-6 sm:px-12 py-2.5 sm:py-3.5 text-[10px] sm:text-sm font-bold uppercase tracking-[0.2em] text-foreground/80 transition-all hover:border-success hover:text-success rounded-xl"
+            className="touch-manipulation flex w-full sm:w-auto items-center justify-center gap-2 bg-foreground/10 border border-foreground/15 px-6 sm:px-12 py-2.5 sm:py-3.5 text-[10px] sm:text-sm font-bold uppercase tracking-[0.2em] text-foreground transition-all hover:bg-foreground/15 rounded-xl"
             style={{ fontFamily: "'Valorant', sans-serif" }}
           >
             {t("products.viewAll")}
