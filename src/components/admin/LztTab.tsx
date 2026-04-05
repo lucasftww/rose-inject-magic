@@ -548,6 +548,7 @@ const LztTab = () => {
                 <tr className="border-b border-border text-left">
                   <th className="pb-3 text-xs font-semibold text-muted-foreground">ID LZT</th>
                   <th className="pb-3 text-xs font-semibold text-muted-foreground">Título</th>
+                  <th className="pb-3 text-xs font-semibold text-muted-foreground">Jogo</th>
                   <th className="pb-3 text-xs font-semibold text-muted-foreground">Compra</th>
                   <th className="pb-3 text-xs font-semibold text-muted-foreground">Venda</th>
                   <th className="pb-3 text-xs font-semibold text-muted-foreground">Lucro</th>
