@@ -53,7 +53,7 @@ const Checkout = () => {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   /** Prevents re-filling account email after the user clears the field (same session). */
   const checkoutEmailUserIdRef = useRef<string | null>(null);
-  const [enabledMethods, setEnabledMethods] = useState<Record<string, boolean>>({ pix: true, card: false, crypto: false });
+  const [enabledMethods, setEnabledMethods] = useState<Record<string, boolean> | null>(null);
   const hasLztItems = items.some((i) => i.type === "lzt-account");
   const couponId = searchParams.get("coupon_id");
   // Snapshot of cart items for Purchase tracking (survives clearCart)
