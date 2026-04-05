@@ -648,12 +648,17 @@ const LolDetalhes = () => {
             )}
 
             {/* Description */}
-            {item.description && (
-              <div className="mt-6 rounded-lg border border-border bg-card p-5">
-                <h3 className="text-sm font-bold text-foreground mb-2">Descrição</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{item.description}</p>
-              </div>
-            )}
+            {item.description && (() => {
+              const raw = String(item.description).trim();
+              const stripped = raw.replace(/\[URL=[^\]]*\][^\[]*\[\/URL\]/gi, "").replace(/\[\/?\w+\]/g, "").replace(/https?:\/\/\S+/g, "").trim();
+              if (stripped.length < 10) return null;
+              return (
+                <div className="mt-6 rounded-lg border border-border bg-card p-5">
+                  <h3 className="text-sm font-bold text-foreground mb-2">Descrição</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{stripped}</p>
+                </div>
+              );
+            })()}
           </motion.div>
         )}
       </div>
