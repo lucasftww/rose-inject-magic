@@ -171,7 +171,7 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
         const planMap = Object.fromEntries((plansRes.data || []).map((p) => [p.id, p]));
 
         const paidPriceMap = new Map<string, number>();
-        for (const pay of (allPaymentsRes || [])) {
+        for (const pay of ((allPaymentsRes || []) as PaymentAggregate[])) {
           const snapshot = paymentCartSnapshot(pay.cart_snapshot);
           if (snapshot.length === 0) continue;
           const cartTotal = snapshot.reduce((sum, item) => sum + (Number(item.price) || 0), 0);
