@@ -77,7 +77,7 @@ const App = () => (
           <BrowserRouter>
             <RouteTracker />
             <Suspense fallback={<LazyFallback />}>
-              <GlobalErrorBoundary>
+              <LocationAwareErrorBoundary>
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/produtos" element={<Produtos />} />
@@ -109,7 +109,7 @@ const App = () => (
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
-              </GlobalErrorBoundary>
+              </LocationAwareErrorBoundary>
             </Suspense>
           </BrowserRouter>
         </TooltipProvider>
