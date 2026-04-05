@@ -1706,7 +1706,7 @@ const Contas = () => {
     setSearchQuery(""); setOnlyKnife(false);
     setInvMin(""); setInvMax("");
     setLvlMin(""); setLvlMax("");
-    // page state removed
+    setSortBy("pdate_to_down");
     setDisplayPage(1);
   };
 
