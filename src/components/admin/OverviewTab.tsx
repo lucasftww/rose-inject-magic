@@ -208,13 +208,13 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
         const productIds = [...new Set(rows.map((t) => t.product_id))];
         const planIds = [...new Set(rows.map((t) => t.product_plan_id))];
         const [prodsRes, plansRes] = await Promise.all([
-          productIds.length > 0 ? supabase.from("products").select("id, name, image_url").in("id", productIds) : { data: [] },
-          planIds.length > 0 ? supabase.from("product_plans").select("id, name").in("id", planIds) : { data: [] },
+          productIds.length > 0 ? supabase.from("products").select("id, name, image_url").in("id", productIds) : { data: [] as { id: string; name: string; image_url: string | null }[] },
+          planIds.length > 0 ? supabase.from("product_plans").select("id, name").in("id", planIds) : { data: [] as { id: string; name: string }[] },
         ]);
         const prodMap: Record<string, { name: string; image_url: string | null }> = {};
         const planMap: Record<string, string> = {};
-        prodsRes.data?.forEach((p) => { prodMap[p.id] = { name: p.name, image_url: p.image_url }; });
-        plansRes.data?.forEach((p) => { planMap[p.id] = p.name; });
+        (prodsRes.data || []).forEach((p: { id: string; name: string; image_url: string | null }) => { prodMap[p.id] = { name: p.name, image_url: p.image_url }; });
+        (plansRes.data || []).forEach((p: { id: string; name: string }) => { planMap[p.id] = p.name; });
 
         setRecentOrders(
           rows.map((t) => {
