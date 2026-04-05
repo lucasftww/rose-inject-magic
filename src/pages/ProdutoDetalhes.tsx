@@ -643,9 +643,9 @@ const ProdutoDetalhes = () => {
                         </div>
                       )}
                       {Number(selectedPlan.price) === 0 && (
-                        <div className="mb-4 flex items-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-4 py-3">
-                          <Download className="h-5 w-5 text-emerald-400" />
-                          <span className="text-sm text-emerald-300">Software gratuito — acesso instantâneo!</span>
+                        <div className="mb-4 flex items-center gap-2 rounded-xl bg-success/10 border border-success/20 px-4 py-3">
+                          <Download className="h-5 w-5 text-success" />
+                          <span className="text-sm text-success">Software gratuito — acesso instantâneo!</span>
                         </div>
                       )}
                       <button
