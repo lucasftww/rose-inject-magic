@@ -170,7 +170,7 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
         );
         const planMap = Object.fromEntries((plansRes.data || []).map((p) => [p.id, p]));
 
-        const paidPriceMap = new Map<string, number>();
+        const paidPriceMap = new Map<string, number[]>();
         for (const pay of ((allPaymentsRes || []) as PaymentAggregate[])) {
           const snapshot = paymentCartSnapshot(pay.cart_snapshot);
           if (snapshot.length === 0) continue;
@@ -178,9 +178,11 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
           const actualPaid = Number(pay.amount) / 100;
           for (const item of snapshot) {
             const key = `${pay.user_id}|${item.productId}|${item.planId}`;
-            if (!paidPriceMap.has(key) && item.price != null) {
+            if (item.price != null) {
               const proportion = cartTotal > 0 ? (Number(item.price) / cartTotal) : 0;
-              paidPriceMap.set(key, actualPaid * proportion);
+              const arr = paidPriceMap.get(key) || [];
+              arr.push(actualPaid * proportion);
+              paidPriceMap.set(key, arr);
             }
           }
         }
@@ -190,7 +192,8 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
           const product = productMap[t.product_id];
           const plan = planMap[t.product_plan_id];
           const meta = asOrderTicketMetadata(t.metadata);
-          const revenue = paidPriceMap.get(`${t.user_id}|${t.product_id}|${t.product_plan_id}`) ?? 0;
+          const key = `${t.user_id}|${t.product_id}|${t.product_plan_id}`;
+          const revenue = paidPriceMap.get(key)?.shift() ?? 0;
           let cost = 0;
           if (meta.amount_spent && Number(meta.amount_spent) > 0) {
             // Real cost = 60% of amount_spent (40% cashback from Robot Project)

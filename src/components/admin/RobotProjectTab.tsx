@@ -255,7 +255,7 @@ const RobotProjectTab = () => {
       const planMap = Object.fromEntries((plansRes.data || []).map(p => [p.id, p]));
       
       // Build paid price map from cart_snapshot (historical prices apportioned by discount)
-      const paidPriceMap = new Map<string, number>();
+      const paidPriceMap = new Map<string, number[]>();
       for (const pay of ((robotPayments || []) as { cart_snapshot: Json | undefined; amount: number; user_id: string }[])) {
         const snapshot = paymentCartSnapshot(pay.cart_snapshot);
         if (snapshot.length === 0) continue;
@@ -265,9 +265,11 @@ const RobotProjectTab = () => {
 
         for (const item of snapshot) {
           const key = `${pay.user_id}|${item.productId}|${item.planId}`;
-          if (!paidPriceMap.has(key) && item.price != null) {
+          if (item.price != null) {
             const proportion = cartTotal > 0 ? (Number(item.price) / cartTotal) : 0;
-            paidPriceMap.set(key, actualPaid * proportion);
+            const arr = paidPriceMap.get(key) || [];
+            arr.push(actualPaid * proportion);
+            paidPriceMap.set(key, arr);
           }
         }
       }
@@ -278,9 +280,8 @@ const RobotProjectTab = () => {
         const meta = asOrderTicketMetadata(t.metadata);
         
         // Revenue = apportioned actual paid price. If missing (manual creation), revenue is 0.
-        const revenue = paidPriceMap.has(`${t.user_id}|${t.product_id}|${t.product_plan_id}`) 
-          ? paidPriceMap.get(`${t.user_id}|${t.product_id}|${t.product_plan_id}`)! 
-          : 0;
+        const key = `${t.user_id}|${t.product_id}|${t.product_plan_id}`;
+        const revenue = paidPriceMap.get(key)?.shift() ?? 0;
         
         // Cost estimation: if metadata has amount_spent use it, otherwise estimate from markup
         let cost = 0;

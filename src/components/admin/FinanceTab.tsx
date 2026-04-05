@@ -225,7 +225,7 @@ const FinanceTab = () => {
       );
       const planMap = Object.fromEntries((plansRes.data || []).map((p) => [p.id, p]));
 
-      const paidPriceMap = new Map<string, number>();
+      const paidPriceMap = new Map<string, number[]>();
       for (const pay of paymentsData) {
         const snapshot = paymentCartSnapshot(pay.cart_snapshot);
         if (snapshot.length === 0) continue;
@@ -235,9 +235,11 @@ const FinanceTab = () => {
 
         for (const item of snapshot) {
           const key = `${pay.user_id}|${item.productId}|${item.planId}`;
-          if (!paidPriceMap.has(key) && item.price != null) {
+          if (item.price != null) {
             const proportion = cartTotal > 0 ? (Number(item.price) / cartTotal) : 0;
-            paidPriceMap.set(key, actualPaid * proportion);
+            const arr = paidPriceMap.get(key) || [];
+            arr.push(actualPaid * proportion);
+            paidPriceMap.set(key, arr);
           }
         }
       }
@@ -247,9 +249,9 @@ const FinanceTab = () => {
         const plan = planMap[t.product_plan_id];
         const meta = asOrderTicketMetadata(t.metadata);
         
-        const revenue = paidPriceMap.has(`${t.user_id}|${t.product_id}|${t.product_plan_id}`) 
-          ? paidPriceMap.get(`${t.user_id}|${t.product_id}|${t.product_plan_id}`)! 
-          : 0;
+        const key = `${t.user_id}|${t.product_id}|${t.product_plan_id}`;
+        const revenues = paidPriceMap.get(key);
+        const revenue = revenues?.shift() ?? 0;
         let cost = 0;
         if (meta.amount_spent && Number(meta.amount_spent) > 0) {
           // Real cost = 60% of amount_spent (40% cashback from Robot Project)
