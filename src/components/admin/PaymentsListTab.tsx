@@ -256,7 +256,7 @@ const PaymentsListTab = () => {
                 </div>
                 <div className="space-y-1">
                   <span className="text-[10px] uppercase font-bold text-muted-foreground">Data</span>
-                  <p className="text-xs text-muted-foreground">{new Date(selectedPayment.created_at).toLocaleString("pt-BR")}</p>
+                  <p className="text-xs text-muted-foreground">{new Date(selectedPayment.created_at || "").toLocaleString("pt-BR")}</p>
                 </div>
               </div>
 

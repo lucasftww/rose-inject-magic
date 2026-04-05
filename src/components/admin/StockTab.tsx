@@ -17,7 +17,7 @@ interface Plan {
   id: string;
   name: string;
   product_id: string;
-  sort_order: number;
+  sort_order: number | null;
 }
 
 interface StockItem {

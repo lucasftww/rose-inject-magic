@@ -256,7 +256,7 @@ const RobotProjectTab = () => {
       
       // Build paid price map from cart_snapshot (historical prices apportioned by discount)
       const paidPriceMap = new Map<string, number>();
-      for (const pay of ((robotPayments || []) as { cart_snapshot: unknown; amount: number; user_id: string }[])) {
+      for (const pay of ((robotPayments || []) as { cart_snapshot: Json | undefined; amount: number; user_id: string }[])) {
         const snapshot = paymentCartSnapshot(pay.cart_snapshot);
         if (snapshot.length === 0) continue;
 

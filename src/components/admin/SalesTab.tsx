@@ -429,9 +429,9 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
                           </span>
                         </td>
                         <td className="px-3 py-2.5 text-muted-foreground text-[11px] hidden md:table-cell whitespace-nowrap">
-                          {new Date(sale.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
+                          {new Date(sale.created_at || "").toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
                           <span className="text-muted-foreground/40 ml-1">
-                            {new Date(sale.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                            {new Date(sale.created_at || "").toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                           </span>
                         </td>
                         <td className="px-3 py-2.5 text-center">
