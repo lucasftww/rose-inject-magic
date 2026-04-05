@@ -2177,30 +2177,17 @@ const Contas = () => {
           {/* ─── Grid ─── */}
           <div className="flex-1">
             {isLoading && (
-              <div className="flex flex-col items-center justify-center py-16 gap-4">
-                {/* Animated searching indicator */}
-                <div className="relative flex items-center justify-center">
-                  <div className="h-14 w-14 rounded-full border-[3px] border-border/40" />
-                  <div className="absolute h-14 w-14 rounded-full border-[3px] border-transparent animate-spin" style={{ borderTopColor: accentColor, animationDuration: '0.8s' }} />
-                  <Search className="absolute h-5 w-5 text-muted-foreground" />
-                </div>
-                <div className="text-center">
-                  <p className="text-sm font-semibold text-foreground animate-pulse">Buscando contas…</p>
-                  <p className="mt-1 text-xs text-muted-foreground">Isso pode levar alguns segundos</p>
-                </div>
-                {/* Subtle skeleton grid behind */}
-                <div className="grid w-full grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3 mt-4 opacity-30 pointer-events-none">
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} className="animate-pulse rounded-xl border border-border/30 bg-card overflow-hidden">
-                      <div className="h-28 sm:h-36 bg-secondary/20" />
-                      <div className="p-2.5 sm:p-3 space-y-2">
-                        <div className="h-2.5 w-3/4 rounded bg-secondary/30" />
-                        <div className="h-2.5 w-1/2 rounded bg-secondary/30" />
-                        <div className="mt-3 h-5 w-20 rounded bg-secondary/30" />
-                      </div>
+              <div className="grid w-full grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3">
+                {Array.from({ length: 12 }).map((_, i) => (
+                  <div key={i} className="animate-pulse rounded-xl border border-border/30 bg-card overflow-hidden">
+                    <div className="h-28 sm:h-36 bg-secondary/20" />
+                    <div className="p-2.5 sm:p-3 space-y-2">
+                      <div className="h-2.5 w-3/4 rounded bg-secondary/30" />
+                      <div className="h-2.5 w-1/2 rounded bg-secondary/30" />
+                      <div className="mt-3 h-5 w-20 rounded bg-secondary/30" />
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
               </div>
             )}
 
