@@ -266,8 +266,10 @@ interface LztItem {
   fortnite_vbucks?: number;
   fortnite_level?: number;
   fortnite_skin_count?: number;
+  fortnite_outfit_count?: number;
   fortniteSkins?: Array<{ id: string; title?: string }>;
   fortnitePickaxe?: Array<{ id: string; title?: string }>;
+  fortnitePastSeasons?: Array<{ purchasedVIP?: boolean; seasonNumber?: number }>;
   lolInventory?: {
     Champion?: number[];
     Skin?: number[] | Record<string, number>;
@@ -985,6 +987,8 @@ const Contas = () => {
   // ─── Fortnite filters ───
   const [fnVbMin, setFnVbMin] = useState("");
   const [fnSkinsMin, setFnSkinsMin] = useState("");
+  const [fnLevelMin, setFnLevelMin] = useState("");
+  const [fnHasBattlePass, setFnHasBattlePass] = useState(false);
 
   // ─── Minecraft filters ───
   const [mcJava, setMcJava] = useState(false);
@@ -1594,6 +1598,19 @@ const Contas = () => {
     if (gameTab === "lol") {
       filtered = filtered.filter((item) => !isLikelyWrongGameInLolList(item));
     }
+    // Fortnite client-side filters (level & battle pass not available as API params)
+    if (gameTab === "fortnite") {
+      const lvlMin = Number(fnLevelMin) || 0;
+      if (lvlMin > 0) {
+        filtered = filtered.filter((item) => (item.fortnite_level ?? 0) >= lvlMin);
+      }
+      if (fnHasBattlePass) {
+        filtered = filtered.filter((item) => {
+          const seasons = item.fortnitePastSeasons;
+          return Array.isArray(seasons) && seasons.some((s: Record<string, unknown>) => s.purchasedVIP === true);
+        });
+      }
+    }
 
     // Region filter is now done server-side via country[] API param
     // Price filtering is done server-side via pmin/pmax — no duplicate client-side filter needed
@@ -1636,7 +1653,7 @@ const Contas = () => {
       return filtered.sort((a, b) => getBrlPrice(a) - getBrlPrice(b));
     }
     return filtered;
-  }, [streamedItems, sortBy, gameTab, getBrlPrice]);
+  }, [streamedItems, sortBy, gameTab, getBrlPrice, fnLevelMin, fnHasBattlePass]);
   const totalDisplayPages = Math.max(1, Math.ceil(allItems.length / ITEMS_PER_PAGE));
 
   // Clamp displayPage when allItems shrinks (e.g. after price filtering)
@@ -1677,6 +1694,8 @@ const Contas = () => {
     setLolSkinsMin("");
     setFnVbMin("");
     setFnSkinsMin("");
+    setFnLevelMin("");
+    setFnHasBattlePass(false);
     setMcJava(false);
     setMcBedrock(false);
     setMcHypixelLvlMin("");
@@ -1719,6 +1738,8 @@ const Contas = () => {
     gameTab === "lol" && lolRegion !== "BR1",
     gameTab === "fortnite" && fnVbMin !== "",
     gameTab === "fortnite" && fnSkinsMin !== "",
+    gameTab === "fortnite" && fnLevelMin !== "",
+    gameTab === "fortnite" && fnHasBattlePass,
     isMinecraft && mcJava,
     isMinecraft && mcBedrock,
     isMinecraft && mcHypixelLvlMin !== "",
@@ -1910,6 +1931,27 @@ const Contas = () => {
             <input type="number" min="0" placeholder="Ex: 10" value={fnSkinsMin} onChange={(e) => { setFnSkinsMin(e.target.value); setDisplayPage(1); }}
               className="w-full rounded-lg border border-border bg-secondary/50 py-2 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
               onFocus={e => (e.currentTarget.style.borderColor = `${FN_PURPLE}80`)} onBlur={e => (e.currentTarget.style.borderColor = '')} />
+          </div>
+          <div className="mt-4">
+            <p className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" style={{ color: FN_PURPLE }} />Mín. Nível
+            </p>
+            <input type="number" min="0" placeholder="Ex: 100" value={fnLevelMin} onChange={(e) => { setFnLevelMin(e.target.value); setDisplayPage(1); }}
+              className="w-full rounded-lg border border-border bg-secondary/50 py-2 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
+              onFocus={e => (e.currentTarget.style.borderColor = `${FN_PURPLE}80`)} onBlur={e => (e.currentTarget.style.borderColor = '')} />
+          </div>
+          <div className="mt-5">
+            <label className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-border p-3 transition-all"
+              style={fnHasBattlePass ? { borderColor: FN_PURPLE, background: `${FN_PURPLE}10` } : {}}>
+              <input type="checkbox" checked={fnHasBattlePass} onChange={(e) => { setFnHasBattlePass(e.target.checked); setDisplayPage(1); }} className="sr-only" />
+              <div className="h-4 w-4 rounded-sm border-2 flex items-center justify-center flex-shrink-0 transition-colors" style={{ borderColor: fnHasBattlePass ? FN_PURPLE : undefined, background: fnHasBattlePass ? FN_PURPLE : "transparent" }}>
+                {fnHasBattlePass && <span className="text-[9px] font-bold text-white">✓</span>}
+              </div>
+              <div>
+                <span className="text-xs font-semibold" style={{ color: fnHasBattlePass ? FN_PURPLE : undefined }}>Battle Pass Comprado</span>
+                <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">Contas com passe de batalha pago</p>
+              </div>
+            </label>
           </div>
         </>
       )}
