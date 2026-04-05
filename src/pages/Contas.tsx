@@ -2069,11 +2069,9 @@ const Contas = () => {
             <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">
               {streamError ? "Não foi possível carregar a lista. Tente atualizar." : isLoading ? "Buscando contas disponíveis…" : `${allItems.length} ${allItems.length === 1 ? "conta listada" : "contas listadas"} · página ${displayPage} de ${totalDisplayPages}`}
             </p>
-            <p className="mt-2 max-w-2xl text-xs leading-relaxed text-muted-foreground/85">
-              Aqui você compra <span className="font-medium text-foreground/80">contas de jogo</span> curadas pela loja.
-              Software, loaders e entregas digitais estão em{" "}
-              <Link to="/produtos" className="text-success underline-offset-2 hover:underline">Produtos</Link>
-              {" "}— outro catálogo, preço e checkout.
+            <p className="mt-2.5 inline-flex items-center gap-1.5 rounded-full border border-border/50 bg-secondary/30 px-3 py-1 text-[11px] text-muted-foreground">
+              Procurando softwares?{" "}
+              <Link to="/produtos" className="font-medium underline-offset-2 hover:underline" style={{ color: accentColor }}>Ver Produtos →</Link>
             </p>
           </div>
           <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
