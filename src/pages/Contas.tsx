@@ -1271,22 +1271,27 @@ const Contas = () => {
   const prevNonSearchRef = useRef(nonSearchParamsKey);
   const prevSearchTrimRef = useRef(searchQuery.trim());
   useEffect(() => {
+    // Non-search filter changes: apply immediately (no debounce)
     if (prevNonSearchRef.current !== nonSearchParamsKey) {
       prevNonSearchRef.current = nonSearchParamsKey;
       setDebouncedParamsKey(paramsKey);
       prevSearchTrimRef.current = searchQuery.trim();
       return;
     }
+    // Search cleared: apply immediately
     const clearedSearch = prevSearchTrimRef.current !== "" && searchQuery.trim() === "";
     prevSearchTrimRef.current = searchQuery.trim();
     if (clearedSearch) {
       setDebouncedParamsKey(paramsKey);
       return;
     }
+    // No actual change from current debounced value: skip debounce timer
+    if (debouncedParamsKey === paramsKey) return;
+    // Search text changed: debounce 280ms
     const delay = 280;
     const handler = setTimeout(() => setDebouncedParamsKey(paramsKey), delay);
     return () => clearTimeout(handler);
-  }, [paramsKey, nonSearchParamsKey, searchQuery]);
+  }, [paramsKey, nonSearchParamsKey, searchQuery, debouncedParamsKey]);
 
   const fetchWithRetry = useCallback(
     async (
