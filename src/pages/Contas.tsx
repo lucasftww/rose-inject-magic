@@ -1159,8 +1159,13 @@ const Contas = () => {
 
   const flushCacheToSession = useCallback(() => {
     try {
-      sessionStorage.setItem("royal_lzt_cache", JSON.stringify(Array.from(fetchCacheRef.current.entries())));
-    } catch { /* silent */ }
+      // Strip heavy fields (screenshots/description) before serializing to reduce payload
+      const slim = Array.from(fetchCacheRef.current.entries()).map(([k, v]) => [
+        k,
+        { ...v, items: v.items.map(({ description, ...rest }) => rest) },
+      ]);
+      sessionStorage.setItem("royal_lzt_cache", JSON.stringify(slim));
+    } catch { /* silent — quota exceeded or unavailable */ }
   }, []);
 
   useEffect(
@@ -1193,7 +1198,7 @@ const Contas = () => {
       persistSessionTimerRef.current = setTimeout(() => {
         persistSessionTimerRef.current = null;
         flushCacheToSession();
-      }, 450);
+      }, 1500);
     },
     [flushCacheToSession],
   );
