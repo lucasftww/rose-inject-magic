@@ -430,13 +430,13 @@ const ValorantCard = memo(({ item, skinsMap, priceLabel, queryClient }: { item: 
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--success)/0.06),transparent_70%)]" />
         {skinPreviews.length === 1 ? (
           <div className="relative z-[1] w-full h-full flex items-center justify-center bg-secondary/30">
-            <img src={getProxiedImageUrl(skinPreviews[0].image)} alt={skinPreviews[0].name} className="w-full h-full object-contain" loading="lazy" />
+            <SmoothImg src={getProxiedImageUrl(skinPreviews[0].image)} alt={skinPreviews[0].name} className="w-full h-full object-contain" />
           </div>
         ) : skinPreviews.length === 2 ? (
           <div className="relative z-[1] grid grid-cols-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
             {skinPreviews.map((skin, i) => (
               <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/30 p-0.5">
-                <img src={getProxiedImageUrl(skin.image)} alt={skin.name} className="w-full h-full object-contain" loading="lazy" />
+                <SmoothImg src={getProxiedImageUrl(skin.image)} alt={skin.name} className="w-full h-full object-contain" />
               </div>
             ))}
           </div>
@@ -444,18 +444,18 @@ const ValorantCard = memo(({ item, skinsMap, priceLabel, queryClient }: { item: 
           <div className="relative z-[1] grid grid-cols-2 grid-rows-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
             {skinPreviews.slice(0, 2).map((skin, i) => (
               <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/30 p-0.5">
-                <img src={getProxiedImageUrl(skin.image)} alt={skin.name} className="w-full h-full object-contain" loading="lazy" />
+                <SmoothImg src={getProxiedImageUrl(skin.image)} alt={skin.name} className="w-full h-full object-contain" />
               </div>
             ))}
             <div className="flex items-center justify-center w-full h-full rounded bg-secondary/30 p-0.5 col-span-2">
-              <img src={getProxiedImageUrl(skinPreviews[2].image)} alt={skinPreviews[2].name} className="w-full h-full object-contain" loading="lazy" />
+              <SmoothImg src={getProxiedImageUrl(skinPreviews[2].image)} alt={skinPreviews[2].name} className="w-full h-full object-contain" />
             </div>
           </div>
         ) : skinPreviews.length === 4 ? (
           <div className="relative z-[1] grid grid-cols-2 grid-rows-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
             {skinPreviews.map((skin, i) => (
               <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/30 p-0.5">
-                <img src={getProxiedImageUrl(skin.image)} alt={skin.name} className="w-full h-full object-contain" loading="lazy" />
+                <SmoothImg src={getProxiedImageUrl(skin.image)} alt={skin.name} className="w-full h-full object-contain" />
               </div>
             ))}
           </div>
@@ -463,7 +463,7 @@ const ValorantCard = memo(({ item, skinsMap, priceLabel, queryClient }: { item: 
           <div className="relative z-[1] grid grid-cols-3 grid-rows-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
             {skinPreviews.map((skin, i) => (
               <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/30 p-0.5">
-                <img src={getProxiedImageUrl(skin.image)} alt={skin.name} className="w-full h-full object-contain" loading="lazy" />
+                <SmoothImg src={getProxiedImageUrl(skin.image)} alt={skin.name} className="w-full h-full object-contain" />
               </div>
             ))}
           </div>
@@ -588,13 +588,13 @@ const LolCard = memo(({ item, champKeyMap, priceLabel, queryClient }: { item: Lz
         <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[hsl(var(--card))] to-transparent z-[2]" />
         {skinPreviews.length === 1 ? (
           <div className="relative z-[1] w-full h-full">
-            <img src={getProxiedImageUrl(skinPreviews[0].image)} alt={skinPreviews[0].name} className="h-full w-full object-cover object-top" loading="lazy" />
+            <SmoothImg src={getProxiedImageUrl(skinPreviews[0].image)} alt={skinPreviews[0].name} className="h-full w-full object-cover object-top" />
           </div>
         ) : skinPreviews.length === 2 ? (
           <div className="relative z-[1] grid grid-cols-2 gap-0 w-full h-full">
             {skinPreviews.map((skin, i) => (
               <div key={i} className="relative overflow-hidden">
-                <img src={getProxiedImageUrl(skin.image)} alt={skin.name} className="h-full w-full object-cover object-top" loading="lazy" />
+                <SmoothImg src={getProxiedImageUrl(skin.image)} alt={skin.name} className="h-full w-full object-cover object-top" />
                 {i > 0 && <div className="absolute inset-y-0 left-0 w-px bg-black/20" />}
               </div>
             ))}
@@ -603,7 +603,7 @@ const LolCard = memo(({ item, champKeyMap, priceLabel, queryClient }: { item: Lz
           <div className="relative z-[1] grid grid-cols-2 grid-rows-2 gap-0 w-full h-full">
             {skinPreviews.map((skin, i) => (
               <div key={i} className="relative overflow-hidden">
-                <img src={getProxiedImageUrl(skin.image)} alt={skin.name} className="h-full w-full object-cover object-top" loading="lazy" />
+                <SmoothImg src={getProxiedImageUrl(skin.image)} alt={skin.name} className="h-full w-full object-cover object-top" />
               </div>
             ))}
           </div>
@@ -611,7 +611,7 @@ const LolCard = memo(({ item, champKeyMap, priceLabel, queryClient }: { item: Lz
           <div className="relative z-[1] grid grid-cols-3 grid-rows-2 gap-0 w-full h-full">
             {skinPreviews.map((skin, i) => (
               <div key={i} className="relative overflow-hidden">
-                <img src={getProxiedImageUrl(skin.image)} alt={skin.name} className="h-full w-full object-cover object-top" loading="lazy" />
+                <SmoothImg src={getProxiedImageUrl(skin.image)} alt={skin.name} className="h-full w-full object-cover object-top" />
               </div>
             ))}
           </div>
@@ -738,13 +738,13 @@ const FortniteCard = memo(({ item, skinsDb, priceLabel, queryClient }: { item: L
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(265,80%,65%,0.08),transparent_70%)]" />
         {skinPreviews.length === 1 ? (
           <div className="relative z-[1] w-full h-full flex items-center justify-center bg-secondary/20">
-            <img src={getProxiedImageUrl(skinPreviews[0].image)} alt={skinPreviews[0].name} className="w-full h-full object-contain" loading="lazy" />
+            <SmoothImg src={getProxiedImageUrl(skinPreviews[0].image)} alt={skinPreviews[0].name} className="w-full h-full object-contain" />
           </div>
         ) : skinPreviews.length === 2 ? (
           <div className="relative z-[1] grid grid-cols-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
             {skinPreviews.map((skin, i) => (
               <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/20 p-0.5">
-                <img src={getProxiedImageUrl(skin.image)} alt={skin.name} className="h-full w-full object-contain drop-shadow-sm" loading="lazy" />
+                <SmoothImg src={getProxiedImageUrl(skin.image)} alt={skin.name} className="h-full w-full object-contain drop-shadow-sm" />
               </div>
             ))}
           </div>
@@ -752,18 +752,18 @@ const FortniteCard = memo(({ item, skinsDb, priceLabel, queryClient }: { item: L
           <div className="relative z-[1] grid grid-cols-2 grid-rows-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
             {skinPreviews.slice(0, 2).map((skin, i) => (
               <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/20 p-0.5">
-                <img src={getProxiedImageUrl(skin.image)} alt={skin.name} className="h-full w-full object-contain drop-shadow-sm" loading="lazy" />
+                <SmoothImg src={getProxiedImageUrl(skin.image)} alt={skin.name} className="h-full w-full object-contain drop-shadow-sm" />
               </div>
             ))}
             <div className="flex items-center justify-center w-full h-full rounded bg-secondary/20 p-0.5 col-span-2">
-              <img src={getProxiedImageUrl(skinPreviews[2].image)} alt={skinPreviews[2].name} className="w-full h-full object-contain drop-shadow-sm" loading="lazy" />
+              <SmoothImg src={getProxiedImageUrl(skinPreviews[2].image)} alt={skinPreviews[2].name} className="w-full h-full object-contain drop-shadow-sm" />
             </div>
           </div>
         ) : skinPreviews.length === 4 ? (
           <div className="relative z-[1] grid grid-cols-2 grid-rows-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
             {skinPreviews.map((skin, i) => (
               <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/20 p-0.5">
-                <img src={getProxiedImageUrl(skin.image)} alt={skin.name} className="h-full w-full object-contain drop-shadow-sm" loading="lazy" />
+                <SmoothImg src={getProxiedImageUrl(skin.image)} alt={skin.name} className="h-full w-full object-contain drop-shadow-sm" />
               </div>
             ))}
           </div>
@@ -771,7 +771,7 @@ const FortniteCard = memo(({ item, skinsDb, priceLabel, queryClient }: { item: L
           <div className="relative z-[1] grid grid-cols-3 grid-rows-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
             {skinPreviews.map((skin, i) => (
               <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/20 p-0.5">
-                <img src={getProxiedImageUrl(skin.image)} alt={skin.name} className="h-full w-full object-contain drop-shadow-sm" loading="lazy" />
+                <SmoothImg src={getProxiedImageUrl(skin.image)} alt={skin.name} className="h-full w-full object-contain drop-shadow-sm" />
               </div>
             ))}
           </div>
