@@ -332,7 +332,7 @@ const ProductsTab = () => {
 
   const uploadFile = async (file: File) => {
     if (!file.type.startsWith("image/")) { toast({ title: "Apenas imagens", variant: "destructive" }); return; }
-    if (file.size > 5 * 1024 * 1024) { toast({ title: "Máximo 5MB", variant: "destructive" }); return; }
+    if (file.size > 20 * 1024 * 1024) { toast({ title: "Máximo 20MB", variant: "destructive" }); return; }
     setUploading(true);
     const ext = file.name.split(".").pop() || "png";
     const path = `products/${crypto.randomUUID()}.${ext}`;
