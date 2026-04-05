@@ -1786,11 +1786,12 @@ const Contas = () => {
   const switchTab = (tab: GameTab) => {
     if (tab === gameTab) return;
     setGameTab(tab);
+    // clearFilters resets all filter state; the sync effect will update URL params.
+    // We still need to set `game` param explicitly here for history navigation.
     setSearchParams(
-      (prev) => {
-        const next = new URLSearchParams(prev);
-        if (tab === "valorant") next.delete("game");
-        else next.set("game", tab);
+      () => {
+        const next = new URLSearchParams();
+        if (tab !== "valorant") next.set("game", tab);
         return next;
       },
       { replace: false },
