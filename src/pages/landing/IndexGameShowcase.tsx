@@ -1,6 +1,6 @@
 import { useMemo, useState, useRef, useCallback } from "react";
 import type { ReactNode, MouseEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
