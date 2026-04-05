@@ -309,13 +309,13 @@ const FortniteDetalhes = () => {
                       <>
                         <button
                           onClick={() => setSelectedIndex(p => (p - 1 + galleryPreviews.length) % galleryPreviews.length)}
-                          className="absolute left-3 top-1/2 -translate-y-1/2 z-[2] flex h-10 w-10 items-center justify-center rounded-full bg-background/80 border border-border text-muted-foreground opacity-0 group-hover:opacity-100 transition-all"
+                          className="absolute left-3 top-1/2 -translate-y-1/2 z-[2] flex h-10 w-10 items-center justify-center rounded-full bg-background/80 border border-border text-muted-foreground sm:opacity-0 sm:group-hover:opacity-100 transition-all"
                         >
                           <ChevronLeft className="h-5 w-5" />
                         </button>
                         <button
                           onClick={() => setSelectedIndex(p => (p + 1) % galleryPreviews.length)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 z-[2] flex h-10 w-10 items-center justify-center rounded-full bg-background/80 border border-border text-muted-foreground opacity-0 group-hover:opacity-100 transition-all"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 z-[2] flex h-10 w-10 items-center justify-center rounded-full bg-background/80 border border-border text-muted-foreground sm:opacity-0 sm:group-hover:opacity-100 transition-all"
                         >
                           <ChevronRight className="h-5 w-5" />
                         </button>
