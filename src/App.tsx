@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { CartProvider } from "@/hooks/useCart";
 import { lazy, Suspense } from "react";
@@ -12,6 +12,16 @@ import RouteTracker from "@/components/RouteTracker";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { GlobalErrorBoundary } from "@/components/GlobalErrorBoundary";
+
+/** Wrapper that feeds the current route key into the error boundary so it resets on navigation */
+const LocationAwareErrorBoundary = ({ children }: { children: React.ReactNode }) => {
+  const location = useLocation();
+  return (
+    <GlobalErrorBoundary locationKey={location.key + location.pathname}>
+      {children}
+    </GlobalErrorBoundary>
+  );
+};
 
 // Lazy-load secondary routes
 const Produtos = lazy(() => import("./pages/Produtos"));
@@ -67,7 +77,7 @@ const App = () => (
           <BrowserRouter>
             <RouteTracker />
             <Suspense fallback={<LazyFallback />}>
-              <GlobalErrorBoundary>
+              <LocationAwareErrorBoundary>
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/produtos" element={<Produtos />} />
@@ -99,7 +109,7 @@ const App = () => (
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
-              </GlobalErrorBoundary>
+              </LocationAwareErrorBoundary>
             </Suspense>
           </BrowserRouter>
         </TooltipProvider>
