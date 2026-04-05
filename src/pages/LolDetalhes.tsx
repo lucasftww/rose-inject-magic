@@ -681,7 +681,7 @@ const LolDetalhes = () => {
             <div className="flex items-center gap-3">
               <div className="flex flex-col min-w-0">
                 <span className="text-lg font-bold leading-tight" style={{ color: LOL_BLUE }}>
-                  {getDisplayPrice(item, "lol")}
+                  {lockedPriceBrl !== null ? formatPriceBrl(lockedPriceBrl) : getDisplayPrice(item, "lol")}
                 </span>
               </div>
               <button

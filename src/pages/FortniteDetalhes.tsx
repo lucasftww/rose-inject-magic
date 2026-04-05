@@ -620,7 +620,7 @@ const FortniteDetalhes = () => {
             <div className="flex items-center gap-3">
               <div className="flex flex-col min-w-0">
                 <span className="text-lg font-bold leading-tight" style={{ color: FN_PURPLE }}>
-                  {getDisplayPrice(item, "fortnite")}
+                  {lockedPriceBrl !== null ? formatPriceBrl(lockedPriceBrl) : getDisplayPrice(item, "fortnite")}
                 </span>
               </div>
               <button

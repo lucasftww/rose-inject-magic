@@ -1049,7 +1049,7 @@ const ContaDetalhes = () => {
               <div className="flex flex-col min-w-0">
                 <span className="text-xs text-muted-foreground leading-none mb-0.5">Total</span>
                 <span className="text-xl font-bold text-success leading-tight">
-                  {getDisplayPrice(item, "valorant")}
+                  {lockedPriceBrl !== null ? formatPriceBrl(lockedPriceBrl) : getDisplayPrice(item, "valorant")}
                 </span>
               </div>
               <button

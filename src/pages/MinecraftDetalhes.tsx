@@ -491,7 +491,7 @@ const MinecraftDetalhes = () => {
             <div className="flex items-center gap-3">
               <div className="flex flex-col min-w-0">
                 <span className="text-lg font-bold leading-tight" style={{ color: MC_GREEN }}>
-                  {getDisplayPrice(item, "minecraft")}
+                  {lockedPriceBrl !== null ? formatPriceBrl(lockedPriceBrl) : getDisplayPrice(item, "minecraft")}
                 </span>
               </div>
               <button
