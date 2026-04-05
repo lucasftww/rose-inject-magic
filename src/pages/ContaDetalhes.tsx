@@ -810,7 +810,7 @@ const ContaDetalhes = () => {
                     <div>
                       <p className="text-[11px] text-muted-foreground mb-1">Por apenas</p>
                       <p className="text-2xl sm:text-3xl font-bold text-success">
-                        {getDisplayPrice(item, "valorant")}
+                        {lockedPriceBrl !== null ? formatPriceBrl(lockedPriceBrl) : getDisplayPrice(item, "valorant")}
                       </p>
                     </div>
                   </div>
