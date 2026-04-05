@@ -406,7 +406,7 @@ const Dashboard = () => {
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-foreground">
                                 R$ {(Number(p.amount) / 100).toFixed(2)}
-                                {p.discount_amount > 0 && <span className="ml-1 text-[11px] text-success">(-R$ {Number(p.discount_amount).toFixed(2)})</span>}
+                                {(p.discount_amount ?? 0) > 0 && <span className="ml-1 text-[11px] text-success">(-R$ {Number(p.discount_amount ?? 0).toFixed(2)})</span>}
                               </p>
                               <p className="text-[11px] text-muted-foreground">{new Date(p.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
                             </div>
