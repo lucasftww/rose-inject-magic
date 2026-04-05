@@ -2233,7 +2233,8 @@ const Contas = () => {
             {!isLoading && !streamError && (
               <>
                 <div
-                  className="grid grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3 relative"
+                 className="grid grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3 relative"
+                  style={{ contentVisibility: 'auto', containIntrinsicSize: 'auto 400px' } as CSSProperties}
                 >
                   {gridRows.map(({ item, priceLabel }) => (
                     <div key={item.item_id}>
