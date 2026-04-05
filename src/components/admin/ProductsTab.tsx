@@ -174,14 +174,14 @@ const ProductsTab = () => {
     } catch (_) { /* use fallback */ }
   };
 
-  const fetchRobotGames = async () => {
+  const fetchRobotGames = async (silent = false) => {
     setLoadingRobotGames(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
       const fnBase = getSupabaseFunctionsBaseUrl();
       if (!fnBase) {
-        toast({
+        if (!silent) toast({
           title: "Configuração incompleta",
           description: "Configure VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY no .env (produção) para carregar jogos Robot.",
           variant: "destructive",
@@ -200,15 +200,17 @@ const ProductsTab = () => {
       ]);
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        toast({ title: "Erro ao carregar jogos Robot", description: err.error || `HTTP ${res.status}`, variant: "destructive" });
+        if (!silent) toast({ title: "Erro ao carregar jogos Robot", description: err.error || `HTTP ${res.status}`, variant: "destructive" });
       } else {
         const data = await res.json();
         const games = Array.isArray(data) ? data : data.games || [];
         setRobotGames(games);
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      toast({ title: "Erro Robot", description: message, variant: "destructive" });
+      if (!silent) {
+        const message = err instanceof Error ? err.message : String(err);
+        toast({ title: "Erro Robot", description: message, variant: "destructive" });
+      }
     }
     setLoadingRobotGames(false);
   };
@@ -283,7 +285,7 @@ const ProductsTab = () => {
     setRobotEnabled(hasRobot);
     setFormRobotGameId(product.robot_game_id || null);
     setFormRobotMarkup(product.robot_markup_percent || null);
-    if (hasRobot) fetchRobotGames();
+    if (hasRobot) fetchRobotGames(true);
 
     const { data: tutorialData } = await supabase.from("product_tutorials").select("tutorial_text, tutorial_file_url").eq("product_id", product.id).maybeSingle();
     setFormTutorialText(tutorialData?.tutorial_text || "");
@@ -1012,7 +1014,7 @@ const ProductsTab = () => {
                               </option>
                             ))}
                           </select>
-                          <button type="button" onClick={fetchRobotGames} disabled={loadingRobotGames}
+                          <button type="button" onClick={() => fetchRobotGames()} disabled={loadingRobotGames}
                             className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl border border-border/40 text-muted-foreground hover:text-foreground transition-colors">
                             {loadingRobotGames ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
                           </button>
