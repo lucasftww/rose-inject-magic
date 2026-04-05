@@ -43,7 +43,7 @@ const fetchAccountDetail = async (itemId: string) => {
 // Permissive UUID pattern (Valorant UUIDs don't strictly follow RFC 4122)
 const getProxiedImageUrl = (url: string) => {
   if (!url) return "";
-  if (url.includes("lzt.market") || url.includes("img.lzt.market") || url.includes("mineskin.eu")) {
+  if (url.includes("lzt.market") || url.includes("img.lzt.market")) {
     return `${supabaseUrl}/functions/v1/lzt-market?action=image-proxy&url=${encodeURIComponent(url)}`;
   }
   return url;
