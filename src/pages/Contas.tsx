@@ -1634,7 +1634,7 @@ const Contas = () => {
     setLolChampMin("");
     setLolSkinsMin("");
     setFnVbMin("");
-    setFnSkinsMin("10");
+    setFnSkinsMin("");
     setMcJava(false);
     setMcBedrock(false);
     setMcHypixelLvlMin("");
