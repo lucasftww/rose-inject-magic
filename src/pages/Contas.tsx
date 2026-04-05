@@ -209,6 +209,7 @@ const sortOptions = [
   { label: "Mais Recentes", value: "pdate_to_down" },
   { label: "Menor Preço", value: "price_to_up" },
   { label: "Maior Preço", value: "price_to_down" },
+  { label: "Melhor Oferta", value: "best_value" },
 ] as const;
 
 const FN_PURPLE = "hsl(265,80%,65%)";
@@ -1151,7 +1152,8 @@ const Contas = () => {
     const params: Record<string, string | string[]> = {};
     params.page = String(pageNum);
     // Send user's chosen sort to API (validated enum values from LZT API)
-    params.order_by = sortBy || "pdate_to_down";
+    // "best_value" is client-side only — use date order from API as base
+    params.order_by = sortBy === "best_value" ? "pdate_to_down" : (sortBy || "pdate_to_down");
     if (searchQuery) params.title = searchQuery;
 
     // Send price filters to API so server filters before returning
@@ -1621,6 +1623,23 @@ const Contas = () => {
     }
     if (sortBy === "price_to_down") {
       return filtered.sort((a, b) => getBrlPrice(b) - getBrlPrice(a));
+    }
+
+    // "Melhor Oferta": sort by content/price ratio (more skins per R$ = better value)
+    if (sortBy === "best_value") {
+      const getContentScore = (item: LztItem): number => {
+        if (gameTab === "valorant") return item.riot_valorant_skin_count ?? 0;
+        if (gameTab === "lol") return item.riot_lol_skin_count ?? 0;
+        if (gameTab === "fortnite") return item.fortnite_skin_count ?? 0;
+        if (gameTab === "minecraft") return (item.minecraft_capes_count ?? 0) + (item.minecraft_hypixel_level ?? 0);
+        return 0;
+      };
+      return filtered.sort((a, b) => {
+        const valueA = getContentScore(a) / (getBrlPrice(a) || 1);
+        const valueB = getContentScore(b) / (getBrlPrice(b) || 1);
+        if (Math.abs(valueB - valueA) > 0.0001) return valueB - valueA;
+        return getBrlPrice(a) - getBrlPrice(b); // tiebreaker: cheaper first
+      });
     }
 
     // Default sort (pdate_to_down = "Mais Recentes"): preserve API date order for ALL games.
