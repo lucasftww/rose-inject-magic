@@ -181,12 +181,13 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
 
       return {
         ...t,
+        metadata: meta,
         product_name: isLzt ? (meta?.title || meta?.account_name || "Conta LZT") : (product?.name || "—"),
         product_image: isLzt ? null : (product?.image_url || null),
         plan_name: isLzt ? "Conta LZT" : (plan?.name || "—"),
         plan_price: isLzt ? lztPrice : (metaPrice ?? plan?.price ?? 0),
-        username: null,
-        email: null,
+        username: null as string | null,
+        email: null as string | null,
         stock_content:
           t.stock_item_id && !(meta?.type === "robot-project" && meta?.is_free)
             ? (stockMap.get(t.stock_item_id) || null)
