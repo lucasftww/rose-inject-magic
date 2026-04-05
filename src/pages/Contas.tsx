@@ -1623,35 +1623,8 @@ const Contas = () => {
       return filtered.sort((a, b) => getBrlPrice(b) - getBrlPrice(a));
     }
 
-    // Default sort (pdate_to_down): apply game-specific "best quality" sorting
-    if (gameTab === "lol") {
-      return filtered.sort((a, b) => {
-        const scoreA = (a.riot_lol_level ?? 0) > 0 && (a.riot_lol_skin_count ?? 0) > 0 ? 2
-          : (a.riot_lol_level ?? 0) > 0 || (a.riot_lol_skin_count ?? 0) > 0 ? 1 : 0;
-        const scoreB = (b.riot_lol_level ?? 0) > 0 && (b.riot_lol_skin_count ?? 0) > 0 ? 2
-          : (b.riot_lol_level ?? 0) > 0 || (b.riot_lol_skin_count ?? 0) > 0 ? 1 : 0;
-        if (scoreB !== scoreA) return scoreB - scoreA;
-        return ((b.riot_lol_skin_count ?? 0) - (a.riot_lol_skin_count ?? 0)) || ((b.riot_lol_level ?? 0) - (a.riot_lol_level ?? 0));
-      });
-    }
-    if (gameTab === "fortnite") {
-      return filtered.sort((a, b) => {
-        const skinsA = a.fortnite_skin_count ?? 0;
-        const skinsB = b.fortnite_skin_count ?? 0;
-        const hasSkinA = skinsA > 0;
-        const hasSkinB = skinsB > 0;
-        if (hasSkinA && !hasSkinB) return -1;
-        if (!hasSkinA && hasSkinB) return 1;
-        if (!hasSkinA && !hasSkinB) return getBrlPrice(a) - getBrlPrice(b);
-        const valueA = skinsA / (getBrlPrice(a) || 1);
-        const valueB = skinsB / (getBrlPrice(b) || 1);
-        if (Math.abs(valueB - valueA) > 0.0001) return valueB - valueA;
-        return getBrlPrice(a) - getBrlPrice(b);
-      });
-    }
-    if (gameTab === "minecraft") {
-      return filtered.sort((a, b) => getBrlPrice(a) - getBrlPrice(b));
-    }
+    // Default sort (pdate_to_down = "Mais Recentes"): preserve API date order for ALL games.
+    // The API already returns items sorted by publication date descending.
     return filtered;
   }, [streamedItems, sortBy, gameTab, getBrlPrice, fnLevelMin, fnHasBattlePass]);
   const totalDisplayPages = Math.max(1, Math.ceil(allItems.length / ITEMS_PER_PAGE));
