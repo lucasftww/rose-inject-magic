@@ -474,10 +474,11 @@ const LolDetalhes = () => {
                     onClick={handleBuyNow}
                     disabled={checkingAvailability}
                     aria-busy={checkingAvailability}
-                    className="group relative flex w-full items-center justify-center gap-2 border-2 px-5 py-3 text-xs font-bold uppercase tracking-[0.25em] rounded-lg transition-all hover:shadow-lg disabled:opacity-60"
+                    className="group relative flex w-full items-center justify-center gap-2.5 px-5 py-3.5 text-sm font-bold uppercase tracking-[0.2em] rounded-lg transition-all hover:brightness-110 hover:shadow-xl disabled:opacity-60"
                     style={{
-                      borderColor: "rgba(255,255,255,0.2)",
-                      color: "hsl(var(--foreground))",
+                      background: `linear-gradient(135deg, ${LOL_BLUE}, hsl(210,100%,35%))`,
+                      color: "#fff",
+                      boxShadow: `0 4px 20px ${LOL_BLUE}40`,
                     }}
                   >
                     {checkingAvailability ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
