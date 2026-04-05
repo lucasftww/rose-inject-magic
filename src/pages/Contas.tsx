@@ -369,7 +369,7 @@ const LztPreviewImage = ({ url }: { url: string }) => {
   );
 };
 
-const ValorantCard = memo(({ item, skinsMap, priceLabel }: { item: LztItem; skinsMap: Map<string, SkinEntry>; priceLabel: string }) => {
+const ValorantCard = memo(({ item, skinsMap, priceLabel, queryClient }: { item: LztItem; skinsMap: Map<string, SkinEntry>; priceLabel: string; queryClient: QueryClient }) => {
   const rank = item.riot_valorant_rank ? rankMap[item.riot_valorant_rank] : null;
   const skinCount = item.riot_valorant_skin_count ?? 0;
   const hasKnife = (item.riot_valorant_knife ?? 0) > 0;
@@ -404,6 +404,7 @@ const ValorantCard = memo(({ item, skinsMap, priceLabel }: { item: LztItem; skin
   return (
     <Link
       to={`/conta/${item.item_id}`}
+      onPointerEnter={() => prefetchAccountDetail(queryClient, "valorant", item.item_id)}
       className="group touch-manipulation cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-success/50 hover:shadow-[0_4px_24px_hsl(var(--success)/0.12)] flex flex-col h-full no-underline text-inherit"
     >
       <div className="relative flex h-28 sm:h-36 items-center justify-center overflow-hidden bg-secondary/20">
