@@ -406,7 +406,7 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
                     <span className="text-muted-foreground/30 text-[10px]">•</span>
                     <span className="text-[10px] text-muted-foreground/70 flex items-center gap-0.5">
                       <Clock className="h-2.5 w-2.5" />
-                      {timeAgo(order.created_at)}
+                      {timeAgo(order.created_at || new Date().toISOString())}
                     </span>
                   </div>
                 </div>
