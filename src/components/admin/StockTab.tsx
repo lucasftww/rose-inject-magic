@@ -17,7 +17,7 @@ interface Plan {
   id: string;
   name: string;
   product_id: string;
-  sort_order: number;
+  sort_order: number | null;
 }
 
 interface StockItem {
@@ -258,7 +258,7 @@ const StockTab = () => {
                     {product.product_plans.length === 0 ? (
                       <p className="p-4 text-sm text-muted-foreground">Nenhum plano cadastrado</p>
                     ) : product.product_plans
-                        .sort((a, b) => a.sort_order - b.sort_order)
+                        .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
                         .map(plan => {
                       const planExpanded = expandedPlan === plan.id;
                       const counts = stockCounts[plan.id] || { total: 0, available: 0 };

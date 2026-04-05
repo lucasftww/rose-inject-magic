@@ -276,7 +276,7 @@ const ProductsTab = () => {
     setFormFeaturesText(product.features_text || "");
     setFormImageUrl(product.image_url || "");
     setFormGameId(product.game_id ?? "");
-    setFormActive(product.active);
+    setFormActive(product.active ?? true);
     setImagePreview(product.image_url || null);
     setImageMode("url");
     const hasRobot = !!product.robot_game_id && product.robot_game_id > 0;
@@ -728,7 +728,7 @@ const ProductsTab = () => {
                   <div className="border-t border-border/30 bg-muted/10 px-4 sm:px-5 py-3">
                     <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 mb-2.5">Planos</p>
                     <div className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
-                      {[...(product.product_plans ?? [])].sort((a, b) => a.sort_order - b.sort_order).map((plan) => (
+                      {[...(product.product_plans ?? [])].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)).map((plan) => (
                         <div key={plan.id} className="flex items-center justify-between rounded-lg bg-background/60 border border-border/30 px-3 py-2">
                           <div className="flex items-center gap-2 min-w-0">
                             <div className={`h-1.5 w-1.5 rounded-full shrink-0 ${plan.active ? "bg-success" : "bg-destructive"}`} />

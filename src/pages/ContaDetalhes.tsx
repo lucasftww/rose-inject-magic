@@ -255,7 +255,7 @@ async function getWeaponSkinsCatalog(): Promise<unknown[]> {
   return data;
 }
 
-async function getSkinLevelsCatalog(): Promise<unknown[]> {
+async function getSkinLevelsCatalog(): Promise<Record<string, any>[]> {
   const now = Date.now();
   if (skinLevelsCatalogCache && skinLevelsCatalogCache.expiry > now) {
     return skinLevelsCatalogCache.data;
@@ -264,11 +264,11 @@ async function getSkinLevelsCatalog(): Promise<unknown[]> {
   if (!res.ok) return [];
   const json = await res.json();
   const data = Array.isArray(json.data) ? json.data : [];
-  skinLevelsCatalogCache = { data, expiry: now + VALORANT_API_CACHE_MS };
+  skinLevelsCatalogCache = { data: data as Record<string, any>[], expiry: now + VALORANT_API_CACHE_MS };
   return data;
 }
 
-async function getSkinChromasCatalog(): Promise<unknown[]> {
+async function getSkinChromasCatalog(): Promise<Record<string, any>[]> {
   const now = Date.now();
   if (skinChromasCatalogCache && skinChromasCatalogCache.expiry > now) {
     return skinChromasCatalogCache.data;
@@ -277,7 +277,7 @@ async function getSkinChromasCatalog(): Promise<unknown[]> {
   if (!res.ok) return [];
   const json = await res.json();
   const data = Array.isArray(json.data) ? json.data : [];
-  skinChromasCatalogCache = { data, expiry: now + VALORANT_API_CACHE_MS };
+  skinChromasCatalogCache = { data: data as Record<string, any>[], expiry: now + VALORANT_API_CACHE_MS };
   return data;
 }
 
@@ -442,13 +442,13 @@ const fetchValorantBuddies = async (uuids: string[]): Promise<SimpleGalleryItem[
     if (!isRecord(buddy)) continue;
     const b = buddy;
     if (typeof b.uuid === "string" && uuidSet.has(b.uuid.toLowerCase())) {
-      typedMatched.push({ name: b.displayName || "Buddy", image: b.displayIcon || "" });
+      typedMatched.push({ name: String(b.displayName || "Buddy"), image: String(b.displayIcon || "") });
     }
     // Also check levels
     if (Array.isArray(b.levels)) {
       for (const level of b.levels) {
         if (level && typeof level.uuid === "string" && uuidSet.has(level.uuid.toLowerCase())) {
-          typedMatched.push({ name: b.displayName || "Buddy", image: level.displayIcon || b.displayIcon || "" });
+          typedMatched.push({ name: String(b.displayName || "Buddy"), image: String(level.displayIcon || b.displayIcon || "") });
         }
       }
     }

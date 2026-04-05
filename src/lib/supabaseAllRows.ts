@@ -33,7 +33,7 @@ export async function fetchAllRows<T = unknown>(
 
     if (filters) {
       for (const f of filters) {
-        query = query[f.op](f.column, f.value);
+        query = (query as any)[f.op](f.column, f.value);
       }
     }
 

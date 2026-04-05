@@ -136,7 +136,7 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
       ]);
 
       setOpenTickets(openTicketsRes.count ?? 0);
-      setAllPayments(allPaymentsRes || []);
+      setAllPayments((allPaymentsRes || []) as PaymentAggregate[]);
       setAllOrders(allOrdersRes || []);
       setLztSales(
         (lztSalesRes || []).map((s) => ({
@@ -171,7 +171,7 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
         const planMap = Object.fromEntries((plansRes.data || []).map((p) => [p.id, p]));
 
         const paidPriceMap = new Map<string, number>();
-        for (const pay of (allPaymentsRes || [])) {
+        for (const pay of ((allPaymentsRes || []) as PaymentAggregate[])) {
           const snapshot = paymentCartSnapshot(pay.cart_snapshot);
           if (snapshot.length === 0) continue;
           const cartTotal = snapshot.reduce((sum, item) => sum + (Number(item.price) || 0), 0);
@@ -208,13 +208,13 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
         const productIds = [...new Set(rows.map((t) => t.product_id))];
         const planIds = [...new Set(rows.map((t) => t.product_plan_id))];
         const [prodsRes, plansRes] = await Promise.all([
-          productIds.length > 0 ? supabase.from("products").select("id, name, image_url").in("id", productIds) : { data: [] },
-          planIds.length > 0 ? supabase.from("product_plans").select("id, name").in("id", planIds) : { data: [] },
+          productIds.length > 0 ? supabase.from("products").select("id, name, image_url").in("id", productIds) : { data: [] as { id: string; name: string; image_url: string | null }[] },
+          planIds.length > 0 ? supabase.from("product_plans").select("id, name").in("id", planIds) : { data: [] as { id: string; name: string }[] },
         ]);
         const prodMap: Record<string, { name: string; image_url: string | null }> = {};
         const planMap: Record<string, string> = {};
-        prodsRes.data?.forEach((p) => { prodMap[p.id] = { name: p.name, image_url: p.image_url }; });
-        plansRes.data?.forEach((p) => { planMap[p.id] = p.name; });
+        (prodsRes.data || []).forEach((p: { id: string; name: string; image_url: string | null }) => { prodMap[p.id] = { name: p.name, image_url: p.image_url }; });
+        (plansRes.data || []).forEach((p: { id: string; name: string }) => { planMap[p.id] = p.name; });
 
         setRecentOrders(
           rows.map((t) => {
@@ -406,12 +406,12 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
                     <span className="text-muted-foreground/30 text-[10px]">•</span>
                     <span className="text-[10px] text-muted-foreground/70 flex items-center gap-0.5">
                       <Clock className="h-2.5 w-2.5" />
-                      {timeAgo(order.created_at)}
+                      {timeAgo(order.created_at || new Date().toISOString())}
                     </span>
                   </div>
                 </div>
-                <span className={`shrink-0 rounded-md border px-2 py-0.5 text-[10px] font-bold ${statusColors[order.status] || "bg-muted/50 text-muted-foreground border-border"}`}>
-                  {statusLabels[order.status] || order.status_label}
+                <span className={`shrink-0 rounded-md border px-2 py-0.5 text-[10px] font-bold ${statusColors[order.status || ""] || "bg-muted/50 text-muted-foreground border-border"}`}>
+                  {statusLabels[order.status || ""] || order.status_label}
                 </span>
               </div>
             ))}
@@ -453,7 +453,7 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
                     <p className="text-[13px] font-medium text-foreground truncate">{productName}</p>
                     <p className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">
                       <Clock className="h-2.5 w-2.5 inline opacity-50" />
-                      {p.paid_at ? timeAgo(p.paid_at) : timeAgo(p.created_at)}
+                      {p.paid_at ? timeAgo(p.paid_at) : timeAgo(p.created_at || new Date().toISOString())}
                     </p>
                   </div>
                   <span className="text-sm font-bold text-foreground shrink-0">R$ {(Number(p.amount) / 100).toFixed(2)}</span>

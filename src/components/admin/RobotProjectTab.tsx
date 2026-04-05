@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase, supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
-import type { Database, Tables } from "@/integrations/supabase/types";
+import type { Database, Json, Tables } from "@/integrations/supabase/types";
 import { fetchAllRows } from "@/lib/supabaseAllRows";
 import { paymentCartSnapshot } from "@/types/paymentCart";
 import { asOrderTicketMetadata } from "@/types/orderTicketMetadata";
@@ -256,7 +256,7 @@ const RobotProjectTab = () => {
       
       // Build paid price map from cart_snapshot (historical prices apportioned by discount)
       const paidPriceMap = new Map<string, number>();
-      for (const pay of (robotPayments || [])) {
+      for (const pay of ((robotPayments || []) as { cart_snapshot: Json | undefined; amount: number; user_id: string }[])) {
         const snapshot = paymentCartSnapshot(pay.cart_snapshot);
         if (snapshot.length === 0) continue;
 

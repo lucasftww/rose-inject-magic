@@ -13,14 +13,14 @@ import { toast } from "@/hooks/use-toast";
 
 type OrderTicketRow = Database["public"]["Tables"]["order_tickets"]["Row"];
 
-interface SaleTicket extends OrderTicketRow {
-  metadata: Json | null;
+interface SaleTicket extends Omit<OrderTicketRow, "metadata"> {
+  metadata: OrderTicketMetadata | null;
   product_name?: string;
   product_image?: string | null;
   plan_name?: string;
   plan_price?: number;
   username?: string | null;
-  email?: string;
+  email?: string | null;
   stock_content?: string | null;
 }
 
@@ -123,7 +123,7 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
       const results: Tables<T>[] = [];
       for (let i = 0; i < ids.length; i += CHUNK) {
         const chunk = ids.slice(i, i + CHUNK);
-        const { data } = await supabase.from(table).select(select).in(column, chunk);
+        const { data } = await (supabase.from(table).select(select) as any).in(column, chunk);
         if (data) results.push(...(data as Tables<T>[]));
       }
       return results;
@@ -181,12 +181,13 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
 
       return {
         ...t,
+        metadata: meta,
         product_name: isLzt ? (meta?.title || meta?.account_name || "Conta LZT") : (product?.name || "—"),
         product_image: isLzt ? null : (product?.image_url || null),
         plan_name: isLzt ? "Conta LZT" : (plan?.name || "—"),
         plan_price: isLzt ? lztPrice : (metaPrice ?? plan?.price ?? 0),
-        username: null,
-        email: null,
+        username: null as string | null,
+        email: null as string | null,
         stock_content:
           t.stock_item_id && !(meta?.type === "robot-project" && meta?.is_free)
             ? (stockMap.get(t.stock_item_id) || null)
@@ -423,14 +424,14 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
                           R$ {(sale.plan_price || 0).toFixed(2)}
                         </td>
                         <td className="px-3 py-2.5">
-                          <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${statusColors[sale.status] || "bg-muted text-muted-foreground border-border"}`}>
-                            {statusLabels[sale.status] || sale.status_label || sale.status}
+                          <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${statusColors[sale.status || ""] || "bg-muted text-muted-foreground border-border"}`}>
+                            {statusLabels[sale.status || ""] || sale.status_label || sale.status}
                           </span>
                         </td>
                         <td className="px-3 py-2.5 text-muted-foreground text-[11px] hidden md:table-cell whitespace-nowrap">
-                          {new Date(sale.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
+                          {new Date(sale.created_at || "").toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
                           <span className="text-muted-foreground/40 ml-1">
-                            {new Date(sale.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                            {new Date(sale.created_at || "").toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                           </span>
                         </td>
                         <td className="px-3 py-2.5 text-center">
