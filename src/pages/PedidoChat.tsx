@@ -92,7 +92,7 @@ const PedidoChat = () => {
         const lztGameLabels: Record<string, string> = {
           valorant: "Conta Valorant", lol: "Conta LoL", fortnite: "Conta Fortnite", minecraft: "Conta Minecraft",
         };
-        const gameLabel = lztGameLabels[meta?.game] || "Conta de jogo";
+        const gameLabel = lztGameLabels[meta?.game || ""] || "Conta de jogo";
         setProductName(meta?.account_name || meta?.title || gameLabel);
         setPlanName(gameLabel);
         setPlanPrice(meta?.price_paid || meta?.sell_price || 0);

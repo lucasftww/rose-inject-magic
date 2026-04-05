@@ -604,7 +604,7 @@ const Dashboard = () => {
                           <p className="text-xs text-muted-foreground">{t.plan_name} · {new Date(t.created_at || "").toLocaleDateString("pt-BR")}</p>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
-                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${statusColors[t.status] || "bg-muted text-muted-foreground"}`}>{statusLabels[t.status] || t.status_label}</span>
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${statusColors[t.status || ""] || "bg-muted text-muted-foreground"}`}>{statusLabels[t.status || ""] || t.status_label}</span>
                           <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/30 group-hover:text-muted-foreground transition-colors" />
                         </div>
                       </motion.div>

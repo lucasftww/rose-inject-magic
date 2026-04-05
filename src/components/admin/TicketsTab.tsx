@@ -1122,7 +1122,7 @@ const TicketsTab = ({
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground hover:text-success font-mono"
                           >
-                            #{asOrderTicketMetadata(selectedTicket?.metadata)?.lzt_item_id}
+                            #{String(asOrderTicketMetadata(selectedTicket?.metadata)?.lzt_item_id ?? "")}
                             <ExternalLink className="h-2.5 w-2.5" />
                           </a>
                         </>

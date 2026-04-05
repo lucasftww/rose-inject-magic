@@ -780,7 +780,7 @@ const Produtos = () => {
     try {
       const { data, error } = await supabase
         .from("products")
-        .select("id, name, description, image_url, active, sort_order, game_id, created_at, status, status_label, status_updated_at, features_text, robot_game_id, product_plans(*)")
+        .select("id, name, description, image_url, active, sort_order, game_id, created_at, status, status_label, status_updated_at, features_text, robot_game_id, robot_markup_percent, product_plans(*)")
         .eq("game_id", gameId)
         .eq("active", true)
         .order("sort_order", { ascending: true });

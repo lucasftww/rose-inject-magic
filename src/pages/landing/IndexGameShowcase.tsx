@@ -184,7 +184,7 @@ function toLandingGameFromRow(g: LandingGameQueryRow): GameFromDB {
     image_url: g.image_url,
     sort_order: g.sort_order,
     active: g.active,
-    products: (g.products ?? []).map((p) => ({ id: p.id, active: p.active })),
+    products: (g.products ?? []).filter((p): p is { id: string; active: boolean | null } => p.id != null).map((p) => ({ id: p.id, active: p.active })),
   };
 }
 
