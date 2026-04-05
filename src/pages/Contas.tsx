@@ -1690,6 +1690,14 @@ const Contas = () => {
     ? "text-[hsl(120,60%,45%)] border-[hsl(120,60%,45%)] bg-[hsl(120,60%,45%,0.1)]"
     : "text-[hsl(198,100%,45%)] border-[hsl(198,100%,45%)] bg-[hsl(198,100%,45%,0.1)]";
 
+  const searchPlaceholder = isFortnite
+    ? "Buscar por skin... (ex: Travis Scott)"
+    : isValorant
+      ? "Buscar por skin... (ex: Reaver)"
+      : gameTab === "lol"
+        ? "Buscar conta..."
+        : "Buscar conta...";
+
   const renderFilterContent = () => (
     <>
       {/* Search */}
@@ -1697,7 +1705,7 @@ const Contas = () => {
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <input
           type="text"
-          placeholder="Buscar contas..."
+          placeholder={searchPlaceholder}
           value={searchQuery}
           onChange={(e) => { setSearchQuery(e.target.value.slice(0, 100)); setDisplayPage(1); }}
           className="w-full rounded-lg border border-border bg-secondary/50 py-2.5 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors"
