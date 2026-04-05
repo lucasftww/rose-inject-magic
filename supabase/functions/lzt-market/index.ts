@@ -1013,6 +1013,16 @@ Deno.serve(async (req) => {
           log("INFO", "lzt-market", `Price cap R$${priceCap} removed ${beforeCap - data.items.length} ${gameType} items`);
         }
       }
+
+      // Re-sort by BRL price when user explicitly chose price sort.
+      // The API sorts by native currency, but after markup/ceiling/floor the BRL
+      // order can differ — causing cross-page inconsistencies.
+      const orderBy = url.searchParams.get("order_by") || "";
+      if (orderBy === "price_to_down") {
+        data.items.sort((a: LztItem, b: LztItem) => (Number(b.price_brl) || 0) - (Number(a.price_brl) || 0));
+      } else if (orderBy === "price_to_up") {
+        data.items.sort((a: LztItem, b: LztItem) => (Number(a.price_brl) || 0) - (Number(b.price_brl) || 0));
+      }
     }
 
     // For detail action, also add price_brl (keep full data)
