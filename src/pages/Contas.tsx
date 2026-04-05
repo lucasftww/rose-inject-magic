@@ -1341,19 +1341,25 @@ const Contas = () => {
 
     try {
       if (!cached) {
-        // Don't clear items on tab switch — show a loading overlay instead
-        // so the page remains interactive while the API responds
-        setIsRefetching(true);
+        const tabChanged = prevGameTabRef.current !== gameTab;
         setStreamingDone(false);
         setStreamError(null);
         setCurrentPage(1);
         setLoadingMore(false);
         setDisplayPage(1);
-        setStreamedItems(prev => {
-          // Only show skeleton if we truly have nothing to display
-          if (prev.length === 0) setFirstPageLoaded(false);
-          return prev;
-        });
+        if (tabChanged) {
+          // Tab changed with no cache: clear items to avoid rendering old-game data with new-game card components
+          setStreamedItems([]);
+          setFirstPageLoaded(false);
+          setIsRefetching(false);
+        } else {
+          // Same tab, filter change: keep existing items visible with refetching indicator
+          setIsRefetching(true);
+          setStreamedItems(prev => {
+            if (prev.length === 0) setFirstPageLoaded(false);
+            return prev;
+          });
+        }
       } else {
         // Cache expirado: manter itens antigos e indicar refetch
         setIsRefetching(true);
