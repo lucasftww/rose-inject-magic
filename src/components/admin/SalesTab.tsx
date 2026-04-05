@@ -13,14 +13,14 @@ import { toast } from "@/hooks/use-toast";
 
 type OrderTicketRow = Database["public"]["Tables"]["order_tickets"]["Row"];
 
-interface SaleTicket extends OrderTicketRow {
-  metadata: Json | null;
+interface SaleTicket extends Omit<OrderTicketRow, "metadata"> {
+  metadata: OrderTicketMetadata | null;
   product_name?: string;
   product_image?: string | null;
   plan_name?: string;
   plan_price?: number;
   username?: string | null;
-  email?: string;
+  email?: string | null;
   stock_content?: string | null;
 }
 
