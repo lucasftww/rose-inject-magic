@@ -298,17 +298,20 @@ const FinanceTab = () => {
 
   const revenueBreakdown = useMemo(() => {
     let lzt = 0, stock = 0, robot = 0;
-    // Build a set of robot product IDs for fast lookup
     const robotProductIds = new Set(robotTickets.map(r => r.product_id));
     fp.forEach(p => {
       const cart: PaymentCartLine[] = paymentCartSnapshot(p.cart_snapshot);
       if (cart.length === 0) { stock += p.amount / 100; return; }
-      // Classify each payment by its cart items
-      const hasLzt = cart.some((i) => i.type === "lzt-account");
-      const hasRobot = cart.some((i) => i.productId != null && robotProductIds.has(i.productId));
-      if (hasLzt) lzt += p.amount / 100;
-      else if (hasRobot) robot += p.amount / 100;
-      else stock += p.amount / 100;
+      // Distribute revenue proportionally per cart item
+      const cartTotal = cart.reduce((sum, i) => sum + (Number(i.price) || 0), 0);
+      const actualPaid = p.amount / 100;
+      for (const item of cart) {
+        const proportion = cartTotal > 0 ? (Number(item.price) || 0) / cartTotal : 1 / cart.length;
+        const itemRevenue = actualPaid * proportion;
+        if (item.type === "lzt-account") lzt += itemRevenue;
+        else if (item.productId != null && robotProductIds.has(item.productId)) robot += itemRevenue;
+        else stock += itemRevenue;
+      }
     });
     return { lzt, robot, stock };
   }, [fp, robotTickets]);
@@ -377,7 +380,17 @@ const FinanceTab = () => {
       return Object.values(hours);
     }
     const days: Record<string, { date: string; receita: number }> = {};
-    const numDays = period === "7d" ? 7 : period === "30d" ? 30 : 90;
+    // For "all" period, derive the actual range from data instead of hardcoding 90 days
+    const defaultDays = period === "7d" ? 7 : period === "30d" ? 30 : 90;
+    let numDays = defaultDays;
+    if (period === "all" && fp.length > 0) {
+      const oldest = fp.reduce((min, p) => {
+        const t = new Date(p.paid_at || p.created_at).getTime();
+        return Number.isFinite(t) && t < min ? t : min;
+      }, Date.now());
+      const span = Math.ceil((Date.now() - oldest) / 86400000) + 1;
+      numDays = Math.max(span, 1);
+    }
     for (let i = numDays - 1; i >= 0; i--) {
       const d = new Date(Date.now() - i * 86400000);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
