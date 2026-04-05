@@ -825,11 +825,6 @@ const PedidoChat = () => {
     );
   }
 
-  const meta = asOrderTicketMetadata(ticket?.metadata);
-  const statusColor =
-    ticket.status === "delivered" || ticket.status === "closed" ? "text-success" :
-    ticket.status === "open" ? "text-warning" :
-    ticket.status === "banned" ? "text-destructive" : "text-muted-foreground";
   const statusLabel = ticket.status_label || ticket.status || "—";
 
   return (
