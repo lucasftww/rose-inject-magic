@@ -515,9 +515,11 @@ const LolCard = memo(({ item, champKeyMap, priceLabel }: { item: LztItem; champK
   // Resolve LoL skin IDs via lolInventory (não valorantInventory!)
   // skinId = champKey * 1000 + skinNum
   const lolInventory = item.lolInventory;
+  const hasLolInventoryData = !!(lolInventory?.Skin || lolInventory?.Champion);
+  const champKeyMapReady = champKeyMap.size > 0;
+
   const skinPreviews = useMemo(() => {
-    // Tenta skins primeiro; se vazio, mostra campeões como preview
-    // Skin pode vir como array ou objeto {"0": 555016, ...} — normaliza para array
+    if (!champKeyMapReady) return [];
     const rawSkin = lolInventory?.Skin;
     let skinIds: number[] = [];
     if (Array.isArray(rawSkin)) {
@@ -528,7 +530,6 @@ const LolCard = memo(({ item, champKeyMap, priceLabel }: { item: LztItem; champK
     const champIds = Array.isArray(lolInventory?.Champion) ? lolInventory!.Champion! : [];
     const results: { name: string; image: string }[] = [];
 
-    // Skins com arte personalizada
     for (const skinId of skinIds) {
       const id = Number(skinId);
       if (isNaN(id)) continue;
@@ -545,7 +546,6 @@ const LolCard = memo(({ item, champKeyMap, priceLabel }: { item: LztItem; champK
       if (results.length >= 6) break;
     }
 
-    // Fallback: campeões (skin 0 = arte base)
     if (results.length === 0) {
       for (const champId of champIds) {
         const rawChampName = champKeyMap.get(Number(champId));
@@ -561,7 +561,7 @@ const LolCard = memo(({ item, champKeyMap, priceLabel }: { item: LztItem; champK
     }
 
     return results;
-  }, [lolInventory, champKeyMap]);
+  }, [lolInventory, champKeyMap, champKeyMapReady]);
 
   return (
     <Link
