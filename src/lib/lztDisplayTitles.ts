@@ -64,43 +64,42 @@ export function shouldReplaceLztTitle(raw: string | undefined, game: LztGameKind
   return false;
 }
 
-function skinCountLabel(n: number): string {
-  return n === 1 ? "1 skin" : `${n} skins`;
-}
-
 function valorantRankName(rankId: number | undefined): string {
   if (rankId == null) return "Unranked";
   return rankMap[rankId]?.name ?? "Unranked";
 }
 
 /**
- * Título dos cards na listagem Contas: sempre padronizado (nunca texto bruto do LZT).
+ * Título dos cards na listagem Contas: sempre padronizado, limpo e premium.
  */
 export function getListingCardTitle(item: LztItemForTitle, game: LztGameKind): string {
   switch (game) {
     case "valorant": {
       const skinCount = item.riot_valorant_skin_count ?? 0;
       const rankName = valorantRankName(item.riot_valorant_rank);
-      return `Conta Valorant · Full acesso · ${skinCountLabel(skinCount)} · ${rankName}`;
+      return `CONTA VALORANT • ${skinCount} SKINS • ${rankName.toUpperCase()}`;
     }
     case "lol": {
       const rankText = item.riot_lol_rank || "Unranked";
       const rankShort = rankText.split(/\s+/)[0] || rankText;
       const level = item.riot_lol_level ?? 0;
       const skinCount = item.riot_lol_skin_count ?? 0;
-      return `Conta LoL · Full acesso · ${skinCountLabel(skinCount)} · ${rankShort} · Nv.${level}`;
+      return `CONTA LOL • ${skinCount} SKINS • ${rankShort.toUpperCase()} • NV ${level}`;
     }
     case "fortnite": {
       const skinCount = item.fortnite_skin_count ?? item.fortnite_outfit_count ?? 0;
-      return `Conta Fortnite · Full acesso · ${skinCountLabel(skinCount)}`;
+      const level = item.fortnite_level ?? 0;
+      let t = `CONTA FORTNITE • ${skinCount} SKINS`;
+      if (level > 0) t += ` • NV ${level}`;
+      return t;
     }
     case "minecraft": {
       const hasJava = (item.minecraft_java ?? 0) > 0;
       const hasBedrock = (item.minecraft_bedrock ?? 0) > 0;
       const edition =
-        hasJava && hasBedrock ? "Java + Bedrock" : hasJava ? "Java" : hasBedrock ? "Bedrock" : "MC";
+        hasJava && hasBedrock ? "JAVA + BEDROCK" : hasJava ? "JAVA" : hasBedrock ? "BEDROCK" : "FULL ACCESS";
       const nick = item.minecraft_nickname?.trim();
-      return `Conta Minecraft · Full acesso · ${nick || "Conta verificada"} · ${edition}`;
+      return `CONTA MINECRAFT • ${nick ? nick.toUpperCase() : "VERIFICADA"} • ${edition}`;
     }
   }
 }
@@ -114,16 +113,16 @@ type DetailCtx =
 function buildSyntheticDetailTitle(ctx: DetailCtx): string {
   switch (ctx.game) {
     case "valorant":
-      return `Conta Valorant · Full acesso · ${skinCountLabel(ctx.skinCount)} · ${ctx.rankName}`;
+      return `Conta Valorant · Full Acesso · ${ctx.skinCount} Skins · ${ctx.rankName}`;
     case "fortnite": {
-      let s = `Conta Fortnite · Full acesso · ${skinCountLabel(ctx.skinCount)}`;
+      let s = `Conta Fortnite · Full Acesso · ${ctx.skinCount} Skins`;
       if (ctx.level > 0) s += ` · Nv.${ctx.level}`;
       if (ctx.vbucks > 0) s += ` · ${ctx.vbucks.toLocaleString("pt-BR")} V-Bucks`;
       return s;
     }
     case "lol": {
       const rankShort = ctx.rankText.split(/\s+/)[0] || ctx.rankText;
-      return `Conta LoL · Full acesso · ${skinCountLabel(ctx.skinCount)} · ${rankShort} · Nv.${ctx.level}`;
+      return `Conta LoL · Full Acesso · ${ctx.skinCount} Skins · ${rankShort} · Nv.${ctx.level}`;
     }
     case "minecraft": {
       const edition =
@@ -134,7 +133,7 @@ function buildSyntheticDetailTitle(ctx: DetailCtx): string {
             : ctx.hasBedrock
               ? "Bedrock Edition"
               : "Full Access";
-      return `Conta Minecraft · Full acesso · ${ctx.nickname?.trim() || "Conta verificada"} · ${edition}`;
+      return `Conta Minecraft · Full Acesso · ${ctx.nickname?.trim() || "Conta Verificada"} · ${edition}`;
     }
   }
 }
