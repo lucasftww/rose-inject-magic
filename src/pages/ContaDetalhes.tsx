@@ -811,7 +811,7 @@ const ContaDetalhes = () => {
                     onClick={handleBuyNow}
                     disabled={checkingAvailability}
                     aria-busy={checkingAvailability}
-                    className="btn-shine group relative flex w-full items-center justify-center gap-2.5 rounded-xl bg-success py-4 text-sm font-bold uppercase tracking-[0.2em] text-success-foreground transition-all hover:shadow-[0_0_40px_hsl(var(--success)/0.4)] active:scale-[0.98] disabled:opacity-60"
+                    className="group relative flex w-full items-center justify-center gap-2.5 rounded-xl bg-positive py-4 text-sm font-bold uppercase tracking-[0.2em] text-positive-foreground transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-60"
                     style={{ fontFamily: "'Valorant', sans-serif" }}
                   >
                     {checkingAvailability ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4 group-hover:animate-pulse" />}
