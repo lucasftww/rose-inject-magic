@@ -956,9 +956,11 @@ async function fulfillLztAccount(supabaseAdmin: SupabaseAdminClient, payment: Pa
     const checkRes = await fetch(`https://api.lzt.market/${encodeURIComponent(itemId)}`, {
       headers: { Authorization: `Bearer ${LZT_TOKEN}`, Accept: "application/json" },
     });
-    if (checkRes.ok) {
-      const checkData = await checkRes.json();
-      const checkItem = checkData.item;
+    const checkCt = checkRes.headers.get("content-type") || "";
+    if (checkRes.ok && checkCt.includes("application/json")) {
+      let checkData: Record<string, unknown> | null = null;
+      try { checkData = await checkRes.json(); } catch { /* ignore */ }
+      const checkItem = (checkData?.item ?? null) as Record<string, unknown> | null;
       const checkState = checkItem?.item_state;
       if (checkItem?.buyer || (checkState && checkState !== "active")) {
         console.error(`LZT item ${itemId} already sold (buyer=${checkItem.buyer}, state=${checkState})`);
@@ -973,9 +975,11 @@ async function fulfillLztAccount(supabaseAdmin: SupabaseAdminClient, payment: Pa
       // Update price to latest if it changed
       if (checkItem?.price && checkItem.price !== price) {
         console.log(`Price changed from ${price} to ${checkItem.price} ${checkItem.price_currency || currency}`);
-        price = checkItem.price;
-        currency = checkItem.price_currency || currency;
+        price = checkItem.price as number;
+        currency = (checkItem.price_currency as string) || currency;
       }
+    } else {
+      console.warn(`LZT pre-check returned non-JSON or error (${checkRes.status}), proceeding anyway`);
     }
   } catch (err) {
     console.warn("Pre-check failed, proceeding with purchase anyway:", err);
