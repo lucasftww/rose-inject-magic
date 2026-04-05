@@ -1032,6 +1032,11 @@ Deno.serve(async (req) => {
         );
       }
 
+      // Normalize Fortnite field aliases for detail too
+      if (gameType === "fortnite" && data.item.fortnite_outfit_count != null && data.item.fortnite_skin_count == null) {
+        data.item.fortnite_skin_count = data.item.fortnite_outfit_count;
+      }
+
       // Check for price override first
       const detailItemId = String(data.item.item_id);
       const { data: overrideRow } = await supabaseAdmin
