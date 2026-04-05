@@ -124,7 +124,7 @@ function getContentFloorBrl(item: LztItem, gameType?: string) {
 function getContentCeilingBrl(item: LztItem, gameType?: string) {
   if (gameType === "fortnite") {
     const skins = Number(item.fortnite_skin_count || item.fortnite_outfit_count || 0);
-    const vbucks = Math.min(Number(item.fortnite_vbucks || 0), 50000);
+    const vbucks = Math.min(Number(item.fortnite_vbucks || item.fortnite_balance || 0), 50000);
     const level = Math.min(Number(item.fortnite_level || 0), 999);
     // R$10/skin (OG/rare skins worth much more) + vbucks value + level bonus
     const ceiling = skins * 10 + vbucks * 0.02 + level * 0.5;
