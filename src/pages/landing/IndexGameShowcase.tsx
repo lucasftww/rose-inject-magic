@@ -209,7 +209,6 @@ const SectionHeader = ({ subtitle, title }: { subtitle: string; title: string })
 // ─── Accounts Section ───────────────────────────────────────────────────────
 const ContasSection = () => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
 
   return (
     <section className="border-t border-border bg-background px-4 sm:px-6 py-12 sm:py-20">
