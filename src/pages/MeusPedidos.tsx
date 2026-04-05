@@ -112,7 +112,7 @@ const MeusPedidos = () => {
       const productMap: Record<string, { name: string; image_url: string | null }> = {};
       const planMap: Record<string, { name: string; price: number }> = {};
       productsRes.data?.forEach((p) => { productMap[p.id] = { name: p.name, image_url: p.image_url }; });
-      plansRes.data?.forEach((p) => { planMap[p.id] = { name: p.name, price: p.price }; });
+      plansRes.data?.forEach((p) => { planMap[p.id] = { name: p.name, price: p.price ?? 0 }; });
 
       setTickets(
         rows.map((t) => {
