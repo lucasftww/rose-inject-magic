@@ -1441,7 +1441,15 @@ async function fulfillRobotProduct(
       body: JSON.stringify({ duration: Number(duration) }),
     });
 
-    const buyData = await buyRes.json();
+    // Safely parse JSON — Robot API may return HTML on errors/maintenance
+    let buyData: Record<string, unknown> = {};
+    const robotCt = buyRes.headers.get("content-type") || "";
+    if (robotCt.includes("application/json") || robotCt.includes("text/json")) {
+      try { buyData = await buyRes.json(); } catch { buyData = { error: "Invalid JSON response from Robot API" }; }
+    } else {
+      const bodyPreview = await buyRes.text().then(t => t.substring(0, 200));
+      buyData = { error: `Non-JSON response: ${bodyPreview}` };
+    }
     log("INFO", "fulfillRobot", "Robot buy response", { status: buyRes.status, body: JSON.stringify(buyData).substring(0, 500), expectedPrice: robotSnapshot.expectedPrice, duration });
 
     if (!buyRes.ok || !buyData.success) {
