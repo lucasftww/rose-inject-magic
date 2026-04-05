@@ -673,8 +673,8 @@ const LolDetalhes = () => {
                 onClick={handleBuyNow}
                 disabled={checkingAvailability}
                 aria-busy={checkingAvailability}
-                className="flex flex-1 items-center justify-center gap-2 rounded-lg py-3 text-sm font-bold uppercase tracking-wider text-white transition-all active:scale-[0.98] disabled:opacity-60"
-                style={{ background: LOL_BLUE, fontFamily: "'Valorant', sans-serif" }}
+                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-positive py-3 text-sm font-bold uppercase tracking-wider text-positive-foreground transition-all active:scale-[0.98] disabled:opacity-60"
+                style={{ fontFamily: "'Valorant', sans-serif" }}
               >
                 {checkingAvailability ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShoppingCart className="h-4 w-4" />}
                 {checkingAvailability ? "Verificando..." : "Comprar Agora"}
