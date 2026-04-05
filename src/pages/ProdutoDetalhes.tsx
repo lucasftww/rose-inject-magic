@@ -159,6 +159,11 @@ const ProdutoDetalhes = () => {
 
   const selectedMedia = allMedia[selectedMediaIndex] || null;
 
+  // Reset selected plan when product changes
+  useEffect(() => {
+    setSelectedPlanId(null);
+  }, [id]);
+
   useEffect(() => {
     if (sortedPlans.length > 0 && !selectedPlanId) {
       setSelectedPlanId(sortedPlans[0].id);
