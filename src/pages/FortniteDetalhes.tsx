@@ -186,37 +186,42 @@ const FortniteDetalhes = () => {
   // Gallery uses skins, fallback to pickaxes
   const galleryPreviews = skinPreviews.length > 0 ? skinPreviews : pickaxePreviews;
 
+  // Lock price on first load — ensures displayed price = cart price even if LZT price changes
+  useEffect(() => {
+    if (item && lockedPriceBrl === null) {
+      setLockedPriceBrl(getPrice(item, "fortnite"));
+    }
+  }, [item, getPrice, lockedPriceBrl]);
+
   // ViewContent tracking
   const viewTracked = useRef(false);
   useEffect(() => {
     viewTracked.current = false;
   }, [id]);
   useEffect(() => {
-    if (item && !viewTracked.current) {
+    if (item && lockedPriceBrl !== null && !viewTracked.current) {
       viewTracked.current = true;
-      const priceBRL = getPrice(item, "fortnite");
       trackViewContent({
         contentName: cleanedTitle,
         contentIds: [`lzt-fn-${item.item_id}`],
-        value: priceBRL,
+        value: lockedPriceBrl,
       });
     }
-  }, [item, getPrice, cleanedTitle]);
+  }, [item, lockedPriceBrl, cleanedTitle]);
 
   const [checkingAvailability, setCheckingAvailability] = useState(false);
 
   const handleBuyNow = async () => {
-    if (!item || checkingAvailability) return;
+    if (!item || checkingAvailability || lockedPriceBrl === null) return;
     setCheckingAvailability(true);
     const available = await checkLztAvailability(String(item.item_id), "fortnite", { queryClient });
     setCheckingAvailability(false);
     if (!available) return;
-    const priceBRL = getPrice(item, "fortnite");
 
     trackInitiateCheckout({
       contentName: cleanedTitle,
       contentIds: [`lzt-fn-${item.item_id}`],
-      value: priceBRL,
+      value: lockedPriceBrl,
     });
 
     const added = addItem({
@@ -225,7 +230,7 @@ const FortniteDetalhes = () => {
       productImage: null,
       planId: "lzt-fn-account",
       planName: "Conta Fortnite",
-      price: priceBRL,
+      price: lockedPriceBrl,
       type: "lzt-account",
       lztItemId: String(item.item_id),
       lztPrice: item.price,
