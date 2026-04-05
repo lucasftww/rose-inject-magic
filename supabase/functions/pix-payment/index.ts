@@ -988,6 +988,7 @@ async function fulfillLztAccount(supabaseAdmin: SupabaseAdminClient, payment: Pa
 
     // Retry fast-buy up to 4 times with exponential backoff
     // LZT API returns 403 "retry_request" as a temporary rate-limit signal
+    // LZT may also return HTML (Cloudflare challenge) instead of JSON — treat as retryable
     const RETRYABLE_BUY_STATUSES = [403, 429, 502, 503, 504];
     let buyRes: Response | null = null;
     let buyData: Record<string, unknown> | null = null;
@@ -1004,7 +1005,27 @@ async function fulfillLztAccount(supabaseAdmin: SupabaseAdminClient, payment: Pa
           Accept: "application/json",
         },
       });
-      buyData = await buyRes.json();
+
+      // Safely parse JSON — LZT may return HTML (Cloudflare challenge/error page)
+      const contentType = buyRes.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        const bodyPreview = await buyRes.text().then(t => t.substring(0, 200));
+        console.warn(`LZT fast-buy attempt ${attempt + 1}: non-JSON response (${contentType}): ${bodyPreview}`);
+        buyData = null;
+        // Treat HTML/non-JSON responses as retryable
+        if (attempt < 3) continue;
+        break;
+      }
+
+      try {
+        buyData = await buyRes.json();
+      } catch {
+        console.warn(`LZT fast-buy attempt ${attempt + 1}: JSON parse failed`);
+        buyData = null;
+        if (attempt < 3) continue;
+        break;
+      }
+
       console.log(`LZT fast-buy attempt ${attempt + 1}: ${buyRes.status}`, JSON.stringify(buyData).substring(0, 500));
 
       // If success or non-retryable error, stop
