@@ -845,15 +845,15 @@ const MinecraftCard = memo(({ item, priceLabel }: { item: LztItem; priceLabel: s
           <svg className="h-3 w-3 flex-shrink-0" viewBox="0 0 24 24" fill={MC_GREEN}><path d="M4,2H20A2,2 0 0,1 22,4V20A2,2 0 0,1 20,22H4A2,2 0 0,1 2,20V4A2,2 0 0,1 4,2M6,6V10H10V12H8V18H10V16H14V18H16V12H14V10H18V6H14V10H10V6H6Z" /></svg>
           <span className="text-[10px] sm:text-xs font-medium text-foreground truncate">{nickname ? `@${nickname}` : "Minecraft"}</span>
         </div>
-        <div className="flex items-center gap-1">
-          <svg className="h-2.5 w-2.5" style={{ color: MC_GREEN }} viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-          <span className="text-[9px] sm:text-[11px] text-muted-foreground">Full Acesso · Entrega Automática</span>
+        <div className="flex items-center gap-1.5 rounded-md px-2 py-1" style={{ background: "hsl(142,71%,45%,0.1)", border: "1px solid hsl(142,71%,45%,0.2)" }}>
+          <svg className="h-3 w-3 flex-shrink-0 text-positive" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+          <span className="text-[9px] sm:text-[11px] font-semibold text-positive">Full Acesso · Entrega Automática</span>
         </div>
         <div className="mt-auto pt-1.5 border-t border-border/30">
           <h3 className="text-[11px] sm:text-xs font-semibold text-foreground line-clamp-2 text-balance leading-snug tracking-tight mb-1">{cleanedTitle}</h3>
           <p className="text-sm sm:text-base font-bold tracking-tight" style={{ color: MC_GREEN }}>{priceLabel}</p>
-          <span className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg py-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-white" style={{ background: MC_GREEN }}>
-            Ver conta <ArrowRight className="h-2.5 w-2.5" />
+          <span className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg bg-foreground py-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-background">
+            Explorar detalhes <ArrowRight className="h-2.5 w-2.5" />
           </span>
         </div>
       </div>
