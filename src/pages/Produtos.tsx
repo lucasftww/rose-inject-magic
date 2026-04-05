@@ -584,7 +584,7 @@ const GameSelectScreen = ({
       </section>
 
       {loading ? (
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 py-4 sm:py-8 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 py-4 sm:py-8 grid grid-cols-2 gap-2.5 sm:gap-5 lg:grid-cols-4">
           {Array.from({ length: 8 }).map((_, i) => (
              <Skeleton key={i} className="aspect-[16/11] w-full rounded-2xl" />
           ))}
