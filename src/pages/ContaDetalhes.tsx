@@ -504,18 +504,24 @@ const ContaDetalhes = () => {
     [item?.title, rank?.name, skinCount],
   );
 
+  // Lock price on first load — ensures displayed price = cart price even if LZT price changes
+  useEffect(() => {
+    if (item && lockedPriceBrl === null) {
+      setLockedPriceBrl(getPrice(item, "valorant"));
+    }
+  }, [item, getPrice, lockedPriceBrl]);
+
   const handleBuyNow = async () => {
-    if (!item || checkingAvailability) return;
+    if (!item || checkingAvailability || lockedPriceBrl === null) return;
     setCheckingAvailability(true);
     const available = await checkLztAvailability(String(item.item_id), "valorant", { queryClient });
     setCheckingAvailability(false);
     if (!available) return;
-    const priceBRL = getPrice(item, "valorant");
 
     trackInitiateCheckout({
       contentName: cleanedTitle,
       contentIds: [`lzt-${item.item_id}`],
-      value: priceBRL,
+      value: lockedPriceBrl,
     });
 
     const added = addItem({
@@ -524,7 +530,7 @@ const ContaDetalhes = () => {
       productImage: rank?.img || null,
       planId: "lzt-account",
       planName: "Conta Valorant",
-      price: priceBRL,
+      price: lockedPriceBrl,
       type: "lzt-account",
       lztItemId: String(item.item_id),
       lztPrice: item.price,
@@ -537,16 +543,15 @@ const ContaDetalhes = () => {
 
   // ViewContent tracking (cleanedTitle deve existir antes deste effect)
   useEffect(() => {
-    if (item && !viewTracked.current) {
+    if (item && lockedPriceBrl !== null && !viewTracked.current) {
       viewTracked.current = true;
-      const priceBRL = getPrice(item, "valorant");
       trackViewContent({
         contentName: cleanedTitle,
         contentIds: [`lzt-${item.item_id}`],
-        value: priceBRL,
+        value: lockedPriceBrl,
       });
     }
-  }, [item, getPrice, cleanedTitle]);
+  }, [item, lockedPriceBrl, cleanedTitle]);
 
   // Gallery from screenshots
   const gallery = useMemo(() => {

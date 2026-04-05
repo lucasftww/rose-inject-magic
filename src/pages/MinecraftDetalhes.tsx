@@ -118,37 +118,43 @@ const MinecraftDetalhes = () => {
     [item?.title, nickname, hasJava, hasBedrock],
   );
 
+  // Lock price on first load — ensures displayed price = cart price even if LZT price changes
+  useEffect(() => {
+    if (item && lockedPriceBrl === null) {
+      setLockedPriceBrl(getPrice(item, "minecraft"));
+    }
+  }, [item, getPrice, lockedPriceBrl]);
+
   // ViewContent tracking
   const viewTracked = useRef(false);
   useEffect(() => {
     viewTracked.current = false;
+    setLockedPriceBrl(null);
   }, [id]);
   useEffect(() => {
-    if (item && !viewTracked.current) {
+    if (item && lockedPriceBrl !== null && !viewTracked.current) {
       viewTracked.current = true;
-      const priceBRL = getPrice(item, "minecraft");
       trackViewContent({
         contentName: cleanedTitle,
         contentIds: [`lzt-mc-${item.item_id}`],
-        value: priceBRL,
+        value: lockedPriceBrl,
       });
     }
-  }, [item, nickname, getPrice, cleanedTitle]);
+  }, [item, lockedPriceBrl, cleanedTitle]);
 
   const [checkingAvailability, setCheckingAvailability] = useState(false);
 
   const handleBuyNow = async () => {
-    if (!item || checkingAvailability) return;
+    if (!item || checkingAvailability || lockedPriceBrl === null) return;
     setCheckingAvailability(true);
     const available = await checkLztAvailability(String(item.item_id), "minecraft", { queryClient });
     setCheckingAvailability(false);
     if (!available) return;
-    const priceBRL = getPrice(item, "minecraft");
 
     trackInitiateCheckout({
       contentName: cleanedTitle,
       contentIds: [`lzt-mc-${item.item_id}`],
-      value: priceBRL,
+      value: lockedPriceBrl,
     });
 
     const added = addItem({
@@ -157,7 +163,7 @@ const MinecraftDetalhes = () => {
       productImage: headUrl,
       planId: "lzt-mc-account",
       planName: "Conta Minecraft",
-      price: priceBRL,
+      price: lockedPriceBrl,
       type: "lzt-account",
       lztItemId: String(item.item_id),
       lztPrice: item.price,
