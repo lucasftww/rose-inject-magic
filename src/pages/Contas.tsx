@@ -1564,21 +1564,30 @@ const Contas = () => {
       setFirstPageLoaded(true);
       setHasNextPage(prefetched.hasNextPage);
       prevGameTabRef.current = gameTab;
-      const paramsSnapshot = buildParams(1);
-      void (async () => {
-        try {
-          const data = await fetchWithRetry(paramsSnapshot, controller);
-          if (controller.signal.aborted) return;
-          const items: LztItem[] = data?.items ?? [];
-          const hasMore = data?.hasNextPage ?? items.length >= 15;
-          setStreamedItems(items);
-          setHasNextPage(hasMore);
-          setCurrentPage(1);
-          cacheSet(cacheKey, { items, hasNextPage: hasMore, currentPage: 1, timestamp: Date.now() });
-        } catch {
-          /* silent */
-        }
-      })();
+
+      // Only do a background refresh if the prefetch is stale (>30s old)
+      // This avoids duplicate API calls when users switch tabs quickly
+      const prefetchAge = Date.now() - prefetched.timestamp;
+      if (prefetchAge > 30_000) {
+        const paramsSnapshot = buildParams(1);
+        void (async () => {
+          try {
+            const data = await fetchWithRetry(paramsSnapshot, controller);
+            if (controller.signal.aborted) return;
+            const items: LztItem[] = data?.items ?? [];
+            const hasMore = data?.hasNextPage ?? items.length >= 15;
+            setStreamedItems(items);
+            setHasNextPage(hasMore);
+            setCurrentPage(1);
+            cacheSet(cacheKey, { items, hasNextPage: hasMore, currentPage: 1, timestamp: Date.now() });
+          } catch {
+            /* silent */
+          }
+        })();
+      } else {
+        // Promote prefetch to regular cache so it's reused
+        cacheSet(cacheKey, prefetched);
+      }
       return;
     }
 
