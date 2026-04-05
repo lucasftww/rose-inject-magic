@@ -285,6 +285,9 @@ const LztTab = () => {
   const totalPages = Math.max(1, Math.ceil(filteredSales.length / SALES_PER_PAGE));
   const paginatedSales = filteredSales.slice(salesPage * SALES_PER_PAGE, (salesPage + 1) * SALES_PER_PAGE);
 
+  // Reset page when search changes
+  useEffect(() => { setSalesPage(0); }, [salesSearch]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
