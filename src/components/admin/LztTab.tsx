@@ -279,7 +279,7 @@ const LztTab = () => {
     if (!salesSearch.trim()) return true;
     const q = salesSearch.toLowerCase();
     const id = (sale.lzt_item_id || "").toLowerCase();
-    return id.includes(q) || (sale.title || "").toLowerCase().includes(q) || (sale.buyer_user_id || "").toLowerCase().includes(q);
+    return id.includes(q) || (sale.title || "").toLowerCase().includes(q) || (sale.game || "").toLowerCase().includes(q) || (sale.buyer_user_id || "").toLowerCase().includes(q);
   });
 
   const totalPages = Math.max(1, Math.ceil(filteredSales.length / SALES_PER_PAGE));
