@@ -221,7 +221,7 @@ const TicketsTab = ({
       const profileMap: Record<string, string> = {};
       const lztSalesMap = new Map<string, number>();
       productsRes.data?.forEach((p) => { productMap[p.id] = p.name; });
-      plansRes.data?.forEach((p) => { planMap[p.id] = { name: p.name, price: p.price }; });
+      plansRes.data?.forEach((p) => { planMap[p.id] = { name: p.name, price: p.price ?? 0 }; });
       (profilesData.data || []).forEach((p) => { profileMap[p.user_id] = p.username || "—"; });
       (lztSalesData.data || []).forEach((s) => {
         if (s.lzt_item_id != null) lztSalesMap.set(String(s.lzt_item_id), Number(s.sell_price));
@@ -988,11 +988,11 @@ const TicketsTab = ({
                   </div>
                   {/* Purchase type + plan + price */}
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-0.5">
-                    {ticket.metadata?.type === "lzt-account" ? (
+                    {asOrderTicketMetadata(ticket.metadata)?.type === "lzt-account" ? (
                       <span className="inline-flex items-center gap-1 text-blue-400 text-[10px] font-medium">
                         <Globe className="h-2.5 w-2.5" />LZT
                       </span>
-                    ) : ticket.metadata?.type === "robot-project" ? (
+                    ) : asOrderTicketMetadata(ticket.metadata)?.type === "robot-project" ? (
                       <span className="inline-flex items-center gap-1 text-purple-400 text-[10px] font-medium">
                         <Bot className="h-2.5 w-2.5" />Robot
                       </span>
@@ -1007,9 +1007,9 @@ const TicketsTab = ({
                     <span className="font-semibold text-foreground/70">R$ {Number(ticket.plan_price || 0).toFixed(2)}</span>
                   </div>
                   {/* LZT item ID if applicable */}
-                  {ticket.metadata?.lzt_item_id && (
+                  {asOrderTicketMetadata(ticket.metadata)?.lzt_item_id && (
                     <div className="flex items-center gap-1 text-[10px] text-muted-foreground/50 font-mono mb-0.5">
-                      <span>LZT #{ticket.metadata.lzt_item_id}</span>
+                      <span>LZT #{asOrderTicketMetadata(ticket.metadata)?.lzt_item_id}</span>
                     </div>
                   )}
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -1096,11 +1096,11 @@ const TicketsTab = ({
                     </div>
                     <div className="flex items-center gap-1.5 mt-px flex-wrap">
                       {/* Purchase type badge */}
-                      {selectedTicket.metadata?.type === "lzt-account" ? (
+                      {asOrderTicketMetadata(selectedTicket?.metadata)?.type === "lzt-account" ? (
                         <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-blue-400">
                           <Globe className="h-2.5 w-2.5" />LZT
                         </span>
-                      ) : selectedTicket.metadata?.type === "robot-project" ? (
+                      ) : asOrderTicketMetadata(selectedTicket?.metadata)?.type === "robot-project" ? (
                         <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-purple-400">
                           <Bot className="h-2.5 w-2.5" />Robot
                         </span>
@@ -1113,16 +1113,16 @@ const TicketsTab = ({
                       <span className="text-[11px] text-muted-foreground truncate max-w-[120px]">{selectedTicket.product_name}</span>
                       <span className="text-muted-foreground/20">·</span>
                       <span className="text-[11px] font-semibold text-foreground/60">R$ {Number(selectedTicket.plan_price || 0).toFixed(2)}</span>
-                      {selectedTicket.metadata?.lzt_item_id && (
+                      {asOrderTicketMetadata(selectedTicket?.metadata)?.lzt_item_id && (
                         <>
                           <span className="text-muted-foreground/20">·</span>
                           <a
-                            href={`https://lzt.market/${selectedTicket.metadata.lzt_item_id}`}
+                            href={`https://lzt.market/${asOrderTicketMetadata(selectedTicket?.metadata)?.lzt_item_id}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground hover:text-success font-mono"
                           >
-                            #{selectedTicket.metadata.lzt_item_id}
+                            #{asOrderTicketMetadata(selectedTicket?.metadata)?.lzt_item_id}
                             <ExternalLink className="h-2.5 w-2.5" />
                           </a>
                         </>

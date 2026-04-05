@@ -264,7 +264,7 @@ async function getSkinLevelsCatalog(): Promise<Record<string, any>[]> {
   if (!res.ok) return [];
   const json = await res.json();
   const data = Array.isArray(json.data) ? json.data : [];
-  skinLevelsCatalogCache = { data, expiry: now + VALORANT_API_CACHE_MS };
+  skinLevelsCatalogCache = { data: data as Record<string, any>[], expiry: now + VALORANT_API_CACHE_MS };
   return data;
 }
 
@@ -277,7 +277,7 @@ async function getSkinChromasCatalog(): Promise<Record<string, any>[]> {
   if (!res.ok) return [];
   const json = await res.json();
   const data = Array.isArray(json.data) ? json.data : [];
-  skinChromasCatalogCache = { data, expiry: now + VALORANT_API_CACHE_MS };
+  skinChromasCatalogCache = { data: data as Record<string, any>[], expiry: now + VALORANT_API_CACHE_MS };
   return data;
 }
 

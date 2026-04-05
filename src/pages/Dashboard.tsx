@@ -484,11 +484,11 @@ const Dashboard = () => {
                       <p className="mt-1 text-sm text-muted-foreground">Cheats, softwares e licenças digitais</p>
                       <div className="mt-4 flex items-center gap-3">
                         <span className="flex items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-xs font-semibold text-success">
-                          <Package className="h-3 w-3" />{tickets.filter(t => !t.metadata?.type || t.metadata?.type === "robot-project").length} pedido(s)
+                          <Package className="h-3 w-3" />{tickets.filter(t => !asOrderTicketMetadata(t.metadata)?.type || asOrderTicketMetadata(t.metadata)?.type === "robot-project").length} pedido(s)
                         </span>
-                        {tickets.filter(t => (!t.metadata?.type || t.metadata?.type === "robot-project") && t.status === "open").length > 0 && (
+                        {tickets.filter(t => (!asOrderTicketMetadata(t.metadata)?.type || asOrderTicketMetadata(t.metadata)?.type === "robot-project") && t.status === "open").length > 0 && (
                            <span className="flex items-center gap-1.5 rounded-full bg-warning/10 px-3 py-1 text-xs font-semibold text-warning">
-                             <Clock className="h-3 w-3" />{tickets.filter(t => (!t.metadata?.type || t.metadata?.type === "robot-project") && t.status === "open").length} aberto(s)
+                             <Clock className="h-3 w-3" />{tickets.filter(t => (!asOrderTicketMetadata(t.metadata)?.type || asOrderTicketMetadata(t.metadata)?.type === "robot-project") && t.status === "open").length} aberto(s)
                           </span>
                         )}
                       </div>
@@ -496,17 +496,17 @@ const Dashboard = () => {
                     <ChevronRight className="h-5 w-5 text-muted-foreground/40 group-hover:text-success transition-colors mt-0.5 shrink-0" />
                   </div>
 
-                  {tickets.filter(t => !t.metadata?.type || t.metadata?.type === "robot-project").length > 0 && (
+                  {tickets.filter(t => !asOrderTicketMetadata(t.metadata)?.type || asOrderTicketMetadata(t.metadata)?.type === "robot-project").length > 0 && (
                     <div className="border-t border-border px-6 py-3 bg-secondary/20">
                       <div className="flex gap-2 overflow-hidden">
-                        {tickets.filter(t => !t.metadata?.type || t.metadata?.type === "robot-project").slice(0, 4).map((t) => (
+                        {tickets.filter(t => !asOrderTicketMetadata(t.metadata)?.type || asOrderTicketMetadata(t.metadata)?.type === "robot-project").slice(0, 4).map((t) => (
                           <div key={t.id} className="relative shrink-0 h-8 w-8 rounded-lg overflow-hidden border border-border bg-secondary">
                             {t.image_url ? <img src={t.image_url} alt="" className="h-full w-full object-cover" loading="lazy" /> : <div className="flex h-full items-center justify-center"><Package className="h-3.5 w-3.5 text-muted-foreground/40" /></div>}
                           </div>
                         ))}
-                        {tickets.filter(t => !t.metadata?.type || t.metadata?.type === "robot-project").length > 4 && (
+                        {tickets.filter(t => !asOrderTicketMetadata(t.metadata)?.type || asOrderTicketMetadata(t.metadata)?.type === "robot-project").length > 4 && (
                           <div className="shrink-0 h-8 w-8 rounded-lg border border-border bg-secondary flex items-center justify-center">
-                            <span className="text-[10px] font-bold text-muted-foreground">+{tickets.filter(t => !t.metadata?.type || t.metadata?.type === "robot-project").length - 4}</span>
+                            <span className="text-[10px] font-bold text-muted-foreground">+{tickets.filter(t => !asOrderTicketMetadata(t.metadata)?.type || asOrderTicketMetadata(t.metadata)?.type === "robot-project").length - 4}</span>
                           </div>
                         )}
                       </div>
@@ -536,11 +536,11 @@ const Dashboard = () => {
                       <p className="mt-1 text-sm text-muted-foreground">Contas de jogos adquiridas</p>
                       <div className="mt-4 flex items-center gap-3">
                         <span className="flex items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-xs font-semibold text-success">
-                          <Smartphone className="h-3 w-3" />{tickets.filter(t => t.metadata?.type === "lzt-account").length} conta(s)
+                          <Smartphone className="h-3 w-3" />{tickets.filter(t => asOrderTicketMetadata(t.metadata)?.type === "lzt-account").length} conta(s)
                         </span>
-                        {tickets.filter(t => t.metadata?.type === "lzt-account" && t.status === "delivered").length > 0 && (
+                        {tickets.filter(t => asOrderTicketMetadata(t.metadata)?.type === "lzt-account" && t.status === "delivered").length > 0 && (
                           <span className="flex items-center gap-1.5 rounded-full bg-positive/10 px-3 py-1 text-xs font-semibold text-positive">
-                            <CheckCircle className="h-3 w-3" />{tickets.filter(t => t.metadata?.type === "lzt-account" && t.status === "delivered").length} entregue(s)
+                            <CheckCircle className="h-3 w-3" />{tickets.filter(t => asOrderTicketMetadata(t.metadata)?.type === "lzt-account" && t.status === "delivered").length} entregue(s)
                           </span>
                         )}
                       </div>
@@ -549,18 +549,18 @@ const Dashboard = () => {
                   </div>
 
                   <div className="border-t border-border px-6 py-3 bg-secondary/20">
-                    {tickets.filter(t => t.metadata?.type === "lzt-account").length === 0 ? (
+                    {tickets.filter(t => asOrderTicketMetadata(t.metadata)?.type === "lzt-account").length === 0 ? (
                       <p className="text-xs text-muted-foreground/60">Nenhuma conta adquirida ainda.</p>
                     ) : (
                       <div className="flex gap-2 overflow-hidden">
-                        {tickets.filter(t => t.metadata?.type === "lzt-account").slice(0, 4).map((t) => (
+                        {tickets.filter(t => asOrderTicketMetadata(t.metadata)?.type === "lzt-account").slice(0, 4).map((t) => (
                           <div key={t.id} className="relative shrink-0 h-8 w-8 rounded-lg overflow-hidden border border-border bg-secondary">
                             {t.image_url ? <img src={t.image_url} alt="" className="h-full w-full object-cover" loading="lazy" /> : <div className="flex h-full items-center justify-center"><Smartphone className="h-3.5 w-3.5 text-muted-foreground/40" /></div>}
                           </div>
                         ))}
-                        {tickets.filter(t => t.metadata?.type === "lzt-account").length > 4 && (
+                        {tickets.filter(t => asOrderTicketMetadata(t.metadata)?.type === "lzt-account").length > 4 && (
                           <div className="shrink-0 h-8 w-8 rounded-lg border border-border bg-secondary flex items-center justify-center">
-                            <span className="text-[10px] font-bold text-muted-foreground">+{tickets.filter(t => t.metadata?.type === "lzt-account").length - 4}</span>
+                            <span className="text-[10px] font-bold text-muted-foreground">+{tickets.filter(t => asOrderTicketMetadata(t.metadata)?.type === "lzt-account").length - 4}</span>
                           </div>
                         )}
                       </div>
@@ -593,7 +593,7 @@ const Dashboard = () => {
                         <div className="shrink-0 h-9 w-9 rounded-lg overflow-hidden border border-border bg-secondary">
                           {t.image_url ? <img src={t.image_url} alt="" className="h-full w-full object-cover" loading="lazy" /> : (
                             <div className="flex h-full items-center justify-center">
-                              {t.metadata?.type === "lzt-account" ? <Smartphone className="h-3.5 w-3.5 text-muted-foreground/40" /> : <Package className="h-3.5 w-3.5 text-muted-foreground/40" />}
+                              {asOrderTicketMetadata(t.metadata)?.type === "lzt-account" ? <Smartphone className="h-3.5 w-3.5 text-muted-foreground/40" /> : <Package className="h-3.5 w-3.5 text-muted-foreground/40" />}
                             </div>
                           )}
                         </div>

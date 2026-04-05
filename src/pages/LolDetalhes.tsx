@@ -584,7 +584,7 @@ const LolDetalhes = () => {
                   {lightboxIndex !== null && activeItems[lightboxIndex] && (() => {
                     const cur = activeItems[lightboxIndex];
                     const total = activeItems.length;
-                    const splashImg = 'splashImage' in cur ? cur.splashImage : cur.image;
+                    const splashImg = 'splashImage' in cur ? String(cur.splashImage) : String(cur.image);
                     const goPrev = () => setLightboxIndex(p => p !== null ? (p - 1 + total) % total : null);
                     const goNext = () => setLightboxIndex(p => p !== null ? (p + 1) % total : null);
                     return (
