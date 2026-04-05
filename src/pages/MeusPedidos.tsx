@@ -346,9 +346,9 @@ const MeusPedidos = () => {
                     <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent" />
 
                     {/* Status badge */}
-                    <span className={`absolute top-3 right-3 flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold ${statusColors[ticket.status] || statusColors.open}`}>
-                      {statusIcons[ticket.status]}
-                      {statusLabels[ticket.status] || ticket.status_label}
+                    <span className={`absolute top-3 right-3 flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold ${statusColors[ticket.status || ""] || statusColors.open}`}>
+                      {statusIcons[ticket.status || ""]}
+                      {statusLabels[ticket.status || ""] || ticket.status_label}
                     </span>
                   </div>
 
