@@ -1126,7 +1126,7 @@ const ProductsTab = () => {
               {uploadingMedia ? "Enviando..." : "Upload de arquivo"}
             </button>
             <input ref={mediaFileInputRef} type="file" accept="image/*,video/*" className="hidden"
-              onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadMediaFile(f); }} />
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadMediaFile(f); e.target.value = ""; }} />
           </SectionCard>
 
           {/* Features Text */}
