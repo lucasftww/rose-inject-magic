@@ -689,7 +689,7 @@ const GameSelectScreen = ({
           return <SoftwareShowcaseCard key={game.id} game={game} index={idx} isFree={isFree} description={desc} onSelect={onSelect} />;
         };
 
-        const gridClasses = "grid grid-cols-2 gap-2.5 sm:gap-5 lg:grid-cols-4";
+        const gridClasses = "grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4";
 
         const renderSectionHeader = (icon: ReactNode, label: string, color: string) => (
           <div className="mb-5 flex items-center gap-3">
