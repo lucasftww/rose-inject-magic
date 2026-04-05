@@ -1718,10 +1718,19 @@ async function validateAndCalculatePrice(
           : `Erro ao verificar conta LZT ${lztItemId}`;
         return { validatedAmount: 0, validatedDiscount: 0, validatedCart: [], error: userMsg };
       }
-      const lztData = await lztRes.json();
-      const lztItem = lztData?.item;
+      // Safely parse JSON — LZT API may return HTML (Cloudflare)
+      const lztValidateCt = lztRes.headers.get("content-type") || "";
+      if (!lztValidateCt.includes("application/json")) {
+        console.warn(`LZT validation response non-JSON (${lztRes.status}): ${lztValidateCt}`);
+        return { validatedAmount: 0, validatedDiscount: 0, validatedCart: [], error: "Erro ao verificar conta. Tente novamente em alguns segundos." };
+      }
+      let lztData: Record<string, unknown> | null = null;
+      try { lztData = await lztRes.json(); } catch {
+        return { validatedAmount: 0, validatedDiscount: 0, validatedCart: [], error: "Resposta inválida do servidor de contas." };
+      }
+      const lztItem = lztData?.item as Record<string, unknown> | undefined;
       const realLztPrice = Number(lztItem?.price) || 0;
-      const realLztCurrency = lztItem?.price_currency || "rub";
+      const realLztCurrency = (lztItem?.price_currency as string) || "rub";
 
       // Check if item is still available for purchase
       // canBuyItem === false, buyer !== null, or item_state !== "active" means unavailable
