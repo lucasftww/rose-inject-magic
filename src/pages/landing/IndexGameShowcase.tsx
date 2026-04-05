@@ -118,17 +118,17 @@ const characterOverlayMap: Record<string, { bg: string; character: string; chara
 
 // Gradient fallbacks for games without images
 const GAME_GRADIENTS: Record<string, string> = {
-  "Valorant": "from-rose-900/60 to-card",
-  "Fortnite": "from-violet-900/60 to-card",
-  "CS2": "from-amber-900/60 to-card",
-  "Call of Duty": "from-emerald-900/60 to-card",
-  "PUBG": "from-yellow-900/60 to-card",
-  "Rust": "from-orange-900/60 to-card",
-  "DayZ": "from-green-900/60 to-card",
-  "FiveM": "from-blue-900/60 to-card",
-  "Marvel Rivals": "from-red-900/60 to-card",
-  "Apex Legends": "from-red-800/60 to-card",
-  "Spoofer": "from-purple-900/60 to-card",
+  "Valorant": "from-destructive/40 to-card",
+  "Fortnite": "from-accent/40 to-card",
+  "CS2": "from-muted/60 to-card",
+  "Call of Duty": "from-success/30 to-card",
+  "PUBG": "from-muted/50 to-card",
+  "Rust": "from-destructive/30 to-card",
+  "DayZ": "from-success/20 to-card",
+  "FiveM": "from-primary/30 to-card",
+  "Marvel Rivals": "from-destructive/35 to-card",
+  "Apex Legends": "from-destructive/30 to-card",
+  "Spoofer": "from-accent/30 to-card",
 };
 
 // Slugs to hide from the landing page software showcase
