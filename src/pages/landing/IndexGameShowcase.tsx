@@ -129,6 +129,15 @@ const characterOverlayMap: Record<string, { bg: string; character: string; chara
   apex: { bg: bgCardApex, character: apexNormal, characterHover: apexHover },
   "arc raiders": { bg: bgCardArcraiders, character: arcraidersNormal, characterHover: arcraidersHover },
   "arena breakout": { bg: bgCardArenabreakout, character: arenabreakoutNormal, characterHover: arenabreakoutHover },
+  "arena breakout infinite": { bg: bgCardArenabreakout, character: arenabreakoutNormal, characterHover: arenabreakoutHover },
+  "overwatch 2": { bg: bgCardOverwatch2, character: overwatch2Normal, characterHover: overwatch2Hover },
+  overwatch: { bg: bgCardOverwatch2, character: overwatch2Normal, characterHover: overwatch2Hover },
+  squad: { bg: bgCardSquad, character: squadNormal, characterHover: squadHover },
+  "dead by daylight": { bg: bgCardDbd, character: dbdNormal, characterHover: dbdHover },
+  dbd: { bg: bgCardDbd, character: dbdNormal, characterHover: dbdHover },
+  "farlight 84": { bg: bgCardFarlight84, character: farlight84Normal, characterHover: farlight84Hover },
+  farlight84: { bg: bgCardFarlight84, character: farlight84Normal, characterHover: farlight84Hover },
+  "hell let loose": { bg: bgCardHellletloose, character: hellletlooseNormal, characterHover: hellletlooseHover },
 };
 
 // Gradient fallbacks for games without images
