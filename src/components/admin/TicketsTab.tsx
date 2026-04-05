@@ -1112,7 +1112,7 @@ const TicketsTab = ({
                       <span className="text-muted-foreground/20">·</span>
                       <span className="text-[11px] text-muted-foreground truncate max-w-[120px]">{selectedTicket.product_name}</span>
                       <span className="text-muted-foreground/20">·</span>
-                      <span className="text-[11px] font-semibold text-foreground/60">R$ {Number(selectedTicket.plan_price || 0).toFixed(2)}</span>
+                      <span className="text-[11px] font-semibold text-foreground/60">R$ {Number(selectedTicket.plan_price ?? 0).toFixed(2)}</span>
                       {asOrderTicketMetadata(selectedTicket?.metadata)?.lzt_item_id && (
                         <>
                           <span className="text-muted-foreground/20">·</span>
