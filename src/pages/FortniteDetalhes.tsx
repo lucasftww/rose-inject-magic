@@ -358,7 +358,7 @@ const FortniteDetalhes = () => {
                   </h1>
 
                   <div className="flex flex-wrap gap-1.5">
-                    <span className="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold" style={{ color: FN_PURPLE, borderColor: `${FN_PURPLE}40`, background: `${FN_PURPLE}15` }}>
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-positive/10 border border-positive/30 px-3 py-1 text-[11px] font-semibold text-positive">
                       <CheckCircle2 className="h-3 w-3" />
                       FULL ACESSO
                     </span>
@@ -392,12 +392,7 @@ const FortniteDetalhes = () => {
                     onClick={handleBuyNow}
                     disabled={checkingAvailability}
                     aria-busy={checkingAvailability}
-                    className="group relative flex w-full items-center justify-center gap-2.5 px-5 py-3.5 text-sm font-bold uppercase tracking-[0.2em] rounded-lg transition-all hover:brightness-110 hover:shadow-xl disabled:opacity-60"
-                    style={{
-                      background: `linear-gradient(135deg, ${FN_PURPLE}, ${FN_BLUE})`,
-                      color: "#fff",
-                      boxShadow: `0 4px 20px ${FN_PURPLE}40`,
-                    }}
+                    className="flex w-full items-center justify-center gap-2.5 rounded-lg bg-positive py-3.5 text-sm font-bold uppercase tracking-[0.2em] text-positive-foreground transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-60"
                   >
                     {checkingAvailability ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
                     {checkingAvailability ? "VERIFICANDO..." : "COMPRAR AGORA"}
