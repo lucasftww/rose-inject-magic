@@ -250,8 +250,10 @@ const getShowcaseAssets = (game: Pick<GameFromDB, 'name' | 'slug' | 'image_url'>
 
 const TiltCard = ({ children, index }: { children: ReactNode; index: number }) => {
   const cardRef = useRef<HTMLDivElement>(null);
+  const isTouchDevice = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (isTouchDevice) return;
     const card = cardRef.current;
     if (!card) return;
 
@@ -263,11 +265,11 @@ const TiltCard = ({ children, index }: { children: ReactNode; index: number }) =
     const rotateX = centerY > 0 ? ((y - centerY) / centerY) * -7 : 0;
     const rotateY = centerX > 0 ? ((x - centerX) / centerX) * 7 : 0;
     card.style.transform = `perspective(900px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.015, 1.015, 1.015)`;
-  }, []);
+  }, [isTouchDevice]);
 
   const handleMouseLeave = useCallback(() => {
     const card = cardRef.current;
-    if (card) card.style.transform = 'perspective(900px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+    if (card) card.style.transform = '';
   }, []);
 
   return (
@@ -277,7 +279,7 @@ const TiltCard = ({ children, index }: { children: ReactNode; index: number }) =
       custom={index}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      style={{ transition: 'transform 0.18s ease-out', transformStyle: 'preserve-3d' }}
+      style={{ transition: 'transform 0.18s ease-out', willChange: isTouchDevice ? 'auto' : 'transform' }}
     >
       {children}
     </motion.div>
