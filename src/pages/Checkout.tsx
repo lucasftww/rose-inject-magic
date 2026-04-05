@@ -734,7 +734,7 @@ const Checkout = () => {
                 </div>
               )}
               {/* PIX */}
-              {enabledMethods.pix !== false && (
+              {enabledMethods && enabledMethods.pix !== false && (
                 <motion.button
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
