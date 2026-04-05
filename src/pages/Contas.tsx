@@ -685,7 +685,7 @@ LolCard.displayName = "LolCard";
 
 // ─── Fortnite Card ───
 const FortniteCard = memo(({ item, skinsDb, priceLabel, queryClient }: { item: LztItem; skinsDb: Map<string, { name: string; image: string }>; priceLabel: string; queryClient: QueryClient }) => {
-  const vbucks = item.fortnite_balance ?? item.fortnite_vbucks ?? 0;
+  const vbucks = (item.fortnite_balance || item.fortnite_vbucks) ?? 0;
   const skinCount = item.fortnite_skin_count ?? 0;
   const level = item.fortnite_level ?? 0;
 
