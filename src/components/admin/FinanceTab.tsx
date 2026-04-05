@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { fetchAllRows } from "@/lib/supabaseAllRows";
+import { getCached, setCache, getUsdToBrl } from "@/lib/adminCache";
 import { paymentCartSnapshot, type PaymentCartLine } from "@/types/paymentCart";
 import { asOrderTicketMetadata, type OrderTicketMetadata } from "@/types/orderTicketMetadata";
 import {
