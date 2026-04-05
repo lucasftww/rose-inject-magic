@@ -669,9 +669,9 @@ const LolCard = memo(({ item, champKeyMap, priceLabel, queryClient }: { item: Lz
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1.5 rounded-md px-2 py-1" style={{ background: "hsl(198,100%,45%,0.1)", border: "1px solid hsl(198,100%,45%,0.2)" }}>
-          <svg className="h-3 w-3 flex-shrink-0" style={{ color: "hsl(198,100%,45%)" }} viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-          <span className="text-[9px] sm:text-[11px] font-semibold" style={{ color: "hsl(198,100%,45%)" }}>Full Acesso · Entrega Automática</span>
+        <div className="flex items-center gap-1.5 rounded-md px-2 py-1 bg-positive/10 border border-positive/20">
+          <svg className="h-3 w-3 flex-shrink-0 text-positive" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+          <span className="text-[9px] sm:text-[11px] font-semibold text-positive">Full Acesso · Entrega Automática</span>
         </div>
         <div className="mt-auto pt-1.5 border-t border-border/30">
           <h3 className="text-[11px] sm:text-xs font-semibold text-foreground line-clamp-2 text-balance leading-snug tracking-tight mb-1">{cleanedTitle}</h3>
