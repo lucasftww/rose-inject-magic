@@ -712,6 +712,7 @@ const FortniteCard = memo(({ item, skinsDb, priceLabel, queryClient }: { item: L
   return (
     <Link
       to={`/fortnite/${item.item_id}`}
+      onPointerEnter={() => prefetchAccountDetail(queryClient, "fortnite", item.item_id)}
       className="group touch-manipulation cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-[hsl(265,80%,65%)/50%] hover:shadow-[0_4px_24px_hsl(265,80%,65%,0.12)] flex flex-col h-full no-underline text-inherit"
     >
       <div className="relative flex h-28 sm:h-36 items-center justify-center overflow-hidden bg-secondary/20">
