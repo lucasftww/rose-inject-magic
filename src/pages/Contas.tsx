@@ -1927,9 +1927,12 @@ const Contas = () => {
             <p className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
               <Star className="h-4 w-4" style={{ color: FN_PURPLE }} />Mín. Skins
             </p>
-            <input type="number" min="0" placeholder="Ex: 10" value={fnSkinsMin} onChange={(e) => { setFnSkinsMin(e.target.value); setDisplayPage(1); }}
+            <input type="number" min="10" placeholder="Mín: 10" value={fnSkinsMin} onChange={(e) => { setFnSkinsMin(e.target.value); setDisplayPage(1); }}
               className="w-full rounded-lg border border-border bg-secondary/50 py-2 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
               onFocus={e => (e.currentTarget.style.borderColor = `${FN_PURPLE}80`)} onBlur={e => (e.currentTarget.style.borderColor = '')} />
+            {fnSkinsMin && Number(fnSkinsMin) < 10 && (
+              <p className="mt-1 text-[10px] text-muted-foreground">Mínimo aplicado: 10 skins</p>
+            )}
           </div>
           <div className="mt-4">
             <p className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
