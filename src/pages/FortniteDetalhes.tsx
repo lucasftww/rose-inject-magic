@@ -408,7 +408,7 @@ const FortniteDetalhes = () => {
                     onClick={handleBuyNow}
                     disabled={checkingAvailability}
                     aria-busy={checkingAvailability}
-                    className="flex w-full items-center justify-center gap-2.5 rounded-lg bg-positive py-3.5 text-sm font-bold uppercase tracking-[0.2em] text-positive-foreground transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-60"
+                    className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-positive py-3.5 text-sm font-bold uppercase tracking-[0.2em] text-positive-foreground transition-all active:scale-[0.98] disabled:opacity-60"
                   >
                     {checkingAvailability ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
                     {checkingAvailability ? "VERIFICANDO..." : "COMPRAR AGORA"}
