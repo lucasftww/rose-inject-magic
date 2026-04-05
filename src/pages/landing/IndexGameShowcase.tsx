@@ -507,8 +507,8 @@ const SoftwareSection = () => {
 export default function IndexGameShowcase() {
   return (
     <>
-      <SoftwareSection />
       <ContasSection />
+      <SoftwareSection />
     </>
   );
 }
