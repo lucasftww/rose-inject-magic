@@ -842,7 +842,7 @@ const ProductsTab = () => {
                         {uploading ? (
                           <><Loader2 className="h-6 w-6 animate-spin text-success mb-2" /><p className="text-xs text-muted-foreground">Enviando...</p></>
                         ) : (
-                          <><Upload className="h-6 w-6 text-muted-foreground/30 mb-2" /><p className="text-xs text-muted-foreground">Arraste ou clique · Máx 5MB</p></>
+                          <><Upload className="h-6 w-6 text-muted-foreground/30 mb-2" /><p className="text-xs text-muted-foreground">Arraste ou clique · Máx 20MB</p></>
                         )}
                       </div>
                     )}
