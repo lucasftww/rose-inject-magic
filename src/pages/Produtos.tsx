@@ -1204,7 +1204,7 @@ const Produtos = () => {
             </div>
           ) : (
             <motion.div
-              className="flex-1 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3"
+              className="flex-1 grid grid-cols-2 gap-2.5 sm:gap-6 xl:grid-cols-3"
               initial="hidden"
               animate="visible"
               variants={staggerContainer}
