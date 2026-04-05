@@ -43,17 +43,22 @@ const Index = () => {
 
       {/* ═══ HERO ═══ */}
       <main className="relative flex min-h-[90vh] sm:min-h-screen flex-col items-center justify-center px-4 sm:px-6 pt-16 sm:pt-0 pb-6 sm:pb-16 text-center overflow-hidden">
-        {/* Grid background */}
-        <div className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[350px] sm:h-[600px] w-[450px] sm:w-[900px] -translate-x-1/2 -translate-y-1/2"
-          style={{
-            backgroundImage: "linear-gradient(hsl(var(--border) / 0.5) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--border) / 0.5) 1px, transparent 1px)",
-            backgroundSize: "50px 50px",
-            maskImage: "radial-gradient(ellipse at center, black 15%, transparent 65%)",
-            WebkitMaskImage: "radial-gradient(ellipse at center, black 15%, transparent 65%)",
-          }}
-        />
-        {/* Glow */}
-        <div className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[350px] sm:h-[600px] w-[450px] sm:w-[900px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,_hsl(197,100%,50%,0.12)_0%,_transparent_55%)]" />
+        {/* Hero background image */}
+        <div className="pointer-events-none absolute inset-0 z-0">
+          <img
+            src={heroBg}
+            alt=""
+            width={1920}
+            height={1080}
+            className="h-full w-full object-cover"
+            style={{ filter: 'blur(3px) brightness(0.3)' }}
+            fetchPriority="high"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/40" />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-transparent to-transparent" />
+        </div>
+        {/* Glow accent */}
+        <div className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[350px] sm:h-[600px] w-[450px] sm:w-[900px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,_hsl(197,100%,50%,0.08)_0%,_transparent_55%)]" />
 
         {/* Badge */}
         <div className="z-10 mb-4 sm:mb-6 flex items-center gap-1.5 rounded-full border border-success/20 bg-success/[0.06] px-3 sm:px-4 py-1 sm:py-1.5">
