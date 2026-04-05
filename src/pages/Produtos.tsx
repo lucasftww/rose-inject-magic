@@ -492,13 +492,13 @@ const ProductCard = ({ product }: { product: ProductFromDB }) => {
               {discountedPrice !== null ? (
                 <div>
                   <p className="text-[10px] sm:text-xs text-muted-foreground line-through">R$ {lowestPrice.toFixed(2)}</p>
-                  <p className="text-sm sm:text-xl font-bold text-success">R$ {discountedPrice.toFixed(2)}</p>
+                  <p className="text-sm sm:text-xl font-bold text-foreground">R$ {discountedPrice.toFixed(2)}</p>
                 </div>
               ) : (
-                <p className="text-sm sm:text-xl font-bold text-success">R$ {lowestPrice.toFixed(2)}</p>
+                <p className="text-sm sm:text-xl font-bold text-foreground">R$ {lowestPrice.toFixed(2)}</p>
               )}
             </div>
-            <span className="hidden sm:flex items-center gap-1.5 rounded border border-border px-4 py-2 text-xs font-medium text-muted-foreground transition-colors group-hover:border-success group-hover:text-success">
+            <span className="hidden sm:flex items-center gap-1.5 rounded border border-border px-4 py-2 text-xs font-medium text-foreground transition-colors group-hover:border-foreground/50">
               Ver produto
             </span>
           </div>
