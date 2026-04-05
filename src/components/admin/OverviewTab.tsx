@@ -321,7 +321,7 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
             ))}
           </div>
           <button
-            onClick={() => setRefreshKey(k => k + 1)}
+            onClick={() => { invalidateAdminCache(); setRefreshKey(k => k + 1); }}
             className="rounded-lg border border-border bg-card p-1.5 text-muted-foreground hover:text-foreground"
           >
             <RefreshCw className="h-3.5 w-3.5" />
