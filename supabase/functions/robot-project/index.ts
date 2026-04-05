@@ -153,21 +153,26 @@ Deno.serve(async (req) => {
           "Content-Type": "application/json",
         },
       });
-      if (gamesRes.ok) {
-        const gamesData = await gamesRes.json();
-        const games = Array.isArray(gamesData) ? gamesData : gamesData.games || [];
-        const g = games.find((x: { id?: unknown }) => Number(x.id) === Number(game_id)) as
-          | { id?: unknown; is_free?: boolean; isFree?: boolean }
-          | undefined;
-        if (g && (g.is_free === true || g.isFree === true)) {
-          return new Response(
-            JSON.stringify({
-              error:
-                "Jogo gratuito: a API Robot não emite chave nem deve receber POST /buy. Use o link do loader em GET /games; o cliente cria conta no loader sem ativação.",
-            }),
-            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-          );
-        }
+      if (!gamesRes.ok) {
+        log("WARN", "buy", "Failed to fetch games list for free-game check — aborting buy to avoid spending on free game", { status: gamesRes.status });
+        return new Response(
+          JSON.stringify({ error: "Não foi possível verificar se o jogo é gratuito. Tente novamente." }),
+          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+      const gamesData = await gamesRes.json();
+      const games = Array.isArray(gamesData) ? gamesData : gamesData.games || [];
+      const g = games.find((x: { id?: unknown }) => Number(x.id) === Number(game_id)) as
+        | { id?: unknown; is_free?: boolean; isFree?: boolean }
+        | undefined;
+      if (g && (g.is_free === true || g.isFree === true)) {
+        return new Response(
+          JSON.stringify({
+            error:
+              "Jogo gratuito: a API Robot não emite chave nem deve receber POST /buy. Use o link do loader em GET /games; o cliente cria conta no loader sem ativação.",
+          }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
       }
 
       const response = await fetch(`${ROBOT_API_URL}/buy/${encodeURIComponent(game_id)}`, {
@@ -210,7 +215,10 @@ Deno.serve(async (req) => {
       }
 
       const response = await fetch(`${ROBOT_API_URL}/ping`, {
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          Authorization: robotAuthHeader(creds),
+          "Content-Type": "application/json",
+        },
       });
 
       const data = await response.json();
