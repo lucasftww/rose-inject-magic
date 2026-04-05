@@ -315,7 +315,7 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
             { key: "delivered", label: "Entregues" },
             { key: "open", label: "Abertos" },
             { key: "waiting_staff", label: "Aguardando" },
-            { key: "closed", label: "Fechados" },
+            { key: "closed", label: "Encerrados" },
           ].map((f) => (
             <button
               key={f.key}
