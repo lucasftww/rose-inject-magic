@@ -1063,9 +1063,9 @@ const ContaDetalhes = () => {
 };
 
 const StatCell = forwardRef<HTMLDivElement, {label: string;value: string | number;}>(({ label, value }, ref) =>
-<div ref={ref} className="flex items-center justify-between rounded-lg bg-secondary/20 px-3 py-2.5">
-    <span className="text-[10px] text-muted-foreground/70">{label}</span>
-    <span className="text-xs font-semibold text-foreground">{value}</span>
+<div ref={ref} className="flex items-center justify-between rounded-lg bg-secondary/30 px-3.5 py-3">
+    <span className="text-[11px] text-muted-foreground/70 font-medium">{label}</span>
+    <span className="text-sm font-bold text-foreground">{value}</span>
   </div>);
 StatCell.displayName = "StatCell";
 
