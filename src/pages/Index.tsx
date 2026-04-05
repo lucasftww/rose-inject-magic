@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import heroBg from "@/assets/hero-bg.jpg";
+import heroBg from "@/assets/hero-bg.webp";
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import { Star, ArrowRight, Loader2, Zap, Shield, Clock } from "lucide-react";
