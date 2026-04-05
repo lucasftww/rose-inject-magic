@@ -2130,9 +2130,9 @@ const Contas = () => {
 
           {/* ─── Mobile Filter Bottom Sheet ─── */}
           {mobileFiltersOpen && (
-            <div className="fixed inset-0 z-50 lg:hidden">
+            <div className="fixed inset-0 z-50 lg:hidden" style={{ touchAction: 'none' }}>
               <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileFiltersOpen(false)} />
-              <div className="absolute bottom-0 left-0 right-0 max-h-[85vh] overflow-y-auto rounded-t-2xl bg-card border-t border-border animate-in slide-in-from-bottom duration-300">
+              <div className="absolute bottom-0 left-0 right-0 max-h-[85vh] overflow-y-auto rounded-t-2xl bg-card border-t border-border animate-in slide-in-from-bottom duration-300" style={{ touchAction: 'auto' }}>
                 <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card px-5 py-4 rounded-t-2xl">
                   <h3 className="flex items-center gap-2 text-base font-bold text-foreground">
                     <SlidersHorizontal className="h-4 w-4" style={{ color: accentColor }} />
