@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getUsdToBrl } from "@/lib/adminCache";
 import { supabase, supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
 import type { Database, Json, Tables } from "@/integrations/supabase/types";
 import { fetchAllRows } from "@/lib/supabaseAllRows";
