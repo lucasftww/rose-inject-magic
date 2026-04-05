@@ -238,9 +238,9 @@ const buildSkinLookup = (skins: unknown[]): Map<string, ValorantSkinItem> => {
 
 /** Valorant API catálogo muda raramente — cache 1h reduz payload repetido em cada detalhe. */
 const VALORANT_API_CACHE_MS = 1000 * 60 * 60;
-let weaponSkinsCatalogCache: { data: unknown[]; expiry: number } | null = null;
-let skinLevelsCatalogCache: { data: unknown[]; expiry: number } | null = null;
-let skinChromasCatalogCache: { data: unknown[]; expiry: number } | null = null;
+let weaponSkinsCatalogCache: { data: Record<string, any>[]; expiry: number } | null = null;
+let skinLevelsCatalogCache: { data: Record<string, any>[]; expiry: number } | null = null;
+let skinChromasCatalogCache: { data: Record<string, any>[]; expiry: number } | null = null;
 
 async function getWeaponSkinsCatalog(): Promise<unknown[]> {
   const now = Date.now();
