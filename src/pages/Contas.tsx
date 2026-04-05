@@ -1217,9 +1217,9 @@ const Contas = () => {
       // Fortnite-specific
       params.game_type = "fortnite";
       if (fnVbMin) params.vbmin = fnVbMin;
-      // Always enforce minimum 10 skins server-side, even if user leaves field empty
-      const effectiveSmin = fnSkinsMin && Number(fnSkinsMin) > 10 ? fnSkinsMin : "10";
-      params.smin = effectiveSmin;
+      // Enforce minimum 10 skins server-side; if user typed a lower value, use 10
+      const userSmin = Number(fnSkinsMin) || 0;
+      params.smin = String(Math.max(userSmin, 10));
     }
 
     return params;
