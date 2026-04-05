@@ -210,7 +210,10 @@ Deno.serve(async (req) => {
       }
 
       const response = await fetch(`${ROBOT_API_URL}/ping`, {
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          Authorization: robotAuthHeader(creds),
+          "Content-Type": "application/json",
+        },
       });
 
       const data = await response.json();
