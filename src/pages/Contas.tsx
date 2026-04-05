@@ -966,7 +966,7 @@ const Contas = () => {
 
   // ─── Fortnite filters ───
   const [fnVbMin, setFnVbMin] = useState("");
-  const [fnSkinsMin, setFnSkinsMin] = useState("10");
+  const [fnSkinsMin, setFnSkinsMin] = useState("");
 
   // ─── Minecraft filters ───
   const [mcJava, setMcJava] = useState(false);
@@ -1178,7 +1178,9 @@ const Contas = () => {
       // Fortnite-specific
       params.game_type = "fortnite";
       if (fnVbMin) params.vbmin = fnVbMin;
-      if (fnSkinsMin) params.smin = fnSkinsMin;
+      // Always enforce minimum 10 skins server-side, even if user leaves field empty
+      const effectiveSmin = fnSkinsMin && Number(fnSkinsMin) > 10 ? fnSkinsMin : "10";
+      params.smin = effectiveSmin;
     }
 
     return params;
@@ -1632,7 +1634,7 @@ const Contas = () => {
     setLolChampMin("");
     setLolSkinsMin("");
     setFnVbMin("");
-    setFnSkinsMin("10");
+    setFnSkinsMin("");
     setMcJava(false);
     setMcBedrock(false);
     setMcHypixelLvlMin("");
@@ -1674,7 +1676,7 @@ const Contas = () => {
     gameTab === "lol" && lolSkinsMin !== "",
     gameTab === "lol" && lolRegion !== "BR1",
     gameTab === "fortnite" && fnVbMin !== "",
-    gameTab === "fortnite" && fnSkinsMin !== "" && fnSkinsMin !== "10",
+    gameTab === "fortnite" && fnSkinsMin !== "",
     isMinecraft && mcJava,
     isMinecraft && mcBedrock,
     isMinecraft && mcHypixelLvlMin !== "",
