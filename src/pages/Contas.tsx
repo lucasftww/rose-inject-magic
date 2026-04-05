@@ -2213,6 +2213,12 @@ const Contas = () => {
 
             {!isLoading && !streamError && (
               <>
+                {isRefetching && (
+                  <div className="flex items-center justify-center py-4 gap-2 text-muted-foreground">
+                    <Loader2 className="h-5 w-5 animate-spin" style={{ color: accentColor }} />
+                    <span className="text-sm font-medium">Carregando contas…</span>
+                  </div>
+                )}
                 <div
                   className={`grid grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3 transition-opacity duration-200 relative ${isRefetching ? "opacity-40 pointer-events-none" : ""}`}
                 >
