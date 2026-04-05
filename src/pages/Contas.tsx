@@ -1336,10 +1336,11 @@ const Contas = () => {
         setCurrentPage(1);
         setLoadingMore(false);
         setDisplayPage(1);
-        if (streamedItems.length === 0) {
+        setStreamedItems(prev => {
           // Only show skeleton if we truly have nothing to display
-          setFirstPageLoaded(false);
-        }
+          if (prev.length === 0) setFirstPageLoaded(false);
+          return prev;
+        });
       } else {
         // Cache expirado: manter itens antigos e indicar refetch
         setIsRefetching(true);
