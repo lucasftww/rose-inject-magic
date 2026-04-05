@@ -42,6 +42,11 @@ import bgCardBloodstrike from "@/assets/games/bg-card-bloodstrike.png";
 import bgCardApex from "@/assets/games/bg-card-apex.png";
 import bgCardArcraiders from "@/assets/games/bg-card-arcraiders.png";
 import bgCardArenabreakout from "@/assets/games/bg-card-arenabreakout.png";
+import bgCardOverwatch2 from "@/assets/games/bg-card-overwatch2.png";
+import bgCardSquad from "@/assets/games/bg-card-squad.png";
+import bgCardDbd from "@/assets/games/bg-card-dbd.png";
+import bgCardFarlight84 from "@/assets/games/bg-card-farlight84.png";
+import bgCardHellletloose from "@/assets/games/bg-card-hellletloose.png";
 
 // Character overlay images — normal + hover
 import codNormal from "@/assets/games/cod-normal.png";
@@ -70,6 +75,16 @@ import arcraidersNormal from "@/assets/games/arcraiders-normal.png";
 import arcraidersHover from "@/assets/games/arcraiders-hover.png";
 import arenabreakoutNormal from "@/assets/games/arenabreakout-normal.png";
 import arenabreakoutHover from "@/assets/games/arenabreakout-hover.png";
+import overwatch2Normal from "@/assets/games/overwatch2-normal.png";
+import overwatch2Hover from "@/assets/games/overwatch2-hover.png";
+import squadNormal from "@/assets/games/squad-normal.png";
+import squadHover from "@/assets/games/squad-hover.png";
+import dbdNormal from "@/assets/games/dbd-normal.png";
+import dbdHover from "@/assets/games/dbd-hover.png";
+import farlight84Normal from "@/assets/games/farlight84-normal.png";
+import farlight84Hover from "@/assets/games/farlight84-hover.png";
+import hellletlooseNormal from "@/assets/games/hellletloose-normal.png";
+import hellletlooseHover from "@/assets/games/hellletloose-hover.png";
 
 // Local images map for software game cards (fallbacks when no character overlay)
 const softwareImageMap: Record<string, string> = {
