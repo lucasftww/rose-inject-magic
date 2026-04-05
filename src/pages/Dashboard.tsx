@@ -362,8 +362,8 @@ const Dashboard = () => {
                             <p className="text-[11px] text-muted-foreground">{t.plan_name} · {new Date(t.created_at || "").toLocaleDateString("pt-BR")}</p>
                           </div>
                           <div className="flex flex-col items-end gap-1">
-                            <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${statusColors[t.status] || "bg-muted text-muted-foreground"}`}>
-                              {statusLabels[t.status] || t.status_label}
+                            <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${statusColors[t.status || ""] || "bg-muted text-muted-foreground"}`}>
+                              {statusLabels[t.status || ""] || t.status_label}
                             </span>
                             {t.plan_price ? <span className="text-xs font-bold text-success">R$ {Number(t.plan_price).toFixed(2)}</span> : null}
                           </div>
