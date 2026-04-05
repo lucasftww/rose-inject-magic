@@ -266,8 +266,10 @@ interface LztItem {
   fortnite_vbucks?: number;
   fortnite_level?: number;
   fortnite_skin_count?: number;
+  fortnite_outfit_count?: number;
   fortniteSkins?: Array<{ id: string; title?: string }>;
   fortnitePickaxe?: Array<{ id: string; title?: string }>;
+  fortnitePastSeasons?: Array<{ purchasedVIP?: boolean; seasonNumber?: number }>;
   lolInventory?: {
     Champion?: number[];
     Skin?: number[] | Record<string, number>;
