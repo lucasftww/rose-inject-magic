@@ -759,7 +759,7 @@ const Checkout = () => {
               )}
 
               {/* Card — hidden for LZT account purchases */}
-              {enabledMethods.card !== false && !hasLztItems && (
+              {enabledMethods && enabledMethods.card !== false && !hasLztItems && (
                 <motion.button
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
