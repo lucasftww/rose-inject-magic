@@ -397,17 +397,6 @@ function GameCard({ game, count, t }: { game: GameCardGame; count: number; t: TF
             </div>
           )}
 
-          {/* Badge top-left */}
-          <div className="absolute left-2 top-2 sm:left-3 sm:top-3 z-[12] flex flex-wrap gap-1.5 sm:gap-2">
-            {hasProducts && (
-              <div className="flex items-center gap-1 sm:gap-1.5 rounded-full border border-border/50 bg-card/90 px-2 py-0.5 sm:px-2.5 sm:py-1 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-foreground shadow-lg">
-                <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
-                {count} {count === 1 ? t("games.software") : t("games.softwares")}
-              </div>
-            )}
-          </div>
-
-          {/* Content overlay at bottom */}
           <div className="absolute inset-x-0 bottom-0 z-[12] p-3 sm:p-5">
             <h3
               className="text-xs sm:text-lg lg:text-xl font-bold tracking-tight text-foreground"
