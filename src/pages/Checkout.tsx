@@ -139,8 +139,12 @@ const Checkout = () => {
   }, [formData.name, formData.email, formData.phone, formData.document]);
 
   useEffect(() => {
-    supabase.from("payment_settings").select("method, enabled").then(({ data }) => {
-      if (!data) return;
+    supabase.from("payment_settings").select("method, enabled").then(({ data, error }) => {
+      if (error || !data) {
+        // Fallback: show all methods if settings fail to load
+        setEnabledMethods({ pix: true, card: true, crypto: true });
+        return;
+      }
       const map: Record<string, boolean> = {};
       for (const r of data) {
         if (typeof r.method === "string") {
