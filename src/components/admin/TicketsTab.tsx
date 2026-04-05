@@ -235,12 +235,16 @@ const TicketsTab = ({
 
         return {
           ...t,
+          status: t.status || "open",
+          status_label: t.status_label || "Aberto",
+          created_at: t.created_at || new Date().toISOString(),
+          metadata: asOrderTicketMetadata(t.metadata) as Record<string, unknown>,
           product_name: isLzt ? (meta?.title || "Conta LZT") : (productMap[t.product_id] || "Produto"),
           plan_name: isLzt ? "Conta" : (planMap[t.product_plan_id]?.name || "Plano"),
           plan_price: isLzt ? lztPrice : (planMap[t.product_plan_id]?.price ?? 0),
           buyer_email: "—",
           buyer_username: profileMap[t.user_id] || "—",
-        };
+        } as Ticket;
       });
       _cachedTickets = mapped;
       _ticketsCacheTs = Date.now();
