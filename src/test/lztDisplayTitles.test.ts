@@ -55,7 +55,7 @@ describe("getLztDetailDisplayTitle", () => {
     ).toContain("Conta Fortnite · Full Acesso · 594 Skins");
   });
 
-  it("keeps short clean custom titles", () => {
+  it("always uses synthetic title even for short custom titles", () => {
     expect(
       getLztDetailDisplayTitle("Minha conta top", {
         game: "fortnite",
@@ -63,6 +63,6 @@ describe("getLztDetailDisplayTitle", () => {
         level: 0,
         vbucks: 0,
       }),
-    ).toBe("Minha conta top");
+    ).toBe("Conta Fortnite · Full Acesso · 1 Skins");
   });
 });
