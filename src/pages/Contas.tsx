@@ -346,6 +346,26 @@ const fetchLolChampKeyMap = async (): Promise<Map<number, string>> => {
   }
 };
 
+// Smooth-loading image: fades in on load, uses decoding=async for non-blocking rendering
+const SmoothImg = memo(({ src, alt, className, ...props }: React.ImgHTMLAttributes<HTMLImageElement>) => {
+  const [loaded, setLoaded] = useState(false);
+  const [failed, setFailed] = useState(false);
+  if (failed) return null;
+  return (
+    <img
+      src={src}
+      alt={alt || ""}
+      className={`${className || ""} transition-opacity duration-200 ${loaded ? "opacity-100" : "opacity-0"}`}
+      loading="lazy"
+      decoding="async"
+      onLoad={() => setLoaded(true)}
+      onError={() => setFailed(true)}
+      {...props}
+    />
+  );
+});
+SmoothImg.displayName = "SmoothImg";
+
 // Helper: LZT preview image with fallback to placeholder on error
 const LztPreviewImage = ({ url }: { url: string }) => {
   const [failed, setFailed] = useState(false);
@@ -358,11 +378,10 @@ const LztPreviewImage = ({ url }: { url: string }) => {
   }
   return (
     <div className="relative z-[1] flex items-center justify-center w-full h-full p-3">
-      <img
+      <SmoothImg
         src={getProxiedImageUrl(url)}
         alt="Skins preview"
         className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-105"
-        loading="lazy"
         onError={() => setFailed(true)}
       />
     </div>
