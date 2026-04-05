@@ -1723,6 +1723,8 @@ const Contas = () => {
     gameTab === "lol" && lolRegion !== "BR1",
     gameTab === "fortnite" && fnVbMin !== "",
     gameTab === "fortnite" && fnSkinsMin !== "",
+    gameTab === "fortnite" && fnLevelMin !== "",
+    gameTab === "fortnite" && fnHasBattlePass,
     isMinecraft && mcJava,
     isMinecraft && mcBedrock,
     isMinecraft && mcHypixelLvlMin !== "",
