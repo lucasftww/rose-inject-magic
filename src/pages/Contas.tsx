@@ -1181,7 +1181,14 @@ const Contas = () => {
       }
 
       if (selectedWeapon !== "todos") {
-        params.title = searchQuery ? `${searchQuery} ${selectedWeapon}` : selectedWeapon;
+        // Weapon filter uses a separate param so it doesn't overwrite user's title search
+        params.weapon_name = selectedWeapon;
+        // Also append to title for API text search (weapon skins are in the title)
+        if (searchQuery) {
+          params.title = `${searchQuery} ${selectedWeapon}`;
+        } else {
+          params.title = selectedWeapon;
+        }
       }
     } else if (gameTab === "lol") {
       // LoL-specific — use lol_region[] NOT country[] per LZT API docs
@@ -1210,9 +1217,9 @@ const Contas = () => {
       // Fortnite-specific
       params.game_type = "fortnite";
       if (fnVbMin) params.vbmin = fnVbMin;
-      // Always enforce minimum 10 skins server-side, even if user leaves field empty
-      const effectiveSmin = fnSkinsMin && Number(fnSkinsMin) > 10 ? fnSkinsMin : "10";
-      params.smin = effectiveSmin;
+      // Enforce minimum 10 skins server-side; if user typed a lower value, use 10
+      const userSmin = Number(fnSkinsMin) || 0;
+      params.smin = String(Math.max(userSmin, 10));
     }
 
     return params;
@@ -1699,7 +1706,7 @@ const Contas = () => {
     setSearchQuery(""); setOnlyKnife(false);
     setInvMin(""); setInvMax("");
     setLvlMin(""); setLvlMax("");
-    // page state removed
+    setSortBy("pdate_to_down");
     setDisplayPage(1);
   };
 
@@ -1737,7 +1744,7 @@ const Contas = () => {
     isMinecraft && mcHypixelLvlMin !== "",
     isMinecraft && mcCapesMin !== "",
     isMinecraft && mcNoBan,
-    priceMin !== "", priceMax !== "",
+    priceMin !== "" || priceMax !== "",
     searchQuery !== "",
     invMin !== "", invMax !== "",
     lvlMin !== "", lvlMax !== "",
@@ -1920,9 +1927,12 @@ const Contas = () => {
             <p className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
               <Star className="h-4 w-4" style={{ color: FN_PURPLE }} />Mín. Skins
             </p>
-            <input type="number" min="0" placeholder="Ex: 10" value={fnSkinsMin} onChange={(e) => { setFnSkinsMin(e.target.value); setDisplayPage(1); }}
+            <input type="number" min="10" placeholder="Mín: 10" value={fnSkinsMin} onChange={(e) => { setFnSkinsMin(e.target.value); setDisplayPage(1); }}
               className="w-full rounded-lg border border-border bg-secondary/50 py-2 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
               onFocus={e => (e.currentTarget.style.borderColor = `${FN_PURPLE}80`)} onBlur={e => (e.currentTarget.style.borderColor = '')} />
+            {fnSkinsMin && Number(fnSkinsMin) < 10 && (
+              <p className="mt-1 text-[10px] text-muted-foreground">Mínimo aplicado: 10 skins</p>
+            )}
           </div>
           <div className="mt-4">
             <p className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
