@@ -344,8 +344,11 @@ const FinanceTab = () => {
   const prevBuyers = useMemo(() => new Set(pp.map(p => p.user_id)).size, [pp]);
   const buyersChange = pctChange(uniqueBuyers, prevBuyers);
 
-  const avgTicket = fp.length > 0 ? totalRevenue / fp.length : 0;
-  const prevAvgTicket = pp.length > 0 ? prevRevenue / pp.length : 0;
+  // Exclude R$0 payments (free products) from average ticket to avoid deflating the metric
+  const paidFp = fp.filter(p => p.amount > 0);
+  const paidPp = pp.filter(p => p.amount > 0);
+  const avgTicket = paidFp.length > 0 ? totalRevenue / paidFp.length : 0;
+  const prevAvgTicket = paidPp.length > 0 ? prevRevenue / paidPp.length : 0;
   const avgTicketChange = pctChange(avgTicket, prevAvgTicket);
 
   // Note: discount_amount is NOT included in costs because payments.amount
@@ -364,7 +367,9 @@ const FinanceTab = () => {
       prods[r.product_name].cost += r.cost;
       prods[r.product_name].profit += r.profit;
     });
-    return Object.entries(prods).sort((a, b) => b[1].revenue - a[1].revenue);
+    return Object.entries(prods)
+      .filter(([, d]) => d.revenue > 0 || d.cost > 0) // Hide free products with zero activity
+      .sort((a, b) => b[1].revenue - a[1].revenue);
   }, [fRobot]);
 
   const lztByGame = useMemo(() => {
