@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useReseller } from "@/hooks/useReseller";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
-import { asOrderTicketMetadata } from "@/types/orderTicketMetadata";
+import { asOrderTicketMetadata, type OrderTicketMetadata } from "@/types/orderTicketMetadata";
 import { motion } from "framer-motion";
 import {
   User, Shield, Lock, Package, BarChart3, Settings,
