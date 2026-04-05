@@ -24,6 +24,7 @@ const LocationAwareErrorBoundary = ({ children }: { children: React.ReactNode })
 };
 
 // Retry wrapper for lazy imports — retries up to 3 times with delay to recover from transient network/chunk errors
+// On final retry, forces a full page reload to bust stale chunk references after a new deploy
 function lazyRetry<T extends { default: React.ComponentType<unknown> }>(
   factory: () => Promise<T>,
   retries = 3,
@@ -31,7 +32,21 @@ function lazyRetry<T extends { default: React.ComponentType<unknown> }>(
   return lazy(() => {
     const attempt = (remaining: number): Promise<T> =>
       factory().catch((err) => {
-        if (remaining <= 0) throw err;
+        if (remaining <= 0) {
+          // All retries exhausted — likely a stale deploy; force hard reload once
+          const reloadKey = "chunk_reload_" + window.location.pathname;
+          if (!sessionStorage.getItem(reloadKey)) {
+            sessionStorage.setItem(reloadKey, "1");
+            const url = new URL(window.location.href);
+            url.searchParams.set("_cb", String(Date.now()));
+            window.location.replace(url.toString());
+            // Return a never-resolving promise so React doesn't render the error
+            return new Promise<T>(() => {});
+          }
+          // Already reloaded once — let the error boundary handle it
+          sessionStorage.removeItem(reloadKey);
+          throw err;
+        }
         return new Promise<T>((resolve) =>
           setTimeout(() => resolve(attempt(remaining - 1)), 1000),
         );
