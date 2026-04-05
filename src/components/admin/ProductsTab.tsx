@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { getUsdToBrl } from "@/lib/adminCache";
 import { useAdminGames, useAdminProductsWithPlans, useInvalidateAdminCache } from "@/hooks/useAdminData";
 import {
   narrowMediaType,
@@ -164,14 +165,8 @@ const ProductsTab = () => {
   const [robotUsdToBrl, setRobotUsdToBrl] = useState(ROBOT_USD_TO_BRL);
 
   const fetchExchangeRate = async () => {
-    try {
-      const res = await fetch("https://economia.awesomeapi.com.br/json/last/USD-BRL");
-      if (res.ok) {
-        const data = await res.json();
-        const bid = Number(data?.USDBRL?.bid);
-        if (bid > 0) setRobotUsdToBrl(bid);
-      }
-    } catch (_) { /* use fallback */ }
+    const rate = await getUsdToBrl(ROBOT_USD_TO_BRL);
+    setRobotUsdToBrl(rate);
   };
 
   const fetchRobotGames = async (silent = false) => {

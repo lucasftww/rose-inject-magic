@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getUsdToBrl } from "@/lib/adminCache";
 import { supabase, supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
 import type { Database, Json, Tables } from "@/integrations/supabase/types";
 import { fetchAllRows } from "@/lib/supabaseAllRows";
@@ -162,20 +163,9 @@ const RobotProjectTab = () => {
   };
 
   const fetchExchangeRate = async (): Promise<number> => {
-    try {
-      const res = await fetch("https://economia.awesomeapi.com.br/json/last/USD-BRL");
-      if (res.ok) {
-        const data = await res.json();
-        const bid = Number(data?.USDBRL?.bid);
-        if (bid > 0) {
-          setUsdToBrl(bid);
-          return bid;
-        }
-      }
-    } catch (err) {
-      console.error("fetchExchangeRate error:", err);
-    }
-    return usdToBrl;
+    const rate = await getUsdToBrl(usdToBrl);
+    setUsdToBrl(rate);
+    return rate;
   };
 
   const fetchRobotSales = async (period: "7d" | "30d" | "all" = salesPeriod, currentRate?: number) => {
