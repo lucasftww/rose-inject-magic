@@ -382,15 +382,22 @@ const ValorantCard = memo(({ item, skinsMap, priceLabel }: { item: LztItem; skin
 
   const cleanedTitle = getListingCardTitle(item, "valorant");
 
-  const skinPreviews = useMemo(() => {
-    const results: SkinEntry[] = [];
+  const inventoryUuids = useMemo(() => {
     const toUuids = (raw: unknown): string[] => {
       if (Array.isArray(raw)) return raw;
       if (isRecord(raw)) return Object.values(raw).filter((v): v is string => typeof v === "string");
       return [];
     };
-    const allUuids = toUuids(item.valorantInventory?.WeaponSkins);
-    for (const uuid of allUuids) {
+    return toUuids(item.valorantInventory?.WeaponSkins);
+  }, [item.valorantInventory]);
+
+  const hasInventoryData = inventoryUuids.length > 0;
+  const skinsMapReady = skinsMap.size > 0;
+
+  const skinPreviews = useMemo(() => {
+    if (!skinsMapReady) return [];
+    const results: SkinEntry[] = [];
+    for (const uuid of inventoryUuids) {
       if (typeof uuid !== "string") continue;
       const entry = skinsMap.get(uuid.toLowerCase());
       if (entry) results.push(entry);
@@ -398,7 +405,7 @@ const ValorantCard = memo(({ item, skinsMap, priceLabel }: { item: LztItem; skin
     results.sort((a, b) => b.rarity - a.rarity);
     const premium = results.filter(s => s.rarity >= 2);
     return (premium.length >= 4 ? premium : results.filter(s => s.rarity > 0).length >= 4 ? results.filter(s => s.rarity > 0) : results).slice(0, 6);
-  }, [item.valorantInventory, skinsMap]);
+  }, [inventoryUuids, skinsMap, skinsMapReady]);
 
   return (
     <Link
@@ -444,6 +451,13 @@ const ValorantCard = memo(({ item, skinsMap, priceLabel }: { item: LztItem; skin
               <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/30 p-0.5">
                 <img src={getProxiedImageUrl(skin.image)} alt={skin.name} className="w-full h-full object-contain" loading="lazy" />
               </div>
+            ))}
+          </div>
+        ) : hasInventoryData && !skinsMapReady ? (
+          /* Skeleton while Valorant API loads — avoids flashing the raw LZT screenshot */
+          <div className="relative z-[1] grid grid-cols-3 grid-rows-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="w-full h-full rounded bg-secondary/50 animate-pulse" />
             ))}
           </div>
         ) : item.imagePreviewLinks?.direct?.weapons ? (
@@ -501,9 +515,11 @@ const LolCard = memo(({ item, champKeyMap, priceLabel }: { item: LztItem; champK
   // Resolve LoL skin IDs via lolInventory (não valorantInventory!)
   // skinId = champKey * 1000 + skinNum
   const lolInventory = item.lolInventory;
+  const hasLolInventoryData = !!(lolInventory?.Skin || lolInventory?.Champion);
+  const champKeyMapReady = champKeyMap.size > 0;
+
   const skinPreviews = useMemo(() => {
-    // Tenta skins primeiro; se vazio, mostra campeões como preview
-    // Skin pode vir como array ou objeto {"0": 555016, ...} — normaliza para array
+    if (!champKeyMapReady) return [];
     const rawSkin = lolInventory?.Skin;
     let skinIds: number[] = [];
     if (Array.isArray(rawSkin)) {
@@ -514,7 +530,6 @@ const LolCard = memo(({ item, champKeyMap, priceLabel }: { item: LztItem; champK
     const champIds = Array.isArray(lolInventory?.Champion) ? lolInventory!.Champion! : [];
     const results: { name: string; image: string }[] = [];
 
-    // Skins com arte personalizada
     for (const skinId of skinIds) {
       const id = Number(skinId);
       if (isNaN(id)) continue;
@@ -531,7 +546,6 @@ const LolCard = memo(({ item, champKeyMap, priceLabel }: { item: LztItem; champK
       if (results.length >= 6) break;
     }
 
-    // Fallback: campeões (skin 0 = arte base)
     if (results.length === 0) {
       for (const champId of champIds) {
         const rawChampName = champKeyMap.get(Number(champId));
@@ -547,7 +561,7 @@ const LolCard = memo(({ item, champKeyMap, priceLabel }: { item: LztItem; champK
     }
 
     return results;
-  }, [lolInventory, champKeyMap]);
+  }, [lolInventory, champKeyMap, champKeyMapReady]);
 
   return (
     <Link
@@ -584,6 +598,12 @@ const LolCard = memo(({ item, champKeyMap, priceLabel }: { item: LztItem; champK
               <div key={i} className="relative overflow-hidden">
                 <img src={getProxiedImageUrl(skin.image)} alt={skin.name} className="h-full w-full object-cover object-top" loading="lazy" />
               </div>
+            ))}
+          </div>
+        ) : hasLolInventoryData && !champKeyMapReady ? (
+          <div className="relative z-[1] grid grid-cols-3 grid-rows-2 gap-0 w-full h-full">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="bg-secondary/50 animate-pulse" />
             ))}
           </div>
         ) : (
