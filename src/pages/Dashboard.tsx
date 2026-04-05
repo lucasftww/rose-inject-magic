@@ -157,7 +157,7 @@ const Dashboard = () => {
                 fortnite: "Conta Fortnite",
                 minecraft: "Conta Minecraft",
               };
-              const lztGameLabel = (meta.game && lztGameLabels[meta.game]) || "Conta LZT";
+              const lztGameLabel = (meta.game && lztGameLabels[meta.game]) || "Conta de jogo";
               return {
                 ...t,
                 product_name: meta.account_name || meta.title || lztGameLabel,

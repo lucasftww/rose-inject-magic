@@ -1690,14 +1690,14 @@ const Contas = () => {
         {isFortnite ? (
           <>
             <span className="font-medium text-foreground/85">Fortnite:</span> mínimo{" "}
-            <span className="font-semibold text-foreground/90">90 dias</span> sem atividade na conta (filtro LZT).{" "}
+            <span className="font-semibold text-foreground/90">90 dias</span> sem atividade na conta, conforme curadoria da loja.{" "}
             Todas as abas: apenas contas{" "}
-            <span className="font-semibold text-foreground/90">nunca vendidas antes</span> no mercado LZT.
+            <span className="font-semibold text-foreground/90">nunca vendidas antes</span> em outros canais públicos.
           </>
         ) : (
           <>
             Apenas contas{" "}
-            <span className="font-semibold text-foreground/90">nunca vendidas antes</span> no LZT e com inatividade mínima
+            <span className="font-semibold text-foreground/90">nunca vendidas antes</span> em outros canais públicos e com inatividade mínima
             exigida pela loja (Fortnite: 90 dias; demais jogos: 30 dias).
           </>
         )}
@@ -2058,10 +2058,10 @@ const Contas = () => {
               {streamError ? "Não foi possível carregar a lista. Tente atualizar." : isLoading ? "Buscando contas disponíveis…" : `${allItems.length} ${allItems.length === 1 ? "conta listada" : "contas listadas"} · página ${displayPage} de ${totalDisplayPages}`}
             </p>
             <p className="mt-2 max-w-2xl text-xs leading-relaxed text-muted-foreground/85">
-              Esta página lista apenas contas do <span className="font-medium text-foreground/80">LZT Market</span> (compra de conta do jogo).
-              Produtos com entrega via <span className="font-medium text-foreground/80">Robot Project</span> (software / loader) estão em{" "}
+              Aqui você compra <span className="font-medium text-foreground/80">contas de jogo</span> curadas pela loja.
+              Software, loaders e entregas digitais estão em{" "}
               <Link to="/produtos" className="text-success underline-offset-2 hover:underline">Produtos</Link>
-              {" "}— catálogo, preço e checkout diferentes.
+              {" "}— outro catálogo, preço e checkout.
             </p>
           </div>
           <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">

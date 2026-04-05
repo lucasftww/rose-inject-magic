@@ -54,7 +54,7 @@ function toastItemNotPurchasable(item: LztDetailItem) {
   if (itemFailsLztNotSoldBeforePolicy(item as Record<string, unknown>)) {
     toast({
       title: "Conta indisponível",
-      description: "Esta conta já foi vendida antes no LZT e não entra na nossa seleção.",
+      description: "Esta conta já foi comercializada antes em outro canal e não entra na nossa seleção.",
       variant: "destructive",
     });
     return;

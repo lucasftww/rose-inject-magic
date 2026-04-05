@@ -123,7 +123,7 @@ const MeusPedidos = () => {
             const lztGameLabels: Record<string, string> = {
               valorant: "Conta Valorant", lol: "Conta LoL", fortnite: "Conta Fortnite", minecraft: "Conta Minecraft",
             };
-            const lztGameLabel = lztGameLabels[meta.game ?? ""] || "Conta LZT";
+            const lztGameLabel = lztGameLabels[meta.game ?? ""] || "Conta de jogo";
             return {
               ...t,
               product_name: meta.account_name || meta.title || lztGameLabel,

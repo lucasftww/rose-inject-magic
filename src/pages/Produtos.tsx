@@ -553,9 +553,8 @@ const GameSelectScreen = ({
               Encontre os melhores softwares para seu jogo favorito. Selecione abaixo e descubra as opções disponíveis.
             </p>
             <p className="max-w-2xl text-xs leading-relaxed text-muted-foreground/85">
-              Aqui é o catálogo de <span className="font-medium text-foreground/80">produtos</span> da loja (software, loaders e itens com entrega via{" "}
-              <span className="font-medium text-foreground/80">Robot Project</span> quando o produto usa esse provedor).
-              Contas de jogo do <span className="font-medium text-foreground/80">LZT Market</span> estão em{" "}
+              Aqui é o catálogo de <span className="font-medium text-foreground/80">produtos</span> da loja (software, loaders e itens com entrega digital).
+              <span className="font-medium text-foreground/80"> Contas de jogo</span> prontas estão em{" "}
               <Link to="/contas" className="text-success underline-offset-2 hover:underline">Contas</Link>
               {" "}— outro catálogo, preço e checkout.
             </p>
@@ -1106,10 +1105,9 @@ const Produtos = () => {
         </div>
 
         <p className="mt-3 max-w-2xl text-xs leading-relaxed text-muted-foreground/85">
-          Esta listagem é do catálogo <span className="font-medium text-foreground/80">Produtos</span> (não é o mercado de contas LZT).
-          Para comprar conta pronta do jogo, use{" "}
-          <Link to="/contas" className="text-success underline-offset-2 hover:underline">Contas</Link>
-          {" "}(LZT Market).
+          Esta listagem é do catálogo <span className="font-medium text-foreground/80">Produtos</span> (software e entregas digitais).
+          Para comprar <span className="font-medium text-foreground/80">conta pronta</span> do jogo, use{" "}
+          <Link to="/contas" className="text-success underline-offset-2 hover:underline">Contas</Link>.
         </p>
 
         <div className="mt-8 flex flex-col gap-8 lg:flex-row">
