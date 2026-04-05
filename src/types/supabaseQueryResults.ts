@@ -86,7 +86,7 @@ export function mapProductDetailQueryRow(row: ProductDetailQueryRow): StoreProdu
 }
 
 /** Produto + join `games(name)` (aba Status). */
-export type ProductStatusQueryRow = Pick<
+type ProductStatusQueryRow = Pick<
   ProductRow,
   "id" | "name" | "image_url" | "status" | "status_label"
 > & {
