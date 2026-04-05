@@ -187,7 +187,7 @@ export function mapProductStatusRows(data: unknown): ProductStatusListItem[] {
   return out;
 }
 
-export function isValidAdminProductWithPlansRow(data: unknown): boolean {
+function isValidAdminProductWithPlansRow(data: unknown): boolean {
   if (!isRecord(data)) return false;
   if (typeof data.id !== "string" || typeof data.name !== "string") return false;
   const plans = data.product_plans;

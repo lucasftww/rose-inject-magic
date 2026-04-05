@@ -66,7 +66,8 @@ export function parseTicketMessageDeleteId(oldRow: unknown): string | undefined 
   return typeof id === "string" ? id : undefined;
 }
 
-export type OrderTicketTableRow = Tables<"order_tickets">;
+/** @deprecated Use Tables<"order_tickets"> directly */
+type _OrderTicketTableRow = Tables<"order_tickets">;
 
 /**
  * Campos do payload Realtime `new` em `order_tickets` (UPDATE pode ser parcial).

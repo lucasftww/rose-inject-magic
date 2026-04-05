@@ -12,7 +12,7 @@ import {
   parseTicketMessageRealtime,
   type TicketChatMessage,
 } from "@/types/ticketChat";
-import { ArrowLeft, Copy, Check, Eye, EyeOff, Loader2, Lock, MessageSquare, Package, Send, ShieldCheck, Calendar, Hash, DollarSign, Clock, CreditCard, Star, BookOpen, FolderDown, Download, ExternalLink, Mail, KeyRound, ChevronDown, ChevronUp, CheckCircle, Paperclip, X, FileText, Mic, Square, Trash2 } from "lucide-react";
+import { ArrowLeft, Copy, Check, Eye, EyeOff, Loader2, Lock, MessageSquare, Package, Send, ShieldCheck, Calendar, Hash, DollarSign, CreditCard, Star, BookOpen, FolderDown, Download, ExternalLink, Mail, KeyRound, ChevronDown, ChevronUp, CheckCircle, Paperclip, X, FileText, Mic, Trash2 } from "lucide-react";
 import { useAudioRecorder, formatDuration } from "@/hooks/useAudioRecorder";
 import { motion } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
