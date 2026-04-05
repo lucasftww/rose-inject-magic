@@ -120,7 +120,7 @@ function isRecord(x: unknown): x is Record<string, unknown> {
 }
 
 /** Estrutura mínima que `mapProductDetailQueryRow` precisa (resposta `maybeSingle` + nested *). */
-export function isValidProductDetailPayload(data: unknown): boolean {
+function isValidProductDetailPayload(data: unknown): boolean {
   if (!isRecord(data)) return false;
   if (typeof data.id !== "string" || typeof data.name !== "string") return false;
 
