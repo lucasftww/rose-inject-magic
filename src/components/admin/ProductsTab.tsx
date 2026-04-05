@@ -583,7 +583,7 @@ const ProductsTab = () => {
     reordered.splice(globalTo, 0, moved);
     setDragIndex(null); setDragOverIndex(null);
     // Only update items whose sort_order actually changed
-    const updates: Promise<unknown>[] = [];
+    const updates = [];
     for (let i = 0; i < reordered.length; i++) {
       if (reordered[i].sort_order !== i) {
         updates.push(supabase.from("products").update({ sort_order: i }).eq("id", reordered[i].id));
