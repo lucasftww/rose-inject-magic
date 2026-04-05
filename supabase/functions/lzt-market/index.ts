@@ -712,6 +712,14 @@ Deno.serve(async (req) => {
         } else {
           params.delete("pmax");
         }
+      } else {
+        // Apply game-specific price caps at the API level to avoid fetching junk
+        const GAME_API_CAP_BRL: Record<string, number> = { fortnite: 1200 };
+        const apiCap = GAME_API_CAP_BRL[gameType];
+        if (apiCap) {
+          const sellerCap = convertBrlToSellerPrice(apiCap, effectiveCurrency, activeMarkup);
+          if (sellerCap) params.set("pmax", String(Math.ceil(sellerCap * 1.1)));
+        }
       }
 
       if (gameType === "fortnite") {
