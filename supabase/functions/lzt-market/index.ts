@@ -988,6 +988,15 @@ Deno.serve(async (req) => {
           item.valorantInventory = trimmed;
         }
       }
+
+      // Remove items above the price cap
+      if (priceCap < Infinity) {
+        const beforeCap = data.items.length;
+        data.items = data.items.filter((it: Record<string, unknown>) => (Number(it.price_brl) || 0) <= priceCap);
+        if (data.items.length < beforeCap) {
+          log("INFO", "lzt-market", `Price cap R$${priceCap} removed ${beforeCap - data.items.length} ${gameType} items`);
+        }
+      }
     }
 
     // For detail action, also add price_brl (keep full data)
