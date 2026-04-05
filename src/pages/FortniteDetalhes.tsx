@@ -358,7 +358,7 @@ const FortniteDetalhes = () => {
                   </h1>
 
                   <div className="flex flex-wrap gap-1.5">
-                    <span className="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold" style={{ color: FN_PURPLE, borderColor: `${FN_PURPLE}40`, background: `${FN_PURPLE}15` }}>
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-positive/10 border border-positive/30 px-3 py-1 text-[11px] font-semibold text-positive">
                       <CheckCircle2 className="h-3 w-3" />
                       FULL ACESSO
                     </span>
