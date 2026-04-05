@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { throwApiError } from "@/lib/apiErrors";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Header from "@/components/Header";
@@ -20,14 +20,7 @@ import type { LztFortniteCosmeticEntry, LztFortniteItemExtras } from "@/types/lz
 import { lztItemAsFortniteExtras } from "@/lib/lztMergedItemExtras";
 import { hideImgOnError, setImgOpacityOnError, withHTMLElementTarget } from "@/lib/domEventHelpers";
 import { errorMessage } from "@/lib/errorMessage";
-
-const getProxiedImageUrl = (url: string) => {
-  if (!url) return "";
-  if (url.includes("lzt.market") || url.includes("img.lzt.market")) {
-    return `${supabaseUrl}/functions/v1/lzt-market?action=image-proxy&url=${encodeURIComponent(url)}`;
-  }
-  return url;
-};
+import { getProxiedImageUrl, cleanLztDescription } from "@/lib/lztImageProxy";
 
 const FN_PURPLE = "hsl(265,80%,65%)";
 const FN_BLUE = "hsl(210,100%,56%)";
