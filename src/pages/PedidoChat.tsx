@@ -237,6 +237,10 @@ const PedidoChat = () => {
     };
   }, []);
 
+  // Ref to avoid signedUrls in the dependency array (prevents re-runs after each signing batch)
+  const signedUrlsRef = useRef(signedUrls);
+  signedUrlsRef.current = signedUrls;
+
   // Fetch signed URLs for new attachments dynamically
   useEffect(() => {
     if (messages.length === 0) return;
@@ -246,7 +250,7 @@ const PedidoChat = () => {
       const regex = /\[STORAGE_PATH\]([^\s\]\n]+)/g;
       let match;
       while ((match = regex.exec(msg.message)) !== null) {
-        if (!signedUrls[match[1]]) {
+        if (!signedUrlsRef.current[match[1]]) {
           pathsToSign.push(match[1]);
         }
       }
@@ -270,7 +274,7 @@ const PedidoChat = () => {
       };
       fetchSignedUrls();
     }
-  }, [messages, signedUrls]);
+  }, [messages]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
