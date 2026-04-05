@@ -39,7 +39,7 @@ interface Ticket {
   plan_price?: number;
   buyer_email?: string;
   buyer_username?: string;
-  metadata?: Json | null;
+  metadata?: Record<string, unknown> | null;
 }
 
 // ─── Constants ──────────────────────────────────────────────────────────────
