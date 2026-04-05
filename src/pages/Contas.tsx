@@ -1181,7 +1181,14 @@ const Contas = () => {
       }
 
       if (selectedWeapon !== "todos") {
-        params.title = searchQuery ? `${searchQuery} ${selectedWeapon}` : selectedWeapon;
+        // Weapon filter uses a separate param so it doesn't overwrite user's title search
+        params.weapon_name = selectedWeapon;
+        // Also append to title for API text search (weapon skins are in the title)
+        if (searchQuery) {
+          params.title = `${searchQuery} ${selectedWeapon}`;
+        } else {
+          params.title = selectedWeapon;
+        }
       }
     } else if (gameTab === "lol") {
       // LoL-specific — use lol_region[] NOT country[] per LZT API docs
