@@ -177,9 +177,14 @@ const es = {
   },
 
   common: {
+    and: "y",
     back: "Volver",
     loading: "Cargando...",
     skins: "skins",
+  },
+  floatingWidget: {
+    title: "¿Dudas? ¡Habla con nosotros!",
+    subtitle: "Únete a nuestro Discord",
   },
   games: {
     software: "software",

@@ -72,10 +72,10 @@ const Index = () => {
         <p className="z-10 mt-3 sm:mt-6 mx-auto max-w-xl text-[11px] leading-relaxed sm:text-base text-muted-foreground md:text-lg px-2 sm:px-0">
           <span className="hidden sm:inline">{t("hero.descDesktop")}{" "}
           <span className="text-foreground font-medium">{t("hero.undetectable")}</span>,{" "}
-          <span className="text-foreground font-medium">{t("hero.constantUpdates")}</span>{" "}{t("common.and") || "e"}{" "}
+          <span className="text-foreground font-medium">{t("hero.constantUpdates")}</span>{" "}{t("common.and")}{" "}
           <span className="text-foreground font-medium">{t("hero.dedicatedSupport")}</span>.
           {" "}{t("hero.descDesktopEnd")}</span>
-          <span className="sm:hidden">{t("hero.descMobilePre")}{" "}<span className="text-foreground font-medium">{t("hero.instantDelivery")}</span>, <span className="text-foreground font-medium">{t("hero.support247")}</span>{" "}{t("auth.and") || "e"}{" "}<span className="text-foreground font-medium">{t("hero.totalGuarantee")}</span>. {t("hero.descMobileEnd")}</span>
+          <span className="sm:hidden">{t("hero.descMobilePre")}{" "}<span className="text-foreground font-medium">{t("hero.instantDelivery")}</span>, <span className="text-foreground font-medium">{t("hero.support247")}</span>{" "}{t("common.and")}{" "}<span className="text-foreground font-medium">{t("hero.totalGuarantee")}</span>. {t("hero.descMobileEnd")}</span>
         </p>
 
         {/* CTAs */}

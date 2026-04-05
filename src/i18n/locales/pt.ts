@@ -192,9 +192,14 @@ const pt = {
 
   // Common
   common: {
+    and: "e",
     back: "Voltar",
     loading: "Carregando...",
     skins: "skins",
+  },
+  floatingWidget: {
+    title: "Dúvidas? Fale conosco!",
+    subtitle: "Entre no nosso Discord",
   },
   games: {
     software: "software",

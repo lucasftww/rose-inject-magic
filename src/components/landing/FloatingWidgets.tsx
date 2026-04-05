@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 
 const FloatingWidgets = () => {
+  const { t } = useTranslation();
   const [showTooltip, setShowTooltip] = useState(true);
 
   useEffect(() => {
@@ -15,8 +17,8 @@ const FloatingWidgets = () => {
           showTooltip ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-2 opacity-0"
         }`}
       >
-        <p className="text-sm font-semibold text-foreground">Dúvidas? Fale conosco!</p>
-        <p className="text-xs text-muted-foreground">Entre no nosso Discord</p>
+        <p className="text-sm font-semibold text-foreground">{t("floatingWidget.title")}</p>
+        <p className="text-xs text-muted-foreground">{t("floatingWidget.subtitle")}</p>
       </div>
       <a
         href="https://discord.gg/royalstorebr"
