@@ -53,7 +53,7 @@ const Checkout = () => {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   /** Prevents re-filling account email after the user clears the field (same session). */
   const checkoutEmailUserIdRef = useRef<string | null>(null);
-  const [enabledMethods, setEnabledMethods] = useState<Record<string, boolean>>({ pix: true, card: false, crypto: false });
+  const [enabledMethods, setEnabledMethods] = useState<Record<string, boolean> | null>(null);
   const hasLztItems = items.some((i) => i.type === "lzt-account");
   const couponId = searchParams.get("coupon_id");
   // Snapshot of cart items for Purchase tracking (survives clearCart)
@@ -139,8 +139,12 @@ const Checkout = () => {
   }, [formData.name, formData.email, formData.phone, formData.document]);
 
   useEffect(() => {
-    supabase.from("payment_settings").select("method, enabled").then(({ data }) => {
-      if (!data) return;
+    supabase.from("payment_settings").select("method, enabled").then(({ data, error }) => {
+      if (error || !data) {
+        // Fallback: show all methods if settings fail to load
+        setEnabledMethods({ pix: true, card: true, crypto: true });
+        return;
+      }
       const map: Record<string, boolean> = {};
       for (const r of data) {
         if (typeof r.method === "string") {
@@ -723,12 +727,18 @@ const Checkout = () => {
             </motion.div>
 
             {/* Payment methods */}
-            <div className={`flex flex-col gap-3 max-w-lg mx-auto ${!formValid ? 'opacity-50 pointer-events-none' : ''}`}>
-              {!formValid && (
+            <div className={`flex flex-col gap-3 max-w-lg mx-auto ${!formValid || !enabledMethods ? 'opacity-50 pointer-events-none' : ''}`}>
+              {!formValid && enabledMethods && (
                 <p className="text-center text-xs text-destructive font-medium mb-2">Preencha todos os seus dados corretamente acima para liberar o pagamento.</p>
               )}
+              {!enabledMethods && (
+                <div className="flex items-center justify-center py-4 gap-2 text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="text-xs">Carregando métodos de pagamento...</span>
+                </div>
+              )}
               {/* PIX */}
-              {enabledMethods.pix !== false && (
+              {enabledMethods && enabledMethods.pix !== false && (
                 <motion.button
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -753,7 +763,7 @@ const Checkout = () => {
               )}
 
               {/* Card — hidden for LZT account purchases */}
-              {enabledMethods.card !== false && !hasLztItems && (
+              {enabledMethods && enabledMethods.card !== false && !hasLztItems && (
                 <motion.button
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -778,7 +788,7 @@ const Checkout = () => {
               )}
 
               {/* Crypto USDT */}
-              {enabledMethods.crypto !== false && (
+              {enabledMethods && enabledMethods.crypto !== false && (
                 <motion.button
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
