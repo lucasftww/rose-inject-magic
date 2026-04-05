@@ -41,6 +41,7 @@ import {
 } from "@/lib/domEventHelpers";
 import { errorName } from "@/lib/errorMessage";
 import { isRecord } from "@/types/ticketChat";
+import { prefetchAccountDetail } from "@/lib/lztPrefetch";
 
 import weaponAres from "@/assets/weapon-ares.png";
 import weaponBandit from "@/assets/weapon-bandit.png";
