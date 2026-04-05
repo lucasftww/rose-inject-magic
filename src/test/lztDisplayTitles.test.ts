@@ -32,13 +32,13 @@ describe("getListingCardTitle", () => {
         },
         "fortnite",
       ),
-    ).toBe("Conta Fortnite · Full acesso · 594 skins");
+    ).toBe("CONTA FORTNITE • 594 SKINS");
   });
 
   it("Valorant includes rank label from riot_valorant_rank", () => {
     expect(
       getListingCardTitle({ riot_valorant_rank: 27, riot_valorant_skin_count: 12 }, "valorant"),
-    ).toMatch(/Conta Valorant · Full acesso · 12 skins · Radiante/);
+    ).toMatch(/CONTA VALORANT • 12 SKINS • RADIANTE/);
   });
 });
 
@@ -52,7 +52,7 @@ describe("getLztDetailDisplayTitle", () => {
         level: 100,
         vbucks: 750,
       }),
-    ).toContain("Conta Fortnite · Full acesso · 594 skins");
+    ).toContain("Conta Fortnite · Full Acesso · 594 Skins");
   });
 
   it("keeps short clean custom titles", () => {
