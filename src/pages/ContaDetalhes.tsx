@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { throwApiError } from "@/lib/apiErrors";
 import { translateRegion } from "@/lib/regionTranslation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -41,13 +41,7 @@ const fetchAccountDetail = async (itemId: string) => {
 // RARITY_PRIORITY imported from @/lib/valorantData
 
 // Permissive UUID pattern (Valorant UUIDs don't strictly follow RFC 4122)
-const getProxiedImageUrl = (url: string) => {
-  if (!url) return "";
-  if (url.includes("lzt.market") || url.includes("img.lzt.market")) {
-    return `${supabaseUrl}/functions/v1/lzt-market?action=image-proxy&url=${encodeURIComponent(url)}`;
-  }
-  return url;
-};
+import { getProxiedImageUrl } from "@/lib/lztImageProxy";
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 

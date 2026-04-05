@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { throwApiError } from "@/lib/apiErrors";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Header from "@/components/Header";
@@ -20,14 +20,7 @@ import type { LztFortniteCosmeticEntry, LztFortniteItemExtras } from "@/types/lz
 import { lztItemAsFortniteExtras } from "@/lib/lztMergedItemExtras";
 import { hideImgOnError, setImgOpacityOnError, withHTMLElementTarget } from "@/lib/domEventHelpers";
 import { errorMessage } from "@/lib/errorMessage";
-
-const getProxiedImageUrl = (url: string) => {
-  if (!url) return "";
-  if (url.includes("lzt.market") || url.includes("img.lzt.market")) {
-    return `${supabaseUrl}/functions/v1/lzt-market?action=image-proxy&url=${encodeURIComponent(url)}`;
-  }
-  return url;
-};
+import { getProxiedImageUrl, cleanLztDescription } from "@/lib/lztImageProxy";
 
 const FN_PURPLE = "hsl(265,80%,65%)";
 const FN_BLUE = "hsl(210,100%,56%)";
@@ -252,13 +245,13 @@ const FortniteDetalhes = () => {
     <div className="min-h-screen bg-background">
       <Header />
       <div className="mx-auto max-w-6xl px-4 sm:px-6 pt-4 pb-28 sm:pb-20">
-        <button
-          onClick={() => navigate("/contas?game=fortnite")}
-          className="mb-5 flex items-center gap-2 rounded-lg border border-border bg-card/50 px-4 py-2 text-sm text-muted-foreground transition-all hover:text-foreground"
+        <Link
+          to="/contas?game=fortnite"
+          className="mb-5 inline-flex items-center gap-2 rounded-lg border border-border bg-card/50 px-4 py-2 text-sm text-muted-foreground transition-all hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
           Voltar para Contas Fortnite
-        </button>
+        </Link>
 
         {isLoading && (
           <div className="flex flex-col items-center justify-center py-32">
@@ -278,9 +271,9 @@ const FortniteDetalhes = () => {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
             {/* Breadcrumb */}
             <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
-              <button onClick={() => navigate("/")} className="hover:text-foreground transition-colors">Início</button>
+              <Link to="/" className="hover:text-foreground transition-colors">Início</Link>
               <ChevronRight className="h-3 w-3" />
-              <button onClick={() => navigate("/contas")} className="hover:text-foreground transition-colors">Contas</button>
+              <Link to="/contas" className="hover:text-foreground transition-colors">Contas</Link>
               <ChevronRight className="h-3 w-3" />
               <span style={{ color: FN_PURPLE }} className="font-medium">Fortnite #{item.item_id}</span>
             </div>
@@ -316,13 +309,13 @@ const FortniteDetalhes = () => {
                       <>
                         <button
                           onClick={() => setSelectedIndex(p => (p - 1 + galleryPreviews.length) % galleryPreviews.length)}
-                          className="absolute left-3 top-1/2 -translate-y-1/2 z-[2] flex h-10 w-10 items-center justify-center rounded-full bg-background/80 border border-border text-muted-foreground opacity-0 group-hover:opacity-100 transition-all"
+                          className="absolute left-3 top-1/2 -translate-y-1/2 z-[2] flex h-10 w-10 items-center justify-center rounded-full bg-background/80 border border-border text-muted-foreground sm:opacity-0 sm:group-hover:opacity-100 transition-all"
                         >
                           <ChevronLeft className="h-5 w-5" />
                         </button>
                         <button
                           onClick={() => setSelectedIndex(p => (p + 1) % galleryPreviews.length)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 z-[2] flex h-10 w-10 items-center justify-center rounded-full bg-background/80 border border-border text-muted-foreground opacity-0 group-hover:opacity-100 transition-all"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 z-[2] flex h-10 w-10 items-center justify-center rounded-full bg-background/80 border border-border text-muted-foreground sm:opacity-0 sm:group-hover:opacity-100 transition-all"
                         >
                           <ChevronRight className="h-5 w-5" />
                         </button>
@@ -598,14 +591,13 @@ const FortniteDetalhes = () => {
             </AnimatePresence>
 
             {/* Description */}
-            {item.description && (() => {
-              const raw = String(item.description).trim();
-              const stripped = raw.replace(/\[URL=[^\]]*\][^\[]*\[\/URL\]/gi, "").replace(/\[\/?\w+\]/g, "").replace(/https?:\/\/\S+/g, "").trim();
-              if (stripped.length < 10) return null;
+            {(() => {
+              const desc = cleanLztDescription(item.description);
+              if (!desc) return null;
               return (
                 <div className="mt-6 rounded-lg border border-border bg-card p-5">
                   <h3 className="text-sm font-bold text-foreground mb-2">Descrição</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{stripped}</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{desc}</p>
                 </div>
               );
             })()}
