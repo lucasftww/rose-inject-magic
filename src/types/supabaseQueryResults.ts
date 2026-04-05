@@ -86,7 +86,7 @@ export function mapProductDetailQueryRow(row: ProductDetailQueryRow): StoreProdu
 }
 
 /** Produto + join `games(name)` (aba Status). */
-export type ProductStatusQueryRow = Pick<
+type ProductStatusQueryRow = Pick<
   ProductRow,
   "id" | "name" | "image_url" | "status" | "status_label"
 > & {
@@ -120,7 +120,7 @@ function isRecord(x: unknown): x is Record<string, unknown> {
 }
 
 /** Estrutura mínima que `mapProductDetailQueryRow` precisa (resposta `maybeSingle` + nested *). */
-export function isValidProductDetailPayload(data: unknown): boolean {
+function isValidProductDetailPayload(data: unknown): boolean {
   if (!isRecord(data)) return false;
   if (typeof data.id !== "string" || typeof data.name !== "string") return false;
 
@@ -168,7 +168,7 @@ export function parseStoreProductDetail(data: unknown): StoreProductDetail | nul
   return mapProductDetailQueryRow(data as ProductDetailQueryRow);
 }
 
-export function isValidProductStatusPayload(data: unknown): boolean {
+function isValidProductStatusPayload(data: unknown): boolean {
   if (!isRecord(data)) return false;
   if (typeof data.id !== "string" || typeof data.name !== "string") return false;
   const g = data.games;
@@ -187,7 +187,7 @@ export function mapProductStatusRows(data: unknown): ProductStatusListItem[] {
   return out;
 }
 
-export function isValidAdminProductWithPlansRow(data: unknown): boolean {
+function isValidAdminProductWithPlansRow(data: unknown): boolean {
   if (!isRecord(data)) return false;
   if (typeof data.id !== "string" || typeof data.name !== "string") return false;
   const plans = data.product_plans;
