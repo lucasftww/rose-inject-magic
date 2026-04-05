@@ -723,9 +723,15 @@ const Checkout = () => {
             </motion.div>
 
             {/* Payment methods */}
-            <div className={`flex flex-col gap-3 max-w-lg mx-auto ${!formValid ? 'opacity-50 pointer-events-none' : ''}`}>
-              {!formValid && (
+            <div className={`flex flex-col gap-3 max-w-lg mx-auto ${!formValid || !enabledMethods ? 'opacity-50 pointer-events-none' : ''}`}>
+              {!formValid && enabledMethods && (
                 <p className="text-center text-xs text-destructive font-medium mb-2">Preencha todos os seus dados corretamente acima para liberar o pagamento.</p>
+              )}
+              {!enabledMethods && (
+                <div className="flex items-center justify-center py-4 gap-2 text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="text-xs">Carregando métodos de pagamento...</span>
+                </div>
               )}
               {/* PIX */}
               {enabledMethods.pix !== false && (
