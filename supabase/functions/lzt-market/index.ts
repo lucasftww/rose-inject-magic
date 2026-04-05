@@ -650,8 +650,8 @@ Deno.serve(async (req) => {
 
       // Enforce minimum 10 skins via API params (server-side at LZT)
       if (gameType === "riot" || gameType === "valorant") {
-        if (!params.get("valorant_smin") || Number(params.get("valorant_smin")) < 10) {
-          params.set("valorant_smin", "10");
+        if (!params.get("valorant_smin") || Number(params.get("valorant_smin")) < 4) {
+          params.set("valorant_smin", "4");
         }
       } else if (gameType === "lol") {
         if (!params.get("lol_smin") || Number(params.get("lol_smin")) < 10) {
