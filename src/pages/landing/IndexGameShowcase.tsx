@@ -1,6 +1,6 @@
 import { useMemo, useState, useRef, useCallback } from "react";
 import type { ReactNode, MouseEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -118,17 +118,17 @@ const characterOverlayMap: Record<string, { bg: string; character: string; chara
 
 // Gradient fallbacks for games without images
 const GAME_GRADIENTS: Record<string, string> = {
-  "Valorant": "from-rose-900/60 to-card",
-  "Fortnite": "from-violet-900/60 to-card",
-  "CS2": "from-amber-900/60 to-card",
-  "Call of Duty": "from-emerald-900/60 to-card",
-  "PUBG": "from-yellow-900/60 to-card",
-  "Rust": "from-orange-900/60 to-card",
-  "DayZ": "from-green-900/60 to-card",
-  "FiveM": "from-blue-900/60 to-card",
-  "Marvel Rivals": "from-red-900/60 to-card",
-  "Apex Legends": "from-red-800/60 to-card",
-  "Spoofer": "from-purple-900/60 to-card",
+  "Valorant": "from-destructive/40 to-card",
+  "Fortnite": "from-accent/40 to-card",
+  "CS2": "from-muted/60 to-card",
+  "Call of Duty": "from-success/30 to-card",
+  "PUBG": "from-muted/50 to-card",
+  "Rust": "from-destructive/30 to-card",
+  "DayZ": "from-success/20 to-card",
+  "FiveM": "from-primary/30 to-card",
+  "Marvel Rivals": "from-destructive/35 to-card",
+  "Apex Legends": "from-destructive/30 to-card",
+  "Spoofer": "from-accent/30 to-card",
 };
 
 // Slugs to hide from the landing page software showcase
@@ -209,7 +209,6 @@ const SectionHeader = ({ subtitle, title }: { subtitle: string; title: string })
 // ─── Accounts Section ───────────────────────────────────────────────────────
 const ContasSection = () => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
 
   return (
     <section className="border-t border-border bg-background px-4 sm:px-6 py-12 sm:py-20">
@@ -218,18 +217,10 @@ const ContasSection = () => {
 
         <div className="mt-5 sm:mt-12 grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4">
           {GAME_CATEGORIES.map((game) => (
-            <div
+            <Link
               key={game.tab}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  navigate(`/contas?game=${game.tab}`);
-                }
-              }}
-              className="group relative touch-manipulation cursor-pointer overflow-hidden rounded-xl border border-border/40 bg-card transition-all duration-300 hover:border-success/40 hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)]"
-              onClick={() => navigate(`/contas?game=${game.tab}`)}
+              to={`/contas?game=${game.tab}`}
+              className="group relative touch-manipulation overflow-hidden rounded-xl border border-border/40 bg-card transition-all duration-300 hover:border-success/40 hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)]"
             >
               <div className="relative aspect-[3/4] overflow-hidden">
                 <img src={game.image} alt={game.name} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" loading="lazy" decoding="async" />
@@ -252,7 +243,7 @@ const ContasSection = () => {
                   </div>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
 
