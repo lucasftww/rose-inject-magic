@@ -1014,7 +1014,7 @@ const ProductsTab = () => {
                               </option>
                             ))}
                           </select>
-                          <button type="button" onClick={fetchRobotGames} disabled={loadingRobotGames}
+                          <button type="button" onClick={() => fetchRobotGames()} disabled={loadingRobotGames}
                             className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl border border-border/40 text-muted-foreground hover:text-foreground transition-colors">
                             {loadingRobotGames ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
                           </button>
