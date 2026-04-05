@@ -1308,17 +1308,18 @@ const Contas = () => {
 
     try {
       if (!cached) {
-        if (tabChanged) {
-          setStreamedItems([]);
-          setFirstPageLoaded(false);
-        } else {
-          setIsRefetching(true);
-        }
+        // Don't clear items on tab switch — show a loading overlay instead
+        // so the page remains interactive while the API responds
+        setIsRefetching(true);
         setStreamingDone(false);
         setStreamError(null);
         setCurrentPage(1);
         setLoadingMore(false);
         setDisplayPage(1);
+        if (streamedItems.length === 0) {
+          // Only show skeleton if we truly have nothing to display
+          setFirstPageLoaded(false);
+        }
       } else {
         // Cache expirado: manter itens antigos e indicar refetch
         setIsRefetching(true);
