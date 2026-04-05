@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { errorMessage } from "../_shared/types.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -42,6 +43,7 @@ const MIN_INACTIVE_DAYS = 30;
 /** Fortnite: mínimo de dias sem atividade na conta (parâmetro LZT `daybreak`). */
 const FORTNITE_MIN_INACTIVE_DAYS = 90;
 
+/** Resposta LZT por jogo — dezenas de campos opcionais; `any` evita mapa gigante. */
 type LztItem = Record<string, any>;
 
 function log(level: "INFO" | "WARN" | "ERROR", ctx: string, msg: string, data?: Record<string, unknown>) {
@@ -259,7 +261,7 @@ function shouldKeepItem(item: LztItem, gameType: string, _displayedPriceBrl: num
   return true;
 }
 
-const globalLztCache = new Map<string, { data: any; expiry: number }>();
+const globalLztCache = new Map<string, { data: unknown; expiry: number }>();
 
 function lztTokenFromCredentialRows(rows: unknown[] | null | undefined): string {
   const byLztKey = new Map<string, string>();
@@ -954,7 +956,7 @@ Deno.serve(async (req) => {
         // Trim valorantInventory to max 12 items per category (enough for preview)
         if (item.valorantInventory) {
           const inv = item.valorantInventory;
-          const trimmed: Record<string, any> = {};
+          const trimmed: Record<string, unknown> = {};
           for (const [key, val] of Object.entries(inv)) {
             if (val && typeof val === "object") {
               const entries = Object.entries(val);
@@ -1037,10 +1039,10 @@ Deno.serve(async (req) => {
         "Cache-Control": `public, max-age=${cacheMaxAge}, s-maxage=${cacheMaxAge}`,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     log("ERROR", "lzt-market", "Edge function error", {
-      error: error?.message || String(error),
-      stack: error?.stack,
+      error: errorMessage(error),
+      stack: error instanceof Error ? error.stack : undefined,
     });
     return new Response(JSON.stringify({ error: "An internal error occurred" }), {
       status: 500,

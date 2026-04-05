@@ -71,7 +71,7 @@ const CouponsTab = () => {
     setFormExpires(coupon.expires_at ? coupon.expires_at.slice(0, 16) : "");
     // Load associated products
     const { data } = await supabase.from("coupon_products").select("product_id").eq("coupon_id", coupon.id);
-    setFormProductIds(data ? data.map((p: any) => p.product_id) : []);
+    setFormProductIds(data?.map((row) => row.product_id) ?? []);
     setShowForm(true);
   };
 

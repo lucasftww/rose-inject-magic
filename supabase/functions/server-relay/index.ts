@@ -69,12 +69,13 @@ Deno.serve(async (req) => {
       "fbp", "fbc", "fb_login_id", "lead_id",
     ]);
 
-    const rawUserData = user_data || {};
-    const userData: Record<string, any> = {};
+    const rawUserData = (user_data || {}) as Record<string, unknown>;
+    const userData: Record<string, unknown> = {};
 
     for (const key of Object.keys(rawUserData)) {
-      if (ALLOWED_USER_DATA.has(key) && rawUserData[key]) {
-        userData[key] = rawUserData[key];
+      const val = rawUserData[key];
+      if (ALLOWED_USER_DATA.has(key) && val != null && val !== "") {
+        userData[key] = val;
       }
     }
 
@@ -111,7 +112,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    const eventData: Record<string, any> = {
+    const eventData: Record<string, unknown> = {
       event_name,
       event_id,
       event_time: event_time || Math.floor(Date.now() / 1000),
@@ -126,7 +127,7 @@ Deno.serve(async (req) => {
     const url = `https://graph.facebook.com/${GRAPH_API_VERSION}/${PIXEL_ID}/events?access_token=${ACCESS_TOKEN}`;
     const bodyStr = JSON.stringify(payload);
 
-    let lastError: any = null;
+    let lastError: unknown = null;
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
         const metaRes = await fetch(url, {

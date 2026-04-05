@@ -173,6 +173,9 @@ const Checkout = () => {
   const freeCheckoutClaimRef = useRef(false);
 
   useEffect(() => {
+    if (items.length === 0 || cartFinalPrice > 0) {
+      freeCheckoutClaimRef.current = false;
+    }
     if (authLoading || !user || items.length === 0 || paymentId || displayPrice !== null) return;
     if (cartFinalPrice > 0) return;
     if (freeCheckoutClaimRef.current) return;

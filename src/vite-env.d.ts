@@ -4,7 +4,7 @@ interface Window {
   fbq: (
     command: "track" | "trackCustom" | "init" | "set" | "addToCart" | "consent",
     event?: string,
-    params?: Record<string, any>,
+    params?: Record<string, unknown>,
     options?: { eventID?: string }
   ) => void;
 }

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import { supabase } from "@/integrations/supabase/client";
+import type { Tables } from "@/integrations/supabase/types";
 import { Star, Loader2, MessageSquare } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -125,22 +126,41 @@ const Avaliacoes = () => {
         return;
       }
 
-      // Fetch product names
-      const productIds = [...new Set(data.map((r: any) => r.product_id))];
-      const { data: products } = await supabase
-        .from("products")
-        .select("id, name")
-        .in("id", productIds);
-      const productMap = new Map((products || []).map((p: any) => [p.id, p.name]));
+      type PublicReviewRow = Tables<"public_product_reviews">;
+      const rows = data as PublicReviewRow[];
 
-      const dbReviews = data.map((r: any) => ({
-        id: r.id,
-        rating: r.rating,
-        comment: r.comment,
-        created_at: r.created_at,
-        username: r.username || "Usuário",
-        product_name: productMap.get(r.product_id) || "Produto",
-      }));
+      const productIds = [
+        ...new Set(
+          rows
+            .map((r) => r.product_id)
+            .filter((id): id is string => typeof id === "string" && id.length > 0)
+        ),
+      ];
+      const products =
+        productIds.length > 0
+          ? (await supabase.from("products").select("id, name").in("id", productIds)).data
+          : [];
+
+      const productMap = new Map<string, string | null>();
+      (products ?? []).forEach((p) => productMap.set(p.id, p.name));
+
+      const dbReviews: Review[] = rows
+        .filter(
+          (r): r is PublicReviewRow & { id: string; created_at: string; rating: number } =>
+            typeof r.id === "string" &&
+            r.id.length > 0 &&
+            typeof r.created_at === "string" &&
+            typeof r.rating === "number"
+        )
+        .map((r) => ({
+          id: r.id,
+          rating: r.rating,
+          comment: r.comment,
+          created_at: r.created_at,
+          username: r.username || "Usuário",
+          product_name:
+            (typeof r.product_id === "string" ? productMap.get(r.product_id) : null) ?? "Produto",
+        }));
 
       // Merge real reviews with static ones
       const all = [...dbReviews, ...STATIC_REVIEWS].sort(

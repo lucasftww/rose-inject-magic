@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient, type User } from "https://esm.sh/@supabase/supabase-js@2";
+import { errorMessage } from "../_shared/types.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -63,11 +64,15 @@ serve(async (req) => {
       });
     }
 
-    // Parse body safely (invoke always sends POST)
-    let body: any = {};
+    interface AdminRequestBody {
+      action?: string;
+      target_user_id?: string;
+      reason?: string;
+    }
+    let body: AdminRequestBody = {};
     try {
       const text = await req.text();
-      if (text) body = JSON.parse(text);
+      if (text) body = JSON.parse(text) as AdminRequestBody;
     } catch { /* empty body = list users */ }
 
     const { action, target_user_id, reason } = body;
@@ -75,8 +80,13 @@ serve(async (req) => {
     // If no action, list users
     if (!action) {
       // Helper to fetch all rows with pagination (bypasses 1000-row limit)
-      async function fetchAllRows(table: string, select: string, orderCol?: string, orderAsc?: boolean) {
-        let allData: any[] = [];
+      async function fetchAllRows<T extends Record<string, unknown> = Record<string, unknown>>(
+        table: string,
+        select: string,
+        orderCol?: string,
+        orderAsc?: boolean,
+      ): Promise<T[]> {
+        let allData: T[] = [];
         let from = 0;
         const PAGE_SIZE = 1000;
         while (true) {
@@ -85,7 +95,7 @@ serve(async (req) => {
           const { data, error } = await query;
           if (error) throw error;
           if (!data || data.length === 0) break;
-          allData = allData.concat(data);
+          allData = allData.concat(data as T[]);
           if (data.length < PAGE_SIZE) break;
           from += PAGE_SIZE;
         }
@@ -93,7 +103,7 @@ serve(async (req) => {
       }
 
       // Paginate listUsers to handle >1000 users
-      let users: any[] = [];
+      let users: User[] = [];
       let page = 1;
       while (true) {
         const { data, error: listError } = await supabase.auth.admin.listUsers({ page, perPage: 1000 });
@@ -104,42 +114,59 @@ serve(async (req) => {
         page++;
       }
 
+      type ProfileRow = { user_id: string; username: string | null; avatar_url: string | null; banned: boolean | null; banned_at: string | null; banned_reason: string | null };
+      type RoleRow = { user_id: string; role: string };
+      type IpRow = { user_id: string; ip_address: string; logged_at: string };
+      type PaymentRow = { user_id: string; amount: number; status: string | null; created_at: string | null; cart_snapshot: unknown };
+      type TicketRow = {
+        id: string;
+        user_id: string;
+        product_id: string;
+        product_plan_id: string;
+        stock_item_id: string | null;
+        status: string | null;
+        status_label: string | null;
+        created_at: string | null;
+      };
+      type ProductRow = { id: string; name: string; image_url: string | null };
+      type PlanRow = { id: string; name: string; price: number };
+      type StockRow = { id: string; content: unknown };
+
       const [profiles, roles, ips, payments, tickets, products, plans, stockItems] = await Promise.all([
-        fetchAllRows("profiles", "user_id, username, avatar_url, banned, banned_at, banned_reason"),
-        fetchAllRows("user_roles", "user_id, role"),
-        fetchAllRows("user_login_ips", "user_id, ip_address, logged_at", "logged_at", false),
-        fetchAllRows("payments", "user_id, amount, status, created_at, cart_snapshot", "created_at", false),
-        fetchAllRows("order_tickets", "id, user_id, product_id, product_plan_id, stock_item_id, status, status_label, created_at", "created_at", false),
-        fetchAllRows("products", "id, name, image_url"),
-        fetchAllRows("product_plans", "id, name, price"),
-        fetchAllRows("stock_items", "id, content"),
+        fetchAllRows<ProfileRow>("profiles", "user_id, username, avatar_url, banned, banned_at, banned_reason"),
+        fetchAllRows<RoleRow>("user_roles", "user_id, role"),
+        fetchAllRows<IpRow>("user_login_ips", "user_id, ip_address, logged_at", "logged_at", false),
+        fetchAllRows<PaymentRow>("payments", "user_id, amount, status, created_at, cart_snapshot", "created_at", false),
+        fetchAllRows<TicketRow>("order_tickets", "id, user_id, product_id, product_plan_id, stock_item_id, status, status_label, created_at", "created_at", false),
+        fetchAllRows<ProductRow>("products", "id, name, image_url"),
+        fetchAllRows<PlanRow>("product_plans", "id, name, price"),
+        fetchAllRows<StockRow>("stock_items", "id, content"),
       ]);
 
-      const productMap = new Map(products.map((p: any) => [p.id, p]));
-      const planMap = new Map(plans.map((p: any) => [p.id, p]));
-      const stockMap = new Map(stockItems.map((s: any) => [s.id, s]));
+      const productMap = new Map(products.map((p) => [p.id, p]));
+      const planMap = new Map(plans.map((p) => [p.id, p]));
+      const stockMap = new Map(stockItems.map((s) => [s.id, s]));
 
-      const profileMap = new Map(profiles.map((p: any) => [p.user_id, p]));
+      const profileMap = new Map(profiles.map((p) => [p.user_id, p]));
       const roleMap = new Map<string, string[]>();
-      roles.forEach((r: any) => {
+      roles.forEach((r) => {
         const existing = roleMap.get(r.user_id) || [];
         existing.push(r.role);
         roleMap.set(r.user_id, existing);
       });
 
       const ipMap = new Map<string, { ip_address: string; logged_at: string }[]>();
-      ips.forEach((ip: any) => {
+      ips.forEach((ip) => {
         const existing = ipMap.get(ip.user_id) || [];
         if (existing.length < 5) existing.push({ ip_address: ip.ip_address, logged_at: ip.logged_at });
         ipMap.set(ip.user_id, existing);
       });
 
-      // Calculate total spent, total orders, and recent payments per user
+      type RecentPayment = { amount: number; status: string | null; created_at: string | null; cart_snapshot: unknown };
       const spentMap = new Map<string, number>();
       const ordersMap = new Map<string, number>();
-      const recentPaymentsMap = new Map<string, any[]>();
-      payments.forEach((p: any) => {
-        // Only count COMPLETED payments for total spent
+      const recentPaymentsMap = new Map<string, RecentPayment[]>();
+      payments.forEach((p) => {
         if (p.status === "COMPLETED") {
           spentMap.set(p.user_id, (spentMap.get(p.user_id) || 0) + p.amount);
         }
@@ -147,8 +174,19 @@ serve(async (req) => {
         if (existing.length < 5) existing.push({ amount: p.amount, status: p.status, created_at: p.created_at, cart_snapshot: p.cart_snapshot });
         recentPaymentsMap.set(p.user_id, existing);
       });
-      const userOrdersMap = new Map<string, any[]>();
-      tickets.forEach((t: any) => {
+      type UserOrderSummary = {
+        id: string;
+        product_name: string;
+        product_image: string | null;
+        plan_name: string;
+        plan_price: number;
+        status: string | null;
+        status_label: string | null;
+        created_at: string | null;
+        stock_content: string | null;
+      };
+      const userOrdersMap = new Map<string, UserOrderSummary[]>();
+      tickets.forEach((t) => {
         ordersMap.set(t.user_id, (ordersMap.get(t.user_id) || 0) + 1);
         const existing = userOrdersMap.get(t.user_id) || [];
         const prod = productMap.get(t.product_id);
@@ -168,7 +206,7 @@ serve(async (req) => {
         userOrdersMap.set(t.user_id, existing);
       });
 
-      const result = users.map((u: any) => {
+      const result = users.map((u) => {
         const profile = profileMap.get(u.id);
         return {
           id: u.id,
@@ -280,8 +318,8 @@ serve(async (req) => {
           });
       }
     }
-  } catch (err: any) {
-    return new Response(JSON.stringify({ error: err.message }), {
+  } catch (err: unknown) {
+    return new Response(JSON.stringify({ error: errorMessage(err) }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

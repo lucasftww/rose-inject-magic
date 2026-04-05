@@ -377,7 +377,7 @@ getFbc();
 const sendCAPI = async (
   eventName: string,
   eventId: string,
-  customData: Record<string, any>
+  customData: Record<string, unknown>
 ) => {
   try {
     if (!supabaseAnonKey.trim()) return;
@@ -460,7 +460,7 @@ export const trackViewContent = (data: TrackingData) => {
   if (typeof window === "undefined") return;
 
   const eventId = generateEventId("vc");
-  const customData: Record<string, any> = {
+  const customData: Record<string, unknown> = {
     content_name: data.contentName,
     content_ids: data.contentIds,
     contents: data.contentIds.map((id) => ({ id, quantity: 1 })),
@@ -481,7 +481,7 @@ export const trackInitiateCheckout = (data: TrackingData) => {
   if (typeof window === "undefined") return;
 
   const eventId = generateEventId("ic");
-  const customData: Record<string, any> = {
+  const customData: Record<string, unknown> = {
     content_name: data.contentName,
     content_ids: data.contentIds,
     contents: data.contentIds.map((id) => ({ id, quantity: 1 })),
@@ -513,7 +513,7 @@ export const trackPurchase = (
     devLog("trackPurchase sessionStorage failed", e);
   }
 
-  const customData: Record<string, any> = {
+  const customData: Record<string, unknown> = {
     content_name: data.contentName,
     content_ids: data.contentIds,
     contents: data.contentIds.map((id) => ({ id, quantity: 1 })),

@@ -1,4 +1,12 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import type {
+  CartSnapshotItem,
+  PaymentRow,
+  RobotPlanRow,
+  RobotProductRow,
+  SupabaseAdminClient,
+} from "../_shared/types.ts";
+import { errorMessage } from "../_shared/types.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -40,15 +48,27 @@ function log(level: "INFO" | "WARN" | "ERROR", ctx: string, msg: string, data?: 
 }
 
 type RobotCredentials = { username: string; password: string };
+
+interface RobotGameApiRow {
+  id?: unknown;
+  prices?: Record<string, unknown>;
+  maxKeys?: unknown;
+  soldKeys?: unknown;
+  status?: unknown;
+  is_free?: boolean;
+  isFree?: boolean;
+  name?: unknown;
+}
+
 type RobotGameSnapshot = {
-  game: any | null;
+  game: RobotGameApiRow | null;
   balance: number | null;
   expectedPrice: number | null;
   availableSlots: number | null;
   reason?: string;
 };
 
-async function getRobotCredentials(supabaseAdmin: any): Promise<RobotCredentials | null> {
+async function getRobotCredentials(supabaseAdmin: SupabaseAdminClient): Promise<RobotCredentials | null> {
   const [uRes, pRes] = await Promise.all([
     supabaseAdmin.from("system_credentials").select("value").eq("env_key", "ROBOT_API_USERNAME").maybeSingle(),
     supabaseAdmin.from("system_credentials").select("value").eq("env_key", "ROBOT_API_PASSWORD").maybeSingle(),
@@ -65,7 +85,7 @@ async function getRobotCredentials(supabaseAdmin: any): Promise<RobotCredentials
  * Token da API Lolzteam Market: coluna `LZT_API_TOKEN` (migração recente) ou `LZT_MARKET_TOKEN` (seed legado),
  * depois segredo `LZT_MARKET_TOKEN` na Edge Function.
  */
-async function getLztMarketToken(supabaseAdmin: any): Promise<string | null> {
+async function getLztMarketToken(supabaseAdmin: SupabaseAdminClient): Promise<string | null> {
   const { data: rows } = await supabaseAdmin
     .from("system_credentials")
     .select("env_key, value")
@@ -157,7 +177,8 @@ async function fetchRobotGameSnapshot(
 
   const gamesData = await gamesRes.json();
   const games = Array.isArray(gamesData) ? gamesData : gamesData.games || [];
-  const game = games.find((g: any) => Number(g.id) === Number(robotGameId)) || null;
+  const rawGame = games.find((g: Record<string, unknown>) => Number(g["id"]) === Number(robotGameId));
+  const game: RobotGameApiRow | null = rawGame ? (rawGame as RobotGameApiRow) : null;
   const parsedBalance = Number(Array.isArray(gamesData) ? NaN : gamesData?.balance);
   const balance = Number.isFinite(parsedBalance) ? parsedBalance : null;
 
@@ -232,7 +253,7 @@ async function sha256Hash(message: string | null | undefined): Promise<string> {
   }
 }
 
-async function sendServerPurchaseEvent(supabaseAdmin: any, payment: any, req: Request) {
+async function sendServerPurchaseEvent(supabaseAdmin: SupabaseAdminClient, payment: PaymentRow, req: Request) {
   try {
     const { data: capiTokenRow } = await supabaseAdmin
       .from("system_credentials")
@@ -287,7 +308,7 @@ async function sendServerPurchaseEvent(supabaseAdmin: any, payment: any, req: Re
     // 1. Identity data (em, ph, fbp, fbc, external_id)
     const browserData = (payment.meta_tracking || {}) as Record<string, string>;
     const customerData = (payment.customer_data || {}) as Record<string, string>;
-    const userData: Record<string, any> = {};
+    const userData: Record<string, string> = {};
 
     // Priority: browserData (meta_tracking) > customerData (payment table)
     const email = browserData.em || customerData.email;
@@ -385,7 +406,7 @@ async function sendServerPurchaseEvent(supabaseAdmin: any, payment: any, req: Re
 }
 
 // Helper: send Discord webhook notification on sale
-async function sendDiscordSaleNotification(supabaseAdmin: any, payment: any) {
+async function sendDiscordSaleNotification(supabaseAdmin: SupabaseAdminClient, payment: PaymentRow) {
   try {
     const { data: webhookCred } = await supabaseAdmin
       .from("system_credentials")
@@ -463,7 +484,7 @@ async function sendDiscordSaleNotification(supabaseAdmin: any, payment: any) {
   }
 }
 // Helper: assign Discord "Cliente" role to buyer after purchase
-async function assignDiscordClientRole(supabaseAdmin: any, userId: string) {
+async function assignDiscordClientRole(supabaseAdmin: SupabaseAdminClient, userId: string) {
   try {
     const botToken = Deno.env.get("DISCORD_BOT_TOKEN");
     if (!botToken) {
@@ -477,8 +498,8 @@ async function assignDiscordClientRole(supabaseAdmin: any, userId: string) {
       .select("env_key, value")
       .in("env_key", ["DISCORD_GUILD_ID", "DISCORD_CLIENT_ROLE_ID"]);
 
-    const guildId = creds?.find((c: any) => c.env_key === "DISCORD_GUILD_ID")?.value;
-    const roleId = creds?.find((c: any) => c.env_key === "DISCORD_CLIENT_ROLE_ID")?.value;
+    const guildId = creds?.find((c: { env_key?: string; value?: string }) => c.env_key === "DISCORD_GUILD_ID")?.value;
+    const roleId = creds?.find((c: { env_key?: string; value?: string }) => c.env_key === "DISCORD_CLIENT_ROLE_ID")?.value;
 
     if (!guildId || !roleId) {
       console.log("Discord Guild/Role IDs not configured, skipping role assignment");
@@ -488,7 +509,7 @@ async function assignDiscordClientRole(supabaseAdmin: any, userId: string) {
     // Get user's Discord identity from auth
     const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(userId);
     const identities = authUser?.user?.identities || [];
-    const discordIdentity = identities.find((i: any) => i.provider === "discord");
+    const discordIdentity = identities.find((i: { provider?: string }) => i.provider === "discord");
 
     if (!discordIdentity) {
       console.log("User has no Discord identity, skipping role assignment");
@@ -521,7 +542,7 @@ async function assignDiscordClientRole(supabaseAdmin: any, userId: string) {
 }
 
 // Helper: fulfill order (deliver stock, create tickets, record coupon)
-async function fulfillOrder(supabaseAdmin: any, payment: any) {
+async function fulfillOrder(supabaseAdmin: SupabaseAdminClient, payment: PaymentRow) {
   log("INFO", "fulfillOrder", "Starting fulfillment", { paymentId: payment.id, userId: payment.user_id, itemCount: payment.cart_snapshot?.length, amount: payment.amount });
   const cartItems = payment.cart_snapshot as Array<{
     productId: string;
@@ -551,7 +572,7 @@ async function fulfillOrder(supabaseAdmin: any, payment: any) {
       .from("reseller_products")
       .select("product_id")
       .eq("reseller_id", resellerData.id);
-    resellerProductIds = (rProducts || []).map((rp: any) => rp.product_id);
+    resellerProductIds = (rProducts || []).map((rp: { product_id: string }) => rp.product_id);
     log("INFO", "fulfillOrder", "Reseller detected", { resellerId: resellerData.id, discount: resellerData.discount_percent, authorizedProducts: resellerProductIds.length });
   }
 
@@ -600,7 +621,13 @@ async function fulfillOrder(supabaseAdmin: any, payment: any) {
     for (let i = 0; i < (item.quantity || 1); i++) {
       if (isRobotProduct) {
         log("INFO", "fulfillOrder", "Robot product detected", { productId: item.productId, robotGameId: productData.robot_game_id, duration: planData?.robot_duration_days });
-        await fulfillRobotProduct(supabaseAdmin, payment, item, productData, planData);
+        await fulfillRobotProduct(
+          supabaseAdmin,
+          payment,
+          item,
+          productData as RobotProductRow,
+          planData as RobotPlanRow | null,
+        );
       } else {
         // Standard stock-based fulfillment — atomic claim to prevent race conditions
         let stockId: string | null = null;
@@ -719,7 +746,7 @@ async function fulfillOrder(supabaseAdmin: any, payment: any) {
 }
 
 // LZT Market account purchase and delivery
-async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
+async function fulfillLztAccount(supabaseAdmin: SupabaseAdminClient, payment: PaymentRow, item: CartSnapshotItem) {
   const LZT_TOKEN = await getLztMarketToken(supabaseAdmin);
 
   const itemId = item.lztItemId;
@@ -799,13 +826,13 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
 
     // Absolute last resort: any active product
     if (!productId) {
-      const { data: anyFallback } = await supabaseAdmin
+      const { data: lastResortProduct } = await supabaseAdmin
         .from("products")
         .select("id")
         .eq("active", true)
         .limit(1)
         .single();
-      productId = anyFallback?.id || null;
+      productId = lastResortProduct?.id || null;
     }
 
     if (productId) {
@@ -963,7 +990,7 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
     // LZT API returns 403 "retry_request" as a temporary rate-limit signal
     const RETRYABLE_BUY_STATUSES = [403, 429, 502, 503, 504];
     let buyRes: Response | null = null;
-    let buyData: any = null;
+    let buyData: Record<string, unknown> | null = null;
     for (let attempt = 0; attempt < 4; attempt++) {
       if (attempt > 0) {
         const delay = 2000 * Math.pow(2, attempt - 1); // 2s, 4s, 8s
@@ -986,7 +1013,7 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
       // Check if this is a retryable error (retry_request or server error)
       const isRetryableStatus = RETRYABLE_BUY_STATUSES.includes(buyRes.status);
       const isRetryableError = Array.isArray(buyData?.errors) &&
-        buyData.errors.some((e: string) => e === "retry_request" || e.includes("retry"));
+        (buyData.errors as unknown[]).some((e) => typeof e === "string" && (e === "retry_request" || e.includes("retry")));
       if (!isRetryableStatus && !isRetryableError) break; // non-retryable, stop
     }
 
@@ -997,14 +1024,15 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
       return;
     }
 
-    const boughtItem = buyData.item;
-    const loginData = boughtItem?.loginData;
+    const boughtItem = buyData.item as Record<string, unknown> | undefined;
+    const loginData = boughtItem?.loginData as Record<string, unknown> | undefined;
+    const str = (v: unknown) => (typeof v === "string" ? v : "");
 
-    let email = loginData?.login || loginData?.email || boughtItem?.email || "";
-    let password = loginData?.password || boughtItem?.password || "";
-    const rawCredentials = loginData?.raw || "";
-    // Preserve full email login data (login + password) if available
-    let accountEmail: any = boughtItem?.emailLoginData || loginData?.emailLoginData || loginData?.email || boughtItem?.email || "";
+    let email = str(loginData?.login) || str(loginData?.email) || str(boughtItem?.email) || "";
+    let password = str(loginData?.password) || str(boughtItem?.password) || "";
+    const rawCredentials = str(loginData?.raw);
+    let accountEmail: unknown =
+      boughtItem?.emailLoginData ?? loginData?.emailLoginData ?? loginData?.email ?? boughtItem?.email ?? "";
 
     if (!email && rawCredentials) {
       const parts = rawCredentials.split(":");
@@ -1014,9 +1042,8 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
       }
     }
 
-    // If accountEmail is a string and equals the main login, try to get richer data
     if (typeof accountEmail === "string" && accountEmail === email && boughtItem?.item_origin === "autoreg") {
-      accountEmail = boughtItem?.emailLoginData || boughtItem?.email || loginData?.email || "";
+      accountEmail = boughtItem?.emailLoginData ?? boughtItem?.email ?? loginData?.email ?? "";
     }
 
     const stockContent = email && password
@@ -1107,16 +1134,26 @@ async function fulfillLztAccount(supabaseAdmin: any, payment: any, item: any) {
     if (saleErr) console.error("Failed to record lzt_sale:", saleErr);
     else console.log("LZT sale recorded:", itemId);
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("LZT account purchase error:", err);
-    await createManualDeliveryTicket(`Exception: ${err?.message || String(err)}`);
+    await createManualDeliveryTicket(`Exception: ${errorMessage(err)}`);
   }
 }
 
 // Robot Project purchase and delivery
-async function fulfillRobotProduct(supabaseAdmin: any, payment: any, item: any, productData: any, planData: any) {
-  const robotGameId = productData.robot_game_id;
-  const duration = planData?.robot_duration_days || 30;
+async function fulfillRobotProduct(
+  supabaseAdmin: SupabaseAdminClient,
+  payment: PaymentRow,
+  item: CartSnapshotItem,
+  productData: RobotProductRow,
+  planData: RobotPlanRow | null,
+) {
+  const robotGameId = Number(productData.robot_game_id);
+  if (!Number.isFinite(robotGameId) || robotGameId <= 0) {
+    log("ERROR", "fulfillRobot", "Invalid robot_game_id", { productId: productData.id });
+    return;
+  }
+  const duration = planData?.robot_duration_days ?? 30;
 
   log("INFO", "fulfillRobot", "Starting Robot fulfillment", { robotGameId, duration, product: item.productName, userId: payment.user_id });
 
@@ -1534,7 +1571,7 @@ async function fulfillRobotProduct(supabaseAdmin: any, payment: any, item: any, 
 
     console.log(`Robot fulfillment success: key=${key}, game=${gameName}, spent=${amountSpent}, balance=${robotBalance}, free=${isFreeGame}`);
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Robot fulfillment error:", err);
     const { data: ticket } = await supabaseAdmin
       .from("order_tickets")
@@ -1545,7 +1582,7 @@ async function fulfillRobotProduct(supabaseAdmin: any, payment: any, item: any, 
         stock_item_id: null,
         status: "open",
         status_label: "Entrega Manual",
-        metadata: { type: "robot-project", robot_game_id: robotGameId, duration, error: err?.message || String(err) },
+        metadata: { type: "robot-project", robot_game_id: robotGameId, duration, error: errorMessage(err) },
       })
       .select("id")
       .single();
@@ -1562,17 +1599,17 @@ async function fulfillRobotProduct(supabaseAdmin: any, payment: any, item: any, 
 
 // ========== SERVER-SIDE PRICE VALIDATION ==========
 async function validateAndCalculatePrice(
-  supabaseAdmin: any,
-  cartSnapshot: any[],
+  supabaseAdmin: SupabaseAdminClient,
+  cartSnapshot: CartSnapshotItem[],
   userId: string,
   couponId: string | null
-): Promise<{ validatedAmount: number; validatedDiscount: number; validatedCart: any[]; error?: string }> {
+): Promise<{ validatedAmount: number; validatedDiscount: number; validatedCart: CartSnapshotItem[]; error?: string }> {
   if (!Array.isArray(cartSnapshot) || cartSnapshot.length === 0) {
     return { validatedAmount: 0, validatedDiscount: 0, validatedCart: [], error: "Carrinho vazio" };
   }
 
   let totalAmount = 0;
-  const validatedCart: any[] = [];
+  const validatedCart: CartSnapshotItem[] = [];
   /** Lazy FX for LZT cost — matches getLiveRates() (USD+RUB) instead of hardcoded RUB. */
   let lztFxCache: { rub: number; usd: number } | null = null;
   const getLztFxRates = async () => {
@@ -1911,7 +1948,7 @@ async function validateAndCalculatePrice(
 }
 
 // ========== MISTICPAY HELPERS ==========
-async function getMisticPayCredentials(supabaseAdmin: any): Promise<{ clientId: string; clientSecret: string } | null> {
+async function getMisticPayCredentials(supabaseAdmin: SupabaseAdminClient): Promise<{ clientId: string; clientSecret: string } | null> {
   const [ciResult, csResult] = await Promise.all([
     supabaseAdmin.from("system_credentials").select("value").eq("env_key", "MISTICPAY_CLIENT_ID").maybeSingle(),
     supabaseAdmin.from("system_credentials").select("value").eq("env_key", "MISTICPAY_CLIENT_SECRET").maybeSingle(),
@@ -1981,7 +2018,9 @@ function checkRateLimit(key: string, map: Map<string, { count: number; windowSta
 }
 
 // Cleanup old entries from maps periodically
-function cleanupMap(map: Map<string, any>, maxSize: number) {
+type CleanupMapValue = number | { windowStart?: number };
+
+function cleanupMap(map: Map<string, CleanupMapValue>, maxSize: number) {
   if (map.size > maxSize) {
     const cutoff = Date.now() - 120_000;
     for (const [k, v] of map) {
@@ -2281,7 +2320,7 @@ Deno.serve(async (req) => {
       const { cart_snapshot, coupon_id, meta_user_data, customer_data } = body;
 
       const [validationResult, profileResult] = await Promise.all([
-        validateAndCalculatePrice(supabaseAdmin, cart_snapshot, userId, coupon_id),
+        validateAndCalculatePrice(supabaseAdmin, cart_snapshot as CartSnapshotItem[], userId, coupon_id),
         supabaseAdmin.from("profiles").select("username").eq("user_id", userId).maybeSingle(),
       ]);
 
@@ -2629,7 +2668,7 @@ Deno.serve(async (req) => {
         });
       }
 
-      const meta = (ticket.metadata || {}) as Record<string, any>;
+      const meta = (ticket.metadata || {}) as Record<string, unknown>;
       if (meta.type !== "robot-project") {
         return new Response(JSON.stringify({ error: "Este ticket não é do Robot Project" }), {
           status: 400,
@@ -2693,7 +2732,13 @@ Deno.serve(async (req) => {
         quantity: 1,
       };
 
-      await fulfillRobotProduct(supabaseAdmin, payment, item, productData, planData);
+      await fulfillRobotProduct(
+        supabaseAdmin,
+        payment as PaymentRow,
+        item,
+        productData as RobotProductRow,
+        planData as RobotPlanRow,
+      );
 
       return new Response(JSON.stringify({ success: true, message: "Reprocessamento da entrega Robot executado" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

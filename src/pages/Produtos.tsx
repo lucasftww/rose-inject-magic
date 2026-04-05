@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef, useCallback, type ReactNode } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import { Search, SlidersHorizontal, DollarSign, ArrowLeft, Loader2, Package, Tag, ArrowUpDown, UserCheck, X, ArrowRight, Gamepad2, Gift, Shield, AlertCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -552,6 +552,13 @@ const GameSelectScreen = ({
             <p className="max-w-md text-sm text-muted-foreground">
               Encontre os melhores softwares para seu jogo favorito. Selecione abaixo e descubra as opções disponíveis.
             </p>
+            <p className="max-w-2xl text-xs leading-relaxed text-muted-foreground/85">
+              Aqui é o catálogo de <span className="font-medium text-foreground/80">produtos</span> da loja (software, loaders e itens com entrega via{" "}
+              <span className="font-medium text-foreground/80">Robot Project</span> quando o produto usa esse provedor).
+              Contas de jogo do <span className="font-medium text-foreground/80">LZT Market</span> estão em{" "}
+              <Link to="/contas" className="text-success underline-offset-2 hover:underline">Contas</Link>
+              {" "}— outro catálogo, preço e checkout.
+            </p>
 
             {/* Search bar */}
             <motion.div
@@ -1097,6 +1104,13 @@ const Produtos = () => {
             ))}
           </div>
         </div>
+
+        <p className="mt-3 max-w-2xl text-xs leading-relaxed text-muted-foreground/85">
+          Esta listagem é do catálogo <span className="font-medium text-foreground/80">Produtos</span> (não é o mercado de contas LZT).
+          Para comprar conta pronta do jogo, use{" "}
+          <Link to="/contas" className="text-success underline-offset-2 hover:underline">Contas</Link>
+          {" "}(LZT Market).
+        </p>
 
         <div className="mt-8 flex flex-col gap-8 lg:flex-row">
           {/* ─── Mobile Filter Button ─── */}

@@ -325,8 +325,9 @@ const PedidoChat = () => {
         const mapped = mapTicketMessageRow(insertedMsg);
         setMessages((prev) => (prev.some((m) => m.id === mapped.id) ? prev : [...prev, mapped]));
       }
-    } catch (err: any) {
-      toast({ title: "Erro", description: err?.message || "Erro ao enviar áudio", variant: "destructive" });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      toast({ title: "Erro", description: msg || "Erro ao enviar áudio", variant: "destructive" });
     } finally {
       setUploadingFile(false);
       setSending(false);
@@ -351,9 +352,10 @@ const PedidoChat = () => {
               toast({ title: "Erro no upload", description: `Falha ao enviar ${file.name}`, variant: "destructive" });
             }
           }
-        } catch (uploadErr: any) {
+        } catch (uploadErr: unknown) {
           console.error("Upload error:", uploadErr);
-          toast({ title: "Erro no upload", description: uploadErr?.message || "Falha ao enviar arquivo", variant: "destructive" });
+          const msg = uploadErr instanceof Error ? uploadErr.message : String(uploadErr);
+          toast({ title: "Erro no upload", description: msg || "Falha ao enviar arquivo", variant: "destructive" });
         } finally {
           setUploadingFile(false);
           // Clean up preview URLs
@@ -380,9 +382,10 @@ const PedidoChat = () => {
         setMessages((prev) => (prev.some((m) => m.id === mapped.id) ? prev : [...prev, mapped]));
       }
       setNewMessage("");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Send message error:", err);
-      toast({ title: "Erro", description: err?.message || "Erro ao enviar mensagem", variant: "destructive" });
+      const msg = err instanceof Error ? err.message : String(err);
+      toast({ title: "Erro", description: msg || "Erro ao enviar mensagem", variant: "destructive" });
     } finally {
       setSending(false);
     }

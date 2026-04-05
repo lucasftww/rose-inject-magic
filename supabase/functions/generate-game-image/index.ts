@@ -107,7 +107,10 @@ serve(async (req) => {
       if (typeof content === "string" && content.startsWith("data:image")) {
         finalImage = content;
       } else if (Array.isArray(content)) {
-        const imgPart = content.find((p: any) => p.type === "image_url" || p.type === "image");
+        const imgPart = content.find(
+          (p: { type?: string; image_url?: { url?: string }; url?: string }) =>
+            p.type === "image_url" || p.type === "image",
+        );
         finalImage = imgPart?.image_url?.url || imgPart?.url;
       }
     }

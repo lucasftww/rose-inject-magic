@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Tables } from "@/integrations/supabase/types";
 import { fetchAllRows } from "@/lib/supabaseAllRows";
 import { useAdminUsers } from "@/hooks/useAdminUsers";
 import {
@@ -10,19 +11,7 @@ import {
 import { verifyPayment } from "@/hooks/useAdminData";
 import { toast } from "@/hooks/use-toast";
 
-interface PaymentRow {
-  id: string;
-  user_id: string;
-  amount: number;
-  status: string;
-  created_at: string;
-  paid_at: string | null;
-  charge_id: string | null;
-  payment_method: string | null;
-  cart_snapshot: any;
-  customer_data: any;
-  username?: string;
-}
+type PaymentRow = Tables<"payments"> & { username?: string };
 
 const ITEMS_PER_PAGE = 20;
 
@@ -177,12 +166,14 @@ const PaymentsListTab = () => {
                     </td>
                     <td className="px-4 py-3 text-xs font-bold text-foreground">R$ {(p.amount / 100).toFixed(2)}</td>
                     <td className="px-4 py-3">
-                      <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-bold shadow-sm ${statusColors[p.status] || "bg-muted text-muted-foreground border-border"}`}>
-                        {p.status}
+                      <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-bold shadow-sm ${statusColors[p.status ?? ""] || "bg-muted text-muted-foreground border-border"}`}>
+                        {p.status ?? "—"}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-[11px] text-muted-foreground whitespace-nowrap">
-                      {new Date(p.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                      {p.created_at
+                        ? new Date(p.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })
+                        : "—"}
                     </td>
                     <td className="px-4 py-3 text-[10px] font-mono text-muted-foreground">{p.charge_id || "—"}</td>
                     <td className="px-4 py-3 text-center">

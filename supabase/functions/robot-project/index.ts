@@ -1,4 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import type { SupabaseAdminClient } from "../_shared/types.ts";
+import { errorMessage } from "../_shared/types.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -15,7 +17,7 @@ function log(level: "INFO" | "WARN" | "ERROR", ctx: string, msg: string, data?: 
   else console.log(JSON.stringify(entry));
 }
 
-async function getRobotCredentials(supabaseAdmin: any): Promise<{ username: string; password: string } | null> {
+async function getRobotCredentials(supabaseAdmin: SupabaseAdminClient): Promise<{ username: string; password: string } | null> {
   const [uRes, pRes] = await Promise.all([
     supabaseAdmin.from("system_credentials").select("value").eq("env_key", "ROBOT_API_USERNAME").maybeSingle(),
     supabaseAdmin.from("system_credentials").select("value").eq("env_key", "ROBOT_API_PASSWORD").maybeSingle(),
@@ -222,8 +224,8 @@ Deno.serve(async (req) => {
       status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 
-  } catch (error: any) {
-    log("ERROR", "robot-project", "Edge function error", { error: (error as Error).message });
+  } catch (error: unknown) {
+    log("ERROR", "robot-project", "Edge function error", { error: errorMessage(error) });
     return new Response(JSON.stringify({ error: "Internal error" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

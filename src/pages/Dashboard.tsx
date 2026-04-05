@@ -37,6 +37,14 @@ function tabFromSearchParam(raw: string | null): Tab {
   return "overview";
 }
 
+type OrderTicketRow = Tables<"order_tickets">;
+type DashboardTicket = OrderTicketRow & {
+  product_name?: string;
+  plan_name?: string;
+  image_url?: string | null;
+  plan_price?: number;
+};
+
 const Dashboard = () => {
   const { user, profile, loading: authLoading, isAdmin } = useAuth();
   const { isReseller, discountPercent, reseller } = useReseller();
@@ -56,13 +64,6 @@ const Dashboard = () => {
   const [showNewPass, setShowNewPass] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
 
-  type OrderTicketRow = Tables<"order_tickets">;
-  type DashboardTicket = OrderTicketRow & {
-    product_name?: string;
-    plan_name?: string;
-    image_url?: string | null;
-    plan_price?: number;
-  };
   const [tickets, setTickets] = useState<DashboardTicket[]>([]);
   const [loadingTickets, setLoadingTickets] = useState(false);
 
@@ -903,13 +904,13 @@ const OverviewStats = ({
   isReseller,
   discountPercent,
 }: {
-  tickets: any[];
-  payments: any[];
+  tickets: DashboardTicket[];
+  payments: Tables<"payments">[];
   isReseller: boolean;
   discountPercent: number;
 }) => {
-  const paidPayments = payments.filter((p: any) => p.status === "COMPLETED");
-  const totalSpent = paidPayments.reduce((s: number, p: any) => s + Number(p.amount) / 100, 0);
+  const paidPayments = payments.filter((p) => p.status === "COMPLETED");
+  const totalSpent = paidPayments.reduce((s, p) => s + Number(p.amount) / 100, 0);
 
   const stats = useMemo(() => [
     {

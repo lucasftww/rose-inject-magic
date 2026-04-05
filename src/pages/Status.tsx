@@ -15,6 +15,18 @@ interface ProductStatus {
   game_image: string | null;
 }
 
+/** Linha do `select` com join em `games` (PostgREST). */
+interface ProductStatusQueryRow {
+  id: string;
+  name: string;
+  image_url: string | null;
+  status: string | null;
+  status_label: string | null;
+  status_updated_at: string | null;
+  game_id: string | null;
+  games: { name: string; image_url: string | null } | null;
+}
+
 const statusConfig: Record<string, { color: string; bg: string; border: string; icon: typeof ShieldCheck }> = {
   undetected: { color: "text-success", bg: "bg-success/10", border: "border-success/30", icon: ShieldCheck },
   detected: { color: "text-destructive", bg: "bg-destructive/10", border: "border-destructive/30", icon: ShieldAlert },
@@ -28,25 +40,30 @@ const Status = () => {
 
   useEffect(() => {
     const fetch = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("products")
         .select("id, name, image_url, status, status_label, status_updated_at, game_id, games(name, image_url)")
         .eq("active", true)
         .order("sort_order");
 
-      if (data) {
+      if (error) {
+        console.error("Status page products:", error);
+        setProducts([]);
+      } else if (data) {
         setProducts(
-          data.map((p: any) => ({
+          (data as ProductStatusQueryRow[]).map((p) => ({
             id: p.id,
             name: p.name,
             image_url: p.image_url,
-            status: p.status,
-            status_label: p.status_label,
-            status_updated_at: p.status_updated_at,
-            game_name: p.games?.name || "",
-            game_image: p.games?.image_url || null,
+            status: p.status ?? "offline",
+            status_label: p.status_label ?? "",
+            status_updated_at: p.status_updated_at ?? "",
+            game_name: p.games?.name ?? "",
+            game_image: p.games?.image_url ?? null,
           }))
         );
+      } else {
+        setProducts([]);
       }
       setLoading(false);
     };
