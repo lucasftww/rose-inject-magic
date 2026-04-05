@@ -495,7 +495,7 @@ const ValorantCard = memo(({ item, skinsMap, priceLabel, queryClient }: { item: 
 ValorantCard.displayName = "ValorantCard";
 
 // ─── LoL Card ───
-const LolCard = memo(({ item, champKeyMap, priceLabel }: { item: LztItem; champKeyMap: Map<number, string>; priceLabel: string }) => {
+const LolCard = memo(({ item, champKeyMap, priceLabel, queryClient }: { item: LztItem; champKeyMap: Map<number, string>; priceLabel: string; queryClient: QueryClient }) => {
   const rankText = item.riot_lol_rank || "Unranked";
   const rankFilterId = lolRankToFilterId(rankText);
   const rankFilterData = lolRankFilters.find(r => r.id === rankFilterId);
@@ -561,6 +561,7 @@ const LolCard = memo(({ item, champKeyMap, priceLabel }: { item: LztItem; champK
   return (
     <Link
       to={`/lol/${item.item_id}`}
+      onPointerEnter={() => prefetchAccountDetail(queryClient, "lol", item.item_id)}
       className="group touch-manipulation cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all hover:border-[hsl(198,100%,45%)/50%] hover:shadow-[0_4px_24px_hsl(198,100%,45%,0.12)] flex flex-col h-full no-underline text-inherit"
     >
       <div className="relative flex h-28 sm:h-36 items-center justify-center overflow-hidden bg-secondary/20">
