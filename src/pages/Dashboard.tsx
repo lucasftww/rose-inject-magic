@@ -38,7 +38,8 @@ function tabFromSearchParam(raw: string | null): Tab {
 }
 
 type OrderTicketRow = Tables<"order_tickets">;
-type DashboardTicket = OrderTicketRow & {
+type DashboardTicket = Omit<OrderTicketRow, "metadata"> & {
+  metadata: OrderTicketMetadata | null;
   product_name?: string;
   plan_name?: string;
   image_url?: string | null;
