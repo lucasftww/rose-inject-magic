@@ -552,11 +552,9 @@ const GameSelectScreen = ({
             <p className="max-w-md text-sm text-muted-foreground">
               Encontre os melhores softwares para seu jogo favorito. Selecione abaixo e descubra as opções disponíveis.
             </p>
-            <p className="max-w-2xl text-xs leading-relaxed text-muted-foreground/85">
-              Aqui é o catálogo de <span className="font-medium text-foreground/80">produtos</span> da loja (software, loaders e itens com entrega digital).
-              <span className="font-medium text-foreground/80"> Contas de jogo</span> prontas estão em{" "}
-              <Link to="/contas" className="text-success underline-offset-2 hover:underline">Contas</Link>
-              {" "}— outro catálogo, preço e checkout.
+            <p className="max-w-md text-xs text-muted-foreground/60">
+              Procurando contas prontas? Acesse{" "}
+              <Link to="/contas" className="text-success font-medium hover:underline underline-offset-2">Contas</Link>.
             </p>
 
             {/* Search bar */}
