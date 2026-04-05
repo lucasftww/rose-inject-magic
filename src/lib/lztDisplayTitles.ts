@@ -139,16 +139,9 @@ function buildSyntheticDetailTitle(ctx: DetailCtx): string {
 }
 
 /**
- * Título na página de detalhe: mantém texto curto limpo se existir; senão (ou lixo LZT) usa sintético.
+ * Título na página de detalhe: sempre usa título sintético padronizado
+ * para consistência com os cards da listagem.
  */
-export function getLztDetailDisplayTitle(rawTitle: string | undefined, ctx: DetailCtx): string {
-  const stripped = stripCyrillic(rawTitle);
-  const lower = stripped.toLowerCase();
-  if (!stripped || lower === "kuki" || stripped.length < 3 || shouldReplaceLztTitle(rawTitle, ctx.game)) {
-    return buildSyntheticDetailTitle(ctx);
-  }
-  if (stripped.length > 120) {
-    return buildSyntheticDetailTitle(ctx);
-  }
-  return stripped;
+export function getLztDetailDisplayTitle(_rawTitle: string | undefined, ctx: DetailCtx): string {
+  return buildSyntheticDetailTitle(ctx);
 }
