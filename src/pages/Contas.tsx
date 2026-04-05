@@ -65,15 +65,8 @@ type GameTab = "valorant" | "lol" | "fortnite" | "minecraft";
 
 const getProxiedImageUrl = (url: string) => {
   if (!url) return "";
-  if (
-    url.includes("lzt.market") ||
-    url.includes("img.lzt.market") ||
-    url.includes("ddragon.leagueoflegends.com") ||
-    url.includes("akamaihd.net") ||
-    url.includes("mineskin.eu") ||
-    url.includes("fortnite-api.com") ||
-    url.includes("capes.dev")
-  ) {
+  // Only proxy lzt.market images (require auth). Public CDNs load directly for speed.
+  if (url.includes("lzt.market") || url.includes("img.lzt.market")) {
     return `${supabaseUrl}/functions/v1/lzt-market?action=image-proxy&url=${encodeURIComponent(url)}`;
   }
   return url;
