@@ -2395,12 +2395,12 @@ const Contas = () => {
                     Atualizando contas…
                   </div>
                 )}
-                <div
-                 className="grid grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3 relative"
-                  style={{ contentVisibility: 'auto', containIntrinsicSize: 'auto 400px' } as CSSProperties}
-                >
+                <div className="grid grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3 relative">
                   {gridRows.map(({ item, priceLabel }) => (
-                    <div key={item.item_id}>
+                    <div
+                      key={item.item_id}
+                      style={{ contentVisibility: 'auto', containIntrinsicSize: 'auto 320px' } as CSSProperties}
+                    >
                       {isValorant ? (
                         <ValorantCard item={item} skinsMap={skinsMap} priceLabel={priceLabel} queryClient={queryClient} />
                       ) : isFortnite ? (
