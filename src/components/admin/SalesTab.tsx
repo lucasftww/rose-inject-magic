@@ -424,8 +424,8 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
                           R$ {(sale.plan_price || 0).toFixed(2)}
                         </td>
                         <td className="px-3 py-2.5">
-                          <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${statusColors[sale.status] || "bg-muted text-muted-foreground border-border"}`}>
-                            {statusLabels[sale.status] || sale.status_label || sale.status}
+                          <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${statusColors[sale.status || ""] || "bg-muted text-muted-foreground border-border"}`}>
+                            {statusLabels[sale.status || ""] || sale.status_label || sale.status}
                           </span>
                         </td>
                         <td className="px-3 py-2.5 text-muted-foreground text-[11px] hidden md:table-cell whitespace-nowrap">
