@@ -1182,7 +1182,7 @@ const Produtos = () => {
 
           {/* Products Grid */}
           {loadingProducts ? (
-            <div className="flex-1 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="flex-1 grid grid-cols-2 gap-2.5 sm:gap-6 xl:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (
                  <Skeleton key={i} className="h-96 w-full rounded-lg" />
               ))}
