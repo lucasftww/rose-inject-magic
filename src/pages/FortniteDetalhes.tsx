@@ -598,7 +598,6 @@ const FortniteDetalhes = () => {
                 </div>
               );
             })()}
-            }
           </motion.div>
         )}
       </div>
