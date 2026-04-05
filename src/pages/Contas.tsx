@@ -1932,6 +1932,27 @@ const Contas = () => {
               className="w-full rounded-lg border border-border bg-secondary/50 py-2 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
               onFocus={e => (e.currentTarget.style.borderColor = `${FN_PURPLE}80`)} onBlur={e => (e.currentTarget.style.borderColor = '')} />
           </div>
+          <div className="mt-4">
+            <p className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" style={{ color: FN_PURPLE }} />Mín. Nível
+            </p>
+            <input type="number" min="0" placeholder="Ex: 100" value={fnLevelMin} onChange={(e) => { setFnLevelMin(e.target.value); setDisplayPage(1); }}
+              className="w-full rounded-lg border border-border bg-secondary/50 py-2 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
+              onFocus={e => (e.currentTarget.style.borderColor = `${FN_PURPLE}80`)} onBlur={e => (e.currentTarget.style.borderColor = '')} />
+          </div>
+          <div className="mt-5">
+            <label className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-border p-3 transition-all"
+              style={fnHasBattlePass ? { borderColor: FN_PURPLE, background: `${FN_PURPLE}10` } : {}}>
+              <input type="checkbox" checked={fnHasBattlePass} onChange={(e) => { setFnHasBattlePass(e.target.checked); setDisplayPage(1); }} className="sr-only" />
+              <div className="h-4 w-4 rounded-sm border-2 flex items-center justify-center flex-shrink-0 transition-colors" style={{ borderColor: fnHasBattlePass ? FN_PURPLE : undefined, background: fnHasBattlePass ? FN_PURPLE : "transparent" }}>
+                {fnHasBattlePass && <span className="text-[9px] font-bold text-white">✓</span>}
+              </div>
+              <div>
+                <span className="text-xs font-semibold" style={{ color: fnHasBattlePass ? FN_PURPLE : undefined }}>Battle Pass Comprado</span>
+                <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">Contas com passe de batalha pago</p>
+              </div>
+            </label>
+          </div>
         </>
       )}
 
