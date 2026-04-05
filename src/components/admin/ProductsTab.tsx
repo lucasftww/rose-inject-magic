@@ -445,24 +445,22 @@ const ProductsTab = () => {
         const { data: currentPlans } = await supabase.from("product_plans").select("id").eq("product_id", editing.id);
         const plansToDelete = (currentPlans || []).filter(cp => !existingPlanIds.includes(cp.id)).map(cp => cp.id);
         if (plansToDelete.length > 0) {
-          for (const pid of plansToDelete) {
-            await supabase.from("product_plans").delete().eq("id", pid);
-          }
+          await Promise.all(plansToDelete.map(pid =>
+            supabase.from("product_plans").delete().eq("id", pid)
+          ));
         }
 
-        for (const [i, p] of validPlans.entries()) {
-          if (p.id) {
-            await supabase.from("product_plans").update({
-              name: p.name.trim(), price: p.price, active: p.active, sort_order: i,
-              robot_duration_days: p.robot_duration_days || null,
-            }).eq("id", p.id);
-          } else {
-            await supabase.from("product_plans").insert({
-              product_id: editing.id, name: p.name.trim(), price: p.price, active: p.active, sort_order: i,
-              robot_duration_days: p.robot_duration_days || null,
-            });
-          }
-        }
+        // Batch plan updates/inserts in parallel
+        const planOps = validPlans.map((p, i) => {
+          const payload = {
+            name: p.name.trim(), price: p.price, active: p.active, sort_order: i,
+            robot_duration_days: p.robot_duration_days || null,
+          };
+          return p.id
+            ? supabase.from("product_plans").update(payload).eq("id", p.id)
+            : supabase.from("product_plans").insert({ ...payload, product_id: editing.id });
+        });
+        await Promise.all(planOps);
         await supabase.from("product_media").delete().eq("product_id", editing.id);
         const mediaToInsert = formMedia.filter(m => m.url.trim()).map((m, i) => ({
           product_id: editing.id, media_type: m.media_type, url: m.url.trim(), sort_order: i,
