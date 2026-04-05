@@ -1387,7 +1387,7 @@ const Contas = () => {
       if (tab === "valorant") qp.append("country[]", "Bra");
       if (tab === "lol") qp.append("lol_region[]", "BR1");
 
-      const delayMs = delayMultiplier * 550;
+      const delayMs = delayMultiplier * 400;
       const timeoutId = setTimeout(() => {
         if (runId !== prefetchRunIdRef.current) return;
         void (async () => {
