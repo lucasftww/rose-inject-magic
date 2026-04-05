@@ -367,7 +367,9 @@ const FinanceTab = () => {
       prods[r.product_name].cost += r.cost;
       prods[r.product_name].profit += r.profit;
     });
-    return Object.entries(prods).sort((a, b) => b[1].revenue - a[1].revenue);
+    return Object.entries(prods)
+      .filter(([, d]) => d.revenue > 0 || d.cost > 0) // Hide free products with zero activity
+      .sort((a, b) => b[1].revenue - a[1].revenue);
   }, [fRobot]);
 
   const lztByGame = useMemo(() => {
