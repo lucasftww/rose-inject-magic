@@ -797,11 +797,20 @@ Deno.serve(async (req) => {
     const listCacheMaxAge = previewMode ? 60 : 30;
     const listMemoryTtlMs = previewMode ? 60_000 : 30_000;
 
+    // Cap max BRL price per game (accounts above this won't sell)
+    const GAME_PRICE_CAP_BRL: Record<string, number> = { fortnite: 1200 };
+    const priceCap = GAME_PRICE_CAP_BRL[gameType] ?? Infinity;
+
     if (shouldCache) {
       const cached = globalLztCache.get(cacheKey);
       if (cached && cached.expiry > Date.now()) {
         console.log("Serving from global cache:", apiUrl);
-        return new Response(JSON.stringify(cached.data), {
+        // Apply price cap to cached data too
+        let cachedData = cached.data as Record<string, unknown>;
+        if (priceCap < Infinity && Array.isArray(cachedData.items)) {
+          cachedData = { ...cachedData, items: cachedData.items.filter((it: Record<string, unknown>) => (Number(it.price_brl) || 0) <= priceCap) };
+        }
+        return new Response(JSON.stringify(cachedData), {
           headers: {
             ...corsHeaders,
             "Content-Type": "application/json",
@@ -942,6 +951,7 @@ Deno.serve(async (req) => {
         filteredByOther,
       });
 
+      // Assign BRL prices
       for (const item of data.items) {
         item.price_brl = getDisplayedPriceBrl(item, overrideMap.get(String(item.item_id)), gameType, activeMarkup);
 
@@ -981,6 +991,15 @@ Deno.serve(async (req) => {
             }
           }
           item.valorantInventory = trimmed;
+        }
+      }
+
+      // Remove items above the price cap
+      if (priceCap < Infinity) {
+        const beforeCap = data.items.length;
+        data.items = data.items.filter((it: Record<string, unknown>) => (Number(it.price_brl) || 0) <= priceCap);
+        if (data.items.length < beforeCap) {
+          log("INFO", "lzt-market", `Price cap R$${priceCap} removed ${beforeCap - data.items.length} ${gameType} items`);
         }
       }
     }
