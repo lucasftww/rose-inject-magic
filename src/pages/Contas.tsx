@@ -1005,6 +1005,14 @@ const Contas = () => {
   // page state removed — displayPage handles client-side pagination
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
+  // Lock body scroll when mobile filters are open
+  useEffect(() => {
+    if (mobileFiltersOpen) {
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = ''; };
+    }
+  }, [mobileFiltersOpen]);
+
   // ─── Sidebar collapse ───
   const [rankOpen, setRankOpen] = useState(true);
   const [skinsOpen, setSkinsOpen] = useState(true);
