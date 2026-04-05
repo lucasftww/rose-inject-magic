@@ -218,18 +218,10 @@ const ContasSection = () => {
 
         <div className="mt-5 sm:mt-12 grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4">
           {GAME_CATEGORIES.map((game) => (
-            <div
+            <Link
               key={game.tab}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  navigate(`/contas?game=${game.tab}`);
-                }
-              }}
-              className="group relative touch-manipulation cursor-pointer overflow-hidden rounded-xl border border-border/40 bg-card transition-all duration-300 hover:border-success/40 hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)]"
-              onClick={() => navigate(`/contas?game=${game.tab}`)}
+              to={`/contas?game=${game.tab}`}
+              className="group relative touch-manipulation overflow-hidden rounded-xl border border-border/40 bg-card transition-all duration-300 hover:border-success/40 hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)]"
             >
               <div className="relative aspect-[3/4] overflow-hidden">
                 <img src={game.image} alt={game.name} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" loading="lazy" decoding="async" />
@@ -252,7 +244,7 @@ const ContasSection = () => {
                   </div>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
 
