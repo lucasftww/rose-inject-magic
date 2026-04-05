@@ -575,6 +575,9 @@ const LztTab = () => {
                       <span className="text-sm text-foreground truncate block max-w-[200px]">{sale.title || "—"}</span>
                     </td>
                     <td className="py-3 pr-3">
+                      <span className="text-xs text-muted-foreground capitalize">{sale.game || "—"}</span>
+                    </td>
+                    <td className="py-3 pr-3">
                       <span className="text-xs font-bold text-destructive">R${Number(sale.buy_price).toFixed(2)}</span>
                     </td>
                     <td className="py-3 pr-3">
