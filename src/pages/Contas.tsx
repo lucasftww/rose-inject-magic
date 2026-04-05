@@ -453,6 +453,13 @@ const ValorantCard = memo(({ item, skinsMap, priceLabel }: { item: LztItem; skin
               </div>
             ))}
           </div>
+        ) : hasInventoryData && !skinsMapReady ? (
+          /* Skeleton while Valorant API loads — avoids flashing the raw LZT screenshot */
+          <div className="relative z-[1] grid grid-cols-3 grid-rows-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="w-full h-full rounded bg-secondary/50 animate-pulse" />
+            ))}
+          </div>
         ) : item.imagePreviewLinks?.direct?.weapons ? (
           <LztPreviewImage url={item.imagePreviewLinks.direct.weapons} />
         ) : (
