@@ -1131,8 +1131,8 @@ const Contas = () => {
   // Use session storage so when users navigate away and back, it's instant.
   type CacheEntry = { items: LztItem[]; hasNextPage: boolean; currentPage: number; timestamp: number };
 
-  const fetchCacheRef = useRef<Map<string, CacheEntry> | null>(null);
-  if (fetchCacheRef.current === null) {
+  const fetchCacheRef = useRef<Map<string, CacheEntry>>(null!);
+  if (!fetchCacheRef.current) {
     // Lazy init — runs only once (avoids re-parsing JSON on every render)
     let map = new Map<string, CacheEntry>();
     try {
