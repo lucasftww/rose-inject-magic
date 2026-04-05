@@ -408,7 +408,7 @@ const FortniteDetalhes = () => {
                     onClick={handleBuyNow}
                     disabled={checkingAvailability}
                     aria-busy={checkingAvailability}
-                    className="flex w-full items-center justify-center gap-2.5 rounded-lg bg-positive py-3.5 text-sm font-bold uppercase tracking-[0.2em] text-positive-foreground transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-60"
+                    className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-positive py-3.5 text-sm font-bold uppercase tracking-[0.2em] text-positive-foreground transition-all active:scale-[0.98] disabled:opacity-60"
                   >
                     {checkingAvailability ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
                     {checkingAvailability ? "VERIFICANDO..." : "COMPRAR AGORA"}
@@ -619,7 +619,7 @@ const FortniteDetalhes = () => {
           <div className="border-t border-border bg-card/95 backdrop-blur-xl px-4 py-3 safe-area-bottom">
             <div className="flex items-center gap-3">
               <div className="flex flex-col min-w-0">
-                <span className="text-lg font-bold leading-tight" style={{ color: FN_PURPLE }}>
+                <span className="text-lg font-bold leading-tight text-positive">
                   {lockedPriceBrl !== null ? formatPriceBrl(lockedPriceBrl) : getDisplayPrice(item, "fortnite")}
                 </span>
               </div>
@@ -628,8 +628,7 @@ const FortniteDetalhes = () => {
                 onClick={handleBuyNow}
                 disabled={checkingAvailability}
                 aria-busy={checkingAvailability}
-                className="flex flex-1 items-center justify-center gap-2 rounded-lg py-3 text-sm font-bold uppercase tracking-wider text-white transition-all active:scale-[0.98] disabled:opacity-60"
-                style={{ background: FN_PURPLE, fontFamily: "'Valorant', sans-serif" }}
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-positive py-3.5 text-sm font-bold uppercase tracking-wider text-positive-foreground transition-all active:scale-[0.98] disabled:opacity-60"
               >
                 {checkingAvailability ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShoppingCart className="h-4 w-4" />}
                 {checkingAvailability ? "Verificando..." : "Comprar Agora"}

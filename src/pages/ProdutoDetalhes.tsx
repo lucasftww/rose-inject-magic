@@ -652,12 +652,11 @@ const ProdutoDetalhes = () => {
                         type="button"
                         onClick={() => void buyNow()}
                         disabled={claimingFree}
-                        className={`group flex w-full items-center justify-center gap-2.5 rounded-xl py-4 text-sm font-bold uppercase tracking-wider transition-all active:scale-[0.98] disabled:opacity-60 ${
+                        className={`flex w-full items-center justify-center gap-2.5 rounded-xl py-3.5 text-sm font-bold uppercase tracking-[0.2em] transition-all active:scale-[0.98] disabled:opacity-60 ${
                           Number(selectedPlan.price) === 0
-                            ? "bg-gradient-to-r from-success to-success/70 text-success-foreground hover:shadow-[0_0_40px_hsl(var(--success)/0.4)]"
-                            : "bg-success text-success-foreground hover:shadow-[0_0_40px_hsl(var(--success)/0.4)]"
+                            ? "bg-gradient-to-r from-positive to-positive/70 text-positive-foreground"
+                            : "bg-positive text-positive-foreground"
                         }`}
-                        style={{ fontFamily: "'Valorant', sans-serif" }}
                       >
                         {Number(selectedPlan.price) === 0 ? (
                           claimingFree ? (
@@ -666,7 +665,7 @@ const ProdutoDetalhes = () => {
                             <><Download className="h-4 w-4" /> OBTER GRÁTIS</>
                           )
                         ) : (
-                          <><Zap className="h-4 w-4 group-hover:animate-pulse" /> COMPRAR AGORA</>
+                          <><Zap className="h-4 w-4" /> COMPRAR AGORA</>
                         )}
                       </button>
                     </div>
@@ -745,10 +744,9 @@ const ProdutoDetalhes = () => {
                 disabled={claimingFree}
                 className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-bold uppercase tracking-wider transition-all active:scale-[0.98] disabled:opacity-60 ${
                   Number(selectedPlan.price) === 0
-                    ? "bg-gradient-to-r from-success to-success/70 text-success-foreground"
-                    : "bg-success text-success-foreground"
+                    ? "bg-gradient-to-r from-positive to-positive/70 text-positive-foreground"
+                    : "bg-positive text-positive-foreground"
                 }`}
-                style={{ fontFamily: "'Valorant', sans-serif" }}
               >
                 {Number(selectedPlan.price) === 0 ? (
                   claimingFree ? (
