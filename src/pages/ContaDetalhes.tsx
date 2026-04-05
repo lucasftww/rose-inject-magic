@@ -41,13 +41,7 @@ const fetchAccountDetail = async (itemId: string) => {
 // RARITY_PRIORITY imported from @/lib/valorantData
 
 // Permissive UUID pattern (Valorant UUIDs don't strictly follow RFC 4122)
-const getProxiedImageUrl = (url: string) => {
-  if (!url) return "";
-  if (url.includes("lzt.market") || url.includes("img.lzt.market")) {
-    return `${supabaseUrl}/functions/v1/lzt-market?action=image-proxy&url=${encodeURIComponent(url)}`;
-  }
-  return url;
-};
+import { getProxiedImageUrl } from "@/lib/lztImageProxy";
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
