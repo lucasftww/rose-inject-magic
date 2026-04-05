@@ -420,12 +420,7 @@ const MinecraftDetalhes = () => {
                     onClick={handleBuyNow}
                     disabled={checkingAvailability}
                     aria-busy={checkingAvailability}
-                    className="group relative flex w-full items-center justify-center gap-2.5 px-5 py-3.5 text-sm font-bold uppercase tracking-[0.2em] rounded-lg transition-all hover:brightness-110 hover:shadow-xl disabled:opacity-60"
-                    style={{
-                      background: `linear-gradient(135deg, ${MC_GREEN}, hsl(140,60%,35%))`,
-                      color: "#fff",
-                      boxShadow: `0 4px 20px ${MC_GREEN}40`,
-                    }}
+                    className="group relative flex w-full items-center justify-center gap-2.5 px-5 py-3.5 text-sm font-bold uppercase tracking-[0.2em] rounded-lg bg-positive text-positive-foreground transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-60"
                   >
                     {checkingAvailability ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
                     {checkingAvailability ? "VERIFICANDO..." : "COMPRAR AGORA"}
