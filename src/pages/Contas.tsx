@@ -1308,17 +1308,18 @@ const Contas = () => {
 
     try {
       if (!cached) {
-        if (tabChanged) {
-          setStreamedItems([]);
-          setFirstPageLoaded(false);
-        } else {
-          setIsRefetching(true);
-        }
+        // Don't clear items on tab switch — show a loading overlay instead
+        // so the page remains interactive while the API responds
+        setIsRefetching(true);
         setStreamingDone(false);
         setStreamError(null);
         setCurrentPage(1);
         setLoadingMore(false);
         setDisplayPage(1);
+        if (streamedItems.length === 0) {
+          // Only show skeleton if we truly have nothing to display
+          setFirstPageLoaded(false);
+        }
       } else {
         // Cache expirado: manter itens antigos e indicar refetch
         setIsRefetching(true);
@@ -1386,7 +1387,7 @@ const Contas = () => {
       if (tab === "valorant") qp.append("country[]", "Bra");
       if (tab === "lol") qp.append("lol_region[]", "BR1");
 
-      const delayMs = delayMultiplier * 550;
+      const delayMs = delayMultiplier * 400;
       const timeoutId = setTimeout(() => {
         if (runId !== prefetchRunIdRef.current) return;
         void (async () => {
@@ -1465,7 +1466,7 @@ const Contas = () => {
   useEffect(() => {
     if (firstPageLoaded && streamedItems.length > 0) {
       // Re-enabled Staggered Prefetch (Safe from 429 API Rate Limit)
-      const timer = setTimeout(prefetchAdjacentTabs, 500);
+      const timer = setTimeout(prefetchAdjacentTabs, 200);
       return () => clearTimeout(timer);
     }
   }, [firstPageLoaded, gameTab, prefetchAdjacentTabs]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -2212,8 +2213,14 @@ const Contas = () => {
 
             {!isLoading && !streamError && (
               <>
+                {isRefetching && (
+                  <div className="flex items-center justify-center py-4 gap-2 text-muted-foreground">
+                    <Loader2 className="h-5 w-5 animate-spin" style={{ color: accentColor }} />
+                    <span className="text-sm font-medium">Carregando contas…</span>
+                  </div>
+                )}
                 <div
-                  className={`grid grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3 transition-opacity duration-200 relative ${isRefetching ? "opacity-60" : ""}`}
+                  className={`grid grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3 transition-opacity duration-200 relative ${isRefetching ? "opacity-40 pointer-events-none" : ""}`}
                 >
                   {gridRows.map(({ item, priceLabel }) => (
                     <div key={item.item_id}>
