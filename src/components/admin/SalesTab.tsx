@@ -53,6 +53,7 @@ const statusLabels: Record<string, string> = {
 let _cachedSales: SaleTicket[] | null = null;
 let _salesCacheTs = 0;
 const SALES_CACHE_TTL = 3 * 60 * 1000;
+const SALES_MAX_ROWS = 2000; // cap to avoid loading huge datasets
 
 /** Get purchase type label */
 const getPurchaseType = (meta: OrderTicketMetadata | null | undefined): { label: string; icon: typeof Package; color: string } => {
@@ -88,6 +89,7 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
       rawTickets = await fetchAllRows<OrderTicketRow>("order_tickets", {
         select: "*",
         order: { column: "created_at", ascending: false },
+        limit: SALES_MAX_ROWS,
       });
     } catch (err) {
       console.error("fetchSales order_tickets error:", err);
@@ -149,17 +151,20 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
     const stockMap = new Map<string, string>();
     if (stockIds.length > 0) {
       try {
-        const CHUNK_SIZE = 100;
+        const CHUNK_SIZE = 200;
+        const chunks: string[][] = [];
         for (let i = 0; i < stockIds.length; i += CHUNK_SIZE) {
-          const chunk = stockIds.slice(i, i + CHUNK_SIZE);
-          const stockData = await fetchAllRows<{ id: string; content: string | null }>("stock_items", {
+          chunks.push(stockIds.slice(i, i + CHUNK_SIZE));
+        }
+        const results = await Promise.all(chunks.map(chunk =>
+          fetchAllRows<{ id: string; content: string | null }>("stock_items", {
             select: "id, content",
             filters: [{ column: "id", op: "in", value: chunk }],
-          });
-          (stockData || []).forEach((s) => {
-            if (s.content != null) stockMap.set(s.id, s.content);
-          });
-        }
+          })
+        ));
+        results.flat().forEach((s) => {
+          if (s.content != null) stockMap.set(s.id, s.content);
+        });
       } catch (err) {
         console.error("fetchSales stock_items error:", err);
         toast({
