@@ -1045,8 +1045,10 @@ async function fulfillLztAccount(supabaseAdmin: SupabaseAdminClient, payment: Pa
       if (!isRetryableStatus && !isRetryableError) break; // non-retryable, stop
     }
 
-    if (!buyRes || !buyRes.ok) {
-      const reason = `HTTP ${buyRes?.status || 0}: ${JSON.stringify(buyData).substring(0, 300)}`;
+    if (!buyRes || !buyRes.ok || !buyData) {
+      const reason = buyData
+        ? `HTTP ${buyRes?.status || 0}: ${JSON.stringify(buyData).substring(0, 300)}`
+        : `HTTP ${buyRes?.status || 0}: LZT returned non-JSON response (Cloudflare/HTML) after all retries`;
       console.error("LZT fast-buy failed after retries:", reason);
       await createManualDeliveryTicket(reason);
       return;
