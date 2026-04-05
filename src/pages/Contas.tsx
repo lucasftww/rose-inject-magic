@@ -1625,6 +1625,23 @@ const Contas = () => {
       return filtered.sort((a, b) => getBrlPrice(b) - getBrlPrice(a));
     }
 
+    // "Melhor Oferta": sort by content/price ratio (more skins per R$ = better value)
+    if (sortBy === "best_value") {
+      const getContentScore = (item: LztItem): number => {
+        if (gameTab === "valorant") return item.riot_valorant_skin_count ?? 0;
+        if (gameTab === "lol") return item.riot_lol_skin_count ?? 0;
+        if (gameTab === "fortnite") return item.fortnite_skin_count ?? 0;
+        if (gameTab === "minecraft") return (item.minecraft_capes_count ?? 0) + (item.minecraft_hypixel_level ?? 0);
+        return 0;
+      };
+      return filtered.sort((a, b) => {
+        const valueA = getContentScore(a) / (getBrlPrice(a) || 1);
+        const valueB = getContentScore(b) / (getBrlPrice(b) || 1);
+        if (Math.abs(valueB - valueA) > 0.0001) return valueB - valueA;
+        return getBrlPrice(a) - getBrlPrice(b); // tiebreaker: cheaper first
+      });
+    }
+
     // Default sort (pdate_to_down = "Mais Recentes"): preserve API date order for ALL games.
     // The API already returns items sorted by publication date descending.
     return filtered;
