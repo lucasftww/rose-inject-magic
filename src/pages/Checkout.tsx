@@ -784,7 +784,7 @@ const Checkout = () => {
               )}
 
               {/* Crypto USDT */}
-              {enabledMethods.crypto !== false && (
+              {enabledMethods && enabledMethods.crypto !== false && (
                 <motion.button
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
