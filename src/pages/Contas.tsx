@@ -1679,6 +1679,8 @@ const Contas = () => {
     setLolSkinsMin("");
     setFnVbMin("");
     setFnSkinsMin("");
+    setFnLevelMin("");
+    setFnHasBattlePass(false);
     setMcJava(false);
     setMcBedrock(false);
     setMcHypixelLvlMin("");
