@@ -490,7 +490,7 @@ const MinecraftDetalhes = () => {
           <div className="border-t border-border bg-card/95 backdrop-blur-xl px-4 py-3 safe-area-bottom">
             <div className="flex items-center gap-3">
               <div className="flex flex-col min-w-0">
-                <span className="text-lg font-bold leading-tight" style={{ color: MC_GREEN }}>
+                <span className="text-lg font-bold leading-tight text-positive">
                   {lockedPriceBrl !== null ? formatPriceBrl(lockedPriceBrl) : getDisplayPrice(item, "minecraft")}
                 </span>
               </div>

@@ -619,7 +619,7 @@ const FortniteDetalhes = () => {
           <div className="border-t border-border bg-card/95 backdrop-blur-xl px-4 py-3 safe-area-bottom">
             <div className="flex items-center gap-3">
               <div className="flex flex-col min-w-0">
-                <span className="text-lg font-bold leading-tight" style={{ color: FN_PURPLE }}>
+                <span className="text-lg font-bold leading-tight text-positive">
                   {lockedPriceBrl !== null ? formatPriceBrl(lockedPriceBrl) : getDisplayPrice(item, "fortnite")}
                 </span>
               </div>
