@@ -1022,6 +1022,75 @@ const Contas = () => {
     }
   }, [mobileFiltersOpen]);
 
+  // ─── Sync filters → URL query params ───
+  const syncFiltersToUrlRef = useRef(false);
+  useEffect(() => {
+    // Skip first render (state was initialized from URL)
+    if (!syncFiltersToUrlRef.current) {
+      syncFiltersToUrlRef.current = true;
+      return;
+    }
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      // Helper: set or delete
+      const set = (k: string, v: string, def: string = "") => {
+        if (v && v !== def) next.set(k, v);
+        else next.delete(k);
+      };
+      const setBool = (k: string, v: boolean) => {
+        if (v) next.set(k, "1");
+        else next.delete(k);
+      };
+
+      // Shared
+      set("q", searchQuery);
+      set("sort", sortBy, "pdate_to_down");
+      set("pmin", priceMin);
+      set("pmax", priceMax);
+
+      // Game-specific — only write params relevant to the current tab
+      // Clear all game-specific keys first
+      ["rank", "weapon", "knife", "region", "champMin", "skinsMin", "vbMin",
+       "levelMin", "battlePass", "java", "bedrock", "hypixelMin", "capesMin",
+       "noBan", "lvlMin", "lvlMax", "invMin", "invMax"].forEach(k => next.delete(k));
+
+      if (gameTab === "valorant") {
+        set("rank", selectedRank, "todos");
+        set("weapon", selectedWeapon, "todos");
+        setBool("knife", onlyKnife);
+        set("region", valRegion, "br");
+        set("lvlMin", lvlMin); set("lvlMax", lvlMax);
+        set("invMin", invMin); set("invMax", invMax);
+      } else if (gameTab === "lol") {
+        set("rank", lolRank, "todos");
+        set("champMin", lolChampMin);
+        set("skinsMin", lolSkinsMin);
+        set("region", lolRegion, "BR1");
+        set("lvlMin", lvlMin); set("lvlMax", lvlMax);
+      } else if (gameTab === "fortnite") {
+        set("vbMin", fnVbMin);
+        set("skinsMin", fnSkinsMin);
+        set("levelMin", fnLevelMin);
+        setBool("battlePass", fnHasBattlePass);
+      } else if (gameTab === "minecraft") {
+        setBool("java", mcJava);
+        setBool("bedrock", mcBedrock);
+        set("hypixelMin", mcHypixelLvlMin);
+        set("capesMin", mcCapesMin);
+        setBool("noBan", mcNoBan);
+      }
+
+      return next;
+    }, { replace: true });
+  }, [
+    gameTab, searchQuery, sortBy, priceMin, priceMax,
+    selectedRank, selectedWeapon, onlyKnife, valRegion,
+    lolRank, lolChampMin, lolSkinsMin, lolRegion,
+    fnVbMin, fnSkinsMin, fnLevelMin, fnHasBattlePass,
+    mcJava, mcBedrock, mcHypixelLvlMin, mcCapesMin, mcNoBan,
+    lvlMin, lvlMax, invMin, invMax, setSearchParams,
+  ]);
+
   // ─── Sidebar collapse ───
   const [rankOpen, setRankOpen] = useState(true);
   const [skinsOpen, setSkinsOpen] = useState(true);
