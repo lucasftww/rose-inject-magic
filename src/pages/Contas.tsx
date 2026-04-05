@@ -600,6 +600,12 @@ const LolCard = memo(({ item, champKeyMap, priceLabel }: { item: LztItem; champK
               </div>
             ))}
           </div>
+        ) : hasLolInventoryData && !champKeyMapReady ? (
+          <div className="relative z-[1] grid grid-cols-3 grid-rows-2 gap-0 w-full h-full">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="bg-secondary/50 animate-pulse" />
+            ))}
+          </div>
         ) : (
           <div className="flex flex-col h-full w-full items-center justify-center gap-1">
             <Shield className="h-8 w-8 text-muted-foreground/20" />
