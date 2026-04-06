@@ -248,7 +248,7 @@ const RobotProjectTab = () => {
               select: "user_id, amount, cart_snapshot, status",
               filters: [
                 { column: "status", op: "eq", value: "COMPLETED" },
-                { column: "user_id", op: "in", value: `(${batch.join(",")})` },
+                { column: "user_id", op: "in", value: batch },
               ],
               order: { column: "created_at", ascending: false },
             });
