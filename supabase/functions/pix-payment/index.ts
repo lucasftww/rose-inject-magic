@@ -18,7 +18,7 @@ const MISTICPAY_BASE_URL = "https://api.misticpay.com/api";
 
 // ─── Live exchange rate helper ────────────────────────────────────────────────
 const FALLBACK_RUB_TO_BRL = 0.055;
-const FALLBACK_USD_TO_BRL = 6.10;
+const FALLBACK_USD_TO_BRL = 5.16;
 let cachedRates: { rub: number; usd: number; fetchedAt: number } | null = null;
 
 async function getLiveRates(): Promise<{ rub: number; usd: number }> {
@@ -1896,7 +1896,7 @@ async function validateAndCalculatePrice(
             const basePriceUsd = robotSnapshot.expectedPrice;
             if (basePriceUsd !== null && basePriceUsd > 0) {
               const costPriceUsd = basePriceUsd * 0.6;
-              let usdToBrl = 6.10;
+              let usdToBrl = 5.16;
               try {
                 const fxRes = await fetch("https://economia.awesomeapi.com.br/json/last/USD-BRL");
                 if (fxRes.ok) {

@@ -34,7 +34,7 @@ let _ratePromise: Promise<number> | null = null;
 let _rateCacheTs = 0;
 const RATE_TTL = 5 * 60 * 1000; // 5 min
 
-export async function getUsdToBrl(fallback = 6.1): Promise<number> {
+export async function getUsdToBrl(fallback = 5.16): Promise<number> {
   const cached = getCached<number>("usd_brl", RATE_TTL);
   if (cached !== null) return cached;
 
