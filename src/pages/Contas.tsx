@@ -2221,7 +2221,7 @@ const Contas = () => {
 
         {/* ─── Game Tab Switcher (segment control) ─── */}
         <nav
-          className="mb-6 sm:mb-8 rounded-2xl border border-border/60 bg-card/30 p-1 shadow-sm backdrop-blur-sm"
+          className="mb-6 sm:mb-8 rounded-2xl border border-border/60 bg-card p-1 shadow-sm"
           aria-label="Categorias de contas"
         >
           <div className="grid grid-cols-2 gap-1 sm:flex sm:flex-wrap sm:justify-stretch sm:gap-1">
