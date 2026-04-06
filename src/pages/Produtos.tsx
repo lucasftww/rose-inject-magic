@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef, useCallback, type ReactNode, type CSSProperties } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback, forwardRef, type ReactNode, type CSSProperties } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import { Search, SlidersHorizontal, DollarSign, ArrowLeft, Loader2, Package, Tag, ArrowUpDown, UserCheck, X, ArrowRight, Gamepad2, Gift, Shield, AlertCircle } from "lucide-react";
