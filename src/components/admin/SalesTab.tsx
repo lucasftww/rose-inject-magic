@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, Fragment } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database, Json, Tables } from "@/integrations/supabase/types";
 import { fetchAllRows } from "@/lib/supabaseAllRows";
+import { registerCacheInvalidator } from "@/lib/adminCache";
 import { asOrderTicketMetadata, type OrderTicketMetadata } from "@/types/orderTicketMetadata";
 import { useAdminUsers } from "@/hooks/useAdminUsers";
 import {
