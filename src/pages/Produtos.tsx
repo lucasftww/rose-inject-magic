@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef, useCallback, type ReactNode, type CSSProperties } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback, forwardRef, type ReactNode, type CSSProperties } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import { Search, SlidersHorizontal, DollarSign, ArrowLeft, Loader2, Package, Tag, ArrowUpDown, UserCheck, X, ArrowRight, Gamepad2, Gift, Shield, AlertCircle } from "lucide-react";
@@ -248,7 +248,7 @@ const getShowcaseAssets = (game: Pick<GameFromDB, 'name' | 'slug' | 'image_url'>
   };
 };
 
-const TiltCard = ({ children, index }: { children: ReactNode; index: number }) => {
+const TiltCard = forwardRef<HTMLDivElement, { children: ReactNode; index: number }>(({ children, index }, _ref) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const isTouchDevice = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
 
@@ -284,12 +284,13 @@ const TiltCard = ({ children, index }: { children: ReactNode; index: number }) =
       {children}
     </motion.div>
   );
-};
+});
+TiltCard.displayName = "TiltCard";
 
-const SoftwareShowcaseCard = ({ game, index, isFree, description, onSelect }: { game: GameFromDB; index: number; isFree: boolean; description: string; onSelect: (gameId: string) => void }) => {
+const SoftwareShowcaseCard = forwardRef<HTMLDivElement, { game: GameFromDB; index: number; isFree: boolean; description: string; onSelect: (gameId: string) => void }>(({ game, index, isFree, description, onSelect }, _ref) => {
   const [isHovered, setIsHovered] = useState(false);
   const { image, character, characterHover } = getShowcaseAssets(game);
-  const hasProducts = game.product_count > 0;
+  
   const characterPositionClass = 'absolute bottom-0 right-0 z-[8] w-[40%] sm:w-[50%]';
 
   return (
@@ -362,7 +363,8 @@ const SoftwareShowcaseCard = ({ game, index, isFree, description, onSelect }: { 
       </motion.button>
     </TiltCard>
   );
-};
+});
+SoftwareShowcaseCard.displayName = "SoftwareShowcaseCard";
 
 interface GameFromDB {
   id: string;
