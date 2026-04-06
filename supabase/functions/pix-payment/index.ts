@@ -1896,7 +1896,7 @@ async function validateAndCalculatePrice(
             const basePriceUsd = robotSnapshot.expectedPrice;
             if (basePriceUsd !== null && basePriceUsd > 0) {
               const costPriceUsd = basePriceUsd * 0.6;
-              let usdToBrl = 6.10;
+              let usdToBrl = 5.16;
               try {
                 const fxRes = await fetch("https://economia.awesomeapi.com.br/json/last/USD-BRL");
                 if (fxRes.ok) {

@@ -14,7 +14,7 @@ const LZT_ALLOWED_IMAGE_DOMAINS = [
 ];
 const RETRYABLE_STATUSES = [429, 502, 503, 504];
 let RUB_TO_BRL = 0.055; // Updated fallback
-let USD_TO_BRL = 6.10; // Updated fallback to be more realistic
+let USD_TO_BRL = 5.16; // Updated fallback
 let lastFxFetch = 0;
 
 async function updateRates() {
