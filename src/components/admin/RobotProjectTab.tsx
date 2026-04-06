@@ -64,7 +64,7 @@ const RobotProjectTab = () => {
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
   
   const [freeGamesCount, setFreeGamesCount] = useState(0);
-  const [usdToBrl, setUsdToBrl] = useState(6.10);
+  const [usdToBrl, setUsdToBrl] = useState(5.16);
   const [robotSales, setRobotSales] = useState<RobotSale[]>([]);
   const [salesLoading, setSalesLoading] = useState(false);
   const [salesPeriod, setSalesPeriod] = useState<"7d" | "30d" | "all">("30d");

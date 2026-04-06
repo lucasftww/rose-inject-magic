@@ -25,7 +25,7 @@ function coalesceNum(v: unknown, fallback = 0): number {
 export function calcLztFallbackBrl(price: number, currency?: string, _game?: GameCategory): number {
   const raw = coalesceNum(price);
   const RUB_TO_BRL = 0.055;
-  const USD_TO_BRL = 6.10;
+  const USD_TO_BRL = 5.16;
   const MARKUP = 3.0;
   const cur = String(currency || "rub").toLowerCase();
 
