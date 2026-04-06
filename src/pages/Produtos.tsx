@@ -489,7 +489,7 @@ const ProductCard = ({ product }: { product: ProductFromDB }) => {
         {/* Gradient overlay for text readability */}
         <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/50 to-transparent" />
         {isResellerProduct && (
-          <span className="absolute top-2.5 left-2.5 flex items-center gap-1 rounded-md bg-accent/90 backdrop-blur-sm px-2 py-0.5 text-[10px] font-bold text-accent-foreground">
+          <span className="absolute top-2.5 left-2.5 flex items-center gap-1 rounded-md bg-accent px-2 py-0.5 text-[10px] font-bold text-accent-foreground">
             <UserCheck className="h-3 w-3" /> Revendedor
           </span>
         )}
