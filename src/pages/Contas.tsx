@@ -354,7 +354,7 @@ const fetchLolChampKeyMap = async (): Promise<Map<number, string>> => {
 const smoothImgObserver =
   typeof IntersectionObserver !== "undefined"
     ? new IntersectionObserver(
-        (entries) => {
+        (entries, observer) => {
           for (const entry of entries) {
             if (entry.isIntersecting) {
               const el = entry.target as HTMLImageElement;
@@ -363,11 +363,11 @@ const smoothImgObserver =
                 el.src = deferred;
                 el.removeAttribute("data-src");
               }
-              smoothImgObserver.unobserve(el);
+              observer.unobserve(el);
             }
           }
         },
-        { rootMargin: "400px 0px" }, // start loading 400px before viewport
+        { rootMargin: "400px 0px" },
       )
     : null;
 
