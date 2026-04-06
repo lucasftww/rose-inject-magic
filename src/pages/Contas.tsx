@@ -1866,7 +1866,6 @@ const Contas = () => {
       { replace: false },
     );
     clearFilters();
-    setSortBy("pdate_to_down");
   };
 
   const activeFiltersCount = [
@@ -2221,14 +2220,14 @@ const Contas = () => {
 
         {/* ─── Game Tab Switcher (segment control) ─── */}
         <nav
-          className="mb-6 sm:mb-8 rounded-2xl border border-border/60 bg-card/30 p-1 shadow-sm backdrop-blur-sm"
+          className="mb-6 sm:mb-8 rounded-2xl border border-border/60 bg-card p-1 shadow-sm"
           aria-label="Categorias de contas"
         >
           <div className="grid grid-cols-2 gap-1 sm:flex sm:flex-wrap sm:justify-stretch sm:gap-1">
           <button
             type="button"
             onClick={() => switchTab("valorant")}
-            className={`touch-manipulation flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-xl px-2 sm:flex-1 sm:px-3 py-2.5 sm:py-2.5 text-xs sm:text-sm font-semibold tracking-tight transition-all duration-200 ${
+            className={`touch-manipulation flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-xl px-2 sm:flex-1 sm:px-3 py-2.5 sm:py-2.5 text-xs sm:text-sm font-semibold tracking-tight transition-colors duration-200 ${
               isValorant
                 ? "bg-success/15 text-success ring-2 ring-success/35 ring-offset-2 ring-offset-background"
                 : "text-muted-foreground hover:bg-background/70 hover:text-foreground"
@@ -2240,7 +2239,7 @@ const Contas = () => {
           <button
             type="button"
             onClick={() => switchTab("lol")}
-            className={`touch-manipulation flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-xl px-2 sm:flex-1 sm:px-3 py-2.5 sm:py-2.5 text-xs sm:text-sm font-semibold tracking-tight transition-all duration-200 ${
+            className={`touch-manipulation flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-xl px-2 sm:flex-1 sm:px-3 py-2.5 sm:py-2.5 text-xs sm:text-sm font-semibold tracking-tight transition-colors duration-200 ${
               gameTab === "lol"
                 ? "bg-[hsl(198,100%,45%,0.12)] text-[hsl(198,100%,48%)] ring-2 ring-[hsl(198,100%,45%,0.35)] ring-offset-2 ring-offset-background"
                 : "text-muted-foreground hover:bg-background/70 hover:text-foreground"
@@ -2253,7 +2252,7 @@ const Contas = () => {
           <button
             type="button"
             onClick={() => switchTab("fortnite")}
-            className={`touch-manipulation flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-xl px-2 sm:flex-1 sm:px-3 py-2.5 sm:py-2.5 text-xs sm:text-sm font-semibold tracking-tight transition-all duration-200 ${
+            className={`touch-manipulation flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-xl px-2 sm:flex-1 sm:px-3 py-2.5 sm:py-2.5 text-xs sm:text-sm font-semibold tracking-tight transition-colors duration-200 ${
               isFortnite
                 ? "bg-[hsl(265,80%,65%,0.12)] text-[hsl(265,80%,65%)] ring-2 ring-[hsl(265,80%,65%,0.45)] ring-offset-2 ring-offset-background"
                 : "text-muted-foreground hover:bg-background/70 hover:text-foreground"
@@ -2265,7 +2264,7 @@ const Contas = () => {
           <button
             type="button"
             onClick={() => switchTab("minecraft")}
-            className={`touch-manipulation flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-xl px-2 sm:flex-1 sm:px-3 py-2.5 sm:py-2.5 text-xs sm:text-sm font-semibold tracking-tight transition-all duration-200 ${
+            className={`touch-manipulation flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-xl px-2 sm:flex-1 sm:px-3 py-2.5 sm:py-2.5 text-xs sm:text-sm font-semibold tracking-tight transition-colors duration-200 ${
               isMinecraft
                 ? "ring-2 ring-offset-2 ring-offset-background"
                 : "text-muted-foreground hover:bg-background/70 hover:text-foreground"
@@ -2352,7 +2351,7 @@ const Contas = () => {
           {/* ─── Mobile Filter Bottom Sheet ─── */}
           {mobileFiltersOpen && (
             <div className="fixed inset-0 z-50 lg:hidden" style={{ touchAction: 'none' }}>
-              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileFiltersOpen(false)} />
+              <div className="absolute inset-0 bg-black/70" onClick={() => setMobileFiltersOpen(false)} />
               <div className="absolute bottom-0 left-0 right-0 max-h-[85vh] overflow-y-auto rounded-t-2xl bg-card border-t border-border animate-in slide-in-from-bottom duration-300" style={{ touchAction: 'auto' }}>
                 <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card px-5 py-4 rounded-t-2xl">
                   <h3 className="flex items-center gap-2 text-base font-bold text-foreground">
