@@ -724,7 +724,7 @@ const RobotProjectTab = () => {
                   </div>
                   <div className="flex items-center gap-2">
                     {linkedGame ? (
-                      linkedGame.status === "on" && (linkedGame.maxKeys === null || (linkedGame.maxKeys - linkedGame.soldKeys) > 0 || linkedGame.is_free) ? (
+                      linkedGame.status === "on" && (linkedGame.maxKeys === null || (linkedGame.maxKeys - linkedGame.soldKeys) > 0 || linkedGame.is_free || linkedGame.isFree) ? (
                         <span className="flex items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-xs font-bold text-success">
                           <CheckCircle className="h-3.5 w-3.5" />
                           {linkedGame.is_free ? "Grátis" : linkedGame.maxKeys !== null ? `${linkedGame.maxKeys - linkedGame.soldKeys}/${linkedGame.maxKeys} slots` : "Disponível"}
