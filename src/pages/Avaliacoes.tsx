@@ -264,6 +264,8 @@ const Avaliacoes = forwardRef<HTMLDivElement>((_props, _ref) => {
       </div>
     </div>
   );
-};
+});
+
+Avaliacoes.displayName = "Avaliacoes";
 
 export default Avaliacoes;

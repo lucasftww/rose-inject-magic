@@ -345,6 +345,8 @@ const Header = forwardRef<HTMLDivElement>((_props, _ref) => {
       <div className="h-14 sm:h-16" />
     </>
   );
-};
+});
+
+Header.displayName = "Header";
 
 export default Header;
