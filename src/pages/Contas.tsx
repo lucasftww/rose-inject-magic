@@ -361,6 +361,7 @@ const SmoothImg = memo(({ src, alt, className, ...props }: React.ImgHTMLAttribut
       className={`${className || ""} transition-opacity duration-200 ${loaded ? "opacity-100" : "opacity-0"}`}
       loading="lazy"
       decoding="async"
+      referrerPolicy="no-referrer"
       onLoad={() => setLoaded(true)}
       onError={() => setFailed(true)}
       {...props}
@@ -778,6 +779,15 @@ const FortniteCard = memo(({ item, skinsDb, priceLabel, queryClient }: { item: L
               </div>
             ))}
           </div>
+        ) : skinsDb.size === 0 && skinCount > 0 ? (
+          /* Skeleton while Fortnite API loads */
+          <div className="relative z-[1] grid grid-cols-3 grid-rows-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="w-full h-full rounded bg-secondary/50 animate-pulse" />
+            ))}
+          </div>
+        ) : item.imagePreviewLinks?.direct?.weapons ? (
+          <LztPreviewImage url={item.imagePreviewLinks.direct.weapons} />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
             <svg className="h-8 w-8 text-muted-foreground/20" fill="currentColor" viewBox="0 0 24 24"><path d="m15.767 14.171.097-5.05H12.4V5.197h3.99L16.872 0H7.128v24l5.271-.985V14.17z"/></svg>
