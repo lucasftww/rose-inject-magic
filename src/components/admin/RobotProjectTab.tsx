@@ -515,7 +515,7 @@ const RobotProjectTab = () => {
             {(["7d", "30d", "all"] as const).map(p => (
               <button
                 key={p}
-                onClick={() => { setSalesPeriod(p); fetchRobotSales(p); }}
+                onClick={() => { setSalesPeriod(p); fetchRobotSales(p, usdToBrl); }}
                 className={`rounded-md px-3 py-1 text-[11px] font-medium ${
                   salesPeriod === p ? "bg-success text-success-foreground" : "text-muted-foreground hover:text-foreground"
                 }`}
