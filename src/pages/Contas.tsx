@@ -378,9 +378,13 @@ const SmoothImg = memo(({ src, alt, className, ...props }: React.ImgHTMLAttribut
 
   useEffect(() => {
     const el = imgRef.current;
-    if (!el || !smoothImgObserver) return;
+    if (!el || !smoothImgObserver) {
+      // No IO: set src directly
+      if (el && src) el.src = src;
+      return;
+    }
     smoothImgObserver.observe(el);
-    return () => { smoothImgObserver.unobserve(el); };
+    return () => { smoothImgObserver!.unobserve(el); };
   }, [src]);
 
   if (failed) return null;
