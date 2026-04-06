@@ -78,6 +78,7 @@ const QUICK_REPLIES = [
 let _cachedTickets: Ticket[] | null = null;
 let _ticketsCacheTs = 0;
 const TICKETS_CACHE_TTL = 3 * 60 * 1000;
+registerCacheInvalidator(() => { _cachedTickets = null; _ticketsCacheTs = 0; });
 
 const TicketsTab = ({
   initialTicketId,
