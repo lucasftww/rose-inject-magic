@@ -2253,7 +2253,7 @@ const Contas = () => {
           <button
             type="button"
             onClick={() => switchTab("fortnite")}
-            className={`touch-manipulation flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-xl px-2 sm:flex-1 sm:px-3 py-2.5 sm:py-2.5 text-xs sm:text-sm font-semibold tracking-tight transition-all duration-200 ${
+            className={`touch-manipulation flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-xl px-2 sm:flex-1 sm:px-3 py-2.5 sm:py-2.5 text-xs sm:text-sm font-semibold tracking-tight transition-colors duration-200 ${
               isFortnite
                 ? "bg-[hsl(265,80%,65%,0.12)] text-[hsl(265,80%,65%)] ring-2 ring-[hsl(265,80%,65%,0.45)] ring-offset-2 ring-offset-background"
                 : "text-muted-foreground hover:bg-background/70 hover:text-foreground"
