@@ -231,15 +231,31 @@ const RobotProjectTab = () => {
       // Get plan names & prices
       const planIds = [...new Set(tickets.map((t) => t.product_plan_id).filter(Boolean))];
 
+      // Fetch only payments from users who have robot tickets (avoid fetching ALL payments)
+      const ticketUserIds = [...new Set(tickets.map(t => t.user_id))];
+
       const [plansRes, robotPayments] = await Promise.all([
         planIds.length > 0
           ? supabase.from("product_plans").select("id, name, price, robot_duration_days").in("id", planIds)
           : Promise.resolve({ data: [] as { id: string; name: string; price: number; robot_duration_days: number | null }[] }),
-        fetchAllRows("payments", {
-          select: "user_id, amount, cart_snapshot, status",
-          filters: [{ column: "status", op: "eq", value: "COMPLETED" }],
-          order: { column: "created_at", ascending: false },
-        }),
+        // Fetch payments only for users with robot tickets (batched if many users)
+        (async () => {
+          const batchSize = 50;
+          const allPayments: { user_id: string; amount: number; cart_snapshot: Json | undefined; status: string }[] = [];
+          for (let i = 0; i < ticketUserIds.length; i += batchSize) {
+            const batch = ticketUserIds.slice(i, i + batchSize);
+            const rows = await fetchAllRows("payments", {
+              select: "user_id, amount, cart_snapshot, status",
+              filters: [
+                { column: "status", op: "eq", value: "COMPLETED" },
+                { column: "user_id", op: "in", value: `(${batch.join(",")})` },
+              ],
+              order: { column: "created_at", ascending: false },
+            });
+            allPayments.push(...(rows as typeof allPayments));
+          }
+          return allPayments;
+        })(),
       ]);
       
       const planMap = Object.fromEntries((plansRes.data || []).map(p => [p.id, p]));
