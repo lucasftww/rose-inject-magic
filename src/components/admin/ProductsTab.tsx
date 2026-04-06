@@ -669,7 +669,7 @@ const ProductsTab = () => {
                 onDragEnter={() => handleDragEnter(index)}
                 onDragOver={(e) => e.preventDefault()}
                 onDragEnd={handleDragEnd}
-                className={`group rounded-xl border bg-card overflow-hidden cursor-grab active:cursor-grabbing transition-all duration-200 ${
+                className={`group rounded-xl border bg-card overflow-hidden cursor-grab active:cursor-grabbing transition-[border-color,box-shadow,opacity,transform] duration-200 ${
                   dragOverIndex === index ? "border-success ring-2 ring-success/20 scale-[1.01]" : "border-border/40 hover:border-border hover:shadow-sm"
                 } ${dragIndex === index ? "opacity-40 scale-95" : ""}`}>
                 <div className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4">
