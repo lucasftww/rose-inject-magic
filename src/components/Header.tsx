@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, type TransitionEvent } from "react";
+import { useState, useEffect, useRef, useCallback, forwardRef, type TransitionEvent } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Menu, X, Home, ShoppingBag, Gamepad2, Activity, Star, Ticket, LogIn, User, Package, Settings, LogOut } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
