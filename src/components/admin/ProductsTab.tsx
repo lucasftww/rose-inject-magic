@@ -91,7 +91,7 @@ const SectionCard = ({ title, icon: Icon, children, actions, className = "" }: {
   title: string; icon: React.ComponentType<{ className?: string }>; children: React.ReactNode;
   actions?: React.ReactNode; className?: string;
 }) => (
-  <div className={`rounded-xl border border-border/60 bg-card/50 backdrop-blur-sm ${className}`}>
+  <div className={`rounded-xl border border-border/60 bg-card ${className}`}>
     <div className="flex items-center justify-between border-b border-border/40 px-5 py-3">
       <div className="flex items-center gap-2.5">
         <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-success/10">
