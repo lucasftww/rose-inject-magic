@@ -60,6 +60,8 @@ export function invalidateSalesCache() {
   _cachedSales = null;
   _salesCacheTs = 0;
 }
+registerCacheInvalidator(invalidateSalesCache);
+
 const SALES_MAX_ROWS = 2000; // cap to avoid loading huge datasets
 
 /** Get purchase type label */
