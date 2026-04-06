@@ -104,11 +104,9 @@ const Header = forwardRef<HTMLDivElement>((_props, _ref) => {
     <>
       <header className="fixed left-0 right-0 z-50 top-0 royal-header-enter">
         <div
-          className="relative flex h-14 sm:h-16 items-center px-5 sm:px-8 lg:px-10 transition-all duration-500"
+          className="relative flex h-14 sm:h-16 items-center px-5 sm:px-8 lg:px-10 transition-[background,border-color] duration-500"
           style={{
-            background: "hsla(0,0%,6%,0.7)",
-            backdropFilter: "blur(20px) saturate(1.4)",
-            WebkitBackdropFilter: "blur(20px) saturate(1.4)",
+            background: "hsla(0,0%,6%,0.92)",
             borderBottom: "1px solid hsla(0,0%,100%,0.06)",
           }}
         >
