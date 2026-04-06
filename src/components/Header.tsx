@@ -276,7 +276,7 @@ const Header = forwardRef<HTMLDivElement>((_props, _ref) => {
                     <Link
                       to={item.href}
                       onClick={requestCloseOverlay}
-                      className={`flex items-center gap-3.5 px-4 py-3 rounded-xl text-[15px] font-medium transition-all ${
+                      className={`flex items-center gap-3.5 px-4 py-3 rounded-xl text-[15px] font-medium transition-colors ${
                         active ? "text-success bg-success/[0.08]" : "text-foreground/60 hover:text-foreground hover:bg-foreground/[0.04]"
                       }`}
                     >
@@ -306,7 +306,7 @@ const Header = forwardRef<HTMLDivElement>((_props, _ref) => {
                   <button
                     key={label}
                     type="button"
-                    className="mobile-nav-row-enter flex w-full items-center gap-3.5 px-4 py-3 rounded-xl text-[15px] text-foreground/50 hover:text-foreground hover:bg-foreground/[0.04] transition-all"
+                    className="mobile-nav-row-enter flex w-full items-center gap-3.5 px-4 py-3 rounded-xl text-[15px] text-foreground/50 hover:text-foreground hover:bg-foreground/[0.04] transition-colors"
                     style={{ animationDelay: `${220 + i * 35}ms` }}
                     onClick={() => { action(); requestCloseOverlay(); }}
                   >
@@ -316,7 +316,7 @@ const Header = forwardRef<HTMLDivElement>((_props, _ref) => {
                 ))}
                 <div className="pt-1.5">
                   <button type="button" onClick={() => { signOut(); requestCloseOverlay(); }}
-                    className="flex w-full items-center gap-3.5 px-4 py-3 rounded-xl text-[15px] text-destructive/70 hover:bg-destructive/[0.08] transition-all">
+                    className="flex w-full items-center gap-3.5 px-4 py-3 rounded-xl text-[15px] text-destructive/70 hover:bg-destructive/[0.08] transition-colors">
                     <LogOut className="w-[18px] h-[18px]" />
                     {t("nav.logout")}
                   </button>
@@ -325,7 +325,7 @@ const Header = forwardRef<HTMLDivElement>((_props, _ref) => {
             ) : (
               <div className="px-5 mt-5 space-y-2 animate-in fade-in slide-in-from-bottom-2 duration-200" style={{ animationDelay: "250ms", animationFillMode: "both" }}>
                 <Link to="/auth" onClick={requestCloseOverlay}
-                  className="block w-full py-3 text-[14px] font-semibold text-success-foreground rounded-xl transition-all btn-shine text-center"
+                  className="block w-full py-3 text-[14px] font-semibold text-success-foreground rounded-xl transition-colors btn-shine text-center"
                   style={{ background: accentColor, boxShadow: `0 0 20px ${accentColor}20` }}>
                   {t("nav.createAccount")}
                 </Link>
