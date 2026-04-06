@@ -290,7 +290,7 @@ TiltCard.displayName = "TiltCard";
 const SoftwareShowcaseCard = forwardRef<HTMLDivElement, { game: GameFromDB; index: number; isFree: boolean; description: string; onSelect: (gameId: string) => void }>(({ game, index, isFree, description, onSelect }, _ref) => {
   const [isHovered, setIsHovered] = useState(false);
   const { image, character, characterHover } = getShowcaseAssets(game);
-  const hasProducts = game.product_count > 0;
+  
   const characterPositionClass = 'absolute bottom-0 right-0 z-[8] w-[40%] sm:w-[50%]';
 
   return (
