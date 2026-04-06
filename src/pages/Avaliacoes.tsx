@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, forwardRef } from "react";
 import Header from "@/components/Header";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
@@ -108,7 +108,7 @@ const STATIC_REVIEWS: Review[] = [
   { id: "s80", rating: 5, comment: "spoofer resolveu o ban do meu note e do meu pc de mesa, os dois", created_at: "2026-03-04T15:05:00Z", user_id: "s", username: "cecilia", product_name: "Driver Cleaner" },
 ];
 
-const Avaliacoes = () => {
+const Avaliacoes = forwardRef<HTMLDivElement>((_props, _ref) => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -264,6 +264,8 @@ const Avaliacoes = () => {
       </div>
     </div>
   );
-};
+});
+
+Avaliacoes.displayName = "Avaliacoes";
 
 export default Avaliacoes;
