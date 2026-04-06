@@ -91,7 +91,7 @@ const SectionCard = ({ title, icon: Icon, children, actions, className = "" }: {
   title: string; icon: React.ComponentType<{ className?: string }>; children: React.ReactNode;
   actions?: React.ReactNode; className?: string;
 }) => (
-  <div className={`rounded-xl border border-border/60 bg-card/50 backdrop-blur-sm ${className}`}>
+  <div className={`rounded-xl border border-border/60 bg-card ${className}`}>
     <div className="flex items-center justify-between border-b border-border/40 px-5 py-3">
       <div className="flex items-center gap-2.5">
         <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-success/10">
@@ -669,7 +669,7 @@ const ProductsTab = () => {
                 onDragEnter={() => handleDragEnter(index)}
                 onDragOver={(e) => e.preventDefault()}
                 onDragEnd={handleDragEnd}
-                className={`group rounded-xl border bg-card/80 backdrop-blur-sm overflow-hidden cursor-grab active:cursor-grabbing transition-all duration-200 ${
+                className={`group rounded-xl border bg-card overflow-hidden cursor-grab active:cursor-grabbing transition-[border-color,box-shadow,opacity,transform] duration-200 ${
                   dragOverIndex === index ? "border-success ring-2 ring-success/20 scale-[1.01]" : "border-border/40 hover:border-border hover:shadow-sm"
                 } ${dragIndex === index ? "opacity-40 scale-95" : ""}`}>
                 <div className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4">
@@ -1096,7 +1096,7 @@ const ProductsTab = () => {
                       )}
                       {m.media_type === "video" && (
                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-background/80 backdrop-blur-sm">
+                          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-background/90">
                             <Film className="h-3 w-3 text-success" />
                           </div>
                         </div>
