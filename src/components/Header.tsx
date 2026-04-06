@@ -11,7 +11,7 @@ const LOL_BLUE = "hsl(198,100%,45%)";
 
 const CLOSE_FALLBACK_MS = 280;
 
-const Header = () => {
+const Header = forwardRef<HTMLDivElement>((_props, _ref) => {
   const [overlayMounted, setOverlayMounted] = useState(false);
   const [overlayEntered, setOverlayEntered] = useState(false);
   const closeFallbackRef = useRef<ReturnType<typeof setTimeout> | null>(null);
