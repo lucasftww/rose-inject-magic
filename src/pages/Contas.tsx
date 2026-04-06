@@ -1866,7 +1866,6 @@ const Contas = () => {
       { replace: false },
     );
     clearFilters();
-    setSortBy("pdate_to_down");
   };
 
   const activeFiltersCount = [
