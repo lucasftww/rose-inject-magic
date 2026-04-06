@@ -287,7 +287,7 @@ const TiltCard = forwardRef<HTMLDivElement, { children: ReactNode; index: number
 });
 TiltCard.displayName = "TiltCard";
 
-const SoftwareShowcaseCard = ({ game, index, isFree, description, onSelect }: { game: GameFromDB; index: number; isFree: boolean; description: string; onSelect: (gameId: string) => void }) => {
+const SoftwareShowcaseCard = forwardRef<HTMLDivElement, { game: GameFromDB; index: number; isFree: boolean; description: string; onSelect: (gameId: string) => void }>(({ game, index, isFree, description, onSelect }, _ref) => {
   const [isHovered, setIsHovered] = useState(false);
   const { image, character, characterHover } = getShowcaseAssets(game);
   const hasProducts = game.product_count > 0;
@@ -363,7 +363,8 @@ const SoftwareShowcaseCard = ({ game, index, isFree, description, onSelect }: { 
       </motion.button>
     </TiltCard>
   );
-};
+});
+SoftwareShowcaseCard.displayName = "SoftwareShowcaseCard";
 
 interface GameFromDB {
   id: string;
