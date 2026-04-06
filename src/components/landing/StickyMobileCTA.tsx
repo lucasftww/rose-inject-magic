@@ -7,7 +7,7 @@ const StickyMobileCTA = forwardRef<HTMLDivElement>((_, ref) => {
 
   return (
     <div ref={ref} className="fixed bottom-0 left-0 right-0 z-40 sm:hidden">
-      <div className="bg-card/95 backdrop-blur-xl border-t border-border/60 px-4 py-2.5 safe-area-bottom">
+      <div className="bg-card border-t border-border/60 px-4 py-2.5 safe-area-bottom">
         <div className="flex gap-2">
           <Link
             to="/contas"

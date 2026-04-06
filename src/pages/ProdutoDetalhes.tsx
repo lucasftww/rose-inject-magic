@@ -411,17 +411,17 @@ const ProdutoDetalhes = () => {
               {/* Nav arrows */}
               {allMedia.length > 1 && (
                 <>
-                  <button onClick={prevMedia} className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-background/60 backdrop-blur-sm text-foreground/80 transition-colors hover:text-success">
+                  <button onClick={prevMedia} className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-background/90 text-foreground/80 transition-colors hover:text-success">
                     <ChevronLeft className="h-5 w-5" />
                   </button>
-                  <button onClick={nextMedia} className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-background/60 backdrop-blur-sm text-foreground/80 transition-colors hover:text-success">
+                  <button onClick={nextMedia} className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-background/90 text-foreground/80 transition-colors hover:text-success">
                     <ChevronRight className="h-5 w-5" />
                   </button>
                 </>
               )}
 
               {allMedia.length > 1 && (
-                <div className="absolute bottom-3 right-3 rounded-lg bg-background/60 backdrop-blur-sm px-2.5 py-1">
+                <div className="absolute bottom-3 right-3 rounded-lg bg-background/90 px-2.5 py-1">
                   <span className="text-[11px] text-muted-foreground tabular-nums">{selectedMediaIndex + 1}/{allMedia.length}</span>
                 </div>
               )}
@@ -717,7 +717,7 @@ const ProdutoDetalhes = () => {
       {/* Sticky mobile bottom bar */}
       {selectedPlan && (
         <div className="fixed bottom-0 left-0 right-0 z-40 sm:hidden">
-          <div className="border-t border-border/40 bg-background/95 backdrop-blur-xl px-4 py-3 safe-area-bottom">
+          <div className="border-t border-border/40 bg-background px-4 py-3 safe-area-bottom">
             <div className="flex items-center gap-3">
               <div className="flex flex-col min-w-0">
                 {Number(selectedPlan.price) > 0 && (

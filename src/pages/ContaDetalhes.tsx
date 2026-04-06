@@ -685,16 +685,16 @@ const ContaDetalhes = () => {
                     </AnimatePresence>
                     {skinItems.length > 1 &&
                 <>
-                        <button onClick={handlePrev} className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 z-[2] flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-background/70 backdrop-blur-sm text-muted-foreground sm:opacity-0 sm:group-hover:opacity-100 transition-all hover:text-success">
+                        <button onClick={handlePrev} className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 z-[2] flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-background/95 text-muted-foreground sm:opacity-0 sm:group-hover:opacity-100 transition-all hover:text-success">
                           <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
                         </button>
-                        <button onClick={handleNext} className="absolute right-2.5 sm:right-3 top-1/2 -translate-y-1/2 z-[2] flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-background/70 backdrop-blur-sm text-muted-foreground sm:opacity-0 sm:group-hover:opacity-100 transition-all hover:text-success">
+                        <button onClick={handleNext} className="absolute right-2.5 sm:right-3 top-1/2 -translate-y-1/2 z-[2] flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-background/95 text-muted-foreground sm:opacity-0 sm:group-hover:opacity-100 transition-all hover:text-success">
                           <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5 rotate-180" />
                         </button>
                       </>
                 }
                     {/* Counter only */}
-                    <div className="absolute bottom-3 right-3 z-[2] rounded-lg bg-background/60 backdrop-blur-sm px-2.5 py-1">
+                    <div className="absolute bottom-3 right-3 z-[2] rounded-lg bg-background/90 px-2.5 py-1">
                       <p className="text-[11px] text-muted-foreground tabular-nums">{selectedSkin + 1}/{skinItems.length}</p>
                     </div>
                   </div> :
@@ -1037,7 +1037,7 @@ const ContaDetalhes = () => {
       {/* Sticky mobile bottom bar */}
       {item &&
       <div className="fixed bottom-0 left-0 right-0 z-40 sm:hidden">
-          <div className="border-t border-border bg-card/95 backdrop-blur-xl px-5 py-3.5 safe-area-bottom">
+          <div className="border-t border-border bg-card px-5 py-3.5 safe-area-bottom">
             <div className="flex items-center gap-4">
               <div className="flex flex-col min-w-0">
                 <span className="text-xs text-muted-foreground leading-none mb-0.5">Total</span>

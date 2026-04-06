@@ -104,11 +104,9 @@ const Header = forwardRef<HTMLDivElement>((_props, _ref) => {
     <>
       <header className="fixed left-0 right-0 z-50 top-0 royal-header-enter">
         <div
-          className="relative flex h-14 sm:h-16 items-center px-5 sm:px-8 lg:px-10 transition-all duration-500"
+          className="relative flex h-14 sm:h-16 items-center px-5 sm:px-8 lg:px-10 transition-[background,border-color] duration-500"
           style={{
-            background: "hsla(0,0%,6%,0.7)",
-            backdropFilter: "blur(20px) saturate(1.4)",
-            WebkitBackdropFilter: "blur(20px) saturate(1.4)",
+            background: "hsla(0,0%,6%,0.92)",
             borderBottom: "1px solid hsla(0,0%,100%,0.06)",
           }}
         >
@@ -161,7 +159,7 @@ const Header = forwardRef<HTMLDivElement>((_props, _ref) => {
               {user ? (
                 <Link
                   to="/dashboard"
-                  className="flex items-center gap-1.5 pl-1 pr-2.5 py-1 rounded-xl transition-all duration-200 active:scale-[0.97]"
+                  className="flex items-center gap-1.5 pl-1 pr-2.5 py-1 rounded-xl transition-colors duration-200 active:scale-[0.97]"
                   style={{
                     background: "hsla(0,0%,100%,0.05)",
                     border: "1px solid hsla(0,0%,100%,0.07)",
@@ -187,7 +185,7 @@ const Header = forwardRef<HTMLDivElement>((_props, _ref) => {
               ) : (
                 <Link
                   to="/auth"
-                  className="flex items-center gap-2 px-4 sm:px-4.5 py-2 rounded-lg text-xs sm:text-[13px] font-semibold tracking-wide transition-all duration-200 active:scale-[0.96]"
+                  className="flex items-center gap-2 px-4 sm:px-4.5 py-2 rounded-lg text-xs sm:text-[13px] font-semibold tracking-wide transition-colors duration-200 active:scale-[0.96]"
                   style={{
                     background: accentColor,
                     color: "hsl(var(--success-foreground))",
@@ -205,7 +203,7 @@ const Header = forwardRef<HTMLDivElement>((_props, _ref) => {
                 onClick={toggleMobileMenu}
                 aria-expanded={overlayMounted}
                 aria-label={overlayMounted ? t("nav.closeMenu") || "Fechar menu" : t("nav.openMenu") || "Abrir menu"}
-                className="lg:hidden p-1.5 rounded-lg text-foreground/50 hover:text-foreground hover:bg-foreground/[0.05] transition-all active:scale-90"
+                className="lg:hidden p-1.5 rounded-lg text-foreground/50 hover:text-foreground hover:bg-foreground/[0.05] transition-colors active:scale-90"
               >
                 {overlayMounted ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </button>
@@ -278,7 +276,7 @@ const Header = forwardRef<HTMLDivElement>((_props, _ref) => {
                     <Link
                       to={item.href}
                       onClick={requestCloseOverlay}
-                      className={`flex items-center gap-3.5 px-4 py-3 rounded-xl text-[15px] font-medium transition-all ${
+                      className={`flex items-center gap-3.5 px-4 py-3 rounded-xl text-[15px] font-medium transition-colors ${
                         active ? "text-success bg-success/[0.08]" : "text-foreground/60 hover:text-foreground hover:bg-foreground/[0.04]"
                       }`}
                     >
@@ -308,7 +306,7 @@ const Header = forwardRef<HTMLDivElement>((_props, _ref) => {
                   <button
                     key={label}
                     type="button"
-                    className="mobile-nav-row-enter flex w-full items-center gap-3.5 px-4 py-3 rounded-xl text-[15px] text-foreground/50 hover:text-foreground hover:bg-foreground/[0.04] transition-all"
+                    className="mobile-nav-row-enter flex w-full items-center gap-3.5 px-4 py-3 rounded-xl text-[15px] text-foreground/50 hover:text-foreground hover:bg-foreground/[0.04] transition-colors"
                     style={{ animationDelay: `${220 + i * 35}ms` }}
                     onClick={() => { action(); requestCloseOverlay(); }}
                   >
@@ -318,7 +316,7 @@ const Header = forwardRef<HTMLDivElement>((_props, _ref) => {
                 ))}
                 <div className="pt-1.5">
                   <button type="button" onClick={() => { signOut(); requestCloseOverlay(); }}
-                    className="flex w-full items-center gap-3.5 px-4 py-3 rounded-xl text-[15px] text-destructive/70 hover:bg-destructive/[0.08] transition-all">
+                    className="flex w-full items-center gap-3.5 px-4 py-3 rounded-xl text-[15px] text-destructive/70 hover:bg-destructive/[0.08] transition-colors">
                     <LogOut className="w-[18px] h-[18px]" />
                     {t("nav.logout")}
                   </button>
@@ -327,7 +325,7 @@ const Header = forwardRef<HTMLDivElement>((_props, _ref) => {
             ) : (
               <div className="px-5 mt-5 space-y-2 animate-in fade-in slide-in-from-bottom-2 duration-200" style={{ animationDelay: "250ms", animationFillMode: "both" }}>
                 <Link to="/auth" onClick={requestCloseOverlay}
-                  className="block w-full py-3 text-[14px] font-semibold text-success-foreground rounded-xl transition-all btn-shine text-center"
+                  className="block w-full py-3 text-[14px] font-semibold text-success-foreground rounded-xl transition-colors btn-shine text-center"
                   style={{ background: accentColor, boxShadow: `0 0 20px ${accentColor}20` }}>
                   {t("nav.createAccount")}
                 </Link>
