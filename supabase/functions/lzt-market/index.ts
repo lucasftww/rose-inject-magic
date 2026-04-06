@@ -393,7 +393,7 @@ Deno.serve(async (req) => {
         headers: {
           ...corsHeaders,
           "Content-Type": contentType,
-          "Cache-Control": "public, max-age=86400, s-maxage=86400",
+          "Cache-Control": "public, max-age=604800, s-maxage=604800, immutable",
         },
       });
     }
