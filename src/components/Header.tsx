@@ -159,7 +159,7 @@ const Header = forwardRef<HTMLDivElement>((_props, _ref) => {
               {user ? (
                 <Link
                   to="/dashboard"
-                  className="flex items-center gap-1.5 pl-1 pr-2.5 py-1 rounded-xl transition-all duration-200 active:scale-[0.97]"
+                  className="flex items-center gap-1.5 pl-1 pr-2.5 py-1 rounded-xl transition-colors duration-200 active:scale-[0.97]"
                   style={{
                     background: "hsla(0,0%,100%,0.05)",
                     border: "1px solid hsla(0,0%,100%,0.07)",
@@ -185,7 +185,7 @@ const Header = forwardRef<HTMLDivElement>((_props, _ref) => {
               ) : (
                 <Link
                   to="/auth"
-                  className="flex items-center gap-2 px-4 sm:px-4.5 py-2 rounded-lg text-xs sm:text-[13px] font-semibold tracking-wide transition-all duration-200 active:scale-[0.96]"
+                  className="flex items-center gap-2 px-4 sm:px-4.5 py-2 rounded-lg text-xs sm:text-[13px] font-semibold tracking-wide transition-colors duration-200 active:scale-[0.96]"
                   style={{
                     background: accentColor,
                     color: "hsl(var(--success-foreground))",
@@ -203,7 +203,7 @@ const Header = forwardRef<HTMLDivElement>((_props, _ref) => {
                 onClick={toggleMobileMenu}
                 aria-expanded={overlayMounted}
                 aria-label={overlayMounted ? t("nav.closeMenu") || "Fechar menu" : t("nav.openMenu") || "Abrir menu"}
-                className="lg:hidden p-1.5 rounded-lg text-foreground/50 hover:text-foreground hover:bg-foreground/[0.05] transition-all active:scale-90"
+                className="lg:hidden p-1.5 rounded-lg text-foreground/50 hover:text-foreground hover:bg-foreground/[0.05] transition-colors active:scale-90"
               >
                 {overlayMounted ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </button>
