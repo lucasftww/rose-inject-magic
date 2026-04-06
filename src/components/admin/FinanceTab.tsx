@@ -413,7 +413,8 @@ const FinanceTab = () => {
         return Number.isFinite(t) && t < min ? t : min;
       }, Date.now());
       const span = Math.ceil((Date.now() - oldest) / 86400000) + 1;
-      numDays = Math.max(span, 1);
+      // Cap to 180 days to avoid generating thousands of DOM nodes on old datasets
+      numDays = Math.min(Math.max(span, 1), 180);
     }
     for (let i = numDays - 1; i >= 0; i--) {
       const d = new Date(Date.now() - i * 86400000);

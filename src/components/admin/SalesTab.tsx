@@ -53,6 +53,12 @@ const statusLabels: Record<string, string> = {
 let _cachedSales: SaleTicket[] | null = null;
 let _salesCacheTs = 0;
 const SALES_CACHE_TTL = 3 * 60 * 1000;
+
+/** Allow external invalidation (e.g. from admin cache clear) */
+export function invalidateSalesCache() {
+  _cachedSales = null;
+  _salesCacheTs = 0;
+}
 const SALES_MAX_ROWS = 2000; // cap to avoid loading huge datasets
 
 /** Get purchase type label */
