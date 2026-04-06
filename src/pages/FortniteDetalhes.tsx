@@ -323,7 +323,7 @@ const FortniteDetalhes = () => {
                     )}
 
                     {/* Name badge */}
-                    <div className="absolute top-3 left-3 z-[2] rounded-lg bg-background/80 backdrop-blur-sm border border-border px-3 py-1.5">
+                    <div className="absolute top-3 left-3 z-[2] rounded-lg bg-background/95 border border-border px-3 py-1.5">
                       <p className="text-xs font-semibold text-foreground">{galleryPreviews[selectedIndex].name}</p>
                       {galleryPreviews[selectedIndex].rarity && (
                         <p className="text-[10px]" style={{ color: getRarityColor(galleryPreviews[selectedIndex].rarity) }}>
@@ -333,7 +333,7 @@ const FortniteDetalhes = () => {
                     </div>
 
                     {/* Counter */}
-                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-[2] rounded-lg bg-background/80 backdrop-blur-sm border border-border px-3 py-1.5">
+                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-[2] rounded-lg bg-background/95 border border-border px-3 py-1.5">
                       <p className="text-xs font-medium text-muted-foreground">{selectedIndex + 1} / {galleryPreviews.length}</p>
                     </div>
                   </div>
@@ -608,7 +608,7 @@ const FortniteDetalhes = () => {
       {/* Sticky mobile bottom bar */}
       {item && (
         <div className="fixed bottom-0 left-0 right-0 z-40 sm:hidden">
-          <div className="border-t border-border bg-card/95 backdrop-blur-xl px-4 py-3 safe-area-bottom">
+          <div className="border-t border-border bg-card px-4 py-3 safe-area-bottom">
             <div className="flex items-center gap-3">
               <div className="flex flex-col min-w-0">
                 <span className="text-lg font-bold leading-tight text-positive">
