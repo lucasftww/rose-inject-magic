@@ -1092,6 +1092,10 @@ const Contas = () => {
         else next.delete(k);
       };
 
+      // Game tab — always persist so other effects don't reset to valorant
+      if (gameTab !== "valorant") next.set("game", gameTab);
+      else next.delete("game");
+
       // Shared
       set("q", searchQuery);
       set("sort", sortBy, "pdate_to_down");
