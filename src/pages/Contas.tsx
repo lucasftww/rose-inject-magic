@@ -349,14 +349,50 @@ const fetchLolChampKeyMap = async (): Promise<Map<number, string>> => {
   }
 };
 
-// Smooth-loading image: fades in on load, uses decoding=async for non-blocking rendering
+// Smooth-loading image: defers src until card is near viewport via Intersection Observer,
+// then fades in on load. Avoids DNS/connection overhead for off-screen images.
+const smoothImgObserver =
+  typeof IntersectionObserver !== "undefined"
+    ? new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (entry.isIntersecting) {
+              const el = entry.target as HTMLImageElement;
+              const deferred = el.dataset.src;
+              if (deferred) {
+                el.src = deferred;
+                el.removeAttribute("data-src");
+              }
+              smoothImgObserver.unobserve(el);
+            }
+          }
+        },
+        { rootMargin: "400px 0px" }, // start loading 400px before viewport
+      )
+    : null;
+
 const SmoothImg = memo(({ src, alt, className, ...props }: React.ImgHTMLAttributes<HTMLImageElement>) => {
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    const el = imgRef.current;
+    if (!el || !smoothImgObserver) return;
+    smoothImgObserver.observe(el);
+    return () => { smoothImgObserver.unobserve(el); };
+  }, [src]);
+
   if (failed) return null;
+
+  // If no IO support, fall back to native lazy loading with src set immediately
+  const useNative = !smoothImgObserver;
+
   return (
     <img
-      src={src}
+      ref={imgRef}
+      src={useNative ? src : undefined}
+      data-src={useNative ? undefined : src}
       alt={alt || ""}
       className={`${className || ""} transition-opacity duration-200 ${loaded ? "opacity-100" : "opacity-0"}`}
       loading="lazy"
