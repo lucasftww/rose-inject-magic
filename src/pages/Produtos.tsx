@@ -248,7 +248,7 @@ const getShowcaseAssets = (game: Pick<GameFromDB, 'name' | 'slug' | 'image_url'>
   };
 };
 
-const TiltCard = ({ children, index }: { children: ReactNode; index: number }) => {
+const TiltCard = forwardRef<HTMLDivElement, { children: ReactNode; index: number }>(({ children, index }, _ref) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const isTouchDevice = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
 
@@ -284,7 +284,8 @@ const TiltCard = ({ children, index }: { children: ReactNode; index: number }) =
       {children}
     </motion.div>
   );
-};
+});
+TiltCard.displayName = "TiltCard";
 
 const SoftwareShowcaseCard = ({ game, index, isFree, description, onSelect }: { game: GameFromDB; index: number; isFree: boolean; description: string; onSelect: (gameId: string) => void }) => {
   const [isHovered, setIsHovered] = useState(false);
