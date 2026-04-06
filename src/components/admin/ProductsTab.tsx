@@ -1096,7 +1096,7 @@ const ProductsTab = () => {
                       )}
                       {m.media_type === "video" && (
                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-background/80 backdrop-blur-sm">
+                          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-background/90">
                             <Film className="h-3 w-3 text-success" />
                           </div>
                         </div>
