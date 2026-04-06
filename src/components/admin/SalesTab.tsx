@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, Fragment } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database, Json, Tables } from "@/integrations/supabase/types";
 import { fetchAllRows } from "@/lib/supabaseAllRows";
+import { registerCacheInvalidator } from "@/lib/adminCache";
 import { asOrderTicketMetadata, type OrderTicketMetadata } from "@/types/orderTicketMetadata";
 import { useAdminUsers } from "@/hooks/useAdminUsers";
 import {
@@ -53,6 +54,14 @@ const statusLabels: Record<string, string> = {
 let _cachedSales: SaleTicket[] | null = null;
 let _salesCacheTs = 0;
 const SALES_CACHE_TTL = 3 * 60 * 1000;
+
+/** Allow external invalidation (e.g. from admin cache clear) */
+export function invalidateSalesCache() {
+  _cachedSales = null;
+  _salesCacheTs = 0;
+}
+registerCacheInvalidator(invalidateSalesCache);
+
 const SALES_MAX_ROWS = 2000; // cap to avoid loading huge datasets
 
 /** Get purchase type label */

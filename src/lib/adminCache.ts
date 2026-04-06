@@ -25,8 +25,15 @@ export function setCache<T>(key: string, data: T): void {
   cache.set(key, { data, ts: Date.now() });
 }
 
+// External cache invalidators registered by modules with their own caches
+const _externalInvalidators: (() => void)[] = [];
+export function registerCacheInvalidator(fn: () => void): void {
+  _externalInvalidators.push(fn);
+}
+
 export function invalidateAdminCache(): void {
   cache.clear();
+  _externalInvalidators.forEach(fn => fn());
 }
 
 // ─── Shared USD/BRL rate ───

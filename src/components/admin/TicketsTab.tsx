@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { fetchAllRows } from "@/lib/supabaseAllRows";
+import { registerCacheInvalidator } from "@/lib/adminCache";
 import { asOrderTicketMetadata } from "@/types/orderTicketMetadata";
 import {
   mapTicketMessageRow,
@@ -77,6 +78,7 @@ const QUICK_REPLIES = [
 let _cachedTickets: Ticket[] | null = null;
 let _ticketsCacheTs = 0;
 const TICKETS_CACHE_TTL = 3 * 60 * 1000;
+registerCacheInvalidator(() => { _cachedTickets = null; _ticketsCacheTs = 0; });
 
 const TicketsTab = ({
   initialTicketId,
