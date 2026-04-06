@@ -361,6 +361,7 @@ const SmoothImg = memo(({ src, alt, className, ...props }: React.ImgHTMLAttribut
       className={`${className || ""} transition-opacity duration-200 ${loaded ? "opacity-100" : "opacity-0"}`}
       loading="lazy"
       decoding="async"
+      referrerPolicy="no-referrer"
       onLoad={() => setLoaded(true)}
       onError={() => setFailed(true)}
       {...props}
