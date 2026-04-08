@@ -418,6 +418,21 @@ const FortniteDetalhes = () => {
                   </ul>
                 </div>
               </div>
+
+              {/* Stats — 3rd on mobile, under gallery on desktop */}
+              <div className="lg:col-span-3 order-3 lg:order-2">
+                <div className="rounded-lg border border-border bg-card p-5 space-y-4">
+                  <h3 className="text-sm font-bold text-foreground">Informações da Conta</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    {skinCount > 0 && <StatCell label="Skins" value={skinCount} color={FN_PURPLE} />}
+                    {vbucks > 0 && <StatCell label="V-Bucks" value={vbucks.toLocaleString()} color={FN_BLUE} />}
+                    {level > 0 && <StatCell label="Nível" value={level} color={FN_PURPLE} />}
+                    {pickaxePreviews.length > 0 && <StatCell label="Picaretas" value={pickaxePreviews.length} color={FN_PURPLE} />}
+                    {dancePreviews.length > 0 && <StatCell label="Danças" value={dancePreviews.length} color={FN_PURPLE} />}
+                    {gliderPreviews.length > 0 && <StatCell label="Planadores" value={gliderPreviews.length} color={FN_PURPLE} />}
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* ─── Inventory Tabs ─── */}
