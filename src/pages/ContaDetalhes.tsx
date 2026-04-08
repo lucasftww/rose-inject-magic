@@ -732,9 +732,15 @@ const ContaDetalhes = () => {
                   </div>
               }
 
-              {/* Rank + Stats — conversion-focused layout */}
+              </div>
+
+              {/* Purchase card — 2nd on mobile, sidebar on desktop */}
+              <div className="lg:col-span-2 space-y-4 sm:space-y-4 order-2 lg:order-3">
+                <div className="lg:sticky lg:top-20 space-y-4">
+
+              {/* Stats — 3rd on mobile, under gallery on desktop */}
+              <div className="lg:col-span-3 order-3 lg:order-2">
                 <div className="rounded-xl border border-border/40 bg-card overflow-hidden">
-                  {/* Rank display — larger, centered, high-impact */}
                   <div className="flex items-center justify-center gap-6 sm:gap-10 px-5 py-6 sm:py-8">
                     {item.riot_valorant_previous_rank && rankMap[item.riot_valorant_previous_rank] ? (
                       <div className="flex flex-col items-center gap-2.5">
@@ -745,11 +751,9 @@ const ContaDetalhes = () => {
                         </div>
                       </div>
                     ) : <div className="w-16 sm:w-20" />}
-
                     <div className="flex flex-col items-center">
                       <ChevronRight className="h-4 w-4 text-muted-foreground/20" />
                     </div>
-
                     <div className="flex flex-col items-center gap-2.5">
                       <div className="relative">
                         <div className="absolute inset-0 rounded-full bg-success/10 blur-xl scale-150" />
@@ -761,8 +765,6 @@ const ContaDetalhes = () => {
                       </div>
                     </div>
                   </div>
-
-                  {/* Stats grid — clean rows */}
                   <div className="border-t border-border/20 px-4 sm:px-5 py-4 sm:py-5">
                     <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
                       {item.valorantRegionPhrase && <StatCell label="Região" value={translateRegion(item.valorantRegionPhrase)} />}
@@ -775,9 +777,6 @@ const ContaDetalhes = () => {
                   </div>
                 </div>
               </div>
-
-              {/* RIGHT: Purchase + Full Acesso */}
-              <div className="lg:col-span-2 space-y-4 sm:space-y-4">
                 <div className="lg:sticky lg:top-20 space-y-4">
                 {/* Title + Purchase */}
                 <div className="rounded-xl border border-success/20 bg-card p-5 sm:p-5 space-y-4 shadow-[0_0_40px_hsl(var(--success)/0.05)]">
