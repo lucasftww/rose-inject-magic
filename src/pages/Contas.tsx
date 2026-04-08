@@ -1297,7 +1297,7 @@ const Contas = () => {
       params.game_type = "riot";
       if (invMin) params.inv_min = invMin;
       if (invMax) params.inv_max = invMax;
-      if (onlyKnife) params.knife = "true";
+      if (onlyKnife) params.knife = "1";
       if (lvlMin) params.valorant_level_min = lvlMin;
       if (lvlMax) params.valorant_level_max = lvlMax;
 
