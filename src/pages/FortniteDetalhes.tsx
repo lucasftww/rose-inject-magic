@@ -279,8 +279,8 @@ const FortniteDetalhes = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-              {/* LEFT: Gallery */}
-              <div className="lg:col-span-3 space-y-4">
+              {/* Gallery — always first */}
+              <div className="lg:col-span-3 order-1">
                 {galleryPreviews.length > 0 ? (
                   <div className="rounded-lg border border-border bg-card overflow-hidden aspect-square sm:aspect-video relative group">
                     <div className="absolute inset-0 bg-gradient-to-br from-[hsl(265,40%,8%)] to-[hsl(210,40%,12%)]" />
@@ -344,23 +344,10 @@ const FortniteDetalhes = () => {
                     </div>
                   </div>
                 )}
-
-                {/* Stats */}
-                <div className="rounded-lg border border-border bg-card p-5 space-y-4">
-                  <h3 className="text-sm font-bold text-foreground">Informações da Conta</h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    {skinCount > 0 && <StatCell label="Skins" value={skinCount} color={FN_PURPLE} />}
-                    {vbucks > 0 && <StatCell label="V-Bucks" value={vbucks.toLocaleString()} color={FN_BLUE} />}
-                    {level > 0 && <StatCell label="Nível" value={level} color={FN_PURPLE} />}
-                    {pickaxePreviews.length > 0 && <StatCell label="Picaretas" value={pickaxePreviews.length} color={FN_PURPLE} />}
-                    {dancePreviews.length > 0 && <StatCell label="Danças" value={dancePreviews.length} color={FN_PURPLE} />}
-                    {gliderPreviews.length > 0 && <StatCell label="Planadores" value={gliderPreviews.length} color={FN_PURPLE} />}
-                  </div>
-                </div>
               </div>
 
-              {/* RIGHT: Purchase card */}
-              <div className="lg:col-span-2 space-y-4">
+              {/* Purchase card — 2nd on mobile, sidebar on desktop */}
+              <div className="lg:col-span-2 space-y-4 order-2 lg:order-3">
                 <div className="rounded-lg border bg-card p-5 space-y-3.5" style={{ borderColor: `${FN_PURPLE}40` }}>
                   <h1 className="text-lg font-bold text-foreground leading-snug">
                     {cleanedTitle}
@@ -429,6 +416,21 @@ const FortniteDetalhes = () => {
                     <li className="flex items-center gap-2.5"><span style={{ color: FN_PURPLE }}>•</span> Senha alterável</li>
                     <li className="flex items-center gap-2.5"><span style={{ color: FN_PURPLE }}>•</span> Conta verificável</li>
                   </ul>
+                </div>
+              </div>
+
+              {/* Stats — 3rd on mobile, under gallery on desktop */}
+              <div className="lg:col-span-3 order-3 lg:order-2">
+                <div className="rounded-lg border border-border bg-card p-5 space-y-4">
+                  <h3 className="text-sm font-bold text-foreground">Informações da Conta</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    {skinCount > 0 && <StatCell label="Skins" value={skinCount} color={FN_PURPLE} />}
+                    {vbucks > 0 && <StatCell label="V-Bucks" value={vbucks.toLocaleString()} color={FN_BLUE} />}
+                    {level > 0 && <StatCell label="Nível" value={level} color={FN_PURPLE} />}
+                    {pickaxePreviews.length > 0 && <StatCell label="Picaretas" value={pickaxePreviews.length} color={FN_PURPLE} />}
+                    {dancePreviews.length > 0 && <StatCell label="Danças" value={dancePreviews.length} color={FN_PURPLE} />}
+                    {gliderPreviews.length > 0 && <StatCell label="Planadores" value={gliderPreviews.length} color={FN_PURPLE} />}
+                  </div>
                 </div>
               </div>
             </div>
