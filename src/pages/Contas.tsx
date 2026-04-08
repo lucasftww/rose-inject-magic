@@ -371,7 +371,7 @@ const smoothImgObserver =
       )
     : null;
 
-const SmoothImg = memo(({ src, alt, className, ...props }: React.ImgHTMLAttributes<HTMLImageElement>) => {
+const SmoothImg = memo(forwardRef<HTMLImageElement, React.ImgHTMLAttributes<HTMLImageElement>>(({ src, alt, className, ...props }, _ref) => {
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
@@ -407,7 +407,7 @@ const SmoothImg = memo(({ src, alt, className, ...props }: React.ImgHTMLAttribut
       {...props}
     />
   );
-});
+}));
 SmoothImg.displayName = "SmoothImg";
 
 // Helper: LZT preview image with fallback to placeholder on error
