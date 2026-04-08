@@ -339,8 +339,8 @@ const LolDetalhes = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-              {/* LEFT: Skin portrait carousel */}
-              <div className="lg:col-span-3 space-y-4">
+              {/* Gallery — always first */}
+              <div className="lg:col-span-3 order-1">
                 {galleryItems.length > 0 ? (
                   <div className="rounded-lg border border-border bg-card overflow-hidden aspect-[3/4] sm:aspect-[4/3] relative group">
                     <div className="absolute inset-0 bg-gradient-to-br from-[hsl(220,30%,8%)] to-[hsl(220,30%,14%)]" />
@@ -406,45 +406,10 @@ const LolDetalhes = () => {
                     </div>
                   </div>
                 )}
-
-                {/* Rank + Stats card */}
-                <div className="rounded-lg border border-border bg-card p-5 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      {rankData?.img ? (
-                        <img src={rankData.img} alt={rankText} className="h-14 w-14 object-contain flex-shrink-0 drop-shadow-lg" />
-                      ) : (
-                        <div className="h-10 w-10 rounded-full flex-shrink-0 ring-2 ring-offset-2 ring-offset-card" style={{ background: rankColor, boxShadow: `0 0 12px ${rankColor}80` }} />
-                      )}
-                      <div>
-                        <p className="text-xs text-muted-foreground uppercase tracking-wider mb-0.5">Elo / Rank</p>
-                        <p className="text-base font-bold text-foreground">{rankText}</p>
-                      </div>
-                    </div>
-                    {winRate != null && (
-                      <div className="flex flex-col items-end">
-                        <p className="text-xs text-muted-foreground">Win Rate</p>
-                        <p className="text-lg font-bold" style={{ color: winRate >= 50 ? LOL_BLUE : "hsl(var(--muted-foreground))" }}>{winRate}%</p>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="border-t border-border pt-4">
-                    <h3 className="text-sm font-bold text-foreground mb-3">Informações da Conta</h3>
-                    <div className="grid grid-cols-2 gap-2">
-                      {level > 0 && <StatCell label="Nível" value={level} color={LOL_BLUE} />}
-                      {champCount > 0 && <StatCell label="Campeões" value={champCount} color={LOL_BLUE} />}
-                      {skinCount > 0 && <StatCell label="Skins" value={skinCount} color={LOL_BLUE} />}
-                      {region && <StatCell label="Região" value={region.toUpperCase()} color={LOL_BLUE} />}
-                      {blueEssence != null && blueEssence > 0 && <StatCell label="Blue Essence" value={blueEssence.toLocaleString()} color="#4a9fe0" />}
-                      {orangeEssence != null && orangeEssence > 0 && <StatCell label="Orange Essence" value={orangeEssence.toLocaleString()} color="#e09a4a" />}
-                    </div>
-                  </div>
-                </div>
               </div>
 
-              {/* RIGHT: Purchase card */}
-              <div className="lg:col-span-2 space-y-4">
+              {/* Purchase card — 2nd on mobile, sidebar on desktop */}
+              <div className="lg:col-span-2 space-y-4 order-2 lg:order-3">
                 <div className="rounded-lg border border-border bg-card p-5 space-y-3.5" style={{ borderColor: `${rankColor}30` }}>
                   <h1 className="text-lg font-bold text-foreground leading-snug">
                     {cleanedTitle}
@@ -515,6 +480,43 @@ const LolDetalhes = () => {
                     <li className="flex items-center gap-2.5"><span className="text-lg" style={{ color: LOL_BLUE }}>•</span> Senha alterável</li>
                     <li className="flex items-center gap-2.5"><span className="text-lg" style={{ color: LOL_BLUE }}>•</span> Conta verificável</li>
                   </ul>
+                </div>
+              </div>
+
+              {/* Stats — 3rd on mobile, under gallery on desktop */}
+              <div className="lg:col-span-3 order-3 lg:order-2">
+                <div className="rounded-lg border border-border bg-card p-5 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      {rankData?.img ? (
+                        <img src={rankData.img} alt={rankText} className="h-14 w-14 object-contain flex-shrink-0 drop-shadow-lg" />
+                      ) : (
+                        <div className="h-10 w-10 rounded-full flex-shrink-0 ring-2 ring-offset-2 ring-offset-card" style={{ background: rankColor, boxShadow: `0 0 12px ${rankColor}80` }} />
+                      )}
+                      <div>
+                        <p className="text-xs text-muted-foreground uppercase tracking-wider mb-0.5">Elo / Rank</p>
+                        <p className="text-base font-bold text-foreground">{rankText}</p>
+                      </div>
+                    </div>
+                    {winRate != null && (
+                      <div className="flex flex-col items-end">
+                        <p className="text-xs text-muted-foreground">Win Rate</p>
+                        <p className="text-lg font-bold" style={{ color: winRate >= 50 ? LOL_BLUE : "hsl(var(--muted-foreground))" }}>{winRate}%</p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="border-t border-border pt-4">
+                    <h3 className="text-sm font-bold text-foreground mb-3">Informações da Conta</h3>
+                    <div className="grid grid-cols-2 gap-2">
+                      {level > 0 && <StatCell label="Nível" value={level} color={LOL_BLUE} />}
+                      {champCount > 0 && <StatCell label="Campeões" value={champCount} color={LOL_BLUE} />}
+                      {skinCount > 0 && <StatCell label="Skins" value={skinCount} color={LOL_BLUE} />}
+                      {region && <StatCell label="Região" value={region.toUpperCase()} color={LOL_BLUE} />}
+                      {blueEssence != null && blueEssence > 0 && <StatCell label="Blue Essence" value={blueEssence.toLocaleString()} color="#4a9fe0" />}
+                      {orangeEssence != null && orangeEssence > 0 && <StatCell label="Orange Essence" value={orangeEssence.toLocaleString()} color="#e09a4a" />}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

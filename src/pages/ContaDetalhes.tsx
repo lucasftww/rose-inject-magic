@@ -659,8 +659,8 @@ const ContaDetalhes = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 sm:gap-6">
-              {/* LEFT: Gallery only */}
-              <div className="lg:col-span-3 space-y-4 sm:space-y-4">
+              {/* Gallery — always first */}
+              <div className="lg:col-span-3 order-1">
                 {/* Single skin carousel */}
                 {skinItems.length > 0 && !skinsLoading ?
               <div className="rounded-xl border border-border/60 bg-card overflow-hidden aspect-[4/3] sm:aspect-[16/10] relative group">
@@ -732,52 +732,10 @@ const ContaDetalhes = () => {
                   </div>
               }
 
-              {/* Rank + Stats — conversion-focused layout */}
-                <div className="rounded-xl border border-border/40 bg-card overflow-hidden">
-                  {/* Rank display — larger, centered, high-impact */}
-                  <div className="flex items-center justify-center gap-6 sm:gap-10 px-5 py-6 sm:py-8">
-                    {item.riot_valorant_previous_rank && rankMap[item.riot_valorant_previous_rank] ? (
-                      <div className="flex flex-col items-center gap-2.5">
-                        <img src={rankMap[item.riot_valorant_previous_rank].img} alt="" className="h-16 w-16 sm:h-20 sm:w-20 object-contain opacity-35 grayscale-[30%]" />
-                        <div className="text-center">
-                          <p className="text-[9px] text-muted-foreground/50 uppercase tracking-[0.15em]">Anterior</p>
-                          <p className="text-[11px] sm:text-xs font-medium text-muted-foreground/70">{rankMap[item.riot_valorant_previous_rank].name}</p>
-                        </div>
-                      </div>
-                    ) : <div className="w-16 sm:w-20" />}
-
-                    <div className="flex flex-col items-center">
-                      <ChevronRight className="h-4 w-4 text-muted-foreground/20" />
-                    </div>
-
-                    <div className="flex flex-col items-center gap-2.5">
-                      <div className="relative">
-                        <div className="absolute inset-0 rounded-full bg-success/10 blur-xl scale-150" />
-                        <img src={rank?.img || rankUnranked} alt={rank?.name || "Unranked"} className="relative h-20 w-20 sm:h-24 sm:w-24 object-contain drop-shadow-lg" />
-                      </div>
-                      <div className="text-center">
-                        <p className="text-[9px] text-success/80 uppercase tracking-[0.15em] font-medium">Atual</p>
-                        <p className="text-sm sm:text-base font-bold text-foreground">{rank?.name || "Unranked"}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Stats grid — clean rows */}
-                  <div className="border-t border-border/20 px-4 sm:px-5 py-4 sm:py-5">
-                    <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
-                      {item.valorantRegionPhrase && <StatCell label="Região" value={translateRegion(item.valorantRegionPhrase)} />}
-                      {item.riot_valorant_wallet_vp != null && <StatCell label="VP" value={item.riot_valorant_wallet_vp} />}
-                      {item.riot_valorant_wallet_rp != null && item.riot_valorant_wallet_rp > 0 && <StatCell label="RP" value={item.riot_valorant_wallet_rp} />}
-                      {item.riot_valorant_inventory_value != null && <StatCell label="Inventário" value={`$${item.riot_valorant_inventory_value}`} />}
-                      {item.riot_valorant_level != null && <StatCell label="Nível" value={item.riot_valorant_level} />}
-                      {item.riot_valorant_knife_count != null && item.riot_valorant_knife_count > 0 && <StatCell label="Knifes" value={item.riot_valorant_knife_count} />}
-                    </div>
-                  </div>
-                </div>
               </div>
 
-              {/* RIGHT: Purchase + Full Acesso */}
-              <div className="lg:col-span-2 space-y-4 sm:space-y-4">
+              {/* Purchase card — 2nd on mobile, sidebar on desktop */}
+              <div className="lg:col-span-2 space-y-4 sm:space-y-4 order-2 lg:order-3">
                 <div className="lg:sticky lg:top-20 space-y-4">
                 {/* Title + Purchase */}
                 <div className="rounded-xl border border-success/20 bg-card p-5 sm:p-5 space-y-4 shadow-[0_0_40px_hsl(var(--success)/0.05)]">
@@ -863,6 +821,46 @@ const ContaDetalhes = () => {
                     <li className="flex items-center gap-3"><span className="text-success text-lg">•</span> Conta verificável</li>
                   </ul>
                 </div>
+                </div>
+              </div>
+
+              {/* Stats — 3rd on mobile, under gallery on desktop */}
+              <div className="lg:col-span-3 order-3 lg:order-2">
+                <div className="rounded-xl border border-border/40 bg-card overflow-hidden">
+                  <div className="flex items-center justify-center gap-6 sm:gap-10 px-5 py-6 sm:py-8">
+                    {item.riot_valorant_previous_rank && rankMap[item.riot_valorant_previous_rank] ? (
+                      <div className="flex flex-col items-center gap-2.5">
+                        <img src={rankMap[item.riot_valorant_previous_rank].img} alt="" className="h-16 w-16 sm:h-20 sm:w-20 object-contain opacity-35 grayscale-[30%]" />
+                        <div className="text-center">
+                          <p className="text-[9px] text-muted-foreground/50 uppercase tracking-[0.15em]">Anterior</p>
+                          <p className="text-[11px] sm:text-xs font-medium text-muted-foreground/70">{rankMap[item.riot_valorant_previous_rank].name}</p>
+                        </div>
+                      </div>
+                    ) : <div className="w-16 sm:w-20" />}
+                    <div className="flex flex-col items-center">
+                      <ChevronRight className="h-4 w-4 text-muted-foreground/20" />
+                    </div>
+                    <div className="flex flex-col items-center gap-2.5">
+                      <div className="relative">
+                        <div className="absolute inset-0 rounded-full bg-success/10 blur-xl scale-150" />
+                        <img src={rank?.img || rankUnranked} alt={rank?.name || "Unranked"} className="relative h-20 w-20 sm:h-24 sm:w-24 object-contain drop-shadow-lg" />
+                      </div>
+                      <div className="text-center">
+                        <p className="text-[9px] text-success/80 uppercase tracking-[0.15em] font-medium">Atual</p>
+                        <p className="text-sm sm:text-base font-bold text-foreground">{rank?.name || "Unranked"}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="border-t border-border/20 px-4 sm:px-5 py-4 sm:py-5">
+                    <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
+                      {item.valorantRegionPhrase && <StatCell label="Região" value={translateRegion(item.valorantRegionPhrase)} />}
+                      {item.riot_valorant_wallet_vp != null && <StatCell label="VP" value={item.riot_valorant_wallet_vp} />}
+                      {item.riot_valorant_wallet_rp != null && item.riot_valorant_wallet_rp > 0 && <StatCell label="RP" value={item.riot_valorant_wallet_rp} />}
+                      {item.riot_valorant_inventory_value != null && <StatCell label="Inventário" value={`$${item.riot_valorant_inventory_value}`} />}
+                      {item.riot_valorant_level != null && <StatCell label="Nível" value={item.riot_valorant_level} />}
+                      {item.riot_valorant_knife_count != null && item.riot_valorant_knife_count > 0 && <StatCell label="Knifes" value={item.riot_valorant_knife_count} />}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

@@ -204,8 +204,8 @@ const MinecraftDetalhes = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-              {/* LEFT: Skin visual */}
-              <div className="lg:col-span-3 space-y-4">
+              {/* Skin visual — always first */}
+              <div className="lg:col-span-3 order-1">
                 <div className="rounded-lg border border-border bg-card overflow-hidden aspect-video relative" style={{ borderColor: `${MC_GREEN}30` }}>
                   <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, hsl(120,30%,8%), hsl(30,20%,12%))" }} />
                   <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse at 30% 50%, ${MC_GREEN}15, transparent 60%)` }} />
@@ -252,8 +252,112 @@ const MinecraftDetalhes = () => {
                     </div>
                   )}
                 </div>
+              </div>
 
-                {/* Stats card */}
+              {/* Purchase card — 2nd on mobile, sidebar on desktop */}
+              <div className="lg:col-span-2 space-y-4 order-2 lg:order-3">
+                <div className="rounded-lg border bg-card p-5 space-y-3.5" style={{ borderColor: `${MC_GREEN}40` }}>
+                  <h1 className="text-lg font-bold text-foreground leading-snug">
+                    {cleanedTitle}
+                  </h1>
+
+                  <div className="flex flex-wrap gap-1.5">
+                    <span className="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold" style={{ color: MC_GREEN, borderColor: `${MC_GREEN}40`, background: `${MC_GREEN}15` }}>
+                      <CheckCircle2 className="h-3 w-3" />
+                      FULL ACESSO
+                    </span>
+                    {hasJava && (
+                      <span className="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold" style={{ color: MC_GREEN, borderColor: `${MC_GREEN}30`, background: `${MC_GREEN}10` }}>
+                        Java Edition
+                      </span>
+                    )}
+                    {hasBedrock && (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-border bg-secondary px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+                        Bedrock Edition
+                      </span>
+                    )}
+                    {hypixelRank && (
+                      <span className="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold text-white" style={{ background: "hsl(40,80%,40%)", borderColor: "hsl(40,80%,50%)" }}>
+                        {hypixelRank}
+                      </span>
+                    )}
+                    <span className="inline-flex items-center gap-1 rounded-full bg-secondary border border-border px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+                      <Shield className="h-3 w-3" />
+                      Conta verificável
+                    </span>
+                  </div>
+
+                  <div className="space-y-0.5 text-xs text-muted-foreground">
+                    <p className="flex items-center gap-2"><span className="font-bold" style={{ color: MC_GREEN }}>✓</span> Entrega automática</p>
+                    <p className="flex items-center gap-2"><span className="font-bold" style={{ color: MC_GREEN }}>✓</span> Email e senha inclusos</p>
+                    <p className="flex items-center gap-2"><span className="font-bold" style={{ color: MC_GREEN }}>✓</span> Liberação instantânea</p>
+                  </div>
+
+                  <div className="rounded-lg bg-card border border-border p-3 flex items-end justify-between">
+                    <div>
+                      <p className="text-[10px] text-muted-foreground mb-0.5">Por</p>
+                      <p className="text-2xl font-bold" style={{ color: MC_GREEN }}>{lockedPriceBrl !== null ? formatPriceBrl(lockedPriceBrl) : getDisplayPrice(item, "minecraft")}</p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleBuyNow}
+                    disabled={checkingAvailability}
+                    aria-busy={checkingAvailability}
+                    className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-positive py-3.5 text-sm font-bold uppercase tracking-[0.2em] text-positive-foreground transition-all active:scale-[0.98] disabled:opacity-60"
+                  >
+                    {checkingAvailability ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+                    {checkingAvailability ? "VERIFICANDO..." : "COMPRAR AGORA"}
+                  </button>
+
+                  {item.item_id && (
+                    <p className="text-[10px] text-muted-foreground/50 text-center break-all">Código: {item.item_id}</p>
+                  )}
+
+                  {/* Quick stats */}
+                  <div className="grid grid-cols-3 divide-x divide-border border border-border rounded-lg overflow-hidden">
+                    {[
+                      { label: "Edição", value: hasJava && hasBedrock ? "Java+BE" : hasJava ? "Java" : hasBedrock ? "Bedrock" : "—" },
+                      { label: "Hypixel", value: hypixelLevel > 0 ? `Nv.${hypixelLevel}` : "—" },
+                      { label: "Capes", value: capes > 0 ? capes : "—" },
+                    ].map((s) => (
+                      <div key={s.label} className="flex flex-col items-center py-2 px-1">
+                        <p className="text-[10px] text-muted-foreground">{s.label}</p>
+                        <p className="text-sm font-bold" style={{ color: MC_GREEN }}>{s.value}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Full Access info */}
+                <div className="rounded-lg border border-border bg-card p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <svg className="h-6 w-6 flex-shrink-0" viewBox="0 0 24 24" fill={MC_GREEN}><path d="M4,2H20A2,2 0 0,1 22,4V20A2,2 0 0,1 20,22H4A2,2 0 0,1 2,20V4A2,2 0 0,1 4,2M6,6V10H10V12H8V18H10V16H14V18H16V12H14V10H18V6H14V10H10V6H6Z" /></svg>
+                    <h3 className="text-sm font-bold text-foreground">O que está incluso</h3>
+                  </div>
+                  <ul className="space-y-2 text-xs text-muted-foreground">
+                    {[
+                      "Login (email + senha) da conta Microsoft/Mojang",
+                      "Acesso completo para trocar email e senha",
+                      hasJava ? "Minecraft Java Edition licenciado" : null,
+                      hasBedrock ? "Minecraft Bedrock Edition" : null,
+                      hasDungeons ? "Minecraft Dungeons incluso" : null,
+                      hasLegends ? "Minecraft Legends incluso" : null,
+                      minecoins > 0 ? `${minecoins} Minecoins` : null,
+                      capes > 0 ? `${capes} cape(s): ${capesList.join(", ")}` : null,
+                    ].filter(Boolean).map((item, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="mt-0.5 font-bold flex-shrink-0" style={{ color: MC_GREEN }}>✓</span>
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+
+              {/* Stats — 3rd on mobile, under gallery on desktop */}
+              <div className="lg:col-span-3 order-3 lg:order-2 space-y-4">
                 <div className="rounded-lg border border-border bg-card p-5 space-y-4">
                   <h3 className="text-sm font-bold text-foreground">Informações da Conta</h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -368,108 +472,6 @@ const MinecraftDetalhes = () => {
                       </div>
                     </div>
                   )}
-                </div>
-              </div>
-
-              {/* RIGHT: Purchase card */}
-              <div className="lg:col-span-2 space-y-4">
-                <div className="rounded-lg border bg-card p-5 space-y-3.5" style={{ borderColor: `${MC_GREEN}40` }}>
-                  <h1 className="text-lg font-bold text-foreground leading-snug">
-                    {cleanedTitle}
-                  </h1>
-
-                  <div className="flex flex-wrap gap-1.5">
-                    <span className="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold" style={{ color: MC_GREEN, borderColor: `${MC_GREEN}40`, background: `${MC_GREEN}15` }}>
-                      <CheckCircle2 className="h-3 w-3" />
-                      FULL ACESSO
-                    </span>
-                    {hasJava && (
-                      <span className="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold" style={{ color: MC_GREEN, borderColor: `${MC_GREEN}30`, background: `${MC_GREEN}10` }}>
-                        Java Edition
-                      </span>
-                    )}
-                    {hasBedrock && (
-                      <span className="inline-flex items-center gap-1 rounded-full border border-border bg-secondary px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
-                        Bedrock Edition
-                      </span>
-                    )}
-                    {hypixelRank && (
-                      <span className="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold text-white" style={{ background: "hsl(40,80%,40%)", borderColor: "hsl(40,80%,50%)" }}>
-                        {hypixelRank}
-                      </span>
-                    )}
-                    <span className="inline-flex items-center gap-1 rounded-full bg-secondary border border-border px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
-                      <Shield className="h-3 w-3" />
-                      Conta verificável
-                    </span>
-                  </div>
-
-                  <div className="space-y-0.5 text-xs text-muted-foreground">
-                    <p className="flex items-center gap-2"><span className="font-bold" style={{ color: MC_GREEN }}>✓</span> Entrega automática</p>
-                    <p className="flex items-center gap-2"><span className="font-bold" style={{ color: MC_GREEN }}>✓</span> Email e senha inclusos</p>
-                    <p className="flex items-center gap-2"><span className="font-bold" style={{ color: MC_GREEN }}>✓</span> Liberação instantânea</p>
-                  </div>
-
-                  <div className="rounded-lg bg-card border border-border p-3 flex items-end justify-between">
-                    <div>
-                      <p className="text-[10px] text-muted-foreground mb-0.5">Por</p>
-                      <p className="text-2xl font-bold" style={{ color: MC_GREEN }}>{lockedPriceBrl !== null ? formatPriceBrl(lockedPriceBrl) : getDisplayPrice(item, "minecraft")}</p>
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={handleBuyNow}
-                    disabled={checkingAvailability}
-                    aria-busy={checkingAvailability}
-                    className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-positive py-3.5 text-sm font-bold uppercase tracking-[0.2em] text-positive-foreground transition-all active:scale-[0.98] disabled:opacity-60"
-                  >
-                    {checkingAvailability ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
-                    {checkingAvailability ? "VERIFICANDO..." : "COMPRAR AGORA"}
-                  </button>
-
-                  {item.item_id && (
-                    <p className="text-[10px] text-muted-foreground/50 text-center break-all">Código: {item.item_id}</p>
-                  )}
-
-                  {/* Quick stats */}
-                  <div className="grid grid-cols-3 divide-x divide-border border border-border rounded-lg overflow-hidden">
-                    {[
-                      { label: "Edição", value: hasJava && hasBedrock ? "Java+BE" : hasJava ? "Java" : hasBedrock ? "Bedrock" : "—" },
-                      { label: "Hypixel", value: hypixelLevel > 0 ? `Nv.${hypixelLevel}` : "—" },
-                      { label: "Capes", value: capes > 0 ? capes : "—" },
-                    ].map((s) => (
-                      <div key={s.label} className="flex flex-col items-center py-2 px-1">
-                        <p className="text-[10px] text-muted-foreground">{s.label}</p>
-                        <p className="text-sm font-bold" style={{ color: MC_GREEN }}>{s.value}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Full Access info */}
-                <div className="rounded-lg border border-border bg-card p-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <svg className="h-6 w-6 flex-shrink-0" viewBox="0 0 24 24" fill={MC_GREEN}><path d="M4,2H20A2,2 0 0,1 22,4V20A2,2 0 0,1 20,22H4A2,2 0 0,1 2,20V4A2,2 0 0,1 4,2M6,6V10H10V12H8V18H10V16H14V18H16V12H14V10H18V6H14V10H10V6H6Z" /></svg>
-                    <h3 className="text-sm font-bold text-foreground">O que está incluso</h3>
-                  </div>
-                  <ul className="space-y-2 text-xs text-muted-foreground">
-                    {[
-                      "Login (email + senha) da conta Microsoft/Mojang",
-                      "Acesso completo para trocar email e senha",
-                      hasJava ? "Minecraft Java Edition licenciado" : null,
-                      hasBedrock ? "Minecraft Bedrock Edition" : null,
-                      hasDungeons ? "Minecraft Dungeons incluso" : null,
-                      hasLegends ? "Minecraft Legends incluso" : null,
-                      minecoins > 0 ? `${minecoins} Minecoins` : null,
-                      capes > 0 ? `${capes} cape(s): ${capesList.join(", ")}` : null,
-                    ].filter(Boolean).map((item, i) => (
-                      <li key={i} className="flex items-start gap-2">
-                        <span className="mt-0.5 font-bold flex-shrink-0" style={{ color: MC_GREEN }}>✓</span>
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
                 </div>
               </div>
             </div>
