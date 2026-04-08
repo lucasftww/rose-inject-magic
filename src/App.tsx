@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { CartProvider } from "@/hooks/useCart";
-import { lazy, Suspense } from "react";
+import React, { lazy, Suspense } from "react";
 import AdminGuard from "@/components/AdminGuard";
 import RouteTracker from "@/components/RouteTracker";
 
@@ -92,11 +92,12 @@ const queryClient = new QueryClient({
   },
 });
 
-const LazyFallback = () => (
-  <div className="min-h-screen flex items-center justify-center bg-background">
+const LazyFallback = React.forwardRef<HTMLDivElement>((_props, ref) => (
+  <div ref={ref} className="min-h-screen flex items-center justify-center bg-background">
     <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary" />
   </div>
-);
+));
+LazyFallback.displayName = "LazyFallback";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

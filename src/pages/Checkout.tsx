@@ -338,7 +338,13 @@ const Checkout = () => {
       if (error) throw error;
       const result = data as any;
       if (!result?.valid) {
-        setCouponError(result?.reason || "Cupom inválido");
+        setCouponError(result?.error || "Cupom inválido");
+        return;
+      }
+      // Check minimum order value
+      const minOrder = typeof result.min_order_value === "number" ? result.min_order_value : 0;
+      if (minOrder > 0 && safeCartTotal < minOrder) {
+        setCouponError(`Pedido mínimo de R$ ${minOrder.toFixed(2).replace(".", ",")} para este cupom`);
         return;
       }
       const discount =
