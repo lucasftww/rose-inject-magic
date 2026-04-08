@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { CartProvider } from "@/hooks/useCart";
-import { lazy, Suspense } from "react";
+import React, { lazy, Suspense } from "react";
 import AdminGuard from "@/components/AdminGuard";
 import RouteTracker from "@/components/RouteTracker";
 
