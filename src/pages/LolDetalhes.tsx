@@ -339,8 +339,8 @@ const LolDetalhes = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-              {/* LEFT: Skin portrait carousel */}
-              <div className="lg:col-span-3 space-y-4">
+              {/* Gallery — always first */}
+              <div className="lg:col-span-3 order-1">
                 {galleryItems.length > 0 ? (
                   <div className="rounded-lg border border-border bg-card overflow-hidden aspect-[3/4] sm:aspect-[4/3] relative group">
                     <div className="absolute inset-0 bg-gradient-to-br from-[hsl(220,30%,8%)] to-[hsl(220,30%,14%)]" />

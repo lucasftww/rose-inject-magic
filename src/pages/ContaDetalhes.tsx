@@ -659,8 +659,8 @@ const ContaDetalhes = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 sm:gap-6">
-              {/* LEFT: Gallery only */}
-              <div className="lg:col-span-3 space-y-4 sm:space-y-4">
+              {/* Gallery — always first */}
+              <div className="lg:col-span-3 order-1">
                 {/* Single skin carousel */}
                 {skinItems.length > 0 && !skinsLoading ?
               <div className="rounded-xl border border-border/60 bg-card overflow-hidden aspect-[4/3] sm:aspect-[16/10] relative group">

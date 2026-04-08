@@ -204,8 +204,8 @@ const MinecraftDetalhes = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-              {/* LEFT: Skin visual */}
-              <div className="lg:col-span-3 space-y-4">
+              {/* Skin visual — always first */}
+              <div className="lg:col-span-3 order-1">
                 <div className="rounded-lg border border-border bg-card overflow-hidden aspect-video relative" style={{ borderColor: `${MC_GREEN}30` }}>
                   <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, hsl(120,30%,8%), hsl(30,20%,12%))" }} />
                   <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse at 30% 50%, ${MC_GREEN}15, transparent 60%)` }} />
