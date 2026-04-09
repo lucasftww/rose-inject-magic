@@ -1327,6 +1327,9 @@ async function fulfillRobotProduct(
         sender_role: "staff",
         message: `✅ **Pagamento confirmado com sucesso!**\n\n⚠️ Houve uma indisponibilidade temporária no sistema de entrega automática.\n\n🔄 **O que vai acontecer agora?**\nNossa equipe já foi notificada e fará a entrega manual do seu produto o mais rápido possível (geralmente em poucos minutos).\n\n💬 Se tiver qualquer dúvida, envie uma mensagem aqui neste chat.`,
       });
+      await sendDiscordManualDeliveryAlert(payment, "Credentials not configured", {
+        productName: item.productName, ticketId: ticket.id, type: "robot-project",
+      });
     }
     return;
   }
