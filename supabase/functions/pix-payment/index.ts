@@ -1571,36 +1571,12 @@ async function fulfillRobotProduct(
         });
       }
 
-      // Alert admin via Discord about the failed delivery
-      try {
-        const { data: webhookCred } = await supabaseAdmin
-          .from("system_credentials")
-          .select("value")
-          .eq("env_key", "DISCORD_WEBHOOK_URL")
-          .maybeSingle();
-        const wh = webhookCred?.value;
-        if (wh) {
-          await fetch(wh, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              content: "@everyone",
-              embeds: [{
-                title: "⚠️ Falha na entrega automática — Robot Project",
-                color: 0xFF4444,
-                fields: [
-                  { name: "Produto", value: item.productName || "?", inline: true },
-                  { name: "Plano", value: item.planName || "?", inline: true },
-                  { name: "Erro", value: reason.substring(0, 200) },
-                  { name: "Ticket", value: ticket?.id?.substring(0, 8).toUpperCase() || "—", inline: true },
-                ],
-                footer: { text: "Entrega manual necessária" },
-                timestamp: new Date().toISOString(),
-              }],
-            }),
-          });
-        }
-      } catch (_) { /* ignore webhook errors */ }
+      // Alert team via Discord
+      if (ticket) {
+        await sendDiscordManualDeliveryAlert(payment, reason, {
+          productName: item.productName, ticketId: ticket.id, type: "robot-project",
+        });
+      }
 
       return;
     }
