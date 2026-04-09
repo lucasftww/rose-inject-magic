@@ -68,6 +68,7 @@ const ProdutoDetalhes = () => {
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
   const [reviews, setReviews] = useState<ReviewData[]>([]);
   const [claimingFree, setClaimingFree] = useState(false);
+  const [tutorialFileUrl, setTutorialFileUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -109,6 +110,15 @@ const ProdutoDetalhes = () => {
             slug: gameData.slug ?? "",
           });
         }
+      }
+      // Fetch tutorial download URL for free products
+      const { data: tutorialData } = await supabase
+        .from("product_tutorials")
+        .select("tutorial_file_url")
+        .eq("product_id", id)
+        .maybeSingle();
+      if (tutorialData?.tutorial_file_url) {
+        setTutorialFileUrl(tutorialData.tutorial_file_url);
       }
 
       const { data: reviewsData } = await supabase
@@ -234,6 +244,20 @@ const ProdutoDetalhes = () => {
     const isFreeProduct = Number(selectedPlan.price) === 0 || finalItemPrice <= 0;
 
     if (isFreeProduct) {
+      // For free Robot products: open download directly — no ticket needed
+      if (product.robot_game_id && tutorialFileUrl) {
+        const url = tutorialFileUrl.startsWith("http") ? tutorialFileUrl : `https://${tutorialFileUrl}`;
+        window.open(url, "_blank", "noopener,noreferrer");
+        toast({ title: "Download iniciado!", description: "O loader será baixado automaticamente." });
+        return;
+      }
+      // Fallback for free products without tutorial URL: use flowware default
+      if (product.robot_game_id) {
+        window.open("https://app.flowware.pro/", "_blank", "noopener,noreferrer");
+        toast({ title: "Download iniciado!", description: "Crie sua conta no programa e comece a usar." });
+        return;
+      }
+      // Non-robot free products: still create ticket (stock-based)
       setClaimingFree(true);
       try {
         const { data: { session } } = await supabase.auth.getSession();
