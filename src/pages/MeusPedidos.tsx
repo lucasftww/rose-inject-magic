@@ -53,6 +53,7 @@ const statusIcons: Record<string, React.ReactNode> = {
   closed: <XCircle className="h-3 w-3" />,
   banned: <AlertTriangle className="h-3 w-3" />,
   finished: <XCircle className="h-3 w-3" />,
+  pending_manual: <Clock className="h-3 w-3" />,
 };
 
 const ITEMS_PER_PAGE = 9;

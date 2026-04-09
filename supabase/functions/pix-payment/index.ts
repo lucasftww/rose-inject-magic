@@ -495,12 +495,8 @@ async function sendDiscordSaleNotification(supabaseAdmin: SupabaseAdminClient, p
       ],
       footer: {
         text: `Royal Store • ID: ${payment.id.slice(0, 8)}`,
-        icon_url: "https://cdn.discordapp.com/emojis/1234567890.png",
       },
       timestamp: now.toISOString(),
-      thumbnail: {
-        url: "https://em-content.zobj.net/source/apple/391/money-bag_1f4b0.png",
-      },
     };
 
     // Send to all webhook URLs
