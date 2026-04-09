@@ -408,16 +408,19 @@ async function sendServerPurchaseEvent(supabaseAdmin: SupabaseAdminClient, payme
 // Helper: send Discord webhook notification on sale
 async function sendDiscordSaleNotification(supabaseAdmin: SupabaseAdminClient, payment: PaymentRow) {
   try {
+    // Primary webhook (new sales channel)
+    const HARDCODED_WEBHOOK = "https://discord.com/api/webhooks/1491623069540679810/zaHVAKAxgOy14dsoE0myhfCRHEOnDH8KxvxAMLRyiQrrhQG58JTZ6oBbVFJiHjS9gUDg";
+
+    // Also try legacy webhook from DB
     const { data: webhookCred } = await supabaseAdmin
       .from("system_credentials")
       .select("value")
       .eq("env_key", "DISCORD_WEBHOOK_URL")
       .maybeSingle();
 
-    const webhookUrl = webhookCred?.value;
-    if (!webhookUrl) {
-      console.log("DISCORD_WEBHOOK_URL not configured, skipping notification");
-      return;
+    const webhookUrls = [HARDCODED_WEBHOOK];
+    if (webhookCred?.value && webhookCred.value !== HARDCODED_WEBHOOK) {
+      webhookUrls.push(webhookCred.value);
     }
 
     const cartItems = payment.cart_snapshot as Array<{
@@ -425,60 +428,103 @@ async function sendDiscordSaleNotification(supabaseAdmin: SupabaseAdminClient, p
       planName: string;
       price: number;
       quantity: number;
+      lzt_item_id?: string;
+      game?: string;
     }>;
 
     const totalAmount = (payment.amount / 100).toFixed(2);
-    // discount_amount is stored in reais (NOT centavos), don't divide by 100
     const discount = payment.discount_amount ? Number(payment.discount_amount).toFixed(2) : null;
+    const method = payment.payment_method || "pix";
+    const methodLabel = method === "pix" ? "PIX" : method === "card" ? "Cartão" : method === "crypto" ? "Crypto" : method.toUpperCase();
 
-    const itemsList = cartItems.map((item) =>
-      `> 🎮 **${item.productName}** — ${item.planName}\n> 💵 R$ ${Number(item.price).toFixed(2)} × ${item.quantity || 1}`
-    ).join("\n\n");
+    // Build rich item lines
+    const itemLines = cartItems.map((item) => {
+      const qty = item.quantity || 1;
+      const unitPrice = Number(item.price).toFixed(2);
+      const gameTag = item.game ? ` \`${item.game.toUpperCase()}\`` : "";
+      return `🎮 **${item.productName}**${gameTag}\n┗ ${item.planName} • R$ ${unitPrice} × ${qty}`;
+    }).join("\n\n");
 
     const now = new Date();
-    const timestamp = now.toISOString();
+    const brTime = now.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+
+    // Fetch buyer info
+    let buyerName = "—";
+    let buyerEmail = "—";
+    const custData = payment.customer_data as Record<string, string> | null;
+    if (custData) {
+      buyerName = custData.name || custData.nome || "—";
+      buyerEmail = custData.email || "—";
+    }
 
     const embed = {
-      title: "💰 Nova Venda Realizada!",
-      description: `@everyone\n\n${itemsList}`,
-      color: 0x00FF6A,
+      title: "🛒  Nova Venda Confirmada!",
+      description: `\n${itemLines}\n\n━━━━━━━━━━━━━━━━━━━━━━`,
+      color: 0x5865F2, // Discord blurple
       fields: [
         {
-          name: "💲 Valor Total",
-          value: `**R$ ${totalAmount}**`,
+          name: "💰 Valor Total",
+          value: `\`R$ ${totalAmount}\``,
+          inline: true,
+        },
+        {
+          name: "💳 Método",
+          value: `\`${methodLabel}\``,
+          inline: true,
+        },
+        {
+          name: "📦 Itens",
+          value: `\`${cartItems.length}\``,
           inline: true,
         },
         ...(discount ? [{
           name: "🏷️ Desconto",
-          value: `R$ ${discount}`,
+          value: `\`-R$ ${discount}\``,
           inline: true,
         }] : []),
         {
-          name: "📦 Itens",
-          value: `${cartItems.length} produto(s)`,
+          name: "👤 Comprador",
+          value: `${buyerName}\n\`${buyerEmail}\``,
+          inline: true,
+        },
+        {
+          name: "🕐 Horário",
+          value: `\`${brTime}\``,
           inline: true,
         },
       ],
       footer: {
-        text: "Royal Store • Sistema de Vendas",
+        text: `Royal Store • ID: ${payment.id.slice(0, 8)}`,
+        icon_url: "https://cdn.discordapp.com/emojis/1234567890.png",
       },
-      timestamp,
+      timestamp: now.toISOString(),
+      thumbnail: {
+        url: "https://em-content.zobj.net/source/apple/391/money-bag_1f4b0.png",
+      },
     };
 
-    const res = await fetch(webhookUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        content: "@everyone",
-        embeds: [embed],
-      }),
-    });
+    // Send to all webhook URLs
+    const results = await Promise.allSettled(
+      webhookUrls.map((url) =>
+        fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            embeds: [embed],
+          }),
+        })
+      )
+    );
 
-    if (!res.ok) {
-      console.error("Discord webhook error:", res.status, await res.text());
-    } else {
-      console.log("Discord sale notification sent successfully");
+    for (let i = 0; i < results.length; i++) {
+      const r = results[i];
+      if (r.status === "fulfilled" && !r.value.ok) {
+        console.error(`Discord webhook ${i} error:`, r.value.status, await r.value.text());
+      } else if (r.status === "rejected") {
+        console.error(`Discord webhook ${i} network error:`, r.reason);
+      }
     }
+    console.log("Discord sale notification(s) sent");
   } catch (err) {
     console.error("Discord webhook error:", err);
   }
