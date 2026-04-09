@@ -1275,7 +1275,7 @@ async function fulfillRobotProduct(
           ticket_id: ticket.id,
           sender_id: payment.user_id,
           sender_role: "staff",
-          message: `✅ Pagamento confirmado! ⚠️ ${robotSnapshot.reason} Nossa equipe irá entregar manualmente em breve.`,
+          message: `✅ **Pagamento confirmado com sucesso!**\n\n⚠️ Não foi possível concluir a entrega automática neste momento.\n\n🔄 **O que vai acontecer agora?**\nNossa equipe já foi notificada e fará a entrega manual do seu produto o mais rápido possível (geralmente em poucos minutos).\n\n💬 Se tiver qualquer dúvida, envie uma mensagem aqui neste chat.`,
         });
       }
 
