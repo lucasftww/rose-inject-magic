@@ -1493,34 +1493,11 @@ async function fulfillRobotProduct(
         });
       }
 
-      try {
-        const { data: webhookCred } = await supabaseAdmin
-          .from("system_credentials")
-          .select("value")
-          .eq("env_key", "DISCORD_WEBHOOK_URL")
-          .maybeSingle();
-        const wh = webhookCred?.value;
-        if (wh) {
-          await fetch(wh, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              content: "@everyone",
-              embeds: [{
-                title: "⚠️ Jogo Robot gratuito sem URL de loader",
-                description: "A API não retorna chave para free; configure download em GET /games ou tutorial do produto.",
-                color: 0xFF8800,
-                fields: [
-                  { name: "Produto", value: item.productName || "?", inline: true },
-                  { name: "game_id", value: String(robotGameId), inline: true },
-                  { name: "Ticket", value: ticket?.id?.substring(0, 8).toUpperCase() || "—", inline: true },
-                ],
-                timestamp: new Date().toISOString(),
-              }],
-            }),
-          });
-        }
-      } catch (_) { /* ignore */ }
+      if (ticket) {
+        await sendDiscordManualDeliveryAlert(payment, reason, {
+          productName: item.productName, ticketId: ticket.id, type: "robot-project",
+        });
+      }
 
       return;
     }
