@@ -525,6 +525,55 @@ async function sendDiscordSaleNotification(supabaseAdmin: SupabaseAdminClient, p
     console.error("Discord webhook error:", err);
   }
 }
+// Helper: send Discord alert when manual delivery is needed
+async function sendDiscordManualDeliveryAlert(
+  payment: PaymentRow,
+  reason: string,
+  details: { productName?: string; ticketId?: string; type?: string; game?: string; itemId?: string },
+) {
+  try {
+    const WEBHOOK = "https://discord.com/api/webhooks/1491623069540679810/zaHVAKAxgOy14dsoE0myhfCRHEOnDH8KxvxAMLRyiQrrhQG58JTZ6oBbVFJiHjS9gUDg";
+    const now = new Date();
+    const brTime = now.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+    const totalBrl = (payment.amount / 100).toFixed(2);
+    const custData = payment.customer_data as Record<string, string> | null;
+    const buyerName = custData?.name || custData?.nome || "—";
+    const buyerEmail = custData?.email || "—";
+
+    const typeLabel = details.type === "lzt-account"
+      ? `Conta ${(details.game || "").toUpperCase()}`
+      : details.type === "robot-project"
+        ? "Robot Project"
+        : "Produto (estoque vazio)";
+
+    const embed = {
+      title: "🚨  Entrega Manual Necessária",
+      description: `**${details.productName || "Produto"}**\n\`Tipo: ${typeLabel}\``,
+      color: 0xED4245, // Discord red
+      fields: [
+        { name: "⚠️ Motivo", value: `\`\`\`${reason.slice(0, 200)}\`\`\``, inline: false },
+        { name: "💰 Valor", value: `\`R$ ${totalBrl}\``, inline: true },
+        { name: "👤 Comprador", value: `${buyerName}\n\`${buyerEmail}\``, inline: true },
+        { name: "🕐 Horário", value: `\`${brTime}\``, inline: true },
+        ...(details.ticketId ? [{ name: "🎫 Ticket", value: `\`${details.ticketId.slice(0, 8)}\``, inline: true }] : []),
+        ...(details.itemId ? [{ name: "🔗 Item ID", value: `\`${details.itemId}\``, inline: true }] : []),
+      ],
+      footer: { text: `Royal Store • Pagamento: ${payment.id.slice(0, 8)}` },
+      timestamp: now.toISOString(),
+    };
+
+    const res = await fetch(WEBHOOK, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content: "@everyone ⚡ **Entrega manual pendente!**", embeds: [embed] }),
+    });
+    if (!res.ok) console.error("Discord manual alert error:", res.status, await res.text());
+    else console.log("Discord manual delivery alert sent");
+  } catch (err) {
+    console.error("Discord manual alert error:", err);
+  }
+}
+
 // Helper: assign Discord "Cliente" role to buyer after purchase
 async function assignDiscordClientRole(supabaseAdmin: SupabaseAdminClient, userId: string) {
   try {
@@ -698,6 +747,9 @@ async function fulfillOrder(supabaseAdmin: SupabaseAdminClient, payment: Payment
             sender_id: payment.user_id,
             sender_role: "staff",
             message: "✅ **Pagamento confirmado com sucesso!**\n\n⚠️ No momento este item está fora de estoque.\n\n🔄 **O que vai acontecer agora?**\nNossa equipe já foi notificada e fará a entrega manual o mais rápido possível.\n\n💬 Se tiver qualquer dúvida, envie uma mensagem aqui neste chat.",
+          });
+          await sendDiscordManualDeliveryAlert(payment, "Estoque vazio para o plano selecionado", {
+            productName: item.productName, ticketId: ticket.id, type: "stock-empty",
           });
         }
 
@@ -959,6 +1011,10 @@ async function fulfillLztAccount(supabaseAdmin: SupabaseAdminClient, payment: Pa
         sender_id: payment.user_id,
         sender_role: "staff",
         message: customerMessage,
+      });
+      // Alert team via Discord
+      await sendDiscordManualDeliveryAlert(payment, reason, {
+        productName: item.productName, ticketId: ticket.id, type: "lzt-account", game: lztGame, itemId: String(itemId),
       });
     }
 
@@ -1274,6 +1330,9 @@ async function fulfillRobotProduct(
         sender_role: "staff",
         message: `✅ **Pagamento confirmado com sucesso!**\n\n⚠️ Houve uma indisponibilidade temporária no sistema de entrega automática.\n\n🔄 **O que vai acontecer agora?**\nNossa equipe já foi notificada e fará a entrega manual do seu produto o mais rápido possível (geralmente em poucos minutos).\n\n💬 Se tiver qualquer dúvida, envie uma mensagem aqui neste chat.`,
       });
+      await sendDiscordManualDeliveryAlert(payment, "Credentials not configured", {
+        productName: item.productName, ticketId: ticket.id, type: "robot-project",
+      });
     }
     return;
   }
@@ -1321,36 +1380,12 @@ async function fulfillRobotProduct(
         });
       }
 
-      // Alert admin via Discord
-      try {
-        const { data: webhookCred } = await supabaseAdmin
-          .from("system_credentials")
-          .select("value")
-          .eq("env_key", "DISCORD_WEBHOOK_URL")
-          .maybeSingle();
-        const wh = webhookCred?.value;
-        if (wh) {
-          await fetch(wh, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              content: "@everyone",
-              embeds: [{
-                title: "⚠️ Robot pre-check bloqueou entrega automática",
-                color: 0xFF8800,
-                fields: [
-                  { name: "Produto", value: item.productName || "?", inline: true },
-                  { name: "Plano", value: item.planName || "?", inline: true },
-                  { name: "Motivo", value: robotSnapshot.reason.substring(0, 200) },
-                  { name: "Ticket", value: ticket?.id?.substring(0, 8).toUpperCase() || "—", inline: true },
-                ],
-                footer: { text: "Entrega manual necessária" },
-                timestamp: new Date().toISOString(),
-              }],
-            }),
-          });
-        }
-      } catch (_) { /* ignore webhook errors */ }
+      // Alert team via Discord
+      if (ticket) {
+        await sendDiscordManualDeliveryAlert(payment, robotSnapshot.reason, {
+          productName: item.productName, ticketId: ticket.id, type: "robot-project",
+        });
+      }
 
       return;
     }
@@ -1461,34 +1496,11 @@ async function fulfillRobotProduct(
         });
       }
 
-      try {
-        const { data: webhookCred } = await supabaseAdmin
-          .from("system_credentials")
-          .select("value")
-          .eq("env_key", "DISCORD_WEBHOOK_URL")
-          .maybeSingle();
-        const wh = webhookCred?.value;
-        if (wh) {
-          await fetch(wh, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              content: "@everyone",
-              embeds: [{
-                title: "⚠️ Jogo Robot gratuito sem URL de loader",
-                description: "A API não retorna chave para free; configure download em GET /games ou tutorial do produto.",
-                color: 0xFF8800,
-                fields: [
-                  { name: "Produto", value: item.productName || "?", inline: true },
-                  { name: "game_id", value: String(robotGameId), inline: true },
-                  { name: "Ticket", value: ticket?.id?.substring(0, 8).toUpperCase() || "—", inline: true },
-                ],
-                timestamp: new Date().toISOString(),
-              }],
-            }),
-          });
-        }
-      } catch (_) { /* ignore */ }
+      if (ticket) {
+        await sendDiscordManualDeliveryAlert(payment, reason, {
+          productName: item.productName, ticketId: ticket.id, type: "robot-project",
+        });
+      }
 
       return;
     }
@@ -1539,36 +1551,12 @@ async function fulfillRobotProduct(
         });
       }
 
-      // Alert admin via Discord about the failed delivery
-      try {
-        const { data: webhookCred } = await supabaseAdmin
-          .from("system_credentials")
-          .select("value")
-          .eq("env_key", "DISCORD_WEBHOOK_URL")
-          .maybeSingle();
-        const wh = webhookCred?.value;
-        if (wh) {
-          await fetch(wh, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              content: "@everyone",
-              embeds: [{
-                title: "⚠️ Falha na entrega automática — Robot Project",
-                color: 0xFF4444,
-                fields: [
-                  { name: "Produto", value: item.productName || "?", inline: true },
-                  { name: "Plano", value: item.planName || "?", inline: true },
-                  { name: "Erro", value: reason.substring(0, 200) },
-                  { name: "Ticket", value: ticket?.id?.substring(0, 8).toUpperCase() || "—", inline: true },
-                ],
-                footer: { text: "Entrega manual necessária" },
-                timestamp: new Date().toISOString(),
-              }],
-            }),
-          });
-        }
-      } catch (_) { /* ignore webhook errors */ }
+      // Alert team via Discord
+      if (ticket) {
+        await sendDiscordManualDeliveryAlert(payment, reason, {
+          productName: item.productName, ticketId: ticket.id, type: "robot-project",
+        });
+      }
 
       return;
     }
@@ -1691,6 +1679,9 @@ async function fulfillRobotProduct(
         sender_id: payment.user_id,
         sender_role: "staff",
         message: "✅ Pagamento confirmado! ⚠️ Erro ao gerar key. Equipe irá entregar manualmente.",
+      });
+      await sendDiscordManualDeliveryAlert(payment, errorMessage(err), {
+        productName: item.productName, ticketId: ticket.id, type: "robot-project",
       });
     }
   }
