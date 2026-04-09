@@ -40,6 +40,18 @@ function isSoldMessage(body: LztDetailErrorBody | null): boolean {
   );
 }
 
+function isRemovedByAdmin(body: LztDetailErrorBody | null): boolean {
+  const t = `${body?.error ?? ""} ${body?.message ?? ""}`.toLowerCase();
+  return (
+    t.includes("removed by") ||
+    t.includes("removed by the site administration") ||
+    t.includes("isn't visible in the search") ||
+    t.includes("removido pela administração") ||
+    t.includes("not visible") ||
+    t.includes("ad was removed")
+  );
+}
+
 /** Mesma regra da resposta `detail` após JSON ok (sem toast). */
 export function isLztDetailItemPurchasable(item: LztDetailItem | null | undefined): boolean {
   if (!item) return false;
@@ -115,10 +127,19 @@ export const checkLztAvailability = async (
     );
     if (!res.ok) {
       const errBody = await readJsonErrorBody(res);
-      if (res.status === 410) {
-        const sold = isSoldMessage(errBody);
+      if (isRemovedByAdmin(errBody)) {
         toast({
-          title: sold ? "Conta já vendida" : "Conta indisponível",
+          title: "Conta removida",
+          description: "Esta conta foi removida pela administração do marketplace e não está mais disponível.",
+          variant: "destructive",
+        });
+        return false;
+      }
+      if (res.status === 410 || res.status === 403) {
+        const sold = isSoldMessage(errBody);
+        const removed = res.status === 403;
+        toast({
+          title: sold ? "Conta já vendida" : removed ? "Conta indisponível" : "Conta indisponível",
           description: sold
             ? "Esta conta foi vendida recentemente. Escolha outra."
             : "Esta conta não está mais disponível para compra.",
