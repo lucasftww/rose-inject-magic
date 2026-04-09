@@ -90,6 +90,7 @@ const Dashboard = () => {
     closed: "Encerrado",
     banned: "Banido",
     finished: "Finalizado",
+    pending_manual: "Aguardando Entrega",
   };
 
   // Fetch user payments/invoices (all, not limited — needed for accurate stats)
