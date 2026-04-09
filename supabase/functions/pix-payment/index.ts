@@ -748,6 +748,9 @@ async function fulfillOrder(supabaseAdmin: SupabaseAdminClient, payment: Payment
             sender_role: "staff",
             message: "✅ **Pagamento confirmado com sucesso!**\n\n⚠️ No momento este item está fora de estoque.\n\n🔄 **O que vai acontecer agora?**\nNossa equipe já foi notificada e fará a entrega manual o mais rápido possível.\n\n💬 Se tiver qualquer dúvida, envie uma mensagem aqui neste chat.",
           });
+          await sendDiscordManualDeliveryAlert(payment, "Estoque vazio para o plano selecionado", {
+            productName: item.productName, ticketId: ticket.id, type: "stock-empty",
+          });
         }
 
         if (ticket && stockId) {
