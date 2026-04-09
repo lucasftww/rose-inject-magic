@@ -1350,6 +1350,7 @@ const Contas = () => {
       // Fortnite-specific
       params.game_type = "fortnite";
       if (fnVbMin) params.vbmin = fnVbMin;
+      if (fnLevelMin) params.level_min = fnLevelMin;
       // Enforce minimum 10 skins server-side; if user typed a lower value, use 10
       const userSmin = Number(fnSkinsMin) || 0;
       params.smin = String(Math.max(userSmin, 10));
