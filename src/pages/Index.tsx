@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import heroBg from "@/assets/hero-bg.webp";
+import heroBg from "@/assets/hero-bg-new.webp";
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import { Star, ArrowRight, Loader2, Zap, Shield, Clock } from "lucide-react";
@@ -51,7 +51,7 @@ const Index = () => {
             width={1920}
             height={1080}
             className="h-full w-full object-cover object-center scale-110"
-            style={{ filter: 'blur(2px) brightness(0.45) saturate(1.3)' }}
+            style={{ filter: 'brightness(0.55) saturate(1.4)' }}
             {...{ fetchpriority: "high" } as React.ImgHTMLAttributes<HTMLImageElement>}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
