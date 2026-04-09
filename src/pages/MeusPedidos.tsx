@@ -40,6 +40,7 @@ const statusLabels: Record<string, string> = {
   closed: "Encerrado",
   banned: "Banido",
   finished: "Finalizado",
+  pending_manual: "Aguardando Entrega",
 };
 
 const statusIcons: Record<string, React.ReactNode> = {
