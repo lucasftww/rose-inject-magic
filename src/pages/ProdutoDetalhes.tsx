@@ -111,8 +111,17 @@ const ProdutoDetalhes = () => {
           });
         }
       }
+      // Fetch tutorial download URL for free products
+      const { data: tutorialData } = await supabase
+        .from("product_tutorials")
+        .select("tutorial_file_url")
+        .eq("product_id", id)
+        .maybeSingle();
+      if (tutorialData?.tutorial_file_url) {
+        setTutorialFileUrl(tutorialData.tutorial_file_url);
+      }
 
-      const { data: reviewsData } = await supabase
+
         .from("public_product_reviews")
         .select("id, rating, comment, created_at, username, product_id")
         .eq("product_id", id)
