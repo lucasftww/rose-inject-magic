@@ -525,6 +525,55 @@ async function sendDiscordSaleNotification(supabaseAdmin: SupabaseAdminClient, p
     console.error("Discord webhook error:", err);
   }
 }
+// Helper: send Discord alert when manual delivery is needed
+async function sendDiscordManualDeliveryAlert(
+  payment: PaymentRow,
+  reason: string,
+  details: { productName?: string; ticketId?: string; type?: string; game?: string; itemId?: string },
+) {
+  try {
+    const WEBHOOK = "https://discord.com/api/webhooks/1491623069540679810/zaHVAKAxgOy14dsoE0myhfCRHEOnDH8KxvxAMLRyiQrrhQG58JTZ6oBbVFJiHjS9gUDg";
+    const now = new Date();
+    const brTime = now.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+    const totalBrl = (payment.amount / 100).toFixed(2);
+    const custData = payment.customer_data as Record<string, string> | null;
+    const buyerName = custData?.name || custData?.nome || "—";
+    const buyerEmail = custData?.email || "—";
+
+    const typeLabel = details.type === "lzt-account"
+      ? `Conta ${(details.game || "").toUpperCase()}`
+      : details.type === "robot-project"
+        ? "Robot Project"
+        : "Produto (estoque vazio)";
+
+    const embed = {
+      title: "🚨  Entrega Manual Necessária",
+      description: `**${details.productName || "Produto"}**\n\`Tipo: ${typeLabel}\``,
+      color: 0xED4245, // Discord red
+      fields: [
+        { name: "⚠️ Motivo", value: `\`\`\`${reason.slice(0, 200)}\`\`\``, inline: false },
+        { name: "💰 Valor", value: `\`R$ ${totalBrl}\``, inline: true },
+        { name: "👤 Comprador", value: `${buyerName}\n\`${buyerEmail}\``, inline: true },
+        { name: "🕐 Horário", value: `\`${brTime}\``, inline: true },
+        ...(details.ticketId ? [{ name: "🎫 Ticket", value: `\`${details.ticketId.slice(0, 8)}\``, inline: true }] : []),
+        ...(details.itemId ? [{ name: "🔗 Item ID", value: `\`${details.itemId}\``, inline: true }] : []),
+      ],
+      footer: { text: `Royal Store • Pagamento: ${payment.id.slice(0, 8)}` },
+      timestamp: now.toISOString(),
+    };
+
+    const res = await fetch(WEBHOOK, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content: "@everyone ⚡ **Entrega manual pendente!**", embeds: [embed] }),
+    });
+    if (!res.ok) console.error("Discord manual alert error:", res.status, await res.text());
+    else console.log("Discord manual delivery alert sent");
+  } catch (err) {
+    console.error("Discord manual alert error:", err);
+  }
+}
+
 // Helper: assign Discord "Cliente" role to buyer after purchase
 async function assignDiscordClientRole(supabaseAdmin: SupabaseAdminClient, userId: string) {
   try {
