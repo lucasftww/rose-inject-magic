@@ -40,6 +40,18 @@ function isSoldMessage(body: LztDetailErrorBody | null): boolean {
   );
 }
 
+function isRemovedByAdmin(body: LztDetailErrorBody | null): boolean {
+  const t = `${body?.error ?? ""} ${body?.message ?? ""}`.toLowerCase();
+  return (
+    t.includes("removed by") ||
+    t.includes("removed by the site administration") ||
+    t.includes("isn't visible in the search") ||
+    t.includes("removido pela administração") ||
+    t.includes("not visible") ||
+    t.includes("ad was removed")
+  );
+}
+
 /** Mesma regra da resposta `detail` após JSON ok (sem toast). */
 export function isLztDetailItemPurchasable(item: LztDetailItem | null | undefined): boolean {
   if (!item) return false;
