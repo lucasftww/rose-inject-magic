@@ -57,8 +57,8 @@ const Index = () => {
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-transparent to-transparent" />
         </div>
-        {/* Glow accent */}
-        <div className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[350px] sm:h-[600px] w-[450px] sm:w-[900px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,_hsl(197,100%,50%,0.1)_0%,_transparent_55%)]" />
+        {/* Glow accent — fixed size to prevent CLS */}
+        <div className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[600px] w-[900px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,_hsl(197,100%,50%,0.1)_0%,_transparent_55%)]" aria-hidden="true" />
 
         {/* Badge */}
         <div className="z-10 mb-4 sm:mb-6 flex items-center gap-1.5 rounded-full border border-success/20 bg-success/[0.06] px-3 sm:px-4 py-1 sm:py-1.5">
