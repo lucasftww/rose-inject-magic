@@ -1677,6 +1677,9 @@ async function fulfillRobotProduct(
         sender_role: "staff",
         message: "✅ Pagamento confirmado! ⚠️ Erro ao gerar key. Equipe irá entregar manualmente.",
       });
+      await sendDiscordManualDeliveryAlert(payment, errorMessage(err), {
+        productName: item.productName, ticketId: ticket.id, type: "robot-project",
+      });
     }
   }
 }
