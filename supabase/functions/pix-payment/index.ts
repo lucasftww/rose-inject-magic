@@ -655,7 +655,7 @@ async function fulfillOrder(supabaseAdmin: SupabaseAdminClient, payment: Payment
             ticket_id: ticket.id,
             sender_id: payment.user_id,
             sender_role: "staff",
-            message: "⏳ Seu pagamento foi confirmado! No momento não temos este item em estoque. Nossa equipe irá entregar manualmente em breve. Aguarde.",
+            message: "✅ **Pagamento confirmado com sucesso!**\n\n⚠️ No momento este item está fora de estoque.\n\n🔄 **O que vai acontecer agora?**\nNossa equipe já foi notificada e fará a entrega manual o mais rápido possível.\n\n💬 Se tiver qualquer dúvida, envie uma mensagem aqui neste chat.",
           });
         }
 
