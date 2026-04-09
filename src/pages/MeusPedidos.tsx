@@ -57,7 +57,7 @@ const statusIcons: Record<string, React.ReactNode> = {
 };
 
 const ITEMS_PER_PAGE = 9;
-const ALL_STATUSES = ["all", "open", "waiting", "waiting_staff", "delivered", "resolved", "closed"];
+const ALL_STATUSES = ["all", "open", "pending_manual", "waiting", "waiting_staff", "delivered", "resolved", "closed"];
 
 const MeusPedidos = () => {
   const { user, loading: authLoading } = useAuth();
