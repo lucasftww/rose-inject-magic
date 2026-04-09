@@ -285,6 +285,7 @@ const Checkout = () => {
     if (items.length === 0 || cartFinalPrice > 0) freeCheckoutClaimRef.current = false;
     if (authLoading || !user || items.length === 0 || paymentId || displayPrice !== null) return;
     if (cartFinalPrice > 0) return;
+    if (!formValid) return; // Don't auto-claim free items without valid form data
     if (freeCheckoutClaimRef.current) return;
     freeCheckoutClaimRef.current = true;
     void (async () => {
@@ -322,7 +323,7 @@ const Checkout = () => {
         toast({ title: "Erro", description: e instanceof Error ? e.message : String(e), variant: "destructive" });
       }
     })();
-  }, [authLoading, user, items, paymentId, displayPrice, cartFinalPrice, activeCouponId, formData, navigate, clearCart, buildCartSnapshot2]);
+  }, [authLoading, user, items, paymentId, displayPrice, cartFinalPrice, activeCouponId, formData, formValid, navigate, clearCart, buildCartSnapshot2]);
 
   /* ── Coupon apply ── */
   const handleApplyCoupon = async () => {
@@ -464,11 +465,16 @@ const Checkout = () => {
     }
   };
 
+  const handleSelectMethodRef = useRef(false);
   const handleSelectMethod = (method: PaymentMethod) => {
+    if (loading || handleSelectMethodRef.current) return; // prevent double-submit
+    handleSelectMethodRef.current = true;
     setPaymentMethod(method);
-    if (method === "pix") createPixCharge();
-    if (method === "card") createCardCharge();
-    if (method === "crypto") createCryptoCharge();
+    const done = () => { handleSelectMethodRef.current = false; };
+    if (method === "pix") createPixCharge().finally(done);
+    else if (method === "card") createCardCharge().finally(done);
+    else if (method === "crypto") createCryptoCharge().finally(done);
+    else done();
   };
 
   /* ── Polling refs ── */
