@@ -323,7 +323,7 @@ const Checkout = () => {
         toast({ title: "Erro", description: e instanceof Error ? e.message : String(e), variant: "destructive" });
       }
     })();
-  }, [authLoading, user, items, paymentId, displayPrice, cartFinalPrice, activeCouponId, formData, navigate, clearCart, buildCartSnapshot2]);
+  }, [authLoading, user, items, paymentId, displayPrice, cartFinalPrice, activeCouponId, formData, formValid, navigate, clearCart, buildCartSnapshot2]);
 
   /* ── Coupon apply ── */
   const handleApplyCoupon = async () => {
