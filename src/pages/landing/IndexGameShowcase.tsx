@@ -411,8 +411,8 @@ function GameCard({ game, count, t }: { game: GameCardGame; count: number; t: TF
               {t(game.descKey, { defaultValue: game.fallbackDesc })}
             </p>
             <div className="mt-2 sm:mt-3 inline-flex items-center gap-1.5 sm:gap-2 text-[9px] sm:text-xs font-bold uppercase tracking-[0.15em] sm:tracking-[0.18em] text-success sm:transition-all sm:group-hover:gap-3">
-              <span>{t("games.viewSoftwares")} {game.name.split(" ")[0]}</span>
-              <ArrowRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 sm:transition-transform sm:group-hover:translate-x-1" />
+              <span className="truncate max-w-[85%]">{t("games.viewSoftwares")}</span>
+              <ArrowRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0 sm:transition-transform sm:group-hover:translate-x-1" />
             </div>
           </div>
         </div>
