@@ -279,10 +279,10 @@ const FortniteDetalhes = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-              {/* Gallery — always first */}
-              <div className="lg:col-span-3 order-1">
+              {/* ── LEFT COLUMN: Gallery + Stats ── */}
+              <div className="lg:col-span-3 space-y-4 order-1">
                 {galleryPreviews.length > 0 ? (
-                  <div className="rounded-lg border border-border bg-card overflow-hidden aspect-square sm:aspect-video relative group">
+                  <div className="rounded-2xl border border-border/60 bg-card overflow-hidden aspect-square sm:aspect-video relative group">
                     <div className="absolute inset-0 bg-gradient-to-br from-[hsl(265,40%,8%)] to-[hsl(210,40%,12%)]" />
                     <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse at center, ${FN_PURPLE}20, transparent 70%)` }} />
 
@@ -309,20 +309,19 @@ const FortniteDetalhes = () => {
                       <>
                         <button
                           onClick={() => setSelectedIndex(p => (p - 1 + galleryPreviews.length) % galleryPreviews.length)}
-                          className="absolute left-3 top-1/2 -translate-y-1/2 z-[2] flex h-10 w-10 items-center justify-center rounded-full bg-background/80 border border-border text-muted-foreground sm:opacity-0 sm:group-hover:opacity-100 transition-all"
+                          className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 z-[2] flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-background/80 border border-border text-muted-foreground sm:opacity-0 sm:group-hover:opacity-100 transition-all"
                         >
-                          <ChevronLeft className="h-5 w-5" />
+                          <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
                         </button>
                         <button
                           onClick={() => setSelectedIndex(p => (p + 1) % galleryPreviews.length)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 z-[2] flex h-10 w-10 items-center justify-center rounded-full bg-background/80 border border-border text-muted-foreground sm:opacity-0 sm:group-hover:opacity-100 transition-all"
+                          className="absolute right-2.5 sm:right-3 top-1/2 -translate-y-1/2 z-[2] flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-background/80 border border-border text-muted-foreground sm:opacity-0 sm:group-hover:opacity-100 transition-all"
                         >
-                          <ChevronRight className="h-5 w-5" />
+                          <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
                         </button>
                       </>
                     )}
 
-                    {/* Name badge */}
                     <div className="absolute top-3 left-3 z-[2] rounded-lg bg-background/95 border border-border px-3 py-1.5">
                       <p className="text-xs font-semibold text-foreground">{galleryPreviews[selectedIndex].name}</p>
                       {galleryPreviews[selectedIndex].rarity && (
@@ -331,105 +330,123 @@ const FortniteDetalhes = () => {
                         </p>
                       )}
                     </div>
-
-                    {/* Counter */}
                     <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-[2] rounded-lg bg-background/95 border border-border px-3 py-1.5">
                       <p className="text-xs font-medium text-muted-foreground">{selectedIndex + 1} / {galleryPreviews.length}</p>
                     </div>
                   </div>
                 ) : (
-                  <div className="rounded-lg border border-border bg-card flex items-center justify-center aspect-video">
-                    <div className="flex flex-col items-center gap-3">
-                      <p className="text-sm text-muted-foreground">Sem itens para exibir</p>
-                    </div>
+                  <div className="rounded-2xl border border-border/60 bg-card flex items-center justify-center aspect-video">
+                    <p className="text-sm text-muted-foreground">Sem itens para exibir</p>
                   </div>
                 )}
-              </div>
 
-              {/* Purchase card — 2nd on mobile, sidebar on desktop */}
-              <div className="lg:col-span-2 space-y-4 order-2 lg:order-3">
-                <div className="rounded-lg border bg-card p-5 space-y-3.5" style={{ borderColor: `${FN_PURPLE}40` }}>
-                  <h1 className="text-lg font-bold text-foreground leading-snug">
-                    {cleanedTitle}
-                  </h1>
-
-                  <div className="flex flex-wrap gap-1.5">
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-positive/10 border border-positive/30 px-3 py-1 text-[11px] font-semibold text-positive">
-                      <CheckCircle2 className="h-3 w-3" />
-                      FULL ACESSO
-                    </span>
-                    {vbucks > 0 && (
-                      <span className="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold" style={{ color: FN_BLUE, borderColor: `${FN_BLUE}40`, background: `${FN_BLUE}15` }}>
-                        <Gift className="h-3 w-3" />
-                        {vbucks} V-Bucks
-                      </span>
-                    )}
-                    <span className="inline-flex items-center gap-1 rounded-full bg-secondary border border-border px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
-                      <Shield className="h-3 w-3" />
-                      Conta verificável
-                    </span>
-                  </div>
-
-                  <div className="space-y-0.5 text-xs text-muted-foreground">
-                    <p className="flex items-center gap-2"><span className="font-bold" style={{ color: FN_PURPLE }}>✓</span> Entrega automática</p>
-                    <p className="flex items-center gap-2"><span className="font-bold" style={{ color: FN_PURPLE }}>✓</span> Liberação instantânea</p>
-                    <p className="flex items-center gap-2"><span className="font-bold" style={{ color: FN_PURPLE }}>✓</span> Email e senha inclusos</p>
-                  </div>
-
-                  <div className="rounded-lg bg-card border border-border p-3 flex items-end justify-between">
-                    <div>
-                      <p className="text-[10px] text-muted-foreground mb-0.5">Por</p>
-                      <p className="text-2xl font-bold" style={{ color: FN_PURPLE }}>{lockedPriceBrl !== null ? formatPriceBrl(lockedPriceBrl) : getDisplayPrice(item, "fortnite")}</p>
+                {/* Stats Card — compact, directly under gallery */}
+                <div className="rounded-2xl border border-border/40 bg-card overflow-hidden">
+                  <div className="px-5 py-4">
+                    <h3 className="text-sm font-bold text-foreground mb-3">Informações da Conta</h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {skinCount > 0 && <StatCell label="Skins" value={skinCount} color={FN_PURPLE} />}
+                      {vbucks > 0 && <StatCell label="V-Bucks" value={vbucks.toLocaleString()} color={FN_BLUE} />}
+                      {level > 0 && <StatCell label="Nível" value={level} color={FN_PURPLE} />}
+                      {pickaxePreviews.length > 0 && <StatCell label="Picaretas" value={pickaxePreviews.length} color={FN_PURPLE} />}
+                      {dancePreviews.length > 0 && <StatCell label="Danças" value={dancePreviews.length} color={FN_PURPLE} />}
+                      {gliderPreviews.length > 0 && <StatCell label="Planadores" value={gliderPreviews.length} color={FN_PURPLE} />}
                     </div>
                   </div>
-
-                  <button
-                    type="button"
-                    onClick={handleBuyNow}
-                    disabled={checkingAvailability}
-                    aria-busy={checkingAvailability}
-                    className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-positive py-3.5 text-sm font-bold uppercase tracking-[0.2em] text-positive-foreground transition-all active:scale-[0.98] disabled:opacity-60"
-                  >
-                    {checkingAvailability ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
-                    {checkingAvailability ? "VERIFICANDO..." : "COMPRAR AGORA"}
-                  </button>
-
-                  {item.item_id && (
-                    <p className="text-[10px] text-muted-foreground/50 text-center break-all">Código: {item.item_id}</p>
-                  )}
-
-                  <div className="grid grid-cols-3 divide-x divide-border border border-border rounded-lg overflow-hidden">
-                    <StatHighlight label="Skins" value={skinCount} color={FN_PURPLE} />
-                    <StatHighlight label="V-Bucks" value={vbucks > 0 ? vbucks.toLocaleString() : "—"} color={FN_BLUE} />
-                    <StatHighlight label="Nível" value={level > 0 ? level : "—"} color={FN_PURPLE} />
-                  </div>
-                </div>
-
-                {/* Full Access info */}
-                <div className="rounded-lg border border-border bg-card p-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <svg className="h-8 w-8 flex-shrink-0" fill={FN_PURPLE} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="m15.767 14.171.097-5.05H12.4V5.197h3.99L16.872 0H7.128v24l5.271-.985V14.17z"/></svg>
-                    <h3 className="text-xl font-bold text-foreground">Conta FULL ACESSO</h3>
-                  </div>
-                  <ul className="space-y-2 text-sm text-muted-foreground">
-                    <li className="flex items-center gap-2.5"><span style={{ color: FN_PURPLE }}>•</span> Email e senha inclusos</li>
-                    <li className="flex items-center gap-2.5"><span style={{ color: FN_PURPLE }}>•</span> Senha alterável</li>
-                    <li className="flex items-center gap-2.5"><span style={{ color: FN_PURPLE }}>•</span> Conta verificável</li>
-                  </ul>
                 </div>
               </div>
 
-              {/* Stats — 3rd on mobile, under gallery on desktop */}
-              <div className="lg:col-span-3 order-3 lg:order-2">
-                <div className="rounded-lg border border-border bg-card p-5 space-y-4">
-                  <h3 className="text-sm font-bold text-foreground">Informações da Conta</h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    {skinCount > 0 && <StatCell label="Skins" value={skinCount} color={FN_PURPLE} />}
-                    {vbucks > 0 && <StatCell label="V-Bucks" value={vbucks.toLocaleString()} color={FN_BLUE} />}
-                    {level > 0 && <StatCell label="Nível" value={level} color={FN_PURPLE} />}
-                    {pickaxePreviews.length > 0 && <StatCell label="Picaretas" value={pickaxePreviews.length} color={FN_PURPLE} />}
-                    {dancePreviews.length > 0 && <StatCell label="Danças" value={dancePreviews.length} color={FN_PURPLE} />}
-                    {gliderPreviews.length > 0 && <StatCell label="Planadores" value={gliderPreviews.length} color={FN_PURPLE} />}
+              {/* ── RIGHT COLUMN: Purchase Card ── */}
+              <div className="lg:col-span-2 order-2">
+                <div className="lg:sticky lg:top-20 space-y-4">
+                  <div className="rounded-2xl border bg-card p-5 sm:p-6 space-y-5" style={{ borderColor: `${FN_PURPLE}30`, boxShadow: `0 0 40px ${FN_PURPLE}08` }}>
+                    <h1 className="text-base sm:text-lg font-bold text-foreground leading-snug">{cleanedTitle}</h1>
+
+                    <div className="flex flex-wrap gap-2">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-positive/10 border border-positive/30 px-3 py-1 text-[11px] font-semibold text-positive">
+                        <CheckCircle2 className="h-3 w-3" />
+                        FULL ACESSO
+                      </span>
+                      {vbucks > 0 && (
+                        <span className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold" style={{ color: FN_BLUE, borderColor: `${FN_BLUE}40`, background: `${FN_BLUE}15` }}>
+                          <Gift className="h-3 w-3" />
+                          {vbucks} V-Bucks
+                        </span>
+                      )}
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary border border-border px-3 py-1 text-[11px] font-medium text-muted-foreground">
+                        <Shield className="h-3 w-3" />
+                        Conta verificável
+                      </span>
+                    </div>
+
+                    <div className="space-y-2 text-sm text-muted-foreground">
+                      <p className="flex items-center gap-2.5"><span className="font-bold" style={{ color: FN_PURPLE }}>✓</span> Entrega automática</p>
+                      <p className="flex items-center gap-2.5"><span className="font-bold" style={{ color: FN_PURPLE }}>✓</span> Liberação instantânea</p>
+                      <p className="flex items-center gap-2.5"><span className="font-bold" style={{ color: FN_PURPLE }}>✓</span> Email e senha inclusos</p>
+                    </div>
+
+                    <div className="border-t border-border/30" />
+
+                    <div className="text-center py-1">
+                      <p className="text-[11px] text-muted-foreground mb-1.5">Por apenas</p>
+                      <p className="text-3xl sm:text-4xl font-extrabold tracking-tight" style={{ color: FN_PURPLE }}>
+                        {lockedPriceBrl !== null ? formatPriceBrl(lockedPriceBrl) : getDisplayPrice(item, "fortnite")}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleBuyNow}
+                      disabled={checkingAvailability}
+                      aria-busy={checkingAvailability}
+                      className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-positive py-4 text-sm font-bold uppercase tracking-[0.2em] text-positive-foreground transition-all active:scale-[0.98] disabled:opacity-60"
+                    >
+                      {checkingAvailability ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+                      {checkingAvailability ? "VERIFICANDO..." : "COMPRAR AGORA"}
+                    </button>
+
+                    {/* Quick stats */}
+                    <div className="grid grid-cols-3 rounded-xl overflow-hidden bg-secondary/20">
+                      <StatHighlight label="Skins" value={skinCount} color={FN_PURPLE} />
+                      <StatHighlight label="V-Bucks" value={vbucks > 0 ? vbucks.toLocaleString() : "—"} color={FN_BLUE} />
+                      <StatHighlight label="Nível" value={level > 0 ? level : "—"} color={FN_PURPLE} />
+                    </div>
+
+                    {/* Trust signals */}
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="flex flex-col items-center gap-1.5 rounded-xl bg-secondary/20 py-2.5 px-2">
+                        <Zap className="h-3.5 w-3.5" style={{ color: FN_PURPLE }} />
+                        <span className="text-[9px] sm:text-[10px] text-muted-foreground text-center leading-tight font-medium">Entrega<br />Instantânea</span>
+                      </div>
+                      <div className="flex flex-col items-center gap-1.5 rounded-xl bg-secondary/20 py-2.5 px-2">
+                        <Shield className="h-3.5 w-3.5" style={{ color: FN_PURPLE }} />
+                        <span className="text-[9px] sm:text-[10px] text-muted-foreground text-center leading-tight font-medium">Pagamento<br />Seguro</span>
+                      </div>
+                      <div className="flex flex-col items-center gap-1.5 rounded-xl bg-secondary/20 py-2.5 px-2">
+                        <Shield className="h-3.5 w-3.5" style={{ color: FN_PURPLE }} />
+                        <span className="text-[9px] sm:text-[10px] text-muted-foreground text-center leading-tight font-medium">Suporte<br />24/7</span>
+                      </div>
+                    </div>
+
+                    {item.item_id && (
+                      <p className="text-[10px] text-muted-foreground/40 text-center break-all">Código: {item.item_id}</p>
+                    )}
+                  </div>
+
+                  {/* Full Acesso card */}
+                  <div className="rounded-2xl border border-border/60 bg-card p-5 sm:p-6">
+                    <div className="flex items-center gap-3 mb-3">
+                      <svg className="h-5 w-5 flex-shrink-0" fill={FN_PURPLE} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="m15.767 14.171.097-5.05H12.4V5.197h3.99L16.872 0H7.128v24l5.271-.985V14.17z"/></svg>
+                      <h3 className="text-sm sm:text-base font-bold text-foreground">Conta FULL ACESSO</h3>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-3 leading-relaxed">
+                      Acesso total: email original, alteração de senha e dados, sem enrolação.
+                    </p>
+                    <ul className="space-y-2 text-sm text-muted-foreground">
+                      <li className="flex items-center gap-2.5"><span className="text-lg leading-none" style={{ color: FN_PURPLE }}>•</span> Email e senha inclusos</li>
+                      <li className="flex items-center gap-2.5"><span className="text-lg leading-none" style={{ color: FN_PURPLE }}>•</span> Senha alterável</li>
+                      <li className="flex items-center gap-2.5"><span className="text-lg leading-none" style={{ color: FN_PURPLE }}>•</span> Conta verificável</li>
+                    </ul>
                   </div>
                 </div>
               </div>

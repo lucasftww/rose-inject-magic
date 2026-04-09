@@ -339,10 +339,10 @@ const LolDetalhes = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-              {/* Gallery — always first */}
-              <div className="lg:col-span-3 order-1">
+              {/* ── LEFT COLUMN: Gallery + Rank/Stats ── */}
+              <div className="lg:col-span-3 space-y-4 order-1">
                 {galleryItems.length > 0 ? (
-                  <div className="rounded-lg border border-border bg-card overflow-hidden aspect-[3/4] sm:aspect-[4/3] relative group">
+                  <div className="rounded-2xl border border-border/60 bg-card overflow-hidden aspect-[3/4] sm:aspect-[4/3] relative group">
                     <div className="absolute inset-0 bg-gradient-to-br from-[hsl(220,30%,8%)] to-[hsl(220,30%,14%)]" />
                     <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse at center, ${LOL_BLUE}15, transparent 70%)` }} />
 
@@ -362,7 +362,6 @@ const LolDetalhes = () => {
                             backgroundImage: `url(${getProxiedImageUrl(lolGalleryHeroBgUrl(galleryItems[selectedIndex]))})`,
                           }}
                         />
-                        {/* Loading art (portrait) na frente */}
                         <img
                           src={getProxiedImageUrl(galleryItems[selectedIndex].image)}
                           alt={galleryItems[selectedIndex].champName}
@@ -375,127 +374,50 @@ const LolDetalhes = () => {
                       <>
                         <button
                           onClick={() => setSelectedIndex(p => (p - 1 + galleryItems.length) % galleryItems.length)}
-                          className="absolute left-3 top-1/2 -translate-y-1/2 z-[2] flex h-10 w-10 items-center justify-center rounded-full bg-background/80 border border-border text-muted-foreground opacity-0 group-hover:opacity-100 transition-all hover:text-white hover:border-[hsl(198,100%,45%)]"
+                          className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 z-[2] flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-background/80 border border-border text-muted-foreground sm:opacity-0 sm:group-hover:opacity-100 transition-all hover:text-white hover:border-[hsl(198,100%,45%)]"
                         >
-                          <ChevronLeft className="h-5 w-5" />
+                          <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
                         </button>
                         <button
                           onClick={() => setSelectedIndex(p => (p + 1) % galleryItems.length)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 z-[2] flex h-10 w-10 items-center justify-center rounded-full bg-background/80 border border-border text-muted-foreground opacity-0 group-hover:opacity-100 transition-all hover:text-white hover:border-[hsl(198,100%,45%)]"
+                          className="absolute right-2.5 sm:right-3 top-1/2 -translate-y-1/2 z-[2] flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-background/80 border border-border text-muted-foreground sm:opacity-0 sm:group-hover:opacity-100 transition-all hover:text-white hover:border-[hsl(198,100%,45%)]"
                         >
-                          <ChevronRight className="h-5 w-5" />
+                          <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
                         </button>
                       </>
                     )}
 
-                    {/* Name badge */}
                     <div className="absolute top-3 left-3 z-[2] rounded-lg bg-background/95 border border-border px-3 py-1.5">
                       <p className="text-xs font-semibold text-foreground">{galleryItems[selectedIndex].champName}</p>
                     </div>
-
-                    {/* Counter */}
                     <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-[2] rounded-lg bg-background/95 border border-border px-3 py-1.5">
                       <p className="text-xs font-medium text-muted-foreground">{selectedIndex + 1} / {galleryItems.length}</p>
                     </div>
                   </div>
                 ) : (
-                  <div className="rounded-lg border border-border bg-card flex items-center justify-center aspect-[4/3]">
+                  <div className="rounded-2xl border border-border/60 bg-card flex items-center justify-center aspect-[4/3]">
                     <div className="flex flex-col items-center gap-3">
                       <Shield className="h-20 w-20 text-muted-foreground/20" />
                       <p className="text-sm text-muted-foreground">Sem skins personalizadas</p>
                     </div>
                   </div>
                 )}
-              </div>
 
-              {/* Purchase card — 2nd on mobile, sidebar on desktop */}
-              <div className="lg:col-span-2 space-y-4 order-2 lg:order-3">
-                <div className="rounded-lg border border-border bg-card p-5 space-y-3.5" style={{ borderColor: `${rankColor}30` }}>
-                  <h1 className="text-lg font-bold text-foreground leading-snug">
-                    {cleanedTitle}
-                  </h1>
-
-                  <div className="flex flex-wrap gap-1.5">
-                    <span
-                      className="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold"
-                      style={{ color: LOL_BLUE, borderColor: `${LOL_BLUE}40`, background: `${LOL_BLUE}15` }}
-                    >
-                      <CheckCircle2 className="h-3 w-3" />
-                      FULL ACESSO
-                    </span>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-secondary border border-border px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
-                      <Shield className="h-3 w-3" />
-                      Conta verificável
-                    </span>
-                  </div>
-
-                  <div className="space-y-0.5 text-xs text-muted-foreground">
-                    <p className="flex items-center gap-2"><span className="font-bold" style={{ color: LOL_BLUE }}>✓</span> Entrega automática</p>
-                    <p className="flex items-center gap-2"><span className="font-bold" style={{ color: LOL_BLUE }}>✓</span> Liberação instantânea</p>
-                  </div>
-
-                  <div className="rounded-lg bg-card border border-border p-3 flex items-end justify-between">
-                    <div>
-                      <p className="text-[10px] text-muted-foreground mb-0.5">Por</p>
-                      <p className="text-2xl font-bold" style={{ color: LOL_BLUE }}>
-                        {lockedPriceBrl !== null ? formatPriceBrl(lockedPriceBrl) : getDisplayPrice(item, "lol")}
-                      </p>
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={handleBuyNow}
-                    disabled={checkingAvailability}
-                    aria-busy={checkingAvailability}
-                    className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-positive py-3.5 text-sm font-bold uppercase tracking-[0.2em] text-positive-foreground transition-all active:scale-[0.98] disabled:opacity-60"
-                  >
-                    {checkingAvailability ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
-                    {checkingAvailability ? "VERIFICANDO..." : "COMPRAR AGORA"}
-                  </button>
-
-                  {item.item_id && (
-                    <p className="text-[10px] text-muted-foreground/50 text-center break-all">Código: {item.item_id}</p>
-                  )}
-
-                  {/* Stats grid */}
-                  <div className="grid grid-cols-3 divide-x divide-border border border-border rounded-lg overflow-hidden">
-                    <StatHighlight label="Campeões" value={champCount} color={LOL_BLUE} />
-                    <StatHighlight label="Skins" value={skinCount} color={LOL_BLUE} />
-                    <StatHighlight label="Nível" value={level} color={LOL_BLUE} />
-                  </div>
-                </div>
-
-                {/* Full Acesso info */}
-                <div className="rounded-lg border border-border bg-card p-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <CheckCircle2 className="h-8 w-8" style={{ color: LOL_BLUE }} />
-                    <h3 className="text-xl font-bold text-foreground">Conta FULL ACESSO</h3>
-                  </div>
-                  <p className="text-base text-muted-foreground mb-5">
-                    Acesso total: email original, alteração de senha e dados, sem enrolação.
-                  </p>
-                  <ul className="space-y-3.5 text-base text-muted-foreground">
-                    <li className="flex items-center gap-2.5"><span className="text-lg" style={{ color: LOL_BLUE }}>•</span> Email e senha inclusos</li>
-                    <li className="flex items-center gap-2.5"><span className="text-lg" style={{ color: LOL_BLUE }}>•</span> Senha alterável</li>
-                    <li className="flex items-center gap-2.5"><span className="text-lg" style={{ color: LOL_BLUE }}>•</span> Conta verificável</li>
-                  </ul>
-                </div>
-              </div>
-
-              {/* Stats — 3rd on mobile, under gallery on desktop */}
-              <div className="lg:col-span-3 order-3 lg:order-2">
-                <div className="rounded-lg border border-border bg-card p-5 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+                {/* Rank + Stats Card — compact, directly under gallery */}
+                <div className="rounded-2xl border border-border/40 bg-card overflow-hidden">
+                  <div className="flex items-center justify-between px-5 py-5 sm:py-6">
+                    <div className="flex items-center gap-3 sm:gap-4">
                       {rankData?.img ? (
-                        <img src={rankData.img} alt={rankText} className="h-14 w-14 object-contain flex-shrink-0 drop-shadow-lg" />
+                        <div className="relative">
+                          <div className="absolute inset-0 rounded-full blur-xl scale-150" style={{ background: `${rankColor}15` }} />
+                          <img src={rankData.img} alt={rankText} className="relative h-14 w-14 sm:h-[4.5rem] sm:w-[4.5rem] object-contain drop-shadow-lg" />
+                        </div>
                       ) : (
                         <div className="h-10 w-10 rounded-full flex-shrink-0 ring-2 ring-offset-2 ring-offset-card" style={{ background: rankColor, boxShadow: `0 0 12px ${rankColor}80` }} />
                       )}
                       <div>
-                        <p className="text-xs text-muted-foreground uppercase tracking-wider mb-0.5">Elo / Rank</p>
-                        <p className="text-base font-bold text-foreground">{rankText}</p>
+                        <p className="text-[9px] uppercase tracking-widest font-medium mb-0.5" style={{ color: `${rankColor}cc` }}>Elo / Rank</p>
+                        <p className="text-base sm:text-lg font-bold text-foreground leading-tight">{rankText}</p>
                       </div>
                     </div>
                     {winRate != null && (
@@ -506,9 +428,8 @@ const LolDetalhes = () => {
                     )}
                   </div>
 
-                  <div className="border-t border-border pt-4">
-                    <h3 className="text-sm font-bold text-foreground mb-3">Informações da Conta</h3>
-                    <div className="grid grid-cols-2 gap-2">
+                  <div className="border-t border-border/20 px-4 sm:px-5 py-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                       {level > 0 && <StatCell label="Nível" value={level} color={LOL_BLUE} />}
                       {champCount > 0 && <StatCell label="Campeões" value={champCount} color={LOL_BLUE} />}
                       {skinCount > 0 && <StatCell label="Skins" value={skinCount} color={LOL_BLUE} />}
@@ -516,6 +437,96 @@ const LolDetalhes = () => {
                       {blueEssence != null && blueEssence > 0 && <StatCell label="Blue Essence" value={blueEssence.toLocaleString()} color="#4a9fe0" />}
                       {orangeEssence != null && orangeEssence > 0 && <StatCell label="Orange Essence" value={orangeEssence.toLocaleString()} color="#e09a4a" />}
                     </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* ── RIGHT COLUMN: Purchase Card ── */}
+              <div className="lg:col-span-2 order-2">
+                <div className="lg:sticky lg:top-20 space-y-4">
+                  {/* Main purchase card */}
+                  <div className="rounded-2xl border bg-card p-5 sm:p-6 space-y-5" style={{ borderColor: `${rankColor}30`, boxShadow: `0 0 40px ${rankColor}08` }}>
+                    <h1 className="text-base sm:text-lg font-bold text-foreground leading-snug">{cleanedTitle}</h1>
+
+                    <div className="flex flex-wrap gap-2">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-positive/10 border border-positive/30 px-3 py-1 text-[11px] font-semibold text-positive">
+                        <CheckCircle2 className="h-3 w-3" />
+                        FULL ACESSO
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary border border-border px-3 py-1 text-[11px] font-medium text-muted-foreground">
+                        <Shield className="h-3 w-3" />
+                        Conta verificável
+                      </span>
+                    </div>
+
+                    <div className="space-y-2 text-sm text-muted-foreground">
+                      <p className="flex items-center gap-2.5"><span className="font-bold" style={{ color: LOL_BLUE }}>✓</span> Entrega automática</p>
+                      <p className="flex items-center gap-2.5"><span className="font-bold" style={{ color: LOL_BLUE }}>✓</span> Liberação instantânea</p>
+                      <p className="flex items-center gap-2.5"><span className="font-bold" style={{ color: LOL_BLUE }}>✓</span> Garantia de acesso</p>
+                    </div>
+
+                    <div className="border-t border-border/30" />
+
+                    <div className="text-center py-1">
+                      <p className="text-[11px] text-muted-foreground mb-1.5">Por apenas</p>
+                      <p className="text-3xl sm:text-4xl font-extrabold tracking-tight" style={{ color: LOL_BLUE }}>
+                        {lockedPriceBrl !== null ? formatPriceBrl(lockedPriceBrl) : getDisplayPrice(item, "lol")}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleBuyNow}
+                      disabled={checkingAvailability}
+                      aria-busy={checkingAvailability}
+                      className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-positive py-4 text-sm font-bold uppercase tracking-[0.2em] text-positive-foreground transition-all active:scale-[0.98] disabled:opacity-60"
+                    >
+                      {checkingAvailability ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+                      {checkingAvailability ? "VERIFICANDO..." : "COMPRAR AGORA"}
+                    </button>
+
+                    {/* Quick stats */}
+                    <div className="grid grid-cols-3 rounded-xl overflow-hidden bg-secondary/20">
+                      <StatHighlight label="Campeões" value={champCount} color={LOL_BLUE} />
+                      <StatHighlight label="Skins" value={skinCount} color={LOL_BLUE} />
+                      <StatHighlight label="Nível" value={level} color={LOL_BLUE} />
+                    </div>
+
+                    {/* Trust signals */}
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="flex flex-col items-center gap-1.5 rounded-xl bg-secondary/20 py-2.5 px-2">
+                        <Zap className="h-3.5 w-3.5" style={{ color: LOL_BLUE }} />
+                        <span className="text-[9px] sm:text-[10px] text-muted-foreground text-center leading-tight font-medium">Entrega<br />Instantânea</span>
+                      </div>
+                      <div className="flex flex-col items-center gap-1.5 rounded-xl bg-secondary/20 py-2.5 px-2">
+                        <Shield className="h-3.5 w-3.5" style={{ color: LOL_BLUE }} />
+                        <span className="text-[9px] sm:text-[10px] text-muted-foreground text-center leading-tight font-medium">Pagamento<br />Seguro</span>
+                      </div>
+                      <div className="flex flex-col items-center gap-1.5 rounded-xl bg-secondary/20 py-2.5 px-2">
+                        <Star className="h-3.5 w-3.5" style={{ color: LOL_BLUE }} />
+                        <span className="text-[9px] sm:text-[10px] text-muted-foreground text-center leading-tight font-medium">Suporte<br />24/7</span>
+                      </div>
+                    </div>
+
+                    {item.item_id && (
+                      <p className="text-[10px] text-muted-foreground/40 text-center break-all">Código: {item.item_id}</p>
+                    )}
+                  </div>
+
+                  {/* Full Acesso card */}
+                  <div className="rounded-2xl border border-border/60 bg-card p-5 sm:p-6">
+                    <div className="flex items-center gap-3 mb-3">
+                      <CheckCircle2 className="h-5 w-5 shrink-0" style={{ color: LOL_BLUE }} />
+                      <h3 className="text-sm sm:text-base font-bold text-foreground">Conta FULL ACESSO</h3>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-3 leading-relaxed">
+                      Acesso total: email original, alteração de senha e dados, sem enrolação.
+                    </p>
+                    <ul className="space-y-2 text-sm text-muted-foreground">
+                      <li className="flex items-center gap-2.5"><span className="text-lg leading-none" style={{ color: LOL_BLUE }}>•</span> Email e senha inclusos</li>
+                      <li className="flex items-center gap-2.5"><span className="text-lg leading-none" style={{ color: LOL_BLUE }}>•</span> Senha alterável</li>
+                      <li className="flex items-center gap-2.5"><span className="text-lg leading-none" style={{ color: LOL_BLUE }}>•</span> Conta verificável</li>
+                    </ul>
                   </div>
                 </div>
               </div>
