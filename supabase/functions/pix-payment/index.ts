@@ -1220,7 +1220,7 @@ async function fulfillRobotProduct(
         product_plan_id: item.planId,
         stock_item_id: null,
         status: "open",
-        status_label: "Entrega Manual",
+        status_label: "Aguardando Entrega",
         metadata: { type: "robot-project", robot_game_id: robotGameId, duration, error: "Credentials not configured" },
       })
       .select("id")
@@ -1265,7 +1265,7 @@ async function fulfillRobotProduct(
           product_plan_id: item.planId,
           stock_item_id: null,
           status: "open",
-          status_label: "Entrega Manual",
+          status_label: "Aguardando Entrega",
           metadata: { type: "robot-project", robot_game_id: robotGameId, duration, error: robotSnapshot.reason },
         })
         .select("id")
@@ -1396,7 +1396,7 @@ async function fulfillRobotProduct(
           product_plan_id: item.planId,
           stock_item_id: null,
           status: "open",
-          status_label: "Entrega Manual",
+          status_label: "Aguardando Entrega",
           metadata: {
             type: "robot-project",
             robot_game_id: robotGameId,
@@ -1483,7 +1483,7 @@ async function fulfillRobotProduct(
           product_plan_id: item.planId,
           stock_item_id: null,
           status: "open",
-          status_label: "Entrega Manual",
+          status_label: "Aguardando Entrega",
           metadata: { type: "robot-project", robot_game_id: robotGameId, duration, error: reason },
         })
         .select("id")
@@ -1638,7 +1638,7 @@ async function fulfillRobotProduct(
         product_plan_id: item.planId,
         stock_item_id: null,
         status: "open",
-        status_label: "Entrega Manual",
+        status_label: "Aguardando Entrega",
         metadata: { type: "robot-project", robot_game_id: robotGameId, duration, error: errorMessage(err) },
       })
       .select("id")
