@@ -68,6 +68,7 @@ const ProdutoDetalhes = () => {
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
   const [reviews, setReviews] = useState<ReviewData[]>([]);
   const [claimingFree, setClaimingFree] = useState(false);
+  const [tutorialFileUrl, setTutorialFileUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProduct = async () => {
