@@ -244,6 +244,20 @@ const ProdutoDetalhes = () => {
     const isFreeProduct = Number(selectedPlan.price) === 0 || finalItemPrice <= 0;
 
     if (isFreeProduct) {
+      // For free Robot products: open download directly — no ticket needed
+      if (product.robot_game_id && tutorialFileUrl) {
+        const url = tutorialFileUrl.startsWith("http") ? tutorialFileUrl : `https://${tutorialFileUrl}`;
+        window.open(url, "_blank", "noopener,noreferrer");
+        toast({ title: "Download iniciado!", description: "O loader será baixado automaticamente." });
+        return;
+      }
+      // Fallback for free products without tutorial URL: use flowware default
+      if (product.robot_game_id) {
+        window.open("https://app.flowware.pro/", "_blank", "noopener,noreferrer");
+        toast({ title: "Download iniciado!", description: "Crie sua conta no programa e comece a usar." });
+        return;
+      }
+      // Non-robot free products: still create ticket (stock-based)
       setClaimingFree(true);
       try {
         const { data: { session } } = await supabase.auth.getSession();
