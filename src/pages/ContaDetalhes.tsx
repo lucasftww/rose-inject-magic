@@ -658,33 +658,33 @@ const ContaDetalhes = () => {
               <span className="text-foreground font-medium truncate">{rank?.name || "Unranked"}</span>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 sm:gap-6">
-              {/* Gallery — always first */}
-              <div className="lg:col-span-3 order-1">
-                {/* Single skin carousel */}
-                {skinItems.length > 0 && !skinsLoading ?
-              <div className="rounded-xl border border-border/60 bg-card overflow-hidden aspect-[4/3] sm:aspect-[16/10] relative group">
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+              {/* ── LEFT COLUMN: Gallery + Rank + Stats ── */}
+              <div className="lg:col-span-3 space-y-4 order-1">
+                {/* Skin carousel */}
+                {skinItems.length > 0 && !skinsLoading ? (
+                  <div className="rounded-2xl border border-border/60 bg-card overflow-hidden aspect-[4/3] sm:aspect-[16/10] relative group">
                     <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--secondary))] via-[hsl(var(--background))] to-[hsl(var(--secondary))]" />
                     <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--success)/0.06),transparent_70%)]" />
                     <AnimatePresence mode="wait">
                       <motion.div
-                    key={selectedSkin}
-                    className="relative z-[1] flex items-center justify-center h-full w-full p-6 sm:p-8 cursor-pointer"
-                    onClick={() => {setActiveTab("skins");setLightboxIndex(selectedSkin);}}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.2 }}>
-                    
+                        key={selectedSkin}
+                        className="relative z-[1] flex items-center justify-center h-full w-full p-6 sm:p-8 cursor-pointer"
+                        onClick={() => { setActiveTab("skins"); setLightboxIndex(selectedSkin); }}
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.2 }}
+                      >
                         <img
-                      src={getProxiedImageUrl(skinItems[selectedSkin]?.image)}
-                      alt={skinItems[selectedSkin]?.name}
-                      className="max-h-full max-w-full object-contain" />
-                    
+                          src={getProxiedImageUrl(skinItems[selectedSkin]?.image)}
+                          alt={skinItems[selectedSkin]?.name}
+                          className="max-h-full max-w-full object-contain"
+                        />
                       </motion.div>
                     </AnimatePresence>
-                    {skinItems.length > 1 &&
-                <>
+                    {skinItems.length > 1 && (
+                      <>
                         <button onClick={handlePrev} className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 z-[2] flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-background/95 text-muted-foreground sm:opacity-0 sm:group-hover:opacity-100 transition-all hover:text-success">
                           <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
                         </button>
@@ -692,28 +692,27 @@ const ContaDetalhes = () => {
                           <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5 rotate-180" />
                         </button>
                       </>
-                }
-                    {/* Counter only */}
+                    )}
                     <div className="absolute bottom-3 right-3 z-[2] rounded-lg bg-background/90 px-2.5 py-1">
                       <p className="text-[11px] text-muted-foreground tabular-nums">{selectedSkin + 1}/{skinItems.length}</p>
                     </div>
-                  </div> :
-              mainGallery.length > 0 ?
-              <div className="relative group rounded-lg border border-border bg-card overflow-hidden aspect-[4/3] sm:aspect-[16/10]">
+                  </div>
+                ) : mainGallery.length > 0 ? (
+                  <div className="relative group rounded-2xl border border-border bg-card overflow-hidden aspect-[4/3] sm:aspect-[16/10]">
                     <AnimatePresence mode="wait">
                       <motion.img
-                    key={selectedSkin}
-                    src={getProxiedImageUrl(mainGallery[selectedSkin]?.image)}
-                    alt={mainGallery[selectedSkin]?.name}
-                    className="h-full w-full object-contain p-6"
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.2 }} />
-                  
+                        key={selectedSkin}
+                        src={getProxiedImageUrl(mainGallery[selectedSkin]?.image)}
+                        alt={mainGallery[selectedSkin]?.name}
+                        className="h-full w-full object-contain p-6"
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.2 }}
+                      />
                     </AnimatePresence>
-                    {mainGallery.length > 1 &&
-                <>
+                    {mainGallery.length > 1 && (
+                      <>
                         <button onClick={handlePrev} className="absolute left-3 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-background/80 border border-border text-muted-foreground opacity-0 group-hover:opacity-100 transition-all hover:text-success hover:border-success/40">
                           <ChevronLeft className="h-5 w-5" />
                         </button>
@@ -721,138 +720,45 @@ const ContaDetalhes = () => {
                           <ChevronRight className="h-5 w-5" />
                         </button>
                       </>
-                }
-                  </div> :
-
-              <div className="rounded-lg border border-border bg-card flex items-center justify-center aspect-[4/3] sm:aspect-[16/10]">
+                    )}
+                  </div>
+                ) : (
+                  <div className="rounded-2xl border border-border bg-card flex items-center justify-center aspect-[4/3] sm:aspect-[16/10]">
                     <div className="flex flex-col items-center gap-4">
                       <img src={rank?.img || rankUnranked} alt={rank?.name || "Unranked"} className="h-28 w-28 object-contain drop-shadow-xl" />
                       <p className="text-2xl font-bold text-foreground">{rank?.name || "Unranked"}</p>
                     </div>
                   </div>
-              }
+                )}
 
-              </div>
-
-              {/* Purchase card — 2nd on mobile, sidebar on desktop */}
-              <div className="lg:col-span-2 space-y-4 sm:space-y-4 order-2 lg:order-3">
-                <div className="lg:sticky lg:top-20 space-y-4">
-                {/* Title + Purchase */}
-                <div className="rounded-xl border border-success/20 bg-card p-5 sm:p-5 space-y-4 shadow-[0_0_40px_hsl(var(--success)/0.05)]">
-                  <h1 className="text-lg sm:text-lg font-bold text-foreground leading-snug">{cleanedTitle}</h1>
-
-                  <div className="flex flex-wrap gap-2">
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-positive/10 border border-positive/30 px-3 py-1 text-[11px] font-semibold text-positive">
-                      <CheckCircle2 className="h-3 w-3" />
-                      FULL ACESSO
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary border border-border px-3 py-1 text-[11px] font-medium text-muted-foreground">
-                      <Shield className="h-3 w-3" />
-                      Conta verificável
-                    </span>
-                  </div>
-
-                  <div className="space-y-1.5 text-sm text-muted-foreground">
-                    <p className="flex items-center gap-2.5"><span className="text-success font-bold">✓</span> Entrega automática</p>
-                    <p className="flex items-center gap-2.5"><span className="text-success font-bold">✓</span> Liberação instantânea</p>
-                    <p className="flex items-center gap-2.5"><span className="text-success font-bold">✓</span> Garantia de acesso</p>
-                  </div>
-
-                  <div className="rounded-xl bg-secondary/30 p-4 flex items-end justify-between">
-                    <div>
-                      <p className="text-[11px] text-muted-foreground mb-1">Por apenas</p>
-                      <p className="text-2xl sm:text-3xl font-bold text-success">
-                        {lockedPriceBrl !== null ? formatPriceBrl(lockedPriceBrl) : getDisplayPrice(item, "valorant")}
-                      </p>
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={handleBuyNow}
-                    disabled={checkingAvailability}
-                    aria-busy={checkingAvailability}
-                    className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-positive py-3.5 text-sm font-bold uppercase tracking-[0.2em] text-positive-foreground transition-all active:scale-[0.98] disabled:opacity-60"
-                  >
-                    {checkingAvailability ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
-                    {checkingAvailability ? "VERIFICANDO..." : "COMPRAR AGORA"}
-                  </button>
-
-                  {/* Trust signals */}
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="flex flex-col items-center gap-1.5 rounded-xl bg-secondary/20 py-3 px-2">
-                      <Zap className="h-4 w-4 text-success" />
-                      <span className="text-[9px] sm:text-[10px] text-muted-foreground text-center leading-tight font-medium">Entrega<br/>Instantânea</span>
-                    </div>
-                    <div className="flex flex-col items-center gap-1.5 rounded-xl bg-secondary/20 py-3 px-2">
-                      <Shield className="h-4 w-4 text-success" />
-                      <span className="text-[9px] sm:text-[10px] text-muted-foreground text-center leading-tight font-medium">Pagamento<br/>Seguro</span>
-                    </div>
-                    <div className="flex flex-col items-center gap-1.5 rounded-xl bg-secondary/20 py-3 px-2">
-                      <Star className="h-4 w-4 text-success" />
-                      <span className="text-[9px] sm:text-[10px] text-muted-foreground text-center leading-tight font-medium">Suporte<br/>24/7</span>
-                    </div>
-                  </div>
-
-                  {item.item_id && (
-                    <p className="text-[10px] text-muted-foreground/40 text-center break-all">Código: {item.item_id}</p>
-                  )}
-
-                  <div className="grid grid-cols-4 rounded-xl overflow-hidden bg-secondary/20">
-                    <HighlightStat label="Skins" value={item.riot_valorant_skin_count ?? 0} />
-                    <HighlightStat label="Agentes" value={item.riot_valorant_agent_count ?? 0} />
-                    <HighlightStat label="Nível" value={item.riot_valorant_level ?? 0} />
-                    <HighlightStat label="Knifes" value={item.riot_valorant_knife_count ?? 0} />
-                  </div>
-                </div>
-
-                {/* Full Acesso */}
-                <div className="rounded-xl border border-border/60 bg-card p-5 sm:p-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <CheckCircle2 className="h-6 w-6 sm:h-7 sm:w-7 text-success" />
-                    <h3 className="text-base sm:text-lg font-bold text-foreground">Conta FULL ACESSO</h3>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
-                    Acesso total: email original, alteração de senha e dados, sem enrolação.
-                  </p>
-                  <ul className="space-y-2.5 text-sm text-muted-foreground">
-                    <li className="flex items-center gap-3"><span className="text-success text-lg">•</span> Email e senha inclusos</li>
-                    <li className="flex items-center gap-3"><span className="text-success text-lg">•</span> Senha alterável</li>
-                    <li className="flex items-center gap-3"><span className="text-success text-lg">•</span> Conta verificável</li>
-                  </ul>
-                </div>
-                </div>
-              </div>
-
-              {/* Stats — 3rd on mobile, under gallery on desktop */}
-              <div className="lg:col-span-3 order-3 lg:order-2">
-                <div className="rounded-xl border border-border/40 bg-card overflow-hidden">
-                  <div className="flex items-center justify-center gap-6 sm:gap-10 px-5 py-6 sm:py-8">
+                {/* Rank + Stats Card — compact, directly under gallery */}
+                <div className="rounded-2xl border border-border/40 bg-card overflow-hidden">
+                  {/* Rank display row */}
+                  <div className="flex items-center gap-4 sm:gap-6 px-5 py-5 sm:py-6">
                     {item.riot_valorant_previous_rank && rankMap[item.riot_valorant_previous_rank] ? (
-                      <div className="flex flex-col items-center gap-2.5">
-                        <img src={rankMap[item.riot_valorant_previous_rank].img} alt="" className="h-16 w-16 sm:h-20 sm:w-20 object-contain opacity-35 grayscale-[30%]" />
-                        <div className="text-center">
-                          <p className="text-[9px] text-muted-foreground/50 uppercase tracking-[0.15em]">Anterior</p>
-                          <p className="text-[11px] sm:text-xs font-medium text-muted-foreground/70">{rankMap[item.riot_valorant_previous_rank].name}</p>
+                      <div className="flex items-center gap-3">
+                        <div className="flex flex-col items-center gap-1.5">
+                          <img src={rankMap[item.riot_valorant_previous_rank].img} alt="" className="h-12 w-12 sm:h-14 sm:w-14 object-contain opacity-40 grayscale-[30%]" />
+                          <p className="text-[9px] text-muted-foreground/50 uppercase tracking-widest">Anterior</p>
                         </div>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground/20 shrink-0" />
                       </div>
-                    ) : <div className="w-16 sm:w-20" />}
-                    <div className="flex flex-col items-center">
-                      <ChevronRight className="h-4 w-4 text-muted-foreground/20" />
-                    </div>
-                    <div className="flex flex-col items-center gap-2.5">
+                    ) : null}
+                    <div className="flex items-center gap-3 sm:gap-4">
                       <div className="relative">
                         <div className="absolute inset-0 rounded-full bg-success/10 blur-xl scale-150" />
-                        <img src={rank?.img || rankUnranked} alt={rank?.name || "Unranked"} className="relative h-20 w-20 sm:h-24 sm:w-24 object-contain drop-shadow-lg" />
+                        <img src={rank?.img || rankUnranked} alt={rank?.name || "Unranked"} className="relative h-14 w-14 sm:h-[4.5rem] sm:w-[4.5rem] object-contain drop-shadow-lg" />
                       </div>
-                      <div className="text-center">
-                        <p className="text-[9px] text-success/80 uppercase tracking-[0.15em] font-medium">Atual</p>
-                        <p className="text-sm sm:text-base font-bold text-foreground">{rank?.name || "Unranked"}</p>
+                      <div>
+                        <p className="text-[9px] text-success/80 uppercase tracking-widest font-medium mb-0.5">Atual</p>
+                        <p className="text-base sm:text-lg font-bold text-foreground leading-tight">{rank?.name || "Unranked"}</p>
                       </div>
                     </div>
                   </div>
-                  <div className="border-t border-border/20 px-4 sm:px-5 py-4 sm:py-5">
-                    <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
+
+                  {/* Stats grid */}
+                  <div className="border-t border-border/20 px-4 sm:px-5 py-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                       {item.valorantRegionPhrase && <StatCell label="Região" value={translateRegion(item.valorantRegionPhrase)} />}
                       {item.riot_valorant_wallet_vp != null && <StatCell label="VP" value={item.riot_valorant_wallet_vp} />}
                       {item.riot_valorant_wallet_rp != null && item.riot_valorant_wallet_rp > 0 && <StatCell label="RP" value={item.riot_valorant_wallet_rp} />}
@@ -860,6 +766,103 @@ const ContaDetalhes = () => {
                       {item.riot_valorant_level != null && <StatCell label="Nível" value={item.riot_valorant_level} />}
                       {item.riot_valorant_knife_count != null && item.riot_valorant_knife_count > 0 && <StatCell label="Knifes" value={item.riot_valorant_knife_count} />}
                     </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* ── RIGHT COLUMN: Purchase Card ── */}
+              <div className="lg:col-span-2 order-2">
+                <div className="lg:sticky lg:top-20 space-y-4">
+                  {/* Main purchase card */}
+                  <div className="rounded-2xl border border-success/20 bg-card p-5 sm:p-6 space-y-5 shadow-[0_0_40px_hsl(var(--success)/0.04)]">
+                    {/* Title */}
+                    <h1 className="text-base sm:text-lg font-bold text-foreground leading-snug">{cleanedTitle}</h1>
+
+                    {/* Badges */}
+                    <div className="flex flex-wrap gap-2">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-positive/10 border border-positive/30 px-3 py-1 text-[11px] font-semibold text-positive">
+                        <CheckCircle2 className="h-3 w-3" />
+                        FULL ACESSO
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary border border-border px-3 py-1 text-[11px] font-medium text-muted-foreground">
+                        <Shield className="h-3 w-3" />
+                        Conta verificável
+                      </span>
+                    </div>
+
+                    {/* Benefits */}
+                    <div className="space-y-2 text-sm text-muted-foreground">
+                      <p className="flex items-center gap-2.5"><span className="text-success font-bold">✓</span> Entrega automática</p>
+                      <p className="flex items-center gap-2.5"><span className="text-success font-bold">✓</span> Liberação instantânea</p>
+                      <p className="flex items-center gap-2.5"><span className="text-success font-bold">✓</span> Garantia de acesso</p>
+                    </div>
+
+                    {/* Separator */}
+                    <div className="border-t border-border/30" />
+
+                    {/* Price */}
+                    <div className="text-center py-1">
+                      <p className="text-[11px] text-muted-foreground mb-1.5">Por apenas</p>
+                      <p className="text-3xl sm:text-4xl font-extrabold text-success tracking-tight">
+                        {lockedPriceBrl !== null ? formatPriceBrl(lockedPriceBrl) : getDisplayPrice(item, "valorant")}
+                      </p>
+                    </div>
+
+                    {/* CTA Button */}
+                    <button
+                      type="button"
+                      onClick={handleBuyNow}
+                      disabled={checkingAvailability}
+                      aria-busy={checkingAvailability}
+                      className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-positive py-4 text-sm font-bold uppercase tracking-[0.2em] text-positive-foreground transition-all active:scale-[0.98] disabled:opacity-60"
+                    >
+                      {checkingAvailability ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+                      {checkingAvailability ? "VERIFICANDO..." : "COMPRAR AGORA"}
+                    </button>
+
+                    {/* Quick stats */}
+                    <div className="grid grid-cols-4 rounded-xl overflow-hidden bg-secondary/20">
+                      <HighlightStat label="Skins" value={item.riot_valorant_skin_count ?? 0} />
+                      <HighlightStat label="Agentes" value={item.riot_valorant_agent_count ?? 0} />
+                      <HighlightStat label="Nível" value={item.riot_valorant_level ?? 0} />
+                      <HighlightStat label="Knifes" value={item.riot_valorant_knife_count ?? 0} />
+                    </div>
+
+                    {/* Trust signals */}
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="flex flex-col items-center gap-1.5 rounded-xl bg-secondary/20 py-2.5 px-2">
+                        <Zap className="h-3.5 w-3.5 text-success" />
+                        <span className="text-[9px] sm:text-[10px] text-muted-foreground text-center leading-tight font-medium">Entrega<br />Instantânea</span>
+                      </div>
+                      <div className="flex flex-col items-center gap-1.5 rounded-xl bg-secondary/20 py-2.5 px-2">
+                        <Shield className="h-3.5 w-3.5 text-success" />
+                        <span className="text-[9px] sm:text-[10px] text-muted-foreground text-center leading-tight font-medium">Pagamento<br />Seguro</span>
+                      </div>
+                      <div className="flex flex-col items-center gap-1.5 rounded-xl bg-secondary/20 py-2.5 px-2">
+                        <Star className="h-3.5 w-3.5 text-success" />
+                        <span className="text-[9px] sm:text-[10px] text-muted-foreground text-center leading-tight font-medium">Suporte<br />24/7</span>
+                      </div>
+                    </div>
+
+                    {item.item_id && (
+                      <p className="text-[10px] text-muted-foreground/40 text-center break-all">Código: {item.item_id}</p>
+                    )}
+                  </div>
+
+                  {/* Full Acesso card */}
+                  <div className="rounded-2xl border border-border/60 bg-card p-5 sm:p-6">
+                    <div className="flex items-center gap-3 mb-3">
+                      <CheckCircle2 className="h-5 w-5 text-success shrink-0" />
+                      <h3 className="text-sm sm:text-base font-bold text-foreground">Conta FULL ACESSO</h3>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-3 leading-relaxed">
+                      Acesso total: email original, alteração de senha e dados, sem enrolação.
+                    </p>
+                    <ul className="space-y-2 text-sm text-muted-foreground">
+                      <li className="flex items-center gap-2.5"><span className="text-success text-lg leading-none">•</span> Email e senha inclusos</li>
+                      <li className="flex items-center gap-2.5"><span className="text-success text-lg leading-none">•</span> Senha alterável</li>
+                      <li className="flex items-center gap-2.5"><span className="text-success text-lg leading-none">•</span> Conta verificável</li>
+                    </ul>
                   </div>
                 </div>
               </div>
