@@ -29,6 +29,7 @@ const statusColors: Record<string, string> = {
   closed: "bg-muted text-muted-foreground border border-border",
   banned: "bg-destructive/20 text-destructive border border-destructive/20",
   finished: "bg-muted text-muted-foreground border border-border",
+  pending_manual: "bg-warning/20 text-warning border border-warning/20",
 };
 
 const statusLabels: Record<string, string> = {
