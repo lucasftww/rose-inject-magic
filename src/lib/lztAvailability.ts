@@ -127,10 +127,19 @@ export const checkLztAvailability = async (
     );
     if (!res.ok) {
       const errBody = await readJsonErrorBody(res);
-      if (res.status === 410) {
-        const sold = isSoldMessage(errBody);
+      if (isRemovedByAdmin(errBody)) {
         toast({
-          title: sold ? "Conta já vendida" : "Conta indisponível",
+          title: "Conta removida",
+          description: "Esta conta foi removida pela administração do marketplace e não está mais disponível.",
+          variant: "destructive",
+        });
+        return false;
+      }
+      if (res.status === 410 || res.status === 403) {
+        const sold = isSoldMessage(errBody);
+        const removed = res.status === 403;
+        toast({
+          title: sold ? "Conta já vendida" : removed ? "Conta indisponível" : "Conta indisponível",
           description: sold
             ? "Esta conta foi vendida recentemente. Escolha outra."
             : "Esta conta não está mais disponível para compra.",
