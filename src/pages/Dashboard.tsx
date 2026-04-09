@@ -80,6 +80,7 @@ const Dashboard = () => {
     closed: "bg-muted text-muted-foreground",
     banned: "bg-destructive/20 text-destructive",
     finished: "bg-muted text-muted-foreground",
+    pending_manual: "bg-warning/20 text-warning",
   };
   const statusLabels: Record<string, string> = {
     open: "Aberto",

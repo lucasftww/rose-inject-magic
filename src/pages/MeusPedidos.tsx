@@ -29,6 +29,7 @@ const statusColors: Record<string, string> = {
   closed: "bg-muted text-muted-foreground border border-border",
   banned: "bg-destructive/20 text-destructive border border-destructive/20",
   finished: "bg-muted text-muted-foreground border border-border",
+  pending_manual: "bg-warning/20 text-warning border border-warning/20",
 };
 
 const statusLabels: Record<string, string> = {
@@ -52,10 +53,11 @@ const statusIcons: Record<string, React.ReactNode> = {
   closed: <XCircle className="h-3 w-3" />,
   banned: <AlertTriangle className="h-3 w-3" />,
   finished: <XCircle className="h-3 w-3" />,
+  pending_manual: <Clock className="h-3 w-3" />,
 };
 
 const ITEMS_PER_PAGE = 9;
-const ALL_STATUSES = ["all", "open", "waiting", "waiting_staff", "delivered", "resolved", "closed"];
+const ALL_STATUSES = ["all", "open", "pending_manual", "waiting", "waiting_staff", "delivered", "resolved", "closed"];
 
 const MeusPedidos = () => {
   const { user, loading: authLoading } = useAuth();
