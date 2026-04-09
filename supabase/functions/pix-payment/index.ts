@@ -886,18 +886,37 @@ async function fulfillLztAccount(supabaseAdmin: SupabaseAdminClient, payment: Pa
         product_plan_id: planId,
         stock_item_id: null,
         status: "open",
-        status_label: "Entrega Manual",
+        status_label: "Aguardando Entrega",
         metadata: lztMetadata,
       })
       .select("id")
       .single();
 
     if (ticket) {
+      const isRemoved = reason.toLowerCase().includes("removed") || reason.toLowerCase().includes("isn't visible");
+      const isSold = reason.toLowerCase().includes("sold") || reason.toLowerCase().includes("vendid");
+      const isBalance = reason.toLowerCase().includes("balance") || reason.toLowerCase().includes("saldo");
+
+      let customerMessage = `✅ **Pagamento confirmado com sucesso!**\n\n`;
+
+      if (isRemoved) {
+        customerMessage += `⚠️ A conta que você escolheu foi removida do marketplace pelo próprio fornecedor entre o momento da compra e a finalização do pagamento. Isso é raro, mas pode acontecer.\n\n`;
+      } else if (isSold) {
+        customerMessage += `⚠️ A conta que você escolheu foi vendida para outro comprador nos últimos segundos antes do seu pagamento ser confirmado.\n\n`;
+      } else if (isBalance) {
+        customerMessage += `⚠️ Houve uma indisponibilidade temporária no sistema de entrega automática.\n\n`;
+      } else {
+        customerMessage += `⚠️ Não foi possível concluir a entrega automática da sua conta neste momento.\n\n`;
+      }
+
+      customerMessage += `🔄 **O que vai acontecer agora?**\nNossa equipe já foi notificada e fará a entrega manual da sua conta o mais rápido possível (geralmente em poucos minutos).\n\n`;
+      customerMessage += `💬 Se tiver qualquer dúvida, envie uma mensagem aqui neste chat que responderemos prontamente.`;
+
       await supabaseAdmin.from("ticket_messages").insert({
         ticket_id: ticket.id,
         sender_id: payment.user_id,
         sender_role: "staff",
-        message: `✅ Seu pagamento foi confirmado!\n\n⚠️ Houve um problema ao processar a entrega automática da conta. Nossa equipe irá entregar manualmente em breve.\n\nSe tiver dúvidas, envie uma mensagem aqui neste chat.`,
+        message: customerMessage,
       });
     }
 
