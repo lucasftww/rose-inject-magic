@@ -370,7 +370,7 @@ const RobotProjectTab = () => {
           id: ticket.id,
           created_at: ticket.created_at || "",
           status: ticket.status || "open",
-          status_label: ticket.status_label || "Entrega Manual",
+          status_label: ticket.status_label || "Aguardando Entrega",
           error: String(meta.error ?? "Falha não informada"),
           product_name: productMap[ticket.product_id] || "Produto desconhecido",
           plan_name: planMap[ticket.product_plan_id] || "Plano desconhecido",

@@ -655,7 +655,7 @@ async function fulfillOrder(supabaseAdmin: SupabaseAdminClient, payment: Payment
             ticket_id: ticket.id,
             sender_id: payment.user_id,
             sender_role: "staff",
-            message: "⏳ Seu pagamento foi confirmado! No momento não temos este item em estoque. Nossa equipe irá entregar manualmente em breve. Aguarde.",
+            message: "✅ **Pagamento confirmado com sucesso!**\n\n⚠️ No momento este item está fora de estoque.\n\n🔄 **O que vai acontecer agora?**\nNossa equipe já foi notificada e fará a entrega manual o mais rápido possível.\n\n💬 Se tiver qualquer dúvida, envie uma mensagem aqui neste chat.",
           });
         }
 
@@ -1220,7 +1220,7 @@ async function fulfillRobotProduct(
         product_plan_id: item.planId,
         stock_item_id: null,
         status: "open",
-        status_label: "Entrega Manual",
+        status_label: "Aguardando Entrega",
         metadata: { type: "robot-project", robot_game_id: robotGameId, duration, error: "Credentials not configured" },
       })
       .select("id")
@@ -1230,7 +1230,7 @@ async function fulfillRobotProduct(
         ticket_id: ticket.id,
         sender_id: payment.user_id,
         sender_role: "staff",
-        message: "✅ Pagamento confirmado! ⚠️ Houve um problema técnico. Nossa equipe irá entregar manualmente em breve.",
+        message: `✅ **Pagamento confirmado com sucesso!**\n\n⚠️ Houve uma indisponibilidade temporária no sistema de entrega automática.\n\n🔄 **O que vai acontecer agora?**\nNossa equipe já foi notificada e fará a entrega manual do seu produto o mais rápido possível (geralmente em poucos minutos).\n\n💬 Se tiver qualquer dúvida, envie uma mensagem aqui neste chat.`,
       });
     }
     return;
@@ -1265,7 +1265,7 @@ async function fulfillRobotProduct(
           product_plan_id: item.planId,
           stock_item_id: null,
           status: "open",
-          status_label: "Entrega Manual",
+          status_label: "Aguardando Entrega",
           metadata: { type: "robot-project", robot_game_id: robotGameId, duration, error: robotSnapshot.reason },
         })
         .select("id")
@@ -1275,7 +1275,7 @@ async function fulfillRobotProduct(
           ticket_id: ticket.id,
           sender_id: payment.user_id,
           sender_role: "staff",
-          message: `✅ Pagamento confirmado! ⚠️ ${robotSnapshot.reason} Nossa equipe irá entregar manualmente em breve.`,
+          message: `✅ **Pagamento confirmado com sucesso!**\n\n⚠️ Não foi possível concluir a entrega automática neste momento.\n\n🔄 **O que vai acontecer agora?**\nNossa equipe já foi notificada e fará a entrega manual do seu produto o mais rápido possível (geralmente em poucos minutos).\n\n💬 Se tiver qualquer dúvida, envie uma mensagem aqui neste chat.`,
         });
       }
 
@@ -1396,7 +1396,7 @@ async function fulfillRobotProduct(
           product_plan_id: item.planId,
           stock_item_id: null,
           status: "open",
-          status_label: "Entrega Manual",
+          status_label: "Aguardando Entrega",
           metadata: {
             type: "robot-project",
             robot_game_id: robotGameId,
@@ -1483,7 +1483,7 @@ async function fulfillRobotProduct(
           product_plan_id: item.planId,
           stock_item_id: null,
           status: "open",
-          status_label: "Entrega Manual",
+          status_label: "Aguardando Entrega",
           metadata: { type: "robot-project", robot_game_id: robotGameId, duration, error: reason },
         })
         .select("id")
@@ -1638,7 +1638,7 @@ async function fulfillRobotProduct(
         product_plan_id: item.planId,
         stock_item_id: null,
         status: "open",
-        status_label: "Entrega Manual",
+        status_label: "Aguardando Entrega",
         metadata: { type: "robot-project", robot_game_id: robotGameId, duration, error: errorMessage(err) },
       })
       .select("id")
