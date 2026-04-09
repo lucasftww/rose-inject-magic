@@ -531,7 +531,6 @@ const LolDetalhes = () => {
                 </div>
               </div>
             </div>
-            </div>
 
             {/* ─── Inventory Tabs ─── */}
             {(skinPreviews.length > 0 || champPreviews.length > 0) && (

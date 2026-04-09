@@ -451,7 +451,6 @@ const FortniteDetalhes = () => {
                 </div>
               </div>
             </div>
-            </div>
 
             {/* ─── Inventory Tabs ─── */}
             <div className="mt-8">
