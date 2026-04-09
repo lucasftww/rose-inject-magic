@@ -285,6 +285,7 @@ const Checkout = () => {
     if (items.length === 0 || cartFinalPrice > 0) freeCheckoutClaimRef.current = false;
     if (authLoading || !user || items.length === 0 || paymentId || displayPrice !== null) return;
     if (cartFinalPrice > 0) return;
+    if (!formValid) return; // Don't auto-claim free items without valid form data
     if (freeCheckoutClaimRef.current) return;
     freeCheckoutClaimRef.current = true;
     void (async () => {
