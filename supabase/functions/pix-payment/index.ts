@@ -1009,6 +1009,10 @@ async function fulfillLztAccount(supabaseAdmin: SupabaseAdminClient, payment: Pa
         sender_role: "staff",
         message: customerMessage,
       });
+      // Alert team via Discord
+      await sendDiscordManualDeliveryAlert(payment, reason, {
+        productName: item.productName, ticketId: ticket.id, type: "lzt-account", game: lztGame, itemId: String(itemId),
+      });
     }
 
     // Record sale even for manual delivery so admin can track revenue
