@@ -2,7 +2,7 @@ import { supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
 
 /**
  * Meta Pixel + Conversions API (CAPI) — Enterprise-grade tracking
- * Pixel ID: 4378225905838577
+ * Pixel ID: 706054019233816
  *
  * Architecture:
  *   Browser → fbq events with Advanced Matching
@@ -27,7 +27,7 @@ import { supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
-const PIXEL_ID = import.meta.env.VITE_META_PIXEL_ID || "843361478785940";
+const PIXEL_ID = import.meta.env.VITE_META_PIXEL_ID || "706054019233816";
 const STORAGE_KEY_EM = "_meta_em";
 const STORAGE_KEY_EID = "_meta_eid";
 const STORAGE_KEY_PH = "_meta_ph";

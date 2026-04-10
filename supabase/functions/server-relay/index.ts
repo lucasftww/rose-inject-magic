@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 const GRAPH_API_VERSION = "v21.0";
-const DEFAULT_PIXEL_ID = "4378225905838577";
+const DEFAULT_PIXEL_ID = "706054019233816";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
