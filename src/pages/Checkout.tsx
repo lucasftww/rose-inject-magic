@@ -203,23 +203,8 @@ const Checkout = () => {
   const cpfComplete = cpfDigits.length === 11;
   const cpfValid = cpfComplete && validateCpfChecksum(formData.document);
 
-  const didTrackInitiateCheckoutRef = useRef(false);
-
-  useEffect(() => {
-    if (!authLoading && user?.id && items.length > 0) {
-      if (didTrackInitiateCheckoutRef.current) return;
-      didTrackInitiateCheckoutRef.current = true;
-      const firstItem = items[0];
-      import("@/lib/metaPixel").then(({ trackInitiateCheckout }) => {
-        trackInitiateCheckout({
-          contentName: firstItem.productName,
-          contentIds: items.map((i) => i.productId),
-          value: cartFinalPrice,
-          currency: "BRL",
-        });
-      });
-    }
-  }, [authLoading, user?.id, items, cartFinalPrice]);
+  // InitiateCheckout is already tracked on the product detail pages (ProdutoDetalhes, ContaDetalhes, etc.)
+  // before navigating here, so we do NOT fire it again to avoid duplicate events in Meta.
 
   useEffect(() => {
     if (formData.email.includes("@") && formData.name.length > 2) {
