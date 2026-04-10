@@ -376,6 +376,12 @@ const SmoothImg = memo(forwardRef<HTMLImageElement, React.ImgHTMLAttributes<HTML
   const [failed, setFailed] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
 
+  // Reset loaded/failed state when src changes to avoid stale opacity
+  useEffect(() => {
+    setLoaded(false);
+    setFailed(false);
+  }, [src]);
+
   useEffect(() => {
     const el = imgRef.current;
     if (!el || !smoothImgObserver) {
