@@ -235,7 +235,7 @@ async function fetchRobotGameSnapshot(
 // ─── Server-side CAPI Purchase (fires when payment is COMPLETED) ────────────
 // This guarantees Meta receives the Purchase event even if the user closes the browser.
 // Uses the same deterministic event_id as the browser Pixel for deduplication.
-const META_PIXEL_ID = "4378225905838577";
+const META_PIXEL_ID = "706054019233816";
 const META_GRAPH_VERSION = "v21.0";
 
 // SHA-256 hash helper for server-side PII hashing
