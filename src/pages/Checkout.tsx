@@ -50,9 +50,16 @@ function applyCpfMask(value: string): string {
 
 /* ── Phone mask ── */
 function applyPhoneMask(value: string): string {
-  let v = value.replace(/\D/g, "").slice(0, 11);
+  const digits = value.replace(/\D/g, "").slice(0, 11);
+  let v = digits;
   if (v.length > 2) v = `(${v.slice(0, 2)}) ${v.slice(2)}`;
-  if (v.length > 10) v = v.replace(/(\d{5})(\d)/, "$1-$2");
+  // 11 digits (mobile): (XX) XXXXX-XXXX — hyphen after 5th digit
+  // 10 digits (landline): (XX) XXXX-XXXX — hyphen after 4th digit
+  if (digits.length > 6) {
+    const splitAt = digits.length === 11 ? 5 : 4;
+    const local = digits.slice(2);
+    v = `(${digits.slice(0, 2)}) ${local.slice(0, splitAt)}-${local.slice(splitAt)}`;
+  }
   return v;
 }
 
@@ -255,7 +262,8 @@ const Checkout = () => {
       .select("method, enabled")
       .then(({ data, error }) => {
         if (error || !data) {
-          setEnabledMethods({ pix: true, card: true, crypto: true });
+          // Fallback: only enable PIX since card/crypto are not supported by the current gateway
+          setEnabledMethods({ pix: true });
           return;
         }
         const map: Record<string, boolean> = {};
