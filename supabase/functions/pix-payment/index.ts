@@ -311,14 +311,21 @@ async function sendServerPurchaseEvent(supabaseAdmin: SupabaseAdminClient, payme
     const userData: Record<string, string> = {};
 
     // Priority: browserData (meta_tracking) > customerData (payment table)
-    const email = browserData.em || customerData.email;
-    const rawPhone = browserData.ph || customerData.phone;
-    
-    userData.em = await sha256Hash(email);
-    
-    let phone = rawPhone ? String(rawPhone).replace(/\D/g, "") : "";
-    if (phone && !phone.startsWith("55") && phone.length >= 10) phone = "55" + phone;
-    userData.ph = await sha256Hash(phone);
+    // IMPORTANT: browserData.em and browserData.ph are ALREADY SHA-256 hashed from the frontend.
+    // Only hash raw values from customerData as fallback.
+    if (browserData.em) {
+      userData.em = browserData.em; // already hashed
+    } else if (customerData.email) {
+      userData.em = await sha256Hash(customerData.email);
+    }
+
+    if (browserData.ph) {
+      userData.ph = browserData.ph; // already hashed
+    } else if (customerData.phone) {
+      let phone = String(customerData.phone).replace(/\D/g, "");
+      if (phone && !phone.startsWith("55") && phone.length >= 10) phone = "55" + phone;
+      userData.ph = await sha256Hash(phone);
+    }
     
     if (browserData.fbp) userData.fbp = browserData.fbp;
     if (browserData.fbc) userData.fbc = browserData.fbc;
