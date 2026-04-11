@@ -1035,24 +1035,6 @@ const Contas = () => {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, []);
 
-  // Links antigos (?sort=best_value) ou valor inválido → alinhar URL e estado
-  useEffect(() => {
-    const raw = searchParams.get("sort");
-    if (raw == null || raw === "") return;
-    const normalized = normalizeListSortParam(raw);
-    if (normalized !== raw) {
-      setSortBy(normalized);
-      setSearchParams(
-        (prev) => {
-          const next = new URLSearchParams(prev);
-          next.set("sort", normalized);
-          return next;
-        },
-        { replace: true },
-      );
-    }
-  }, [searchParams, setSearchParams]);
-
   // ─── Helper: read query param with default ───
   const qp = (key: string, fallback: string = "") => searchParams.get(key) ?? fallback;
   const qpBool = (key: string) => searchParams.get(key) === "1";
@@ -1086,6 +1068,27 @@ const Contas = () => {
   const [priceMin, setPriceMin] = useState(() => qp("pmin"));
   const [priceMax, setPriceMax] = useState(() => qp("pmax"));
   const [sortBy, setSortBy] = useState<string>(() => normalizeListSortParam(qp("sort", "pdate_to_down")));
+
+  // ?sort= na URL: links antigos/inválidos, voltar/avançar, ou URL sem sort com estado defasado
+  useEffect(() => {
+    const raw = searchParams.get("sort");
+    const normalized = normalizeListSortParam(raw);
+    const rawPresent = raw != null && raw !== "";
+    if (rawPresent && raw !== normalized) {
+      setSortBy(normalized);
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set("sort", normalized);
+          return next;
+        },
+        { replace: true },
+      );
+      return;
+    }
+    if (normalized !== sortBy) setSortBy(normalized);
+  }, [searchParams, setSearchParams, sortBy]);
+
   const [searchQuery, setSearchQuery] = useState(() => qp("q"));
   const [lvlMin, setLvlMin] = useState(() => qp("lvlMin"));
   const [lvlMax, setLvlMax] = useState(() => qp("lvlMax"));
