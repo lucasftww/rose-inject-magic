@@ -3,7 +3,7 @@ import { throwApiError } from "@/lib/apiErrors";
 import { translateRegion } from "@/lib/regionTranslation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Header from "@/components/Header";
-import { ArrowLeft, Shield, Loader2, ChevronRight, ChevronLeft, CheckCircle2, ShoppingCart, Swords, Users, Star, X, Zap } from "lucide-react";
+import { ArrowLeft, Shield, Loader2, ChevronRight, ChevronLeft, CheckCircle2, ShoppingCart, Swords, Users, Star, X, Zap, Search } from "lucide-react";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useMemo, useCallback, useEffect, useRef, forwardRef } from "react";
@@ -457,6 +457,7 @@ const ContaDetalhes = () => {
   const [selectedSkin, setSelectedSkin] = useState(0);
   const [activeTab, setActiveTab] = useState<"skins" | "agents" | "buddies">("skins");
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [inventorySearch, setInventorySearch] = useState("");
   const viewTracked = useRef(false);
 
   // Price lock: prevents silent price changes from background React Query refetches
@@ -469,6 +470,7 @@ const ContaDetalhes = () => {
     setActiveTab("skins");
     viewTracked.current = false;
     setLockedPriceBrl(null);
+    setInventorySearch("");
   }, [id]);
   const { addItem } = useCart();
   const queryClient = useQueryClient();
