@@ -353,8 +353,7 @@ const LolDetalhes = () => {
 
   const getDisplayName = (it: SkinPreview | ChampPreview): string => {
     if ("skinName" in it) return it.skinName;
-    if ("displayName" in it) return it.displayName;
-    return it.champName;
+    return (it as ChampPreview).displayName || it.champName;
   };
 
   return (
