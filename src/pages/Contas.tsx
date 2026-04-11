@@ -1474,6 +1474,7 @@ const Contas = () => {
     // (tabChanged is checked inside the branches below)
 
     // Show stale cache immediately (even if expired) while fetching fresh data
+    const cacheAgeMs = cached ? Date.now() - cached.timestamp : Infinity;
     if (cached) {
       setStreamedItems(cached.items);
       setStreamingDone(true);
@@ -1483,12 +1484,8 @@ const Contas = () => {
       setDisplayPage(1);
       setFirstPageLoaded(true);
       setHasNextPage(cached.hasNextPage);
-
-      // If cache is fresh (~45s), don't refetch — aligns with edge/CDN list TTL so markup/max-price changes show quickly
-      if (Date.now() - cached.timestamp < 45000) {
-        prevGameTabRef.current = gameTab;
-        return;
-      }
+      // Always refetch below (stale-while-revalidate). Markup/max_price live only on the server —
+      // skipping fetch while cache was "fresh" left old `price_brl` on screen after admin changes.
     }
 
     try {
@@ -1513,8 +1510,8 @@ const Contas = () => {
           });
         }
       } else {
-        // Cache expirado: manter itens antigos e indicar refetch
-        setIsRefetching(true);
+        // Cached: só mostra indicador de atualização quando o cache já estava velho (evita flicker a cada SWR silencioso)
+        if (cacheAgeMs >= 45000) setIsRefetching(true);
       }
 
       const data = await fetchWithRetry(buildParams(1), controller);
@@ -1625,29 +1622,22 @@ const Contas = () => {
       setHasNextPage(prefetched.hasNextPage);
       prevGameTabRef.current = gameTab;
 
-      // Only do a background refresh if the prefetch is stale (>30s old)
-      // This avoids duplicate API calls when users switch tabs quickly
-      const prefetchAge = Date.now() - prefetched.timestamp;
-      if (prefetchAge > 30_000) {
-        const paramsSnapshot = buildParams(1);
-        void (async () => {
-          try {
-            const data = await fetchWithRetry(paramsSnapshot, controller);
-            if (controller.signal.aborted) return;
-            const items: LztItem[] = data?.items ?? [];
-            const hasMore = data?.hasNextPage ?? items.length >= 15;
-            setStreamedItems(items);
-            setHasNextPage(hasMore);
-            setCurrentPage(1);
-            cacheSet(cacheKey, { items, hasNextPage: hasMore, currentPage: 1, timestamp: Date.now() });
-          } catch {
-            /* silent */
-          }
-        })();
-      } else {
-        // Promote prefetch to regular cache so it's reused
-        cacheSet(cacheKey, prefetched);
-      }
+      // Sempre reconciliar com a API: prefetch pode ter `price_brl` antigo (markup mudou no admin).
+      const paramsSnapshot = buildParams(1);
+      void (async () => {
+        try {
+          const data = await fetchWithRetry(paramsSnapshot, controller);
+          if (controller.signal.aborted) return;
+          const items: LztItem[] = data?.items ?? [];
+          const hasMore = data?.hasNextPage ?? items.length >= 15;
+          setStreamedItems(items);
+          setHasNextPage(hasMore);
+          setCurrentPage(1);
+          cacheSet(cacheKey, { items, hasNextPage: hasMore, currentPage: 1, timestamp: Date.now() });
+        } catch {
+          /* silent */
+        }
+      })();
       return;
     }
 
