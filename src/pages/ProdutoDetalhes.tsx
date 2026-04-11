@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import { ArrowLeft, ChevronLeft, ChevronRight, Cpu, Download, Fingerprint, Loader2, Monitor, Package, Play, ShoppingCart, Sparkles, Star, UserCheck, Zap } from "lucide-react";
@@ -11,7 +11,7 @@ import { getYouTubeId, getYouTubeEmbedUrl, getYouTubeThumbnail } from "@/lib/vid
 import { useCart } from "@/hooks/useCart";
 import { useReseller } from "@/hooks/useReseller";
 import { toast } from "@/hooks/use-toast";
-import { trackViewContent, trackInitiateCheckout } from "@/lib/metaPixel";
+import { trackInitiateCheckout } from "@/lib/metaPixel";
 import { parseStoreProductDetail, type StoreProductDetail } from "@/types/supabaseQueryResults";
 
 interface PublicProductReview {
@@ -179,22 +179,6 @@ const ProdutoDetalhes = () => {
       setSelectedPlanId(sortedPlans[0].id);
     }
   }, [sortedPlans, selectedPlanId]);
-
-  const viewTracked = useRef(false);
-  useEffect(() => {
-    viewTracked.current = false;
-  }, [id]);
-  useEffect(() => {
-    if (product && game && sortedPlans.length > 0 && !viewTracked.current) {
-      viewTracked.current = true;
-      const plan = sortedPlans[0];
-      trackViewContent({
-        contentName: product.name,
-        contentIds: [product.id],
-        value: Number(plan.price),
-      });
-    }
-  }, [product, game, sortedPlans]);
 
   useEffect(() => {
     if (!product || sortedPlans.length === 0) return;

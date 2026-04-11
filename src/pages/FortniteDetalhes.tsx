@@ -7,11 +7,11 @@ import {
   CheckCircle2, Shield, ShoppingCart, X, Zap, Gift, Search,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useMemo, useEffect, useRef, useCallback, type CSSProperties } from "react";
+import { useState, useMemo, useEffect, useCallback, type CSSProperties } from "react";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "@/hooks/use-toast";
 import { useLztMarkup } from "@/hooks/useLztMarkup";
-import { trackViewContent, trackInitiateCheckout } from "@/lib/metaPixel";
+import { trackInitiateCheckout } from "@/lib/metaPixel";
 import { checkLztAvailability } from "@/lib/lztAvailability";
 import { supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
 import { getLztDetailDisplayTitle } from "@/lib/lztDisplayTitles";
@@ -195,22 +195,6 @@ const FortniteDetalhes = () => {
       setLockedPriceBrl(getPrice(item, "fortnite"));
     }
   }, [item, getPrice, lockedPriceBrl]);
-
-  // ViewContent tracking
-  const viewTracked = useRef(false);
-  useEffect(() => {
-    viewTracked.current = false;
-  }, [id]);
-  useEffect(() => {
-    if (item && lockedPriceBrl !== null && !viewTracked.current) {
-      viewTracked.current = true;
-      trackViewContent({
-        contentName: cleanedTitle,
-        contentIds: [`lzt-fn-${item.item_id}`],
-        value: lockedPriceBrl,
-      });
-    }
-  }, [item, lockedPriceBrl, cleanedTitle]);
 
   const [checkingAvailability, setCheckingAvailability] = useState(false);
 

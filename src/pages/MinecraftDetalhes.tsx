@@ -4,11 +4,11 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Header from "@/components/Header";
 import { ArrowLeft, Loader2, ChevronRight, CheckCircle2, Shield, ShoppingCart, Zap } from "lucide-react";
 import { motion } from "framer-motion";
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "@/hooks/use-toast";
 import { useLztMarkup } from "@/hooks/useLztMarkup";
-import { trackViewContent, trackInitiateCheckout } from "@/lib/metaPixel";
+import { trackInitiateCheckout } from "@/lib/metaPixel";
 import { checkLztAvailability } from "@/lib/lztAvailability";
 import { supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
 import { getLztDetailDisplayTitle } from "@/lib/lztDisplayTitles";
@@ -118,22 +118,9 @@ const MinecraftDetalhes = () => {
     }
   }, [item, getPrice, lockedPriceBrl]);
 
-  // ViewContent tracking
-  const viewTracked = useRef(false);
   useEffect(() => {
-    viewTracked.current = false;
     setLockedPriceBrl(null);
   }, [id]);
-  useEffect(() => {
-    if (item && lockedPriceBrl !== null && !viewTracked.current) {
-      viewTracked.current = true;
-      trackViewContent({
-        contentName: cleanedTitle,
-        contentIds: [`lzt-mc-${item.item_id}`],
-        value: lockedPriceBrl,
-      });
-    }
-  }, [item, lockedPriceBrl, cleanedTitle]);
 
   const [checkingAvailability, setCheckingAvailability] = useState(false);
 

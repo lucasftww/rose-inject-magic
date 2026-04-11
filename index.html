@@ -67,7 +67,7 @@
           }(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
           fbq('set', 'autoConfig', false, PIXEL_ID);
           fbq('init', PIXEL_ID);
-          fbq('track', 'PageView');
+          /* PageView desativado: só InitiateCheckout (páginas) + Purchase (checkout) no Events Manager */
         } catch (e) { /* Pixel opcional: não quebrar a página */ }
       }
       function schedule(){
@@ -105,10 +105,6 @@
     </script>
   </head>
   <body>
-    <noscript><img height="1" width="1" style="display:none"
-    src="https://www.facebook.com/tr?id=706054019233816&ev=PageView&noscript=1"
-    /></noscript>
-
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
 

@@ -6,11 +6,11 @@ import Header from "@/components/Header";
 import { ArrowLeft, Shield, Loader2, ChevronRight, ChevronLeft, CheckCircle2, ShoppingCart, Swords, Users, Star, X, Zap, Search } from "lucide-react";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useMemo, useCallback, useEffect, useRef, forwardRef } from "react";
+import { useState, useMemo, useCallback, useEffect, forwardRef } from "react";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "@/hooks/use-toast";
 import { useLztMarkup } from "@/hooks/useLztMarkup";
-import { trackViewContent, trackInitiateCheckout } from "@/lib/metaPixel";
+import { trackInitiateCheckout } from "@/lib/metaPixel";
 import { checkLztAvailability } from "@/lib/lztAvailability";
 import { supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
 
@@ -458,7 +458,6 @@ const ContaDetalhes = () => {
   const [activeTab, setActiveTab] = useState<"skins" | "agents" | "buddies">("skins");
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [inventorySearch, setInventorySearch] = useState("");
-  const viewTracked = useRef(false);
 
   // Price lock: prevents silent price changes from background React Query refetches
   const [lockedPriceBrl, setLockedPriceBrl] = useState<number | null>(null);
@@ -468,7 +467,6 @@ const ContaDetalhes = () => {
     setSelectedSkin(0);
     setLightboxIndex(null);
     setActiveTab("skins");
-    viewTracked.current = false;
     setLockedPriceBrl(null);
     setInventorySearch("");
   }, [id]);
@@ -536,18 +534,6 @@ const ContaDetalhes = () => {
     });
     if (added) navigate("/checkout");
   };
-
-  // ViewContent tracking (cleanedTitle deve existir antes deste effect)
-  useEffect(() => {
-    if (item && lockedPriceBrl !== null && !viewTracked.current) {
-      viewTracked.current = true;
-      trackViewContent({
-        contentName: cleanedTitle,
-        contentIds: [`lzt-${item.item_id}`],
-        value: lockedPriceBrl,
-      });
-    }
-  }, [item, lockedPriceBrl, cleanedTitle]);
 
   // Gallery from screenshots
   const gallery = useMemo(() => {

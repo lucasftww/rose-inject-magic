@@ -8,7 +8,7 @@ import { supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
  *   Browser → fbq events with Advanced Matching
  *   Server  → Edge Function server-relay with event_id deduplication
  *
- * Events: PageView (manual for SPA), ViewContent, InitiateCheckout, Purchase
+ * Events (ativos): InitiateCheckout, Purchase — PageView/ViewContent não são enviados por pedido do negócio
  * Categories: Valorant, Fortnite, Roblox, Minecraft, LoL, CS2, GTA
  *
  * user_data sent to CAPI:
@@ -20,7 +20,7 @@ import { supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
  *   country                — "br" (hashed) for all users
  *
  * Deduplication:
- *   ViewContent/InitiateCheckout → random event_id shared by Pixel+CAPI
+ *   InitiateCheckout → random event_id (Pixel + CAPI via relay)
  *   Purchase → deterministic purchase_${transactionId} + sessionStorage guard
  */
 
@@ -450,32 +450,6 @@ const sendCAPI = async (
 };
 
 // ─── Event Tracking ─────────────────────────────────────────────────────────
-
-export const trackPageView = () => {
-  if (typeof window === "undefined" || !window.fbq) return;
-  window.fbq("track", "PageView");
-};
-
-export const trackViewContent = (data: TrackingData) => {
-  if (typeof window === "undefined") return;
-
-  const eventId = generateEventId("vc");
-  const customData: Record<string, unknown> = {
-    content_name: data.contentName,
-    content_ids: data.contentIds,
-    contents: data.contentIds.map((id) => ({ id, quantity: 1 })),
-    content_type: "product",
-    value: data.value,
-    currency: data.currency || "BRL",
-  };
-
-  if (window.fbq) {
-    window.fbq("track", "ViewContent", customData, { eventID: eventId });
-  }
-  
-  // ViewContent is Pixel-only per user request
-  return eventId;
-};
 
 export const trackInitiateCheckout = (data: TrackingData) => {
   if (typeof window === "undefined") return;
