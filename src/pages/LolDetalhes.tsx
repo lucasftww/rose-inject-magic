@@ -80,12 +80,17 @@ const emptyChampData = (): ChampData => ({
   cdnVersion: "",
 });
 
-/** Base `.../cdn/{version}/img/champion` ou legado sem versão. */
-const ddragonChampionImgBase = (cdnVersion: string) =>
-  cdnVersion.trim()
-    ? `https://ddragon.leagueoflegends.com/cdn/${cdnVersion}/img/champion`
-    : "https://ddragon.leagueoflegends.com/cdn/img/champion";
+/**
+ * Arte loading/tiles/splash no DDragon.
+ * Não usar `cdn/{patch}/img/champion/...`: em muitos ambientes (incl. browsers) a Riot/CloudFront
+ * devolve **403**; o legado sem patch continua estável (alinhado a `Contas.tsx`).
+ */
+const DDRAGON_CHAMPION_IMG_BASE = "https://ddragon.leagueoflegends.com/cdn/img/champion";
 
+const ddragonChampionAsset = (kind: "tiles" | "loading" | "splash", champName: string, skinNum: number) =>
+  `${DDRAGON_CHAMPION_IMG_BASE}/${kind}/${champName}_${skinNum}.jpg`;
+
+/** Fallback em cadeia quando um path falha (404/403). */
 const fetchChampData = async (): Promise<ChampData> => {
   try {
     const versions = await safeJsonFetch<DDragonVersionList>("https://ddragon.leagueoflegends.com/api/versions.json");
@@ -168,6 +173,31 @@ interface ChampPreview {
   thumbImage: string;
 }
 
+/** Fallback em cadeia quando um path falha (404/403). */
+function applyDdragonImgFallback(el: HTMLImageElement, urls: string[]) {
+  const i = Number(el.dataset.ddragonFb ?? "0");
+  const next = urls[i + 1];
+  if (next) {
+    el.dataset.ddragonFb = String(i + 1);
+    el.src = getProxiedImageUrl(next);
+    return;
+  }
+  el.style.opacity = "0.15";
+}
+
+function lolSkinThumbFallbacks(s: SkinPreview): string[] {
+  return [s.thumbImage, s.image, s.splashImage];
+}
+function lolSkinMainFallbacks(s: SkinPreview): string[] {
+  return [s.image, s.splashImage, s.thumbImage];
+}
+function lolChampThumbFallbacks(c: ChampPreview): string[] {
+  return [c.thumbImage, c.image, ddragonChampionAsset("splash", c.champName, 0)];
+}
+function lolChampMainFallbacks(c: ChampPreview): string[] {
+  return [c.image, ddragonChampionAsset("splash", c.champName, 0), c.thumbImage];
+}
+
 /** Fundo desfocado do hero: miniatura `tiles` — evita pedir splash (~1–2MB) só para blur. */
 function lolGalleryHeroBlurUrl(entry: SkinPreview): string {
   return entry.thumbImage;
@@ -219,7 +249,6 @@ const LolDetalhes = () => {
   const skinPreviews = useMemo((): SkinPreview[] => {
     const skinIds = parseLolSkinIdsFromJsonString(lolSkinKey);
     const results: SkinPreview[] = [];
-    const base = ddragonChampionImgBase(champData.cdnVersion);
     for (const skinId of skinIds) {
       if (isNaN(skinId) || skinId <= 0) continue;
       const champKey = Math.floor(skinId / 1000);
@@ -232,9 +261,9 @@ const LolDetalhes = () => {
           champName,
           skinName: skinDisplayName,
           skinNum,
-          image: `${base}/loading/${champName}_${skinNum}.jpg`,
-          thumbImage: `${base}/tiles/${champName}_${skinNum}.jpg`,
-          splashImage: `${base}/splash/${champName}_${skinNum}.jpg`,
+          image: ddragonChampionAsset("loading", champName, skinNum),
+          thumbImage: ddragonChampionAsset("tiles", champName, skinNum),
+          splashImage: ddragonChampionAsset("splash", champName, skinNum),
         });
       }
     }
@@ -247,7 +276,6 @@ const LolDetalhes = () => {
   const champPreviews = useMemo((): ChampPreview[] => {
     const ids = parseLolChampionIdsFromJsonString(lolChampionKey);
     const results: ChampPreview[] = [];
-    const base = ddragonChampionImgBase(champData.cdnVersion);
     for (const champId of ids) {
       const champName = champData.keyMap.get(Number(champId));
       if (champName) {
@@ -257,8 +285,8 @@ const LolDetalhes = () => {
         results.push({
           champName,
           displayName: champName,
-          image: `${base}/loading/${champName}_0.jpg`,
-          thumbImage: `${base}/tiles/${champName}_0.jpg`,
+          image: ddragonChampionAsset("loading", champName, 0),
+          thumbImage: ddragonChampionAsset("tiles", champName, 0),
         });
       }
     }
@@ -318,14 +346,13 @@ const LolDetalhes = () => {
     skinPreviews.length > 0
       ? skinPreviews
       : champPreviews.map((c) => {
-          const base = ddragonChampionImgBase(champData.cdnVersion);
           return {
             champName: c.champName,
             skinName: c.displayName,
             skinNum: 0,
             image: c.image,
             thumbImage: c.thumbImage,
-            splashImage: `${base}/splash/${c.champName}_0.jpg`,
+            splashImage: ddragonChampionAsset("splash", c.champName, 0),
           };
         });
 
@@ -435,14 +462,17 @@ const LolDetalhes = () => {
                           }}
                         />
                         <img
+                          key={`lol-hero-${selectedIndex}-${galleryItems[selectedIndex].champName}-${galleryItems[selectedIndex].skinNum}`}
                           src={getProxiedImageUrl(galleryItems[selectedIndex].image)}
                           alt={getDisplayName(galleryItems[selectedIndex])}
                           className="relative z-[1] h-full w-auto object-contain drop-shadow-2xl"
                           decoding="async"
                           fetchPriority="high"
+                          referrerPolicy="no-referrer"
                           onError={(e) => {
-                            const img = e.currentTarget;
-                            img.style.opacity = "0.15";
+                            const el = e.currentTarget;
+                            const cur = galleryItems[selectedIndex];
+                            applyDdragonImgFallback(el, lolSkinMainFallbacks(cur));
                           }}
                         />
                       </motion.div>
@@ -691,14 +721,14 @@ const LolDetalhes = () => {
                             loading="lazy"
                             decoding="async"
                             fetchPriority="low"
+                            referrerPolicy="no-referrer"
                             onError={(e) => {
                               const el = e.currentTarget;
-                              if (el.dataset.fallback === "1") {
-                                el.style.opacity = "0.15";
-                                return;
-                              }
-                              el.dataset.fallback = "1";
-                              el.src = getProxiedImageUrl(it.image);
+                              const urls =
+                                "skinName" in it && "splashImage" in it
+                                  ? lolSkinThumbFallbacks(it)
+                                  : lolChampThumbFallbacks(it);
+                              applyDdragonImgFallback(el, urls);
                             }}
                           />
                         </div>
@@ -762,19 +792,20 @@ const LolDetalhes = () => {
 
                           <div className="relative aspect-[3/4] bg-gradient-to-b from-secondary/40 to-secondary/10 overflow-hidden">
                             <img
+                              key={`lol-lb-${lightboxIndex}`}
                               src={getProxiedImageUrl(lightboxSrc)}
                               alt={getDisplayName(cur)}
                               className="relative z-[1] h-full w-full object-cover object-top"
                               decoding="async"
                               fetchPriority="high"
+                              referrerPolicy="no-referrer"
                               onError={(e) => {
                                 const el = e.currentTarget;
-                                if (el.dataset.fallback === "1") {
-                                  el.style.opacity = "0.15";
-                                  return;
-                                }
-                                el.dataset.fallback = "1";
-                                el.src = getProxiedImageUrl(cur.image);
+                                const urls =
+                                  "skinName" in cur && "splashImage" in cur
+                                    ? lolSkinMainFallbacks(cur)
+                                    : lolChampMainFallbacks(cur);
+                                applyDdragonImgFallback(el, urls);
                               }}
                             />
                           </div>
