@@ -774,7 +774,7 @@ const LolDetalhes = () => {
             {/* Description */}
             {item.description && (() => {
               const raw = String(item.description).trim();
-              const stripped = raw.replace(/\[URL=[^\]]*\][^\[]*\[\/URL\]/gi, "").replace(/\[\/?\w+\]/g, "").replace(/https?:\/\/\S+/g, "").trim();
+              const stripped = raw.replace(/\[URL=[^\]]*\][^[]*\[\/URL\]/gi, "").replace(/\[\/?\w+\]/g, "").replace(/https?:\/\/\S+/g, "").trim();
               if (stripped.length < 10) return null;
               return (
                 <div className="mt-6 rounded-lg border border-border bg-card p-5">

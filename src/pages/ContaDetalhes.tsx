@@ -1067,7 +1067,7 @@ const ContaDetalhes = () => {
             {/* Description — hide LZT junk (BBCode, raw URLs, too short) */}
             {item.description && (() => {
               const raw = String(item.description).trim();
-              const stripped = raw.replace(/\[URL=[^\]]*\][^\[]*\[\/URL\]/gi, "").replace(/\[\/?\w+\]/g, "").replace(/https?:\/\/\S+/g, "").trim();
+              const stripped = raw.replace(/\[URL=[^\]]*\][^[]*\[\/URL\]/gi, "").replace(/\[\/?\w+\]/g, "").replace(/https?:\/\/\S+/g, "").trim();
               if (stripped.length < 10) return null;
               return (
                 <div className="mt-4 sm:mt-6 rounded-lg border border-border bg-card p-4 sm:p-5">

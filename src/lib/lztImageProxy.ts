@@ -14,7 +14,7 @@ export const cleanLztDescription = (description: unknown): string | null => {
   if (!description) return null;
   const raw = String(description).trim();
   const stripped = raw
-    .replace(/\[URL=[^\]]*\][^\[]*\[\/URL\]/gi, "")
+    .replace(/\[URL=[^\]]*\][^[]*\[\/URL\]/gi, "")
     .replace(/\[\/?\w+\]/g, "")
     .replace(/https?:\/\/\S+/g, "")
     .trim();

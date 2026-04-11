@@ -1403,7 +1403,7 @@ const Contas = () => {
     }
 
     return params;
-  }, [searchQuery, onlyKnife, selectedRank, selectedWeapon, invMin, invMax, lvlMin, lvlMax, gameTab, lolRank, lolChampMin, lolSkinsMin, fnVbMin, fnSkinsMin, fnLevelMin, fnHasBattlePass, mcJava, mcBedrock, mcHypixelLvlMin, mcCapesMin, mcNoBan, lolRegion, valRegion, sortBy, priceMin, priceMax]);
+  }, [searchQuery, onlyKnife, selectedRank, selectedWeapon, invMin, invMax, lvlMin, lvlMax, gameTab, lolRank, lolChampMin, lolSkinsMin, fnVbMin, fnSkinsMin, mcJava, mcBedrock, mcHypixelLvlMin, mcCapesMin, mcNoBan, lolRegion, valRegion, sortBy, priceMin, priceMax]);
 
   const paramsKey = JSON.stringify(buildParams(1)) + gameTab;
   // Só o campo "busca por título" usa debounce. Preço, inv, nível, mínimos etc. disparam fetch na hora (mais fluido).
