@@ -978,6 +978,12 @@ const ContaDetalhes = () => {
                     <p className="text-sm text-muted-foreground">Erro ao carregar itens. Tente recarregar a página.</p>
                   </div> :
 
+            inventorySearch ?
+            <div className="flex flex-col items-center justify-center py-12 rounded-lg border border-border bg-card">
+                    <Search className="h-8 w-8 text-muted-foreground/30 mb-2" />
+                    <p className="text-sm text-muted-foreground">Nenhum resultado para "{inventorySearch}"</p>
+                    <button onClick={() => setInventorySearch("")} className="text-xs text-success underline mt-2">Limpar busca</button>
+                  </div> :
             <div className="flex items-center justify-center py-12 rounded-lg border border-border bg-card">
                     <p className="text-sm text-muted-foreground">Nenhum item encontrado.</p>
                   </div>
