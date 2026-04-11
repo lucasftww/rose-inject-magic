@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Header from "@/components/Header";
 import {
   ArrowLeft, Loader2, ChevronLeft, ChevronRight,
-  CheckCircle2, Shield, ShoppingCart, X, Zap, Gift,
+  CheckCircle2, Shield, ShoppingCart, X, Zap, Gift, Search,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useMemo, useEffect, useRef, useCallback, type CSSProperties } from "react";
@@ -93,6 +93,7 @@ const FortniteDetalhes = () => {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<InventoryTab>("skins");
+  const [inventorySearch, setInventorySearch] = useState("");
   const { addItem } = useCart();
   const queryClient = useQueryClient();
 
@@ -105,6 +106,7 @@ const FortniteDetalhes = () => {
     setLightboxIndex(null);
     setActiveTab("skins");
     setLockedPriceBrl(null);
+    setInventorySearch("");
   }, [id]);
 
   const { data, isLoading, error } = useQuery({
@@ -152,7 +154,15 @@ const FortniteDetalhes = () => {
     gliders: gliderPreviews,
   };
 
-  const currentPreviews = tabPreviews[activeTab];
+  const allCurrentPreviews = tabPreviews[activeTab];
+
+  // Sort alphabetically and filter by search
+  const currentPreviews = useMemo(() => {
+    const sorted = [...allCurrentPreviews].sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+    if (!inventorySearch.trim()) return sorted;
+    const q = inventorySearch.toLowerCase().trim();
+    return sorted.filter(c => c.name.toLowerCase().includes(q));
+  }, [allCurrentPreviews, inventorySearch]);
 
   const vbucks = (raw?.fortnite_balance || raw?.fortnite_vbucks) ?? 0;
   const skinCount = raw?.fortnite_skin_count ?? 0;
@@ -455,31 +465,60 @@ const FortniteDetalhes = () => {
             {/* ─── Inventory Tabs ─── */}
             <div className="mt-8">
               {/* Tab bar */}
-              <div className="flex items-center gap-1 mb-5 border-b border-border">
-                {tabs.map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => { setActiveTab(tab.id); setSelectedIndex(0); }}
-                    className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-semibold transition-all border-b-2 -mb-px ${
-                      activeTab === tab.id
-                        ? "border-[hsl(265,80%,65%)] text-foreground"
-                        : "border-transparent text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    {tab.label}
-                    {tab.count > 0 && (
-                      <span
-                        className="rounded-full px-1.5 py-0.5 text-[10px] font-bold"
-                        style={{
-                          background: activeTab === tab.id ? `${FN_PURPLE}25` : "hsl(var(--secondary))",
-                          color: activeTab === tab.id ? FN_PURPLE : "hsl(var(--muted-foreground))",
-                        }}
-                      >
-                        {tab.count}
-                      </span>
-                    )}
-                  </button>
-                ))}
+              <div className="flex flex-col gap-3 mb-5">
+                <div className="flex items-center gap-1 border-b border-border">
+                  {tabs.map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => { setActiveTab(tab.id); setSelectedIndex(0); setInventorySearch(""); }}
+                      className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-semibold transition-all border-b-2 -mb-px ${
+                        activeTab === tab.id
+                          ? "border-[hsl(265,80%,65%)] text-foreground"
+                          : "border-transparent text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {tab.label}
+                      {tab.count > 0 && (
+                        <span
+                          className="rounded-full px-1.5 py-0.5 text-[10px] font-bold"
+                          style={{
+                            background: activeTab === tab.id ? `${FN_PURPLE}25` : "hsl(var(--secondary))",
+                            color: activeTab === tab.id ? FN_PURPLE : "hsl(var(--muted-foreground))",
+                          }}
+                        >
+                          {tab.count}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Search */}
+                <div className="relative max-w-xs">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                  <input
+                    type="text"
+                    value={inventorySearch}
+                    onChange={(e) => setInventorySearch(e.target.value)}
+                    placeholder="Buscar item..."
+                    className="w-full rounded-lg border border-border bg-card pl-9 pr-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none transition-colors"
+                    style={{ borderColor: inventorySearch ? FN_PURPLE : undefined }}
+                  />
+                  {inventorySearch && (
+                    <button
+                      onClick={() => setInventorySearch("")}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                {inventorySearch && (
+                  <p className="text-xs text-muted-foreground">
+                    {currentPreviews.length} de {allCurrentPreviews.length} itens encontrados
+                  </p>
+                )}
               </div>
 
               {/* Item grid */}
@@ -532,6 +571,12 @@ const FortniteDetalhes = () => {
                       </div>
                     </motion.div>
                   ))}
+                </div>
+              ) : inventorySearch ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <Search className="h-8 w-8 text-muted-foreground/30 mb-2" />
+                  <p className="text-sm text-muted-foreground">Nenhum resultado para "{inventorySearch}"</p>
+                  <button onClick={() => setInventorySearch("")} className="text-xs mt-2 underline" style={{ color: FN_PURPLE }}>Limpar busca</button>
                 </div>
               ) : (
                 <div className="flex items-center justify-center py-12">
