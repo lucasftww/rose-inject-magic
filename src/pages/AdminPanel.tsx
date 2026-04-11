@@ -1,5 +1,6 @@
 import { useState, lazy, Suspense, useCallback, memo } from "react";
 import { useNavigate } from "react-router-dom";
+import "@/lib/adminSalesCache";
 import {
   ShieldAlert, Gamepad2, Mail, Package, Tag, UserCheck, TrendingUp,
   Key, CreditCard, BarChart3, ShoppingBag, Globe, Shield, Users,

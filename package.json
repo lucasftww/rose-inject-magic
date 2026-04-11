@@ -13,6 +13,7 @@
     "lint": "eslint .",
     "knip": "knip",
     "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm run lint && npm run test && npm run build",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",

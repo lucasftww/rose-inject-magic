@@ -281,6 +281,7 @@ const TicketsTab = ({
   const selectTicket = useCallback(async (ticket: Ticket) => {
     latestSelectionTicketIdRef.current = ticket.id;
     setSelectedTicket(ticket);
+    setSignedUrls({});
     setStockContent(null);
     setShowDelivery(false);
     setShowStockKey(false);
