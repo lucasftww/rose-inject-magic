@@ -3,18 +3,19 @@
  *
  * Requer: SUPABASE_ACCESS_TOKEN (Dashboard → Account → Access Tokens)
  *   PowerShell: $env:SUPABASE_ACCESS_TOKEN="sbp_..."
- *   cmd:        set SUPABASE_ACCESS_TOKEN=sbp_...
  *
- * Opcional: supabase login --token sbp_...
+ * Mitigação Windows / HTTP2: define GODEBUG=http2client=0 no processo filho
+ * (evita `PROTOCOL_ERROR` / "cannot retry" ao falar com api.supabase.com).
+ * Para forçar outro comportamento: $env:GODEBUG="..." (o script acrescenta http2client=0 se faltar).
  *
- * Uma função só (ex.: após corrigir server-relay):
- *   npm run deploy:server-relay
+ * Uma função só:
  *   node scripts/deploy-edge-functions.mjs server-relay
  */
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { setTimeout } from "node:timers/promises";
+import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
@@ -28,6 +29,21 @@ function projectRefFromConfig() {
     /* ignore */
   }
   return null;
+}
+
+/** Evita HTTP/2 no cliente Go do CLI (erros comuns em deploy no Windows). */
+function envWithGoHttp11() {
+  const raw = (process.env.GODEBUG || "").trim();
+  const parts = raw
+    ? raw
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean)
+    : [];
+  if (!parts.some((p) => /^http2client=/i.test(p))) {
+    parts.push("http2client=0");
+  }
+  return { ...process.env, GODEBUG: parts.join(",") };
 }
 
 const PROJECT_REF = process.env.SUPABASE_PROJECT_REF || projectRefFromConfig();
@@ -70,19 +86,63 @@ if (!process.env.SUPABASE_ACCESS_TOKEN?.trim()) {
   process.exit(1);
 }
 
-const argsBase = ["supabase", "functions", "deploy", "--project-ref", PROJECT_REF, "--use-api"];
+const deployEnv = envWithGoHttp11();
+if (!process.env.SUPABASE_DEPLOY_QUIET_GO_DEBUG) {
+  console.log(`[deploy] GODEBUG para o CLI: ${deployEnv.GODEBUG}`);
+}
 
-for (const name of FUNCTIONS) {
-  console.log(`\n── Deploy: ${name} ──`);
+/** CLI recente reduz bugs de rede; --yes evita prompt do npx. */
+const argsBase = [
+  "--yes",
+  "supabase@latest",
+  "functions",
+  "deploy",
+  "--project-ref",
+  PROJECT_REF,
+  "--use-api",
+];
+
+const RETRY_WAIT_MS = [0, 4_000, 12_000, 24_000];
+const PAUSE_BETWEEN_MS = 2_000;
+
+function deployOnce(name) {
   const r = spawnSync("npx", [...argsBase, name], {
     stdio: "inherit",
     shell: true,
     cwd: root,
-    env: { ...process.env },
+    env: deployEnv,
   });
-  if (r.status !== 0) {
-    console.error(`Falha ao fazer deploy de ${name}.`);
-    process.exit(r.status ?? 1);
+  return r.status === 0;
+}
+
+for (let i = 0; i < FUNCTIONS.length; i++) {
+  const name = FUNCTIONS[i];
+  console.log(`\n── Deploy: ${name} ──`);
+
+  let ok = false;
+  for (let attempt = 0; attempt < RETRY_WAIT_MS.length; attempt++) {
+    const wait = RETRY_WAIT_MS[attempt];
+    if (wait > 0) {
+      console.log(`   …espera ${wait / 1000}s antes da tentativa ${attempt + 1}/${RETRY_WAIT_MS.length}`);
+      await setTimeout(wait);
+    }
+    if (deployOnce(name)) {
+      ok = true;
+      break;
+    }
+    if (attempt < RETRY_WAIT_MS.length - 1) {
+      console.warn(`   Falha na tentativa ${attempt + 1}; a repetir…`);
+    }
+  }
+
+  if (!ok) {
+    console.error(`Falha ao fazer deploy de ${name} após ${RETRY_WAIT_MS.length} tentativas.`);
+    console.error("Dicas: VPN/firewall off, rede estável, ou tente: $env:SUPABASE_DEPLOY_DEBUG='1'; npx supabase@latest functions deploy --project-ref ... --debug");
+    process.exit(1);
+  }
+
+  if (i < FUNCTIONS.length - 1) {
+    await setTimeout(PAUSE_BETWEEN_MS);
   }
 }
 
