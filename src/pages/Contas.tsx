@@ -625,7 +625,7 @@ const LolCard = memo(({ item, champKeyMap, priceLabel, queryClient }: { item: Lz
         const champName = ddragonChampionId(rawChampName);
         results.push({
           name: champName,
-          image: `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${champName}_${skinNum}.jpg`,
+          image: `https://ddragon.leagueoflegends.com/cdn/img/champion/tiles/${champName}_${skinNum}.jpg`,
         });
       }
       if (results.length >= 6) break;
@@ -638,7 +638,7 @@ const LolCard = memo(({ item, champKeyMap, priceLabel, queryClient }: { item: Lz
           const champName = ddragonChampionId(rawChampName);
           results.push({
             name: champName,
-            image: `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${champName}_0.jpg`,
+            image: `https://ddragon.leagueoflegends.com/cdn/img/champion/tiles/${champName}_0.jpg`,
           });
         }
         if (results.length >= 6) break;

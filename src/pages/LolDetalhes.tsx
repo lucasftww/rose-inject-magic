@@ -68,15 +68,29 @@ const lolRankToKey = (rank: string): string => {
 // Fetches champion key→internalName map AND skin names per champion
 interface ChampData {
   keyMap: Map<number, string>;
-  // skinNames: Map<"ChampName_skinNum", skinDisplayName>
+  /** skinNames: Map<"ChampName_skinNum", skinDisplayName> */
   skinNames: Map<string, string>;
+  /** Patch do DDragon (ex. 15.1.1) — URLs versionadas cacheiam melhor no CDN da Riot. */
+  cdnVersion: string;
 }
+
+const emptyChampData = (): ChampData => ({
+  keyMap: new Map(),
+  skinNames: new Map(),
+  cdnVersion: "",
+});
+
+/** Base `.../cdn/{version}/img/champion` ou legado sem versão. */
+const ddragonChampionImgBase = (cdnVersion: string) =>
+  cdnVersion.trim()
+    ? `https://ddragon.leagueoflegends.com/cdn/${cdnVersion}/img/champion`
+    : "https://ddragon.leagueoflegends.com/cdn/img/champion";
 
 const fetchChampData = async (): Promise<ChampData> => {
   try {
     const versions = await safeJsonFetch<DDragonVersionList>("https://ddragon.leagueoflegends.com/api/versions.json");
     const version = versions[0];
-    if (!version) return { keyMap: new Map(), skinNames: new Map() };
+    if (!version) return emptyChampData();
 
     // Use championFull.json to get skin names
     const data = await safeJsonFetch<{
@@ -106,10 +120,10 @@ const fetchChampData = async (): Promise<ChampData> => {
         }
       }
     }
-    return { keyMap, skinNames };
+    return { keyMap, skinNames, cdnVersion: version };
   } catch (err) {
     console.warn("Failed to fetch LoL champ data:", err);
-    return { keyMap: new Map(), skinNames: new Map() };
+    return emptyChampData();
   }
 };
 
@@ -140,7 +154,10 @@ interface SkinPreview {
   champName: string;
   skinName: string; // actual skin display name
   skinNum: number;
+  /** Arte de loading (hero / lightbox principal) — mais leve que splash. */
   image: string;
+  /** Miniatura da grelha — `tiles` é bem menor que `loading`. */
+  thumbImage: string;
   splashImage: string;
 }
 
@@ -148,11 +165,12 @@ interface ChampPreview {
   champName: string;
   displayName: string;
   image: string;
+  thumbImage: string;
 }
 
-function lolGalleryHeroBgUrl(entry: SkinPreview | ChampPreview): string {
-  if ("splashImage" in entry && typeof entry.splashImage === "string") return entry.splashImage;
-  return entry.image;
+/** Fundo desfocado do hero: miniatura `tiles` — evita pedir splash (~1–2MB) só para blur. */
+function lolGalleryHeroBlurUrl(entry: SkinPreview): string {
+  return entry.thumbImage;
 }
 
 const LolDetalhes = () => {
@@ -185,7 +203,7 @@ const LolDetalhes = () => {
   });
 
   // Fetch champ data (key map + skin names) from DDragon
-  const { data: champData = { keyMap: new Map<number, string>(), skinNames: new Map<string, string>() } } = useQuery({
+  const { data: champData = emptyChampData() } = useQuery({
     queryKey: ["lol-champ-full-data"],
     queryFn: fetchChampData,
     staleTime: 1000 * 60 * 60 * 6,
@@ -201,6 +219,7 @@ const LolDetalhes = () => {
   const skinPreviews = useMemo((): SkinPreview[] => {
     const skinIds = parseLolSkinIdsFromJsonString(lolSkinKey);
     const results: SkinPreview[] = [];
+    const base = ddragonChampionImgBase(champData.cdnVersion);
     for (const skinId of skinIds) {
       if (isNaN(skinId) || skinId <= 0) continue;
       const champKey = Math.floor(skinId / 1000);
@@ -213,8 +232,9 @@ const LolDetalhes = () => {
           champName,
           skinName: skinDisplayName,
           skinNum,
-          image: `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${champName}_${skinNum}.jpg`,
-          splashImage: `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${champName}_${skinNum}.jpg`,
+          image: `${base}/loading/${champName}_${skinNum}.jpg`,
+          thumbImage: `${base}/tiles/${champName}_${skinNum}.jpg`,
+          splashImage: `${base}/splash/${champName}_${skinNum}.jpg`,
         });
       }
     }
@@ -227,6 +247,7 @@ const LolDetalhes = () => {
   const champPreviews = useMemo((): ChampPreview[] => {
     const ids = parseLolChampionIdsFromJsonString(lolChampionKey);
     const results: ChampPreview[] = [];
+    const base = ddragonChampionImgBase(champData.cdnVersion);
     for (const champId of ids) {
       const champName = champData.keyMap.get(Number(champId));
       if (champName) {
@@ -236,7 +257,8 @@ const LolDetalhes = () => {
         results.push({
           champName,
           displayName: champName,
-          image: `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${champName}_0.jpg`,
+          image: `${base}/loading/${champName}_0.jpg`,
+          thumbImage: `${base}/tiles/${champName}_0.jpg`,
         });
       }
     }
@@ -292,15 +314,20 @@ const LolDetalhes = () => {
   const totalItems: (SkinPreview | ChampPreview)[] = activeTab === "skins" ? skinPreviews : champPreviews;
 
   // Gallery: skins com arte personalizada primeiro; fallback → campeões
-  const galleryItems: (SkinPreview | ChampPreview)[] =
+  const galleryItems: SkinPreview[] =
     skinPreviews.length > 0
       ? skinPreviews
-      : champPreviews.map(c => ({
-          ...c,
-          skinNum: 0,
-          skinName: c.displayName,
-          splashImage: `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${c.champName}_0.jpg`,
-        }));
+      : champPreviews.map((c) => {
+          const base = ddragonChampionImgBase(champData.cdnVersion);
+          return {
+            champName: c.champName,
+            skinName: c.displayName,
+            skinNum: 0,
+            image: c.image,
+            thumbImage: c.thumbImage,
+            splashImage: `${base}/splash/${c.champName}_0.jpg`,
+          };
+        });
 
   useEffect(() => {
     if (item && lockedPriceBrl === null) {
@@ -404,13 +431,15 @@ const LolDetalhes = () => {
                         <div
                           className="absolute inset-0 bg-cover bg-center opacity-30 blur-sm scale-105"
                           style={{
-                            backgroundImage: `url(${getProxiedImageUrl(lolGalleryHeroBgUrl(galleryItems[selectedIndex]))})`,
+                            backgroundImage: `url(${getProxiedImageUrl(lolGalleryHeroBlurUrl(galleryItems[selectedIndex]))})`,
                           }}
                         />
                         <img
                           src={getProxiedImageUrl(galleryItems[selectedIndex].image)}
                           alt={getDisplayName(galleryItems[selectedIndex])}
                           className="relative z-[1] h-full w-auto object-contain drop-shadow-2xl"
+                          decoding="async"
+                          fetchPriority="high"
                           onError={(e) => {
                             const img = e.currentTarget;
                             img.style.opacity = "0.15";
@@ -656,13 +685,20 @@ const LolDetalhes = () => {
                       >
                         <div className="aspect-[3/4] bg-secondary/20 overflow-hidden">
                           <img
-                            src={getProxiedImageUrl(it.image)}
+                            src={getProxiedImageUrl(it.thumbImage)}
                             alt={getDisplayName(it)}
                             className="h-full w-full object-cover object-top group-hover:scale-105 transition-transform duration-300"
                             loading="lazy"
+                            decoding="async"
+                            fetchPriority="low"
                             onError={(e) => {
-                              const img = e.currentTarget;
-                              img.style.opacity = "0.15";
+                              const el = e.currentTarget;
+                              if (el.dataset.fallback === "1") {
+                                el.style.opacity = "0.15";
+                                return;
+                              }
+                              el.dataset.fallback = "1";
+                              el.src = getProxiedImageUrl(it.image);
                             }}
                           />
                         </div>
@@ -693,9 +729,10 @@ const LolDetalhes = () => {
                   {lightboxIndex !== null && totalItems[lightboxIndex] && (() => {
                     const cur = totalItems[lightboxIndex];
                     const total = totalItems.length;
-                    const splashImg = 'splashImage' in cur ? String(cur.splashImage) : String(cur.image);
                     const goPrev = () => setLightboxIndex(p => p !== null ? (p - 1 + total) % total : null);
                     const goNext = () => setLightboxIndex(p => p !== null ? (p + 1) % total : null);
+                    /** Só `loading` no lightbox — splash é ~1–2MB por frame; qualidade continua boa. */
+                    const lightboxSrc = cur.image;
                     return (
                       <motion.div
                         key="lol-lightbox"
@@ -723,16 +760,22 @@ const LolDetalhes = () => {
                             <X className="h-5 w-5" />
                           </button>
 
-                          <div className="relative aspect-[3/4] bg-secondary/20 overflow-hidden">
-                            <div
-                              className="absolute inset-0 bg-cover bg-center opacity-30 blur-md scale-110"
-                              style={{ backgroundImage: `url(${getProxiedImageUrl(splashImg)})` }}
-                            />
+                          <div className="relative aspect-[3/4] bg-gradient-to-b from-secondary/40 to-secondary/10 overflow-hidden">
                             <img
-                              src={getProxiedImageUrl(cur.image)}
+                              src={getProxiedImageUrl(lightboxSrc)}
                               alt={getDisplayName(cur)}
                               className="relative z-[1] h-full w-full object-cover object-top"
-                              onError={(e) => { e.currentTarget.style.opacity = "0.15"; }}
+                              decoding="async"
+                              fetchPriority="high"
+                              onError={(e) => {
+                                const el = e.currentTarget;
+                                if (el.dataset.fallback === "1") {
+                                  el.style.opacity = "0.15";
+                                  return;
+                                }
+                                el.dataset.fallback = "1";
+                                el.src = getProxiedImageUrl(cur.image);
+                              }}
                             />
                           </div>
 
