@@ -67,6 +67,27 @@ const PedidoChat = () => {
 
   useEffect(() => {
     if (!id || !user) return;
+    let cancelled = false;
+
+    const clearTicketState = () => {
+      setTicket(null);
+      setMessages([]);
+      setProductName("");
+      setPlanName("");
+      setPlanPrice(null);
+      setStockContent(null);
+      setIsFreeNoKey(false);
+      setTutorialText(null);
+      setTutorialFileUrl(null);
+      setExistingReview(null);
+      setReviewRating(0);
+      setReviewComment("");
+      setSignedUrls({});
+    };
+
+    setLoading(true);
+    setLoadingReview(true);
+
     const fetchData = async () => {
       const { data: ticketData } = await supabase
         .from("order_tickets")
@@ -74,8 +95,21 @@ const PedidoChat = () => {
         .eq("id", id)
         .maybeSingle();
 
-      if (!ticketData) { setLoading(false); return; }
+      if (cancelled) return;
+
+      if (!ticketData) {
+        clearTicketState();
+        setLoadingReview(false);
+        setLoading(false);
+        return;
+      }
+
       setTicket(ticketData);
+      // Evita misturar chave/tutorial de um ticket Robot/LZT com outro
+      setIsFreeNoKey(false);
+      setStockContent(null);
+      setTutorialText(null);
+      setTutorialFileUrl(null);
 
       const meta = asOrderTicketMetadata(ticketData.metadata);
       const isLzt = meta?.type === "lzt-account";
@@ -87,6 +121,8 @@ const PedidoChat = () => {
         supabase.from("ticket_messages").select("*").eq("ticket_id", id).order("created_at", { ascending: true }),
         supabase.from("product_tutorials").select("tutorial_text, tutorial_file_url").eq("product_id", ticketData.product_id).maybeSingle(),
       ]);
+
+      if (cancelled) return;
 
       if (isLzt) {
         const lztGameLabels: Record<string, string> = {
@@ -136,6 +172,7 @@ const PedidoChat = () => {
           .select("content")
           .eq("id", ticketData.stock_item_id)
           .maybeSingle();
+        if (cancelled) return;
         if (stockData) {
           const raw = stockData.content;
           setStockContent(typeof raw === "string" ? raw : JSON.stringify(raw));
@@ -149,6 +186,7 @@ const PedidoChat = () => {
         .eq("product_id", ticketData.product_id)
         .eq("user_id", user.id)
         .maybeSingle();
+      if (cancelled) return;
       if (reviewData) {
         setExistingReview({
           id: reviewData.id,
@@ -157,12 +195,22 @@ const PedidoChat = () => {
         });
         setReviewRating(reviewData.rating);
         setReviewComment(reviewData.comment || "");
+      } else {
+        setExistingReview(null);
+        setReviewRating(0);
+        setReviewComment("");
       }
       setLoadingReview(false);
 
-      setLoading(false);
+      if (!cancelled) setLoading(false);
     };
     fetchData();
+    return () => {
+      cancelled = true;
+      // Libera o spinner se o utilizador sair ou trocar de ticket a meio do carregamento
+      setLoading(false);
+      setLoadingReview(false);
+    };
   }, [id, user]);
 
   // Realtime subscription + polling fallback for reliable message sync
@@ -243,10 +291,11 @@ const PedidoChat = () => {
 
   // Fetch signed URLs for new attachments dynamically
   useEffect(() => {
-    if (messages.length === 0) return;
-    
+    if (!id || messages.length === 0) return;
+    let cancelled = false;
+
     const pathsToSign: string[] = [];
-    messages.forEach(msg => {
+    messages.forEach((msg) => {
       const regex = /\[STORAGE_PATH\]([^\s\]\n]+)/g;
       let match;
       while ((match = regex.exec(msg.message)) !== null) {
@@ -260,21 +309,23 @@ const PedidoChat = () => {
       const uniquePaths = [...new Set(pathsToSign)];
       const fetchSignedUrls = async () => {
         const { data } = await supabase.storage.from("ticket-files").createSignedUrls(uniquePaths, 7 * 24 * 3600);
-        if (data) {
-          setSignedUrls(prev => {
-            const next = { ...prev };
-            data.forEach(item => {
-              if (item.path && item.signedUrl) {
-                next[item.path] = item.signedUrl;
-              }
-            });
-            return next;
+        if (cancelled || !data) return;
+        setSignedUrls((prev) => {
+          const next = { ...prev };
+          data.forEach((item) => {
+            if (item.path && item.signedUrl) {
+              next[item.path] = item.signedUrl;
+            }
           });
-        }
+          return next;
+        });
       };
-      fetchSignedUrls();
+      void fetchSignedUrls();
     }
-  }, [messages]);
+    return () => {
+      cancelled = true;
+    };
+  }, [messages, id]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);

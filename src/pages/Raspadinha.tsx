@@ -188,17 +188,20 @@ const Raspadinha = () => {
 
 
   useEffect(() => {
-    if (user) {
-      supabase
-        .from("scratch_card_plays")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(20)
-        .then(({ data }) => {
-          if (data) setHistory(data.map(mapScratchPlayRow));
-        });
-    }
+    if (!user) return;
+    let cancelled = false;
+    void supabase
+      .from("scratch_card_plays")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(20)
+      .then(({ data }) => {
+        if (!cancelled && data) setHistory(data.map(mapScratchPlayRow));
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [user, result]);
 
   const [checkingPayments, setCheckingPayments] = useState(false);
