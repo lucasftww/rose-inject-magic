@@ -883,29 +883,57 @@ const ContaDetalhes = () => {
             {/* Inventory Tabs - Full width below */}
             {(skinUuids.length > 0 || agentUuids.length > 0 || buddyUuids.length > 0) &&
           <div className="mt-4 sm:mt-5">
-                {/* Tab buttons */}
-                <div className="flex w-full gap-2 mb-5 sm:mb-5">
-                  {tabs.map((tab) =>
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={`flex flex-1 items-center justify-center gap-1.5 sm:gap-2 rounded-xl px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
-                activeTab === tab.key ?
-                "bg-success/10 text-success" :
-                "bg-secondary/40 text-muted-foreground hover:bg-secondary/60"}`
-                }>
-                
-                      {tab.icon}
-                      <span>{tab.label}</span>
-                      {tab.count > 0 &&
-                <span className={`rounded-full px-1.5 sm:px-2 py-0.5 text-[10px] font-bold ${
-                activeTab === tab.key ? "bg-success/20 text-success" : "bg-secondary text-muted-foreground"}`
-                }>
-                          {tab.count}
-                        </span>
-                }
-                    </button>
-              )}
+                {/* Tab buttons + Search */}
+                <div className="flex flex-col gap-3 mb-5">
+                  <div className="flex w-full gap-2">
+                    {tabs.map((tab) =>
+                      <button
+                        key={tab.key}
+                        onClick={() => { setActiveTab(tab.key); setInventorySearch(""); }}
+                        className={`flex flex-1 items-center justify-center gap-1.5 sm:gap-2 rounded-xl px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
+                          activeTab === tab.key
+                            ? "bg-success/10 text-success"
+                            : "bg-secondary/40 text-muted-foreground hover:bg-secondary/60"
+                        }`}
+                      >
+                        {tab.icon}
+                        <span>{tab.label}</span>
+                        {tab.count > 0 && (
+                          <span className={`rounded-full px-1.5 sm:px-2 py-0.5 text-[10px] font-bold ${
+                            activeTab === tab.key ? "bg-success/20 text-success" : "bg-secondary text-muted-foreground"
+                          }`}>
+                            {tab.count}
+                          </span>
+                        )}
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Search */}
+                  <div className="relative max-w-xs">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                    <input
+                      type="text"
+                      value={inventorySearch}
+                      onChange={(e) => setInventorySearch(e.target.value)}
+                      placeholder="Buscar item..."
+                      className="w-full rounded-lg border border-border bg-card pl-9 pr-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-success transition-colors"
+                    />
+                    {inventorySearch && (
+                      <button
+                        onClick={() => setInventorySearch("")}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {inventorySearch && (
+                    <p className="text-xs text-muted-foreground">
+                      {activeItems.length} de {allActiveItems.length} itens encontrados
+                    </p>
+                  )}
                 </div>
 
                 {/* Items grid */}
