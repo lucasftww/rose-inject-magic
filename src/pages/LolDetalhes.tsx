@@ -283,8 +283,8 @@ const LolDetalhes = () => {
     return champPreviews.filter(c => c.displayName.toLowerCase().includes(q));
   }, [champPreviews, searchQuery]);
 
-  const activeItems = activeTab === "skins" ? filteredSkins : filteredChamps;
-  const totalItems = activeTab === "skins" ? skinPreviews : champPreviews;
+  const activeItems: (SkinPreview | ChampPreview)[] = activeTab === "skins" ? filteredSkins : filteredChamps;
+  const totalItems: (SkinPreview | ChampPreview)[] = activeTab === "skins" ? skinPreviews : champPreviews;
 
   // Gallery: skins com arte personalizada primeiro; fallback → campeões
   const galleryItems: (SkinPreview | ChampPreview)[] =
