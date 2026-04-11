@@ -300,6 +300,8 @@ const FortniteDetalhes = () => {
                           src={getProxiedImageUrl(galleryPreviews[selectedIndex].image)}
                           alt={galleryPreviews[selectedIndex].name}
                           className="relative z-[1] h-full w-auto max-w-full object-contain drop-shadow-2xl"
+                          decoding="async"
+                          fetchPriority="high"
                           onError={(e) => setImgOpacityOnError(e, "0.2")}
                         />
                       </motion.div>
@@ -519,7 +521,7 @@ const FortniteDetalhes = () => {
                       key={`${cosmetic.id}-${i}`}
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.15, delay: i * 0.008 }}
+                      transition={{ duration: 0.12, delay: Math.min(i * 0.006, 0.12) }}
                       className="group rounded-lg border border-border bg-card overflow-hidden cursor-pointer transition-all hover:shadow-md"
                       style={{ "--hover-border": `${FN_PURPLE}40` } as CSSProperties}
                       onMouseEnter={(e) =>
@@ -548,6 +550,8 @@ const FortniteDetalhes = () => {
                           alt={cosmetic.name}
                           className="relative z-[1] h-full w-full object-contain group-hover:scale-110 transition-transform duration-300"
                           loading="lazy"
+                          decoding="async"
+                          fetchPriority="low"
                           onError={(e) => setImgOpacityOnError(e, "0.2")}
                         />
                       </div>
@@ -616,7 +620,13 @@ const FortniteDetalhes = () => {
                           className="absolute inset-0 opacity-20"
                           style={{ background: `radial-gradient(ellipse at center, ${getRarityColor(cur.rarity)}, transparent 70%)` }}
                         />
-                        <img src={getProxiedImageUrl(cur.image)} alt={cur.name} className="relative z-[1] h-full w-full object-contain drop-shadow-2xl" />
+                        <img
+                          src={getProxiedImageUrl(cur.image)}
+                          alt={cur.name}
+                          className="relative z-[1] h-full w-full object-contain drop-shadow-2xl"
+                          decoding="async"
+                          fetchPriority="high"
+                        />
                       </div>
                       <div className="p-4 flex flex-col items-center gap-3">
                         <div className="text-center">

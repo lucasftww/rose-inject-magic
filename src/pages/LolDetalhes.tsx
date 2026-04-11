@@ -675,7 +675,7 @@ const LolDetalhes = () => {
                         key={`${activeTab}-${"skinNum" in it ? `${it.champName}_${it.skinNum}` : it.champName}`}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.2, delay: Math.min(i * 0.015, 0.5) }}
+                        transition={{ duration: 0.2, delay: Math.min(i * 0.012, 0.15) }}
                         className="group rounded-lg border border-border bg-card overflow-hidden hover:border-[hsl(198,100%,45%)/40%] transition-all cursor-pointer"
                         onClick={() => {
                           // Find original index in unfiltered list for lightbox

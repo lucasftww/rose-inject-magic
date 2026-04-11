@@ -213,6 +213,8 @@ const MinecraftDetalhes = () => {
                         alt={nickname || "Skin"}
                         className="h-full w-auto object-contain drop-shadow-2xl"
                         loading="lazy"
+                        decoding="async"
+                        fetchPriority="high"
                         onError={(e) => setImgOpacityOnError(e, "0")}
                       />
                     </div>
@@ -224,7 +226,16 @@ const MinecraftDetalhes = () => {
 
                   {nickname && (
                     <div className="absolute top-3 left-3 z-[2] rounded-lg bg-background/95 border border-border px-3 py-1.5 flex items-center gap-2">
-                      {headUrl && <img src={getProxiedImageUrl(headUrl)} alt="head" className="h-7 w-7 rounded object-contain" onError={hideImgOnError} />}
+                      {headUrl && (
+                        <img
+                          src={getProxiedImageUrl(headUrl)}
+                          alt="head"
+                          className="h-7 w-7 rounded object-contain"
+                          decoding="async"
+                          fetchPriority="low"
+                          onError={hideImgOnError}
+                        />
+                      )}
                       <div>
                         <p className="text-xs font-bold text-foreground">{nickname}</p>
                         <p className="text-[10px] text-muted-foreground">
@@ -331,6 +342,9 @@ const MinecraftDetalhes = () => {
                                           alt={type}
                                           className="object-contain transition-transform group-hover:scale-105"
                                           style={{ maxHeight: 110, maxWidth: "100%", imageRendering: "pixelated" }}
+                                          loading="lazy"
+                                          decoding="async"
+                                          fetchPriority="low"
                                           onError={hideImgOnError}
                                         />
                                       </div>

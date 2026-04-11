@@ -100,9 +100,10 @@ const resolveSkinImage = (s: unknown): string | null => {
 
   if (Array.isArray(skin.chromas)) {
     for (const c of skin.chromas) {
-      if (c?.fullRender) return c.fullRender;
+      // Ícones/swatch primeiro — fullRender é muito maior (grelha + lista).
       if (c?.displayIcon) return c.displayIcon;
       if (c?.swatch) return c.swatch;
+      if (c?.fullRender) return c.fullRender;
     }
   }
 
@@ -684,6 +685,8 @@ const ContaDetalhes = () => {
                           src={getProxiedImageUrl(skinItems[selectedSkin]?.image)}
                           alt={skinItems[selectedSkin]?.name}
                           className="max-h-full max-w-full object-contain"
+                          decoding="async"
+                          fetchPriority="high"
                         />
                       </motion.div>
                     </AnimatePresence>
@@ -709,6 +712,8 @@ const ContaDetalhes = () => {
                         src={getProxiedImageUrl(mainGallery[selectedSkin]?.image)}
                         alt={mainGallery[selectedSkin]?.name}
                         className="h-full w-full object-contain p-6"
+                        decoding="async"
+                        fetchPriority="high"
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
@@ -936,7 +941,7 @@ const ContaDetalhes = () => {
                 key={`${activeTab}-${i}`}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2, delay: i * 0.015 }}
+                transition={{ duration: 0.2, delay: Math.min(i * 0.012, 0.15) }}
                 className="group rounded-xl bg-card overflow-hidden hover:ring-1 hover:ring-success/30 transition-all relative cursor-pointer"
                 onClick={() => setLightboxIndex(i)}>
                 
@@ -950,7 +955,10 @@ const ContaDetalhes = () => {
                     src={getProxiedImageUrl(invItem.image)}
                     alt={invItem.name}
                     className="h-full w-full object-contain drop-shadow-md transition-transform group-hover:scale-110"
-                    loading="lazy" />
+                    loading="lazy"
+                    decoding="async"
+                    fetchPriority="low"
+                  />
                   
                         </div>
                         <div className="px-2 py-1.5 sm:p-2 flex items-center gap-1 sm:gap-1.5">
@@ -1018,7 +1026,13 @@ const ContaDetalhes = () => {
 
                           {/* Image */}
                           <div className="aspect-[4/3] bg-secondary/20 flex items-center justify-center p-8 border-b border-border">
-                            <img src={getProxiedImageUrl(currentItem.image)} alt={currentItem.name} className="max-h-full max-w-full object-contain" />
+                            <img
+                              src={getProxiedImageUrl(currentItem.image)}
+                              alt={currentItem.name}
+                              className="max-h-full max-w-full object-contain"
+                              decoding="async"
+                              fetchPriority="high"
+                            />
                           </div>
 
                           {/* Info */}
