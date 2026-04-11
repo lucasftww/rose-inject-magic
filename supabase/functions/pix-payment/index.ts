@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
-  hasLztBuyerAssigned,
+  hasLztItemBuyerAssigned,
   isLztItemStateAwaiting,
   isLztItemStateSoldOrRemoved,
 } from "../_shared/lztItemGuards.ts";
@@ -1095,11 +1095,11 @@ async function fulfillLztAccount(supabaseAdmin: SupabaseAdminClient, payment: Pa
       const checkItem = (checkData?.item ?? null) as Record<string, unknown> | null;
       const checkState = checkItem?.item_state;
       if (
-        hasLztBuyerAssigned(checkItem?.buyer) ||
+        hasLztItemBuyerAssigned(checkItem) ||
         isLztItemStateSoldOrRemoved(checkState) ||
         isLztItemStateAwaiting(checkState)
       ) {
-        console.error(`LZT item ${itemId} already sold (buyer=${checkItem.buyer}, state=${checkState})`);
+        console.error(`LZT item ${itemId} unavailable (buyerSignals=${hasLztItemBuyerAssigned(checkItem)}, state=${checkState})`);
         await createManualDeliveryTicket("Account already sold before purchase attempt");
         return;
       }
@@ -1803,7 +1803,7 @@ async function validateAndCalculatePrice(
       // canBuyItem === false, comprador real, ou estado terminal LZT (não usar só !== "active").
       const itemState = lztItem?.item_state;
       const isSold =
-        hasLztBuyerAssigned(lztItem?.buyer) ||
+        hasLztItemBuyerAssigned(lztItem) ||
         lztItem?.canBuyItem === false ||
         isLztItemStateSoldOrRemoved(itemState) ||
         isLztItemStateAwaiting(itemState);

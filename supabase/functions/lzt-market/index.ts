@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
-  hasLztBuyerAssigned,
+  hasLztItemBuyerAssigned,
   isLztItemStateAwaiting,
   isLztItemStateSoldOrRemoved,
 } from "../_shared/lztItemGuards.ts";
@@ -319,7 +319,7 @@ function shouldKeepItem(
   _displayedPriceBrl: number,
   opts?: { skipValueGate?: boolean; skipMinSkins?: boolean; skipCanBuyCheck?: boolean },
 ) {
-  if (hasLztBuyerAssigned(item.buyer)) return false;
+  if (hasLztItemBuyerAssigned(item)) return false;
   if (!opts?.skipCanBuyCheck && item.canBuyItem === false) return false;
   if (itemFailsNotSoldBeforePolicy(item)) return false;
 
@@ -1018,7 +1018,7 @@ Deno.serve(async (req) => {
           filteredByOther++;
           return false;
         }
-        if (hasLztBuyerAssigned(item.buyer)) { filteredByOther++; return false; }
+        if (hasLztItemBuyerAssigned(item)) { filteredByOther++; return false; }
         // More robust check for canBuyItem (catch false or null if it's supposed to be buyable)
         if (item.canBuyItem === false) { filteredByOther++; return false; }
         
@@ -1121,7 +1121,7 @@ Deno.serve(async (req) => {
       enrichDetailItemFromNestedInventory(data.item as LztItem, gameType);
       // SECURITY: vendido / removido / awaiting — não tratar `stickied`/`pre_active` como indisponível.
       const itemState = data.item.item_state;
-      if (hasLztBuyerAssigned(data.item.buyer) || isLztItemStateSoldOrRemoved(itemState)) {
+      if (hasLztItemBuyerAssigned(data.item) || isLztItemStateSoldOrRemoved(itemState)) {
         return new Response(
           JSON.stringify({ error: "Account already sold", item: null }),
           { status: 410, headers: { ...corsHeaders, "Content-Type": "application/json" } },

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   hasLztBuyerAssigned,
+  hasLztItemBuyerAssigned,
   isLztItemStateAwaiting,
   isLztItemStateSoldOrRemoved,
   normalizeLztItemState,
@@ -40,5 +41,19 @@ describe("hasLztBuyerAssigned", () => {
     expect(hasLztBuyerAssigned({ id: 1 })).toBe(true);
     expect(hasLztBuyerAssigned({ user_id: 99 })).toBe(true);
     expect(hasLztBuyerAssigned({ username: "x" })).toBe(true);
+  });
+});
+
+describe("hasLztItemBuyerAssigned", () => {
+  it("returns false when nested buyer is empty and no root signals", () => {
+    expect(hasLztItemBuyerAssigned({ buyer: {}, item_state: "active" })).toBe(false);
+  });
+
+  it("detects buyer_username on item root", () => {
+    expect(hasLztItemBuyerAssigned({ buyer_username: "someone" })).toBe(true);
+  });
+
+  it("detects buyer_user_id on item root", () => {
+    expect(hasLztItemBuyerAssigned({ buyer_user_id: "42" })).toBe(true);
   });
 });

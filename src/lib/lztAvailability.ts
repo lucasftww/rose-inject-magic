@@ -8,7 +8,7 @@ import {
   parseLztDetailResponseItem,
 } from "@/lib/lztDetailItemParse";
 import {
-  hasLztBuyerAssigned,
+  hasLztItemBuyerAssigned,
   isLztItemStateAwaiting,
   isLztItemStateSoldOrRemoved,
 } from "@/lib/lztItemGuards";
@@ -62,7 +62,7 @@ export function isLztDetailItemPurchasable(item: LztDetailItem | null | undefine
   if (!item) return false;
   if (itemFailsLztNotSoldBeforePolicy(item as Record<string, unknown>)) return false;
   if (isLztItemStateSoldOrRemoved(item.item_state) || isLztItemStateAwaiting(item.item_state)) return false;
-  if (hasLztBuyerAssigned(item.buyer)) return false;
+  if (hasLztItemBuyerAssigned(item)) return false;
   if (item.canBuyItem === false) return false;
   return true;
 }
@@ -76,7 +76,7 @@ function toastItemNotPurchasable(item: LztDetailItem) {
     });
     return;
   }
-  if (hasLztBuyerAssigned(item.buyer)) {
+  if (hasLztItemBuyerAssigned(item)) {
     toast({
       title: "Conta já vendida",
       description: "Esta conta foi vendida recentemente. Escolha outra.",

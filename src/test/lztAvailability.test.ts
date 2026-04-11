@@ -26,6 +26,9 @@ describe("isLztDetailItemPurchasable", () => {
   it("rejects sold or closed", () => {
     expect(isLztDetailItemPurchasable({ item_state: "closed" })).toBe(false);
     expect(isLztDetailItemPurchasable({ buyer: { id: 1 } })).toBe(false);
+    expect(isLztDetailItemPurchasable({ item_state: "active", buyer_username: "sold_user", canBuyItem: true })).toBe(
+      false,
+    );
     expect(isLztDetailItemPurchasable({ canBuyItem: false })).toBe(false);
   });
 

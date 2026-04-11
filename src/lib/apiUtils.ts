@@ -39,8 +39,8 @@ export const safeJsonFetch = async <T = unknown>(
     );
   }
 
-  const contentType = response.headers.get("Content-Type");
-  if (!contentType || !contentType.includes("application/json")) {
+  const contentType = (response.headers.get("Content-Type") || "").toLowerCase();
+  if (!contentType.includes("application/json")) {
     console.error(`Expected JSON but received ${contentType} from ${url}. Body snippet: ${text.substring(0, 200)}`);
     throw new ApiError(
       `A resposta do servidor não é um JSON válido. O serviço pode estar temporariamente indisponível.`,

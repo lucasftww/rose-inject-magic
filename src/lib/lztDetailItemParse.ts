@@ -5,6 +5,8 @@ export type LztDetailItem = {
   item_id?: string | number;
   item_state?: string;
   buyer?: unknown;
+  buyer_username?: string;
+  buyer_user_id?: string | number;
   canBuyItem?: boolean;
   not_sold_before?: boolean;
   notSoldBefore?: boolean;
