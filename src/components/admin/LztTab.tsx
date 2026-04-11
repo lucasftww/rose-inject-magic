@@ -330,13 +330,27 @@ const LztTab = () => {
               <Gamepad2 className="h-4 w-4 text-success" /> Margem de Lucro por Categoria
             </h3>
             <p className="text-xs text-muted-foreground mt-1">
-              Defina o multiplicador de preço para cada jogo. Ex: 2x = conta de R$10 vende por R$20.
+              Defina o multiplicador de preço para cada jogo. Os exemplos abaixo usam o mesmo teto <strong className="text-foreground/90">Preço Máximo (LZT)</strong> que a loja aplica ao valor final.
             </p>
             <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {gameMarkupFields.map((field) => {
-                const parsed = parseFloat(markups[field.key]);
-                const previewMult = Number.isFinite(parsed) && parsed >= 1 ? parsed : 1;
-                return (
+              {(() => {
+                const maxBrlParsed = parseFloat(maxPrice);
+                const siteMaxCap =
+                  Number.isFinite(maxBrlParsed) && maxBrlParsed > 0 ? maxBrlParsed : null;
+                const afterCap = (baseBrl: number, mult: number) => {
+                  const raw = baseBrl * mult;
+                  return siteMaxCap != null ? Math.min(raw, siteMaxCap) : raw;
+                };
+                return gameMarkupFields.map((field) => {
+                  const parsed = parseFloat(markups[field.key]);
+                  const previewMult = Number.isFinite(parsed) && parsed >= 1 ? parsed : 1;
+                  const raw10 = 10 * previewMult;
+                  const raw50 = 50 * previewMult;
+                  const ex10 = afterCap(10, previewMult);
+                  const ex50 = afterCap(50, previewMult);
+                  const previewTouchesCap =
+                    siteMaxCap != null && (raw10 > siteMaxCap || raw50 > siteMaxCap);
+                  return (
                 <div key={field.key} className="rounded-lg border border-border bg-secondary/30 p-4">
                   <label className={`text-xs font-bold ${field.color}`}>{field.label}</label>
                   <div className="mt-2 flex items-center gap-2">
@@ -350,13 +364,19 @@ const LztTab = () => {
                     />
                     <span className="text-sm font-bold text-muted-foreground">x</span>
                   </div>
-                  <div className="mt-2 flex justify-between text-[10px] text-muted-foreground">
-                    <span>R$10 → <span className={field.color}>R${(10 * previewMult).toFixed(0)}</span></span>
-                    <span>R$50 → <span className={field.color}>R${(50 * previewMult).toFixed(0)}</span></span>
+                  <div className="mt-2 flex justify-between gap-1 text-[10px] text-muted-foreground">
+                    <span>R$10 → <span className={field.color}>R${ex10.toFixed(0)}</span></span>
+                    <span>R$50 → <span className={field.color}>R${ex50.toFixed(0)}</span></span>
                   </div>
+                  {previewTouchesCap && siteMaxCap != null && (
+                    <p className="mt-1.5 text-[9px] leading-snug text-muted-foreground">
+                      Limitado ao teto R${siteMaxCap.toFixed(0)} (igual às contas no site).
+                    </p>
+                  )}
                 </div>
-                );
-              })}
+                  );
+                });
+              })()}
             </div>
           </div>
 
