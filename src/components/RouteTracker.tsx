@@ -6,6 +6,7 @@ const RouteTracker = () => {
   const location = useLocation();
 
   useEffect(() => {
+    window.scrollTo({ top: 0, left: 0 });
     trackPageView();
   }, [location.pathname]);
 
