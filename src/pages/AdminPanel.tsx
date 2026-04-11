@@ -1,10 +1,10 @@
-import { useState, lazy, Suspense, useCallback, memo } from "react";
+import { useState, useCallback, memo, useEffect, type ComponentType } from "react";
 import { useNavigate } from "react-router-dom";
 import "@/lib/adminSalesCache";
 import {
   ShieldAlert, Gamepad2, Mail, Package, Tag, UserCheck, TrendingUp,
   Key, CreditCard, BarChart3, ShoppingBag, Globe, Shield, Users,
-  ChevronRight, Menu, Loader2, Home, History
+  ChevronRight, Menu, Home, History
 } from "lucide-react";
 import {
   Sheet,
@@ -12,29 +12,10 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import type { TabId } from "@/components/admin/adminTabIds";
+import { AdminTabPanel } from "@/components/admin/AdminTabContent";
 
-/* Lazy-load all tabs */
-const OverviewTab = lazy(() => import("@/components/admin/OverviewTab"));
-const FinanceTab = lazy(() => import("@/components/admin/FinanceTab"));
-const GamesTab = lazy(() => import("@/components/admin/GamesTab"));
-const ProductsTab = lazy(() => import("@/components/admin/ProductsTab"));
-const StockTab = lazy(() => import("@/components/admin/StockTab"));
-const LztTab = lazy(() => import("@/components/admin/LztTab"));
-const RobotProjectTab = lazy(() => import("@/components/admin/RobotProjectTab"));
-const SalesTab = lazy(() => import("@/components/admin/SalesTab"));
-const PaymentsTab = lazy(() => import("@/components/admin/PaymentsTab"));
-const PaymentsListTab = lazy(() => import("@/components/admin/PaymentsListTab"));
-const CouponsTab = lazy(() => import("@/components/admin/CouponsTab"));
-const ScratchCardTab = lazy(() => import("@/components/admin/ScratchCardTab"));
-const TicketsTab = lazy(() => import("@/components/admin/TicketsTab"));
-const StatusTab = lazy(() => import("@/components/admin/StatusTab"));
-const UsersTab = lazy(() => import("@/components/admin/UsersTab"));
-const ResellersTab = lazy(() => import("@/components/admin/ResellersTab"));
-const CredentialsTab = lazy(() => import("@/components/admin/CredentialsTab"));
-
-type TabId = "overview" | "financeiro" | "pix_historico" | "jogos" | "produtos" | "estoque" | "lzt" | "robot" | "vendas" | "pagamentos" | "cupons" | "raspadinha" | "tickets" | "status" | "usuarios" | "revendedores" | "credenciais";
-
-interface TabItem { id: TabId; label: string; icon: React.ComponentType<{ className?: string }>; }
+interface TabItem { id: TabId; label: string; icon: ComponentType<{ className?: string }>; }
 interface TabGroup { label: string; tabs: TabItem[]; }
 
 const tabGroups: TabGroup[] = [
@@ -82,11 +63,46 @@ const tabGroups: TabGroup[] = [
   },
 ];
 
-const TabFallback = () => (
-  <div className="flex items-center justify-center py-20">
-    <Loader2 className="h-6 w-6 animate-spin text-success" />
-  </div>
-);
+/** Warm tab chunks in idle time so switching sidebar tabs rarely hits Suspense */
+function usePrefetchAdminTabs() {
+  useEffect(() => {
+    const importers = [
+      () => import("@/components/admin/OverviewTab"),
+      () => import("@/components/admin/FinanceTab"),
+      () => import("@/components/admin/GamesTab"),
+      () => import("@/components/admin/ProductsTab"),
+      () => import("@/components/admin/StockTab"),
+      () => import("@/components/admin/LztTab"),
+      () => import("@/components/admin/RobotProjectTab"),
+      () => import("@/components/admin/SalesTab"),
+      () => import("@/components/admin/PaymentsTab"),
+      () => import("@/components/admin/PaymentsListTab"),
+      () => import("@/components/admin/CouponsTab"),
+      () => import("@/components/admin/ScratchCardTab"),
+      () => import("@/components/admin/TicketsTab"),
+      () => import("@/components/admin/StatusTab"),
+      () => import("@/components/admin/UsersTab"),
+      () => import("@/components/admin/ResellersTab"),
+      () => import("@/components/admin/CredentialsTab"),
+    ];
+    const run = () => {
+      for (const f of importers) void f();
+    };
+    let idleId: number | undefined;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+      idleId = window.requestIdleCallback(run, { timeout: 2800 });
+    } else {
+      timeoutId = setTimeout(run, 400);
+    }
+    return () => {
+      if (idleId !== undefined && typeof window !== "undefined" && "cancelIdleCallback" in window) {
+        window.cancelIdleCallback(idleId);
+      }
+      if (timeoutId !== undefined) clearTimeout(timeoutId);
+    };
+  }, []);
+}
 
 /* Memoized nav to avoid re-renders on tab content changes */
 const SidebarNav = memo(({
@@ -137,20 +153,18 @@ const SidebarNav = memo(({
 SidebarNav.displayName = "SidebarNav";
 
 const AdminPanel = () => {
+  usePrefetchAdminTabs();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabId>("overview");
-  const [visitedTabs, setVisitedTabs] = useState<Set<TabId>>(new Set(["overview"]));
   const [pendingTicketId, setPendingTicketId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
   const handleGoToTicket = useCallback((ticketId: string) => {
     setPendingTicketId(ticketId);
-    setVisitedTabs(prev => new Set(prev).add("tickets"));
     setActiveTab("tickets");
   }, []);
 
   const handleTabSelect = useCallback((id: TabId) => {
-    setVisitedTabs(prev => new Set(prev).add(id));
     setActiveTab(id);
     setMobileOpen(false);
   }, []);
@@ -213,7 +227,6 @@ const AdminPanel = () => {
 
         {/* Main Content — offset by sidebar width */}
         <main className={`flex-1 min-w-0 ${sidebarOpen ? "lg:ml-56" : "lg:ml-14"}`}>
-          {/* Top bar */}
           <div className="sticky top-0 z-20 flex items-center gap-3 px-4 lg:px-8 py-3 border-b border-border bg-background">
             <button
               onClick={() => setMobileOpen(true)}
@@ -229,27 +242,13 @@ const AdminPanel = () => {
             </div>
           </div>
 
-          {/* Tab Content — each tab lazy-loaded */}
           <div className="px-3 sm:px-5 lg:px-8 py-5 lg:py-6">
-            <Suspense fallback={<TabFallback />}>
-              <div style={{ display: activeTab === "overview" ? "block" : "none" }}>{visitedTabs.has("overview") && <OverviewTab onGoToTicket={handleGoToTicket} />}</div>
-              <div style={{ display: activeTab === "jogos" ? "block" : "none" }}>{visitedTabs.has("jogos") && <GamesTab />}</div>
-              <div style={{ display: activeTab === "produtos" ? "block" : "none" }}>{visitedTabs.has("produtos") && <ProductsTab />}</div>
-              <div style={{ display: activeTab === "estoque" ? "block" : "none" }}>{visitedTabs.has("estoque") && <StockTab />}</div>
-              <div style={{ display: activeTab === "robot" ? "block" : "none" }}>{visitedTabs.has("robot") && <RobotProjectTab />}</div>
-              <div style={{ display: activeTab === "revendedores" ? "block" : "none" }}>{visitedTabs.has("revendedores") && <ResellersTab />}</div>
-              <div style={{ display: activeTab === "tickets" ? "block" : "none" }}>{visitedTabs.has("tickets") && <TicketsTab initialTicketId={pendingTicketId} onTicketOpened={handleTicketOpened} />}</div>
-              <div style={{ display: activeTab === "status" ? "block" : "none" }}>{visitedTabs.has("status") && <StatusTab />}</div>
-              <div style={{ display: activeTab === "cupons" ? "block" : "none" }}>{visitedTabs.has("cupons") && <CouponsTab />}</div>
-              <div style={{ display: activeTab === "usuarios" ? "block" : "none" }}>{visitedTabs.has("usuarios") && <UsersTab onGoToTicket={handleGoToTicket} />}</div>
-              <div style={{ display: activeTab === "credenciais" ? "block" : "none" }}>{visitedTabs.has("credenciais") && <CredentialsTab />}</div>
-              <div style={{ display: activeTab === "lzt" ? "block" : "none" }}>{visitedTabs.has("lzt") && <LztTab />}</div>
-              <div style={{ display: activeTab === "vendas" ? "block" : "none" }}>{visitedTabs.has("vendas") && <SalesTab onGoToTicket={handleGoToTicket} />}</div>
-              <div style={{ display: activeTab === "pix_historico" ? "block" : "none" }}>{visitedTabs.has("pix_historico") && <PaymentsListTab />}</div>
-              <div style={{ display: activeTab === "pagamentos" ? "block" : "none" }}>{visitedTabs.has("pagamentos") && <PaymentsTab />}</div>
-              <div style={{ display: activeTab === "financeiro" ? "block" : "none" }}>{visitedTabs.has("financeiro") && <FinanceTab />}</div>
-              <div style={{ display: activeTab === "raspadinha" ? "block" : "none" }}>{visitedTabs.has("raspadinha") && <ScratchCardTab />}</div>
-            </Suspense>
+            <AdminTabPanel
+              activeTab={activeTab}
+              onGoToTicket={handleGoToTicket}
+              pendingTicketId={pendingTicketId}
+              onTicketOpened={handleTicketOpened}
+            />
           </div>
         </main>
       </div>

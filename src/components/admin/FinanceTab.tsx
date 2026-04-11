@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { fetchAllRows } from "@/lib/supabaseAllRows";
@@ -150,26 +151,21 @@ const StatCard = ({
   </div>
 );
 
-// ─── Main Component ───
-const FinanceTab = () => {
-  const [loading, setLoading] = useState(true);
-  const [payments, setPayments] = useState<PaymentRow[]>([]);
-  const [lztSales, setLztSales] = useState<LztSale[]>([]);
-  const [resellerPurchases, setResellerPurchases] = useState<ResellerPurchase[]>([]);
-  const [robotTickets, setRobotTickets] = useState<RobotTicket[]>([]);
-  const [period, setPeriod] = useState<Period>("24h");
-  const [usdToBrl, setUsdToBrl] = useState(5.16);
+async function fetchFinanceDashboard(): Promise<{
+  payments: PaymentRow[];
+  lztSales: LztSale[];
+  resellerPurchases: ResellerPurchase[];
+  robotTickets: RobotTicket[];
+  usdToBrl: number;
+}> {
+  let currentRate = 5.16;
+  try {
+    currentRate = await getUsdToBrl();
+  } catch {
+    /* fallback */
+  }
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-
-    let currentRate = usdToBrl;
-    try {
-      currentRate = await getUsdToBrl();
-      setUsdToBrl(currentRate);
-    } catch { /* fallback */ }
-
+  try {
     // Use shared cache for heavy queries
     const CACHE_KEY_PAYMENTS = "admin_payments_completed";
     const CACHE_KEY_LZT = "admin_lzt_sales_full";
@@ -207,9 +203,7 @@ const FinanceTab = () => {
     if (!cachedLzt) setCache(CACHE_KEY_LZT, lztData);
     if (!cachedReseller) setCache(CACHE_KEY_RESELLER, resellerData);
 
-    setPayments(paymentsData);
-    setLztSales(lztData);
-    setResellerPurchases(resellerData);
+    let robotTickets: RobotTicket[] = [];
 
     if (robotProductsRes.error) {
       console.warn("FinanceTab: produtos Robot", robotProductsRes.error.message);
@@ -287,21 +281,36 @@ const FinanceTab = () => {
           revenue, cost: Math.round(cost * 100) / 100, profit: Math.round((revenue - cost) * 100) / 100,
         };
       });
-      setRobotTickets(enriched);
+      robotTickets = enriched;
     }
 
-    } catch (err) {
-      console.error("FinanceTab fetchData error:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    return {
+      payments: paymentsData,
+      lztSales: lztData,
+      resellerPurchases: resellerData,
+      robotTickets,
+      usdToBrl: currentRate,
+    };
+  } catch (err) {
+    console.error("FinanceTab fetchFinanceDashboard error:", err);
+    throw err instanceof Error ? err : new Error(String(err));
+  }
+}
 
-  useEffect(() => {
-    void fetchData();
-    // Intentional: single load on mount; fetchData is stable for dashboard totals.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+// ─── Main Component ───
+const FinanceTab = () => {
+  const { data, isPending: loading, refetch, isFetching } = useQuery({
+    queryKey: ["admin", "finance"],
+    queryFn: fetchFinanceDashboard,
+    staleTime: 3 * 60 * 1000,
+  });
+
+  const payments = useMemo(() => data?.payments ?? [], [data]);
+  const lztSales = useMemo(() => data?.lztSales ?? [], [data]);
+  const resellerPurchases = useMemo(() => data?.resellerPurchases ?? [], [data]);
+  const robotTickets = useMemo(() => data?.robotTickets ?? [], [data]);
+  const usdToBrl = data?.usdToBrl ?? 5.16;
+  const [period, setPeriod] = useState<Period>("24h");
 
   // ─── Filtered data ───
   const fp = useMemo(() => filterByPeriod(payments, period), [payments, period]);
@@ -500,8 +509,15 @@ const FinanceTab = () => {
               </button>
             ))}
           </div>
-          <button onClick={() => { invalidateAdminCache(); fetchData(); }} className="rounded-lg border border-border bg-card p-1.5 text-muted-foreground hover:text-foreground">
-            <RefreshCw className="h-3.5 w-3.5" />
+          <button
+            onClick={() => {
+              invalidateAdminCache();
+              void refetch();
+            }}
+            disabled={isFetching}
+            className="rounded-lg border border-border bg-card p-1.5 text-muted-foreground hover:text-foreground disabled:opacity-50"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`} />
           </button>
           <button onClick={generatePDF} className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1.5 text-[11px] font-medium text-muted-foreground hover:text-foreground">
             <Download className="h-3 w-3" /> PDF

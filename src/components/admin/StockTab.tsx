@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchAllRows } from "@/lib/supabaseAllRows";
-import { useAdminProductsWithPlans } from "@/hooks/useAdminData";
+import { useAdminProductsWithPlans, useAdminStockPlanCounts } from "@/hooks/useAdminData";
 import type { AdminProductWithPlansRow } from "@/types/supabaseQueryResults";
 import { toast } from "@/hooks/use-toast";
 import { Package, ChevronDown, ChevronRight, Plus, Trash2, Loader2, Sparkles, AlertTriangle } from "lucide-react";
@@ -33,39 +33,29 @@ const ITEMS_PER_PAGE = 5;
 
 const StockTab = () => {
   const { data: cachedProducts, isError, isLoading, error: productsQueryError } = useAdminProductsWithPlans();
+  const { data: stockCountRows = [], refetch: refetchStockCounts } = useAdminStockPlanCounts();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedProduct, setExpandedProduct] = useState<string | null>(null);
   const [expandedPlan, setExpandedPlan] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [stockMap, setStockMap] = useState<Record<string, StockItem[]>>({});
-  const [stockCounts, setStockCounts] = useState<Record<string, { total: number; available: number }>>({});
+  const stockCounts = useMemo(() => {
+    const counts: Record<string, { total: number; available: number }> = {};
+    for (const row of stockCountRows) {
+      counts[row.plan_id] = { total: row.total, available: row.available };
+    }
+    return counts;
+  }, [stockCountRows]);
   const [loadingStock, setLoadingStock] = useState<string | null>(null);
   const [newStockText, setNewStockText] = useState("");
   const [addingStock, setAddingStock] = useState(false);
   const [generatingAI, setGeneratingAI] = useState(false);
   const [aiLines, setAiLines] = useState(5);
 
-  const fetchStockCounts = async (_prods: Product[]) => {
-    // Single RPC call replaces 2N individual queries
-    const { data, error } = await supabase.rpc("admin_stock_counts");
-    if (error) {
-      console.error("admin_stock_counts error:", error);
-      setStockCounts({});
-      return;
-    }
-    const counts: Record<string, { total: number; available: number }> = {};
-    const rows = (data as unknown as { plan_id: string; total: number; available: number }[]) ?? [];
-    for (const row of rows) {
-      counts[row.plan_id] = { total: row.total, available: row.available };
-    }
-    setStockCounts(counts);
-  };
-
   useEffect(() => {
     if (isError) {
       setProducts([]);
-      setStockCounts({});
       setLoading(false);
       toast({
         title: "Erro ao carregar produtos",
@@ -89,7 +79,7 @@ const StockTab = () => {
       product_plans: p.product_plans ?? [],
     }));
     setProducts(mapped);
-    void fetchStockCounts(mapped).then(() => setLoading(false));
+    setLoading(false);
   }, [cachedProducts, isError, isLoading, productsQueryError]);
 
   const fetchStockForPlan = async (planId: string) => {
@@ -133,7 +123,7 @@ const StockTab = () => {
       toast({ title: `${lines.length} item(s) adicionado(s)!` });
       setNewStockText("");
       fetchStockForPlan(planId);
-      fetchStockCounts(products); // refresh counts
+      void refetchStockCounts();
     }
     setAddingStock(false);
   };
@@ -166,7 +156,7 @@ const StockTab = () => {
     } else {
       toast({ title: "Item removido!" });
       fetchStockForPlan(planId);
-      fetchStockCounts(products);
+      void refetchStockCounts();
     }
   };
 
@@ -178,7 +168,7 @@ const StockTab = () => {
     } else {
       toast({ title: "Estoque limpo!" });
       fetchStockForPlan(planId);
-      fetchStockCounts(products);
+      void refetchStockCounts();
     }
   };
 

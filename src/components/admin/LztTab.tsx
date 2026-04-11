@@ -1,10 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import type { PostgrestError } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
-import { fetchAllRows } from "@/lib/supabaseAllRows";
-import { asOrderTicketMetadata } from "@/types/orderTicketMetadata";
-import { isRecord } from "@/types/ticketChat";
+import type { AdminLztSale as LztSale } from "@/lib/adminLztFetch";
+import { useAdminLztBundle, useAdminLztPriceOverrides } from "@/hooks/useAdminData";
 import { Loader2, DollarSign, TrendingUp, Settings, Save, ShoppingCart, RefreshCw, Copy, ExternalLink, ChevronLeft, ChevronRight, Search, Gamepad2, Tag } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
@@ -17,18 +16,6 @@ interface LztConfig {
   markup_lol: number;
   markup_fortnite: number;
   markup_minecraft: number;
-}
-
-interface LztSale {
-  id: string;
-  lzt_item_id: string;
-  buy_price: number;
-  sell_price: number;
-  profit: number;
-  title: string | null;
-  game: string | null;
-  buyer_user_id: string | null;
-  created_at: string;
 }
 
 const SALES_PER_PAGE = 15;
@@ -58,12 +45,6 @@ function mapLztConfigRow(row: Tables<"lzt_config"> | null | undefined): Partial<
   };
 }
 
-function parseAdminLztStatsPayload(data: unknown): Record<string, unknown> | null {
-  return isRecord(data) ? data : null;
-}
-
-type LztTicketFallbackRow = Pick<Tables<"order_tickets">, "id" | "metadata" | "created_at">;
-
 const gameMarkupFields = [
   { key: "markup_valorant" as const, label: "Valorant", color: "text-destructive" },
   { key: "markup_lol" as const, label: "League of Legends", color: "text-warning" },
@@ -72,10 +53,20 @@ const gameMarkupFields = [
 ];
 
 const LztTab = () => {
-  const [loading, setLoading] = useState(true);
+  const {
+    data: lztBundle,
+    dataUpdatedAt: lztBundleUpdatedAt,
+    isPending: loading,
+    isError: lztBundleError,
+    error: lztBundleFetchError,
+    refetch: refetchLzt,
+  } = useAdminLztBundle();
+  const { data: overrides = [], refetch: refetchOverrides } = useAdminLztPriceOverrides();
+  const allSales = lztBundle?.sales ?? [];
+  const dbStats = lztBundle?.dbStats ?? null;
+
   const [saving, setSaving] = useState(false);
   const [config, setConfig] = useState<LztConfig | null>(null);
-  const [allSales, setAllSales] = useState<LztSale[]>([]);
   const [maxPrice, setMaxPrice] = useState("500");
   const [activeView, setActiveView] = useState<"config" | "sales" | "price">("config");
   const [salesPage, setSalesPage] = useState(0);
@@ -85,8 +76,6 @@ const LztTab = () => {
   const [priceItemId, setPriceItemId] = useState("");
   const [newPrice, setNewPrice] = useState("");
   const [changingPrice, setChangingPrice] = useState(false);
-  const [overrides, setOverrides] = useState<{ lzt_item_id: string; custom_price_brl: number }[]>([]);
-
   const applyConfig = (partial?: Partial<LztConfig> | null) => {
     const resolved: LztConfig = {
       ...DEFAULT_CONFIG,
@@ -104,33 +93,6 @@ const LztTab = () => {
     });
   };
 
-  const fetchOverrides = useCallback(async () => {
-    try {
-      const { data, error } = await supabase
-        .from("lzt_price_overrides")
-        .select("lzt_item_id, custom_price_brl")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-
-      const deduped = new Map<string, { lzt_item_id: string; custom_price_brl: number }>();
-      for (const row of data || []) {
-        const price = Number(row.custom_price_brl);
-        if (!Number.isFinite(price) || price <= 0) continue;
-        if (!deduped.has(row.lzt_item_id)) {
-          deduped.set(row.lzt_item_id, {
-            lzt_item_id: row.lzt_item_id,
-            custom_price_brl: price,
-          });
-        }
-      }
-
-      setOverrides(Array.from(deduped.values()));
-    } catch {
-      setOverrides([]);
-    }
-  }, []);
-
   // Per-game markup state
   const [markups, setMarkups] = useState({
     markup_valorant: String(DEFAULT_CONFIG.markup_valorant),
@@ -139,80 +101,23 @@ const LztTab = () => {
     markup_minecraft: String(DEFAULT_CONFIG.markup_minecraft),
   });
 
-  // Aggregated stats from DB (accurate, no row limit)
-  const [dbStats, setDbStats] = useState<Record<string, unknown> | null>(null);
   const totalBought = dbStats ? Number(dbStats.total_bought) : 0;
   const totalSold = dbStats ? Number(dbStats.total_sold) : 0;
   const totalProfit = dbStats ? Number(dbStats.total_profit) : 0;
   const totalSalesCount = dbStats ? Number(dbStats.total_count) : allSales.length;
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [configRes, statsRes] = await Promise.all([
-        supabase.from("lzt_config").select("*").limit(1).maybeSingle(),
-        supabase.rpc("admin_lzt_stats"),
-      ]);
-
-      if (configRes.error) throw configRes.error;
-      applyConfig(mapLztConfigRow(configRes.data));
-
-      if (statsRes.error) throw statsRes.error;
-      setDbStats(parseAdminLztStatsPayload(statsRes.data));
-
-      let sales: LztSale[];
-      try {
-        sales = await fetchAllRows<LztSale>("lzt_sales", {
-          select: "*",
-          order: { column: "created_at", ascending: false },
-        });
-      } catch {
-        sales = [];
-      }
-
-      if (sales.length === 0) {
-        try {
-          const tickets = await fetchAllRows<LztTicketFallbackRow>("order_tickets", {
-            select: "id, metadata, created_at",
-            order: { column: "created_at", ascending: false },
-          });
-          const lztTickets = tickets.filter((t) => asOrderTicketMetadata(t.metadata).type === "lzt-account");
-          sales = lztTickets.map((t): LztSale => {
-            const meta = asOrderTicketMetadata(t.metadata);
-            const sell = Number(meta.price_paid || meta.sell_price || 0);
-            return {
-              id: t.id,
-              lzt_item_id: meta.lzt_item_id != null ? String(meta.lzt_item_id) : "",
-              buy_price: 0,
-              sell_price: sell,
-              profit: sell,
-              title: meta.account_name || meta.title || "Conta LZT",
-              game: meta.game ?? null,
-              buyer_user_id: null,
-              created_at: t.created_at ?? "",
-            };
-          });
-        } catch {
-          sales = [];
-        }
-      }
-
-      setAllSales(sales);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Tente novamente.";
-      toast({ title: "Erro ao carregar dados LZT", description: msg, variant: "destructive" });
-      applyConfig(null);
-      setAllSales([]);
-      setDbStats(null);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  useEffect(() => {
+    if (!lztBundleError) return;
+    const msg = lztBundleFetchError instanceof Error ? lztBundleFetchError.message : "Tente novamente.";
+    toast({ title: "Erro ao carregar dados LZT", description: msg, variant: "destructive" });
+    applyConfig(null);
+  }, [lztBundleError, lztBundleFetchError]);
 
   useEffect(() => {
-    void fetchData();
-    void fetchOverrides();
-  }, [fetchData, fetchOverrides]);
+    if (lztBundleError || !lztBundle) return;
+    applyConfig(mapLztConfigRow(lztBundle.configRow));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- hydrate form when React Query finishes a successful fetch
+  }, [lztBundleUpdatedAt, lztBundleError]);
 
   const handleSaveConfig = async () => {
     if (!config) return;
@@ -266,6 +171,7 @@ const LztTab = () => {
     else {
       toast({ title: "Configurações salvas!" });
       applyConfig(mapLztConfigRow(savedRow));
+      void refetchLzt();
     }
     setSaving(false);
   };
@@ -410,7 +316,7 @@ const LztTab = () => {
               <h3 className="text-base font-bold text-foreground flex items-center gap-2">
                 <ShoppingCart className="h-4 w-4 text-success" /> Últimas 5 Vendas
               </h3>
-              <button onClick={fetchData} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1">
+              <button type="button" onClick={() => void refetchLzt()} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1">
                 <RefreshCw className="h-3 w-3" /> Atualizar
               </button>
             </div>
@@ -496,7 +402,7 @@ const LztTab = () => {
                   toast({ title: "Preço definido!", description: `Conta #${trimmedItemId} → R$ ${p.toFixed(2)}` });
                   setPriceItemId("");
                   setNewPrice("");
-                  fetchOverrides();
+                  void refetchOverrides();
                 } catch (err: unknown) {
                   toast({
                     title: "Erro ao salvar",
@@ -528,7 +434,7 @@ const LztTab = () => {
                           const { error } = await supabase.from("lzt_price_overrides").delete().eq("lzt_item_id", o.lzt_item_id);
                           if (error) { toast({ title: "Erro ao remover", description: error.message, variant: "destructive" }); return; }
                           toast({ title: "Override removido", description: `Conta #${o.lzt_item_id} voltou ao preço automático.` });
-                          fetchOverrides();
+                          void refetchOverrides();
                         }}
                         className="text-xs text-destructive hover:text-destructive/80"
                       >
@@ -558,7 +464,7 @@ const LztTab = () => {
                   value={salesSearch} onChange={(e) => { setSalesSearch(e.target.value); setSalesPage(0); }}
                   className="w-full sm:w-72 rounded-lg border border-border bg-secondary/50 pl-9 pr-4 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-success/50" />
               </div>
-              <button onClick={fetchData} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 shrink-0">
+              <button type="button" onClick={() => void refetchLzt()} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 shrink-0">
                 <RefreshCw className="h-3 w-3" /> Atualizar
               </button>
             </div>

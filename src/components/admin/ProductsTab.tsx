@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { getUsdToBrl } from "@/lib/adminCache";
 import { useAdminGames, useAdminProductsWithPlans, useInvalidateAdminCache } from "@/hooks/useAdminData";
 import {
@@ -119,9 +119,6 @@ const inputClass = "w-full rounded-xl border border-border/60 bg-background/80 p
 const selectClass = "w-full rounded-xl border border-border/60 bg-background/80 px-4 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-success/50 focus:ring-1 focus:ring-success/20";
 
 const ProductsTab = () => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [games, setGames] = useState<Game[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
   const [saving, setSaving] = useState(false);
@@ -210,31 +207,22 @@ const ProductsTab = () => {
     setLoadingRobotGames(false);
   };
 
-  const { data: cachedGames, refetch: refetchGames } = useAdminGames();
-  const { data: cachedProducts, refetch: refetchProducts } = useAdminProductsWithPlans();
+  const { data: cachedGames, isPending: gamesPending, refetch: refetchGames } = useAdminGames();
+  const { data: cachedProducts, isPending: productsPending, refetch: refetchProducts } = useAdminProductsWithPlans();
   const invalidateAdmin = useInvalidateAdminCache();
 
-  useEffect(() => {
-    if (cachedGames) setGames(cachedGames);
-  }, [cachedGames]);
-
-  useEffect(() => {
-    if (cachedProducts) {
-      setProducts(cachedProducts);
-      setLoading(false);
-    }
-  }, [cachedProducts]);
+  const games = useMemo(
+    () => (cachedGames ?? []).map((g) => ({ id: g.id, name: g.name })),
+    [cachedGames],
+  );
+  const products = useMemo(() => cachedProducts ?? [], [cachedProducts]);
+  const loading =
+    (gamesPending && games.length === 0) || (productsPending && products.length === 0);
 
   const fetchData = async (shouldInvalidate = false) => {
     if (shouldInvalidate) invalidateAdmin();
     await Promise.all([refetchGames(), refetchProducts()]);
-    setLoading(false);
   };
-
-  useEffect(() => {
-    if (!cachedProducts) void fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- bootstrap when React Query cache empty
-  }, []);
 
   useEffect(() => {
     if (!robotEnabled || !formRobotGameId || formRobotMarkup === null || robotGames.length === 0) return;

@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useAdminProductsList } from "@/hooks/useAdminData";
+import { useState, useEffect, useMemo } from "react";
+import { useAdminProductsList, useAdminResellersRaw } from "@/hooks/useAdminData";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminUsers, type AdminUser } from "@/hooks/useAdminUsers";
 import { toast } from "@/hooks/use-toast";
@@ -43,8 +43,24 @@ interface Purchase {
 const ResellersTab = () => {
   const { users: adminUsersData } = useAdminUsers();
   const { data: products = [] } = useAdminProductsList();
-  const [resellers, setResellers] = useState<Reseller[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: resellerRows = [], isPending: resellersLoading, refetch: refetchResellers } = useAdminResellersRaw();
+  const resellers = useMemo((): Reseller[] => {
+    return resellerRows.map((r) => {
+      const user = adminUsersData.find((u: AdminUser) => u.id === r.user_id);
+      return {
+        id: r.id,
+        user_id: r.user_id,
+        discount_percent: r.discount_percent ?? 0,
+        active: r.active ?? false,
+        expires_at: r.expires_at,
+        total_purchases: r.total_purchases ?? 0,
+        created_at: r.created_at ?? "",
+        username: user?.username ?? undefined,
+        email: user?.email ?? "?",
+      };
+    });
+  }, [resellerRows, adminUsersData]);
+  const loading = resellersLoading;
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -72,37 +88,6 @@ const ResellersTab = () => {
   const [editExpires, setEditExpires] = useState("");
   const [editProductIds, setEditProductIds] = useState<string[]>([]);
   const [savingEdit, setSavingEdit] = useState(false);
-
-  const fetchResellers = async () => {
-    const { data, error } = await supabase
-      .from("resellers")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (!error && data) {
-      const enriched: Reseller[] = data.map((r) => {
-        const user = adminUsersData.find((u: AdminUser) => u.id === r.user_id);
-        return {
-          id: r.id,
-          user_id: r.user_id,
-          discount_percent: r.discount_percent ?? 0,
-          active: r.active ?? false,
-          expires_at: r.expires_at,
-          total_purchases: r.total_purchases ?? 0,
-          created_at: r.created_at ?? "",
-          username: user?.username ?? undefined,
-          email: user?.email ?? "?",
-        };
-      });
-      setResellers(enriched);
-    }
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    if (adminUsersData.length > 0) void fetchResellers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchResellers closes over latest adminUsersData
-  }, [adminUsersData]);
 
   const searchUsers = async () => {
     if (searchEmail.trim().length < 2) return;
@@ -145,7 +130,7 @@ const ResellersTab = () => {
     }
     toast({ title: "Revendedor adicionado!" });
     resetForm();
-    fetchResellers();
+    void refetchResellers();
     setSaving(false);
   };
 
@@ -233,7 +218,7 @@ const ResellersTab = () => {
 
     toast({ title: "Revendedor atualizado!" });
     setEditingId(null);
-    fetchResellers();
+    void refetchResellers();
     setSavingEdit(false);
   };
 
@@ -246,7 +231,7 @@ const ResellersTab = () => {
     ]);
     const { error } = await supabase.from("resellers").delete().eq("id", reseller.id);
     if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
-    else { toast({ title: "Removido!" }); fetchResellers(); }
+    else { toast({ title: "Removido!" }); void refetchResellers(); }
   };
 
   const toggleProductId = (id: string, list: string[], setter: (v: string[]) => void) => {

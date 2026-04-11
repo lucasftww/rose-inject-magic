@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useAdminPaymentSettings } from "@/hooks/useAdminData";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { toast } from "@/hooks/use-toast";
@@ -27,39 +28,31 @@ const methodIcons: Record<string, typeof QrCode> = {
 };
 
 const PaymentsTab = () => {
-  const [settings, setSettings] = useState<PaymentSetting[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: rows = [], isPending: loading, isError, error, refetch: refetchSettings } = useAdminPaymentSettings();
+  const settings = useMemo(() => rows.map(mapPaymentSettingRow), [rows]);
   const [toggling, setToggling] = useState<string | null>(null);
 
-  const fetchSettings = async () => {
-    const { data, error } = await supabase
-      .from("payment_settings")
-      .select("*")
-      .order("method");
-    if (error) {
-      toast({ title: "Erro ao carregar métodos de pagamento", description: error.message, variant: "destructive" });
-    } else if (data) {
-      setSettings(data.map(mapPaymentSettingRow));
-    }
-    setLoading(false);
-  };
-
-  useEffect(() => { fetchSettings(); }, []);
+  useEffect(() => {
+    if (!isError) return;
+    toast({
+      title: "Erro ao carregar métodos de pagamento",
+      description: error instanceof Error ? error.message : "Tente novamente.",
+      variant: "destructive",
+    });
+  }, [isError, error]);
 
   const toggleMethod = async (setting: PaymentSetting) => {
     setToggling(setting.id);
     const newEnabled = !setting.enabled;
-    const { error } = await supabase
+    const { error: upErr } = await supabase
       .from("payment_settings")
       .update({ enabled: newEnabled })
       .eq("id", setting.id);
-    if (error) {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
+    if (upErr) {
+      toast({ title: "Erro", description: upErr.message, variant: "destructive" });
     } else {
-      setSettings((prev) =>
-        prev.map((s) => (s.id === setting.id ? { ...s, enabled: newEnabled } : s))
-      );
       toast({ title: `${setting.label} ${newEnabled ? "ativado" : "desativado"}` });
+      void refetchSettings();
     }
     setToggling(null);
   };

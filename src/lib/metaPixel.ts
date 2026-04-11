@@ -381,6 +381,7 @@ const sendCAPI = async (
 ) => {
   try {
     if (!supabaseAnonKey.trim()) return;
+    if (!eventName?.trim() || !eventId?.trim()) return;
 
     const url = `${new URL(supabaseUrl).origin}/functions/v1/server-relay`;
 

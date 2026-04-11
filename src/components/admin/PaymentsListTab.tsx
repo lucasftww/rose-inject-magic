@@ -1,14 +1,12 @@
 import { useState, useEffect, useMemo } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
-import { fetchAllRows } from "@/lib/supabaseAllRows";
 import { useAdminUsers } from "@/hooks/useAdminUsers";
+import { useAdminPaymentsFullList, verifyPayment } from "@/hooks/useAdminData";
 import {
   Loader2, Search, DollarSign, Clock, RefreshCw, 
   ChevronLeft, ChevronRight, Eye, Check, XCircle, AlertCircle,
   ShoppingCart, Users, ShieldCheck, Zap
 } from "lucide-react";
-import { verifyPayment } from "@/hooks/useAdminData";
 import { toast } from "@/hooks/use-toast";
 
 type PaymentRow = Tables<"payments"> & { username?: string };
@@ -25,8 +23,7 @@ const statusColors: Record<string, string> = {
 
 const PaymentsListTab = () => {
   const { usernameMap } = useAdminUsers();
-  const [loading, setLoading] = useState(true);
-  const [payments, setPayments] = useState<PaymentRow[]>([]);
+  const { data: payments = [], isPending: loading, refetch } = useAdminPaymentsFullList();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
@@ -47,7 +44,7 @@ const PaymentsListTab = () => {
         description: `Status atualizado: ${res.status || "verificado"}.`,
         variant: res.status === "COMPLETED" ? "default" : "destructive" 
       });
-      fetchPayments();
+      void refetch();
       if (selectedPayment?.id === p.id) {
         setSelectedPayment((prev) =>
           prev ? { ...prev, status: res.status ?? prev.status } : null
@@ -60,28 +57,6 @@ const PaymentsListTab = () => {
       setVerifying(prev => ({ ...prev, [p.id]: false }));
     }
   };
-
-  const fetchPayments = async () => {
-    setLoading(true);
-    try {
-      const data = await fetchAllRows<PaymentRow>("payments", {
-        select: "*",
-        order: { column: "created_at", ascending: false },
-      });
-      setPayments(data || []);
-    } catch (err) {
-      console.error("fetchPayments error:", err);
-      toast({
-        title: "Erro ao carregar pagamentos",
-        description: err instanceof Error ? err.message : "Tente novamente.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => { fetchPayments(); }, []);
 
   const filtered = useMemo(() => {
     let result = payments;
@@ -110,7 +85,7 @@ const PaymentsListTab = () => {
     <div className="space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h2 className="text-lg font-bold text-foreground">Todos os Pagamentos</h2>
-        <button onClick={fetchPayments} className="rounded-lg border border-border bg-card p-2 text-muted-foreground hover:text-foreground transition-colors group">
+        <button onClick={() => void refetch()} className="rounded-lg border border-border bg-card p-2 text-muted-foreground hover:text-foreground transition-colors group">
           <RefreshCw className="h-4 w-4 group-active:rotate-180 transition-transform duration-500" />
         </button>
       </div>

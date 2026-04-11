@@ -1,14 +1,7 @@
 import { useState, useEffect, useMemo, Fragment } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import type { Database, Json, Tables } from "@/integrations/supabase/types";
-import { fetchAllRows } from "@/lib/supabaseAllRows";
-import {
-  type SaleTicket,
-  type OrderTicketRow,
-  getSalesCache,
-  setSalesCacheData,
-  SALES_CACHE_TTL,
-} from "@/lib/adminSalesCache";
+import { useQuery } from "@tanstack/react-query";
+import { type SaleTicket, SALES_CACHE_TTL } from "@/lib/adminSalesCache";
+import { fetchAdminSalesTickets } from "@/lib/adminSalesFetch";
 import { asOrderTicketMetadata, type OrderTicketMetadata } from "@/types/orderTicketMetadata";
 import { useAdminUsers } from "@/hooks/useAdminUsers";
 import {
@@ -44,8 +37,6 @@ const statusLabels: Record<string, string> = {
   finished: "Finalizado",
 };
 
-const SALES_MAX_ROWS = 2000; // cap to avoid loading huge datasets
-
 /** Get purchase type label */
 const getPurchaseType = (meta: OrderTicketMetadata | null | undefined): { label: string; icon: typeof Package; color: string } => {
   if (meta?.type === "lzt-account") return { label: "Conta LZT", icon: Globe, color: "text-info" };
@@ -55,159 +46,46 @@ const getPurchaseType = (meta: OrderTicketMetadata | null | undefined): { label:
 
 const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void }) => {
   const { emailMap: adminEmailMap, usernameMap } = useAdminUsers();
-  const initialCache = getSalesCache();
-  const [loading, setLoading] = useState(!initialCache.tickets);
-  const [tickets, setTickets] = useState<SaleTicket[]>(initialCache.tickets || []);
+  const {
+    data: rawTickets = [],
+    isPending,
+    isFetching,
+    refetch,
+    error: salesError,
+    isError: salesIsError,
+  } = useQuery({
+    queryKey: ["admin", "sales-tickets"],
+    queryFn: fetchAdminSalesTickets,
+    staleTime: SALES_CACHE_TTL,
+  });
+
+  useEffect(() => {
+    if (!salesIsError || !salesError) return;
+    toast({
+      title: "Erro ao carregar vendas",
+      description: salesError instanceof Error ? salesError.message : "Tente atualizar a página.",
+      variant: "destructive",
+    });
+  }, [salesIsError, salesError]);
+
+  const tickets = useMemo(
+    () =>
+      rawTickets.map((t) => ({
+        ...t,
+        email: adminEmailMap.get(t.user_id) || t.email,
+        username: t.username || usernameMap.get(t.user_id) || null,
+      })),
+    [rawTickets, adminEmailMap, usernameMap],
+  );
+
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [dataLoaded, setDataLoaded] = useState(!!initialCache.tickets);
 
-  const fetchSales = async (force = false) => {
-    const { tickets: cached, ts } = getSalesCache();
-    if (!force && cached && Date.now() - ts < SALES_CACHE_TTL) {
-      setTickets(cached);
-      setDataLoaded(true);
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-
-    let rawTickets: OrderTicketRow[];
-    try {
-      rawTickets = await fetchAllRows<OrderTicketRow>("order_tickets", {
-        select: "*",
-        order: { column: "created_at", ascending: false },
-        limit: SALES_MAX_ROWS,
-      });
-    } catch (err) {
-      console.error("fetchSales order_tickets error:", err);
-      toast({
-        title: "Erro ao carregar vendas",
-        description: err instanceof Error ? err.message : "Tente atualizar a página.",
-        variant: "destructive",
-      });
-      setLoading(false);
-      return;
-    }
-
-    const productIds = [...new Set(rawTickets.map((t) => t.product_id))];
-    const planIds = [...new Set(rawTickets.map((t) => t.product_plan_id))];
-
-    const lztItemIds = rawTickets
-      .filter((t) => {
-        const m = asOrderTicketMetadata(t.metadata);
-        return m.type === "lzt-account" && m.lzt_item_id != null;
-      })
-      .map((t) => String(asOrderTicketMetadata(t.metadata).lzt_item_id));
-
-    // Chunk large .in() queries to avoid Supabase 1000-row response limit
-    const CHUNK = 500;
-    type PublicTable = keyof Database["public"]["Tables"];
-    const fetchInChunks = async <T extends PublicTable>(
-      table: T,
-      select: string,
-      column: string,
-      ids: string[],
-    ): Promise<Tables<T>[]> => {
-      if (ids.length === 0) return [];
-      const chunks: string[][] = [];
-      for (let i = 0; i < ids.length; i += CHUNK) chunks.push(ids.slice(i, i + CHUNK));
-      const results = await Promise.all(chunks.map(chunk =>
-        (supabase.from(table as any).select(select) as any).in(column, chunk).then((r: any) => (r.data ?? []) as Tables<T>[])
-      ));
-      return results.flat();
-    };
-
-    const [productsData, plansData, lztSalesRaw] = await Promise.all([
-      fetchInChunks("products", "id, name, image_url", "id", productIds),
-      fetchInChunks("product_plans", "id, name, price", "id", planIds),
-      lztItemIds.length > 0
-        ? fetchInChunks("lzt_sales", "lzt_item_id, sell_price", "lzt_item_id", lztItemIds)
-        : Promise.resolve([] as Tables<"lzt_sales">[]),
-    ]);
-
-    const productsMap = new Map(productsData.map((p) => [p.id, p]));
-    const plansMap = new Map(plansData.map((p) => [p.id, p]));
-    const lztSalesMap = new Map(
-      (lztSalesRaw || [])
-        .filter((s): s is Tables<"lzt_sales"> & { lzt_item_id: string } => typeof s.lzt_item_id === "string" && s.lzt_item_id.length > 0)
-        .map((s) => [s.lzt_item_id, Number(s.sell_price)]),
-    );
-
-    const stockIds = rawTickets.flatMap((t) => (t.stock_item_id ? [t.stock_item_id] : []));
-    const stockMap = new Map<string, string>();
-    if (stockIds.length > 0) {
-      try {
-        const CHUNK_SIZE = 200;
-        const chunks: string[][] = [];
-        for (let i = 0; i < stockIds.length; i += CHUNK_SIZE) {
-          chunks.push(stockIds.slice(i, i + CHUNK_SIZE));
-        }
-        const results = await Promise.all(chunks.map(chunk =>
-          fetchAllRows<{ id: string; content: string | null }>("stock_items", {
-            select: "id, content",
-            filters: [{ column: "id", op: "in", value: chunk }],
-          })
-        ));
-        results.flat().forEach((s) => {
-          if (s.content != null) stockMap.set(s.id, s.content);
-        });
-      } catch (err) {
-        console.error("fetchSales stock_items error:", err);
-        toast({
-          title: "Conteúdo de alguns pedidos não carregou",
-          description: err instanceof Error ? err.message : "Dados de estoque indisponíveis; tente atualizar.",
-          variant: "destructive",
-        });
-      }
-    }
-
-    const enriched: SaleTicket[] = rawTickets.map((t) => {
-      const product = productsMap.get(t.product_id);
-      const plan = plansMap.get(t.product_plan_id);
-      const meta = asOrderTicketMetadata(t.metadata);
-      const isLzt = meta?.type === "lzt-account";
-      const lztItemId = meta?.lzt_item_id;
-      const lztPrice = lztItemId ? (lztSalesMap.get(String(lztItemId)) || meta?.price_paid || meta?.price || meta?.sell_price || 0) : 0;
-      const metaPrice = meta?.price_paid || meta?.plan_price;
-
-      return {
-        ...t,
-        metadata: meta,
-        product_name: isLzt ? (meta?.title || meta?.account_name || "Conta LZT") : (product?.name || "—"),
-        product_image: isLzt ? null : (product?.image_url || null),
-        plan_name: isLzt ? "Conta LZT" : (plan?.name || "—"),
-        plan_price: isLzt ? lztPrice : (metaPrice ?? plan?.price ?? 0),
-        username: null as string | null,
-        email: null as string | null,
-        stock_content:
-          t.stock_item_id && !(meta?.type === "robot-project" && meta?.is_free)
-            ? (stockMap.get(t.stock_item_id) || null)
-            : null,
-      };
-    });
-
-    setSalesCacheData(enriched);
-    setTickets(enriched);
-    setDataLoaded(true);
-    setLoading(false);
-  };
-
-  useEffect(() => { fetchSales(); }, []);
-
-  useEffect(() => {
-    if (!dataLoaded || adminEmailMap.size === 0) return;
-    setTickets(prev => prev.map(t => ({
-      ...t,
-      email: adminEmailMap.get(t.user_id) || t.email,
-      username: t.username || usernameMap.get(t.user_id) || null,
-    })));
-  }, [adminEmailMap, usernameMap, dataLoaded]);
+  const loading = isPending;
 
   const stats = useMemo(() => {
     const total = tickets.length;
@@ -346,8 +224,13 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
             </button>
           ))}
         </div>
-        <button onClick={() => fetchSales(true)} className="rounded-lg border border-border bg-card p-2 text-muted-foreground hover:text-foreground" title="Atualizar">
-          <RefreshCw className="h-4 w-4" />
+        <button
+          onClick={() => void refetch()}
+          disabled={isFetching}
+          className="rounded-lg border border-border bg-card p-2 text-muted-foreground hover:text-foreground disabled:opacity-50"
+          title="Atualizar"
+        >
+          <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
         </button>
       </div>
 

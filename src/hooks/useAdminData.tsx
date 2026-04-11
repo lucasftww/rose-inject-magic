@@ -1,6 +1,7 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase, supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
 import { useCallback } from "react";
+import { invalidateAdminCache } from "@/lib/adminCache";
 import { safeJsonFetch } from "@/lib/apiUtils";
 import type { PixPaymentVerifyResult } from "@/lib/edgeFunctionTypes";
 import {
@@ -9,6 +10,17 @@ import {
   type AdminProductWithPlansRow,
   type ProductStatusListItem,
 } from "@/types/supabaseQueryResults";
+import { fetchAllRows } from "@/lib/supabaseAllRows";
+import type { Tables } from "@/integrations/supabase/types";
+import { fetchAdminTicketsList } from "@/lib/adminTicketsListFetch";
+import { fetchAdminLztBundle, fetchAdminLztPriceOverrides } from "@/lib/adminLztFetch";
+import {
+  fetchAdminRobotProjectBundle,
+  type RobotProjectSalesPeriod,
+} from "@/lib/adminRobotProjectFetch";
+import { isRecord } from "@/types/ticketChat";
+
+export type { RobotProjectSalesPeriod } from "@/lib/adminRobotProjectFetch";
 
 /**
  * Shared admin data hooks using React Query.
@@ -17,6 +29,7 @@ import {
  */
 
 const ADMIN_STALE_TIME = 2 * 60 * 1000; // 2 minutes
+const ADMIN_HEAVY_STALE_TIME = 3 * 60 * 1000; // 3 minutes — overview / finance / payments list
 
 // ─── Products (id, name) — used by CouponsTab, ResellersTab, ScratchCardTab ───
 export function useAdminProductsList() {
@@ -82,12 +95,176 @@ export function useAdminProductsStatus() {
   });
 }
 
+/** Full payments table for Histórico Pix — deduped across revisits */
+export function useAdminPaymentsFullList() {
+  return useQuery({
+    queryKey: ["admin", "payments-full-list"],
+    queryFn: async () => {
+      const rows = await fetchAllRows<Tables<"payments">>("payments", {
+        select: "*",
+        order: { column: "created_at", ascending: false },
+      });
+      return rows ?? [];
+    },
+    staleTime: ADMIN_HEAVY_STALE_TIME,
+  });
+}
+
+export function useAdminCouponsList() {
+  return useQuery({
+    queryKey: ["admin", "coupons"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("coupons").select("*").order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+    staleTime: ADMIN_STALE_TIME,
+  });
+}
+
+export function useAdminCredentialsList() {
+  return useQuery({
+    queryKey: ["admin", "credentials"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("system_credentials")
+        .select("*")
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+    staleTime: ADMIN_STALE_TIME,
+  });
+}
+
+export function useAdminPaymentSettings() {
+  return useQuery({
+    queryKey: ["admin", "payment-settings"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("payment_settings").select("*").order("method");
+      if (error) throw error;
+      return data ?? [];
+    },
+    staleTime: ADMIN_STALE_TIME,
+  });
+}
+
+function parseAdminScratchStats(raw: unknown): { total_plays: number; total_wins: number; total_revenue: number } | null {
+  if (!isRecord(raw)) return null;
+  const s = raw;
+  if (s.error != null && s.error !== false && s.error !== "") return null;
+  return {
+    total_plays: Number(s.total_plays) || 0,
+    total_wins: Number(s.total_wins) || 0,
+    total_revenue: Number(s.total_revenue) || 0,
+  };
+}
+
+export type ScratchCardAdminBundle = {
+  prizes: Tables<"scratch_card_prizes">[];
+  config: Tables<"scratch_card_config"> | null;
+  stats: { total_plays: number; total_wins: number; total_revenue: number };
+};
+
+export function useAdminScratchCardBundle() {
+  return useQuery({
+    queryKey: ["admin", "scratch-card"],
+    queryFn: async (): Promise<ScratchCardAdminBundle> => {
+      const [prizesRes, configRes, statsRes] = await Promise.all([
+        supabase.from("scratch_card_prizes").select("*").order("sort_order"),
+        supabase.from("scratch_card_config").select("*").limit(1).maybeSingle(),
+        supabase.rpc("admin_scratch_stats"),
+      ]);
+      if (prizesRes.error) throw prizesRes.error;
+      if (configRes.error) throw configRes.error;
+      if (statsRes.error) throw statsRes.error;
+      const stats =
+        statsRes.data != null ? parseAdminScratchStats(statsRes.data) : null;
+      return {
+        prizes: prizesRes.data ?? [],
+        config: configRes.data ?? null,
+        stats: stats ?? { total_plays: 0, total_wins: 0, total_revenue: 0 },
+      };
+    },
+    staleTime: ADMIN_HEAVY_STALE_TIME,
+  });
+}
+
+/** Full `games` rows — admin Games tab (slug, image, sort, active). */
+export function useAdminGamesFull() {
+  return useQuery({
+    queryKey: ["admin", "games-full"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("games").select("*").order("sort_order", { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+    staleTime: ADMIN_STALE_TIME,
+  });
+}
+
+export function useAdminResellersRaw() {
+  return useQuery({
+    queryKey: ["admin", "resellers-raw"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("resellers").select("*").order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+    staleTime: ADMIN_STALE_TIME,
+  });
+}
+
+export function useAdminStockPlanCounts() {
+  return useQuery({
+    queryKey: ["admin", "stock-plan-counts"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("admin_stock_counts");
+      if (error) throw error;
+      return (data as unknown as { plan_id: string; total: number; available: number }[]) ?? [];
+    },
+    staleTime: 60 * 1000,
+  });
+}
+
+export function useAdminTicketsList() {
+  return useQuery({
+    queryKey: ["admin", "tickets-list"],
+    queryFn: fetchAdminTicketsList,
+    staleTime: ADMIN_HEAVY_STALE_TIME,
+  });
+}
+
+export function useAdminLztBundle() {
+  return useQuery({
+    queryKey: ["admin", "lzt", "bundle"],
+    queryFn: fetchAdminLztBundle,
+    staleTime: ADMIN_HEAVY_STALE_TIME,
+  });
+}
+
+export function useAdminLztPriceOverrides() {
+  return useQuery({
+    queryKey: ["admin", "lzt", "price-overrides"],
+    queryFn: fetchAdminLztPriceOverrides,
+    staleTime: ADMIN_STALE_TIME,
+  });
+}
+
+export function useAdminRobotProjectBundle(period: RobotProjectSalesPeriod) {
+  return useQuery({
+    queryKey: ["admin", "robot-project", "bundle", period],
+    queryFn: () => fetchAdminRobotProjectBundle(period),
+    staleTime: ADMIN_HEAVY_STALE_TIME,
+    placeholderData: (previousData) => previousData,
+  });
+}
+
 // ─── Invalidation helper — call after any product/game mutation ───
 export function useInvalidateAdminCache() {
-  const queryClient = useQueryClient();
   return useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ["admin"] });
-  }, [queryClient]);
+    invalidateAdminCache();
+  }, []);
 }
 
 /**

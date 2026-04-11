@@ -1,8 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { Database, Json } from "@/integrations/supabase/types";
-import { fetchAllRows } from "@/lib/supabaseAllRows";
-import { registerCacheInvalidator } from "@/lib/adminCache";
 import { asOrderTicketMetadata } from "@/types/orderTicketMetadata";
 import {
   mapTicketMessageRow,
@@ -12,6 +9,7 @@ import {
   type TicketChatMessage,
 } from "@/types/ticketChat";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdminTicketsList } from "@/hooks/useAdminData";
 import { useAdminUsers } from "@/hooks/useAdminUsers";
 import { toast } from "@/hooks/use-toast";
 import AudioMessagePlayer from "@/components/AudioMessagePlayer";
@@ -58,10 +56,6 @@ const statusOptions = [
 
 const ITEMS_PER_PAGE = 10;
 
-const EMPTY_PRODUCT_NAMES: { id: string; name: string }[] = [];
-const EMPTY_PLAN_ROWS: { id: string; name: string; price: number }[] = [];
-const EMPTY_PROFILE_ROWS: { user_id: string; username: string | null }[] = [];
-
 const QUICK_REPLIES = [
   "Precisa de ajuda?",
   "Qual seu problema?",
@@ -74,12 +68,6 @@ const QUICK_REPLIES = [
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
-// Module-level cache to persist across tab switches
-let _cachedTickets: Ticket[] | null = null;
-let _ticketsCacheTs = 0;
-const TICKETS_CACHE_TTL = 3 * 60 * 1000;
-registerCacheInvalidator(() => { _cachedTickets = null; _ticketsCacheTs = 0; });
-
 const TicketsTab = ({
   initialTicketId,
   onTicketOpened,
@@ -89,8 +77,23 @@ const TicketsTab = ({
 }) => {
   const { user } = useAuth();
   const { emailMap: adminEmailMap } = useAdminUsers();
-  const [tickets, setTickets] = useState<Ticket[]>(_cachedTickets || []);
-  const [loading, setLoading] = useState(!_cachedTickets);
+  const {
+    data: rawTickets = [],
+    isPending: loading,
+    isError: ticketsQueryError,
+    error: ticketsFetchError,
+    refetch: refetchTickets,
+  } = useAdminTicketsList();
+  const tickets = useMemo(
+    () =>
+      adminEmailMap.size === 0
+        ? rawTickets
+        : rawTickets.map((t) => ({
+            ...t,
+            buyer_email: adminEmailMap.get(t.user_id) || t.buyer_email,
+          })),
+    [rawTickets, adminEmailMap],
+  );
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [messages, setMessages] = useState<TicketChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
@@ -172,109 +175,38 @@ const TicketsTab = ({
     };
   }, []);
 
-  // ─── Data Fetching ──────────────────────────────────────────────────────
-
-  const fetchTickets = useCallback(async (force = false) => {
-    // Return cached data if fresh
-    if (!force && _cachedTickets && Date.now() - _ticketsCacheTs < TICKETS_CACHE_TTL) {
-      setTickets(_cachedTickets);
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    type OrderTicketRow = Database["public"]["Tables"]["order_tickets"]["Row"];
-    const data = await fetchAllRows<OrderTicketRow>("order_tickets", {
-      select: "*",
-      order: { column: "created_at", ascending: false },
-      limit: 500,
-    }).catch((err) => {
-      console.error("fetchTickets error:", err);
-      return null;
-    });
-
-    if (!data) {
-      toast({
-        title: "Não foi possível carregar os tickets",
-        description: "Verifique a conexão ou tente atualizar a página.",
-        variant: "destructive",
-      });
-    }
-
-    if (data) {
-      const productIds = [...new Set(data.map((t) => t.product_id))];
-      const planIds = [...new Set(data.map((t) => t.product_plan_id))];
-      const userIds = [...new Set(data.map((t) => t.user_id))];
-
-      const lztItemIds = data
-        .filter((t) => {
-          const m = asOrderTicketMetadata(t.metadata);
-          return m.type === "lzt-account" && m.lzt_item_id != null;
-        })
-        .map((t) => String(asOrderTicketMetadata(t.metadata).lzt_item_id));
-
-      const [productsRes, plansRes, profilesData, lztSalesData] = await Promise.all([
-        productIds.length > 0
-          ? supabase.from("products").select("id, name").in("id", productIds)
-          : Promise.resolve({ data: EMPTY_PRODUCT_NAMES }),
-        planIds.length > 0
-          ? supabase.from("product_plans").select("id, name, price").in("id", planIds)
-          : Promise.resolve({ data: EMPTY_PLAN_ROWS }),
-        userIds.length > 0
-          ? supabase.from("profiles").select("user_id, username").in("user_id", userIds)
-          : Promise.resolve({ data: EMPTY_PROFILE_ROWS }),
-        lztItemIds.length > 0
-          ? supabase.from("lzt_sales").select("lzt_item_id, sell_price").in("lzt_item_id", lztItemIds)
-          : Promise.resolve({ data: [] }),
-      ]);
-
-      const productMap: Record<string, string> = {};
-      const planMap: Record<string, { name: string; price: number }> = {};
-      const profileMap: Record<string, string> = {};
-      const lztSalesMap = new Map<string, number>();
-      productsRes.data?.forEach((p) => { productMap[p.id] = p.name; });
-      plansRes.data?.forEach((p) => { planMap[p.id] = { name: p.name, price: Number(p.price ?? 0) }; });
-      (profilesData.data || []).forEach((p) => { profileMap[p.user_id] = p.username || "—"; });
-      (lztSalesData.data || []).forEach((s) => {
-        if (s.lzt_item_id != null) lztSalesMap.set(String(s.lzt_item_id), Number(s.sell_price));
-      });
-
-      const mapped = data.map((t) => {
-        const meta = asOrderTicketMetadata(t.metadata);
-        const isLzt = meta?.type === "lzt-account";
-        const lztItemId = meta?.lzt_item_id;
-        const lztPrice = lztItemId ? (lztSalesMap.get(String(lztItemId)) || meta?.price || meta?.sell_price || 0) : 0;
-
-        return {
-          ...t,
-          status: t.status || "open",
-          status_label: t.status_label || "Aberto",
-          created_at: t.created_at || new Date().toISOString(),
-          metadata: asOrderTicketMetadata(t.metadata) as Record<string, unknown>,
-          product_name: isLzt ? (meta?.title || "Conta LZT") : (productMap[t.product_id] || "Produto"),
-          plan_name: isLzt ? "Conta" : (planMap[t.product_plan_id]?.name || "Plano"),
-          plan_price: isLzt ? lztPrice : (planMap[t.product_plan_id]?.price ?? 0),
-          buyer_email: "—",
-          buyer_username: profileMap[t.user_id] || "—",
-        } as Ticket;
-      });
-      _cachedTickets = mapped as Ticket[];
-      _ticketsCacheTs = Date.now();
-      setTickets(mapped as Ticket[]);
-    }
-    setLoading(false);
-  }, []);
-
-  useEffect(() => { fetchTickets(); }, [fetchTickets]);
-
-  // Enrich emails separately when adminEmailMap updates (no refetch)
   useEffect(() => {
-    if (adminEmailMap.size === 0) return;
-    setTickets(prev => prev.map(t => ({
-      ...t,
-      buyer_email: adminEmailMap.get(t.user_id) || t.buyer_email,
-    })));
-  }, [adminEmailMap]);
+    if (!ticketsQueryError) return;
+    toast({
+      title: "Não foi possível carregar os tickets",
+      description:
+        ticketsFetchError instanceof Error
+          ? ticketsFetchError.message
+          : "Verifique a conexão ou tente atualizar a página.",
+      variant: "destructive",
+    });
+  }, [ticketsQueryError, ticketsFetchError]);
+
+  // Keep open ticket in sync when the list refetches (status, labels, email map, etc.)
+  useEffect(() => {
+    setSelectedTicket((prev) => {
+      if (!prev) return prev;
+      const fresh = tickets.find((t) => t.id === prev.id);
+      if (!fresh) return prev;
+      if (
+        fresh.status === prev.status &&
+        fresh.status_label === prev.status_label &&
+        fresh.buyer_email === prev.buyer_email &&
+        fresh.buyer_username === prev.buyer_username &&
+        fresh.product_name === prev.product_name &&
+        fresh.plan_name === prev.plan_name &&
+        fresh.plan_price === prev.plan_price
+      ) {
+        return prev;
+      }
+      return fresh;
+    });
+  }, [tickets]);
 
   // ─── Ticket Selection & Realtime ────────────────────────────────────────
 
@@ -513,7 +445,7 @@ const TicketsTab = ({
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } else {
       toast({ title: `Status: ${label}` });
-      fetchTickets(true);
+      void refetchTickets();
       if (selectedTicket?.id === ticketId) {
         setSelectedTicket(prev => prev ? { ...prev, status, status_label: label } : null);
       }
@@ -527,7 +459,7 @@ const TicketsTab = ({
     } else {
       toast({ title: "Ticket arquivado" });
       if (selectedTicket?.id === ticketId) setSelectedTicket(null);
-      fetchTickets(true);
+      void refetchTickets();
     }
   };
 
@@ -540,7 +472,7 @@ const TicketsTab = ({
       if (selectedTicket?.id === ticketId) {
         setSelectedTicket(prev => (prev ? { ...prev, status: "open", status_label: "Aberto" } : null));
       }
-      fetchTickets(true);
+      void refetchTickets();
     }
   };
 

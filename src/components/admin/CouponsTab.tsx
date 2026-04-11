@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useAdminProductsList } from "@/hooks/useAdminData";
+import { useState } from "react";
+import { useAdminCouponsList, useAdminProductsList } from "@/hooks/useAdminData";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Plus, Pencil, Trash2, Loader2, Tag, X } from "lucide-react";
@@ -29,8 +29,7 @@ interface Product {
 }
 
 const CouponsTab = () => {
-  const [coupons, setCoupons] = useState<Coupon[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: coupons = [], isPending: loading, refetch: refetchCoupons } = useAdminCouponsList();
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Coupon | null>(null);
   const [saving, setSaving] = useState(false);
@@ -45,14 +44,6 @@ const CouponsTab = () => {
   const [formActive, setFormActive] = useState(true);
   const [formExpires, setFormExpires] = useState("");
   const [formProductIds, setFormProductIds] = useState<string[]>([]);
-
-  const fetchCoupons = async () => {
-    const { data } = await supabase.from("coupons").select("*").order("created_at", { ascending: false });
-    if (data) setCoupons(data as Coupon[]);
-    setLoading(false);
-  };
-
-  useEffect(() => { fetchCoupons(); }, []);
 
   const resetForm = () => {
     setFormCode(""); setFormType("percentage"); setFormValue(""); setFormMaxUses("");
@@ -121,7 +112,7 @@ const CouponsTab = () => {
 
     toast({ title: editing ? "Cupom atualizado!" : "Cupom criado!" });
     resetForm();
-    await fetchCoupons();
+    await refetchCoupons();
     setSaving(false);
   };
 
@@ -135,7 +126,7 @@ const CouponsTab = () => {
     ]);
     const { error } = await supabase.from("coupons").delete().eq("id", coupon.id);
     if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
-    else { toast({ title: "Cupom excluído!" }); fetchCoupons(); }
+    else { toast({ title: "Cupom excluído!" }); void refetchCoupons(); }
   };
 
   const toggleProduct = (pid: string) => {

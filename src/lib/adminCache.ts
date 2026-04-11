@@ -3,6 +3,8 @@
  * Prevents duplicate fetches when switching between Overview, Finance, Sales tabs.
  */
 
+import { queryClient } from "@/lib/queryClient";
+
 interface CacheEntry<T> {
   data: T;
   ts: number;
@@ -34,6 +36,7 @@ export function registerCacheInvalidator(fn: () => void): void {
 export function invalidateAdminCache(): void {
   cache.clear();
   _externalInvalidators.forEach(fn => fn());
+  void queryClient.invalidateQueries({ queryKey: ["admin"] });
 }
 
 // ─── Shared USD/BRL rate ───

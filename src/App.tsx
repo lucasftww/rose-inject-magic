@@ -1,7 +1,8 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { CartProvider } from "@/hooks/useCart";
@@ -81,23 +82,17 @@ const Auth = lazyRetry(() => import("./pages/Auth"));
 // Admin panel — lazy-loaded INSIDE AdminGuard so the bundle never downloads for non-admins
 const AdminPanel = lazyRetry(() => import("./pages/AdminPanel"));
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000,   // 5 min — avoid refetching fresh data
-      gcTime: 10 * 60 * 1000,     // 10 min garbage collection
-      retry: 1,                    // single retry on failure
-      refetchOnWindowFocus: false, // prevent refetch on tab switch
-    },
-  },
-});
-
 const LazyFallback = React.forwardRef<HTMLDivElement>((_props, ref) => (
   <div ref={ref} className="min-h-screen flex items-center justify-center bg-background">
     <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary" />
   </div>
 ));
 LazyFallback.displayName = "LazyFallback";
+
+/** Per-route Suspense so navigating from home → shop does not blank the whole app behind a spinner */
+function SuspenseRoute({ children }: { children: React.ReactNode }) {
+  return <Suspense fallback={<LazyFallback />}>{children}</Suspense>;
+}
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -108,41 +103,48 @@ const App = () => (
           <Sonner />
           <BrowserRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
             <RouteTracker />
-            <Suspense fallback={<LazyFallback />}>
-              <LocationAwareErrorBoundary>
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/produtos" element={<Produtos />} />
-                  <Route path="/produto/:id" element={<ProdutoDetalhes />} />
-                  <Route path="/contas" element={<Contas />} />
-                  <Route path="/conta/:id" element={<ContaDetalhes />} />
-                  <Route path="/lol/:id" element={<LolDetalhes />} />
-                  <Route path="/fortnite/:id" element={<FortniteDetalhes />} />
-                  <Route path="/minecraft/:id" element={<MinecraftDetalhes />} />
-                  <Route path="/steam/:id" element={<Navigate to="/contas" replace />} />
-                  <Route path="/status" element={<Status />} />
-                  <Route path="/admin" element={<AdminGuard><AdminPanel /></AdminGuard>} />
-                  <Route path="/avaliacoes" element={<Avaliacoes />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  
-                  <Route path="/meus-pedidos" element={<MeusPedidos />} />
-                  <Route path="/pedido/:id" element={<PedidoChat />} />
-                  <Route path="/checkout" element={<Checkout />} />
-                  
-                  <Route path="/raspadinha" element={<Raspadinha />} />
-                  <Route path="/reset-password" element={<ResetPassword />} />
-                  <Route path="/termos" element={<TermosDeUso />} />
-                  <Route path="/privacidade" element={<PoliticaPrivacidade />} />
-                  <Route path="/reembolso" element={<PoliticaReembolso />} />
-                  <Route path="/garantia" element={<Garantia />} />
-                  <Route path="/ajuda" element={<CentralAjuda />} />
-                  <Route path="/auth" element={<Auth />} />
-                  <Route path="/login" element={<Auth />} />
-                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </LocationAwareErrorBoundary>
-            </Suspense>
+            <LocationAwareErrorBoundary>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/produtos" element={<SuspenseRoute><Produtos /></SuspenseRoute>} />
+                <Route path="/produto/:id" element={<SuspenseRoute><ProdutoDetalhes /></SuspenseRoute>} />
+                <Route path="/contas" element={<SuspenseRoute><Contas /></SuspenseRoute>} />
+                <Route path="/conta/:id" element={<SuspenseRoute><ContaDetalhes /></SuspenseRoute>} />
+                <Route path="/lol/:id" element={<SuspenseRoute><LolDetalhes /></SuspenseRoute>} />
+                <Route path="/fortnite/:id" element={<SuspenseRoute><FortniteDetalhes /></SuspenseRoute>} />
+                <Route path="/minecraft/:id" element={<SuspenseRoute><MinecraftDetalhes /></SuspenseRoute>} />
+                <Route path="/steam/:id" element={<Navigate to="/contas" replace />} />
+                <Route path="/status" element={<SuspenseRoute><Status /></SuspenseRoute>} />
+                <Route
+                  path="/admin"
+                  element={
+                    <AdminGuard>
+                      <SuspenseRoute>
+                        <AdminPanel />
+                      </SuspenseRoute>
+                    </AdminGuard>
+                  }
+                />
+                <Route path="/avaliacoes" element={<SuspenseRoute><Avaliacoes /></SuspenseRoute>} />
+                <Route path="/dashboard" element={<SuspenseRoute><Dashboard /></SuspenseRoute>} />
+
+                <Route path="/meus-pedidos" element={<SuspenseRoute><MeusPedidos /></SuspenseRoute>} />
+                <Route path="/pedido/:id" element={<SuspenseRoute><PedidoChat /></SuspenseRoute>} />
+                <Route path="/checkout" element={<SuspenseRoute><Checkout /></SuspenseRoute>} />
+
+                <Route path="/raspadinha" element={<SuspenseRoute><Raspadinha /></SuspenseRoute>} />
+                <Route path="/reset-password" element={<SuspenseRoute><ResetPassword /></SuspenseRoute>} />
+                <Route path="/termos" element={<SuspenseRoute><TermosDeUso /></SuspenseRoute>} />
+                <Route path="/privacidade" element={<SuspenseRoute><PoliticaPrivacidade /></SuspenseRoute>} />
+                <Route path="/reembolso" element={<SuspenseRoute><PoliticaReembolso /></SuspenseRoute>} />
+                <Route path="/garantia" element={<SuspenseRoute><Garantia /></SuspenseRoute>} />
+                <Route path="/ajuda" element={<SuspenseRoute><CentralAjuda /></SuspenseRoute>} />
+                <Route path="/auth" element={<SuspenseRoute><Auth /></SuspenseRoute>} />
+                <Route path="/login" element={<SuspenseRoute><Auth /></SuspenseRoute>} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </LocationAwareErrorBoundary>
           </BrowserRouter>
         </TooltipProvider>
       </CartProvider>

@@ -1,384 +1,57 @@
 import { useState, useEffect } from "react";
-import { getUsdToBrl } from "@/lib/adminCache";
 import { supabase, supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
-import type { Database, Json, Tables } from "@/integrations/supabase/types";
-import { fetchAllRows } from "@/lib/supabaseAllRows";
-import { paymentCartSnapshot } from "@/types/paymentCart";
-import { asOrderTicketMetadata } from "@/types/orderTicketMetadata";
+import type {
+  PendingRobotTicket,
+  ProductWithRobot,
+  RobotGame,
+  RobotSale,
+} from "@/lib/adminRobotProjectFetch";
+import { useAdminRobotProjectBundle, type RobotProjectSalesPeriod } from "@/hooks/useAdminData";
 import { Loader2, RefreshCw, Wifi, WifiOff, Gamepad2, AlertTriangle, CheckCircle, Package, DollarSign, Clock, Zap, Gift, TrendingUp, BarChart3, RotateCw } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
-interface RobotGame {
-  id: number;
-  name: string;
-  version: string;
-  status: string;
-  icon: string;
-  is_free?: boolean;
-  /** API pode enviar camelCase */
-  isFree?: boolean;
-  prices: Record<string, number>;
-  maxKeys: number | null;
-  soldKeys: number;
-}
-
-interface ProductWithRobot {
-  id: string;
-  name: string;
-  image_url: string | null;
-  robot_game_id: number | null;
-  robot_markup_percent: number | null;
-  hasStock: boolean;
-  stockCount: number;
-}
-
-interface RobotSale {
-  id: string;
-  created_at: string;
-  product_name: string;
-  plan_name: string;
-  revenue: number; // what customer paid (BRL)
-  cost: number; // estimated cost (BRL)
-  profit: number;
-  status: string;
-  duration: number | null;
-}
-
-interface PendingRobotTicket {
-  id: string;
-  created_at: string;
-  status: string;
-  status_label: string;
-  error: string;
-  product_name: string;
-  plan_name: string;
-  user_label: string;
-}
-
 const RobotProjectTab = () => {
-  const [loading, setLoading] = useState(true);
-  const [pingStatus, setPingStatus] = useState<"online" | "offline" | "loading">("loading");
-  const [robotGames, setRobotGames] = useState<RobotGame[]>([]);
-  const [productsWithRobot, setProductsWithRobot] = useState<ProductWithRobot[]>([]);
-  const [loadingGames, setLoadingGames] = useState(false);
+  const [salesPeriod, setSalesPeriod] = useState<RobotProjectSalesPeriod>("30d");
+  const {
+    data: bundle,
+    dataUpdatedAt: bundleUpdatedAt,
+    isPending,
+    isFetching,
+    isError,
+    error,
+    refetch: refetchRobotBundle,
+  } = useAdminRobotProjectBundle(salesPeriod);
+
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
-  
-  const [freeGamesCount, setFreeGamesCount] = useState(0);
-  const [usdToBrl, setUsdToBrl] = useState(5.16);
-  const [robotSales, setRobotSales] = useState<RobotSale[]>([]);
-  const [salesLoading, setSalesLoading] = useState(false);
-  const [salesPeriod, setSalesPeriod] = useState<"7d" | "30d" | "all">("30d");
-  const [pendingRobotTickets, setPendingRobotTickets] = useState<PendingRobotTicket[]>([]);
   const [retryingTicketId, setRetryingTicketId] = useState<string | null>(null);
 
-  const checkPing = async () => {
-    setPingStatus("loading");
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch(
-        `${supabaseUrl}/functions/v1/robot-project?action=ping`,
-        {
-          headers: {
-            Authorization: `Bearer ${session?.access_token}`,
-            apikey: supabaseAnonKey,
-          },
-        }
-      );
-      setPingStatus(response.ok ? "online" : "offline");
-    } catch {
-      setPingStatus("offline");
-    }
-  };
+  const robotGames = bundle?.robotGames ?? [];
+  const productsWithRobot = bundle?.productsWithRobot ?? [];
+  const robotSales = bundle?.robotSales ?? [];
+  const pendingRobotTickets = bundle?.pendingRobotTickets ?? [];
+  const freeGamesCount = bundle?.freeGamesCount ?? 0;
+  const usdToBrl = bundle?.usdToBrl ?? 5.16;
 
-  const fetchRobotGames = async () => {
-    setLoadingGames(true);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch(
-        `${supabaseUrl}/functions/v1/robot-project?action=list-games`,
-        {
-          headers: {
-            Authorization: `Bearer ${session?.access_token}`,
-            apikey: supabaseAnonKey,
-          },
-        }
-      );
-      if (response.ok) {
-        const data = await response.json();
-        const games = Array.isArray(data) ? data : data.games || [];
-        setRobotGames(games);
-        setFreeGamesCount(games.filter((g: RobotGame) => g.is_free === true || g.isFree === true).length);
-      } else {
-        toast({ title: "Erro ao carregar jogos Robot", variant: "destructive" });
-      }
-    } catch (err) {
-      console.error("fetchRobotGames error:", err);
-      toast({ title: "Erro de conexão com Robot Project", variant: "destructive" });
-    }
-    setLoadingGames(false);
-  };
+  const loading = isPending && !bundle;
+  const loadingGames = loading;
+  const salesLoading = isFetching;
+  const pingStatus: "online" | "offline" | "loading" =
+    isPending && !bundle ? "loading" : bundle?.pingOnline ? "online" : "offline";
 
-  const fetchProductsWithRobot = async () => {
-    const { data: products } = await supabase
-      .from("products")
-      .select("id, name, image_url, robot_game_id, robot_markup_percent")
-      .not("robot_game_id", "is", null)
-      .eq("active", true);
+  useEffect(() => {
+    if (bundleUpdatedAt) setLastRefresh(new Date(bundleUpdatedAt));
+  }, [bundleUpdatedAt]);
 
-    if (!products || products.length === 0) {
-      setProductsWithRobot([]);
-      return;
-    }
-
-    const productIds = products.map(p => p.id);
-    const { data: plans } = await supabase
-      .from("product_plans")
-      .select("id, product_id")
-      .in("product_id", productIds)
-      .eq("active", true);
-
-    const planIds = (plans || []).map(p => p.id);
-    const planToProduct: Record<string, string> = {};
-    (plans || []).forEach(p => { planToProduct[p.id] = p.product_id; });
-
-    const stockCounts: Record<string, number> = {};
-    if (planIds.length > 0) {
-      const stockPromises = planIds.map(async (planId: string) => {
-        const { count } = await supabase
-          .from("stock_items")
-          .select("id", { count: "exact", head: true })
-          .eq("product_plan_id", planId)
-          .eq("used", false);
-        const productId = planToProduct[planId];
-        if (productId) stockCounts[productId] = (stockCounts[productId] || 0) + (count || 0);
-      });
-      await Promise.all(stockPromises);
-    }
-
-    setProductsWithRobot(products.map(p => ({
-      ...p,
-      hasStock: (stockCounts[p.id] || 0) > 0,
-      stockCount: stockCounts[p.id] || 0,
-    })));
-  };
-
-  const fetchExchangeRate = async (): Promise<number> => {
-    const rate = await getUsdToBrl(usdToBrl);
-    setUsdToBrl(rate);
-    return rate;
-  };
-
-  const fetchRobotSales = async (period: "7d" | "30d" | "all" = salesPeriod, currentRate?: number) => {
-    const rate = currentRate ?? usdToBrl;
-    setSalesLoading(true);
-    try {
-      // Get all products with robot_game_id
-      const { data: robotProducts } = await supabase
-        .from("products")
-        .select("id, name, robot_game_id, robot_markup_percent")
-        .not("robot_game_id", "is", null);
-
-      if (!robotProducts || robotProducts.length === 0) {
-        setRobotSales([]);
-        setSalesLoading(false);
-        return;
-      }
-
-      const productIds = robotProducts.map(p => p.id);
-      const productMap = Object.fromEntries(robotProducts.map(p => [p.id, p]));
-
-      // Build date filter
-      let dateFilter: string | null = null;
-      if (period === "7d") {
-        dateFilter = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-      } else if (period === "30d") {
-        dateFilter = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-      }
-
-      type RobotTicketRow = Pick<
-        Database["public"]["Tables"]["order_tickets"]["Row"],
-        "id" | "created_at" | "product_id" | "product_plan_id" | "status" | "metadata" | "user_id"
-      >;
-
-      // Get tickets for robot products (paginated, no 1000-row limit)
-      let allTickets: RobotTicketRow[];
-      if (dateFilter) {
-        allTickets = await fetchAllRows<RobotTicketRow>("order_tickets", {
-          select: "id, created_at, product_id, product_plan_id, status, metadata, user_id",
-          filters: [
-            { column: "status", op: "eq", value: "delivered" },
-            { column: "created_at", op: "gte", value: dateFilter },
-          ],
-          order: { column: "created_at", ascending: false },
-        });
-      } else {
-        allTickets = await fetchAllRows<RobotTicketRow>("order_tickets", {
-          select: "id, created_at, product_id, product_plan_id, status, metadata, user_id",
-          filters: [{ column: "status", op: "eq", value: "delivered" }],
-          order: { column: "created_at", ascending: false },
-        });
-      }
-
-      const tickets = allTickets.filter(
-        (t) => productIds.includes(t.product_id) && asOrderTicketMetadata(t.metadata).type !== "lzt-account",
-      );
-      if (tickets.length === 0) {
-        setRobotSales([]);
-        setSalesLoading(false);
-        return;
-      }
-
-      // Get plan names & prices
-      const planIds = [...new Set(tickets.map((t) => t.product_plan_id).filter(Boolean))];
-
-      // Fetch only payments from users who have robot tickets (avoid fetching ALL payments)
-      const ticketUserIds = [...new Set(tickets.map(t => t.user_id))];
-
-      const [plansRes, robotPayments] = await Promise.all([
-        planIds.length > 0
-          ? supabase.from("product_plans").select("id, name, price, robot_duration_days").in("id", planIds)
-          : Promise.resolve({ data: [] as { id: string; name: string; price: number; robot_duration_days: number | null }[] }),
-        // Fetch payments only for users with robot tickets (batched if many users)
-        (async () => {
-          const batchSize = 50;
-          const allPayments: { user_id: string; amount: number; cart_snapshot: Json | undefined; status: string }[] = [];
-          for (let i = 0; i < ticketUserIds.length; i += batchSize) {
-            const batch = ticketUserIds.slice(i, i + batchSize);
-            const rows = await fetchAllRows("payments", {
-              select: "user_id, amount, cart_snapshot, status",
-              filters: [
-                { column: "status", op: "eq", value: "COMPLETED" },
-                { column: "user_id", op: "in", value: batch },
-              ],
-              order: { column: "created_at", ascending: false },
-            });
-            allPayments.push(...(rows as typeof allPayments));
-          }
-          return allPayments;
-        })(),
-      ]);
-      
-      const planMap = Object.fromEntries((plansRes.data || []).map(p => [p.id, p]));
-      
-      // Build paid price map from cart_snapshot (historical prices apportioned by discount)
-      const paidPriceMap = new Map<string, number[]>();
-      for (const pay of ((robotPayments || []) as { cart_snapshot: Json | undefined; amount: number; user_id: string }[])) {
-        const snapshot = paymentCartSnapshot(pay.cart_snapshot);
-        if (snapshot.length === 0) continue;
-
-        const cartTotal = snapshot.reduce((sum, item) => sum + (Number(item.price) || 0), 0);
-        const actualPaid = pay.amount / 100;
-
-        for (const item of snapshot) {
-          const key = `${pay.user_id}|${item.productId}|${item.planId}`;
-          if (item.price != null) {
-            const proportion = cartTotal > 0 ? (Number(item.price) / cartTotal) : 0;
-            const arr = paidPriceMap.get(key) || [];
-            arr.push(actualPaid * proportion);
-            paidPriceMap.set(key, arr);
-          }
-        }
-      }
-      
-      const sales: RobotSale[] = tickets.map(t => {
-        const product = productMap[t.product_id];
-        const plan = planMap[t.product_plan_id];
-        const meta = asOrderTicketMetadata(t.metadata);
-        
-        // Revenue = apportioned actual paid price. If missing (manual creation), revenue is 0.
-        const key = `${t.user_id}|${t.product_id}|${t.product_plan_id}`;
-        const revenue = paidPriceMap.get(key)?.shift() ?? 0;
-        
-        // Cost estimation: if metadata has amount_spent use it, otherwise estimate from markup
-        let cost = 0;
-        if (meta.amount_spent && Number(meta.amount_spent) > 0) {
-          // Real cost = 60% of amount_spent (40% cashback from Robot Project)
-          cost = Number(meta.amount_spent) * 0.6 * rate;
-        } else if (meta.is_free) {
-          cost = 0;
-        } else if (product?.robot_markup_percent) {
-          // Estimate: revenue / (1 + markup/100) = base cost
-          cost = revenue / (1 + (product.robot_markup_percent || 50) / 100);
-        }
-
-        return {
-          id: t.id,
-          created_at: t.created_at || "",
-          product_name: product?.name || "Desconhecido",
-          plan_name: plan?.name || "—",
-          revenue,
-          cost: Math.round(cost * 100) / 100,
-          profit: Math.round((revenue - cost) * 100) / 100,
-          status: t.status || "unknown",
-          duration: plan?.robot_duration_days || meta.duration || null,
-        };
-      });
-
-      setRobotSales(sales);
-    } catch (err) {
-      console.error("Error fetching robot sales:", err);
-    }
-    setSalesLoading(false);
-  };
-
-  const fetchPendingRobotTickets = async () => {
-    type RobotTicketRow = Pick<
-      Tables<"order_tickets">,
-      "id" | "created_at" | "status" | "status_label" | "metadata" | "product_id" | "product_plan_id" | "user_id"
-    >;
-
-    const { data: tickets } = await supabase
-      .from("order_tickets")
-      .select("id, created_at, status, status_label, metadata, product_id, product_plan_id, user_id")
-      .eq("status", "open")
-      .order("created_at", { ascending: false })
-      .limit(100);
-
-    const robotTickets = (tickets ?? []).filter((ticket): ticket is RobotTicketRow => {
-      const m = asOrderTicketMetadata(ticket.metadata);
-      return m.type === "robot-project";
+  useEffect(() => {
+    if (!isError) return;
+    toast({
+      title: "Erro ao carregar Robot Project",
+      description: error instanceof Error ? error.message : "Tente atualizar ou verifique a sessão.",
+      variant: "destructive",
     });
-    if (robotTickets.length === 0) {
-      setPendingRobotTickets([]);
-      return;
-    }
+  }, [isError, error]);
 
-    const productIds = [...new Set(robotTickets.map((ticket) => ticket.product_id))];
-    const planIds = [...new Set(robotTickets.map((ticket) => ticket.product_plan_id))];
-    const userIds = [...new Set(robotTickets.map((ticket) => ticket.user_id))];
-
-    const [productsRes, plansRes, profilesRes] = await Promise.all([
-      productIds.length > 0
-        ? supabase.from("products").select("id, name").in("id", productIds)
-        : Promise.resolve({ data: [] as { id: string; name: string }[] }),
-      planIds.length > 0
-        ? supabase.from("product_plans").select("id, name").in("id", planIds)
-        : Promise.resolve({ data: [] as { id: string; name: string }[] }),
-      userIds.length > 0
-        ? supabase.from("profiles").select("user_id, username").in("user_id", userIds)
-        : Promise.resolve({ data: [] as { user_id: string; username: string | null }[] }),
-    ]);
-
-    const productMap = Object.fromEntries((productsRes.data || []).map((item) => [item.id, item.name]));
-    const planMap = Object.fromEntries((plansRes.data || []).map((item) => [item.id, item.name]));
-    const profileMap = Object.fromEntries((profilesRes.data || []).map((item) => [item.user_id, item.username || item.user_id.slice(0, 8)]));
-
-    setPendingRobotTickets(
-      robotTickets.map((ticket) => {
-        const meta = asOrderTicketMetadata(ticket.metadata);
-        return {
-          id: ticket.id,
-          created_at: ticket.created_at || "",
-          status: ticket.status || "open",
-          status_label: ticket.status_label || "Aguardando Entrega",
-          error: String(meta.error ?? "Falha não informada"),
-          product_name: productMap[ticket.product_id] || "Produto desconhecido",
-          plan_name: planMap[ticket.product_plan_id] || "Plano desconhecido",
-          user_label: profileMap[ticket.user_id] || ticket.user_id.slice(0, 8),
-        };
-      }),
-    );
-  };
+  const refreshAll = () => void refetchRobotBundle();
 
   const retryRobotDelivery = async (ticketId: string) => {
     try {
@@ -401,7 +74,7 @@ const RobotProjectTab = () => {
         throw new Error(result.error || "Não foi possível reprocessar a entrega");
       }
       toast({ title: "Entrega Robot reprocessada", description: result.message || "Verifique o ticket do pedido." });
-      await refreshAll();
+      await refetchRobotBundle();
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : "Falha";
       toast({ title: "Falha ao reprocessar", description: msg, variant: "destructive" });
@@ -410,34 +83,25 @@ const RobotProjectTab = () => {
     }
   };
 
-
-  const refreshAll = async () => {
-    setLoading(true);
-    const ratePromise = fetchExchangeRate();
-    await Promise.all([checkPing(), fetchRobotGames(), fetchProductsWithRobot(), fetchPendingRobotTickets()]);
-    const rate = await ratePromise;
-    await fetchRobotSales(salesPeriod, rate);
-    setLastRefresh(new Date());
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    void refreshAll();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- initial Robot Project load
-  }, []);
-
   return (
     <div>
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-foreground">Robot Project</h2>
         <button
+          type="button"
           onClick={refreshAll}
-          disabled={loading}
+          disabled={loading || isFetching}
           className="flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-xs font-medium text-muted-foreground hover:border-success hover:text-success disabled:opacity-50"
         >
-          <RefreshCw className={`h-3 w-3 ${loading ? "animate-spin" : ""}`} /> Atualizar
+          <RefreshCw className={`h-3 w-3 ${isFetching ? "animate-spin" : ""}`} /> Atualizar
         </button>
       </div>
+
+      {isError && !loading && (
+        <p className="mt-2 text-xs text-destructive">
+          Falha ao carregar o painel. Use &quot;Atualizar&quot; para tentar de novo.
+        </p>
+      )}
 
       {lastRefresh && (
         <p className="mt-1 text-[11px] text-muted-foreground">
@@ -531,7 +195,8 @@ const RobotProjectTab = () => {
             {(["7d", "30d", "all"] as const).map(p => (
               <button
                 key={p}
-                onClick={() => { setSalesPeriod(p); fetchRobotSales(p, usdToBrl); }}
+                type="button"
+                onClick={() => setSalesPeriod(p)}
                 className={`rounded-md px-3 py-1 text-[11px] font-medium ${
                   salesPeriod === p ? "bg-success text-success-foreground" : "text-muted-foreground hover:text-foreground"
                 }`}
@@ -804,7 +469,7 @@ const RobotProjectTab = () => {
                         <span className={`text-[10px] font-bold ${game.status === "on" ? "text-success" : "text-destructive"}`}>
                           {game.status === "on" ? "● ON" : "● OFF"}
                         </span>
-                        {game.is_free && (
+                        {(game.is_free || game.isFree) && (
                           <span className="rounded bg-accent/20 px-1.5 py-0.5 text-[9px] font-bold text-accent-foreground">FREE</span>
                         )}
                       </div>

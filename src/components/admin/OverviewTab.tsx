@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database, Tables } from "@/integrations/supabase/types";
 import { fetchAllRows } from "@/lib/supabaseAllRows";
@@ -90,28 +91,20 @@ const filterByPeriod = <T extends { created_at?: string | null; paid_at?: string
   });
 };
 
-const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void }) => {
-  const { users: adminUsers, usernameMap } = useAdminUsers();
-  const [loading, setLoading] = useState(true);
-  const [refreshKey, setRefreshKey] = useState(0);
-  const [period, setPeriod] = useState<Period>("24h");
-  const [openTickets, setOpenTickets] = useState(0);
-  const [allOrders, setAllOrders] = useState<OrderTicket[]>([]);
-  const [allPayments, setAllPayments] = useState<PaymentAggregate[]>([]);
-  const [recentOrders, setRecentOrders] = useState<OrderTicket[]>([]);
-  const [recentPayments, setRecentPayments] = useState<PaymentRow[]>([]);
+type OverviewDashboardData = {
+  openTickets: number;
+  allOrders: OrderTicket[];
+  allPayments: PaymentAggregate[];
+  recentOrders: OrderTicket[];
+  recentPayments: PaymentRow[];
+  lztSales: { buy_price: number; created_at: string }[];
+  robotCosts: { cost: number; created_at: string }[];
+};
 
-  // Granular cost data for period filtering
-  const [lztSales, setLztSales] = useState<{ buy_price: number; created_at: string }[]>([]);
-  const [robotCosts, setRobotCosts] = useState<{ cost: number; created_at: string }[]>([]);
-
-  useEffect(() => {
-    const fetchAll = async () => {
-      setLoading(true);
-      setRobotCosts([]);
-      try {
-
-      const usdToBrl = await getUsdToBrl();
+async function fetchOverviewDashboard(): Promise<OverviewDashboardData> {
+  let robotCosts: { cost: number; created_at: string }[] = [];
+  try {
+    const usdToBrl = await getUsdToBrl();
 
       // Use shared cache for heavy queries
       const CACHE_KEY_PAYMENTS = "admin_payments_completed";
@@ -150,15 +143,13 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
       if (!cachedOrders && Array.isArray(allOrdersRes)) setCache(CACHE_KEY_ORDERS, allOrdersRes);
       if (!cachedLztCosts && Array.isArray(lztSalesRes)) setCache(CACHE_KEY_LZT_COSTS, lztSalesRes);
 
-      setOpenTickets(openTicketsRes.count ?? 0);
-      setAllPayments((allPaymentsRes || []) as PaymentAggregate[]);
-      setAllOrders(allOrdersRes || []);
-      setLztSales(
-        (lztSalesRes || []).map((s) => ({
-          buy_price: Number(s.buy_price) || 0,
-          created_at: String(s.created_at ?? ""),
-        })),
-      );
+      const openTickets = openTicketsRes.count ?? 0;
+      const allPayments = (allPaymentsRes || []) as PaymentAggregate[];
+      const allOrders = (allOrdersRes || []) as OrderTicket[];
+      const lztSales = (lztSalesRes || []).map((s) => ({
+        buy_price: Number(s.buy_price) || 0,
+        created_at: String(s.created_at ?? ""),
+      }));
 
       if (robotProductsRes.error) {
         console.warn("OverviewTab: produtos Robot", robotProductsRes.error.message);
@@ -218,9 +209,10 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
           }
           costs.push({ cost: Math.round(cost * 100) / 100, created_at: t.created_at || "" });
         });
-        setRobotCosts(costs);
+        robotCosts = costs;
       }
 
+      let recentOrders: OrderTicket[] = [];
       if (recentOrdersRes.data) {
         const rows: OrderTicketRow[] = recentOrdersRes.data;
         const productIds = [...new Set(rows.map((t) => t.product_id))];
@@ -234,37 +226,53 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
         (prodsRes.data || []).forEach((p: { id: string; name: string; image_url: string | null }) => { prodMap[p.id] = { name: p.name, image_url: p.image_url }; });
         (plansRes.data || []).forEach((p: { id: string; name: string }) => { planMap[p.id] = p.name; });
 
-        setRecentOrders(
-          rows.map((t) => {
-            const meta = asOrderTicketMetadata(t.metadata);
-            const isLzt = meta.type === "lzt-account";
-            const prod = prodMap[t.product_id];
-            return {
-              ...t,
-              product_name: isLzt ? (meta.title || meta.account_name || "Conta LZT") : (prod?.name || "Produto"),
-              product_image: isLzt ? null : (prod?.image_url || null),
-              plan_name: isLzt ? "Conta LZT" : (planMap[t.product_plan_id] || "Plano"),
-              username: "...",
-            };
-          }),
-        );
+        recentOrders = rows.map((t) => {
+          const meta = asOrderTicketMetadata(t.metadata);
+          const isLzt = meta.type === "lzt-account";
+          const prod = prodMap[t.product_id];
+          return {
+            ...t,
+            product_name: isLzt ? (meta.title || meta.account_name || "Conta LZT") : (prod?.name || "Produto"),
+            product_image: isLzt ? null : (prod?.image_url || null),
+            plan_name: isLzt ? "Conta LZT" : (planMap[t.product_plan_id] || "Plano"),
+            username: "...",
+          };
+        });
       }
 
-      if (recentPaymentsRes.data) {
-        setRecentPayments(recentPaymentsRes.data);
-      }
+      const recentPayments = (recentPaymentsRes.data ?? []) as PaymentRow[];
 
-      } catch (err) {
-        console.error("OverviewTab fetchAll error:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+      return {
+        openTickets,
+        allOrders,
+        allPayments,
+        recentOrders,
+        recentPayments,
+        lztSales,
+        robotCosts,
+      };
+  } catch (err) {
+    console.error("OverviewTab fetchOverviewDashboard error:", err);
+    throw err instanceof Error ? err : new Error(String(err));
+  }
+}
 
-    fetchAll();
-  }, [refreshKey]);
+const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void }) => {
+  const { users: adminUsers, usernameMap } = useAdminUsers();
+  const { data, isPending: loading, refetch, isFetching } = useQuery({
+    queryKey: ["admin", "overview"],
+    queryFn: fetchOverviewDashboard,
+    staleTime: 3 * 60 * 1000,
+  });
 
-  // Removed usernameMap useEffect to prevent race condition
+  const openTickets = data?.openTickets ?? 0;
+  const allOrders = useMemo(() => data?.allOrders ?? [], [data]);
+  const allPayments = useMemo(() => data?.allPayments ?? [], [data]);
+  const recentOrders = useMemo(() => data?.recentOrders ?? [], [data]);
+  const recentPayments = useMemo(() => data?.recentPayments ?? [], [data]);
+  const lztSales = useMemo(() => data?.lztSales ?? [], [data]);
+  const robotCosts = useMemo(() => data?.robotCosts ?? [], [data]);
+  const [period, setPeriod] = useState<Period>("24h");
 
   // Period-filtered metrics (memoized to avoid recalculating on every render)
   const filteredPayments = useMemo(() => filterByPeriod(allPayments, period), [allPayments, period]);
@@ -321,10 +329,14 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
             ))}
           </div>
           <button
-            onClick={() => { invalidateAdminCache(); setRefreshKey(k => k + 1); }}
-            className="rounded-lg border border-border bg-card p-1.5 text-muted-foreground hover:text-foreground"
+            onClick={() => {
+              invalidateAdminCache();
+              void refetch();
+            }}
+            disabled={isFetching}
+            className="rounded-lg border border-border bg-card p-1.5 text-muted-foreground hover:text-foreground disabled:opacity-50"
           >
-            <RefreshCw className="h-3.5 w-3.5" />
+            <RefreshCw className={`h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`} />
           </button>
         </div>
       </div>

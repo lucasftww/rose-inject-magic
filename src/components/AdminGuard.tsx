@@ -1,9 +1,10 @@
-import { useState, useEffect, type ReactNode } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, type ReactNode } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import { isRecord } from "@/types/ticketChat";
+import { readAdminGuardCache, writeAdminGuardCache } from "@/lib/adminGuardCache";
 
 function parseAdminVerifyPayload(data: unknown): { verified: boolean; uid: string } | null {
   if (!isRecord(data)) return null;
@@ -27,6 +28,26 @@ function parseAdminVerifyPayload(data: unknown): { verified: boolean; uid: strin
 const AdminGuard = ({ children }: { children: ReactNode }) => {
   const { user, loading } = useAuth();
   const [serverVerified, setServerVerified] = useState<boolean | null>(null);
+  const lastUserIdRef = useRef<string | null>(null);
+
+  // Same-session re-entry: show admin shell immediately while RPC re-runs in background
+  useLayoutEffect(() => {
+    if (loading) return;
+    if (!user) {
+      lastUserIdRef.current = null;
+      setServerVerified(false);
+      return;
+    }
+    const uid = user.id;
+    if (lastUserIdRef.current !== uid) {
+      lastUserIdRef.current = uid;
+      setServerVerified(readAdminGuardCache(uid) === true ? true : null);
+      return;
+    }
+    if (readAdminGuardCache(uid) === true) {
+      setServerVerified(true);
+    }
+  }, [loading, user]);
 
   useEffect(() => {
     if (loading) return;
@@ -61,16 +82,21 @@ const AdminGuard = ({ children }: { children: ReactNode }) => {
         const payload = parseAdminVerifyPayload(adminVerify.data);
         const layer2 = !adminVerify.error && payload !== null && payload.uid === user.id;
 
+        const ok = layer1 && layer2;
         if (!cancelled) {
-          setServerVerified(layer1 && layer2);
+          setServerVerified(ok);
+          writeAdminGuardCache(user.id, ok);
         }
       } catch (err) {
         console.error("AdminGuard: unexpected error during role check:", err);
-        if (!cancelled) setServerVerified(false);
+        if (!cancelled) {
+          setServerVerified(false);
+          writeAdminGuardCache(user.id, false);
+        }
       }
     };
 
-    verify();
+    void verify();
     return () => { cancelled = true; };
   }, [loading, user]);
 

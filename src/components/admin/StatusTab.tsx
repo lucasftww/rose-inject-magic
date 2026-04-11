@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminProductsStatus, useInvalidateAdminCache } from "@/hooks/useAdminData";
 import type { ProductStatusListItem } from "@/types/supabaseQueryResults";
@@ -13,23 +13,12 @@ const statusOptions = [
 ];
 
 const StatusTab = () => {
-  const { data: fetchedProducts, isLoading: queryLoading, refetch } = useAdminProductsStatus();
+  const { data: fetchedProducts, isPending: queryLoading, refetch } = useAdminProductsStatus();
   const invalidateAdmin = useInvalidateAdminCache();
-  const [products, setProducts] = useState<ProductStatusListItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const products = useMemo(() => fetchedProducts ?? [], [fetchedProducts]);
+  const loading = queryLoading && fetchedProducts === undefined;
   const [saving, setSaving] = useState<string | null>(null);
   const [edits, setEdits] = useState<Record<string, { status: string; status_label: string }>>({});
-
-  useEffect(() => {
-    if (fetchedProducts) {
-      setProducts(fetchedProducts);
-      setLoading(false);
-    }
-  }, [fetchedProducts]);
-
-  useEffect(() => {
-    if (!queryLoading) setLoading(false);
-  }, [queryLoading]);
 
   const handleStatusChange = (productId: string, newStatus: string) => {
     const opt = statusOptions.find(o => o.value === newStatus);

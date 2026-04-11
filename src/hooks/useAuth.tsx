@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState, ReactNode } fro
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { setAdvancedMatching, clearAdvancedMatching } from "@/lib/metaPixel";
+import { clearAdminGuardCache } from "@/lib/adminGuardCache";
 import type { User, Session } from "@supabase/supabase-js";
 
 interface AuthContextType {
@@ -95,6 +96,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setIsAdmin(false);
           trackedSessionRef.current = null;
           clearAdvancedMatching();
+          clearAdminGuardCache();
           return;
         }
 
@@ -102,6 +104,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         setSession(newSession);
         setUser(newSession.user);
+
+        // Token refresh keeps the same user — skip profile + has_role RPC (saves latency site-wide)
+        if (event === "TOKEN_REFRESHED") {
+          return;
+        }
 
         setTimeout(() => {
           if (!isMountedRef.current) return;

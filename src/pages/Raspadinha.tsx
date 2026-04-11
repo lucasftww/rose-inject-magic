@@ -111,7 +111,7 @@ const CellContent = ({ cell }: { cell: GridCell }) => {
   );
 };
 
-type PaymentPhase = "idle" | "paying" | "paid";
+type PaymentPhase = "idle" | "generating" | "paying" | "paid";
 
 const Raspadinha = () => {
   const { user, isAdmin } = useAuth();
@@ -147,6 +147,7 @@ const Raspadinha = () => {
   const pendingModeRef = useRef<RaspadinhaMode>("produtos");
   const [pendingPayment, setPendingPayment] = useState<{ id: string; mode: string; quantity: number } | null>(null);
   const mountedRef = useRef(true);
+  const createPaymentCancelledRef = useRef(false);
 
   // Contas prizes pool (fixed)
   const contasPrizes: Prize[] = [
@@ -356,6 +357,8 @@ const Raspadinha = () => {
     }
 
     setPlaying(true);
+    createPaymentCancelledRef.current = false;
+    setPaymentPhase("generating");
     setResult(null);
     setAllRevealed(false);
     setRevealed(Array(9).fill(false));
@@ -394,6 +397,10 @@ const Raspadinha = () => {
       if (!data.success) throw new Error(data.error || "Erro ao criar cobrança");
       if (!data.payment_id) throw new Error("Resposta sem payment_id");
       if (!mountedRef.current) return;
+      if (createPaymentCancelledRef.current) {
+        setPlaying(false);
+        return;
+      }
 
       setPaymentId(data.payment_id);
       paymentIdRef.current = data.payment_id;
@@ -407,6 +414,7 @@ const Raspadinha = () => {
       const message = err instanceof Error ? err.message : String(err);
       toast({ title: "Erro ao gerar pagamento", description: message, variant: "destructive" });
       setPlaying(false);
+      if (mountedRef.current) setPaymentPhase("idle");
     }
   };
 
@@ -857,7 +865,7 @@ const Raspadinha = () => {
 
         {/* PIX Payment Modal */}
         <AnimatePresence>
-          {paymentPhase === "paying" && chargeData && (
+          {(paymentPhase === "generating" || paymentPhase === "paying") && (
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -872,9 +880,14 @@ const Raspadinha = () => {
               >
                 <button
                   onClick={() => {
-                    if (pollRef.current) clearInterval(pollRef.current);
+                    createPaymentCancelledRef.current = true;
+                    if (pollRef.current) {
+                      clearInterval(pollRef.current);
+                      pollRef.current = null;
+                    }
                     setPaymentPhase("idle");
                     setChargeData(null);
+                    setPlaying(false);
                   }}
                   className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors"
                 >
@@ -884,43 +897,57 @@ const Raspadinha = () => {
                 <div className="text-center mb-6">
                   <div className={`inline-flex items-center gap-2 rounded-full ${bgAccent} border ${borderAccent} px-3 py-1 mb-3`}>
                     <div className={`h-2 w-2 rounded-full ${isContas ? "bg-info" : "bg-success"} animate-pulse`} />
-                    <span className={`text-xs font-medium ${accentClass}`}>Aguardando pagamento</span>
+                    <span className={`text-xs font-medium ${accentClass}`}>
+                      {paymentPhase === "generating" ? "A preparar o PIX" : "Aguardando pagamento"}
+                    </span>
                   </div>
                   <h2 className="text-xl font-bold text-foreground" style={{ fontFamily: "'Valorant', sans-serif" }}>
-                    PAGUE VIA PIX
+                    {paymentPhase === "generating" ? "UM MOMENTO" : "PAGUE VIA PIX"}
                   </h2>
                   <p className="text-sm text-muted-foreground mt-1">
                     R$ {totalPrice.toFixed(2)} • {pendingQuantityRef.current}x {isContas ? "Raspadinha de Contas" : "Raspadinha"}
                   </p>
+                  {paymentPhase === "generating" && (
+                    <p className="text-xs text-muted-foreground mt-3 flex items-center justify-center gap-2">
+                      <Loader2 className={`h-4 w-4 animate-spin shrink-0 ${accentClass}`} />
+                      A gerar o código PIX no banco — não feche esta janela.
+                    </p>
+                  )}
                 </div>
 
-                {chargeData.qrCodeImage && (
+                {chargeData?.qrCodeImage && (
                   <div className="mx-auto mb-4 w-48 h-48 rounded-xl border border-border bg-white p-2">
                     <img src={chargeData.qrCodeImage} alt="QR Code PIX" className="h-full w-full object-contain" />
                   </div>
                 )}
 
-                <div className="mb-4">
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5 text-center">Código Copia e Cola</p>
-                  <div className="flex gap-2">
-                    <input
-                      readOnly
-                      value={chargeData.brCode}
-                      className="flex-1 rounded-lg border border-border bg-secondary/50 px-3 py-2.5 text-xs text-foreground font-mono truncate"
-                    />
-                    <button
-                      onClick={copyCode}
-                      className={`flex items-center gap-1.5 rounded-lg ${isContas ? "bg-info" : "bg-success"} px-4 py-2.5 text-xs font-bold text-white transition-all`}
-                    >
-                      {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                      {copied ? "Copiado" : "Copiar"}
-                    </button>
+                {chargeData && (
+                  <div className="mb-4">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5 text-center">Código Copia e Cola</p>
+                    <div className="flex gap-2">
+                      <input
+                        readOnly
+                        value={chargeData.brCode}
+                        className="flex-1 rounded-lg border border-border bg-secondary/50 px-3 py-2.5 text-xs text-foreground font-mono truncate"
+                      />
+                      <button
+                        onClick={copyCode}
+                        className={`flex items-center gap-1.5 rounded-lg ${isContas ? "bg-info" : "bg-success"} px-4 py-2.5 text-xs font-bold text-white transition-all`}
+                      >
+                        {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                        {copied ? "Copiado" : "Copiar"}
+                      </button>
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
                   <Loader2 className={`h-3.5 w-3.5 animate-spin ${accentClass}`} />
-                  <span>O jogo será liberado automaticamente após o pagamento</span>
+                  <span>
+                    {paymentPhase === "generating"
+                      ? "Isto costuma levar só alguns segundos."
+                      : "O jogo será liberado automaticamente após o pagamento"}
+                  </span>
                 </div>
               </motion.div>
             </motion.div>
@@ -1102,7 +1129,7 @@ const Raspadinha = () => {
               isContas ? "bg-info hover:bg-info/90" : "bg-success hover:bg-success/90"
             }`}
             style={
-              !playing && !scratching && paymentPhase !== "paying"
+              !playing && !scratching && paymentPhase !== "paying" && paymentPhase !== "generating"
                 ? { boxShadow: `0 0 40px ${accentColor}80` }
                 : {}
             }
@@ -1115,7 +1142,9 @@ const Raspadinha = () => {
                 <Ticket className="h-5 w-5" />
               )}
               {playing
-                ? "Gerando pagamento..."
+                ? paymentPhase === "generating"
+                  ? "A gerar o PIX..."
+                  : "Gerando pagamento..."
                 : scratching
                 ? "Raspe para revelar!"
                 : paymentPhase === "paying"

@@ -1,0 +1,18 @@
+export type TabId =
+  | "overview"
+  | "financeiro"
+  | "pix_historico"
+  | "jogos"
+  | "produtos"
+  | "estoque"
+  | "lzt"
+  | "robot"
+  | "vendas"
+  | "pagamentos"
+  | "cupons"
+  | "raspadinha"
+  | "tickets"
+  | "status"
+  | "usuarios"
+  | "revendedores"
+  | "credenciais";

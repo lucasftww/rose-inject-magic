@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useAdminCredentialsList } from "@/hooks/useAdminData";
 import { Key, Eye, EyeOff, CheckCircle, ExternalLink, Plus, Pencil, Trash2, Loader2, X, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
@@ -75,8 +76,9 @@ const CREDENTIAL_PRESETS: { name: string; env_key: string; description: string; 
 ];
 
 const CredentialsTab = () => {
-  const [credentials, setCredentials] = useState<Credential[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: credentialRows = [], isPending: loading, isError, error, refetch: refetchCredentials } =
+    useAdminCredentialsList();
+  const credentials = useMemo(() => credentialRows.map(credentialFromRow), [credentialRows]);
   const [visibleKeys, setVisibleKeys] = useState<Set<string>>(new Set());
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Credential | null>(null);
@@ -90,21 +92,14 @@ const CredentialsTab = () => {
   const [formDescription, setFormDescription] = useState("");
   const [formHelpUrl, setFormHelpUrl] = useState("");
 
-  const fetchCredentials = async () => {
-    const { data, error } = await supabase
-      .from("system_credentials")
-      .select("*")
-      .order("created_at", { ascending: true });
-    if (error) {
-      toast({ title: "Erro ao carregar credenciais", description: error.message, variant: "destructive" });
-      setCredentials([]);
-    } else if (data) {
-      setCredentials(data.map(credentialFromRow));
-    }
-    setLoading(false);
-  };
-
-  useEffect(() => { fetchCredentials(); }, []);
+  useEffect(() => {
+    if (!isError) return;
+    toast({
+      title: "Erro ao carregar credenciais",
+      description: error instanceof Error ? error.message : "Tente novamente.",
+      variant: "destructive",
+    });
+  }, [isError, error]);
 
   const existingEnvKeys = useMemo(
     () => new Set(credentials.map((c) => c.env_key.toUpperCase())),
@@ -173,7 +168,7 @@ const CredentialsTab = () => {
         })
         .eq("env_key", rowEnvKey);
       if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
-      else { toast({ title: "Credencial atualizada!" }); resetForm(); fetchCredentials(); }
+      else { toast({ title: "Credencial atualizada!" }); resetForm(); void refetchCredentials(); }
     } else {
       // Upsert: seed/migrations may already have a row for this env_key (empty value) — insert would duplicate or hit RLS confusion
       const row = {
@@ -187,7 +182,7 @@ const CredentialsTab = () => {
         onConflict: "env_key",
       });
       if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
-      else { toast({ title: "Credencial guardada!" }); resetForm(); fetchCredentials(); }
+      else { toast({ title: "Credencial guardada!" }); resetForm(); void refetchCredentials(); }
     }
     setSaving(false);
   };
@@ -196,7 +191,7 @@ const CredentialsTab = () => {
     if (!confirm(`Excluir "${cred.name}"?`)) return;
     const { error } = await supabase.from("system_credentials").delete().eq("env_key", cred.env_key);
     if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
-    else { toast({ title: "Credencial excluída!" }); fetchCredentials(); }
+    else { toast({ title: "Credencial excluída!" }); void refetchCredentials(); }
   };
 
   const toggleVisibility = (envKey: string) => {

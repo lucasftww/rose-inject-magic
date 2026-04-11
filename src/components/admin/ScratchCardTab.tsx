@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
-import { isRecord } from "@/types/ticketChat";
+import { useAdminScratchCardBundle } from "@/hooks/useAdminData";
 import { toast } from "@/hooks/use-toast";
 import { Pencil, Loader2, Gift, RefreshCw, Save } from "lucide-react";
 
@@ -46,21 +46,13 @@ function mapScratchConfigRow(r: ScratchConfigRow): Config {
   };
 }
 
-function parseAdminScratchStats(raw: unknown): { total_plays: number; total_wins: number; total_revenue: number } | null {
-  if (!isRecord(raw)) return null;
-  const s = raw;
-  if (s.error != null && s.error !== false && s.error !== "") return null;
-  return {
-    total_plays: Number(s.total_plays) || 0,
-    total_wins: Number(s.total_wins) || 0,
-    total_revenue: Number(s.total_revenue) || 0,
-  };
-}
-
 const ScratchCardTab = () => {
-  const [prizes, setPrizes] = useState<Prize[]>([]);
-  const [config, setConfig] = useState<Config | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: bundle, isPending: loading, isError, error, refetch: refetchScratch } = useAdminScratchCardBundle();
+  const prizes = useMemo(() => (bundle?.prizes ?? []).map(mapScratchPrizeRow), [bundle]);
+  const config = useMemo(
+    () => (bundle?.config ? mapScratchConfigRow(bundle.config) : null),
+    [bundle],
+  );
   const [syncing, setSyncing] = useState(false);
   const [savingPct, setSavingPct] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -71,34 +63,24 @@ const ScratchCardTab = () => {
   const [configActive, setConfigActive] = useState(true);
   const [savingConfig, setSavingConfig] = useState(false);
 
-  const [totalPlays, setTotalPlays] = useState(0);
-  const [totalWins, setTotalWins] = useState(0);
-  const [totalRevenue, setTotalRevenue] = useState(0);
+  const totalPlays = bundle?.stats?.total_plays ?? 0;
+  const totalWins = bundle?.stats?.total_wins ?? 0;
+  const totalRevenue = bundle?.stats?.total_revenue ?? 0;
 
-  const fetchData = async () => {
-    const [{ data: prizesData }, { data: configData }, statsRes] = await Promise.all([
-      supabase.from("scratch_card_prizes").select("*").order("sort_order"),
-      supabase.from("scratch_card_config").select("*").limit(1).maybeSingle(),
-      // Use DB aggregation function for accurate stats (no 1000-row limit)
-      supabase.rpc("admin_scratch_stats"),
-    ]);
-    if (prizesData) setPrizes(prizesData.map(mapScratchPrizeRow));
-    if (configData) {
-      const c = mapScratchConfigRow(configData);
-      setConfig(c);
-      setConfigPrice(String(c.price));
-      setConfigActive(c.active);
-    }
-    const stats = statsRes.data != null ? parseAdminScratchStats(statsRes.data) : null;
-    if (stats) {
-      setTotalPlays(stats.total_plays);
-      setTotalWins(stats.total_wins);
-      setTotalRevenue(stats.total_revenue);
-    }
-    setLoading(false);
-  };
+  useEffect(() => {
+    if (!config) return;
+    setConfigPrice(String(config.price));
+    setConfigActive(config.active);
+  }, [config]);
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    if (!isError) return;
+    toast({
+      title: "Erro ao carregar raspadinha",
+      description: error instanceof Error ? error.message : "Tente novamente.",
+      variant: "destructive",
+    });
+  }, [isError, error]);
 
   const handleSyncProducts = async () => {
     setSyncing(true);
@@ -141,7 +123,7 @@ const ScratchCardTab = () => {
       }
     }
 
-    await fetchData();
+    await refetchScratch();
     setSyncing(false);
   };
 
@@ -155,7 +137,7 @@ const ScratchCardTab = () => {
     else toast({ title: "Atualizado!" });
     setEditingId(null);
     setSavingPct(null);
-    fetchData();
+    void refetchScratch();
   };
 
   const handleSaveConfig = async () => {
@@ -166,13 +148,31 @@ const ScratchCardTab = () => {
       active: configActive,
     }).eq("id", config.id);
     if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
-    else toast({ title: "Configurações salvas!" });
+    else {
+      toast({ title: "Configurações salvas!" });
+      void refetchScratch();
+    }
     setSavingConfig(false);
   };
 
   const totalPct = prizes.filter(p => p.active).reduce((s, p) => s + p.win_percentage, 0);
 
   if (loading) return <div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-success" /></div>;
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-4 py-20 text-center">
+        <p className="text-sm text-destructive">Não foi possível carregar os dados da raspadinha.</p>
+        <button
+          type="button"
+          onClick={() => void refetchScratch()}
+          className="flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:border-success"
+        >
+          <RefreshCw className="h-4 w-4" /> Tentar novamente
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">

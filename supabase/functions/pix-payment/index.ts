@@ -2419,16 +2419,22 @@ Deno.serve(async (req) => {
     }
 
     // ==================== STATUS POLLING THROTTLE ====================
+    // Per (user, payment_id) so checkout + raspadinha (or multiple tabs) don't 429 each other.
     if ((action === "status" || action === "card-status" || action === "crypto-status") && req.method === "GET") {
+      const paymentIdForThrottle = url.searchParams.get("payment_id");
+      const statusPollKey =
+        paymentIdForThrottle && paymentIdForThrottle.length > 0
+          ? `${userId}:${paymentIdForThrottle}`
+          : `${userId}:${action}`;
       const now = Date.now();
-      const lastPoll = statusPollMap.get(userId);
+      const lastPoll = statusPollMap.get(statusPollKey);
       if (lastPoll && now - lastPoll < 3000) {
         return new Response(JSON.stringify({ error: "Aguarde alguns segundos antes de verificar novamente." }), {
           status: 429,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      statusPollMap.set(userId, now);
+      statusPollMap.set(statusPollKey, now);
       // Cleanup old entries periodically
       if (statusPollMap.size > 5000) {
         const cutoff = now - 30000;
@@ -2670,7 +2676,13 @@ Deno.serve(async (req) => {
           body: JSON.stringify({ transactionId: payment.charge_id }),
         });
 
-        const mpData = await mpRes.json();
+        const mpRaw = await mpRes.text();
+        let mpData: { transaction?: { transactionState?: string; updatedAt?: string } } = {};
+        try {
+          mpData = mpRaw ? (JSON.parse(mpRaw) as typeof mpData) : {};
+        } catch {
+          console.error("MisticPay status non-JSON:", mpRes.status, mpRaw.substring(0, 400));
+        }
         if (mpRes.ok && mpData.transaction) {
           const newStatus = mapMisticPayStatus(mpData.transaction.transactionState);
 

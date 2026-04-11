@@ -45,8 +45,8 @@ Deno.serve(async (req) => {
     const { event_name, event_id, event_time, user_data, custom_data, event_source_url, action_source } = body;
 
     if (!event_name || !event_id) {
-      return new Response(JSON.stringify({ error: "event_name and event_id are required" }), {
-        status: 400,
+      return new Response(JSON.stringify({ success: true, ignored: true, reason: "missing event_name or event_id" }), {
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

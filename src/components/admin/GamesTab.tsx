@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
-import { useInvalidateAdminCache } from "@/hooks/useAdminData";
+import { useAdminGamesFull, useInvalidateAdminCache } from "@/hooks/useAdminData";
 import {
   Plus, Pencil, Trash2, GripVertical, ImageIcon, Loader2,
   Upload, Link, Sparkles, X,
@@ -25,8 +25,8 @@ function mapGameRow(r: Tables<"games">): Game {
 }
 
 const GamesTab = () => {
-  const [games, setGames] = useState<Game[]>([]);
-  const [loadingGames, setLoadingGames] = useState(true);
+  const { data: gameRows = [], isPending: loadingGames, isError, error, refetch: refetchGames } = useAdminGamesFull();
+  const games = useMemo(() => gameRows.map(mapGameRow), [gameRows]);
   const [showForm, setShowForm] = useState(false);
   const [editingGame, setEditingGame] = useState<Game | null>(null);
   const [formName, setFormName] = useState("");
@@ -46,20 +46,14 @@ const GamesTab = () => {
 
   const invalidateAdmin = useInvalidateAdminCache();
 
-  const fetchGames = useCallback(async (shouldInvalidate = false) => {
-    const { data, error } = await supabase.from("games").select("*").order("sort_order", { ascending: true });
-    if (error) {
-      toast({ title: "Erro ao carregar jogos", description: error.message, variant: "destructive" });
-    } else if (data) {
-      setGames(data.map(mapGameRow));
-    }
-    setLoadingGames(false);
-    if (shouldInvalidate) invalidateAdmin();
-  }, [invalidateAdmin]);
-
   useEffect(() => {
-    void fetchGames();
-  }, [fetchGames]);
+    if (!isError) return;
+    toast({
+      title: "Erro ao carregar jogos",
+      description: error instanceof Error ? error.message : "Tente novamente.",
+      variant: "destructive",
+    });
+  }, [isError, error]);
 
   const resetForm = () => { setFormName(""); setFormSlug(""); setFormImageUrl(""); setFormActive(true); setEditingGame(null); setShowForm(false); setImageMode("url"); setAiPrompt(""); setImagePreview(null); };
 
@@ -72,10 +66,11 @@ const GamesTab = () => {
     const reordered = [...games];
     const [moved] = reordered.splice(dragIndex, 1);
     reordered.splice(dragOverIndex, 0, moved);
-    setGames(reordered);
     setDragIndex(null); setDragOverIndex(null);
     const updates = reordered.map((g, i) => supabase.from("games").update({ sort_order: i }).eq("id", g.id));
     await Promise.all(updates);
+    void refetchGames();
+    invalidateAdmin();
   };
 
   const openEdit = (game: Game) => {
@@ -153,11 +148,11 @@ const GamesTab = () => {
     if (editingGame) {
       const { error } = await supabase.from("games").update({ name: formName.trim(), slug: formSlug.trim(), image_url: formImageUrl.trim() || null, active: formActive }).eq("id", editingGame.id);
       if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
-      else { toast({ title: "Jogo atualizado!" }); resetForm(); fetchGames(true); }
+      else { toast({ title: "Jogo atualizado!" }); resetForm(); void refetchGames(); invalidateAdmin(); }
     } else {
       const { error } = await supabase.from("games").insert({ name: formName.trim(), slug: formSlug.trim(), image_url: formImageUrl.trim() || null, active: formActive, sort_order: games.length });
       if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
-      else { toast({ title: "Jogo criado!" }); resetForm(); fetchGames(true); }
+      else { toast({ title: "Jogo criado!" }); resetForm(); void refetchGames(); invalidateAdmin(); }
     }
     setSaving(false);
   };
@@ -172,7 +167,7 @@ const GamesTab = () => {
     if (!confirm(`Excluir "${game.name}"?`)) return;
     const { error } = await supabase.from("games").delete().eq("id", game.id);
     if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
-    else { toast({ title: "Excluído!" }); fetchGames(true); }
+    else { toast({ title: "Excluído!" }); void refetchGames(); invalidateAdmin(); }
   };
 
   return (
