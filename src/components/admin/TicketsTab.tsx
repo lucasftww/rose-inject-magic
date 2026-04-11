@@ -119,48 +119,58 @@ const TicketsTab = ({
 
   // Dynamic signed URLs for attachments
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
+  const signedUrlsRef = useRef(signedUrls);
+  signedUrlsRef.current = signedUrls;
 
   // Fetch signed URLs for new attachments dynamically
   useEffect(() => {
-    if (messages.length === 0) return;
-    
+    if (messages.length === 0 || !selectedTicket?.id) return;
+    let cancelled = false;
+
     const pathsToSign: string[] = [];
-    messages.forEach(msg => {
+    messages.forEach((msg) => {
       const regex = /\[STORAGE_PATH\]([^\s\]\n]+)/g;
       let match;
       while ((match = regex.exec(msg.message)) !== null) {
-        if (!signedUrls[match[1]]) {
+        if (!signedUrlsRef.current[match[1]]) {
           pathsToSign.push(match[1]);
         }
       }
     });
 
-    if (pathsToSign.length > 0 && selectedTicket) {
+    if (pathsToSign.length > 0) {
       const uniquePaths = [...new Set(pathsToSign)];
       const fetchSignedUrls = async () => {
         const { data } = await supabase.storage.from("ticket-files").createSignedUrls(uniquePaths, 7 * 24 * 3600);
-        if (data) {
-          setSignedUrls(prev => {
-            const next = { ...prev };
-            data.forEach(item => {
-              if (item.path && item.signedUrl) {
-                next[item.path] = item.signedUrl;
-              }
-            });
-            return next;
+        if (cancelled || !data) return;
+        setSignedUrls((prev) => {
+          const next = { ...prev };
+          data.forEach((item) => {
+            if (item.path && item.signedUrl) {
+              next[item.path] = item.signedUrl;
+            }
           });
-        }
+          return next;
+        });
       };
-      fetchSignedUrls();
+      void fetchSignedUrls();
     }
-  }, [messages, signedUrls, selectedTicket]);
+    return () => {
+      cancelled = true;
+    };
+  }, [messages, selectedTicket?.id]);
+
+  const previewUrlsRef = useRef(previewUrls);
+  previewUrlsRef.current = previewUrls;
 
   // Cleanup preview URLs on unmount to prevent memory leaks
   useEffect(() => {
     return () => {
-      previewUrls.forEach(url => { if (url) URL.revokeObjectURL(url); });
+      previewUrlsRef.current.forEach((url) => {
+        if (url) URL.revokeObjectURL(url);
+      });
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   // ─── Data Fetching ──────────────────────────────────────────────────────
 
@@ -326,16 +336,17 @@ const TicketsTab = ({
   }, [initialTicketId, tickets, selectTicket, onTicketOpened]);
 
   useEffect(() => {
-    if (!selectedTicket) return;
+    const ticketId = selectedTicket?.id;
+    if (!ticketId) return;
     let cancelled = false;
 
     const channel = supabase
-      .channel(`admin-ticket-rt-${selectedTicket.id}-${Date.now()}`)
+      .channel(`admin-ticket-rt-${ticketId}-${Date.now()}`)
       .on("postgres_changes", {
         event: "*",
         schema: "public",
         table: "ticket_messages",
-        filter: `ticket_id=eq.${selectedTicket.id}`,
+        filter: `ticket_id=eq.${ticketId}`,
       }, (payload) => {
         if (payload.eventType === "INSERT") {
           setMessages((prev) => {
@@ -355,7 +366,7 @@ const TicketsTab = ({
       const { data } = await supabase
         .from("ticket_messages")
         .select("*")
-        .eq("ticket_id", selectedTicket.id)
+        .eq("ticket_id", ticketId)
         .order("created_at", { ascending: true });
       if (data && !cancelled) {
         setMessages((prev) => {
@@ -374,7 +385,6 @@ const TicketsTab = ({
       clearInterval(pollInterval);
       supabase.removeChannel(channel);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-subscribe only when ticket id changes
   }, [selectedTicket?.id]);
 
   useEffect(() => {

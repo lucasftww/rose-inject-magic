@@ -146,6 +146,7 @@ const Raspadinha = () => {
   const pendingQuantityRef = useRef(1);
   const pendingModeRef = useRef<RaspadinhaMode>("produtos");
   const [pendingPayment, setPendingPayment] = useState<{ id: string; mode: string; quantity: number } | null>(null);
+  const mountedRef = useRef(true);
 
   // Contas prizes pool (fixed)
   const contasPrizes: Prize[] = [
@@ -161,11 +162,13 @@ const Raspadinha = () => {
 
   // Fetch products prizes + config
   useEffect(() => {
+    let cancelled = false;
     const fetchData = async () => {
       const [{ data: prizesData }, { data: configData }] = await Promise.all([
         supabase.from("public_scratch_card_prizes").select("id, name, description, image_url").eq("active", true).order("sort_order"),
         supabase.from("scratch_card_config").select("price, active").limit(1).maybeSingle(),
       ]);
+      if (cancelled) return;
       if (prizesData) {
         setPrizes(
           prizesData
@@ -181,7 +184,10 @@ const Raspadinha = () => {
       }
       setLoading(false);
     };
-    fetchData();
+    void fetchData();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
 
@@ -225,7 +231,7 @@ const Raspadinha = () => {
 
   // Check for paid-but-unplayed scratch card payments AND active payments that may have been paid
   const checkPendingPayments = useCallback(async (silent = false) => {
-    if (!user) return;
+    if (!user || !mountedRef.current) return;
     if (!silent) setCheckingPayments(true);
     try {
       // Find recent raspadinha payments (COMPLETED or ACTIVE) from last 24h
@@ -242,12 +248,13 @@ const Raspadinha = () => {
       if (!payments || payments.length === 0) {
         if (!silent) {
           toast({ title: "Nenhum pagamento pendente encontrado" });
-          setCheckingPayments(false);
+          if (mountedRef.current) setCheckingPayments(false);
         }
         return;
       }
       
       for (const payment of payments) {
+        if (!mountedRef.current) return;
         const cart = paymentCartSnapshot(payment.cart_snapshot);
         if (cart.length === 0) continue;
         const raspadinhaItem = cart.find((item) => item.type === "raspadinha");
@@ -262,6 +269,7 @@ const Raspadinha = () => {
               { headers }
             );
             if (data.status === "COMPLETED") {
+              if (!mountedRef.current) return;
               const paymentMode = raspadinhaItem.planId?.includes("contas") ? "contas" : "produtos";
               const qty = parseInt(raspadinhaItem.planName?.match(/(\d+)x/)?.[1] || "1");
               setPendingPayment({ id: payment.id, mode: paymentMode, quantity: qty });
@@ -283,6 +291,7 @@ const Raspadinha = () => {
           .limit(1);
         
         if (!plays || plays.length === 0) {
+          if (!mountedRef.current) return;
           const paymentMode = raspadinhaItem.planId?.includes("contas") ? "contas" : "produtos";
           const qty = parseInt(raspadinhaItem.planName?.match(/(\d+)x/)?.[1] || "1");
           setPendingPayment({ id: payment.id, mode: paymentMode, quantity: qty });
@@ -304,7 +313,7 @@ const Raspadinha = () => {
         });
       }
     }
-    setCheckingPayments(false);
+    if (mountedRef.current) setCheckingPayments(false);
   }, [user]);
 
   useEffect(() => {
@@ -313,8 +322,13 @@ const Raspadinha = () => {
   }, [checkPendingPayments, paymentPhase]);
 
   useEffect(() => {
+    mountedRef.current = true;
     return () => {
-      if (pollRef.current) clearInterval(pollRef.current);
+      mountedRef.current = false;
+      if (pollRef.current) {
+        clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
     };
   }, []);
 
@@ -379,6 +393,7 @@ const Raspadinha = () => {
       );
       if (!data.success) throw new Error(data.error || "Erro ao criar cobrança");
       if (!data.payment_id) throw new Error("Resposta sem payment_id");
+      if (!mountedRef.current) return;
 
       setPaymentId(data.payment_id);
       paymentIdRef.current = data.payment_id;
@@ -406,17 +421,25 @@ const Raspadinha = () => {
           `${supabaseUrl}/functions/v1/pix-payment?action=status&payment_id=${pId}`,
           { headers }
         );
+        if (!mountedRef.current) return;
         raspadinhaPollFailCountRef.current = 0;
         if (data.status === "COMPLETED") {
-          if (pollRef.current) clearInterval(pollRef.current);
-          onPaymentCompleted();
+          if (pollRef.current) {
+            clearInterval(pollRef.current);
+            pollRef.current = null;
+          }
+          void onPaymentCompleted();
         } else if (data.status === "EXPIRED" || data.status === "FAILED" || data.status === "CANCELLED") {
-          if (pollRef.current) clearInterval(pollRef.current);
+          if (pollRef.current) {
+            clearInterval(pollRef.current);
+            pollRef.current = null;
+          }
           setPaymentPhase("idle");
           setChargeData(null);
           toast({ title: "Pagamento expirado ou cancelado", variant: "destructive" });
         }
       } catch (e: unknown) {
+        if (!mountedRef.current) return;
         raspadinhaPollFailCountRef.current += 1;
         console.error("Raspadinha payment status poll failed:", e);
         if (raspadinhaPollFailCountRef.current >= 5 && !raspadinhaPollNotifiedRef.current) {
@@ -485,6 +508,7 @@ const Raspadinha = () => {
 
 
   const onPaymentCompleted = async () => {
+    if (!mountedRef.current) return;
     setPaymentPhase("paid");
     setChargeData(null);
 
@@ -495,6 +519,7 @@ const Raspadinha = () => {
 
     try {
       const headers = await getAuthHeaders();
+      if (!mountedRef.current) return;
       const data = await safeJsonFetch<ScratchCardPlayResult>(
         `${supabaseUrl}/functions/v1/scratch-card-play`,
         {
@@ -507,6 +532,7 @@ const Raspadinha = () => {
           }),
         }
       );
+      if (!mountedRef.current) return;
       if (!data) throw new Error("Erro ao processar raspadinha");
 
       const newGrid: GridCell[] = data.grid;
@@ -532,6 +558,7 @@ const Raspadinha = () => {
       return;
     }
 
+    if (!mountedRef.current) return;
     setScratching(true);
     // Store mode for canvas paint after React re-renders
     pendingCanvasPaintRef.current = currentMode;
@@ -643,6 +670,7 @@ const Raspadinha = () => {
 
     try {
       const headers = await getAuthHeaders();
+      if (!mountedRef.current) return;
       const data = await safeJsonFetch<ScratchCardPlayResult>(
         `${supabaseUrl}/functions/v1/scratch-card-play`,
         {
@@ -655,6 +683,7 @@ const Raspadinha = () => {
           }),
         }
       );
+      if (!mountedRef.current) return;
       if (!data) throw new Error("Erro ao processar raspadinha");
 
       const newGrid: GridCell[] = data.grid;
@@ -680,8 +709,9 @@ const Raspadinha = () => {
       return;
     }
 
+    if (!mountedRef.current) return;
     setScratching(true);
-    pendingCanvasPaintRef.current = pendingPayment.mode === "contas" ? "contas" : "produtos";
+    pendingCanvasPaintRef.current = coerceRaspadinhaMode(pendingPayment.mode);
   };
 
   const isContas = mode === "contas";

@@ -2,7 +2,13 @@ import { useState, useEffect, useMemo, Fragment } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database, Json, Tables } from "@/integrations/supabase/types";
 import { fetchAllRows } from "@/lib/supabaseAllRows";
-import { registerCacheInvalidator } from "@/lib/adminCache";
+import {
+  type SaleTicket,
+  type OrderTicketRow,
+  getSalesCache,
+  setSalesCacheData,
+  SALES_CACHE_TTL,
+} from "@/lib/adminSalesCache";
 import { asOrderTicketMetadata, type OrderTicketMetadata } from "@/types/orderTicketMetadata";
 import { useAdminUsers } from "@/hooks/useAdminUsers";
 import {
@@ -11,19 +17,6 @@ import {
   Bot, RefreshCw, User, ExternalLink
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-
-type OrderTicketRow = Database["public"]["Tables"]["order_tickets"]["Row"];
-
-interface SaleTicket extends Omit<OrderTicketRow, "metadata"> {
-  metadata: OrderTicketMetadata | null;
-  product_name?: string;
-  product_image?: string | null;
-  plan_name?: string;
-  plan_price?: number;
-  username?: string | null;
-  email?: string | null;
-  stock_content?: string | null;
-}
 
 const ITEMS_PER_PAGE = 20;
 
@@ -51,17 +44,6 @@ const statusLabels: Record<string, string> = {
   finished: "Finalizado",
 };
 
-let _cachedSales: SaleTicket[] | null = null;
-let _salesCacheTs = 0;
-const SALES_CACHE_TTL = 3 * 60 * 1000;
-
-/** Allow external invalidation (e.g. from admin cache clear) */
-export function invalidateSalesCache() {
-  _cachedSales = null;
-  _salesCacheTs = 0;
-}
-registerCacheInvalidator(invalidateSalesCache);
-
 const SALES_MAX_ROWS = 2000; // cap to avoid loading huge datasets
 
 /** Get purchase type label */
@@ -73,19 +55,21 @@ const getPurchaseType = (meta: OrderTicketMetadata | null | undefined): { label:
 
 const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void }) => {
   const { emailMap: adminEmailMap, usernameMap } = useAdminUsers();
-  const [loading, setLoading] = useState(!_cachedSales);
-  const [tickets, setTickets] = useState<SaleTicket[]>(_cachedSales || []);
+  const initialCache = getSalesCache();
+  const [loading, setLoading] = useState(!initialCache.tickets);
+  const [tickets, setTickets] = useState<SaleTicket[]>(initialCache.tickets || []);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [dataLoaded, setDataLoaded] = useState(!!_cachedSales);
+  const [dataLoaded, setDataLoaded] = useState(!!initialCache.tickets);
 
   const fetchSales = async (force = false) => {
-    if (!force && _cachedSales && Date.now() - _salesCacheTs < SALES_CACHE_TTL) {
-      setTickets(_cachedSales);
+    const { tickets: cached, ts } = getSalesCache();
+    if (!force && cached && Date.now() - ts < SALES_CACHE_TTL) {
+      setTickets(cached);
       setDataLoaded(true);
       setLoading(false);
       return;
@@ -208,8 +192,7 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
       };
     });
 
-    _cachedSales = enriched;
-    _salesCacheTs = Date.now();
+    setSalesCacheData(enriched);
     setTickets(enriched);
     setDataLoaded(true);
     setLoading(false);

@@ -483,16 +483,19 @@ const Checkout = () => {
   /* ── Poll status ── */
   useEffect(() => {
     if (!paymentId || paymentStatus !== "ACTIVE") return;
+    let cancelled = false;
     statusPollFailCountRef.current = 0;
     statusPollNotifiedRef.current = false;
     const statusAction = paymentMethod === "card" ? "card-status" : paymentMethod === "crypto" ? "crypto-status" : "status";
     const checkStatus = async () => {
+      if (cancelled) return;
       setChecking(true);
       try {
         const data = await safeJsonFetch<PixPaymentStatusResult>(
           `${supabaseUrl}/functions/v1/pix-payment?action=${statusAction}&payment_id=${paymentId}`,
           { headers: { Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`, apikey: supabaseAnonKey } },
         );
+        if (cancelled) return;
         statusPollFailCountRef.current = 0;
         if (data.status && data.status !== "ACTIVE") {
           setPaymentStatus(data.status);
@@ -505,6 +508,7 @@ const Checkout = () => {
           }
         }
       } catch (e) {
+        if (cancelled) return;
         statusPollFailCountRef.current += 1;
         console.error("Checkout poll failed:", e);
         if (statusPollFailCountRef.current >= 5 && !statusPollNotifiedRef.current) {
@@ -512,11 +516,14 @@ const Checkout = () => {
           toast({ title: "Não foi possível verificar o pagamento", description: "Verifique sua conexão.", variant: "destructive" });
         }
       }
-      setChecking(false);
+      if (!cancelled) setChecking(false);
     };
     intervalRef.current = setInterval(checkStatus, 3000);
     checkStatus();
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+    return () => {
+      cancelled = true;
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
   }, [paymentId, paymentStatus, paymentMethod]);
 
   const copyCode = () => {
