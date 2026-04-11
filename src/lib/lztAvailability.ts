@@ -123,7 +123,13 @@ export const checkLztAvailability = async (
   try {
     const res = await fetch(
       `${supabaseUrl}/functions/v1/lzt-market?action=detail&item_id=${encodeURIComponent(normalizedId)}&game_type=${encodeURIComponent(gameType)}`,
-      { headers: { "Content-Type": "application/json", apikey: supabaseAnonKey } }
+      {
+        headers: {
+          "Content-Type": "application/json",
+          apikey: supabaseAnonKey,
+          Authorization: `Bearer ${supabaseAnonKey}`,
+        },
+      }
     );
     if (!res.ok) {
       const errBody = await readJsonErrorBody(res);

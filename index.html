@@ -38,9 +38,10 @@
       defer
     ></script>
     <!--
-      Meta Pixel: carrega após idle. Se vires ERR_BLOCKED_BY_CLIENT ou falta de fbevents.js,
-      é bloqueador de anúncios / modo estrito — não é bug da app. Erros tipo "Receiving end does
-      not exist" ou css-procedural.js vêm de extensões do browser.
+      Meta Pixel + pedidos a google-analytics.com/g/collect (GA4, ex. via UTMify): se vires
+      ERR_BLOCKED_BY_CLIENT ou falta de fbevents.js, é bloqueador de anúncios / modo estrito —
+      não é bug da app. Erros tipo "Receiving end does not exist" ou css-procedural.js vêm de
+      extensões do browser.
     -->
     <script>
     (function(){

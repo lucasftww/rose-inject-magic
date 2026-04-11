@@ -38,6 +38,42 @@ const devLog = (label: string, err?: unknown) => {
   if (import.meta.env.DEV) console.debug(`[metaPixel] ${label}`, err);
 };
 
+/** Headers exigidas pelo gateway Supabase + JSON para Edge Functions. */
+const relayAuthHeaders = (): Record<string, string> => ({
+  "Content-Type": "application/json",
+  apikey: supabaseAnonKey,
+  Authorization: `Bearer ${supabaseAnonKey}`,
+});
+
+/** Reduz campos inválidos que costumam gerar 400 na Meta CAPI. */
+const sanitizeRelayCustomData = (data: Record<string, unknown>): Record<string, unknown> => {
+  const out: Record<string, unknown> = {};
+  if (typeof data.content_name === "string") out.content_name = data.content_name.trim().slice(0, 500);
+  if (Array.isArray(data.content_ids)) {
+    out.content_ids = data.content_ids.map((id) => String(id)).filter(Boolean).slice(0, 100);
+  }
+  if (Array.isArray(data.contents)) {
+    out.contents = data.contents
+      .filter((c): c is { id?: unknown; quantity?: unknown } => c != null && typeof c === "object" && !Array.isArray(c))
+      .map((c) => ({
+        id: String(c.id ?? ""),
+        quantity: Math.max(1, Math.min(1000, Math.floor(Number(c.quantity) || 1))),
+      }))
+      .filter((c) => c.id.length > 0)
+      .slice(0, 100);
+  }
+  if (typeof data.content_type === "string") out.content_type = data.content_type.trim().slice(0, 50);
+  if (data.value != null) {
+    const v = Number(data.value);
+    if (Number.isFinite(v) && v >= 0) out.value = Math.round(v * 100) / 100;
+  }
+  if (typeof data.currency === "string" && /^[A-Za-z]{3}$/.test(data.currency)) {
+    out.currency = data.currency.toUpperCase();
+  }
+  if (typeof data.transaction_id === "string") out.transaction_id = data.transaction_id.trim().slice(0, 200);
+  return out;
+};
+
 // ─── SHA-256 Hashing ────────────────────────────────────────────────────────
 
 const sha256 = async (message: string): Promise<string> => {
@@ -359,8 +395,7 @@ export const getUserData = (): Record<string, string> => {
       data.external_id = _trackingIdHash;
     }
 
-    // Origin URL — critical for CAPI matching
-    data.event_source_url = window.location.href;
+    // event_source_url belongs on the event root in CAPI, not inside user_data (relay adds it from the body).
 
     // Country — always "br" (hashed for CAPI)
     if (_countryHash) data.country = _countryHash;
@@ -391,28 +426,39 @@ const sendCAPI = async (
     // Collect user data, if fbp is missing schedule a retry
     const userData = getUserData();
     const eventTime = Math.floor(Date.now() / 1000);
-    const sourceUrl = window.location.href;
+    const sourceUrl =
+      typeof window.location?.href === "string" && window.location.href.startsWith("http")
+        ? window.location.href
+        : "";
+
+    const safeCustom = sanitizeRelayCustomData(customData);
 
     const body = JSON.stringify({
       event_name: eventName,
       event_id: eventId,
       event_time: eventTime,
-      event_source_url: sourceUrl,
+      ...(sourceUrl ? { event_source_url: sourceUrl } : {}),
       action_source: "website",
       user_data: userData,
-      custom_data: customData,
+      custom_data: safeCustom,
     });
 
-    fetch(url, {
+    void fetch(url, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        apikey: supabaseAnonKey,
-      },
+      headers: relayAuthHeaders(),
       body,
       keepalive: true,
       credentials: "omit",
-    }).catch((e: unknown) => devLog("CAPI relay fetch failed", e));
+    })
+      .then((r) => {
+        if (!r.ok) devLog("CAPI relay HTTP error", r.status);
+        else void r.json().then((j: unknown) => {
+          if (j && typeof j === "object" && (j as { success?: boolean; relay?: string }).success === false) {
+            devLog("CAPI relay response", j);
+          }
+        }).catch(() => {});
+      })
+      .catch((e: unknown) => devLog("CAPI relay fetch failed", e));
 
     // If fbp or fbc was missing, retry at 1s and 3s (Meta Pixel may need time to set cookies)
     if (!userData.fbp || !userData.fbc) {
@@ -426,21 +472,27 @@ const sendCAPI = async (
               event_name: eventName,
               event_id: eventId, // same event_id = Meta deduplicates
               event_time: eventTime, // use original event_time to ensure proper deduplication
-              event_source_url: sourceUrl,
+              ...(sourceUrl ? { event_source_url: sourceUrl } : {}),
               action_source: "website",
               user_data: retryData,
-              custom_data: customData,
+              custom_data: safeCustom,
             });
-            fetch(url, {
+            void fetch(url, {
               method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                apikey: supabaseAnonKey,
-              },
+              headers: relayAuthHeaders(),
               body: retryBody,
               keepalive: true,
               credentials: "omit",
-            }).catch((e: unknown) => devLog("CAPI relay retry failed", e));
+            })
+              .then((r) => {
+                if (!r.ok) devLog("CAPI relay retry HTTP error", r.status);
+                else void r.json().then((j: unknown) => {
+                  if (j && typeof j === "object" && (j as { success?: boolean }).success === false) {
+                    devLog("CAPI relay retry response", j);
+                  }
+                }).catch(() => {});
+              })
+              .catch((e: unknown) => devLog("CAPI relay retry failed", e));
           }
         }, delay);
       }

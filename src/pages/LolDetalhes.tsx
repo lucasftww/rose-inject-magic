@@ -117,7 +117,12 @@ const fetchAccountDetail = async (itemId: string) => {
   try {
     return await safeJsonFetch<LztMarketLolDetailResponse>(
       `${supabaseUrl}/functions/v1/lzt-market?action=detail&item_id=${encodeURIComponent(itemId)}&game_type=lol`,
-      { headers: { apikey: supabaseAnonKey } }
+      {
+        headers: {
+          apikey: supabaseAnonKey,
+          Authorization: `Bearer ${supabaseAnonKey}`,
+        },
+      }
     );
   } catch (err: unknown) {
     if (err instanceof ApiError) {

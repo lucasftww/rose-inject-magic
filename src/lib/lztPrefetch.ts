@@ -19,12 +19,20 @@ export const prefetchAccountDetail = (
     queryKey: key,
     queryFn: async () => {
       const res = await fetch(
-        `${supabaseUrl}/functions/v1/lzt-market?action=detail&item_id=${encodeURIComponent(id)}&game_type=${gameType}`,
-        { headers: { "Content-Type": "application/json", apikey: supabaseAnonKey } },
+        `${supabaseUrl}/functions/v1/lzt-market?action=detail&item_id=${encodeURIComponent(id)}&game_type=${encodeURIComponent(gameType)}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            apikey: supabaseAnonKey,
+            Authorization: `Bearer ${supabaseAnonKey}`,
+          },
+        },
       );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return res.json();
     },
     staleTime: 60_000, // 1 min
+    /** Sem isto, o default (3 retries) repete o mesmo GET 410 várias vezes na consola. */
+    retry: false,
   });
 };

@@ -6,6 +6,10 @@
  *   cmd:        set SUPABASE_ACCESS_TOKEN=sbp_...
  *
  * Opcional: supabase login --token sbp_...
+ *
+ * Uma função só (ex.: após corrigir server-relay):
+ *   npm run deploy:server-relay
+ *   node scripts/deploy-edge-functions.mjs server-relay
  */
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
@@ -32,7 +36,7 @@ if (!PROJECT_REF) {
   process.exit(1);
 }
 
-const FUNCTIONS = [
+const ALL_FUNCTIONS = [
   "pix-payment",
   "scratch-card-play",
   "lzt-market",
@@ -43,12 +47,25 @@ const FUNCTIONS = [
   "robot-project",
 ];
 
+const cliNames = process.argv.slice(2).filter((a) => a && !a.startsWith("-"));
+const FUNCTIONS =
+  cliNames.length > 0
+    ? cliNames.filter((name) => {
+        if (!ALL_FUNCTIONS.includes(name)) {
+          console.error(`Função desconhecida: ${name}. Válidas: ${ALL_FUNCTIONS.join(", ")}`);
+          process.exit(1);
+        }
+        return true;
+      })
+    : ALL_FUNCTIONS;
+
 if (!process.env.SUPABASE_ACCESS_TOKEN?.trim()) {
   console.error(
     "SUPABASE_ACCESS_TOKEN não definido.\n" +
       "1. Crie um token em https://supabase.com/dashboard/account/tokens\n" +
       "2. PowerShell: $env:SUPABASE_ACCESS_TOKEN=\"sbp_...\"\n" +
-      "3. npm run deploy:supabase-functions",
+      "3. npm run deploy:supabase-functions\n" +
+      "   (só server-relay: npm run deploy:server-relay)",
   );
   process.exit(1);
 }

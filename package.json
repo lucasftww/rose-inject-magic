@@ -18,7 +18,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "supabase:repair-migrations": "node scripts/repair-migration-history.mjs",
-    "deploy:supabase-functions": "node scripts/deploy-edge-functions.mjs"
+    "deploy:supabase-functions": "node scripts/deploy-edge-functions.mjs",
+    "deploy:server-relay": "node scripts/deploy-edge-functions.mjs server-relay"
   },
   "dependencies": {
     "@fontsource/space-grotesk": "^5.2.10",

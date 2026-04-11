@@ -254,7 +254,64 @@ function itemFailsNotSoldBeforePolicy(item: LztItem): boolean {
   return false;
 }
 
-function shouldKeepItem(item: LztItem, gameType: string, _displayedPriceBrl: number) {
+/**
+ * GET /{item_id} costuma omitir agregados (`riot_lol_skin_count`, etc.) que vêm na listagem,
+ * mas traz `lolInventory` / `valorantInventory`. Sem isto, `shouldKeepItem` reprova o detalhe com 410.
+ */
+function enrichDetailItemFromNestedInventory(item: LztItem, gameType: string) {
+  const gt = String(gameType || "").toLowerCase();
+
+  const countLoLInventoryField = (raw: unknown): number => {
+    if (raw == null) return 0;
+    if (typeof raw === "string") {
+      const t = raw.trim();
+      if (!t) return 0;
+      try {
+        return countLoLInventoryField(JSON.parse(t));
+      } catch {
+        return 0;
+      }
+    }
+    if (Array.isArray(raw)) return raw.filter((x) => x != null && x !== "").length;
+    if (typeof raw === "object") return Object.keys(raw as Record<string, unknown>).length;
+    return 0;
+  };
+
+  const valorantWeaponSkinCount = (inv: unknown): number => {
+    if (!inv || typeof inv !== "object") return 0;
+    const ws = (inv as Record<string, unknown>).WeaponSkins;
+    if (ws == null) return 0;
+    if (Array.isArray(ws)) return ws.filter((x) => x != null && x !== "").length;
+    if (typeof ws === "object") return Object.keys(ws as Record<string, unknown>).length;
+    return 0;
+  };
+
+  if (gt === "lol") {
+    const inv = item.lolInventory;
+    if (inv && typeof inv === "object") {
+      const o = inv as Record<string, unknown>;
+      const skinN = countLoLInventoryField(o.Skin);
+      const champN = countLoLInventoryField(o.Champion);
+      const curSkins = Number(item.riot_lol_skin_count || 0);
+      const curChamps = Number(item.riot_lol_champion_count || 0);
+      if (skinN > curSkins) item.riot_lol_skin_count = skinN;
+      if (champN > curChamps) item.riot_lol_champion_count = champN;
+    }
+  }
+
+  if (gt === "riot" || gt === "valorant") {
+    const n = valorantWeaponSkinCount(item.valorantInventory);
+    const cur = Number(item.riot_valorant_skin_count || 0);
+    if (n > cur) item.riot_valorant_skin_count = n;
+  }
+}
+
+function shouldKeepItem(
+  item: LztItem,
+  gameType: string,
+  _displayedPriceBrl: number,
+  opts?: { skipValueGate?: boolean },
+) {
   if (item.buyer) return false;
   if (item.canBuyItem === false) return false;
   if (itemFailsNotSoldBeforePolicy(item)) return false;
@@ -273,6 +330,8 @@ function shouldKeepItem(item: LztItem, gameType: string, _displayedPriceBrl: num
     const skins = Number(item.fortnite_skin_count || item.fortnite_outfit_count || 0);
     if (skins < 10) return false;
   }
+
+  if (opts?.skipValueGate) return true;
 
   // ── Value gate: reject overpriced accounts with poor content ──
   // If the content ceiling (fair value) is less than a threshold of the raw cost,
@@ -1033,6 +1092,7 @@ Deno.serve(async (req) => {
 
     // For detail action, also add price_brl (keep full data)
     if (action === "detail" && data.item) {
+      enrichDetailItemFromNestedInventory(data.item as LztItem, gameType);
       // SECURITY: reject sold/unavailable accounts on detail too
       const itemState = data.item.item_state;
       if (data.item.buyer || itemState === "closed" || itemState === "deleted") {
@@ -1067,7 +1127,12 @@ Deno.serve(async (req) => {
 
       data.item.price_brl = getDisplayedPriceBrl(data.item, overridePrice, gameType, activeMarkup, maxCustomerBrl);
 
-      if (!shouldKeepItem(data.item, gameType, data.item.price_brl)) {
+      const passesStrict = shouldKeepItem(data.item, gameType, data.item.price_brl);
+      // Detalhe: FX/cache podem deslocar ligeiramente o value gate vs. a lista; ainda exigimos mínimos de skins.
+      const passesDetail = passesStrict || shouldKeepItem(data.item, gameType, data.item.price_brl, {
+        skipValueGate: true,
+      });
+      if (!passesDetail) {
         return new Response(
           JSON.stringify({ error: "Account does not meet quality filters", item: null }),
           { status: 410, headers: { ...corsHeaders, "Content-Type": "application/json" } },

@@ -9,6 +9,63 @@ const corsHeaders = {
 const GRAPH_API_VERSION = "v21.0";
 const DEFAULT_PIXEL_ID = "706054019233816";
 
+/** Meta CAPI custom_data: only safe shapes to reduce 400 from Graph API. */
+function sanitizeCustomData(raw: unknown): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return out;
+  const o = raw as Record<string, unknown>;
+
+  if (typeof o.content_name === "string") {
+    out.content_name = o.content_name.trim().slice(0, 500);
+  }
+  if (Array.isArray(o.content_ids)) {
+    out.content_ids = o.content_ids.map((id) => String(id)).filter(Boolean).slice(0, 100);
+  }
+  if (Array.isArray(o.contents)) {
+    out.contents = o.contents
+      .filter((c): c is Record<string, unknown> => c != null && typeof c === "object" && !Array.isArray(c))
+      .map((c) => ({
+        id: String(c.id ?? ""),
+        quantity: Math.max(1, Math.min(1000, Math.floor(Number(c.quantity) || 1))),
+      }))
+      .filter((c) => c.id.length > 0)
+      .slice(0, 100);
+  }
+  if (typeof o.content_type === "string") {
+    out.content_type = o.content_type.trim().slice(0, 50);
+  }
+  if (o.value != null) {
+    const v = Number(o.value);
+    if (Number.isFinite(v) && v >= 0) out.value = Math.round(v * 100) / 100;
+  }
+  if (typeof o.currency === "string" && /^[A-Za-z]{3}$/.test(o.currency)) {
+    out.currency = o.currency.toUpperCase();
+  }
+  if (typeof o.transaction_id === "string") {
+    out.transaction_id = o.transaction_id.trim().slice(0, 200);
+  }
+  return out;
+}
+
+function resolveEventSourceUrl(
+  bodyUrl: unknown,
+  req: Request,
+): string | undefined {
+  const u = typeof bodyUrl === "string" ? bodyUrl.trim() : "";
+  if (u.startsWith("http://") || u.startsWith("https://")) {
+    return u.slice(0, 2048);
+  }
+  const referer = req.headers.get("referer")?.trim();
+  if (referer && (referer.startsWith("http://") || referer.startsWith("https://"))) {
+    return referer.slice(0, 2048);
+  }
+  const origin = req.headers.get("origin")?.trim();
+  if (origin && (origin.startsWith("http://") || origin.startsWith("https://"))) {
+    return origin.slice(0, 2048);
+  }
+  return undefined;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -41,7 +98,15 @@ Deno.serve(async (req) => {
       });
     }
 
-    const body = await req.json();
+    let body: Record<string, unknown>;
+    try {
+      body = await req.json();
+    } catch {
+      return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const { event_name, event_id, event_time, user_data, custom_data, event_source_url, action_source } = body;
 
     if (!event_name || !event_id) {
@@ -112,14 +177,19 @@ Deno.serve(async (req) => {
       }
     }
 
+    const safeCustom = sanitizeCustomData(custom_data);
+    const resolvedUrl = resolveEventSourceUrl(event_source_url, req);
+
     const eventData: Record<string, unknown> = {
       event_name,
       event_id,
-      event_time: event_time || Math.floor(Date.now() / 1000),
-      action_source: action_source || "website",
-      event_source_url,
+      event_time: typeof event_time === "number" && Number.isFinite(event_time)
+        ? event_time
+        : Math.floor(Date.now() / 1000),
+      action_source: typeof action_source === "string" && action_source ? action_source : "website",
+      ...(resolvedUrl ? { event_source_url: resolvedUrl } : {}),
       user_data: userData,
-      custom_data: custom_data || {},
+      custom_data: safeCustom,
     };
 
     const payload = { data: [eventData] };
@@ -145,12 +215,22 @@ Deno.serve(async (req) => {
           });
         }
 
+        // Return HTTP 200 so the browser fetch does not surface a red "400" for Meta-side
+        // validation/token issues; details are still logged and returned in JSON.
         if (metaRes.status >= 400 && metaRes.status < 500) {
-          console.error("Meta CAPI error:", JSON.stringify(metaData));
-          return new Response(JSON.stringify({ error: "Meta API error", details: metaData }), {
-            status: metaRes.status,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
+          console.error("Meta CAPI client error:", metaRes.status, JSON.stringify(metaData));
+          return new Response(
+            JSON.stringify({
+              success: false,
+              relay: "meta_client_error",
+              metaHttpStatus: metaRes.status,
+              details: metaData,
+            }),
+            {
+              status: 200,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            },
+          );
         }
 
         lastError = metaData;

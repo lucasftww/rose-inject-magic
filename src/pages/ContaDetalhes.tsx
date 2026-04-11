@@ -24,7 +24,13 @@ import { isRecord } from "@/types/ticketChat";
 const fetchAccountDetail = async (itemId: string) => {
   const res = await fetch(
     `${supabaseUrl}/functions/v1/lzt-market?action=detail&item_id=${encodeURIComponent(itemId)}&game_type=valorant`,
-    { headers: { "Content-Type": "application/json", apikey: supabaseAnonKey } }
+    {
+      headers: {
+        "Content-Type": "application/json",
+        apikey: supabaseAnonKey,
+        Authorization: `Bearer ${supabaseAnonKey}`,
+      },
+    }
   );
   if (!res.ok) {
     const body = await res.json().catch(() => null);
