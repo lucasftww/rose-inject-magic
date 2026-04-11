@@ -614,7 +614,17 @@ const ContaDetalhes = () => {
   { key: "buddies" as const, label: "Buddies", icon: <Star className="h-4 w-4" />, count: buddyItems.length > 0 ? buddyItems.length : buddyUuids.length }];
 
 
-  const activeItems = activeTab === "skins" ? skinItems : activeTab === "agents" ? agentItems : buddyItems;
+  const allActiveItems = activeTab === "skins" ? skinItems : activeTab === "agents" ? agentItems : buddyItems;
+
+  // Sort alphabetically and filter by search
+  const sortedActiveItems = useMemo(() => {
+    const sorted = [...allActiveItems].sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+    if (!inventorySearch.trim()) return sorted;
+    const q = inventorySearch.toLowerCase().trim();
+    return sorted.filter(item => item.name.toLowerCase().includes(q));
+  }, [allActiveItems, inventorySearch]);
+
+  const activeItems = sortedActiveItems;
 
   return (
     <div className="min-h-screen bg-background">
