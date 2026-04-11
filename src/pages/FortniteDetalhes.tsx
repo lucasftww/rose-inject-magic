@@ -572,6 +572,12 @@ const FortniteDetalhes = () => {
                     </motion.div>
                   ))}
                 </div>
+              ) : inventorySearch ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <Search className="h-8 w-8 text-muted-foreground/30 mb-2" />
+                  <p className="text-sm text-muted-foreground">Nenhum resultado para "{inventorySearch}"</p>
+                  <button onClick={() => setInventorySearch("")} className="text-xs mt-2 underline" style={{ color: FN_PURPLE }}>Limpar busca</button>
+                </div>
               ) : (
                 <div className="flex items-center justify-center py-12">
                   <p className="text-sm text-muted-foreground">Nenhum item nesta categoria</p>
