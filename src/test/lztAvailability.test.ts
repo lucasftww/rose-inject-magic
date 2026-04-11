@@ -13,6 +13,16 @@ describe("isLztDetailItemPurchasable", () => {
     ).toBe(true);
   });
 
+  it("accepts stickied / pre_active (still listed on LZT)", () => {
+    expect(isLztDetailItemPurchasable({ item_state: "stickied", canBuyItem: true })).toBe(true);
+    expect(isLztDetailItemPurchasable({ item_state: "pre_active", canBuyItem: true })).toBe(true);
+    expect(isLztDetailItemPurchasable({ item_state: "discount_requests", canBuyItem: true })).toBe(true);
+  });
+
+  it("treats empty buyer object as no buyer", () => {
+    expect(isLztDetailItemPurchasable({ item_state: "active", buyer: {}, canBuyItem: true })).toBe(true);
+  });
+
   it("rejects sold or closed", () => {
     expect(isLztDetailItemPurchasable({ item_state: "closed" })).toBe(false);
     expect(isLztDetailItemPurchasable({ buyer: { id: 1 } })).toBe(false);

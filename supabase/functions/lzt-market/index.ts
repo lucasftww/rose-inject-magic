@@ -1,4 +1,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  hasLztBuyerAssigned,
+  isLztItemStateAwaiting,
+  isLztItemStateSoldOrRemoved,
+} from "../_shared/lztItemGuards.ts";
 import { errorMessage } from "../_shared/types.ts";
 
 const corsHeaders = {
@@ -249,8 +254,10 @@ function getDisplayedPriceBrl(
 /** Se a API devolver explicitamente que a conta já foi vendida antes no LZT, removemos da lista/detalhe. */
 function itemFailsNotSoldBeforePolicy(item: LztItem): boolean {
   const o = item as Record<string, unknown>;
-  if (o.not_sold_before === false || o.notSoldBefore === false) return true;
-  if (o.sold_before === true || o.soldBefore === true) return true;
+  const nsb = o.not_sold_before ?? o.notSoldBefore;
+  if (nsb === false || nsb === 0 || nsb === "0") return true;
+  const sb = o.sold_before ?? o.soldBefore;
+  if (sb === true || sb === 1 || sb === "1") return true;
   return false;
 }
 
@@ -312,7 +319,7 @@ function shouldKeepItem(
   _displayedPriceBrl: number,
   opts?: { skipValueGate?: boolean; skipMinSkins?: boolean; skipCanBuyCheck?: boolean },
 ) {
-  if (item.buyer) return false;
+  if (hasLztBuyerAssigned(item.buyer)) return false;
   if (!opts?.skipCanBuyCheck && item.canBuyItem === false) return false;
   if (itemFailsNotSoldBeforePolicy(item)) return false;
 
@@ -1007,9 +1014,11 @@ Deno.serve(async (req) => {
       const beforeCount = data.items.length;
       let filteredByOther = 0;
       data.items = data.items.filter((item: LztItem) => {
-        // Skip sold/closed/deleted items
-        if (item.item_state && item.item_state !== "active") { filteredByOther++; return false; }
-        if (item.buyer) { filteredByOther++; return false; }
+        if (isLztItemStateSoldOrRemoved(item.item_state) || isLztItemStateAwaiting(item.item_state)) {
+          filteredByOther++;
+          return false;
+        }
+        if (hasLztBuyerAssigned(item.buyer)) { filteredByOther++; return false; }
         // More robust check for canBuyItem (catch false or null if it's supposed to be buyable)
         if (item.canBuyItem === false) { filteredByOther++; return false; }
         
@@ -1110,22 +1119,22 @@ Deno.serve(async (req) => {
     // For detail action, also add price_brl (keep full data)
     if (action === "detail" && data.item) {
       enrichDetailItemFromNestedInventory(data.item as LztItem, gameType);
-      // SECURITY: reject sold/unavailable accounts on detail too
+      // SECURITY: vendido / removido / awaiting — não tratar `stickied`/`pre_active` como indisponível.
       const itemState = data.item.item_state;
-      if (data.item.buyer || itemState === "closed" || itemState === "deleted") {
+      if (hasLztBuyerAssigned(data.item.buyer) || isLztItemStateSoldOrRemoved(itemState)) {
         return new Response(
           JSON.stringify({ error: "Account already sold", item: null }),
           { status: 410, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
-      // Não reprovar só por `canBuyItem: false` no GET do item — a listagem ainda mostra a conta;
-      // checkout falha na LZT se realmente não for comprável.
-      if (itemState && itemState !== "active") {
+      if (isLztItemStateAwaiting(itemState)) {
         return new Response(
           JSON.stringify({ error: "Account unavailable", item: null }),
           { status: 410, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
+      // Não reprovar só por `canBuyItem: false` no GET do item — a listagem ainda mostra a conta;
+      // checkout falha na LZT se realmente não for comprável.
 
       // Normalize Fortnite field aliases for detail too
       if (gameType === "fortnite" && data.item.fortnite_outfit_count != null && data.item.fortnite_skin_count == null) {

@@ -14,8 +14,10 @@ export type LztDetailItem = {
 
 /** Alinhado à edge `lzt-market` (shouldKeepItem): conta já vendida antes no LZT. */
 export function itemFailsLztNotSoldBeforePolicy(item: Record<string, unknown>): boolean {
-  if (item.not_sold_before === false || item.notSoldBefore === false) return true;
-  if (item.sold_before === true || item.soldBefore === true) return true;
+  const nsb = item.not_sold_before ?? item.notSoldBefore;
+  if (nsb === false || nsb === 0 || nsb === "0") return true;
+  const sb = item.sold_before ?? item.soldBefore;
+  if (sb === true || sb === 1 || sb === "1") return true;
   return false;
 }
 

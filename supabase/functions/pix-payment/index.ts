@@ -1,4 +1,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  hasLztBuyerAssigned,
+  isLztItemStateAwaiting,
+  isLztItemStateSoldOrRemoved,
+} from "../_shared/lztItemGuards.ts";
 import type {
   CartSnapshotItem,
   PaymentRow,
@@ -1089,7 +1094,11 @@ async function fulfillLztAccount(supabaseAdmin: SupabaseAdminClient, payment: Pa
       try { checkData = await checkRes.json(); } catch { /* ignore */ }
       const checkItem = (checkData?.item ?? null) as Record<string, unknown> | null;
       const checkState = checkItem?.item_state;
-      if (checkItem?.buyer || (checkState && checkState !== "active")) {
+      if (
+        hasLztBuyerAssigned(checkItem?.buyer) ||
+        isLztItemStateSoldOrRemoved(checkState) ||
+        isLztItemStateAwaiting(checkState)
+      ) {
         console.error(`LZT item ${itemId} already sold (buyer=${checkItem.buyer}, state=${checkState})`);
         await createManualDeliveryTicket("Account already sold before purchase attempt");
         return;
@@ -1791,10 +1800,13 @@ async function validateAndCalculatePrice(
       const realLztPrice = Number(lztItem?.price) || 0;
       const realLztCurrency = (lztItem?.price_currency as string) || "rub";
 
-      // Check if item is still available for purchase
-      // canBuyItem === false, buyer !== null, or item_state !== "active" means unavailable
+      // canBuyItem === false, comprador real, ou estado terminal LZT (não usar só !== "active").
       const itemState = lztItem?.item_state;
-      const isSold = lztItem?.buyer != null || lztItem?.canBuyItem === false || (itemState && itemState !== "active");
+      const isSold =
+        hasLztBuyerAssigned(lztItem?.buyer) ||
+        lztItem?.canBuyItem === false ||
+        isLztItemStateSoldOrRemoved(itemState) ||
+        isLztItemStateAwaiting(itemState);
       if (realLztPrice <= 0 || isSold) {
         console.warn(`LZT item ${lztItemId} unavailable: price=${realLztPrice}, buyer=${lztItem?.buyer}, canBuyItem=${lztItem?.canBuyItem}, item_state=${itemState}`);
         return { validatedAmount: 0, validatedDiscount: 0, validatedCart: [], error: `Esta conta já foi vendida ou não está mais disponível. Por favor, escolha outra conta.` };
