@@ -1484,8 +1484,8 @@ const Contas = () => {
       setFirstPageLoaded(true);
       setHasNextPage(cached.hasNextPage);
 
-      // If cache is fresh (5 min), don't refetch
-      if (Date.now() - cached.timestamp < 300000) {
+      // If cache is fresh (~45s), don't refetch — aligns with edge/CDN list TTL so markup/max-price changes show quickly
+      if (Date.now() - cached.timestamp < 45000) {
         prevGameTabRef.current = gameTab;
         return;
       }
@@ -1614,7 +1614,7 @@ const Contas = () => {
     const cached = fetchCacheRef.current.get(cacheKey);
 
     // Use prefetch if no specific cache exists and filters are at defaults
-    if (!cached && prefetched && Date.now() - prefetched.timestamp < 300000) {
+    if (!cached && prefetched && Date.now() - prefetched.timestamp < 45000) {
       setStreamedItems(prefetched.items);
       setStreamingDone(true);
       setStreamError(null);

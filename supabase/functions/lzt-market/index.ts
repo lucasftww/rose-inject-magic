@@ -181,44 +181,64 @@ function getContentCeilingBrl(item: LztItem, gameType?: string) {
   return Math.max(ceiling, MIN_PRICE_BRL);
 }
 
-function getDisplayedPriceBrl(item: LztItem, overridePrice?: number, gameType?: string, markup?: number) {
+/**
+ * Final sale price in BRL for storefront + checkout.
+ * - Respects per-game `markup` from `lzt_config` (must not be silently overridden by content ceiling).
+ * - Optional `maxCustomerBrl` from `lzt_config.max_fetch_price`: max **displayed** price to the customer.
+ */
+function getDisplayedPriceBrl(
+  item: LztItem,
+  overridePrice?: number,
+  gameType?: string,
+  markup?: number,
+  maxCustomerBrl?: number,
+) {
   if (typeof overridePrice === "number" && overridePrice > 0) return overridePrice;
 
   const activeMarkup = markup || DEFAULT_MARKUP;
   const currency = String(item.price_currency || "rub").toLowerCase();
   const rawPrice = Number(item.price || 0);
-  let brl = rawPrice;
-  
-  if (currency === "rub") {
-    brl = rawPrice * RUB_TO_BRL;
-    brl = brl * activeMarkup;
-  } else if (currency === "usd") {
-    brl = rawPrice * USD_TO_BRL;
-    brl = brl * activeMarkup;
-  } else {
-    // BRL or unknown: increased to 2.00 for 50% minimum margin
-    brl = rawPrice * 2.00;
-  }
-  let final = brl;
 
+  let costBrl: number;
+  /** Pure multiplier result before content anti-gouging / floors (used so ceiling never erases admin markup). */
+  let rawMarkedUp: number;
+
+  if (currency === "rub") {
+    costBrl = rawPrice * RUB_TO_BRL;
+    rawMarkedUp = costBrl * activeMarkup;
+  } else if (currency === "usd") {
+    costBrl = rawPrice * USD_TO_BRL;
+    rawMarkedUp = costBrl * activeMarkup;
+  } else {
+    // BRL or unknown: 2× seller price — legacy margin path (no per-game markup column in API)
+    costBrl = rawPrice;
+    rawMarkedUp = rawPrice * 2.0;
+  }
+
+  let final = rawMarkedUp;
 
   // Enforce content-based floor so cheap listings with lots of content get a fair price
   const contentFloor = getContentFloorBrl(item, gameType);
   if (final < contentFloor) final = contentFloor;
 
-  // Enforce content-based CEILING so expensive listings with low content don't get overpriced
+  // Content ceiling: only cap *above* what markup already allows — never shave a high multiplier down
+  // (this was the root cause of e.g. Fortnite 20× not appearing in `price_brl`).
   const contentCeiling = getContentCeilingBrl(item, gameType);
-  if (final > contentCeiling) final = contentCeiling;
+  const effectiveCeiling = Math.max(contentCeiling, rawMarkedUp);
+  if (final > effectiveCeiling) final = effectiveCeiling;
 
-  // ⚠️ NEW: Ensure minimum 50% margin over cost (protect against ceiling being too aggressive)
-  const costBrl = currency === "rub" ? rawPrice * RUB_TO_BRL : currency === "usd" ? rawPrice * USD_TO_BRL : rawPrice;
-  const minMarginPrice = costBrl * 2.00; // Guarantee 50% margin even on high-cost accounts
+  // Ensure minimum 50% margin over cost
+  const minMarginPrice = costBrl * 2.0;
   if (final < minMarginPrice) final = minMarginPrice;
 
-  // 🛡️ SECURITY: Minimum absolute profit of R$ 20.00 to guarantee a fair return per sale
   const MIN_PROFIT_BRL = 20.0;
   const safeProfitPrice = costBrl + MIN_PROFIT_BRL;
   if (final < safeProfitPrice) final = safeProfitPrice;
+
+  // Admin "Preço máximo (LZT)" — max final BRL shown to the customer
+  if (typeof maxCustomerBrl === "number" && maxCustomerBrl > 0 && final > maxCustomerBrl) {
+    final = maxCustomerBrl;
+  }
 
   return final < MIN_PRICE_BRL ? MIN_PRICE_BRL : Math.round(final * 100) / 100;
 }
@@ -605,6 +625,13 @@ Deno.serve(async (req) => {
     else if ((gameType === "riot" || gameType === "valorant") && lztConfig?.markup_valorant) activeMarkup = Number(lztConfig.markup_valorant);
     else if (lztConfig?.markup_multiplier) activeMarkup = Number(lztConfig.markup_multiplier);
 
+    /** Admin UI: "Preço Máximo (LZT)" — caps final BRL shown to customers (see `getDisplayedPriceBrl`). */
+    const maxFetchRaw = Number(lztConfig?.max_fetch_price);
+    const maxCustomerBrl =
+      Number.isFinite(maxFetchRaw) && maxFetchRaw > 0 ? maxFetchRaw : undefined;
+    /** When the client does not send `pmax`, bound LZT API fetch so we do not pull irrelevant ultra-expensive listings. */
+    const listFetchCapBrl = maxCustomerBrl ?? 2500;
+
     // DETAIL: Get single item
     let apiUrl: string;
     if (action === "detail" && itemId) {
@@ -614,6 +641,7 @@ Deno.serve(async (req) => {
       const params = new URLSearchParams();
       const allowedParams = [
         "page", "pmin", "pmax", "title", "order_by", "currency",
+        "weapon_name",
         "nsb",  // not sold before
         "daybreak", // minimum days offline (inactivity)
         "rmin", "rmax", "last_rmin", "last_rmax", "previous_rmin", "previous_rmax",
@@ -713,13 +741,8 @@ Deno.serve(async (req) => {
           params.delete("pmax");
         }
       } else {
-        // Apply game-specific price caps at the API level to avoid fetching junk
-        const GAME_API_CAP_BRL: Record<string, number> = { fortnite: 1200 };
-        const apiCap = GAME_API_CAP_BRL[gameType];
-        if (apiCap) {
-          const sellerCap = convertBrlToSellerPrice(apiCap, effectiveCurrency, activeMarkup);
-          if (sellerCap) params.set("pmax", String(Math.ceil(sellerCap * 1.1)));
-        }
+        const sellerCap = convertBrlToSellerPrice(listFetchCapBrl, effectiveCurrency, activeMarkup);
+        if (sellerCap) params.set("pmax", String(Math.ceil(sellerCap * 1.1)));
       }
 
       if (gameType === "fortnite") {
@@ -800,24 +823,16 @@ Deno.serve(async (req) => {
     }
 
     const shouldCache = action !== "detail" && action !== "fast-buy" && action !== "change-price" && action !== "image-proxy";
-    const cacheKey = apiUrl + "|" + activeMarkup;
+    const cacheKey = `${apiUrl}|m=${activeMarkup}|max=${maxCustomerBrl ?? "na"}`;
     // Align in-memory + CDN TTL with fresh responses (preview 60s, list 30s; detail bypasses this cache)
     const listCacheMaxAge = previewMode ? 60 : 30;
     const listMemoryTtlMs = previewMode ? 60_000 : 30_000;
-
-    // Cap max BRL price per game (accounts above this won't sell)
-    const GAME_PRICE_CAP_BRL: Record<string, number> = { fortnite: 1200 };
-    const priceCap = GAME_PRICE_CAP_BRL[gameType] ?? Infinity;
 
     if (shouldCache) {
       const cached = globalLztCache.get(cacheKey);
       if (cached && cached.expiry > Date.now()) {
         console.log("Serving from global cache:", apiUrl);
-        // Apply price cap to cached data too
-        let cachedData = cached.data as Record<string, unknown>;
-        if (priceCap < Infinity && Array.isArray(cachedData.items)) {
-          cachedData = { ...cachedData, items: cachedData.items.filter((it: Record<string, unknown>) => (Number(it.price_brl) || 0) <= priceCap) };
-        }
+        const cachedData = cached.data as Record<string, unknown>;
         return new Response(JSON.stringify(cachedData), {
           headers: {
             ...corsHeaders,
@@ -922,7 +937,7 @@ Deno.serve(async (req) => {
         // More robust check for canBuyItem (catch false or null if it's supposed to be buyable)
         if (item.canBuyItem === false) { filteredByOther++; return false; }
         
-        const displayedPriceBrl = getDisplayedPriceBrl(item, undefined, gameType, activeMarkup);
+        const displayedPriceBrl = getDisplayedPriceBrl(item, undefined, gameType, activeMarkup, maxCustomerBrl);
         
         if (!shouldKeepItem(item, gameType, displayedPriceBrl)) {
           filteredByOther++;
@@ -964,7 +979,7 @@ Deno.serve(async (req) => {
         if (gameType === "fortnite" && item.fortnite_outfit_count != null && item.fortnite_skin_count == null) {
           item.fortnite_skin_count = item.fortnite_outfit_count;
         }
-        item.price_brl = getDisplayedPriceBrl(item, overrideMap.get(String(item.item_id)), gameType, activeMarkup);
+        item.price_brl = getDisplayedPriceBrl(item, overrideMap.get(String(item.item_id)), gameType, activeMarkup, maxCustomerBrl);
 
         // Strip heavy fields
         for (const field of STRIP_FIELDS) delete item[field];
@@ -1002,15 +1017,6 @@ Deno.serve(async (req) => {
             }
           }
           item.valorantInventory = trimmed;
-        }
-      }
-
-      // Remove items above the price cap
-      if (priceCap < Infinity) {
-        const beforeCap = data.items.length;
-        data.items = data.items.filter((it: Record<string, unknown>) => (Number(it.price_brl) || 0) <= priceCap);
-        if (data.items.length < beforeCap) {
-          log("INFO", "lzt-market", `Price cap R$${priceCap} removed ${beforeCap - data.items.length} ${gameType} items`);
         }
       }
 
@@ -1059,7 +1065,7 @@ Deno.serve(async (req) => {
         ? Number(overrideRow.custom_price_brl)
         : undefined;
 
-      data.item.price_brl = getDisplayedPriceBrl(data.item, overridePrice, gameType, activeMarkup);
+      data.item.price_brl = getDisplayedPriceBrl(data.item, overridePrice, gameType, activeMarkup, maxCustomerBrl);
 
       if (!shouldKeepItem(data.item, gameType, data.item.price_brl)) {
         return new Response(
