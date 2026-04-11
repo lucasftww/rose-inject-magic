@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Header from "@/components/Header";
 import {
   ArrowLeft, Loader2, ChevronLeft, ChevronRight,
-  CheckCircle2, Shield, ShoppingCart, X, Zap, Gift,
+  CheckCircle2, Shield, ShoppingCart, X, Zap, Gift, Search,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useMemo, useEffect, useRef, useCallback, type CSSProperties } from "react";
@@ -93,6 +93,7 @@ const FortniteDetalhes = () => {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<InventoryTab>("skins");
+  const [inventorySearch, setInventorySearch] = useState("");
   const { addItem } = useCart();
   const queryClient = useQueryClient();
 
@@ -105,6 +106,7 @@ const FortniteDetalhes = () => {
     setLightboxIndex(null);
     setActiveTab("skins");
     setLockedPriceBrl(null);
+    setInventorySearch("");
   }, [id]);
 
   const { data, isLoading, error } = useQuery({
@@ -152,7 +154,15 @@ const FortniteDetalhes = () => {
     gliders: gliderPreviews,
   };
 
-  const currentPreviews = tabPreviews[activeTab];
+  const allCurrentPreviews = tabPreviews[activeTab];
+
+  // Sort alphabetically and filter by search
+  const currentPreviews = useMemo(() => {
+    const sorted = [...allCurrentPreviews].sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+    if (!inventorySearch.trim()) return sorted;
+    const q = inventorySearch.toLowerCase().trim();
+    return sorted.filter(c => c.name.toLowerCase().includes(q));
+  }, [allCurrentPreviews, inventorySearch]);
 
   const vbucks = (raw?.fortnite_balance || raw?.fortnite_vbucks) ?? 0;
   const skinCount = raw?.fortnite_skin_count ?? 0;
