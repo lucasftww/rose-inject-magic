@@ -117,9 +117,8 @@ const Header = forwardRef<HTMLDivElement>((_props, _ref) => {
                 alt="Royal Store"
                 width={44}
                 height={44}
-                className="sm:w-9 sm:h-9"
                 decoding="async"
-                className="h-8 w-8 sm:h-9 sm:w-9 object-contain shrink-0 transition-transform duration-300 ease-out group-hover:-rotate-[8deg]"
+                className="h-10 w-10 sm:h-9 sm:w-9 object-contain shrink-0 transition-transform duration-300 ease-out group-hover:-rotate-[8deg]"
               />
               <span
                 className="text-base sm:text-lg tracking-[0.14em] whitespace-nowrap hidden sm:inline"
