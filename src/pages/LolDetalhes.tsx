@@ -2,11 +2,11 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { throwApiError } from "@/lib/apiErrors";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { safeJsonFetch, ApiError } from "@/lib/apiUtils";
-import type { DDragonChampionJson, DDragonVersionList, LztMarketLolDetailResponse } from "@/lib/edgeFunctionTypes";
+import type { DDragonVersionList } from "@/lib/edgeFunctionTypes";
 import Header from "@/components/Header";
 import {
   ArrowLeft, Shield, Loader2, ChevronLeft, ChevronRight,
-  CheckCircle2, ShoppingCart, Swords, Star, X, Zap, Trophy, Globe, TrendingUp,
+  CheckCircle2, ShoppingCart, Swords, Star, X, Zap, Trophy, Globe, TrendingUp, Search,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useMemo, useEffect, useRef } from "react";
@@ -21,6 +21,7 @@ import { lztAccountDetailQueryKey } from "@/lib/lztAccountDetailQuery";
 import { parseLolSkinIdsFromJsonString, parseLolChampionIdsFromJsonString } from "@/lib/lolInventoryJson";
 import { errorMessage } from "@/lib/errorMessage";
 import { getProxiedImageUrl } from "@/lib/lztImageProxy";
+import type { LztMarketLolDetailResponse } from "@/lib/edgeFunctionTypes";
 
 import { rankMap } from "@/lib/valorantData";
 
@@ -33,7 +34,7 @@ import lolRankEsmeraldaImg from "@/assets/lol-rank-esmeralda.png";
 import lolRankDiamanteImg from "@/assets/lol-rank-diamante.webp";
 import lolRankMestreImg from "@/assets/lol-rank-mestre.png";
 
-// ─── LoL rank config (preenchido após imports) ───
+// ─── LoL rank config ───
 const lolRankConfig: Record<string, { color: string; img: string | null }> = {
   iron:        { color: "#7e6a5e", img: lolRankFerroImg },
   bronze:      { color: "#a0603c", img: lolRankBronzeImg },
@@ -64,25 +65,51 @@ const lolRankToKey = (rank: string): string => {
 };
 
 // ─── DDragon helpers ───
-const fetchChampKeyMap = async (): Promise<Map<number, string>> => {
+// Fetches champion key→internalName map AND skin names per champion
+interface ChampData {
+  keyMap: Map<number, string>;
+  // skinNames: Map<"ChampName_skinNum", skinDisplayName>
+  skinNames: Map<string, string>;
+}
+
+const fetchChampData = async (): Promise<ChampData> => {
   try {
     const versions = await safeJsonFetch<DDragonVersionList>("https://ddragon.leagueoflegends.com/api/versions.json");
     const version = versions[0];
-    if (!version) return new Map();
-    const data = await safeJsonFetch<DDragonChampionJson>(
-      `https://ddragon.leagueoflegends.com/cdn/${version}/data/en_US/champion.json`
-    );
-    const map = new Map<number, string>();
+    if (!version) return { keyMap: new Map(), skinNames: new Map() };
+
+    // Use championFull.json to get skin names
+    const data = await safeJsonFetch<{
+      data: Record<string, {
+        key: string;
+        id?: string;
+        name?: string;
+        skins?: Array<{ num: number; name: string }>;
+      }>;
+    }>(`https://ddragon.leagueoflegends.com/cdn/${version}/data/pt_BR/championFull.json`);
+
+    const keyMap = new Map<number, string>();
+    const skinNames = new Map<string, string>();
+
     for (const [internalName, champ] of Object.entries(data.data)) {
       const keyStr = champ.key;
       if (!keyStr) continue;
       const parsed = parseInt(keyStr, 10);
-      if (Number.isFinite(parsed)) map.set(parsed, internalName);
+      if (Number.isFinite(parsed)) keyMap.set(parsed, internalName);
+
+      // Map skin names: "ChampInternalName_skinNum" → display name
+      if (champ.skins) {
+        for (const skin of champ.skins) {
+          if (skin.num === 0) continue; // skip default skin
+          const displayName = skin.name === "default" ? (champ.name || internalName) : skin.name;
+          skinNames.set(`${internalName}_${skin.num}`, displayName);
+        }
+      }
     }
-    return map;
+    return { keyMap, skinNames };
   } catch (err) {
-    console.warn("Failed to fetch LoL champ map:", err);
-    return new Map();
+    console.warn("Failed to fetch LoL champ data:", err);
+    return { keyMap: new Map(), skinNames: new Map() };
   }
 };
 
@@ -106,6 +133,7 @@ const fetchAccountDetail = async (itemId: string) => {
 // ─── Types ───
 interface SkinPreview {
   champName: string;
+  skinName: string; // actual skin display name
   skinNum: number;
   image: string;
   splashImage: string;
@@ -113,6 +141,7 @@ interface SkinPreview {
 
 interface ChampPreview {
   champName: string;
+  displayName: string;
   image: string;
 }
 
@@ -128,33 +157,32 @@ const LolDetalhes = () => {
   const [activeTab, setActiveTab] = useState<"skins" | "champions">("skins");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const { addItem } = useCart();
   const queryClient = useQueryClient();
 
-  // Price lock: prevents silent price changes from background React Query refetches
   const [lockedPriceBrl, setLockedPriceBrl] = useState<number | null>(null);
 
-  // Reset state when navigating between accounts
   useEffect(() => {
     setSelectedIndex(0);
     setLightboxIndex(null);
     setActiveTab("skins");
     setLockedPriceBrl(null);
+    setSearchQuery("");
   }, [id]);
 
-  // Fetch account detail
   const { data, isLoading, error } = useQuery({
     queryKey: lztAccountDetailQueryKey("lol", id ?? ""),
     queryFn: () => fetchAccountDetail(id!),
     enabled: !!id,
-    staleTime: 1000 * 30, // 30 seconds
+    staleTime: 1000 * 30,
     retry: false,
   });
 
-  // Fetch champ key map from DDragon
-  const { data: champKeyMap = new Map<number, string>() } = useQuery({
-    queryKey: ["lol-champ-key-map"],
-    queryFn: fetchChampKeyMap,
+  // Fetch champ data (key map + skin names) from DDragon
+  const { data: champData = { keyMap: new Map<number, string>(), skinNames: new Map<string, string>() } } = useQuery({
+    queryKey: ["lol-champ-full-data"],
+    queryFn: fetchChampData,
     staleTime: 1000 * 60 * 60 * 6,
   });
 
@@ -167,41 +195,49 @@ const LolDetalhes = () => {
   // ─── Skins: ID = champKey * 1000 + skinNum ───
   const skinPreviews = useMemo((): SkinPreview[] => {
     const skinIds = parseLolSkinIdsFromJsonString(lolSkinKey);
-
     const results: SkinPreview[] = [];
     for (const skinId of skinIds) {
       if (isNaN(skinId) || skinId <= 0) continue;
       const champKey = Math.floor(skinId / 1000);
       const skinNum = skinId % 1000;
-      if (skinNum === 0) continue; // pula skin base
-      const champName = champKeyMap.get(champKey);
+      if (skinNum === 0) continue;
+      const champName = champData.keyMap.get(champKey);
       if (champName) {
+        const skinDisplayName = champData.skinNames.get(`${champName}_${skinNum}`) || `${champName} #${skinNum}`;
         results.push({
           champName,
+          skinName: skinDisplayName,
           skinNum,
           image: `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${champName}_${skinNum}.jpg`,
           splashImage: `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${champName}_${skinNum}.jpg`,
         });
       }
     }
+    // Sort alphabetically by skin name
+    results.sort((a, b) => a.skinName.localeCompare(b.skinName, "pt-BR"));
     return results;
-  }, [lolSkinKey, champKeyMap]);
+  }, [lolSkinKey, champData]);
 
   // ─── Champions: IDs numéricos diretos ───
   const champPreviews = useMemo((): ChampPreview[] => {
     const ids = parseLolChampionIdsFromJsonString(lolChampionKey);
     const results: ChampPreview[] = [];
     for (const champId of ids) {
-      const champName = champKeyMap.get(Number(champId));
+      const champName = champData.keyMap.get(Number(champId));
       if (champName) {
+        // Try to get localized display name
+        // DDragon championFull has name field but we stored internalName in keyMap
+        // Use champName as display since it's the internal name (close enough)
         results.push({
           champName,
+          displayName: champName,
           image: `https://ddragon.leagueoflegends.com/cdn/img/champion/loading/${champName}_0.jpg`,
         });
       }
     }
+    results.sort((a, b) => a.displayName.localeCompare(b.displayName, "pt-BR"));
     return results;
-  }, [lolChampionKey, champKeyMap]);
+  }, [lolChampionKey, champData]);
 
   const rankText = item?.riot_lol_rank || "Unranked";
   const rankKey = lolRankToKey(rankText);
@@ -226,14 +262,29 @@ const LolDetalhes = () => {
     [item?.title, rankText, level, skinCount],
   );
 
-  // Se não há skins mas há campeões, muda aba padrão
   useEffect(() => {
     if (skinPreviews.length === 0 && champPreviews.length > 0) {
       setActiveTab("champions");
     }
   }, [skinPreviews.length, champPreviews.length]);
 
-  const activeItems = activeTab === "skins" ? skinPreviews : champPreviews;
+  // Filter items by search query
+  const filteredSkins = useMemo(() => {
+    if (!searchQuery.trim()) return skinPreviews;
+    const q = searchQuery.toLowerCase().trim();
+    return skinPreviews.filter(s =>
+      s.skinName.toLowerCase().includes(q) || s.champName.toLowerCase().includes(q)
+    );
+  }, [skinPreviews, searchQuery]);
+
+  const filteredChamps = useMemo(() => {
+    if (!searchQuery.trim()) return champPreviews;
+    const q = searchQuery.toLowerCase().trim();
+    return champPreviews.filter(c => c.displayName.toLowerCase().includes(q));
+  }, [champPreviews, searchQuery]);
+
+  const activeItems = activeTab === "skins" ? filteredSkins : filteredChamps;
+  const totalItems = activeTab === "skins" ? skinPreviews : champPreviews;
 
   // Gallery: skins com arte personalizada primeiro; fallback → campeões
   const galleryItems: (SkinPreview | ChampPreview)[] =
@@ -242,17 +293,16 @@ const LolDetalhes = () => {
       : champPreviews.map(c => ({
           ...c,
           skinNum: 0,
+          skinName: c.displayName,
           splashImage: `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${c.champName}_0.jpg`,
         }));
 
-  // Lock price on first load — ensures displayed price = cart price even if LZT price changes
   useEffect(() => {
     if (item && lockedPriceBrl === null) {
       setLockedPriceBrl(getPrice(item, "lol"));
     }
   }, [item, getPrice, lockedPriceBrl]);
 
-  // ViewContent tracking
   const viewTracked = useRef(false);
   useEffect(() => {
     viewTracked.current = false;
@@ -300,6 +350,12 @@ const LolDetalhes = () => {
   };
 
   const LOL_BLUE = "hsl(198,100%,45%)";
+
+  const getDisplayName = (it: SkinPreview | ChampPreview): string => {
+    if ("skinName" in it) return it.skinName;
+    if ("displayName" in it) return it.displayName;
+    return it.champName;
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -364,8 +420,12 @@ const LolDetalhes = () => {
                         />
                         <img
                           src={getProxiedImageUrl(galleryItems[selectedIndex].image)}
-                          alt={galleryItems[selectedIndex].champName}
+                          alt={getDisplayName(galleryItems[selectedIndex])}
                           className="relative z-[1] h-full w-auto object-contain drop-shadow-2xl"
+                          onError={(e) => {
+                            const img = e.currentTarget;
+                            img.style.opacity = "0.15";
+                          }}
                         />
                       </motion.div>
                     </AnimatePresence>
@@ -388,7 +448,7 @@ const LolDetalhes = () => {
                     )}
 
                     <div className="absolute top-3 left-3 z-[2] rounded-lg bg-background/95 border border-border px-3 py-1.5">
-                      <p className="text-xs font-semibold text-foreground">{galleryItems[selectedIndex].champName}</p>
+                      <p className="text-xs font-semibold text-foreground">{getDisplayName(galleryItems[selectedIndex])}</p>
                     </div>
                     <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-[2] rounded-lg bg-background/95 border border-border px-3 py-1.5">
                       <p className="text-xs font-medium text-muted-foreground">{selectedIndex + 1} / {galleryItems.length}</p>
@@ -403,7 +463,7 @@ const LolDetalhes = () => {
                   </div>
                 )}
 
-                {/* Rank + Stats Card — compact, directly under gallery */}
+                {/* Rank + Stats Card */}
                 <div className="rounded-2xl border border-border/40 bg-card overflow-hidden">
                   <div className="flex items-center justify-between px-5 py-5 sm:py-6">
                     <div className="flex items-center gap-3 sm:gap-4">
@@ -444,7 +504,6 @@ const LolDetalhes = () => {
               {/* ── RIGHT COLUMN: Purchase Card ── */}
               <div className="lg:col-span-2 order-2">
                 <div className="lg:sticky lg:top-20 space-y-4">
-                  {/* Main purchase card */}
                   <div className="rounded-2xl border bg-card p-5 sm:p-6 space-y-5" style={{ borderColor: `${rankColor}30`, boxShadow: `0 0 40px ${rankColor}08` }}>
                     <h1 className="text-base sm:text-lg font-bold text-foreground leading-snug">{cleanedTitle}</h1>
 
@@ -485,14 +544,12 @@ const LolDetalhes = () => {
                       {checkingAvailability ? "VERIFICANDO..." : "COMPRAR AGORA"}
                     </button>
 
-                    {/* Quick stats */}
                     <div className="grid grid-cols-3 rounded-xl overflow-hidden bg-secondary/20">
                       <StatHighlight label="Campeões" value={champCount} color={LOL_BLUE} />
                       <StatHighlight label="Skins" value={skinCount} color={LOL_BLUE} />
                       <StatHighlight label="Nível" value={level} color={LOL_BLUE} />
                     </div>
 
-                    {/* Trust signals */}
                     <div className="grid grid-cols-3 gap-2">
                       <div className="flex flex-col items-center gap-1.5 rounded-xl bg-secondary/20 py-2.5 px-2">
                         <Zap className="h-3.5 w-3.5" style={{ color: LOL_BLUE }} />
@@ -513,7 +570,6 @@ const LolDetalhes = () => {
                     )}
                   </div>
 
-                  {/* Full Acesso card */}
                   <div className="rounded-2xl border border-border/60 bg-card p-5 sm:p-6">
                     <div className="flex items-center gap-3 mb-3">
                       <CheckCircle2 className="h-5 w-5 shrink-0" style={{ color: LOL_BLUE }} />
@@ -535,60 +591,106 @@ const LolDetalhes = () => {
             {/* ─── Inventory Tabs ─── */}
             {(skinPreviews.length > 0 || champPreviews.length > 0) && (
               <div className="mt-6">
-                <div className="flex gap-2 mb-5">
-                  {([
-                    { key: "skins" as const, label: "Skins", count: skinPreviews.length, icon: <Star className="h-4 w-4" /> },
-                    { key: "champions" as const, label: "Campeões", count: champPreviews.length, icon: <Swords className="h-4 w-4" /> },
-                  ]).map((tab) => (
-                    <button
-                      key={tab.key}
-                      onClick={() => { setActiveTab(tab.key); setSelectedIndex(0); setLightboxIndex(null); }}
-                      className={`flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-all ${
-                        activeTab === tab.key
-                          ? "border-[hsl(198,100%,45%)] bg-[hsl(198,100%,45%,0.1)] text-[hsl(198,100%,45%)]"
-                          : "border-border bg-card text-muted-foreground hover:border-muted-foreground/50"
-                      }`}
-                    >
-                      {tab.icon}
-                      {tab.label}
-                      {tab.count > 0 && (
-                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                {/* Tabs + Search */}
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-5">
+                  <div className="flex gap-2">
+                    {([
+                      { key: "skins" as const, label: "Skins", count: skinPreviews.length, icon: <Star className="h-4 w-4" /> },
+                      { key: "champions" as const, label: "Campeões", count: champPreviews.length, icon: <Swords className="h-4 w-4" /> },
+                    ]).map((tab) => (
+                      <button
+                        key={tab.key}
+                        onClick={() => { setActiveTab(tab.key); setSearchQuery(""); }}
+                        className={`flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-all ${
                           activeTab === tab.key
-                            ? "bg-[hsl(198,100%,45%,0.2)] text-[hsl(198,100%,45%)]"
-                            : "bg-secondary text-muted-foreground"
-                        }`}>
-                          {tab.count}
-                        </span>
-                      )}
-                    </button>
-                  ))}
+                            ? "border-[hsl(198,100%,45%)] bg-[hsl(198,100%,45%,0.1)] text-[hsl(198,100%,45%)]"
+                            : "border-border bg-card text-muted-foreground hover:border-muted-foreground/50"
+                        }`}
+                      >
+                        {tab.icon}
+                        {tab.label}
+                        {tab.count > 0 && (
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                            activeTab === tab.key
+                              ? "bg-[hsl(198,100%,45%,0.2)] text-[hsl(198,100%,45%)]"
+                              : "bg-secondary text-muted-foreground"
+                          }`}>
+                            {tab.count}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Search input */}
+                  <div className="relative flex-1 max-w-xs">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder={activeTab === "skins" ? "Buscar skin..." : "Buscar campeão..."}
+                      className="w-full rounded-lg border border-border bg-card pl-9 pr-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-[hsl(198,100%,45%)] transition-colors"
+                    />
+                    {searchQuery && (
+                      <button
+                        onClick={() => setSearchQuery("")}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
                 </div>
+
+                {/* Results count when filtering */}
+                {searchQuery && (
+                  <p className="text-xs text-muted-foreground mb-3">
+                    {activeItems.length} de {totalItems.length} {activeTab === "skins" ? "skins" : "campeões"} encontrados
+                  </p>
+                )}
 
                 {activeItems.length > 0 ? (
                   <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
                     {activeItems.map((it, i) => (
                       <motion.div
-                        key={`${activeTab}-${i}`}
+                        key={`${activeTab}-${"skinNum" in it ? `${it.champName}_${it.skinNum}` : it.champName}`}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.2, delay: i * 0.015 }}
+                        transition={{ duration: 0.2, delay: Math.min(i * 0.015, 0.5) }}
                         className="group rounded-lg border border-border bg-card overflow-hidden hover:border-[hsl(198,100%,45%)/40%] transition-all cursor-pointer"
-                        onClick={() => setLightboxIndex(i)}
+                        onClick={() => {
+                          // Find original index in unfiltered list for lightbox
+                          const origIndex = totalItems.indexOf(it);
+                          setLightboxIndex(origIndex >= 0 ? origIndex : i);
+                        }}
                       >
-                        {/* Portrait image */}
                         <div className="aspect-[3/4] bg-secondary/20 overflow-hidden">
                           <img
                             src={getProxiedImageUrl(it.image)}
-                            alt={it.champName}
+                            alt={getDisplayName(it)}
                             className="h-full w-full object-cover object-top group-hover:scale-105 transition-transform duration-300"
                             loading="lazy"
+                            onError={(e) => {
+                              const img = e.currentTarget;
+                              img.style.opacity = "0.15";
+                            }}
                           />
                         </div>
                         <div className="p-2 border-t border-border">
-                          <p className="text-[11px] font-medium text-foreground truncate">{it.champName}</p>
+                          <p className="text-[11px] font-medium text-foreground truncate">{getDisplayName(it)}</p>
+                          {"champName" in it && "skinName" in it && (
+                            <p className="text-[9px] text-muted-foreground truncate">{it.champName}</p>
+                          )}
                         </div>
                       </motion.div>
                     ))}
+                  </div>
+                ) : searchQuery ? (
+                  <div className="flex flex-col items-center justify-center py-12 rounded-lg border border-border bg-card">
+                    <Search className="h-8 w-8 text-muted-foreground/30 mb-2" />
+                    <p className="text-sm text-muted-foreground">Nenhum resultado para "{searchQuery}"</p>
+                    <button onClick={() => setSearchQuery("")} className="text-xs mt-2 underline" style={{ color: LOL_BLUE }}>Limpar busca</button>
                   </div>
                 ) : (
                   <div className="flex items-center justify-center py-12 rounded-lg border border-border bg-card">
@@ -597,11 +699,11 @@ const LolDetalhes = () => {
                   </div>
                 )}
 
-                    {/* Lightbox */}
+                {/* Lightbox */}
                 <AnimatePresence>
-                  {lightboxIndex !== null && activeItems[lightboxIndex] && (() => {
-                    const cur = activeItems[lightboxIndex];
-                    const total = activeItems.length;
+                  {lightboxIndex !== null && totalItems[lightboxIndex] && (() => {
+                    const cur = totalItems[lightboxIndex];
+                    const total = totalItems.length;
                     const splashImg = 'splashImage' in cur ? String(cur.splashImage) : String(cur.image);
                     const goPrev = () => setLightboxIndex(p => p !== null ? (p - 1 + total) % total : null);
                     const goNext = () => setLightboxIndex(p => p !== null ? (p + 1) % total : null);
@@ -632,18 +734,24 @@ const LolDetalhes = () => {
                             <X className="h-5 w-5" />
                           </button>
 
-                            {/* Portrait art */}
                           <div className="relative aspect-[3/4] bg-secondary/20 overflow-hidden">
-                            {/* Splash blurred bg */}
                             <div
                               className="absolute inset-0 bg-cover bg-center opacity-30 blur-md scale-110"
-                              style={{ backgroundImage: `url(${getProxiedImageUrl(splashImg as string)})` }}
+                              style={{ backgroundImage: `url(${getProxiedImageUrl(splashImg)})` }}
                             />
-                            <img src={getProxiedImageUrl(cur.image)} alt={cur.champName} className="relative z-[1] h-full w-full object-cover object-top" />
+                            <img
+                              src={getProxiedImageUrl(cur.image)}
+                              alt={getDisplayName(cur)}
+                              className="relative z-[1] h-full w-full object-cover object-top"
+                              onError={(e) => { e.currentTarget.style.opacity = "0.15"; }}
+                            />
                           </div>
 
                           <div className="p-5 flex flex-col items-center gap-3">
-                            <h3 className="text-base font-bold text-foreground text-center">{cur.champName}</h3>
+                            <h3 className="text-base font-bold text-foreground text-center">{getDisplayName(cur)}</h3>
+                            {"champName" in cur && "skinName" in cur && (
+                              <p className="text-xs text-muted-foreground">{cur.champName}</p>
+                            )}
 
                             <div className="flex items-center gap-4 mt-1">
                               <button onClick={goPrev} className="h-9 w-9 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-muted-foreground transition-colors">
