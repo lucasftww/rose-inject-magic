@@ -69,7 +69,13 @@ const RobotProjectTab = () => {
           body: JSON.stringify({ ticket_id: ticketId }),
         }
       );
-      const result = await response.json();
+      const text = await response.text();
+      let result: { success?: boolean; error?: string; message?: string };
+      try {
+        result = text.trim() ? (JSON.parse(text) as typeof result) : {};
+      } catch {
+        throw new Error("Resposta inválida do servidor");
+      }
       if (!response.ok || !result.success) {
         throw new Error(result.error || "Não foi possível reprocessar a entrega");
       }
