@@ -2075,6 +2075,24 @@ function misticPayHeaders(creds: { clientId: string; clientSecret: string }) {
   };
 }
 
+/** CPF com 11 dígitos a partir do checkout; fallback legado se inválido. */
+function payerDocumentFromCustomerData(customerData: unknown): string {
+  if (!customerData || typeof customerData !== "object") return "00000000000";
+  const doc = String((customerData as { document?: string }).document ?? "");
+  const digits = doc.replace(/\D/g, "");
+  if (digits.length === 11) return digits;
+  return "00000000000";
+}
+
+function payerNameFromCustomerData(customerData: unknown, profileUsername: string | null | undefined): string {
+  if (customerData && typeof customerData === "object") {
+    const n = String((customerData as { name?: string }).name ?? "").trim();
+    if (n.length >= 2) return n;
+  }
+  const u = profileUsername?.trim();
+  return u && u.length > 0 ? u : "Cliente";
+}
+
 function mapMisticPayStatus(state: string): string {
   if (!state) return "ACTIVE";
   const s = state.toUpperCase();
@@ -2517,27 +2535,49 @@ Deno.serve(async (req) => {
         });
       }
 
+      const payerDocument = payerDocumentFromCustomerData(customer_data);
+      const payerName = payerNameFromCustomerData(customer_data, profile?.username ?? null);
+
       const mpRes = await fetch(`${MISTICPAY_BASE_URL}/transactions/create`, {
         method: "POST",
         headers: misticPayHeaders(misticCreds),
         body: JSON.stringify({
           amount: amountReais,
-          payerName: profile?.username || "Cliente",
-          payerDocument: "00000000000", // placeholder - MisticPay requires CPF
+          payerName,
+          payerDocument,
           transactionId: internalTxId,
           description: `Compra Royal Store - ${validatedCart.length} item(s)`,
         }),
       });
 
-      const mpData = await mpRes.json();
+      const mpRaw = await mpRes.text();
+      let mpData: { data?: unknown; message?: string; error?: string } = {};
+      try {
+        mpData = mpRaw ? (JSON.parse(mpRaw) as typeof mpData) : {};
+      } catch {
+        console.error("MisticPay create non-JSON:", mpRes.status, mpRaw.substring(0, 400));
+        return new Response(
+          JSON.stringify({ error: "Gateway PIX retornou resposta inválida. Tente novamente em instantes." }),
+          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
       console.log("MisticPay create response:", mpRes.status, JSON.stringify(mpData).substring(0, 500));
 
       if (!mpRes.ok || !mpData.data) {
+        const gatewayMsg =
+          (typeof mpData.message === "string" && mpData.message) ||
+          (typeof mpData.error === "string" && mpData.error) ||
+          null;
         console.error("MisticPay error:", mpData);
-        return new Response(JSON.stringify({ error: mpData.message || "Erro ao criar cobrança PIX" }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        const httpStatus =
+          !mpRes.ok && mpRes.status >= 400 && mpRes.status < 600 ? mpRes.status : 502;
+        return new Response(
+          JSON.stringify({ error: gatewayMsg || "Erro ao criar cobrança PIX. Verifique os dados ou tente novamente." }),
+          {
+            status: httpStatus,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
       }
 
       const chargeData = mpData.data;
@@ -2864,10 +2904,16 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    console.error("Edge function error:", err);
-    return new Response(JSON.stringify({ error: "Internal server error" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    const msg = errorMessage(err);
+    console.error("pix-payment error:", msg, err);
+    return new Response(
+      JSON.stringify({
+        error: "Não foi possível concluir o pagamento. Tente de novo ou use outro navegador.",
+      }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
   }
 });
