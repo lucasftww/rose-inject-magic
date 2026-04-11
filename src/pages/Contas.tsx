@@ -206,9 +206,24 @@ const weapons = [
 ];
 
 const sortOptions = [
-  { label: "Mais Recentes", value: "pdate_to_down", title: "Ordem da API: contas publicadas mais recentemente primeiro" },
-  { label: "Menor Preço", value: "price_to_up", title: "Ordenar pelo preço final em R$ (menor primeiro)" },
-  { label: "Maior Preço", value: "price_to_down", title: "Ordenar pelo preço final em R$ (maior primeiro)" },
+  {
+    label: "Mais Recentes",
+    shortLabel: "Recentes",
+    value: "pdate_to_down",
+    title: "Ordem da API: contas publicadas mais recentemente primeiro",
+  },
+  {
+    label: "Menor Preço",
+    shortLabel: "Menor R$",
+    value: "price_to_up",
+    title: "Ordenar pelo preço final em R$ (menor primeiro)",
+  },
+  {
+    label: "Maior Preço",
+    shortLabel: "Maior R$",
+    value: "price_to_down",
+    title: "Ordenar pelo preço final em R$ (maior primeiro)",
+  },
 ] as const;
 
 const LIST_SORT_VALUES = new Set<string>(sortOptions.map((o) => o.value));
@@ -2221,20 +2236,20 @@ const Contas = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 pt-4 pb-20">
+      <div className="mx-auto max-w-7xl px-3 min-[400px]:px-4 sm:px-6 pt-4 pb-20">
 
         {/* ─── Game Tab Switcher (segment control) ─── */}
         <nav
           className="mb-6 sm:mb-8 rounded-2xl border border-border/60 bg-card p-1 shadow-sm"
           aria-label="Categorias de contas"
         >
-          <div className="grid grid-cols-2 gap-1 sm:flex sm:flex-wrap sm:justify-stretch sm:gap-1">
+          <div className="grid grid-cols-2 gap-0.5 min-[400px]:gap-1 sm:flex sm:flex-wrap sm:justify-stretch sm:gap-1">
           <button
             type="button"
             onClick={() => switchTab("valorant")}
-            className={`touch-manipulation flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-xl px-2 sm:flex-1 sm:px-3 py-2.5 sm:py-2.5 text-xs sm:text-sm font-semibold tracking-tight transition-colors duration-200 ${
+            className={`touch-manipulation flex min-h-11 min-w-0 flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-xl px-1.5 min-[400px]:px-2 sm:flex-1 sm:px-3 py-2.5 sm:py-2.5 text-[11px] min-[400px]:text-xs sm:text-sm font-semibold tracking-tight transition-colors duration-200 ${
               isValorant
-                ? "bg-success/15 text-success ring-2 ring-success/35 ring-offset-2 ring-offset-background"
+                ? "bg-success/15 text-success ring-2 ring-success/35 ring-offset-1 ring-offset-background sm:ring-offset-2"
                 : "text-muted-foreground hover:bg-background/70 hover:text-foreground"
             }`}
           >
@@ -2244,9 +2259,9 @@ const Contas = () => {
           <button
             type="button"
             onClick={() => switchTab("lol")}
-            className={`touch-manipulation flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-xl px-2 sm:flex-1 sm:px-3 py-2.5 sm:py-2.5 text-xs sm:text-sm font-semibold tracking-tight transition-colors duration-200 ${
+            className={`touch-manipulation flex min-h-11 min-w-0 flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-xl px-1.5 min-[400px]:px-2 sm:flex-1 sm:px-3 py-2.5 sm:py-2.5 text-[11px] min-[400px]:text-xs sm:text-sm font-semibold tracking-tight transition-colors duration-200 ${
               gameTab === "lol"
-                ? "bg-[hsl(198,100%,45%,0.12)] text-[hsl(198,100%,48%)] ring-2 ring-[hsl(198,100%,45%,0.35)] ring-offset-2 ring-offset-background"
+                ? "bg-[hsl(198,100%,45%,0.12)] text-[hsl(198,100%,48%)] ring-2 ring-[hsl(198,100%,45%,0.35)] ring-offset-1 ring-offset-background sm:ring-offset-2"
                 : "text-muted-foreground hover:bg-background/70 hover:text-foreground"
             }`}
           >
@@ -2257,9 +2272,9 @@ const Contas = () => {
           <button
             type="button"
             onClick={() => switchTab("fortnite")}
-            className={`touch-manipulation flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-xl px-2 sm:flex-1 sm:px-3 py-2.5 sm:py-2.5 text-xs sm:text-sm font-semibold tracking-tight transition-colors duration-200 ${
+            className={`touch-manipulation flex min-h-11 min-w-0 flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-xl px-1.5 min-[400px]:px-2 sm:flex-1 sm:px-3 py-2.5 sm:py-2.5 text-[11px] min-[400px]:text-xs sm:text-sm font-semibold tracking-tight transition-colors duration-200 ${
               isFortnite
-                ? "bg-[hsl(265,80%,65%,0.12)] text-[hsl(265,80%,65%)] ring-2 ring-[hsl(265,80%,65%,0.45)] ring-offset-2 ring-offset-background"
+                ? "bg-[hsl(265,80%,65%,0.12)] text-[hsl(265,80%,65%)] ring-2 ring-[hsl(265,80%,65%,0.45)] ring-offset-1 ring-offset-background sm:ring-offset-2"
                 : "text-muted-foreground hover:bg-background/70 hover:text-foreground"
             }`}
           >
@@ -2269,9 +2284,9 @@ const Contas = () => {
           <button
             type="button"
             onClick={() => switchTab("minecraft")}
-            className={`touch-manipulation flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-xl px-2 sm:flex-1 sm:px-3 py-2.5 sm:py-2.5 text-xs sm:text-sm font-semibold tracking-tight transition-colors duration-200 ${
+            className={`touch-manipulation flex min-h-11 min-w-0 flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-xl px-1.5 min-[400px]:px-2 sm:flex-1 sm:px-3 py-2.5 sm:py-2.5 text-[11px] min-[400px]:text-xs sm:text-sm font-semibold tracking-tight transition-colors duration-200 ${
               isMinecraft
-                ? "ring-2 ring-offset-2 ring-offset-background"
+                ? "ring-2 ring-offset-1 ring-offset-background sm:ring-offset-2"
                 : "text-muted-foreground hover:bg-background/70 hover:text-foreground"
             }`}
             style={
@@ -2286,8 +2301,8 @@ const Contas = () => {
           </div>
         </nav>
 
-        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div>
+        <div className="flex min-w-0 flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div className="min-w-0">
             <p className="text-[11px] sm:text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
               Marketplace ·{" "}
               <span style={{ color: accentColor }}>
@@ -2295,7 +2310,7 @@ const Contas = () => {
               </span>
             </p>
             <h1
-              className={`mt-1.5 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl md:text-4xl ${isValorant ? "" : "font-sans"}`}
+              className={`mt-1.5 text-xl min-[400px]:text-2xl font-semibold tracking-tight text-foreground sm:text-3xl md:text-4xl ${isValorant ? "" : "font-sans"}`}
               style={isValorant ? { fontFamily: "'Valorant', sans-serif" } : undefined}
             >
               {isValorant
@@ -2309,16 +2324,20 @@ const Contas = () => {
             <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">
               {streamError ? "Não foi possível carregar a lista. Tente atualizar." : isLoading ? "Buscando contas disponíveis…" : `${allItems.length} ${allItems.length === 1 ? "conta listada" : "contas listadas"} · página ${displayPage} de ${totalDisplayPages}`}
             </p>
-            <p className="mt-2.5 inline-flex items-center gap-1.5 rounded-full border border-border/50 bg-secondary/30 px-3 py-1 text-[11px] text-muted-foreground">
+            <p className="mt-2.5 inline-flex max-w-full flex-wrap items-center gap-1.5 rounded-full border border-border/50 bg-secondary/30 px-2.5 py-1 text-[10px] min-[400px]:text-[11px] text-muted-foreground sm:px-3">
               Procurando softwares?{" "}
               <Link to="/produtos" className="font-medium underline-offset-2 hover:underline" style={{ color: accentColor }}>Ver Produtos →</Link>
             </p>
           </div>
-          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-0.5">
+          <div
+            className="flex min-h-[44px] w-full min-w-0 items-center gap-1.5 overflow-x-auto overscroll-x-contain scrollbar-hide pb-1 [-webkit-overflow-scrolling:touch] sm:min-h-0 sm:w-auto sm:gap-2 sm:pb-0.5 snap-x snap-mandatory px-0.5 sm:px-0"
+            role="group"
+            aria-label="Ordenar e atualizar lista"
+          >
             <button
               type="button"
               onClick={() => refetch()}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded border border-border text-muted-foreground transition-colors"
+              className="flex h-11 w-11 shrink-0 snap-start items-center justify-center rounded border border-border text-muted-foreground transition-colors sm:h-9 sm:w-9 touch-manipulation"
               style={{ "--hover-color": accentColor } as CSSProperties}
               onMouseEnter={(e) => setLinkAccentHover(e, accentColor)}
               onMouseLeave={clearLinkAccentHover}
@@ -2334,11 +2353,12 @@ const Contas = () => {
                 title={opt.title}
                 aria-pressed={sortBy === opt.value}
                 onClick={() => { setSortBy(opt.value); setDisplayPage(1); }}
-                className={`shrink-0 whitespace-nowrap rounded border px-4 py-2 text-xs font-medium transition-colors ${
+                className={`min-h-11 shrink-0 snap-start touch-manipulation whitespace-nowrap rounded border px-2.5 py-2 text-[11px] font-medium transition-colors sm:min-h-0 sm:px-4 sm:py-2 sm:text-xs ${
                   sortBy === opt.value ? accentClass : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
                 }`}
               >
-                {opt.label}
+                <span className="sm:hidden">{opt.shortLabel}</span>
+                <span className="hidden sm:inline">{opt.label}</span>
               </button>
             ))}
           </div>
@@ -2347,8 +2367,9 @@ const Contas = () => {
         <div className="mt-8 flex flex-col gap-8 lg:flex-row">
           {/* ─── Mobile Filter Button ─── */}
           <button
+            type="button"
             onClick={() => setMobileFiltersOpen(true)}
-            className="flex lg:hidden items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition-all active:scale-[0.98]"
+            className="flex min-h-12 lg:hidden items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition-all active:scale-[0.98] touch-manipulation"
             style={{ borderColor: activeFiltersCount > 0 ? `${accentColor}60` : undefined }}
           >
             <SlidersHorizontal className="h-4 w-4" style={{ color: accentColor }} />
@@ -2362,8 +2383,14 @@ const Contas = () => {
           {mobileFiltersOpen && (
             <div className="fixed inset-0 z-50 lg:hidden" style={{ touchAction: 'none' }}>
               <div className="absolute inset-0 bg-black/70" onClick={() => setMobileFiltersOpen(false)} />
-              <div className="absolute bottom-0 left-0 right-0 max-h-[85vh] overflow-y-auto rounded-t-2xl bg-card border-t border-border animate-in slide-in-from-bottom duration-300" style={{ touchAction: 'auto' }}>
-                <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card px-5 py-4 rounded-t-2xl">
+              <div
+                className="absolute bottom-0 left-0 right-0 max-h-[min(85dvh,85vh)] overflow-y-auto overscroll-y-contain rounded-t-2xl bg-card border-t border-border animate-in slide-in-from-bottom duration-300"
+                style={{ touchAction: "auto" }}
+              >
+                <div className="flex justify-center pt-2 pb-1" aria-hidden>
+                  <span className="h-1 w-10 shrink-0 rounded-full bg-muted-foreground/25" />
+                </div>
+                <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-border bg-card px-4 min-[400px]:px-5 py-3 min-[400px]:py-4 rounded-t-2xl">
                   <h3 className="flex items-center gap-2 text-base font-bold text-foreground">
                     <SlidersHorizontal className="h-4 w-4" style={{ color: accentColor }} />
                     Filtros
@@ -2378,13 +2405,14 @@ const Contas = () => {
                     </button>
                   </div>
                 </div>
-                <div className="p-5">
+                <div className="p-4 min-[400px]:p-5">
                   {renderFilterContent()}
                 </div>
-                <div className="sticky bottom-0 border-t border-border bg-card p-4">
+                <div className="sticky bottom-0 border-t border-border bg-card p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
                   <button
+                    type="button"
                     onClick={() => setMobileFiltersOpen(false)}
-                    className="w-full rounded-xl py-3 text-sm font-bold text-white transition-all active:scale-[0.98]"
+                    className="min-h-12 w-full rounded-xl py-3 text-sm font-bold text-white transition-all active:scale-[0.98] touch-manipulation"
                     style={{ background: accentColor }}
                   >
                     Ver resultados
