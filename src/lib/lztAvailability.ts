@@ -115,10 +115,17 @@ export const checkLztAvailability = async (
   const qc = options?.queryClient;
   if (qc) {
     const key = lztAccountDetailQueryKey(gameType, normalizedId);
-    const state = qc.getQueryState(key);
     const data = qc.getQueryData<{ item?: LztDetailItem }>(key);
     const cached = data?.item;
-    if (state && data && cached && String(cached.item_id) === normalizedId && !(state as { isStale?: boolean }).isStale) {
+    /** `getQueryState` não inclui `isStale` no v5 — usar `Query` do cache. */
+    const query = qc.getQueryCache().find({ queryKey: key });
+    if (
+      query &&
+      !query.isStale() &&
+      data &&
+      cached &&
+      String(cached.item_id) === normalizedId
+    ) {
       if (isLztDetailItemPurchasable(cached)) return true;
       toastItemNotPurchasable(cached);
       return false;

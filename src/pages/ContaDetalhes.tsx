@@ -375,10 +375,9 @@ const fetchValorantSkins = async (uuids: string[]) => {
         }
       }
     } catch {
-
-
       // ignore fallback failures
-    }}
+    }
+  }
   // Deduplicate by skin name (same skin via base uuid + level + chroma)
   const deduped = new Map<string, ValorantSkinItem>();
   for (const skin of matched) {
