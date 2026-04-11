@@ -206,11 +206,17 @@ const weapons = [
 ];
 
 const sortOptions = [
-  { label: "Mais Recentes", value: "pdate_to_down" },
-  { label: "Menor Preço", value: "price_to_up" },
-  { label: "Maior Preço", value: "price_to_down" },
-  { label: "Melhor Oferta", value: "best_value" },
+  { label: "Mais Recentes", value: "pdate_to_down", title: "Ordem da API: contas publicadas mais recentemente primeiro" },
+  { label: "Menor Preço", value: "price_to_up", title: "Ordenar pelo preço final em R$ (menor primeiro)" },
+  { label: "Maior Preço", value: "price_to_down", title: "Ordenar pelo preço final em R$ (maior primeiro)" },
 ] as const;
+
+const LIST_SORT_VALUES = new Set<string>(sortOptions.map((o) => o.value));
+
+function normalizeListSortParam(raw: string | null | undefined): string {
+  const v = (raw ?? "").trim();
+  return LIST_SORT_VALUES.has(v) ? v : "pdate_to_down";
+}
 
 const FN_PURPLE = "hsl(265,80%,65%)";
 const FN_BLUE = "hsl(210,100%,56%)";
@@ -1029,6 +1035,24 @@ const Contas = () => {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, []);
 
+  // Links antigos (?sort=best_value) ou valor inválido → alinhar URL e estado
+  useEffect(() => {
+    const raw = searchParams.get("sort");
+    if (raw == null || raw === "") return;
+    const normalized = normalizeListSortParam(raw);
+    if (normalized !== raw) {
+      setSortBy(normalized);
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set("sort", normalized);
+          return next;
+        },
+        { replace: true },
+      );
+    }
+  }, [searchParams, setSearchParams]);
+
   // ─── Helper: read query param with default ───
   const qp = (key: string, fallback: string = "") => searchParams.get(key) ?? fallback;
   const qpBool = (key: string) => searchParams.get(key) === "1";
@@ -1061,7 +1085,7 @@ const Contas = () => {
   // ─── Shared filters ───
   const [priceMin, setPriceMin] = useState(() => qp("pmin"));
   const [priceMax, setPriceMax] = useState(() => qp("pmax"));
-  const [sortBy, setSortBy] = useState<string>(() => qp("sort", "pdate_to_down"));
+  const [sortBy, setSortBy] = useState<string>(() => normalizeListSortParam(qp("sort", "pdate_to_down")));
   const [searchQuery, setSearchQuery] = useState(() => qp("q"));
   const [lvlMin, setLvlMin] = useState(() => qp("lvlMin"));
   const [lvlMax, setLvlMax] = useState(() => qp("lvlMax"));
@@ -1290,9 +1314,8 @@ const Contas = () => {
   const buildParams = useCallback((pageNum: number = 1): Record<string, string | string[]> => {
     const params: Record<string, string | string[]> = {};
     params.page = String(pageNum);
-    // Send user's chosen sort to API (validated enum values from LZT API)
-    // "best_value" is client-side only — use date order from API as base
-    params.order_by = sortBy === "best_value" ? "pdate_to_down" : (sortBy || "pdate_to_down");
+    // Ordenação enviada à API LZT (preço reordenado no cliente com price_brl)
+    params.order_by = normalizeListSortParam(sortBy);
     if (searchQuery) params.title = searchQuery;
 
     // Send price filters to API so server filters before returning
@@ -1768,23 +1791,6 @@ const Contas = () => {
     }
     if (sortBy === "price_to_down") {
       return filtered.sort((a, b) => getBrlPrice(b) - getBrlPrice(a));
-    }
-
-    // "Melhor Oferta": sort by content/price ratio (more skins per R$ = better value)
-    if (sortBy === "best_value") {
-      const getContentScore = (item: LztItem): number => {
-        if (gameTab === "valorant") return item.riot_valorant_skin_count ?? 0;
-        if (gameTab === "lol") return item.riot_lol_skin_count ?? 0;
-        if (gameTab === "fortnite") return item.fortnite_skin_count ?? 0;
-        if (gameTab === "minecraft") return (item.minecraft_capes_count ?? 0) + (item.minecraft_hypixel_level ?? 0);
-        return 0;
-      };
-      return filtered.sort((a, b) => {
-        const valueA = getContentScore(a) / (getBrlPrice(a) || 1);
-        const valueB = getContentScore(b) / (getBrlPrice(b) || 1);
-        if (Math.abs(valueB - valueA) > 0.0001) return valueB - valueA;
-        return getBrlPrice(a) - getBrlPrice(b); // tiebreaker: cheaper first
-      });
     }
 
     // Default sort (pdate_to_down = "Mais Recentes"): preserve API date order for ALL games.
@@ -2305,22 +2311,27 @@ const Contas = () => {
               <Link to="/produtos" className="font-medium underline-offset-2 hover:underline" style={{ color: accentColor }}>Ver Produtos →</Link>
             </p>
           </div>
-          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-0.5">
             <button
+              type="button"
               onClick={() => refetch()}
-              className="flex h-9 w-9 items-center justify-center rounded border border-border text-muted-foreground transition-colors"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded border border-border text-muted-foreground transition-colors"
               style={{ "--hover-color": accentColor } as CSSProperties}
               onMouseEnter={(e) => setLinkAccentHover(e, accentColor)}
               onMouseLeave={clearLinkAccentHover}
-              title="Atualizar"
+              title="Atualizar lista (busca de novo na API)"
+              aria-label="Atualizar lista de contas"
             >
               <RefreshCw className="h-4 w-4" />
             </button>
             {sortOptions.map((opt) => (
               <button
+                type="button"
                 key={opt.value}
+                title={opt.title}
+                aria-pressed={sortBy === opt.value}
                 onClick={() => { setSortBy(opt.value); setDisplayPage(1); }}
-                className={`rounded border px-4 py-2 text-xs font-medium transition-colors ${
+                className={`shrink-0 whitespace-nowrap rounded border px-4 py-2 text-xs font-medium transition-colors ${
                   sortBy === opt.value ? accentClass : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
                 }`}
               >
