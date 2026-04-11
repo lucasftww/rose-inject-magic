@@ -6,7 +6,8 @@ export const queryClient = new QueryClient({
     queries: {
       staleTime: 5 * 60 * 1000,
       gcTime: 10 * 60 * 1000,
-      retry: 1,
+      /** Evita repetir o mesmo GET (ex.: 410 do lzt-market detail) na consola. */
+      retry: false,
       refetchOnWindowFocus: false,
     },
   },

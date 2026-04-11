@@ -310,25 +310,27 @@ function shouldKeepItem(
   item: LztItem,
   gameType: string,
   _displayedPriceBrl: number,
-  opts?: { skipValueGate?: boolean },
+  opts?: { skipValueGate?: boolean; skipMinSkins?: boolean; skipCanBuyCheck?: boolean },
 ) {
   if (item.buyer) return false;
-  if (item.canBuyItem === false) return false;
+  if (!opts?.skipCanBuyCheck && item.canBuyItem === false) return false;
   if (itemFailsNotSoldBeforePolicy(item)) return false;
 
   // ── Quality gates: minimum content thresholds ──
-  const isValorant = gameType === "riot" || gameType === "valorant";
-  if (isValorant) {
-    const skins = Number(item.riot_valorant_skin_count || 0);
-    if (skins < 5) return false;
-  }
-  if (gameType === "lol") {
-    const skins = Number(item.riot_lol_skin_count || 0);
-    if (skins < 10) return false;
-  }
-  if (gameType === "fortnite") {
-    const skins = Number(item.fortnite_skin_count || item.fortnite_outfit_count || 0);
-    if (skins < 10) return false;
+  if (!opts?.skipMinSkins) {
+    const isValorant = gameType === "riot" || gameType === "valorant";
+    if (isValorant) {
+      const skins = Number(item.riot_valorant_skin_count || 0);
+      if (skins < 5) return false;
+    }
+    if (gameType === "lol") {
+      const skins = Number(item.riot_lol_skin_count || 0);
+      if (skins < 10) return false;
+    }
+    if (gameType === "fortnite") {
+      const skins = Number(item.fortnite_skin_count || item.fortnite_outfit_count || 0);
+      if (skins < 10) return false;
+    }
   }
 
   if (opts?.skipValueGate) return true;
@@ -956,6 +958,21 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Normalizar formato da resposta GET /{item_id} (às vezes `items[0]` ou objeto plano sem `item`)
+    if (action === "detail" && itemId) {
+      const d = data as Record<string, unknown>;
+      if (!d.item) {
+        if (Array.isArray(d.items) && d.items[0] && typeof d.items[0] === "object") {
+          d.item = d.items[0];
+        } else if (d.item_id != null && (typeof d.item_id === "string" || typeof d.item_id === "number")) {
+          const flat: Record<string, unknown> = { ...d };
+          delete flat.items;
+          delete flat.item;
+          d.item = flat;
+        }
+      }
+    }
+
     if (action !== "detail") {
       if (!Array.isArray(data.items)) data.items = [];
 
@@ -1101,7 +1118,9 @@ Deno.serve(async (req) => {
           { status: 410, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
-      if (data.item.canBuyItem === false || (itemState && itemState !== "active")) {
+      // Não reprovar só por `canBuyItem: false` no GET do item — a listagem ainda mostra a conta;
+      // checkout falha na LZT se realmente não for comprável.
+      if (itemState && itemState !== "active") {
         return new Response(
           JSON.stringify({ error: "Account unavailable", item: null }),
           { status: 410, headers: { ...corsHeaders, "Content-Type": "application/json" } },
@@ -1128,9 +1147,14 @@ Deno.serve(async (req) => {
       data.item.price_brl = getDisplayedPriceBrl(data.item, overridePrice, gameType, activeMarkup, maxCustomerBrl);
 
       const passesStrict = shouldKeepItem(data.item, gameType, data.item.price_brl);
-      // Detalhe: FX/cache podem deslocar ligeiramente o value gate vs. a lista; ainda exigimos mínimos de skins.
-      const passesDetail = passesStrict || shouldKeepItem(data.item, gameType, data.item.price_brl, {
+      const passesNoValue = passesStrict || shouldKeepItem(data.item, gameType, data.item.price_brl, {
         skipValueGate: true,
+      });
+      // Último nível: contadores por vezes ausentes no JSON do item — ainda bloqueia vendido/policy.
+      const passesDetail = passesNoValue || shouldKeepItem(data.item, gameType, data.item.price_brl, {
+        skipValueGate: true,
+        skipMinSkins: true,
+        skipCanBuyCheck: true,
       });
       if (!passesDetail) {
         return new Response(
