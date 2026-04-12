@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database, Tables } from "@/integrations/supabase/types";
 import { fetchAllRows } from "@/lib/supabaseAllRows";
 import { getCached, setCache, getUsdToBrl, invalidateAdminCache } from "@/lib/adminCache";
+import { buildRobotSalesLedgerFromPayments } from "@/lib/adminRobotSalesLedger";
 import { paymentCartSnapshot } from "@/types/paymentCart";
 import { asOrderTicketMetadata } from "@/types/orderTicketMetadata";
 import { useAdminUsers } from "@/hooks/useAdminUsers";
@@ -30,7 +31,7 @@ type LztSalesCostRow = Pick<Tables<"lzt_sales">, "buy_price" | "created_at">;
 /** Linhas agregadas (fetchAllRows) — sem exigir todos os campos da tabela */
 type PaymentAggregate = Pick<
   PaymentRow,
-  "amount" | "discount_amount" | "user_id" | "cart_snapshot" | "status" | "created_at" | "paid_at"
+  "id" | "amount" | "discount_amount" | "user_id" | "cart_snapshot" | "status" | "created_at" | "paid_at"
 >;
 
 const statusColors: Record<string, string> = {
@@ -107,7 +108,7 @@ async function fetchOverviewDashboard(): Promise<OverviewDashboardData> {
     const usdToBrl = await getUsdToBrl();
 
       // Use shared cache for heavy queries
-      const CACHE_KEY_PAYMENTS = "admin_payments_completed";
+      const CACHE_KEY_PAYMENTS = "admin_payments_completed_v2";
       const CACHE_KEY_ORDERS = "admin_orders_all";
       const CACHE_KEY_LZT_COSTS = "admin_lzt_costs";
 
@@ -121,7 +122,7 @@ async function fetchOverviewDashboard(): Promise<OverviewDashboardData> {
         cachedPayments
           ? Promise.resolve(cachedPayments)
           : fetchAllRows<PaymentAggregate>("payments", {
-              select: "amount, discount_amount, user_id, cart_snapshot, status, created_at, paid_at",
+              select: "id, amount, discount_amount, user_id, cart_snapshot, status, created_at, paid_at",
               filters: [{ column: "status", op: "eq", value: "COMPLETED" }],
             }),
         supabase.from("products").select("id, name, robot_game_id, robot_markup_percent").not("robot_game_id", "is", null),
@@ -166,50 +167,29 @@ async function fetchOverviewDashboard(): Promise<OverviewDashboardData> {
         const productIds = robotProducts.map((p) => p.id);
         const productMap = Object.fromEntries(robotProducts.map((p) => [p.id, p]));
 
-        const plansRes = await supabase.from("product_plans").select("id, name, price").in("product_id", productIds);
+        const plansRes = await supabase
+          .from("product_plans")
+          .select("id, name, price, robot_duration_days")
+          .in("product_id", productIds);
 
-        const robotTickets = (allOrdersRes || []).filter(
-          (t) =>
-            t.status === "delivered" &&
-            productIds.includes(t.product_id) &&
-            asOrderTicketMetadata(t.metadata).type !== "lzt-account",
+        const planById = Object.fromEntries(
+          (plansRes.data || []).map((p) => [p.id, { name: p.name, robot_duration_days: p.robot_duration_days }]),
         );
-        const planMap = Object.fromEntries((plansRes.data || []).map((p) => [p.id, p]));
 
-        const paidPriceMap = new Map<string, number[]>();
-        for (const pay of ((allPaymentsRes || []) as PaymentAggregate[])) {
-          const snapshot = paymentCartSnapshot(pay.cart_snapshot);
-          if (snapshot.length === 0) continue;
-          const cartTotal = snapshot.reduce((sum, item) => sum + (Number(item.price) || 0), 0);
-          const actualPaid = Number(pay.amount) / 100;
-          for (const item of snapshot) {
-            const key = `${pay.user_id}|${item.productId}|${item.planId}`;
-            if (item.price != null) {
-              const proportion = cartTotal > 0 ? (Number(item.price) / cartTotal) : 0;
-              const arr = paidPriceMap.get(key) || [];
-              arr.push(actualPaid * proportion);
-              paidPriceMap.set(key, arr);
-            }
-          }
-        }
-
-        const costs: { cost: number; created_at: string }[] = [];
-        robotTickets.forEach((t) => {
-          const product = productMap[t.product_id];
-          const plan = planMap[t.product_plan_id];
-          const meta = asOrderTicketMetadata(t.metadata);
-          const key = `${t.user_id}|${t.product_id}|${t.product_plan_id}`;
-          const revenue = paidPriceMap.get(key)?.shift() ?? 0;
-          let cost = 0;
-          if (meta.amount_spent && Number(meta.amount_spent) > 0) {
-            // Real cost = 60% of amount_spent (40% cashback from Robot Project)
-            cost = Number(meta.amount_spent) * 0.6 * usdToBrl;
-          } else if (!meta.is_free && product?.robot_markup_percent) {
-            cost = revenue / (1 + (product.robot_markup_percent || 50) / 100);
-          }
-          costs.push({ cost: Math.round(cost * 100) / 100, created_at: t.created_at || "" });
-        });
-        robotCosts = costs;
+        const ledger = buildRobotSalesLedgerFromPayments(
+          robotProducts.map((p) => ({ id: p.id, name: p.name, robot_markup_percent: p.robot_markup_percent })),
+          planById,
+          (allPaymentsRes || []).map((p) => ({
+            id: p.id,
+            user_id: p.user_id,
+            amount: Number(p.amount),
+            cart_snapshot: p.cart_snapshot,
+            paid_at: p.paid_at,
+            created_at: p.created_at,
+          })),
+          null,
+        );
+        robotCosts = ledger.map((r) => ({ cost: r.cost, created_at: r.created_at }));
       }
 
       let recentOrders: OrderTicket[] = [];

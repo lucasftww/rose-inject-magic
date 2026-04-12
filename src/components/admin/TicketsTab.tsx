@@ -490,7 +490,8 @@ const TicketsTab = ({
       }
       const confirmed = window.confirm(
         `Excluir permanentemente ${pending} ticket(s) com status "Entregue"?\n\n` +
-          "O histórico de chat será apagado. Os clientes deixam de ver esses pedidos. Não dá para desfazer."
+          "O histórico de chat será apagado. Os clientes deixam de ver esses pedidos. Não dá para desfazer.\n\n" +
+          "Os relatórios de Lucro Robot / Financeiro usam pagamentos PIX no banco; apagar tickets não apaga vendas."
       );
       if (!confirmed) return;
 

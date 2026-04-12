@@ -1,11 +1,12 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { Database, Json } from "@/integrations/supabase/types";
+import type { Json } from "@/integrations/supabase/types";
 import { fetchAllRows } from "@/lib/supabaseAllRows";
 import { getCached, setCache, getUsdToBrl, invalidateAdminCache } from "@/lib/adminCache";
+import { buildRobotSalesLedgerFromPayments } from "@/lib/adminRobotSalesLedger";
 import { paymentCartSnapshot, type PaymentCartLine } from "@/types/paymentCart";
-import { asOrderTicketMetadata, type OrderTicketMetadata } from "@/types/orderTicketMetadata";
+import type { OrderTicketMetadata } from "@/types/orderTicketMetadata";
 import {
   Loader2, DollarSign, TrendingUp, TrendingDown,
   Download, Wallet, Users, ArrowUp, ArrowDown, Minus, Gamepad2,
@@ -18,6 +19,7 @@ import {
 } from "recharts";
 
 interface PaymentRow {
+  id: string;
   amount: number;
   status: string;
   created_at: string;
@@ -167,7 +169,7 @@ async function fetchFinanceDashboard(): Promise<{
 
   try {
     // Use shared cache for heavy queries
-    const CACHE_KEY_PAYMENTS = "admin_payments_completed";
+    const CACHE_KEY_PAYMENTS = "admin_payments_completed_v2";
     const CACHE_KEY_LZT = "admin_lzt_sales_full";
     const CACHE_KEY_RESELLER = "admin_reseller_purchases";
 
@@ -179,7 +181,7 @@ async function fetchFinanceDashboard(): Promise<{
       cachedPayments
         ? Promise.resolve(cachedPayments)
         : fetchAllRows<PaymentRow>("payments", {
-            select: "amount, status, created_at, paid_at, cart_snapshot, payment_method, discount_amount, user_id",
+            select: "id, amount, status, created_at, paid_at, cart_snapshot, payment_method, discount_amount, user_id",
             filters: [{ column: "status", op: "eq", value: "COMPLETED" }],
             order: { column: "paid_at", ascending: false },
           }),
@@ -216,72 +218,45 @@ async function fetchFinanceDashboard(): Promise<{
 
     const robotProducts = robotProductsRes.data || [];
     if (robotProducts.length > 0) {
-      const productIds = robotProducts.map(p => p.id);
-      const productMap = Object.fromEntries(robotProducts.map(p => [p.id, p]));
+      const productIds = robotProducts.map((p) => p.id);
 
-      type DelivTicketRow = Pick<
-        Database["public"]["Tables"]["order_tickets"]["Row"],
-        "id" | "created_at" | "product_id" | "product_plan_id" | "user_id" | "metadata" | "status"
-      >;
+      const { data: plansData } = await supabase
+        .from("product_plans")
+        .select("id, name, price, robot_duration_days")
+        .in("product_id", productIds);
 
-      const [ticketsRes, plansRes] = await Promise.all([
-        fetchAllRows<DelivTicketRow>("order_tickets", {
-          select: "id, created_at, product_id, product_plan_id, user_id, metadata, status",
-          filters: [{ column: "status", op: "eq", value: "delivered" }],
-          order: { column: "created_at", ascending: false },
-        }),
-        supabase.from("product_plans").select("id, name, price, robot_duration_days").in("product_id", productIds),
-      ]);
-
-      const robotTicketsRaw = ticketsRes.filter(
-        (t) => productIds.includes(t.product_id) && asOrderTicketMetadata(t.metadata).type !== "lzt-account",
+      const planById = Object.fromEntries(
+        (plansData || []).map((p) => [p.id, { name: p.name, robot_duration_days: p.robot_duration_days }]),
       );
-      const planMap = Object.fromEntries((plansRes.data || []).map((p) => [p.id, p]));
 
-      const paidPriceMap = new Map<string, number[]>();
-      for (const pay of paymentsData) {
-        const snapshot = paymentCartSnapshot(pay.cart_snapshot);
-        if (snapshot.length === 0) continue;
+      const emptyMeta = {} as OrderTicketMetadata;
+      const ledger = buildRobotSalesLedgerFromPayments(
+        robotProducts.map((p) => ({ id: p.id, name: p.name, robot_markup_percent: p.robot_markup_percent })),
+        planById,
+        paymentsData.map((p) => ({
+          id: p.id,
+          user_id: p.user_id,
+          amount: Number(p.amount),
+          cart_snapshot: p.cart_snapshot,
+          paid_at: p.paid_at,
+          created_at: p.created_at,
+        })),
+        null,
+      );
 
-        const cartTotal = snapshot.reduce((sum, item) => sum + (Number(item.price) || 0), 0);
-        const actualPaid = pay.amount / 100;
-
-        for (const item of snapshot) {
-          const key = `${pay.user_id}|${item.productId}|${item.planId}`;
-          if (item.price != null) {
-            const proportion = cartTotal > 0 ? (Number(item.price) / cartTotal) : 0;
-            const arr = paidPriceMap.get(key) || [];
-            arr.push(actualPaid * proportion);
-            paidPriceMap.set(key, arr);
-          }
-        }
-      }
-
-      const enriched: RobotTicket[] = robotTicketsRaw.map((t) => {
-        const product = productMap[t.product_id];
-        const plan = planMap[t.product_plan_id];
-        const meta = asOrderTicketMetadata(t.metadata);
-        
-        const key = `${t.user_id}|${t.product_id}|${t.product_plan_id}`;
-        const revenues = paidPriceMap.get(key);
-        const revenue = revenues?.shift() ?? 0;
-        let cost = 0;
-        if (meta.amount_spent && Number(meta.amount_spent) > 0) {
-          // Real cost = 60% of amount_spent (40% cashback from Robot Project)
-          cost = Number(meta.amount_spent) * 0.6 * currentRate;
-        } else if (meta.is_free) {
-          cost = 0;
-        } else if (product?.robot_markup_percent) {
-          cost = revenue / (1 + (product.robot_markup_percent || 50) / 100);
-        }
-        return {
-          id: t.id, created_at: t.created_at || "", product_id: t.product_id,
-          product_plan_id: t.product_plan_id, user_id: t.user_id, metadata: meta,
-          product_name: product?.name || "Produto Robot", plan_name: plan?.name || "—",
-          revenue, cost: Math.round(cost * 100) / 100, profit: Math.round((revenue - cost) * 100) / 100,
-        };
-      });
-      robotTickets = enriched;
+      robotTickets = ledger.map((r) => ({
+        id: r.id,
+        created_at: r.created_at,
+        product_id: r.product_id ?? "",
+        product_plan_id: r.product_plan_id ?? "",
+        user_id: r.user_id ?? "",
+        metadata: emptyMeta,
+        product_name: r.product_name,
+        plan_name: r.plan_name,
+        revenue: r.revenue,
+        cost: r.cost,
+        profit: r.profit,
+      }));
     }
 
     return {

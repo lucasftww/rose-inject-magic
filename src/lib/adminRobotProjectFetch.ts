@@ -1,9 +1,11 @@
 import { getUsdToBrl } from "@/lib/adminCache";
+import { buildRobotSalesLedgerFromPayments, type RobotSale } from "@/lib/adminRobotSalesLedger";
 import { supabase, supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
 import type { Database, Json, Tables } from "@/integrations/supabase/types";
 import { fetchAllRows } from "@/lib/supabaseAllRows";
-import { paymentCartSnapshot } from "@/types/paymentCart";
 import { asOrderTicketMetadata } from "@/types/orderTicketMetadata";
+
+export type { RobotSale } from "@/lib/adminRobotSalesLedger";
 
 export type RobotProjectSalesPeriod = "7d" | "30d" | "all";
 
@@ -28,18 +30,6 @@ export interface ProductWithRobot {
   robot_markup_percent: number | null;
   hasStock: boolean;
   stockCount: number;
-}
-
-export interface RobotSale {
-  id: string;
-  created_at: string;
-  product_name: string;
-  plan_name: string;
-  revenue: number;
-  cost: number;
-  profit: number;
-  status: string;
-  duration: number | null;
 }
 
 export interface PendingRobotTicket {
@@ -162,7 +152,7 @@ async function fetchPendingRobotTickets(): Promise<PendingRobotTicket[]> {
   });
 }
 
-async function fetchRobotSalesForPeriod(period: RobotProjectSalesPeriod, rate: number): Promise<RobotSale[]> {
+async function fetchRobotSalesForPeriod(period: RobotProjectSalesPeriod): Promise<RobotSale[]> {
   const { data: robotProducts } = await supabase
     .from("products")
     .select("id, name, robot_game_id, robot_markup_percent")
@@ -171,7 +161,6 @@ async function fetchRobotSalesForPeriod(period: RobotProjectSalesPeriod, rate: n
   if (!robotProducts || robotProducts.length === 0) return [];
 
   const productIds = robotProducts.map((p) => p.id);
-  const productMap = Object.fromEntries(robotProducts.map((p) => [p.id, p]));
 
   let dateFilter: string | null = null;
   if (period === "7d") {
@@ -180,110 +169,38 @@ async function fetchRobotSalesForPeriod(period: RobotProjectSalesPeriod, rate: n
     dateFilter = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
   }
 
-  type RobotTicketRow = Pick<
-    Database["public"]["Tables"]["order_tickets"]["Row"],
-    "id" | "created_at" | "product_id" | "product_plan_id" | "status" | "metadata" | "user_id"
-  >;
+  const { data: plansData } = await supabase
+    .from("product_plans")
+    .select("id, name, robot_duration_days")
+    .in("product_id", productIds);
 
-  let allTickets: RobotTicketRow[];
-  if (dateFilter) {
-    allTickets = await fetchAllRows<RobotTicketRow>("order_tickets", {
-      select: "id, created_at, product_id, product_plan_id, status, metadata, user_id",
-      filters: [
-        { column: "status", op: "eq", value: "delivered" },
-        { column: "created_at", op: "gte", value: dateFilter },
-      ],
-      order: { column: "created_at", ascending: false },
-    });
-  } else {
-    allTickets = await fetchAllRows<RobotTicketRow>("order_tickets", {
-      select: "id, created_at, product_id, product_plan_id, status, metadata, user_id",
-      filters: [{ column: "status", op: "eq", value: "delivered" }],
-      order: { column: "created_at", ascending: false },
-    });
-  }
-
-  const tickets = allTickets.filter(
-    (t) => productIds.includes(t.product_id) && asOrderTicketMetadata(t.metadata).type !== "lzt-account",
+  const planById = Object.fromEntries(
+    (plansData || []).map((p) => [p.id, { name: p.name, robot_duration_days: p.robot_duration_days }]),
   );
-  if (tickets.length === 0) return [];
 
-  const planIds = [...new Set(tickets.map((t) => t.product_plan_id).filter(Boolean))];
-  const ticketUserIds = [...new Set(tickets.map((t) => t.user_id))];
+  type PayRow = {
+    id: string;
+    user_id: string;
+    amount: number;
+    cart_snapshot: Json | null;
+    paid_at: string | null;
+    created_at: string | null;
+  };
 
-  const [plansRes, robotPayments] = await Promise.all([
-    planIds.length > 0
-      ? supabase.from("product_plans").select("id, name, price, robot_duration_days").in("id", planIds)
-      : Promise.resolve({ data: [] as { id: string; name: string; price: number; robot_duration_days: number | null }[] }),
-    (async () => {
-      const batchSize = 50;
-      const allPayments: { user_id: string; amount: number; cart_snapshot: Json | undefined; status: string }[] = [];
-      for (let i = 0; i < ticketUserIds.length; i += batchSize) {
-        const batch = ticketUserIds.slice(i, i + batchSize);
-        const rows = await fetchAllRows("payments", {
-          select: "user_id, amount, cart_snapshot, status",
-          filters: [
-            { column: "status", op: "eq", value: "COMPLETED" },
-            { column: "user_id", op: "in", value: batch },
-          ],
-          order: { column: "created_at", ascending: false },
-        });
-        allPayments.push(...(rows as typeof allPayments));
-      }
-      return allPayments;
-    })(),
-  ]);
-
-  const planMap = Object.fromEntries((plansRes.data || []).map((p) => [p.id, p]));
-
-  const paidPriceMap = new Map<string, number[]>();
-  for (const pay of (robotPayments || []) as { cart_snapshot: Json | undefined; amount: number; user_id: string }[]) {
-    const snapshot = paymentCartSnapshot(pay.cart_snapshot);
-    if (snapshot.length === 0) continue;
-
-    const cartTotal = snapshot.reduce((sum, item) => sum + (Number(item.price) || 0), 0);
-    const actualPaid = pay.amount / 100;
-
-    for (const item of snapshot) {
-      const key = `${pay.user_id}|${item.productId}|${item.planId}`;
-      if (item.price != null) {
-        const proportion = cartTotal > 0 ? Number(item.price) / cartTotal : 0;
-        const arr = paidPriceMap.get(key) || [];
-        arr.push(actualPaid * proportion);
-        paidPriceMap.set(key, arr);
-      }
-    }
+  const payFilters: { column: string; op: "eq" | "gte"; value: unknown }[] = [
+    { column: "status", op: "eq", value: "COMPLETED" },
+  ];
+  if (dateFilter) {
+    payFilters.push({ column: "created_at", op: "gte", value: dateFilter });
   }
 
-  return tickets.map((t) => {
-    const product = productMap[t.product_id];
-    const plan = planMap[t.product_plan_id];
-    const meta = asOrderTicketMetadata(t.metadata);
-
-    const key = `${t.user_id}|${t.product_id}|${t.product_plan_id}`;
-    const revenue = paidPriceMap.get(key)?.shift() ?? 0;
-
-    let cost = 0;
-    if (meta.amount_spent && Number(meta.amount_spent) > 0) {
-      cost = Number(meta.amount_spent) * 0.6 * rate;
-    } else if (meta.is_free) {
-      cost = 0;
-    } else if (product?.robot_markup_percent) {
-      cost = revenue / (1 + (product.robot_markup_percent || 50) / 100);
-    }
-
-    return {
-      id: t.id,
-      created_at: t.created_at || "",
-      product_name: product?.name || "Desconhecido",
-      plan_name: plan?.name || "—",
-      revenue,
-      cost: Math.round(cost * 100) / 100,
-      profit: Math.round((revenue - cost) * 100) / 100,
-      status: t.status || "unknown",
-      duration: plan?.robot_duration_days || meta.duration || null,
-    };
+  const payments = await fetchAllRows<PayRow>("payments", {
+    select: "id, user_id, amount, cart_snapshot, paid_at, created_at",
+    filters: payFilters,
+    order: { column: "created_at", ascending: false },
   });
+
+  return buildRobotSalesLedgerFromPayments(robotProducts, planById, payments, dateFilter);
 }
 
 export async function fetchAdminRobotProjectBundle(period: RobotProjectSalesPeriod): Promise<AdminRobotProjectBundle> {
@@ -326,7 +243,7 @@ export async function fetchAdminRobotProjectBundle(period: RobotProjectSalesPeri
 
   let robotSales: RobotSale[] = [];
   try {
-    robotSales = await fetchRobotSalesForPeriod(period, rate);
+    robotSales = await fetchRobotSalesForPeriod(period);
   } catch (err) {
     console.error("fetchRobotSalesForPeriod error:", err);
     robotSales = [];
