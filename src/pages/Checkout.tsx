@@ -204,10 +204,11 @@ const Checkout = () => {
   }, 0);
   const safeCartTotal = Number.isFinite(cartTotal) ? cartTotal : 0;
 
-  const rawUrlDiscount = parseFloat(searchParams.get("discount") || "0");
-  const urlDiscount = Number.isFinite(rawUrlDiscount) ? rawUrlDiscount : 0;
+  // Only coupon discounts (validated server-side in pix-payment). Never honor raw
+  // `?discount=` — it was only reflected in the UI and was not charged, confusing users
+  // and allowing arbitrary "fake" reductions before pay.
   const discountFromCoupon = couponApplied?.discount ?? 0;
-  const discountAmount = Math.max(0, Math.min(urlDiscount + discountFromCoupon, safeCartTotal));
+  const discountAmount = Math.max(0, Math.min(discountFromCoupon, safeCartTotal));
   const cartFinalPrice = Math.max(0, safeCartTotal - discountAmount);
 
   const [displayPrice, setDisplayPrice] = useState<{ total: number; final: number; discount: number } | null>(null);

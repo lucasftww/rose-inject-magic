@@ -134,12 +134,17 @@ const LztTab = () => {
       parsedMarkups[field.key] = val;
     }
 
-    // Use average as the global fallback
-    const avgMarkup = Object.values(parsedMarkups).reduce((a, b) => a + b, 0) / Object.values(parsedMarkups).length;
+    // Preserva `markup_multiplier` da linha atual (fallback em código legado); não sobrescrever com média dos jogos.
+    const preserveGlobal =
+      typeof config.markup_multiplier === "number" &&
+      Number.isFinite(config.markup_multiplier) &&
+      config.markup_multiplier >= 1
+        ? config.markup_multiplier
+        : Math.max(...Object.values(parsedMarkups));
 
     setSaving(true);
     const payload = {
-      markup_multiplier: avgMarkup,
+      markup_multiplier: preserveGlobal,
       max_fetch_price: p,
       currency: config.currency,
       ...parsedMarkups,

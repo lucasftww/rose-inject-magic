@@ -4,6 +4,12 @@ import {
   isLztItemStateAwaiting,
   isLztItemStateSoldOrRemoved,
 } from "../_shared/lztItemGuards.ts";
+import {
+  DEFAULT_MARKUP,
+  MIN_PRICE_BRL,
+  getDisplayedPriceBrl,
+  shouldKeepItem,
+} from "../_shared/lztPricingModel.ts";
 import { errorMessage } from "../_shared/types.ts";
 
 const corsHeaders = {
@@ -42,8 +48,6 @@ async function updateRates() {
     console.warn("FX fetch failed, using fallbacks:", e);
   }
 }
-const MIN_PRICE_BRL = 20;
-const DEFAULT_MARKUP = 3.0;
 const MIN_INACTIVE_DAYS = 30;
 /** Fortnite: mínimo de dias sem atividade na conta (parâmetro LZT `daybreak`). */
 const FORTNITE_MIN_INACTIVE_DAYS = 90;
@@ -89,172 +93,6 @@ async function parseJsonResponse(response: Response) {
   } catch {
     return { raw: text };
   }
-}
-
-/**
- * Content-based minimum price: ensures accounts with lots of skins/content
- * are never sold below a fair floor, even if listed cheap on LZT.
- */
-function getContentFloorBrl(item: LztItem, gameType?: string) {
-  if (gameType === "fortnite") {
-    const skins = Number(item.fortnite_skin_count || item.fortnite_outfit_count || 0);
-    const vbucks = Math.min(Number(item.fortnite_vbucks || item.fortnite_balance || 0), 50000);
-    const level = Math.min(Number(item.fortnite_level || 0), 500);
-    return skins * 0.35 + vbucks * 0.005 + level * 0.1;
-  }
-  if (gameType === "lol") {
-    const skins = Number(item.riot_lol_skin_count || 0);
-    const champs = Number(item.riot_lol_champion_count || 0);
-    const level = Math.min(Number(item.riot_lol_level || 0), 350);
-    return skins * 0.5 + champs * 0.15 + level * 0.1;
-  }
-  if (gameType === "minecraft") {
-    const capes = Number(item.minecraft_capes_count || 0);
-    const level = Math.min(Number(item.minecraft_hypixel_level || 0), 300);
-    const hasJava = Number(item.minecraft_java || 0);
-    const hasBedrock = Number(item.minecraft_bedrock || 0);
-    return capes * 2 + level * 0.1 + hasJava * 3 + hasBedrock * 3;
-  }
-  // Valorant
-  const skins = Number(item.riot_valorant_skin_count || 0);
-  const knives = Number(item.riot_valorant_knife || item.riot_valorant_knife_count || 0);
-  const level = Math.min(Number(item.riot_valorant_level || 0), 500);
-  return skins * 0.6 + knives * 5 + level * 0.08;
-}
-
-/**
- * Content-based CEILING: prevents overpricing low-quality accounts.
- * An unranked account with 12 basic skins should NOT cost R$225.
- * The ceiling reflects the realistic resale value of the account's content.
- */
-function getContentCeilingBrl(item: LztItem, gameType?: string) {
-  if (gameType === "fortnite") {
-    const skins = Number(item.fortnite_skin_count || item.fortnite_outfit_count || 0);
-    const vbucks = Math.min(Number(item.fortnite_vbucks || item.fortnite_balance || 0), 50000);
-    const level = Math.min(Number(item.fortnite_level || 0), 999);
-    // R$10/skin (OG/rare skins worth much more) + vbucks value + level bonus
-    const ceiling = skins * 10 + vbucks * 0.02 + level * 0.5;
-    return Math.max(ceiling, MIN_PRICE_BRL);
-  }
-  if (gameType === "lol") {
-    const skins = Number(item.riot_lol_skin_count || 0);
-    const champs = Number(item.riot_lol_champion_count || 0);
-    const level = Math.min(Number(item.riot_lol_level || 0), 500);
-    const rank = String(item.riot_lol_rank || "").toUpperCase();
-    let ceiling = skins * 2.5 + champs * 0.8 + level * 0.3;
-    // Rank bonus
-    if (rank.includes("MASTER") || rank.includes("GRANDMASTER") || rank.includes("CHALLENGER")) ceiling += 120;
-    else if (rank.includes("DIAMOND")) ceiling += 60;
-    else if (rank.includes("EMERALD")) ceiling += 40;
-    else if (rank.includes("PLATINUM")) ceiling += 25;
-    else if (rank.includes("GOLD")) ceiling += 15;
-    return Math.max(ceiling, MIN_PRICE_BRL);
-  }
-  if (gameType === "minecraft") {
-    const capes = Number(item.minecraft_capes_count || 0);
-    const level = Math.min(Number(item.minecraft_hypixel_level || 0), 300);
-    const hasJava = Number(item.minecraft_java || 0);
-    const hasBedrock = Number(item.minecraft_bedrock || 0);
-    const hasDungeons = Number(item.minecraft_dungeons || 0);
-    const hasLegends = Number(item.minecraft_legends || 0);
-    let ceiling = capes * 15 + level * 0.5 + hasJava * 20 + hasBedrock * 15 + hasDungeons * 10 + hasLegends * 10;
-    const rankStr = String(item.minecraft_hypixel_rank || "").toUpperCase();
-    if (rankStr.includes("MVP+")) ceiling += 40;
-    else if (rankStr.includes("MVP")) ceiling += 25;
-    else if (rankStr.includes("VIP+")) ceiling += 15;
-    else if (rankStr.includes("VIP")) ceiling += 8;
-    return Math.max(ceiling, MIN_PRICE_BRL);
-  }
-  // Valorant
-  const skins = Number(item.riot_valorant_skin_count || 0);
-  const knives = Number(item.riot_valorant_knife || item.riot_valorant_knife_count || 0);
-  const agents = Number(item.riot_valorant_agent_count || 0);
-  const level = Math.min(Number(item.riot_valorant_level || 0), 500);
-  const rank = Number(item.riot_valorant_rank || 0);
-  const vp = Number(item.riot_valorant_wallet_vp || 0);
-  const invValue = Number(item.riot_valorant_inventory_value || 0);
-
-  let ceiling = skins * 5 + knives * 30 + agents * 1.5 + level * 0.15 + vp * 0.01;
-  if (invValue > 0) ceiling += invValue * 0.003;
-
-  if (rank >= 27) ceiling += 150;
-  else if (rank >= 24) ceiling += 80;
-  else if (rank >= 21) ceiling += 50;
-  else if (rank >= 18) ceiling += 35;
-  else if (rank >= 15) ceiling += 20;
-  else if (rank >= 12) ceiling += 10;
-
-  return Math.max(ceiling, MIN_PRICE_BRL);
-}
-
-/**
- * Final sale price in BRL for storefront + checkout.
- * - Respects per-game `markup` from `lzt_config` (must not be silently overridden by content ceiling).
- * - `lzt_config.max_fetch_price` is **only** used to bound the LZT list `pmax` (which listings we fetch), not to
- *   flatten every card to the same displayed price (that broke sorting and made unrelated accounts share one price).
- */
-function getDisplayedPriceBrl(
-  item: LztItem,
-  overridePrice?: number,
-  gameType?: string,
-  markup?: number,
-) {
-  if (typeof overridePrice === "number" && overridePrice > 0) return overridePrice;
-
-  const activeMarkup = markup || DEFAULT_MARKUP;
-  const currency = String(item.price_currency || "rub").toLowerCase();
-  const rawPrice = Number(item.price || 0);
-
-  let costBrl: number;
-  /** Pure multiplier result before content anti-gouging / floors (used so ceiling never erases admin markup). */
-  let rawMarkedUp: number;
-
-  if (currency === "rub") {
-    costBrl = rawPrice * RUB_TO_BRL;
-    rawMarkedUp = costBrl * activeMarkup;
-  } else if (currency === "usd") {
-    costBrl = rawPrice * USD_TO_BRL;
-    rawMarkedUp = costBrl * activeMarkup;
-  } else {
-    // BRL (preço do vendedor já em reais): aplicar o mesmo `activeMarkup` que RUB/USD — antes era 2× fixo e ignorava o admin.
-    costBrl = rawPrice;
-    rawMarkedUp = rawPrice * activeMarkup;
-  }
-
-  let final = rawMarkedUp;
-
-  // Enforce content-based floor so cheap listings with lots of content get a fair price
-  const contentFloor = getContentFloorBrl(item, gameType);
-  if (final < contentFloor) final = contentFloor;
-
-  // Content ceiling: only cap *above* what markup already allows — never shave a high multiplier down
-  // (this was the root cause of e.g. Fortnite 20× not appearing in `price_brl`).
-  const contentCeiling = getContentCeilingBrl(item, gameType);
-  const effectiveCeiling = Math.max(contentCeiling, rawMarkedUp);
-  if (final > effectiveCeiling) final = effectiveCeiling;
-
-  // Ensure minimum 50% margin over cost
-  const minMarginPrice = costBrl * 2.0;
-  if (final < minMarginPrice) final = minMarginPrice;
-
-  const MIN_PROFIT_BRL = 20.0;
-  const safeProfitPrice = costBrl + MIN_PROFIT_BRL;
-  if (final < safeProfitPrice) final = safeProfitPrice;
-
-  return final < MIN_PRICE_BRL ? MIN_PRICE_BRL : Math.round(final * 100) / 100;
-}
-
-
-// Fair price ceiling functions kept for potential future use in filtering overpriced items
-
-/** Se a API devolver explicitamente que a conta já foi vendida antes no LZT, removemos da lista/detalhe. */
-function itemFailsNotSoldBeforePolicy(item: LztItem): boolean {
-  const o = item as Record<string, unknown>;
-  const nsb = o.not_sold_before ?? o.notSoldBefore;
-  if (nsb === false || nsb === 0 || nsb === "0") return true;
-  const sb = o.sold_before ?? o.soldBefore;
-  if (sb === true || sb === 1 || sb === "1") return true;
-  return false;
 }
 
 /**
@@ -307,53 +145,6 @@ function enrichDetailItemFromNestedInventory(item: LztItem, gameType: string) {
     const cur = Number(item.riot_valorant_skin_count || 0);
     if (n > cur) item.riot_valorant_skin_count = n;
   }
-}
-
-function shouldKeepItem(
-  item: LztItem,
-  gameType: string,
-  _displayedPriceBrl: number,
-  opts?: { skipValueGate?: boolean; skipMinSkins?: boolean; skipCanBuyCheck?: boolean },
-) {
-  if (hasLztItemBuyerAssigned(item)) return false;
-  if (!opts?.skipCanBuyCheck && item.canBuyItem === false) return false;
-  if (itemFailsNotSoldBeforePolicy(item)) return false;
-
-  // ── Quality gates: minimum content thresholds ──
-  if (!opts?.skipMinSkins) {
-    const isValorant = gameType === "riot" || gameType === "valorant";
-    if (isValorant) {
-      const skins = Number(item.riot_valorant_skin_count || 0);
-      if (skins < 5) return false;
-    }
-    if (gameType === "lol") {
-      const skins = Number(item.riot_lol_skin_count || 0);
-      if (skins < 10) return false;
-    }
-    if (gameType === "fortnite") {
-      const skins = Number(item.fortnite_skin_count || item.fortnite_outfit_count || 0);
-      if (skins < 10) return false;
-    }
-  }
-
-  if (opts?.skipValueGate) return true;
-
-  // ── Value gate: reject overpriced accounts with poor content ──
-  // If the content ceiling (fair value) is less than a threshold of the raw cost,
-  // the account is garbage listed at an inflated price — skip it.
-  // Fortnite uses a lower threshold (0.2) because OG/rare skins have unpredictable value.
-  const currency = String(item.price_currency || "rub").toLowerCase();
-  const rawPrice = Number(item.price || 0);
-  const costBrl = currency === "rub" ? rawPrice * RUB_TO_BRL
-    : currency === "usd" ? rawPrice * USD_TO_BRL
-    : rawPrice;
-  if (costBrl > 0) {
-    const contentCeiling = getContentCeilingBrl(item, gameType);
-    const valueGateRatio = gameType === "fortnite" ? 0.2 : 0.4;
-    if (contentCeiling < costBrl * valueGateRatio) return false;
-  }
-
-  return true;
 }
 
 const globalLztCache = new Map<string, { data: unknown; expiry: number }>();
@@ -1007,18 +798,42 @@ Deno.serve(async (req) => {
 
       const beforeCount = data.items.length;
       let filteredByOther = 0;
-      data.items = data.items.filter((item: LztItem) => {
+      const listFxRates = { rub: RUB_TO_BRL, usd: USD_TO_BRL };
+
+      const passAvailability = data.items.filter((item: LztItem) => {
         if (isLztItemStateSoldOrRemoved(item.item_state) || isLztItemStateAwaiting(item.item_state)) {
           filteredByOther++;
           return false;
         }
         if (hasLztItemBuyerAssigned(item)) { filteredByOther++; return false; }
-        // More robust check for canBuyItem (catch false or null if it's supposed to be buyable)
         if (item.canBuyItem === false) { filteredByOther++; return false; }
-        
-        const displayedPriceBrl = getDisplayedPriceBrl(item, undefined, gameType, activeMarkup);
-        
-        if (!shouldKeepItem(item, gameType, displayedPriceBrl)) {
+        return true;
+      });
+
+      const preIds = passAvailability.map((item: LztItem) => String(item.item_id)).filter(Boolean);
+      const overrideMap = new Map<string, number>();
+      if (preIds.length > 0) {
+        const { data: overridesData } = await supabaseAdmin
+          .from("lzt_price_overrides")
+          .select("lzt_item_id, custom_price_brl")
+          .in("lzt_item_id", preIds);
+
+        if (overridesData) {
+          for (const override of overridesData) {
+            const v = Number(override.custom_price_brl);
+            if (Number.isFinite(v) && v > 0) overrideMap.set(String(override.lzt_item_id), v);
+          }
+        }
+      }
+
+      data.items = passAvailability.filter((item: LztItem) => {
+        const oid = String(item.item_id);
+        const rawOv = overrideMap.get(oid);
+        const hasAdminOverride = typeof rawOv === "number" && Number.isFinite(rawOv) && rawOv > 0;
+        const overrideForPrice = hasAdminOverride ? rawOv : undefined;
+        const displayedPriceBrl = getDisplayedPriceBrl(item, overrideForPrice, gameType, activeMarkup, listFxRates);
+
+        if (!shouldKeepItem(item, gameType, displayedPriceBrl, { skipValueGate: hasAdminOverride }, listFxRates)) {
           filteredByOther++;
           return false;
         }
@@ -1028,22 +843,6 @@ Deno.serve(async (req) => {
       if (responseLimit > 0 && data.items.length > responseLimit) {
         data.items = data.items.slice(0, responseLimit);
         data.perPage = Math.min(Number(data.perPage || responseLimit), responseLimit);
-      }
-
-      const itemIds = data.items.map((item: LztItem) => String(item.item_id)).filter(Boolean);
-      const overrideMap = new Map<string, number>();
-
-      if (itemIds.length > 0) {
-        const { data: overridesData } = await supabaseAdmin
-          .from("lzt_price_overrides")
-          .select("lzt_item_id, custom_price_brl")
-          .in("lzt_item_id", itemIds);
-
-        if (overridesData) {
-          for (const override of overridesData) {
-            overrideMap.set(override.lzt_item_id, Number(override.custom_price_brl));
-          }
-        }
       }
 
       log("INFO", "lzt-market", "Filtered market items", {
@@ -1058,7 +857,10 @@ Deno.serve(async (req) => {
         if (gameType === "fortnite" && item.fortnite_outfit_count != null && item.fortnite_skin_count == null) {
           item.fortnite_skin_count = item.fortnite_outfit_count;
         }
-        item.price_brl = getDisplayedPriceBrl(item, overrideMap.get(String(item.item_id)), gameType, activeMarkup);
+        const oid = String(item.item_id);
+        const ovp = overrideMap.get(oid);
+        const overrideForPrice = typeof ovp === "number" && Number.isFinite(ovp) && ovp > 0 ? ovp : undefined;
+        item.price_brl = getDisplayedPriceBrl(item, overrideForPrice, gameType, activeMarkup, listFxRates);
 
         // Strip heavy fields
         for (const field of STRIP_FIELDS) delete item[field];
@@ -1147,18 +949,19 @@ Deno.serve(async (req) => {
         ? Number(overrideRow.custom_price_brl)
         : undefined;
 
-      data.item.price_brl = getDisplayedPriceBrl(data.item, overridePrice, gameType, activeMarkup);
+      const detailFxRates = { rub: RUB_TO_BRL, usd: USD_TO_BRL };
+      data.item.price_brl = getDisplayedPriceBrl(data.item, overridePrice, gameType, activeMarkup, detailFxRates);
 
-      const passesStrict = shouldKeepItem(data.item, gameType, data.item.price_brl);
+      const passesStrict = shouldKeepItem(data.item, gameType, data.item.price_brl, undefined, detailFxRates);
       const passesNoValue = passesStrict || shouldKeepItem(data.item, gameType, data.item.price_brl, {
         skipValueGate: true,
-      });
+      }, detailFxRates);
       // Último nível: contadores por vezes ausentes no JSON do item — ainda bloqueia vendido/policy.
       const passesDetail = passesNoValue || shouldKeepItem(data.item, gameType, data.item.price_brl, {
         skipValueGate: true,
         skipMinSkins: true,
         skipCanBuyCheck: true,
-      });
+      }, detailFxRates);
       if (!passesDetail) {
         return new Response(
           JSON.stringify({ error: "Account does not meet quality filters", item: null }),

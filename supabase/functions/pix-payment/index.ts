@@ -4,6 +4,7 @@ import {
   isLztItemStateAwaiting,
   isLztItemStateSoldOrRemoved,
 } from "../_shared/lztItemGuards.ts";
+import { getDisplayedPriceBrl } from "../_shared/lztPricingModel.ts";
 import type {
   CartSnapshotItem,
   PaymentRow,
@@ -1898,9 +1899,8 @@ async function validateAndCalculatePrice(
       // The price the customer saw (sent from frontend)
       const clientDisplayPrice = Number(item.price) || 0;
       
-      // Recalculate what the price SHOULD be now (for reference)
-      const currentCalcPrice = Math.round(costBrl * markup * 100) / 100;
       const MIN_PRICE = 20;
+      const currentCalcPrice = Math.round(costBrl * markup * 100) / 100;
       const currentFairPrice = overridePrice || (currentCalcPrice < MIN_PRICE ? MIN_PRICE : currentCalcPrice);
       
       // PRICE LOCK STRATEGY:
@@ -1911,10 +1911,13 @@ async function validateAndCalculatePrice(
       let finalPrice: number;
       
       if (clientDisplayPrice > 0) {
-        // If admin set an override, trust it — don't reject intentional discounts
-        if (hasOverride) {
-          finalPrice = clientDisplayPrice;
-          console.log(`LZT PRICE LOCKED (override active): itemId=${lztItemId}, lockedPrice=${finalPrice}, overridePrice=${overridePrice}, cost=${costBrl.toFixed(2)}`);
+        // Admin override is authoritative (DB). Never trust client price here — a tampered
+        // cart could undercut `custom_price_brl` and wipe margin on promoted listings.
+        if (hasOverride && overridePrice != null) {
+          finalPrice = Math.round(overridePrice * 100) / 100;
+          console.log(
+            `LZT PRICE OVERRIDE (server): itemId=${lztItemId}, charged=${finalPrice}, clientSent=${clientDisplayPrice}, cost=${costBrl.toFixed(2)}`,
+          );
         } else {
           // ⚠️ ENFORCE MINIMUM 50% MARGIN:
           // If the client price (locked at checkout) is below 2.0x our cost, we reject it.
@@ -1929,9 +1932,18 @@ async function validateAndCalculatePrice(
         }
 
       } else {
-        // No client price sent — use current calculated price (backwards compat)
-        finalPrice = currentFairPrice;
-        console.log(`LZT PRICE CALCULATED (no lock): itemId=${lztItemId}, price=${finalPrice}, cost=${costBrl.toFixed(2)}`);
+        // No client price — same rules as edge list/detail (floor/ceiling/margem), not só custo×markup.
+        const pricingItem = { ...lztItem, price: realLztPrice, price_currency: realLztCurrency } as Record<string, unknown>;
+        finalPrice = getDisplayedPriceBrl(
+          pricingItem,
+          overridePrice ?? undefined,
+          gameCategory,
+          markup,
+          { rub: RUB_TO_BRL, usd: USD_TO_BRL },
+        );
+        console.log(
+          `LZT PRICE CALCULATED (no lock, shared model): itemId=${lztItemId}, price=${finalPrice}, legacyFair=${currentFairPrice}, cost=${costBrl.toFixed(2)}`,
+        );
       }
       
       totalAmount += Math.round(finalPrice * 100);

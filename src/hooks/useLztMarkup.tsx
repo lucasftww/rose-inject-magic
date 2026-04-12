@@ -1,8 +1,14 @@
+import { useQuery } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  DEFAULT_LZT_FX,
+  DEFAULT_MARKUP,
+  getDisplayedPriceBrl,
+  type LztFxRates,
+} from "@/lib/lztPricingModel";
 
 export type GameCategory = "valorant" | "lol" | "fortnite" | "minecraft";
-
-const MIN_PRICE_BRL = 20;
 
 type LztPriceInput = {
   price?: number;
@@ -19,50 +25,139 @@ function coalesceNum(v: unknown, fallback = 0): number {
   return Number.isFinite(n) && n >= 0 ? n : fallback;
 }
 
-/**
- * Fallback BRL when `price_brl` from the API is missing — keep in sync with edge `lzt-market` heuristics as much as practical.
- */
-export function calcLztFallbackBrl(price: number, currency?: string, _game?: GameCategory): number {
-  const raw = coalesceNum(price);
-  const RUB_TO_BRL = 0.055;
-  const USD_TO_BRL = 5.16;
-  const MARKUP = 3.0;
-  const cur = String(currency || "rub").toLowerCase();
+type StorefrontPricing = LztFxRates & {
+  fallbackMarkup: number;
+  markupByGame: Record<GameCategory, number>;
+};
 
-  let brl = raw;
-  if (cur === "rub") brl = raw * RUB_TO_BRL * MARKUP;
-  else if (cur === "usd") brl = raw * USD_TO_BRL * MARKUP;
-  // BRL na LZT: alinhar ao edge `lzt-market` (markup configurável; fallback 3× como RUB/USD)
-  else brl = raw * MARKUP;
-
-  const costBrl = cur === "rub" ? raw * RUB_TO_BRL : cur === "usd" ? raw * USD_TO_BRL : raw;
-  const minPrice = costBrl * 2.0;
-  if (brl < minPrice) brl = minPrice;
-
-  return brl < MIN_PRICE_BRL ? MIN_PRICE_BRL : brl;
+function toMarkup(v: unknown, fallback: number): number {
+  const n = Number(v);
+  return Number.isFinite(n) && n >= 1 ? n : fallback;
 }
 
+async function fetchStorefrontPricing(): Promise<StorefrontPricing> {
+  const [fxRes, cfgRes] = await Promise.all([
+    fetch("https://economia.awesomeapi.com.br/json/last/USD-BRL,RUB-BRL"),
+    supabase
+      .from("lzt_config")
+      .select("markup_multiplier, markup_valorant, markup_lol, markup_fortnite, markup_minecraft")
+      .limit(1)
+      .maybeSingle(),
+  ]);
+
+  let rub = DEFAULT_LZT_FX.rub;
+  let usd = DEFAULT_LZT_FX.usd;
+  if (fxRes.ok) {
+    try {
+      const fxData = await fxRes.json();
+      const usdBid = Number(fxData?.USDBRL?.bid);
+      const rubBid = Number(fxData?.RUBBRL?.bid);
+      if (usdBid > 0) usd = usdBid;
+      if (rubBid > 0) rub = rubBid;
+    } catch {
+      /* keep defaults */
+    }
+  }
+
+  const row = cfgRes.data;
+  const fb = toMarkup(row?.markup_multiplier, DEFAULT_MARKUP);
+
+  return {
+    rub,
+    usd,
+    fallbackMarkup: fb,
+    markupByGame: {
+      valorant: toMarkup(row?.markup_valorant, fb),
+      lol: toMarkup(row?.markup_lol, fb),
+      fortnite: toMarkup(row?.markup_fortnite, fb),
+      minecraft: toMarkup(row?.markup_minecraft, fb),
+    },
+  };
+}
+
+function itemRowFromPriceInput(input: LztPriceInput): Record<string, unknown> {
+  return {
+    price: input.price,
+    price_currency: input.price_currency,
+  };
+}
+
+export type LztPricingContext = { rates: LztFxRates; markup: number };
+
 /**
- * Numeric BRL for display/sorting — prefers API `price_brl`, else fallback conversion.
+ * Fallback BRL quando `price_brl` falha — alinhado ao modelo `getDisplayedPriceBrl` da edge.
+ * Sem `ctx`, usa FX/markup padrão (testes e primeiro paint).
  */
-export function getLztItemBrlPrice(item: LztPriceInput, game?: GameCategory): number {
+export function calcLztFallbackBrl(
+  price: number,
+  currency?: string,
+  game?: GameCategory,
+  ctx?: LztPricingContext,
+): number {
+  const rates = ctx?.rates ?? DEFAULT_LZT_FX;
+  const markup = ctx?.markup ?? DEFAULT_MARKUP;
+  const item = itemRowFromPriceInput({ price, price_currency: currency });
+  return getDisplayedPriceBrl(item, undefined, game, markup, rates);
+}
+
+export function getLztItemBrlPrice(item: LztPriceInput, game?: GameCategory, ctx?: LztPricingContext): number {
   if (isValidPriceBrl(item.price_brl)) return item.price_brl;
-  return calcLztFallbackBrl(coalesceNum(item.price), item.price_currency, game);
+  const rates = ctx?.rates ?? DEFAULT_LZT_FX;
+  const markup = ctx?.markup ?? DEFAULT_MARKUP;
+  return getDisplayedPriceBrl(itemRowFromPriceInput(item), undefined, game, markup, rates);
 }
 
 export const useLztMarkup = () => {
+  const { data: pricing } = useQuery({
+    queryKey: ["lzt-storefront-pricing"],
+    queryFn: fetchStorefrontPricing,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    retry: 1,
+  });
+
+  const rub = pricing?.rub ?? DEFAULT_LZT_FX.rub;
+  const usd = pricing?.usd ?? DEFAULT_LZT_FX.usd;
+  const fallbackMarkup = pricing?.fallbackMarkup ?? DEFAULT_MARKUP;
+  const mv = pricing?.markupByGame?.valorant ?? fallbackMarkup;
+  const ml = pricing?.markupByGame?.lol ?? fallbackMarkup;
+  const mf = pricing?.markupByGame?.fortnite ?? fallbackMarkup;
+  const mm = pricing?.markupByGame?.minecraft ?? fallbackMarkup;
+
+  const rates = useMemo(() => ({ rub, usd }), [rub, usd]);
+
+  const markupForGame = useCallback(
+    (game?: GameCategory) => {
+      if (!game) return fallbackMarkup;
+      return game === "valorant" ? mv : game === "lol" ? ml : game === "fortnite" ? mf : mm;
+    },
+    [mv, ml, mf, mm, fallbackMarkup],
+  );
+
+  const pricingCtx = useCallback(
+    (game?: GameCategory): LztPricingContext => ({ rates, markup: markupForGame(game) }),
+    [rates, markupForGame],
+  );
+
   const formatPriceBrl = useCallback((priceBrl: number): string => {
     if (!Number.isFinite(priceBrl)) return "R$ —";
     return `R$ ${priceBrl.toFixed(2)}`;
   }, []);
 
-  const calcPrice = useCallback((price: number, currency?: string, game?: GameCategory): number => calcLztFallbackBrl(price, currency, game), []);
+  const calcPrice = useCallback(
+    (price: number, currency?: string, game?: GameCategory): number =>
+      calcLztFallbackBrl(price, currency, game, pricingCtx(game)),
+    [pricingCtx],
+  );
 
-  const formatPrice = useCallback((price: number, currency?: string, game?: GameCategory): string => {
-    const brl = calcLztFallbackBrl(coalesceNum(price), currency, game);
-    if (!Number.isFinite(brl)) return "R$ —";
-    return `R$ ${brl.toFixed(2)}`;
-  }, []);
+  const formatPrice = useCallback(
+    (price: number, currency?: string, game?: GameCategory): string => {
+      const brl = calcLztFallbackBrl(coalesceNum(price), currency, game, pricingCtx(game));
+      if (!Number.isFinite(brl)) return "R$ —";
+      return `R$ ${brl.toFixed(2)}`;
+    },
+    [pricingCtx],
+  );
 
   const getDisplayPrice = useCallback(
     (item: LztPriceInput, game?: GameCategory): string => {
@@ -74,7 +169,10 @@ export const useLztMarkup = () => {
     [formatPrice, formatPriceBrl],
   );
 
-  const getPrice = useCallback((item: LztPriceInput, game?: GameCategory): number => getLztItemBrlPrice(item, game), []);
+  const getPrice = useCallback(
+    (item: LztPriceInput, game?: GameCategory): number => getLztItemBrlPrice(item, game, pricingCtx(game)),
+    [pricingCtx],
+  );
 
   return useMemo(
     () => ({
@@ -83,10 +181,11 @@ export const useLztMarkup = () => {
       formatPriceBrl,
       getDisplayPrice,
       getPrice,
-      getMarkupForGame: () => 3.0,
-      config: null,
-      markup: 3.0,
+      getMarkupForGame: markupForGame,
+      config: pricing ?? null,
+      markup: fallbackMarkup,
+      rates,
     }),
-    [calcPrice, formatPrice, formatPriceBrl, getDisplayPrice, getPrice],
+    [calcPrice, formatPrice, formatPriceBrl, getDisplayPrice, getPrice, markupForGame, pricing, fallbackMarkup, rates],
   );
 };

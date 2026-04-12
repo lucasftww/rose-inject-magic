@@ -32,6 +32,7 @@
   },
   "include": [
     "src",
-    "supabase/functions/_shared/lztItemGuards.ts"
+    "supabase/functions/_shared/lztItemGuards.ts",
+    "supabase/functions/_shared/lztPricingModel.ts"
   ]
 }
