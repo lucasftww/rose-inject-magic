@@ -310,8 +310,18 @@ Deno.serve(async (req) => {
     mode === "contas"
       ? CONTAS_PRIZES.reduce((s, p) => s + Math.max(0, Number(p.win_percentage) || 0), 0)
       : prizeRows.reduce((s, r) => s + Math.max(0, Number(r.win_percentage) || 0), 0);
-  const capped = Math.min(100, totalWeight);
-  const loseThreshold = Math.max(0, 100 - capped);
+  /**
+   * When prize `win_percentage` values sum to ~100%, they behave like *relative weights* among prizes,
+   * not "aggregate win chance". Using them directly as gate would make loseThreshold=0 → every play wins.
+   * (Contas mode sums to 100 by design — that was a 100% win-rate bug.)
+   */
+  const saturatedPool = totalWeight >= 99.5;
+  const gateWinPercent = saturatedPool
+    ? mode === "contas"
+      ? 20
+      : 25
+    : Math.min(100, totalWeight);
+  const loseThreshold = Math.max(0, 100 - gateWinPercent);
 
   let won = false;
   let grid: GridCell[] = buildLosingGrid();

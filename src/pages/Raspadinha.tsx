@@ -523,7 +523,13 @@ const Raspadinha = () => {
     const qty = pendingQuantityRef.current;
     const currentMode = pendingModeRef.current;
 
-    toast({ title: "Pagamento confirmado! 🎉", description: qty > 1 ? `Processando ${qty} raspadinhas...` : "Raspe para revelar!" });
+    toast({
+      title: "Pagamento confirmado! 🎉",
+      description:
+        qty > 1
+          ? `Valor de ${qty} unidades — um sorteio por pagamento. Raspe para revelar!`
+          : "Raspe para revelar!",
+    });
 
     try {
       const headers = await getAuthHeaders();
@@ -1049,9 +1055,9 @@ const Raspadinha = () => {
                         Nossa equipe vai entregar sua conta em breve via ticket de suporte.
                       </p>
                     )}
-                    {result.prize?.prize_value && result.prize.prize_value > 0 && (
+                    {typeof result.prize?.prize_value === "number" && result.prize.prize_value > 0 ? (
                       <p className={`font-bold text-lg mt-2 ${accentClass}`}>R$ {result.prize.prize_value.toFixed(2)}</p>
-                    )}
+                    ) : null}
                   </>
                 ) : (
                   <>
@@ -1072,6 +1078,9 @@ const Raspadinha = () => {
               className="mt-8 flex flex-col items-center gap-3"
             >
               <p className="text-xs text-muted-foreground uppercase tracking-widest">Quantidade de raspadinhas</p>
+              <p className="text-[10px] text-muted-foreground/90 text-center max-w-xs leading-snug">
+                Cada pagamento gera um sorteio; a quantidade só altera o valor total pago (não são várias rodadas separadas).
+              </p>
               <div className="flex items-center gap-4 rounded-xl border border-border bg-card px-2 py-1.5">
                 <button
                   onClick={() => setQuantity(q => Math.max(1, q - 1))}
@@ -1193,7 +1202,7 @@ const Raspadinha = () => {
                         {new Date(play.created_at).toLocaleDateString("pt-BR")}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        R$ {Number(play.amount_paid).toFixed(2)}
+                        R$ {(Number(play.amount_paid) / 100).toFixed(2)}
                       </p>
                     </div>
                   </div>
