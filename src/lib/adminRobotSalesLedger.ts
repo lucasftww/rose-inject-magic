@@ -18,9 +18,9 @@ export type RobotSale = {
   duration: number | null;
 };
 
-export type RobotProductLedger = { id: string; name: string; robot_markup_percent: number | null };
+type RobotProductLedger = { id: string; name: string; robot_markup_percent: number | null };
 
-export type PaymentLedgerInput = {
+type PaymentLedgerInput = {
   id?: string;
   user_id: string;
   amount: number;

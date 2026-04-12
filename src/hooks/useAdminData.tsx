@@ -160,7 +160,7 @@ function parseAdminScratchStats(raw: unknown): { total_plays: number; total_wins
   };
 }
 
-export type ScratchCardAdminBundle = {
+type ScratchCardAdminBundle = {
   prizes: Tables<"scratch_card_prizes">[];
   config: Tables<"scratch_card_config"> | null;
   stats: { total_plays: number; total_wins: number; total_revenue: number };

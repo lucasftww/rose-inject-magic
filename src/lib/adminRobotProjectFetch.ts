@@ -43,7 +43,7 @@ export interface PendingRobotTicket {
   user_label: string;
 }
 
-export type AdminRobotProjectBundle = {
+type AdminRobotProjectBundle = {
   pingOnline: boolean;
   robotGames: RobotGame[];
   freeGamesCount: number;

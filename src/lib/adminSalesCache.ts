@@ -20,10 +20,6 @@ let _salesCacheTs = 0;
 
 export const SALES_CACHE_TTL = 3 * 60 * 1000;
 
-export function getSalesCache(): { tickets: SaleTicket[] | null; ts: number } {
-  return { tickets: _cachedSales, ts: _salesCacheTs };
-}
-
 export function setSalesCacheData(tickets: SaleTicket[]): void {
   _cachedSales = tickets;
   _salesCacheTs = Date.now();

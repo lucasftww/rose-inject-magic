@@ -213,13 +213,6 @@ const sortOptions = [
     title: "Ordem da API: contas publicadas mais recentemente primeiro",
   },
   {
-    label: "Melhor custo-benefício",
-    shortLabel: "Custo-ben.",
-    value: "custo_beneficio",
-    title:
-      "Ordena na página por “conteúdo” estimado (inventário/skins/nível etc.) em relação ao preço em R$ — a API LZT não oferece este modo; usa a mesma busca que “Mais recentes”.",
-  },
-  {
     label: "Menor Preço",
     shortLabel: "Menor R$",
     value: "price_to_up",
@@ -240,10 +233,9 @@ function normalizeListSortParam(raw: string | null | undefined): string {
   return LIST_SORT_VALUES.has(v) ? v : "pdate_to_down";
 }
 
-/** Parâmetro `order_by` enviado à LZT (não existe sort nativo de custo-benefício). */
+/** Parâmetro `order_by` enviado à LZT (alinhado ao sort da UI). */
 function listOrderByForLztApi(uiSort: string): string {
-  const n = normalizeListSortParam(uiSort);
-  return n === "custo_beneficio" ? "pdate_to_down" : n;
+  return normalizeListSortParam(uiSort);
 }
 
 const FN_PURPLE = "hsl(265,80%,65%)";
@@ -321,38 +313,6 @@ interface LztItem {
   };
   // Server-calculated BRL price (with correct markup)
   price_brl?: number;
-}
-
-/** Pontuação de “conteúdo” do anúncio (não é preço); usada só no sort custo-benefício. */
-function getListingValueScore(item: LztItem, game: GameTab): number {
-  switch (game) {
-    case "valorant": {
-      const inv = Number(item.riot_valorant_inventory_value);
-      if (Number.isFinite(inv) && inv > 0) return inv;
-      const skins = item.riot_valorant_skin_count ?? 0;
-      const agents = item.riot_valorant_agent_count ?? 0;
-      const knife = (item.riot_valorant_knife ?? 0) > 0 ? 1 : 0;
-      return skins * 1200 + agents * 1000 + knife * 8000;
-    }
-    case "lol": {
-      const skins = item.riot_lol_skin_count ?? 0;
-      const champs = item.riot_lol_champion_count ?? 0;
-      return skins * 100 + champs * 40;
-    }
-    case "fortnite": {
-      const outfits = item.fortnite_skin_count ?? item.fortnite_outfit_count ?? 0;
-      const vb = Number(item.fortnite_vbucks ?? item.fortnite_balance ?? 0);
-      return outfits * 200 + (Number.isFinite(vb) ? vb : 0) * 0.45;
-    }
-    case "minecraft": {
-      const hyp = item.minecraft_hypixel_level ?? 0;
-      const capes = item.minecraft_capes_count ?? 0;
-      const editions = (item.minecraft_java ?? 0) + (item.minecraft_bedrock ?? 0);
-      return hyp * 10 + capes * 400 + editions * 150;
-    }
-    default:
-      return 0;
-  }
 }
 
 type LztMarketListResponse = {
@@ -1130,12 +1090,18 @@ const Contas = () => {
   const [priceMax, setPriceMax] = useState(() => qp("pmax"));
   const [sortBy, setSortBy] = useState<string>(() => normalizeListSortParam(qp("sort", "pdate_to_down")));
 
-  // ?sort= na URL: links antigos/inválidos, voltar/avançar, ou URL sem sort com estado defasado
+  // ?sort= na URL: voltar/avançar e links com valor inválido.
+  // Só reagir a `searchParams` (não incluir `sortBy`): com `sortBy` nas deps, ao clicar num filtro o
+  // URL ainda não tinha `sort=…` e `normalizeListSortParam(null)` virava `pdate_to_down`, repor o
+  // estado e anulava o clique.
   useEffect(() => {
     const raw = searchParams.get("sort");
+    if (raw == null || raw === "") {
+      setSortBy(normalizeListSortParam(raw));
+      return;
+    }
     const normalized = normalizeListSortParam(raw);
-    const rawPresent = raw != null && raw !== "";
-    if (rawPresent && raw !== normalized) {
+    if (raw !== normalized) {
       setSortBy(normalized);
       setSearchParams(
         (prev) => {
@@ -1147,8 +1113,8 @@ const Contas = () => {
       );
       return;
     }
-    if (normalized !== sortBy) setSortBy(normalized);
-  }, [searchParams, setSearchParams, sortBy]);
+    setSortBy((prev) => (prev === normalized ? prev : normalized));
+  }, [searchParams, setSearchParams]);
 
   const lztListOrderBy = useMemo(() => listOrderByForLztApi(sortBy), [sortBy]);
 
@@ -1857,20 +1823,6 @@ const Contas = () => {
     }
     if (sortBy === "price_to_down") {
       return filtered.sort((a, b) => getBrlPrice(b) - getBrlPrice(a));
-    }
-
-    if (sortBy === "custo_beneficio") {
-      return filtered.sort((a, b) => {
-        const pa = Math.max(getBrlPrice(a), 0.01);
-        const pb = Math.max(getBrlPrice(b), 0.01);
-        const ra = getListingValueScore(a, gameTab) / pa;
-        const rb = getListingValueScore(b, gameTab) / pb;
-        if (rb !== ra) return rb - ra;
-        const pubA = a.published_date ?? 0;
-        const pubB = b.published_date ?? 0;
-        if (pubB !== pubA) return pubB - pubA;
-        return (b.item_id ?? 0) - (a.item_id ?? 0);
-      });
     }
 
     // Default sort (pdate_to_down = "Mais Recentes"): preserve API date order for ALL games.

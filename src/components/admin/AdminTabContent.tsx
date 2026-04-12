@@ -21,7 +21,7 @@ import {
   CredentialsTab,
 } from "./adminLazyTabs";
 
-export const TabFallback = () => (
+const TabFallback = () => (
   <div className="flex min-h-[40vh] items-center justify-center py-16">
     <Loader2 className="h-6 w-6 animate-spin text-success" />
   </div>
@@ -37,7 +37,7 @@ type Props = {
 /**
  * Only the active admin tab is mounted — saves CPU/network (e.g. Tickets realtime) when browsing other sections.
  */
-export function AdminTabContent({ activeTab, onGoToTicket, pendingTicketId, onTicketOpened }: Props) {
+function AdminTabContent({ activeTab, onGoToTicket, pendingTicketId, onTicketOpened }: Props) {
   switch (activeTab) {
     case "overview":
       return <OverviewTab onGoToTicket={onGoToTicket} />;

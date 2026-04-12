@@ -4,7 +4,7 @@ import { fetchAllRows } from "@/lib/supabaseAllRows";
 import { asOrderTicketMetadata } from "@/types/orderTicketMetadata";
 
 /** Support ticket row shape used by admin TicketsTab (matches prior fetchTickets mapping). */
-export type AdminTicketListItem = {
+type AdminTicketListItem = {
   id: string;
   user_id: string;
   product_id: string;

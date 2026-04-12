@@ -16,13 +16,13 @@ export type AdminLztSale = {
   created_at: string;
 };
 
-export function parseAdminLztStatsPayload(data: unknown): Record<string, unknown> | null {
+function parseAdminLztStatsPayload(data: unknown): Record<string, unknown> | null {
   return isRecord(data) ? data : null;
 }
 
 type LztTicketFallbackRow = Pick<Tables<"order_tickets">, "id" | "metadata" | "created_at">;
 
-export type AdminLztBundle = {
+type AdminLztBundle = {
   configRow: Tables<"lzt_config"> | null;
   dbStats: Record<string, unknown> | null;
   sales: AdminLztSale[];
@@ -82,7 +82,7 @@ export async function fetchAdminLztBundle(): Promise<AdminLztBundle> {
   };
 }
 
-export type AdminLztPriceOverride = { lzt_item_id: string; custom_price_brl: number };
+type AdminLztPriceOverride = { lzt_item_id: string; custom_price_brl: number };
 
 export async function fetchAdminLztPriceOverrides(): Promise<AdminLztPriceOverride[]> {
   const { data, error } = await supabase

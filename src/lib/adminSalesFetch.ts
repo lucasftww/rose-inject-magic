@@ -5,7 +5,7 @@ import { asOrderTicketMetadata } from "@/types/orderTicketMetadata";
 import type { OrderTicketRow, SaleTicket } from "@/lib/adminSalesCache";
 import { setSalesCacheData } from "@/lib/adminSalesCache";
 
-export const SALES_MAX_ROWS = 2000;
+const SALES_MAX_ROWS = 2000;
 
 /**
  * Loads and enriches order tickets for the admin Sales tab.
