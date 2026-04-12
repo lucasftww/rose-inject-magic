@@ -4,6 +4,16 @@ import { lztAccountDetailQueryKey } from "@/lib/lztAccountDetailQuery";
 
 /** Contas 410 (vendida/indisponível): não repetir GET ao passar o rato. */
 const detailPrefetchGoneKeys = new Set<string>();
+const MAX_DETAIL_GONE_KEYS = 400;
+
+function rememberDetailPrefetchGone(dedupeKey: string): void {
+  detailPrefetchGoneKeys.add(dedupeKey);
+  while (detailPrefetchGoneKeys.size > MAX_DETAIL_GONE_KEYS) {
+    const oldest = detailPrefetchGoneKeys.values().next().value;
+    if (oldest === undefined) break;
+    detailPrefetchGoneKeys.delete(oldest);
+  }
+}
 
 const detailPrefetchInFlight = new Set<string>();
 
@@ -31,7 +41,7 @@ async function runDetailPrefetch(
       },
     );
     if (res.status === 410) {
-      detailPrefetchGoneKeys.add(dedupeKey);
+      rememberDetailPrefetchGone(dedupeKey);
       return;
     }
     if (!res.ok) return;

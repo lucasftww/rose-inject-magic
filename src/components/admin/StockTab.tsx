@@ -273,7 +273,9 @@ const StockTab = () => {
                                       min={1}
                                       max={100}
                                       value={aiLines}
-                                      onChange={e => setAiLines(Math.max(1, Math.min(100, parseInt(e.target.value) || 1)))}
+                                      onChange={(e) =>
+                                        setAiLines(Math.max(1, Math.min(100, parseInt(e.target.value, 10) || 1)))
+                                      }
                                       className="w-14 rounded border border-border bg-secondary/50 px-2 py-1 text-xs text-foreground text-center outline-none"
                                     />
                                     <button
