@@ -22,8 +22,8 @@ describe("getLztItemBrlPrice", () => {
     expect(brl).toBeGreaterThanOrEqual(20);
   });
 
-  it("fallback brl path doubles raw for margin heuristic", () => {
+  it("fallback brl path uses same markup multiplier as rub/usd fallback (3×)", () => {
     const brl = calcLztFallbackBrl(100, "brl");
-    expect(brl).toBe(200);
+    expect(brl).toBe(300);
   });
 });

@@ -347,11 +347,17 @@ const ProdutoDetalhes = () => {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <div className="mx-auto max-w-5xl px-6 pt-4 text-center">
-          <Package className="mx-auto h-16 w-16 text-muted-foreground/30" />
-          <h1 className="mt-4 text-2xl font-bold text-foreground">Produto não encontrado</h1>
-          <button onClick={() => navigate("/produtos")} className="mt-6 text-sm text-success hover:underline">
-            ← Voltar aos produtos
+        <div className="mx-auto max-w-lg px-4 pt-8 text-center sm:pt-12">
+          <Package className="mx-auto h-14 w-14 text-muted-foreground/25 sm:h-16 sm:w-16" />
+          <h1 className="mt-4 text-xl font-bold text-foreground sm:text-2xl">Produto não encontrado</h1>
+          <p className="mt-2 text-sm text-muted-foreground">O link pode estar incorreto ou o produto foi removido.</p>
+          <button
+            type="button"
+            onClick={() => navigate("/produtos")}
+            className="mt-6 inline-flex items-center gap-2 rounded-full border border-border bg-card px-5 py-2.5 text-sm font-medium text-success transition-colors hover:bg-success/10"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Ver produtos
           </button>
         </div>
       </div>
@@ -361,13 +367,15 @@ const ProdutoDetalhes = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 pt-3 sm:pt-4 pb-36 sm:pb-20">
+      <div className="mx-auto max-w-7xl px-4 min-[400px]:px-5 sm:px-6 pt-3 sm:pt-4 pb-32 sm:pb-20">
         {/* Back button */}
         <button
+          type="button"
           onClick={() => navigate(-1)}
-          className="mb-3 sm:mb-5 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-success"
+          aria-label="Voltar à página anterior"
+          className="mb-4 sm:mb-5 inline-flex items-center gap-2 rounded-full border border-border/80 bg-card/90 px-4 py-2 text-sm font-medium text-muted-foreground shadow-sm backdrop-blur-sm transition-all hover:border-success/50 hover:text-success hover:shadow-md active:scale-[0.98] touch-manipulation"
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="h-4 w-4 shrink-0" />
           <span>Voltar</span>
         </button>
 
@@ -384,16 +392,17 @@ const ProdutoDetalhes = () => {
           <span className="text-foreground/80 truncate">{product.name}</span>
         </div>
 
-        <div className="grid gap-6 sm:gap-10 lg:grid-cols-5">
-          {/* Left: Media Gallery — 3 cols */}
+        {/* Mobile: planos/preço primeiro; desktop: mídia à esquerda */}
+        <div className="grid grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-5 lg:gap-10">
+          {/* Media + conteúdo — ordem 2 no mobile */}
           <motion.div
-            className="lg:col-span-3"
+            className="order-2 lg:order-1 lg:col-span-3"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.25 }}
           >
             {/* Main media viewer */}
-            <div className="relative overflow-hidden rounded-2xl bg-secondary/10 border border-border/40">
+            <div className="relative overflow-hidden rounded-2xl border border-border/50 bg-gradient-to-b from-secondary/15 to-background shadow-sm">
               {selectedMedia ? (
                 selectedMedia.media_type === "video" ? (
                   (() => {
@@ -412,25 +421,33 @@ const ProdutoDetalhes = () => {
                       );
                     }
                     return (
-                      <video src={selectedMedia.url} controls className="w-full rounded-2xl" />
+                      <video src={selectedMedia.url} controls className="max-h-[min(70vh,520px)] w-full rounded-2xl bg-black object-contain" />
                     );
                   })()
                 ) : (
-                  <img src={selectedMedia.url} alt={product.name} className="w-full" />
+                  <div className="flex min-h-[220px] max-h-[min(70vh,560px)] w-full items-center justify-center bg-secondary/5 p-3 sm:p-4">
+                    <img
+                      src={selectedMedia.url}
+                      alt={product.name}
+                      className="max-h-full w-full object-contain"
+                      loading="eager"
+                      decoding="async"
+                    />
+                  </div>
                 )
               ) : (
-                <div className="flex h-48 w-full items-center justify-center">
+                <div className="flex min-h-[200px] w-full items-center justify-center">
                   <Package className="h-16 w-16 text-muted-foreground/20" />
                 </div>
               )}
 
-              {/* Nav arrows */}
+              {/* Nav arrows — sempre visíveis no toque; hover no desktop */}
               {allMedia.length > 1 && (
                 <>
-                  <button onClick={prevMedia} className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-background/90 text-foreground/80 transition-colors hover:text-success">
+                  <button type="button" aria-label="Mídia anterior" onClick={prevMedia} className="absolute left-2 top-1/2 z-[2] flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-border/60 bg-background/95 text-foreground/80 shadow-sm opacity-100 transition-colors hover:text-success sm:left-3 sm:opacity-90 sm:hover:opacity-100 touch-manipulation">
                     <ChevronLeft className="h-5 w-5" />
                   </button>
-                  <button onClick={nextMedia} className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-background/90 text-foreground/80 transition-colors hover:text-success">
+                  <button type="button" aria-label="Próxima mídia" onClick={nextMedia} className="absolute right-2 top-1/2 z-[2] flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-border/60 bg-background/95 text-foreground/80 shadow-sm opacity-100 transition-colors hover:text-success sm:right-3 sm:opacity-90 sm:hover:opacity-100 touch-manipulation">
                     <ChevronRight className="h-5 w-5" />
                   </button>
                 </>
@@ -450,10 +467,10 @@ const ProdutoDetalhes = () => {
                   <button
                     key={media.id}
                     onClick={() => setSelectedMediaIndex(idx)}
-                    className={`relative h-14 w-14 sm:h-16 sm:w-16 shrink-0 overflow-hidden rounded-xl transition-all ${
+                    className={`relative h-14 w-14 sm:h-16 sm:w-16 shrink-0 overflow-hidden rounded-xl border-2 transition-all touch-manipulation ${
                       idx === selectedMediaIndex
-                        ? "ring-2 ring-success ring-offset-2 ring-offset-background"
-                        : "opacity-50 hover:opacity-100"
+                        ? "border-success ring-2 ring-success/30 ring-offset-2 ring-offset-background opacity-100"
+                        : "border-transparent opacity-60 hover:opacity-100"
                     }`}
                   >
                     {media.media_type === "video" ? (
@@ -484,7 +501,7 @@ const ProdutoDetalhes = () => {
 
             {/* Features cards */}
             {sortedFeatures.length > 0 && (
-              <div className="mt-5 sm:mt-6 grid grid-cols-2 gap-2.5">
+              <div className="mt-5 sm:mt-6 grid grid-cols-1 min-[420px]:grid-cols-2 gap-2.5 sm:gap-3">
                 {sortedFeatures.map((feat) => {
                   const iconMap: Record<string, React.ReactNode> = {
                     "GPU": <Sparkles className="h-4 w-4" />,
@@ -564,16 +581,16 @@ const ProdutoDetalhes = () => {
             </div>
           </motion.div>
 
-          {/* Right: Product Info — 2 cols, sticky on desktop */}
+          {/* Preço / planos — ordem 1 no mobile */}
           <motion.div
-            className="lg:col-span-2"
+            className="order-1 lg:order-2 lg:col-span-2"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.25, delay: 0.05 }}
           >
             <div className="lg:sticky lg:top-20 space-y-5">
               {/* Product header card */}
-              <div className="rounded-2xl border border-border/50 bg-card p-5 sm:p-6">
+              <div className="rounded-2xl border border-border/60 bg-card p-5 sm:p-6 shadow-sm">
                 {game && (
                   <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-success">{game.name}</p>
                 )}
@@ -594,18 +611,19 @@ const ProdutoDetalhes = () => {
 
               {/* Plans selection — purchase card */}
               {sortedPlans.length > 0 && (
-                <div className="rounded-2xl border border-success/20 bg-card p-5 sm:p-6 shadow-[0_0_40px_hsl(var(--success)/0.05)]">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 mb-3">Escolha seu plano</p>
+                <div className="rounded-2xl border border-success/25 bg-gradient-to-b from-card to-secondary/10 p-5 sm:p-6 shadow-[0_0_0_1px_hsl(var(--success)/0.08),0_12px_40px_-12px_hsl(0_0%_0%/0.3)]">
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">Escolha seu plano</p>
 
-                  <div className="space-y-2">
+                  <div className="space-y-2.5">
                     {sortedPlans.map((plan, idx) => (
                       <button
+                        type="button"
                         key={plan.id}
                         onClick={() => setSelectedPlanId(plan.id)}
-                        className={`flex w-full items-center justify-between rounded-xl p-3.5 sm:p-4 text-left transition-all relative ${
+                        className={`relative flex w-full min-h-[52px] touch-manipulation items-center justify-between rounded-xl p-3.5 sm:p-4 text-left transition-all active:scale-[0.99] ${
                           selectedPlanId === plan.id
-                            ? "bg-success/10 ring-1 ring-success/40"
-                            : "bg-secondary/20 hover:bg-secondary/30"
+                            ? "bg-success/12 ring-2 ring-success/35 shadow-sm"
+                            : "bg-secondary/25 hover:bg-secondary/40"
                         }`}
                       >
                         {/* Popular badge for best value (last plan usually) */}
@@ -668,9 +686,10 @@ const ProdutoDetalhes = () => {
                         type="button"
                         onClick={() => void buyNow()}
                         disabled={claimingFree}
-                        className={`flex w-full items-center justify-center gap-2.5 rounded-xl py-3.5 text-sm font-bold uppercase tracking-[0.2em] transition-all active:scale-[0.98] disabled:opacity-60 ${
+                        aria-label={Number(selectedPlan.price) === 0 ? "Obter gratuitamente" : "Comprar agora"}
+                        className={`flex w-full min-h-[52px] items-center justify-center gap-2.5 rounded-xl py-3.5 text-sm font-bold uppercase tracking-[0.18em] shadow-md transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-60 touch-manipulation ${
                           Number(selectedPlan.price) === 0
-                            ? "bg-gradient-to-r from-positive to-positive/70 text-positive-foreground"
+                            ? "bg-gradient-to-r from-positive to-positive/80 text-positive-foreground"
                             : "bg-positive text-positive-foreground"
                         }`}
                       >
@@ -732,35 +751,39 @@ const ProdutoDetalhes = () => {
 
       {/* Sticky mobile bottom bar */}
       {selectedPlan && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 sm:hidden">
-          <div className="border-t border-border/40 bg-background px-4 py-3 safe-area-bottom">
-            <div className="flex items-center gap-3">
-              <div className="flex flex-col min-w-0">
+        <div className="fixed bottom-0 left-0 right-0 z-40 sm:hidden pointer-events-none">
+          <div className="pointer-events-auto border-t border-border/60 bg-background/95 px-4 py-3 shadow-[0_-8px_32px_-8px_rgba(0,0,0,0.35)] backdrop-blur-md safe-area-bottom">
+            <div className="mx-auto flex max-w-lg items-center gap-3">
+              <div className="flex min-w-0 flex-col">
                 {Number(selectedPlan.price) > 0 && (
                   <>
-                    <span className="text-[10px] text-muted-foreground/70 leading-none mb-0.5">Total</span>
+                    <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/80">Total</span>
                     {isReseller && isResellerForProduct(product.id) ? (
                       <>
                         <span className="text-[10px] text-muted-foreground line-through leading-none">R$ {Number(selectedPlan.price).toFixed(2)}</span>
-                        <span className="text-lg font-bold text-success leading-tight">
+                        <span className="truncate text-lg font-bold tabular-nums text-success leading-tight">
                           R$ {(Number(selectedPlan.price) * (1 - discountPercent / 100)).toFixed(2)}
                         </span>
                       </>
                     ) : (
-                      <span className="text-lg font-bold text-success leading-tight">
+                      <span className="truncate text-lg font-bold tabular-nums text-success leading-tight">
                         R$ {Number(selectedPlan.price).toFixed(2)}
                       </span>
                     )}
                   </>
+                )}
+                {Number(selectedPlan.price) === 0 && (
+                  <span className="text-xs font-semibold text-success">Grátis</span>
                 )}
               </div>
               <button
                 type="button"
                 onClick={() => void buyNow()}
                 disabled={claimingFree}
-                className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-bold uppercase tracking-wider transition-all active:scale-[0.98] disabled:opacity-60 ${
+                aria-label={Number(selectedPlan.price) === 0 ? "Obter grátis" : "Comprar agora"}
+                className={`flex min-h-[48px] min-w-0 flex-1 items-center justify-center gap-2 rounded-xl px-3 py-3 text-xs font-bold uppercase tracking-wider shadow-md transition-all active:scale-[0.98] disabled:opacity-60 touch-manipulation ${
                   Number(selectedPlan.price) === 0
-                    ? "bg-gradient-to-r from-positive to-positive/70 text-positive-foreground"
+                    ? "bg-gradient-to-r from-positive to-positive/80 text-positive-foreground"
                     : "bg-positive text-positive-foreground"
                 }`}
               >

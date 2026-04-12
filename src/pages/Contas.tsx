@@ -213,6 +213,13 @@ const sortOptions = [
     title: "Ordem da API: contas publicadas mais recentemente primeiro",
   },
   {
+    label: "Melhor custo-benefício",
+    shortLabel: "Custo-ben.",
+    value: "custo_beneficio",
+    title:
+      "Ordena na página por “conteúdo” estimado (inventário/skins/nível etc.) em relação ao preço em R$ — a API LZT não oferece este modo; usa a mesma busca que “Mais recentes”.",
+  },
+  {
     label: "Menor Preço",
     shortLabel: "Menor R$",
     value: "price_to_up",
@@ -231,6 +238,12 @@ const LIST_SORT_VALUES = new Set<string>(sortOptions.map((o) => o.value));
 function normalizeListSortParam(raw: string | null | undefined): string {
   const v = (raw ?? "").trim();
   return LIST_SORT_VALUES.has(v) ? v : "pdate_to_down";
+}
+
+/** Parâmetro `order_by` enviado à LZT (não existe sort nativo de custo-benefício). */
+function listOrderByForLztApi(uiSort: string): string {
+  const n = normalizeListSortParam(uiSort);
+  return n === "custo_beneficio" ? "pdate_to_down" : n;
 }
 
 const FN_PURPLE = "hsl(265,80%,65%)";
@@ -308,6 +321,38 @@ interface LztItem {
   };
   // Server-calculated BRL price (with correct markup)
   price_brl?: number;
+}
+
+/** Pontuação de “conteúdo” do anúncio (não é preço); usada só no sort custo-benefício. */
+function getListingValueScore(item: LztItem, game: GameTab): number {
+  switch (game) {
+    case "valorant": {
+      const inv = Number(item.riot_valorant_inventory_value);
+      if (Number.isFinite(inv) && inv > 0) return inv;
+      const skins = item.riot_valorant_skin_count ?? 0;
+      const agents = item.riot_valorant_agent_count ?? 0;
+      const knife = (item.riot_valorant_knife ?? 0) > 0 ? 1 : 0;
+      return skins * 1200 + agents * 1000 + knife * 8000;
+    }
+    case "lol": {
+      const skins = item.riot_lol_skin_count ?? 0;
+      const champs = item.riot_lol_champion_count ?? 0;
+      return skins * 100 + champs * 40;
+    }
+    case "fortnite": {
+      const outfits = item.fortnite_skin_count ?? item.fortnite_outfit_count ?? 0;
+      const vb = Number(item.fortnite_vbucks ?? item.fortnite_balance ?? 0);
+      return outfits * 200 + (Number.isFinite(vb) ? vb : 0) * 0.45;
+    }
+    case "minecraft": {
+      const hyp = item.minecraft_hypixel_level ?? 0;
+      const capes = item.minecraft_capes_count ?? 0;
+      const editions = (item.minecraft_java ?? 0) + (item.minecraft_bedrock ?? 0);
+      return hyp * 10 + capes * 400 + editions * 150;
+    }
+    default:
+      return 0;
+  }
 }
 
 type LztMarketListResponse = {
@@ -1105,6 +1150,8 @@ const Contas = () => {
     if (normalized !== sortBy) setSortBy(normalized);
   }, [searchParams, setSearchParams, sortBy]);
 
+  const lztListOrderBy = useMemo(() => listOrderByForLztApi(sortBy), [sortBy]);
+
   const [searchQuery, setSearchQuery] = useState(() => qp("q"));
   const [lvlMin, setLvlMin] = useState(() => qp("lvlMin"));
   const [lvlMax, setLvlMax] = useState(() => qp("lvlMax"));
@@ -1333,8 +1380,8 @@ const Contas = () => {
   const buildParams = useCallback((pageNum: number = 1): Record<string, string | string[]> => {
     const params: Record<string, string | string[]> = {};
     params.page = String(pageNum);
-    // Ordenação enviada à API LZT (preço reordenado no cliente com price_brl)
-    params.order_by = normalizeListSortParam(sortBy);
+    // Ordenação LZT: preço reordenado no edge com price_brl; custo-benefício → pdate (sort só no cliente).
+    params.order_by = lztListOrderBy;
     if (searchQuery) params.title = searchQuery;
 
     // Send price filters to API so server filters before returning
@@ -1404,7 +1451,7 @@ const Contas = () => {
     }
 
     return params;
-  }, [searchQuery, onlyKnife, selectedRank, selectedWeapon, invMin, invMax, lvlMin, lvlMax, gameTab, lolRank, lolChampMin, lolSkinsMin, fnVbMin, fnSkinsMin, mcJava, mcBedrock, mcHypixelLvlMin, mcCapesMin, mcNoBan, lolRegion, valRegion, sortBy, priceMin, priceMax]);
+  }, [searchQuery, onlyKnife, selectedRank, selectedWeapon, invMin, invMax, lvlMin, lvlMax, gameTab, lolRank, lolChampMin, lolSkinsMin, fnVbMin, fnSkinsMin, mcJava, mcBedrock, mcHypixelLvlMin, mcCapesMin, mcNoBan, lolRegion, valRegion, lztListOrderBy, priceMin, priceMax]);
 
   const paramsKey = JSON.stringify(buildParams(1)) + gameTab;
   // Só o campo "busca por título" usa debounce. Preço, inv, nível, mínimos etc. disparam fetch na hora (mais fluido).
@@ -1412,7 +1459,7 @@ const Contas = () => {
     () =>
       JSON.stringify({
         gameTab,
-        sortBy,
+        lztListOrderBy,
         selectedRank,
         selectedWeapon,
         onlyKnife,
@@ -1437,7 +1484,7 @@ const Contas = () => {
       }),
     [
       gameTab,
-      sortBy,
+      lztListOrderBy,
       selectedRank,
       selectedWeapon,
       onlyKnife,
@@ -1810,6 +1857,20 @@ const Contas = () => {
     }
     if (sortBy === "price_to_down") {
       return filtered.sort((a, b) => getBrlPrice(b) - getBrlPrice(a));
+    }
+
+    if (sortBy === "custo_beneficio") {
+      return filtered.sort((a, b) => {
+        const pa = Math.max(getBrlPrice(a), 0.01);
+        const pb = Math.max(getBrlPrice(b), 0.01);
+        const ra = getListingValueScore(a, gameTab) / pa;
+        const rb = getListingValueScore(b, gameTab) / pb;
+        if (rb !== ra) return rb - ra;
+        const pubA = a.published_date ?? 0;
+        const pubB = b.published_date ?? 0;
+        if (pubB !== pubA) return pubB - pubA;
+        return (b.item_id ?? 0) - (a.item_id ?? 0);
+      });
     }
 
     // Default sort (pdate_to_down = "Mais Recentes"): preserve API date order for ALL games.

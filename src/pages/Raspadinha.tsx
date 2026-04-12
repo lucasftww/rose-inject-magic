@@ -272,7 +272,7 @@ const Raspadinha = () => {
             if (data.status === "COMPLETED") {
               if (!mountedRef.current) return;
               const paymentMode = raspadinhaItem.planId?.includes("contas") ? "contas" : "produtos";
-              const qty = parseInt(raspadinhaItem.planName?.match(/(\d+)x/)?.[1] || "1");
+              const qty = parseInt(raspadinhaItem.planName?.match(/(\d+)x/)?.[1] || "1", 10);
               setPendingPayment({ id: payment.id, mode: paymentMode, quantity: qty });
               if (!silent) toast({ title: "Pagamento confirmado! Clique em Jogar Agora 🎉" });
               setCheckingPayments(false);
@@ -294,7 +294,7 @@ const Raspadinha = () => {
         if (!plays || plays.length === 0) {
           if (!mountedRef.current) return;
           const paymentMode = raspadinhaItem.planId?.includes("contas") ? "contas" : "produtos";
-          const qty = parseInt(raspadinhaItem.planName?.match(/(\d+)x/)?.[1] || "1");
+          const qty = parseInt(raspadinhaItem.planName?.match(/(\d+)x/)?.[1] || "1", 10);
           setPendingPayment({ id: payment.id, mode: paymentMode, quantity: qty });
           if (!silent) toast({ title: "Raspadinha pendente encontrada! 🎉" });
           setCheckingPayments(false);
@@ -678,7 +678,7 @@ const Raspadinha = () => {
     // Call directly onPaymentCompleted logic
     setPaymentPhase("paid");
     const qty = pendingPayment.quantity;
-    const currentMode = pendingPayment.mode;
+    const currentMode = coerceRaspadinhaMode(pendingPayment.mode);
 
     toast({ title: "Carregando sua raspadinha! 🎉" });
 

@@ -26,7 +26,7 @@ const LocationAwareErrorBoundary = ({ children }: { children: React.ReactNode })
 
 // Retry wrapper for lazy imports — retries up to 3 times with delay to recover from transient network/chunk errors
 // On final retry, forces a full page reload to bust stale chunk references after a new deploy
-type LazyModule = { default: React.ComponentType<any> };
+type LazyModule = { default: React.ComponentType<Record<string, unknown>> };
 
 function lazyRetry(
   factory: () => Promise<LazyModule>,

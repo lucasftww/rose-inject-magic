@@ -621,13 +621,15 @@ const ContaDetalhes = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <div className="mx-auto max-w-6xl px-5 sm:px-6 pt-4 pb-32 sm:pb-20">
+      <div className="mx-auto max-w-6xl px-4 min-[400px]:px-5 sm:px-6 pt-3 sm:pt-4 pb-28 sm:pb-20">
         <button
+          type="button"
           onClick={() => navigate("/contas")}
-          className="mb-5 sm:mb-5 flex items-center gap-2 rounded-xl border border-border bg-card/50 px-4 py-2.5 text-sm text-muted-foreground transition-all hover:border-success/40 hover:text-success">
-          
-          <ArrowLeft className="h-4 w-4" />
-          Voltar
+          aria-label="Voltar para lista de contas"
+          className="mb-4 sm:mb-5 inline-flex items-center gap-2 rounded-full border border-border/80 bg-card/90 px-4 py-2 text-sm font-medium text-muted-foreground shadow-sm backdrop-blur-sm transition-all hover:border-success/50 hover:text-success hover:shadow-md active:scale-[0.98] touch-manipulation"
+        >
+          <ArrowLeft className="h-4 w-4 shrink-0" />
+          Voltar às contas
         </button>
 
         {isLoading &&
@@ -662,9 +664,10 @@ const ContaDetalhes = () => {
               <span className="text-foreground font-medium truncate">{rank?.name || "Unranked"}</span>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-              {/* ── LEFT COLUMN: Gallery + Rank + Stats ── */}
-              <div className="lg:col-span-3 space-y-4 order-1">
+            {/* Mobile: preço/CTA primeiro (conversão); desktop: galeria à esquerda */}
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-5 lg:gap-8">
+              {/* ── Gallery + Rank + Stats ── */}
+              <div className="space-y-4 order-2 lg:order-1 lg:col-span-3">
                 {/* Skin carousel */}
                 {skinItems.length > 0 && !skinsLoading ? (
                   <div className="rounded-2xl border border-border/60 bg-card overflow-hidden aspect-[4/3] sm:aspect-[16/10] relative group">
@@ -704,13 +707,14 @@ const ContaDetalhes = () => {
                     </div>
                   </div>
                 ) : mainGallery.length > 0 ? (
-                  <div className="relative group rounded-2xl border border-border bg-card overflow-hidden aspect-[4/3] sm:aspect-[16/10]">
+                  <div className="relative group rounded-2xl border border-border/60 bg-card overflow-hidden aspect-[4/3] sm:aspect-[16/10] shadow-sm">
+                    <div className="absolute inset-0 bg-gradient-to-b from-secondary/20 to-transparent pointer-events-none" />
                     <AnimatePresence mode="wait">
                       <motion.img
                         key={selectedSkin}
                         src={getProxiedImageUrl(mainGallery[selectedSkin]?.image)}
                         alt={mainGallery[selectedSkin]?.name}
-                        className="h-full w-full object-contain p-6"
+                        className="relative z-[1] h-full w-full object-contain p-4 sm:p-6"
                         decoding="async"
                         fetchPriority="high"
                         initial={{ opacity: 0, scale: 0.95 }}
@@ -721,10 +725,10 @@ const ContaDetalhes = () => {
                     </AnimatePresence>
                     {mainGallery.length > 1 && (
                       <>
-                        <button onClick={handlePrev} className="absolute left-3 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-background/80 border border-border text-muted-foreground opacity-0 group-hover:opacity-100 transition-all hover:text-success hover:border-success/40">
+                        <button type="button" aria-label="Imagem anterior" onClick={handlePrev} className="absolute left-2 sm:left-3 top-1/2 z-[2] flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/95 text-muted-foreground shadow-sm opacity-100 transition-all hover:text-success hover:border-success/40 sm:opacity-0 sm:group-hover:opacity-100 touch-manipulation">
                           <ChevronLeft className="h-5 w-5" />
                         </button>
-                        <button onClick={handleNext} className="absolute right-3 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-background/80 border border-border text-muted-foreground opacity-0 group-hover:opacity-100 transition-all hover:text-success hover:border-success/40">
+                        <button type="button" aria-label="Próxima imagem" onClick={handleNext} className="absolute right-2 sm:right-3 top-1/2 z-[2] flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/95 text-muted-foreground shadow-sm opacity-100 transition-all hover:text-success hover:border-success/40 sm:opacity-0 sm:group-hover:opacity-100 touch-manipulation">
                           <ChevronRight className="h-5 w-5" />
                         </button>
                       </>
@@ -778,11 +782,11 @@ const ContaDetalhes = () => {
                 </div>
               </div>
 
-              {/* ── RIGHT COLUMN: Purchase Card ── */}
-              <div className="lg:col-span-2 order-2">
+              {/* ── Purchase card ── */}
+              <div className="order-1 lg:order-2 lg:col-span-2">
                 <div className="lg:sticky lg:top-20 space-y-4">
                   {/* Main purchase card */}
-                  <div className="rounded-2xl border border-success/20 bg-card p-5 sm:p-6 space-y-5 shadow-[0_0_40px_hsl(var(--success)/0.04)]">
+                  <div className="rounded-2xl border border-success/25 bg-gradient-to-b from-card to-secondary/10 p-5 sm:p-6 space-y-5 shadow-[0_0_0_1px_hsl(var(--success)/0.08),0_12px_40px_-12px_hsl(0_0%_0%/0.35)]">
                     {/* Title */}
                     <h1 className="text-base sm:text-lg font-bold text-foreground leading-snug">{cleanedTitle}</h1>
 
@@ -822,7 +826,8 @@ const ContaDetalhes = () => {
                       onClick={handleBuyNow}
                       disabled={checkingAvailability}
                       aria-busy={checkingAvailability}
-                      className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-positive py-4 text-sm font-bold uppercase tracking-[0.2em] text-positive-foreground transition-all active:scale-[0.98] disabled:opacity-60"
+                      aria-label={checkingAvailability ? "Verificando disponibilidade" : "Comprar esta conta agora"}
+                      className="flex w-full min-h-[52px] items-center justify-center gap-2.5 rounded-xl bg-positive py-4 text-sm font-bold uppercase tracking-[0.18em] text-positive-foreground shadow-md transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-60 touch-manipulation"
                     >
                       {checkingAvailability ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
                       {checkingAvailability ? "VERIFICANDO..." : "COMPRAR AGORA"}
@@ -906,14 +911,15 @@ const ContaDetalhes = () => {
                   </div>
 
                   {/* Search */}
-                  <div className="relative max-w-xs">
+                  <div className="relative w-full max-w-md">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                     <input
-                      type="text"
+                      type="search"
+                      enterKeyHint="search"
                       value={inventorySearch}
                       onChange={(e) => setInventorySearch(e.target.value)}
-                      placeholder="Buscar item..."
-                      className="w-full rounded-lg border border-border bg-card pl-9 pr-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-success transition-colors"
+                      placeholder="Buscar skin, agente ou buddy…"
+                      className="w-full rounded-xl border border-border bg-card pl-10 pr-10 py-3 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-success/25 focus:border-success/50 transition-shadow"
                     />
                     {inventorySearch && (
                       <button
@@ -1087,31 +1093,31 @@ const ContaDetalhes = () => {
       </div>
 
       {/* Sticky mobile bottom bar */}
-      {item &&
-      <div className="fixed bottom-0 left-0 right-0 z-40 sm:hidden">
-          <div className="border-t border-border bg-card px-5 py-3.5 safe-area-bottom">
-            <div className="flex items-center gap-4">
-              <div className="flex flex-col min-w-0">
-                <span className="text-xs text-muted-foreground leading-none mb-0.5">Total</span>
-                <span className="text-xl font-bold text-success leading-tight">
+      {item && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 sm:hidden pointer-events-none">
+          <div className="pointer-events-auto border-t border-border/60 bg-background/95 px-4 py-3 shadow-[0_-8px_32px_-8px_rgba(0,0,0,0.35)] backdrop-blur-md safe-area-bottom">
+            <div className="mx-auto flex max-w-lg items-center gap-3">
+              <div className="flex min-w-0 flex-col">
+                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/80">Total</span>
+                <span className="truncate text-lg font-bold tabular-nums text-success">
                   {lockedPriceBrl !== null ? formatPriceBrl(lockedPriceBrl) : getDisplayPrice(item, "valorant")}
                 </span>
               </div>
               <button
-              type="button"
-              onClick={handleBuyNow}
-              disabled={checkingAvailability}
-              aria-busy={checkingAvailability}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-positive py-3.5 text-sm font-bold uppercase tracking-wider text-positive-foreground transition-all active:scale-[0.98] disabled:opacity-60"
+                type="button"
+                onClick={handleBuyNow}
+                disabled={checkingAvailability}
+                aria-busy={checkingAvailability}
+                aria-label={checkingAvailability ? "Verificando disponibilidade" : "Comprar agora"}
+                className="flex min-h-[48px] min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-positive px-3 py-3 text-xs font-bold uppercase tracking-wider text-positive-foreground shadow-md transition-all active:scale-[0.98] disabled:opacity-60 touch-manipulation"
               >
-              
-                {checkingAvailability ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShoppingCart className="h-4 w-4" />}
-                {checkingAvailability ? "Verificando..." : "Comprar Agora"}
+                {checkingAvailability ? <Loader2 className="h-4 w-4 shrink-0 animate-spin" /> : <ShoppingCart className="h-4 w-4 shrink-0" />}
+                <span className="truncate">{checkingAvailability ? "Verificando…" : "Comprar"}</span>
               </button>
             </div>
           </div>
         </div>
-      }
+      )}
     </div>);
 
 };

@@ -72,7 +72,8 @@ function convertBrlToSellerPrice(brlAmount: number, currency: string, markup: nu
   }
 
   if (currency === "brl") {
-    return Math.max(1, Math.ceil(brlAmount / 2.0));
+    // Listagens em BRL na LZT: inverter o mesmo multiplicador usado em `getDisplayedPriceBrl` (markup admin).
+    return Math.max(1, Math.ceil(brlAmount / Math.max(markup, 1)));
   }
 
 
@@ -215,9 +216,9 @@ function getDisplayedPriceBrl(
     costBrl = rawPrice * USD_TO_BRL;
     rawMarkedUp = costBrl * activeMarkup;
   } else {
-    // BRL or unknown: 2× seller price — legacy margin path (no per-game markup column in API)
+    // BRL (preço do vendedor já em reais): aplicar o mesmo `activeMarkup` que RUB/USD — antes era 2× fixo e ignorava o admin.
     costBrl = rawPrice;
-    rawMarkedUp = rawPrice * 2.0;
+    rawMarkedUp = rawPrice * activeMarkup;
   }
 
   let final = rawMarkedUp;
@@ -746,7 +747,7 @@ Deno.serve(async (req) => {
       // Todas as categorias: apenas contas que nunca foram vendidas antes no LZT (`nsb`).
       params.set("nsb", "1");
 
-      // Enforce minimum 10 skins via API params (server-side at LZT)
+      // Valorant: mínimo de skins na API LZT (`valorant_smin`; não confundir com LoL/FN que usam 10)
       if (gameType === "riot" || gameType === "valorant") {
         if (!params.get("valorant_smin") || Number(params.get("valorant_smin")) < 5) {
           params.set("valorant_smin", "5");

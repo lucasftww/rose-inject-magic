@@ -32,7 +32,8 @@ export function calcLztFallbackBrl(price: number, currency?: string, _game?: Gam
   let brl = raw;
   if (cur === "rub") brl = raw * RUB_TO_BRL * MARKUP;
   else if (cur === "usd") brl = raw * USD_TO_BRL * MARKUP;
-  else brl = raw * 2.0;
+  // BRL na LZT: alinhar ao edge `lzt-market` (markup configurável; fallback 3× como RUB/USD)
+  else brl = raw * MARKUP;
 
   const costBrl = cur === "rub" ? raw * RUB_TO_BRL : cur === "usd" ? raw * USD_TO_BRL : raw;
   const minPrice = costBrl * 2.0;
