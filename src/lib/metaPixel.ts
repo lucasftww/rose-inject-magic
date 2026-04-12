@@ -361,6 +361,8 @@ const generateEventId = (prefix: string): string => {
 interface TrackingData {
   contentName: string;
   contentIds: string[];
+  /** Se omitido, cada `contentIds[i]` usa quantidade 1. */
+  contents?: { id: string; quantity: number }[];
   value: number;
   currency?: string;
   transactionId?: string;
@@ -508,10 +510,14 @@ export const trackInitiateCheckout = (data: TrackingData) => {
   if (typeof window === "undefined") return;
 
   const eventId = generateEventId("ic");
+  const contents =
+    data.contents?.length && data.contents.every((c) => c.id)
+      ? data.contents
+      : data.contentIds.map((id) => ({ id, quantity: 1 }));
   const customData: Record<string, unknown> = {
     content_name: data.contentName,
     content_ids: data.contentIds,
-    contents: data.contentIds.map((id) => ({ id, quantity: 1 })),
+    contents,
     content_type: "product",
     value: data.value,
     currency: data.currency || "BRL",
@@ -540,10 +546,14 @@ export const trackPurchase = (
     devLog("trackPurchase sessionStorage failed", e);
   }
 
+  const contents =
+    data.contents?.length && data.contents.every((c) => c.id)
+      ? data.contents
+      : data.contentIds.map((id) => ({ id, quantity: 1 }));
   const customData: Record<string, unknown> = {
     content_name: data.contentName,
     content_ids: data.contentIds,
-    contents: data.contentIds.map((id) => ({ id, quantity: 1 })),
+    contents,
     content_type: "product",
     value: data.value,
     currency: data.currency || "BRL",

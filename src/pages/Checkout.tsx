@@ -501,10 +501,28 @@ const Checkout = () => {
           setPaymentStatus(data.status);
           if (intervalRef.current) clearInterval(intervalRef.current);
           if (data.status === "COMPLETED") {
-            const cartItem = cartSnapshotRef.current[0];
-            if (cartItem) {
-              trackPurchase({ contentName: cartItem.productName, contentIds: [cartItem.productId], value: finalPriceRef.current, transactionId: paymentIdRef.current || "unknown" });
-            }
+            const snap = cartSnapshotRef.current;
+            if (snap.length === 0) return;
+            const contentIds = snap.map((i) => i.productId).filter(Boolean);
+            if (contentIds.length === 0) return;
+            const contents = snap.map((i) => ({
+              id: i.productId,
+              quantity: Math.max(1, Math.floor(Number(i.quantity) || 1)),
+            }));
+            const contentName =
+              snap.length === 1
+                ? snap[0].productName
+                : (() => {
+                    const joined = snap.map((i) => i.productName).join(", ");
+                    return joined.length <= 500 ? joined : `${snap.length} produtos — ${joined.slice(0, 420)}…`;
+                  })();
+            trackPurchase({
+              contentName,
+              contentIds,
+              contents,
+              value: finalPriceRef.current,
+              transactionId: paymentIdRef.current || "unknown",
+            });
           }
         }
       } catch (e) {
