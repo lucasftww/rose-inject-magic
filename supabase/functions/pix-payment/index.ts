@@ -892,8 +892,11 @@ async function fulfillLztAccount(supabaseAdmin: SupabaseAdminClient, payment: Pa
     .neq("status", "failed")
     .maybeSingle();
 
-  if (existingTicket && existingTicket.status === "delivered") {
-    console.log(`LZT item ${itemId} already delivered for user ${payment.user_id}. Skipping duplicate fulfillment.`);
+  /** Evita 2º fast-buy / 2º ticket no mesmo item (webhook + poll, retries, etc.). */
+  if (existingTicket) {
+    console.log(
+      `LZT item ${itemId} already has ticket ${existingTicket.id} (status=${existingTicket.status}) for user ${payment.user_id}. Skipping duplicate fulfillment.`,
+    );
     return;
   }
 
@@ -1206,7 +1209,21 @@ async function fulfillLztAccount(supabaseAdmin: SupabaseAdminClient, payment: Pa
       return;
     }
 
+    const topErrors = Array.isArray((buyData as { errors?: unknown }).errors)
+      ? (buyData as { errors: unknown[] }).errors
+      : [];
+    if (topErrors.length > 0) {
+      console.error("LZT fast-buy JSON has errors array despite HTTP OK:", JSON.stringify(topErrors).slice(0, 400));
+      await createManualDeliveryTicket(`LZT fast-buy errors: ${JSON.stringify(topErrors).slice(0, 400)}`);
+      return;
+    }
+
     const boughtItem = buyData.item as Record<string, unknown> | undefined;
+    if (!boughtItem || typeof boughtItem !== "object") {
+      console.error("LZT fast-buy OK but missing item object in body");
+      await createManualDeliveryTicket("LZT fast-buy OK but missing item in JSON body");
+      return;
+    }
     const loginData = boughtItem?.loginData as Record<string, unknown> | undefined;
     const str = (v: unknown) => (typeof v === "string" ? v : "");
 
@@ -1226,6 +1243,14 @@ async function fulfillLztAccount(supabaseAdmin: SupabaseAdminClient, payment: Pa
 
     if (typeof accountEmail === "string" && accountEmail === email && boughtItem?.item_origin === "autoreg") {
       accountEmail = boughtItem?.emailLoginData ?? boughtItem?.email ?? loginData?.email ?? "";
+    }
+
+    const hasLoginPair = Boolean(String(email || "").trim() && String(password || "").trim());
+    const hasRawCreds = Boolean(String(rawCredentials || "").trim().length >= 2);
+    if (!hasLoginPair && !hasRawCreds) {
+      console.warn(`LZT fast-buy OK for ${itemId} but no usable credentials — opening manual ticket instead of Entregue`);
+      await createManualDeliveryTicket("Fast-buy succeeded but no login/password or raw credentials in LZT response");
+      return;
     }
 
     const stockContent = email && password
