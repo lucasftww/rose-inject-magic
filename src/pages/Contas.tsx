@@ -1236,6 +1236,8 @@ const Contas = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [isRefetching, setIsRefetching] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+  /** Abort só do “carregar mais” — separado do `abortRef` da listagem principal. */
+  const loadMoreControllerRef = useRef<AbortController | null>(null);
   const prevGameTabRef = useRef(gameTab);
   
   const isValorant = gameTab === "valorant";
@@ -1690,7 +1692,9 @@ const Contas = () => {
           setCurrentPage(1);
           cacheSet(cacheKey, { items, hasNextPage: hasMore, currentPage: 1, timestamp: Date.now() });
         } catch (e: unknown) {
-          console.warn("Contas: reconciliação pós-prefetch falhou", e instanceof Error ? e.message : String(e));
+          if (import.meta.env.DEV) {
+            console.warn("Contas: reconciliação pós-prefetch falhou", e instanceof Error ? e.message : String(e));
+          }
         }
       })();
       return;
@@ -1717,8 +1721,6 @@ const Contas = () => {
       return () => clearTimeout(timer);
     }
   }, [firstPageLoaded, gameTab, prefetchAdjacentTabs]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const loadMoreControllerRef = useRef<AbortController | null>(null);
 
   const loadMorePages = async () => {
     if (streamError || loadingMore || !hasNextPage) return;

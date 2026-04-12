@@ -44,15 +44,15 @@ function validateCpfChecksum(cpf: string): boolean {
   if (digits.length !== 11) return false;
   if (/^(\d)\1{10}$/.test(digits)) return false; // all same digits
   let sum = 0;
-  for (let i = 0; i < 9; i++) sum += parseInt(digits[i]) * (10 - i);
+  for (let i = 0; i < 9; i++) sum += parseInt(digits[i], 10) * (10 - i);
   let rest = (sum * 10) % 11;
   if (rest === 10) rest = 0;
-  if (rest !== parseInt(digits[9])) return false;
+  if (rest !== parseInt(digits[9], 10)) return false;
   sum = 0;
-  for (let i = 0; i < 10; i++) sum += parseInt(digits[i]) * (11 - i);
+  for (let i = 0; i < 10; i++) sum += parseInt(digits[i], 10) * (11 - i);
   rest = (sum * 10) % 11;
   if (rest === 10) rest = 0;
-  return rest === parseInt(digits[10]);
+  return rest === parseInt(digits[10], 10);
 }
 
 /* ── CPF mask ── */
@@ -77,6 +77,13 @@ function applyPhoneMask(value: string): string {
     v = `(${digits.slice(0, 2)}) ${local.slice(0, splitAt)}-${local.slice(splitAt)}`;
   }
   return v;
+}
+
+/** Dígitos com código do país 55 (Meta / gateways). Evita `55` órfão se o campo estiver vazio. */
+function toBrazilPhoneDigits(maskedPhone: string): string {
+  const d = maskedPhone.replace(/\D/g, "");
+  if (!d) return "";
+  return d.startsWith("55") ? d : `55${d}`;
 }
 
 /* ── Field validation helpers ── */
@@ -258,7 +265,7 @@ const Checkout = () => {
   }, [nameValid, emailValid, phoneValid, cpfValid]);
 
   useEffect(() => {
-    supabase
+    void supabase
       .from("payment_settings")
       .select("method, enabled")
       .then(({ data, error }) => {
@@ -272,6 +279,9 @@ const Checkout = () => {
           if (typeof r.method === "string") map[r.method] = r.enabled ?? false;
         }
         setEnabledMethods(map);
+      })
+      .catch(() => {
+        setEnabledMethods({ pix: true });
       });
   }, []);
 
@@ -311,7 +321,7 @@ const Checkout = () => {
               customer_data: {
                 name: formData.name.trim() || user.email?.split("@")[0] || "Cliente",
                 email: formData.email.trim() || user.email || "",
-                phone: formData.phone,
+                phone: toBrazilPhoneDigits(formData.phone) || formData.phone.trim(),
                 document: formData.document,
               },
             }),
@@ -374,7 +384,7 @@ const Checkout = () => {
       setCouponApplied({ id: couponId, code: couponCode.trim().toUpperCase(), discount: Math.min(discount, safeCartTotal) });
       setCouponCode("");
     } catch (e: unknown) {
-      console.warn("validate_coupon:", e instanceof Error ? e.message : String(e));
+      if (import.meta.env.DEV) console.warn("validate_coupon:", e instanceof Error ? e.message : String(e));
       setCouponError("Erro ao validar cupom");
     } finally {
       setCouponLoading(false);
@@ -392,7 +402,7 @@ const Checkout = () => {
     setLoading(true);
     await setAdvancedMatching({
       email: formData.email,
-      phone: "55" + formData.phone.replace(/\D/g, ""),
+      phone: toBrazilPhoneDigits(formData.phone),
       firstName: formData.name.split(" ")[0],
       lastName: formData.name.split(" ").slice(1).join(" "),
       externalId: user.id,
@@ -422,7 +432,7 @@ const Checkout = () => {
       setCartSnapshot([...items]);
       clearCart();
     } catch (err: unknown) {
-      console.error(err);
+      if (import.meta.env.DEV) console.error(err);
       toast({ title: "Erro ao gerar PIX", description: err instanceof Error ? err.message : String(err), variant: "destructive" });
       setPaymentMethod(null);
     } finally {
@@ -434,7 +444,7 @@ const Checkout = () => {
   const createCardCharge = async () => {
     if (!user || loading) return;
     setLoading(true);
-    await setAdvancedMatching({ email: formData.email, phone: "55" + formData.phone.replace(/\D/g, ""), firstName: formData.name.split(" ")[0], lastName: formData.name.split(" ").slice(1).join(" "), externalId: user.id });
+    await setAdvancedMatching({ email: formData.email, phone: toBrazilPhoneDigits(formData.phone), firstName: formData.name.split(" ")[0], lastName: formData.name.split(" ").slice(1).join(" "), externalId: user.id });
     try {
       const result = await safeJsonFetch<PixPaymentCreateResult>(`${supabaseUrl}/functions/v1/pix-payment?action=create-card`, {
         method: "POST",
@@ -453,7 +463,7 @@ const Checkout = () => {
       if (cardUrl) window.open(cardUrl, "_blank", "noopener,noreferrer");
       else if (result.paymentUrl) toast({ title: "URL de pagamento inválida", variant: "destructive" });
     } catch (err: unknown) {
-      console.error(err);
+      if (import.meta.env.DEV) console.error(err);
       toast({ title: "Erro ao gerar pagamento com cartão", description: err instanceof Error ? err.message : String(err), variant: "destructive" });
       setPaymentMethod(null);
     } finally {
@@ -465,7 +475,7 @@ const Checkout = () => {
   const createCryptoCharge = async () => {
     if (!user || loading) return;
     setLoading(true);
-    await setAdvancedMatching({ email: formData.email, phone: "55" + formData.phone.replace(/\D/g, ""), firstName: formData.name.split(" ")[0], lastName: formData.name.split(" ").slice(1).join(" "), externalId: user.id });
+    await setAdvancedMatching({ email: formData.email, phone: toBrazilPhoneDigits(formData.phone), firstName: formData.name.split(" ")[0], lastName: formData.name.split(" ").slice(1).join(" "), externalId: user.id });
     try {
       const result = await safeJsonFetch<PixPaymentCreateResult>(`${supabaseUrl}/functions/v1/pix-payment?action=create-crypto`, {
         method: "POST",
@@ -481,7 +491,7 @@ const Checkout = () => {
       setCartSnapshot([...items]);
       clearCart();
     } catch (err: unknown) {
-      console.error(err);
+      if (import.meta.env.DEV) console.error(err);
       toast({ title: "Erro ao gerar pagamento USDT", description: err instanceof Error ? err.message : String(err), variant: "destructive" });
       setPaymentMethod(null);
     } finally {
@@ -546,7 +556,7 @@ const Checkout = () => {
       } catch (e) {
         if (cancelled) return;
         statusPollFailCountRef.current += 1;
-        console.error("Checkout poll failed:", e);
+        if (import.meta.env.DEV) console.error("Checkout poll failed:", e);
         if (statusPollFailCountRef.current >= 5 && !statusPollNotifiedRef.current) {
           statusPollNotifiedRef.current = true;
           toast({ title: "Não foi possível verificar o pagamento", description: "Verifique sua conexão.", variant: "destructive" });
