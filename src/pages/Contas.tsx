@@ -1676,8 +1676,8 @@ const Contas = () => {
           setHasNextPage(hasMore);
           setCurrentPage(1);
           cacheSet(cacheKey, { items, hasNextPage: hasMore, currentPage: 1, timestamp: Date.now() });
-        } catch {
-          /* silent */
+        } catch (e: unknown) {
+          console.warn("Contas: reconciliação pós-prefetch falhou", e instanceof Error ? e.message : String(e));
         }
       })();
       return;

@@ -309,6 +309,7 @@ const FinanceTab = () => {
       const cartTotal = cart.reduce((sum, i) => sum + (Number(i.price) || 0), 0);
       const actualPaid = p.amount / 100;
       for (const item of cart) {
+        // Preços ausentes ou zerados: rateio uniforme para não perder receita na fatia LZT/Robot/Estoque.
         const proportion = cartTotal > 0 ? (Number(item.price) || 0) / cartTotal : 1 / cart.length;
         const itemRevenue = actualPaid * proportion;
         if (item.type === "lzt-account") lzt += itemRevenue;

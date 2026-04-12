@@ -45,11 +45,18 @@ export const useReseller = () => {
         return;
       }
 
-      // Fetch allowed products
-      const { data: prodData } = await supabase
+      // Fetch allowed products — erro aqui não pode virar "desconto em tudo" (lista vazia = todos os produtos).
+      const { data: prodData, error: prodErr } = await supabase
         .from("reseller_products")
         .select("product_id")
         .eq("reseller_id", r.id);
+
+      if (prodErr) {
+        console.warn("useReseller: reseller_products", prodErr.message);
+        setReseller(null);
+        setLoading(false);
+        return;
+      }
 
       setReseller({
         id: r.id,
@@ -66,7 +73,8 @@ export const useReseller = () => {
 
   const isResellerForProduct = (productId: string): boolean => {
     if (!reseller) return false;
-    if (reseller.productIds.length === 0) return true; // all products
+    // Lista vazia após fetch OK = regra de negócio "vale para todos os produtos" cadastrados no admin.
+    if (reseller.productIds.length === 0) return true;
     return reseller.productIds.includes(productId);
   };
 

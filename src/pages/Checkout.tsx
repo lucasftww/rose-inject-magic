@@ -23,6 +23,21 @@ import { Button } from "@/components/ui/button";
 
 type PaymentMethod = "pix" | "card" | "crypto" | null;
 
+/** Resposta de `validate_coupon` (jsonb) — manter alinhado ao RPC em migrations. */
+type ValidateCouponRpcResult = {
+  valid?: boolean;
+  error?: string;
+  id?: string;
+  discount_type?: string;
+  discount_value?: number;
+  min_order_value?: number;
+};
+
+function parseValidateCouponRpc(data: unknown): ValidateCouponRpcResult {
+  if (data == null || typeof data !== "object" || Array.isArray(data)) return {};
+  return data as ValidateCouponRpcResult;
+}
+
 /* ── CPF checksum validation ── */
 function validateCpfChecksum(cpf: string): boolean {
   const digits = cpf.replace(/\D/g, "");
@@ -335,9 +350,9 @@ const Checkout = () => {
         _cart_product_ids: items.map((i) => i.productId),
       });
       if (error) throw error;
-      const result = data as any;
-      if (!result?.valid) {
-        setCouponError(result?.error || "Cupom inválido");
+      const result = parseValidateCouponRpc(data);
+      if (!result.valid) {
+        setCouponError(result.error || "Cupom inválido");
         return;
       }
       // Check minimum order value
@@ -346,13 +361,20 @@ const Checkout = () => {
         setCouponError(`Pedido mínimo de R$ ${minOrder.toFixed(2).replace(".", ",")} para este cupom`);
         return;
       }
+      const rawValue = typeof result.discount_value === "number" && Number.isFinite(result.discount_value) ? result.discount_value : 0;
       const discount =
         result.discount_type === "percentage"
-          ? (safeCartTotal * result.discount_value) / 100
-          : result.discount_value ?? 0;
-      setCouponApplied({ id: result.id, code: couponCode.trim().toUpperCase(), discount: Math.min(discount, safeCartTotal) });
+          ? (safeCartTotal * rawValue) / 100
+          : rawValue;
+      const couponId = typeof result.id === "string" && result.id.length > 0 ? result.id : "";
+      if (!couponId) {
+        setCouponError("Resposta do cupom inválida. Tente novamente.");
+        return;
+      }
+      setCouponApplied({ id: couponId, code: couponCode.trim().toUpperCase(), discount: Math.min(discount, safeCartTotal) });
       setCouponCode("");
-    } catch {
+    } catch (e: unknown) {
+      console.warn("validate_coupon:", e instanceof Error ? e.message : String(e));
       setCouponError("Erro ao validar cupom");
     } finally {
       setCouponLoading(false);
@@ -485,6 +507,7 @@ const Checkout = () => {
   const paymentIdRef = useRef(paymentId);
   const statusPollFailCountRef = useRef(0);
   const statusPollNotifiedRef = useRef(false);
+  const statusPollInFlightRef = useRef(false);
   useEffect(() => { cartSnapshotRef.current = cartSnapshot; }, [cartSnapshot]);
   useEffect(() => { finalPriceRef.current = finalPrice; }, [finalPrice]);
   useEffect(() => { paymentIdRef.current = paymentId; }, [paymentId]);
@@ -495,9 +518,12 @@ const Checkout = () => {
     let cancelled = false;
     statusPollFailCountRef.current = 0;
     statusPollNotifiedRef.current = false;
+    statusPollInFlightRef.current = false;
     const statusAction = paymentMethod === "card" ? "card-status" : paymentMethod === "crypto" ? "crypto-status" : "status";
     const checkStatus = async () => {
       if (cancelled) return;
+      if (statusPollInFlightRef.current) return;
+      statusPollInFlightRef.current = true;
       setChecking(true);
       try {
         const data = await safeJsonFetch<PixPaymentStatusResult>(
@@ -525,8 +551,10 @@ const Checkout = () => {
           statusPollNotifiedRef.current = true;
           toast({ title: "Não foi possível verificar o pagamento", description: "Verifique sua conexão.", variant: "destructive" });
         }
+      } finally {
+        statusPollInFlightRef.current = false;
+        if (!cancelled) setChecking(false);
       }
-      if (!cancelled) setChecking(false);
     };
     intervalRef.current = setInterval(checkStatus, 3000);
     checkStatus();

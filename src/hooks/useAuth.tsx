@@ -124,7 +124,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             if (supabase) {
               supabase.functions.invoke("track-login", {
                 headers: { Authorization: `Bearer ${newSession.access_token}` },
-              }).catch(() => {});
+              }).catch((err: unknown) => {
+                console.warn("track-login:", err instanceof Error ? err.message : String(err));
+              });
             }
 
             syncAdvancedMatching(newSession.user);
