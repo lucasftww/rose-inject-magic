@@ -13,6 +13,7 @@ import {
 import logoRoyal from "@/assets/logo-royal.png";
 import { motion } from "framer-motion";
 import { trackPurchase, getUserData, setAdvancedMatching } from "@/lib/metaPixel";
+import { buildMetaPurchasePayloadFromCartItems } from "@/lib/buildMetaPurchasePayload";
 import { safeJsonFetch, ApiError } from "@/lib/apiUtils";
 import { safeHttpUrl } from "@/lib/safeUrl";
 import { buildCartSnapshotFromItems } from "@/lib/buildCartSnapshot";
@@ -306,6 +307,10 @@ const Checkout = () => {
           toast({ title: "Não foi possível concluir", description: result.error || "Verifique o carrinho.", variant: "destructive" });
           return;
         }
+        const freePayload = buildMetaPurchasePayloadFromCartItems(items, 0);
+        if (freePayload && result.payment_id) {
+          trackPurchase({ ...freePayload, transactionId: result.payment_id });
+        }
         clearCart();
         if (result.ticket_id) {
           toast({ title: "Pronto!", description: "Abrindo o pedido com o download." });
@@ -378,6 +383,10 @@ const Checkout = () => {
       });
       if (!result.success) throw new Error(result.error || "Erro ao criar cobrança");
       if (result.claimed_free) {
+        const freePayload = buildMetaPurchasePayloadFromCartItems(items, 0);
+        if (freePayload && result.payment_id) {
+          trackPurchase({ ...freePayload, transactionId: result.payment_id });
+        }
         clearCart();
         if (result.ticket_id) { toast({ title: "Pronto!", description: "Abrindo o pedido." }); navigate(`/pedido/${result.ticket_id}`); }
         else navigate("/meus-pedidos");
@@ -502,27 +511,10 @@ const Checkout = () => {
           if (intervalRef.current) clearInterval(intervalRef.current);
           if (data.status === "COMPLETED") {
             const snap = cartSnapshotRef.current;
-            if (snap.length === 0) return;
-            const contentIds = snap.map((i) => i.productId).filter(Boolean);
-            if (contentIds.length === 0) return;
-            const contents = snap.map((i) => ({
-              id: i.productId,
-              quantity: Math.max(1, Math.floor(Number(i.quantity) || 1)),
-            }));
-            const contentName =
-              snap.length === 1
-                ? snap[0].productName
-                : (() => {
-                    const joined = snap.map((i) => i.productName).join(", ");
-                    return joined.length <= 500 ? joined : `${snap.length} produtos — ${joined.slice(0, 420)}…`;
-                  })();
-            trackPurchase({
-              contentName,
-              contentIds,
-              contents,
-              value: finalPriceRef.current,
-              transactionId: paymentId,
-            });
+            const purchasePayload = buildMetaPurchasePayloadFromCartItems(snap, finalPriceRef.current);
+            if (purchasePayload) {
+              trackPurchase({ ...purchasePayload, transactionId: paymentId });
+            }
           }
         }
       } catch (e) {

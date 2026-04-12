@@ -6,12 +6,11 @@ import { motion } from "framer-motion";
 import { supabase, supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
 import { safeJsonFetch } from "@/lib/apiUtils";
 import type { PixPaymentCreateResult } from "@/lib/edgeFunctionTypes";
-import { getUserData } from "@/lib/metaPixel";
+import { getUserData, trackInitiateCheckout, trackPurchase } from "@/lib/metaPixel";
 import { getYouTubeId, getYouTubeEmbedUrl, getYouTubeThumbnail } from "@/lib/videoUtils";
 import { useCart } from "@/hooks/useCart";
 import { useReseller } from "@/hooks/useReseller";
 import { toast } from "@/hooks/use-toast";
-import { trackInitiateCheckout } from "@/lib/metaPixel";
 import { parseStoreProductDetail, type StoreProductDetail } from "@/types/supabaseQueryResults";
 
 interface PublicProductReview {
@@ -286,6 +285,15 @@ const ProdutoDetalhes = () => {
           }
         );
         if (!res.success) throw new Error(res.error || "Não foi possível concluir");
+        if (res.claimed_free && res.payment_id) {
+          trackPurchase({
+            contentName: product.name,
+            contentIds: [product.id],
+            contents: [{ id: product.id, quantity: 1 }],
+            value: 0,
+            transactionId: res.payment_id,
+          });
+        }
         if (res.claimed_free && res.ticket_id) {
           toast({ title: "Pronto!", description: "Abrindo o pedido com o link de download." });
           navigate(`/pedido/${res.ticket_id}`);
