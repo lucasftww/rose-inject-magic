@@ -71,10 +71,10 @@ const AdminGuard = ({ children }: { children: ReactNode }) => {
         ]);
 
         if (roleCheck.error) {
-          console.error("AdminGuard: has_role check failed:", roleCheck.error.message);
+          if (import.meta.env.DEV) console.error("AdminGuard: has_role check failed:", roleCheck.error.message);
         }
         if (adminVerify.error) {
-          console.error("AdminGuard: admin_verify check failed:", adminVerify.error.message);
+          if (import.meta.env.DEV) console.error("AdminGuard: admin_verify check failed:", adminVerify.error.message);
         }
 
         const layer1 = !roleCheck.error && !!roleCheck.data;
@@ -88,7 +88,7 @@ const AdminGuard = ({ children }: { children: ReactNode }) => {
           writeAdminGuardCache(user.id, ok);
         }
       } catch (err) {
-        console.error("AdminGuard: unexpected error during role check:", err);
+        if (import.meta.env.DEV) console.error("AdminGuard: unexpected error during role check:", err);
         if (!cancelled) {
           setServerVerified(false);
           writeAdminGuardCache(user.id, false);

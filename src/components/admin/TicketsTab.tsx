@@ -770,7 +770,7 @@ const TicketsTab = ({
         </div>
       );
     } catch (err) {
-      console.error("Credential parse error:", err);
+      if (import.meta.env.DEV) console.error("Credential parse error:", err);
       return <p className="text-sm text-foreground whitespace-pre-wrap">{jsonStr}</p>;
     }
   };

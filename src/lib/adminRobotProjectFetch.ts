@@ -205,7 +205,7 @@ async function fetchRobotSalesForPeriod(period: RobotProjectSalesPeriod): Promis
 
 export async function fetchAdminRobotProjectBundle(period: RobotProjectSalesPeriod): Promise<AdminRobotProjectBundle> {
   const ratePromise = getUsdToBrl(5.16).catch((err) => {
-    console.warn("getUsdToBrl failed in Robot admin bundle, using fallback 5.16", err);
+    if (import.meta.env.DEV) console.warn("getUsdToBrl failed in Robot admin bundle, using fallback 5.16", err);
     return 5.16;
   });
   const session = (await supabase.auth.getSession()).data?.session;
@@ -245,7 +245,7 @@ export async function fetchAdminRobotProjectBundle(period: RobotProjectSalesPeri
   try {
     robotSales = await fetchRobotSalesForPeriod(period);
   } catch (err) {
-    console.error("fetchRobotSalesForPeriod error:", err);
+    if (import.meta.env.DEV) console.error("fetchRobotSalesForPeriod error:", err);
     robotSales = [];
   }
 

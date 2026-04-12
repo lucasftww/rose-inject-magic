@@ -208,7 +208,7 @@ async function fetchFinanceDashboard(): Promise<{
     let robotTickets: RobotTicket[] = [];
 
     if (robotProductsRes.error) {
-      console.warn("FinanceTab: produtos Robot", robotProductsRes.error.message);
+      if (import.meta.env.DEV) console.warn("FinanceTab: produtos Robot", robotProductsRes.error.message);
       toast({
         title: "Métricas Robot incompletas",
         description: robotProductsRes.error.message,
@@ -267,7 +267,7 @@ async function fetchFinanceDashboard(): Promise<{
       usdToBrl: currentRate,
     };
   } catch (err) {
-    console.error("FinanceTab fetchFinanceDashboard error:", err);
+    if (import.meta.env.DEV) console.error("FinanceTab fetchFinanceDashboard error:", err);
     throw err instanceof Error ? err : new Error(String(err));
   }
 }

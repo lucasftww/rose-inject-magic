@@ -88,7 +88,7 @@ export async function fetchAdminSalesTickets(): Promise<SaleTicket[]> {
         if (s.content != null) stockMap.set(s.id, s.content);
       });
     } catch (err) {
-      console.error("fetchAdminSalesTickets stock_items error:", err);
+      if (import.meta.env.DEV) console.error("fetchAdminSalesTickets stock_items error:", err);
     }
   }
 

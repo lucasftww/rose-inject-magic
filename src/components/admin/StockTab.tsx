@@ -92,8 +92,8 @@ const StockTab = () => {
       });
       setStockMap(prev => ({ ...prev, [planId]: data }));
     } catch (err) {
-      console.error("fetchStockForPlan error:", err);
-      // fallback
+      if (import.meta.env.DEV) console.error("fetchStockForPlan error:", err);
+      toast({ title: "Erro ao carregar estoque", description: "Tente expandir o plano novamente.", variant: "destructive" });
     }
     setLoadingStock(null);
   };

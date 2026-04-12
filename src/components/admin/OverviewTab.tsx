@@ -153,7 +153,7 @@ async function fetchOverviewDashboard(): Promise<OverviewDashboardData> {
       }));
 
       if (robotProductsRes.error) {
-        console.warn("OverviewTab: produtos Robot", robotProductsRes.error.message);
+        if (import.meta.env.DEV) console.warn("OverviewTab: produtos Robot", robotProductsRes.error.message);
         toast({
           title: "Visão geral: métricas Robot incompletas",
           description: robotProductsRes.error.message,
@@ -232,7 +232,7 @@ async function fetchOverviewDashboard(): Promise<OverviewDashboardData> {
         robotCosts,
       };
   } catch (err) {
-    console.error("OverviewTab fetchOverviewDashboard error:", err);
+    if (import.meta.env.DEV) console.error("OverviewTab fetchOverviewDashboard error:", err);
     throw err instanceof Error ? err : new Error(String(err));
   }
 }
