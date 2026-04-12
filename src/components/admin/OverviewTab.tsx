@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database, Tables } from "@/integrations/supabase/types";
 import { fetchAllRows } from "@/lib/supabaseAllRows";
-import { getCached, setCache, getUsdToBrl, invalidateAdminCache } from "@/lib/adminCache";
+import { getCached, setCache, invalidateAdminCache } from "@/lib/adminCache";
 import { buildRobotSalesLedgerFromPayments } from "@/lib/adminRobotSalesLedger";
 import { paymentCartSnapshot } from "@/types/paymentCart";
 import { asOrderTicketMetadata } from "@/types/orderTicketMetadata";
@@ -105,8 +105,6 @@ type OverviewDashboardData = {
 async function fetchOverviewDashboard(): Promise<OverviewDashboardData> {
   let robotCosts: { cost: number; created_at: string }[] = [];
   try {
-    const usdToBrl = await getUsdToBrl();
-
       // Use shared cache for heavy queries
       const CACHE_KEY_PAYMENTS = "admin_payments_completed_v2";
       const CACHE_KEY_ORDERS = "admin_orders_all";
@@ -366,11 +364,11 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
         <div className="rounded-xl border border-border bg-card p-4">
           <div className="flex items-center gap-2 mb-2">
             <Users className="h-4 w-4 text-warning" />
-            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Status</span>
+            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Administradores</span>
           </div>
           <p className="text-2xl font-bold text-foreground tracking-tight">{adminUsers.length}</p>
           <p className="text-[11px] text-muted-foreground mt-0.5">
-            {openTickets > 0 ? <span className="text-warning font-semibold">{openTickets} tickets abertos</span> : "Nenhum ticket aberto"}
+            {openTickets > 0 ? <span className="text-warning font-semibold">{openTickets} ticket{openTickets === 1 ? "" : "s"} aberto{openTickets === 1 ? "" : "s"}</span> : "Nenhum ticket aberto"}
           </p>
         </div>
       </div>

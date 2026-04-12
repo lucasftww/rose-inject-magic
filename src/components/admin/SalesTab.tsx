@@ -128,6 +128,11 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
 
   useEffect(() => { setPage(1); }, [search, statusFilter, typeFilter]);
 
+  /** Evita lista vazia quando a página atual fica acima do total após refetch ou mudança de dados. */
+  useEffect(() => {
+    setPage((p) => Math.min(p, totalPages));
+  }, [totalPages]);
+
   const copyToClipboard = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
     setCopiedId(id);

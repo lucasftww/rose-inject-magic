@@ -325,6 +325,11 @@ const FinanceTab = () => {
 
   const robotTotalCost = useMemo(() => fRobot.reduce((s, r) => s + r.cost, 0), [fRobot]);
   const robotTotalProfit = useMemo(() => fRobot.reduce((s, r) => s + r.profit, 0), [fRobot]);
+  /** Desconto agregado a revendedores (preço tabela − pago); reduz lucro como custo operacional. */
+  const resellerProgramCost = useMemo(
+    () => fReseller.reduce((s, r) => s + (Number(r.original_price) - Number(r.paid_price)), 0),
+    [fReseller],
+  );
   const uniqueBuyers = useMemo(() => new Set(fp.map(p => p.user_id)).size, [fp]);
   const prevBuyers = useMemo(() => new Set(pp.map(p => p.user_id)).size, [pp]);
   const buyersChange = pctChange(uniqueBuyers, prevBuyers);
@@ -339,7 +344,7 @@ const FinanceTab = () => {
   // Note: discount_amount is NOT included in costs because payments.amount
   // already stores the post-discount value (the actual money received).
   // Including it would double-count discounts and artificially lower margins.
-  const totalCosts = lztTotalBought + robotTotalCost;
+  const totalCosts = lztTotalBought + robotTotalCost + resellerProgramCost;
   const netProfit = totalRevenue - totalCosts;
   const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
 
@@ -451,7 +456,7 @@ const FinanceTab = () => {
     <p class="section">Custos</p><div class="grid">
       <div class="card"><p class="card-label">Custo LZT</p><p class="card-value">R$ ${fmt(lztTotalBought)}</p></div>
       <div class="card"><p class="card-label">Custo Robot</p><p class="card-value">R$ ${fmt(robotTotalCost)}</p></div>
-      
+      <div class="card"><p class="card-label">Revendedores</p><p class="card-value">R$ ${fmt(resellerProgramCost)}</p></div>
     </div>
     <p class="footer">Royal Store · Relatório gerado automaticamente</p></body></html>`;
     const w = window.open("", "_blank");
@@ -661,7 +666,7 @@ const FinanceTab = () => {
               <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
                 <Users className="h-3 w-3 text-warning" /> Revendedores
               </span>
-              <span className="text-xs text-warning font-bold">-R$ {fmt(fReseller.reduce((s, r) => s + (Number(r.original_price) - Number(r.paid_price)), 0))}</span>
+              <span className="text-xs text-warning font-bold">-R$ {fmt(resellerProgramCost)}</span>
             </div>
           )}
         </div>
