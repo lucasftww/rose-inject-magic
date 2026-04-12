@@ -114,7 +114,7 @@ const CellContent = ({ cell }: { cell: GridCell }) => {
 type PaymentPhase = "idle" | "generating" | "paying" | "paid";
 
 const Raspadinha = () => {
-  const { user, isAdmin } = useAuth();
+  const { user } = useAuth();
   const [mode, setMode] = useState<RaspadinhaMode>("produtos");
 
   const [prizes, setPrizes] = useState<Prize[]>([]);

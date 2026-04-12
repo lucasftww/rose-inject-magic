@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { PostgrestError } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
@@ -66,6 +66,10 @@ const LztTab = () => {
   const dbStats = lztBundle?.dbStats ?? null;
 
   const [saving, setSaving] = useState(false);
+  /** Evita `applyConfig` em refetch da query apagar edições em curso no formulário. */
+  const lztConfigFormDirtyRef = useRef(false);
+  /** Já aplicámos pelo menos uma vez dados do servidor no form (para não bloquear a primeira hidratação). */
+  const lztConfigHydratedFromServerRef = useRef(false);
   const [config, setConfig] = useState<LztConfig | null>(null);
   const [maxPrice, setMaxPrice] = useState("500");
   const [activeView, setActiveView] = useState<"config" | "sales" | "price">("config");
@@ -83,6 +87,8 @@ const LztTab = () => {
       id: partial?.id || "",
     };
 
+    lztConfigFormDirtyRef.current = false;
+    lztConfigHydratedFromServerRef.current = partial != null;
     setConfig(resolved);
     setMaxPrice(String(resolved.max_fetch_price));
     setMarkups({
@@ -115,6 +121,7 @@ const LztTab = () => {
 
   useEffect(() => {
     if (lztBundleError || !lztBundle) return;
+    if (lztConfigFormDirtyRef.current && lztConfigHydratedFromServerRef.current) return;
     applyConfig(mapLztConfigRow(lztBundle.configRow));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- hydrate form when React Query finishes a successful fetch
   }, [lztBundleUpdatedAt, lztBundleError]);
@@ -258,7 +265,10 @@ const LztTab = () => {
                         step="0.1"
                         min="1"
                         value={markups[field.key]}
-                        onChange={(e) => setMarkups((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                        onChange={(e) => {
+                          lztConfigFormDirtyRef.current = true;
+                          setMarkups((prev) => ({ ...prev, [field.key]: e.target.value }));
+                        }}
                         className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-success/50"
                       />
                       <span className="text-sm font-bold text-muted-foreground">x</span>
@@ -293,7 +303,7 @@ const LztTab = () => {
                 <label className="text-xs font-medium text-muted-foreground">Preço máximo (limite de busca LZT)</label>
                 <div className="mt-1 flex items-center gap-2">
                   <span className="text-sm font-bold text-muted-foreground">R$</span>
-                  <input type="number" step="10" min="1" value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)}
+                  <input type="number" step="10" min="1" value={maxPrice} onChange={(e) => { lztConfigFormDirtyRef.current = true; setMaxPrice(e.target.value); }}
                     className="w-32 rounded-lg border border-border bg-secondary/50 px-4 py-2.5 text-sm text-foreground outline-none focus:border-success/50" />
                 </div>
                 <p className="mt-1 text-[10px] text-muted-foreground max-w-md">

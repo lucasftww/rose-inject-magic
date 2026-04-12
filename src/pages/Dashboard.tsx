@@ -55,6 +55,11 @@ const Dashboard = () => {
   const initialTab = tabFromSearchParam(searchParams.get("tab"));
   const [activeTab, setActiveTab] = useState<Tab>(initialTab);
 
+  useEffect(() => {
+    const t = tabFromSearchParam(searchParams.get("tab"));
+    setActiveTab((prev) => (prev === t ? prev : t));
+  }, [searchParams]);
+
   // Security state
   const [securityVerified, setSecurityVerified] = useState(false);
   const [verifyPassword, setVerifyPassword] = useState("");

@@ -210,6 +210,19 @@ const weapons = [
   { id: "vandal", name: "Vandal", img: weaponVandal },
 ];
 
+const VALORANT_RANK_IDS = new Set(valorantRankFilters.map((r) => r.id));
+const LOL_RANK_IDS = new Set(lolRankFilters.map((r) => r.id));
+const VAL_WEAPON_IDS = new Set(weapons.map((w) => w.id));
+const VAL_REGION_IDS = new Set(valorantRegions.map((r) => r.id));
+const LOL_REGION_IDS = new Set(lolRegions.map((r) => r.id));
+
+/** Query keys escritos pelo sync de filtros / switchTab (preserva utm_*, etc.). */
+const CONTAS_MANAGED_QUERY_KEYS: string[] = [
+  "rank", "weapon", "knife", "region", "champMin", "skinsMin", "vbMin",
+  "levelMin", "battlePass", "java", "bedrock", "hypixelMin", "capesMin",
+  "noBan", "lvlMin", "lvlMax", "invMin", "invMax", "q", "sort", "pmin", "pmax", "game",
+];
+
 const sortOptions = [
   {
     label: "Mais Recentes",
@@ -1064,16 +1077,39 @@ const Contas = () => {
   const qpBool = (key: string) => searchParams.get(key) === "1";
 
   // ─── Valorant filters ───
-  const [selectedRank, setSelectedRank] = useState(() => qp("rank", "todos"));
-  const [selectedWeapon, setSelectedWeapon] = useState(() => qp("weapon", "todos"));
+  const [selectedRank, setSelectedRank] = useState(() => {
+    const tab = gameTabFromSearchParams(searchParams);
+    const r = searchParams.get("rank") ?? "todos";
+    if (tab !== "valorant") return "todos";
+    return VALORANT_RANK_IDS.has(r) ? r : "todos";
+  });
+  const [selectedWeapon, setSelectedWeapon] = useState(() => {
+    const w = searchParams.get("weapon") ?? "todos";
+    return VAL_WEAPON_IDS.has(w) ? w : "todos";
+  });
   const [onlyKnife, setOnlyKnife] = useState(() => qpBool("knife"));
-  const [valRegion, setValRegion] = useState(() => qp("region", "br"));
+  const [valRegion, setValRegion] = useState(() => {
+    const tab = gameTabFromSearchParams(searchParams);
+    const r = searchParams.get("region") ?? "br";
+    if (tab !== "valorant") return "br";
+    return VAL_REGION_IDS.has(r) ? r : "br";
+  });
 
   // ─── LoL filters ───
-  const [lolRank, setLolRank] = useState(() => qp("rank", "todos"));
+  const [lolRank, setLolRank] = useState(() => {
+    const tab = gameTabFromSearchParams(searchParams);
+    const r = searchParams.get("rank") ?? "todos";
+    if (tab !== "lol") return "todos";
+    return LOL_RANK_IDS.has(r) ? r : "todos";
+  });
   const [lolChampMin, setLolChampMin] = useState(() => qp("champMin"));
   const [lolSkinsMin, setLolSkinsMin] = useState(() => qp("skinsMin"));
-  const [lolRegion, setLolRegion] = useState(() => qp("region", "BR1"));
+  const [lolRegion, setLolRegion] = useState(() => {
+    const tab = gameTabFromSearchParams(searchParams);
+    const r = searchParams.get("region") ?? "BR1";
+    if (tab !== "lol") return "BR1";
+    return LOL_REGION_IDS.has(r) ? r : "BR1";
+  });
 
   // ─── Fortnite filters ───
   const [fnVbMin, setFnVbMin] = useState(() => qp("vbMin"));
@@ -1126,6 +1162,151 @@ const Contas = () => {
   const [lvlMax, setLvlMax] = useState(() => qp("lvlMax"));
   const [invMin, setInvMin] = useState(() => qp("invMin"));
   const [invMax, setInvMax] = useState(() => qp("invMax"));
+  /** Inventário Valorant: debounce para não disparar 1 fetch LZT por tecla (abort/retry deixa tudo lento). */
+  const [debouncedInvMin, setDebouncedInvMin] = useState(() => qp("invMin"));
+  const [debouncedInvMax, setDebouncedInvMax] = useState(() => qp("invMax"));
+  const prevGameTabForInvDebounceRef = useRef<GameTab | null>(null);
+  useEffect(() => {
+    if (gameTab !== "valorant") {
+      setDebouncedInvMin(invMin);
+      setDebouncedInvMax(invMax);
+      prevGameTabForInvDebounceRef.current = gameTab;
+      return;
+    }
+    const tabJustChanged = prevGameTabForInvDebounceRef.current !== gameTab;
+    prevGameTabForInvDebounceRef.current = gameTab;
+    if (tabJustChanged) {
+      setDebouncedInvMin(invMin);
+      setDebouncedInvMax(invMax);
+      return;
+    }
+    const ms = 420;
+    const id = window.setTimeout(() => {
+      setDebouncedInvMin(invMin);
+      setDebouncedInvMax(invMax);
+    }, ms);
+    return () => clearTimeout(id);
+  }, [invMin, invMax, gameTab]);
+
+  // Voltar/avançar ou editar URL: estado dos filtros vinha só do mount inicial — ficava dessincronizado.
+  // `sort` continua com efeito dedicado (normalização); aqui não mexemos em sortBy.
+  useEffect(() => {
+    const tab = gameTabFromSearchParams(searchParams);
+    const get = (k: string, d = "") => searchParams.get(k) ?? d;
+
+    setSearchQuery((prev) => {
+      const v = get("q").slice(0, 100);
+      return prev === v ? prev : v;
+    });
+    setPriceMin((prev) => {
+      const v = get("pmin").slice(0, 7);
+      return prev === v ? prev : v;
+    });
+    setPriceMax((prev) => {
+      const v = get("pmax").slice(0, 7);
+      return prev === v ? prev : v;
+    });
+    setLvlMin((prev) => {
+      const v = get("lvlMin").slice(0, 4);
+      return prev === v ? prev : v;
+    });
+    setLvlMax((prev) => {
+      const v = get("lvlMax").slice(0, 4);
+      return prev === v ? prev : v;
+    });
+    const invMi = get("invMin").slice(0, 7);
+    const invMa = get("invMax").slice(0, 7);
+    setInvMin((prev) => (prev === invMi ? prev : invMi));
+    setInvMax((prev) => (prev === invMa ? prev : invMa));
+    setDebouncedInvMin((prev) => (prev === invMi ? prev : invMi));
+    setDebouncedInvMax((prev) => (prev === invMa ? prev : invMa));
+
+    const rankRaw = get("rank", "todos");
+    if (tab === "valorant") {
+      const vr = VALORANT_RANK_IDS.has(rankRaw) ? rankRaw : "todos";
+      setSelectedRank((prev) => (prev === vr ? prev : vr));
+      setLolRank((prev) => (prev === "todos" ? prev : "todos"));
+    } else if (tab === "lol") {
+      const lr = LOL_RANK_IDS.has(rankRaw) ? rankRaw : "todos";
+      setLolRank((prev) => (prev === lr ? prev : lr));
+      setSelectedRank((prev) => (prev === "todos" ? prev : "todos"));
+    } else {
+      setSelectedRank((prev) => (prev === "todos" ? prev : "todos"));
+      setLolRank((prev) => (prev === "todos" ? prev : "todos"));
+    }
+
+    const weaponRaw = get("weapon", "todos");
+    const vw = VAL_WEAPON_IDS.has(weaponRaw) ? weaponRaw : "todos";
+    setSelectedWeapon((prev) => (prev === vw ? prev : vw));
+
+    setOnlyKnife((prev) => {
+      const v = searchParams.get("knife") === "1";
+      return prev === v ? prev : v;
+    });
+
+    const regionRaw = get("region", tab === "lol" ? "BR1" : "br");
+    if (tab === "valorant") {
+      const vr = VAL_REGION_IDS.has(regionRaw) ? regionRaw : "br";
+      setValRegion((prev) => (prev === vr ? prev : vr));
+    } else if (tab === "lol") {
+      const lr = LOL_REGION_IDS.has(regionRaw) ? regionRaw : "BR1";
+      setLolRegion((prev) => (prev === lr ? prev : lr));
+    }
+
+    if (tab === "lol") {
+      setLolChampMin((prev) => {
+        const v = get("champMin");
+        return prev === v ? prev : v;
+      });
+      setLolSkinsMin((prev) => {
+        const v = get("skinsMin");
+        return prev === v ? prev : v;
+      });
+    }
+
+    if (tab === "fortnite") {
+      setFnVbMin((prev) => {
+        const v = get("vbMin");
+        return prev === v ? prev : v;
+      });
+      setFnSkinsMin((prev) => {
+        const v = get("skinsMin");
+        return prev === v ? prev : v;
+      });
+      setFnLevelMin((prev) => {
+        const v = get("levelMin");
+        return prev === v ? prev : v;
+      });
+      setFnHasBattlePass((prev) => {
+        const v = searchParams.get("battlePass") === "1";
+        return prev === v ? prev : v;
+      });
+    }
+
+    if (tab === "minecraft") {
+      setMcJava((prev) => {
+        const v = searchParams.get("java") === "1";
+        return prev === v ? prev : v;
+      });
+      setMcBedrock((prev) => {
+        const v = searchParams.get("bedrock") === "1";
+        return prev === v ? prev : v;
+      });
+      setMcHypixelLvlMin((prev) => {
+        const v = get("hypixelMin");
+        return prev === v ? prev : v;
+      });
+      setMcCapesMin((prev) => {
+        const v = get("capesMin");
+        return prev === v ? prev : v;
+      });
+      setMcNoBan((prev) => {
+        const v = searchParams.get("noBan") === "1";
+        return prev === v ? prev : v;
+      });
+    }
+  }, [searchParams]);
+
   // page state removed — displayPage handles client-side pagination
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
@@ -1361,8 +1542,8 @@ const Contas = () => {
 
     if (gameTab === "valorant") {
       params.game_type = "riot";
-      if (invMin) params.inv_min = invMin;
-      if (invMax) params.inv_max = invMax;
+      if (debouncedInvMin) params.inv_min = debouncedInvMin;
+      if (debouncedInvMax) params.inv_max = debouncedInvMax;
       if (onlyKnife) params.knife = "1";
       if (lvlMin) params.valorant_level_min = lvlMin;
       if (lvlMax) params.valorant_level_max = lvlMax;
@@ -1422,7 +1603,7 @@ const Contas = () => {
     }
 
     return params;
-  }, [searchQuery, onlyKnife, selectedRank, selectedWeapon, invMin, invMax, lvlMin, lvlMax, gameTab, lolRank, lolChampMin, lolSkinsMin, fnVbMin, fnSkinsMin, mcJava, mcBedrock, mcHypixelLvlMin, mcCapesMin, mcNoBan, lolRegion, valRegion, lztListOrderBy, priceMin, priceMax]);
+  }, [searchQuery, onlyKnife, selectedRank, selectedWeapon, debouncedInvMin, debouncedInvMax, lvlMin, lvlMax, gameTab, lolRank, lolChampMin, lolSkinsMin, fnVbMin, fnSkinsMin, mcJava, mcBedrock, mcHypixelLvlMin, mcCapesMin, mcNoBan, lolRegion, valRegion, lztListOrderBy, priceMin, priceMax]);
 
   const paramsKey = JSON.stringify(buildParams(1)) + gameTab;
   // Só o campo "busca por título" usa debounce. Preço, inv, nível, mínimos etc. disparam fetch na hora (mais fluido).
@@ -1446,8 +1627,8 @@ const Contas = () => {
         mcCapesMin,
         priceMin,
         priceMax,
-        invMin,
-        invMax,
+        invMin: debouncedInvMin,
+        invMax: debouncedInvMax,
         lvlMin,
         lvlMax,
         fnVbMin,
@@ -1471,8 +1652,8 @@ const Contas = () => {
       mcCapesMin,
       priceMin,
       priceMax,
-      invMin,
-      invMax,
+      debouncedInvMin,
+      debouncedInvMax,
       lvlMin,
       lvlMax,
       fnVbMin,
@@ -1886,6 +2067,7 @@ const Contas = () => {
     setPriceMin(""); setPriceMax("");
     setSearchQuery(""); setOnlyKnife(false);
     setInvMin(""); setInvMax("");
+    setDebouncedInvMin(""); setDebouncedInvMax("");
     setLvlMin(""); setLvlMax("");
     setSortBy("pdate_to_down");
     setDisplayPage(1);
@@ -1894,11 +2076,11 @@ const Contas = () => {
   const switchTab = (tab: GameTab) => {
     if (tab === gameTab) return;
     setGameTab(tab);
-    // clearFilters resets all filter state; the sync effect will update URL params.
-    // We still need to set `game` param explicitly here for history navigation.
+    // Não substituir a query inteira — perdia utm_*, ref, etc. Só removemos chaves que o sync gere.
     setSearchParams(
-      () => {
-        const next = new URLSearchParams();
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        for (const k of CONTAS_MANAGED_QUERY_KEYS) next.delete(k);
         if (tab !== "valorant") next.set("game", tab);
         return next;
       },
