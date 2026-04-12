@@ -12,6 +12,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAdminTicketsList } from "@/hooks/useAdminData";
 import { useAdminUsers } from "@/hooks/useAdminUsers";
 import { toast } from "@/hooks/use-toast";
+import { invalidateAdminCache } from "@/lib/adminCache";
+import { countOrderTicketsByStatus, deleteAllDeliveredOrderTickets } from "@/lib/adminTicketsBulk";
 import AudioMessagePlayer from "@/components/AudioMessagePlayer";
 import {
   Loader2, MessageSquare, Search, Send, Archive, ArchiveRestore, ArrowLeft,
@@ -119,6 +121,7 @@ const TicketsTab = ({
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const { isRecording, recordingDuration, startRecording, stopRecording, cancelRecording } = useAudioRecorder();
+  const [purgeDeliveredBusy, setPurgeDeliveredBusy] = useState(false);
 
   // Dynamic signed URLs for attachments
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
@@ -473,6 +476,46 @@ const TicketsTab = ({
         setSelectedTicket(prev => (prev ? { ...prev, status: "open", status_label: "Aberto" } : null));
       }
       void refetchTickets();
+    }
+  };
+
+  const purgeAllDeliveredTickets = async () => {
+    if (purgeDeliveredBusy) return;
+    setPurgeDeliveredBusy(true);
+    try {
+      const pending = await countOrderTicketsByStatus("delivered");
+      if (pending === 0) {
+        toast({ title: "Nada a excluir", description: "Não há tickets com status Entregue." });
+        return;
+      }
+      const confirmed = window.confirm(
+        `Excluir permanentemente ${pending} ticket(s) com status "Entregue"?\n\n` +
+          "O histórico de chat será apagado. Os clientes deixam de ver esses pedidos. Não dá para desfazer."
+      );
+      if (!confirmed) return;
+
+      const removed = await deleteAllDeliveredOrderTickets();
+      if (selectedTicket?.status === "delivered") {
+        setSelectedTicket(null);
+        setMessages([]);
+      }
+      invalidateAdminCache();
+      void refetchTickets();
+      toast({
+        title: "Tickets entregues removidos",
+        description:
+          removed === pending
+            ? `${removed} registro(s) excluído(s).`
+            : `${removed} registro(s) excluído(s) nesta operação (havia ${pending} no momento da confirmação).`,
+      });
+    } catch (e) {
+      toast({
+        title: "Falha ao excluir tickets",
+        description: e instanceof Error ? e.message : String(e),
+        variant: "destructive",
+      });
+    } finally {
+      setPurgeDeliveredBusy(false);
     }
   };
 
@@ -861,17 +904,35 @@ const TicketsTab = ({
             {filteredTickets.length}
           </span>
         </div>
-        <button
-          onClick={() => { setShowArchived(!showArchived); setSelectedTicket(null); }}
-          className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold ${
-            showArchived
-              ? "border-success/25 bg-success/10 text-success"
-              : "border-border bg-card text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          {showArchived ? <ArchiveRestore className="h-3.5 w-3.5" /> : <Archive className="h-3.5 w-3.5" />}
-          {showArchived ? "Ativos" : "Arquivo"}
-        </button>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {!showArchived && (
+            <button
+              type="button"
+              onClick={() => void purgeAllDeliveredTickets()}
+              disabled={purgeDeliveredBusy}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-destructive/30 bg-destructive/[0.06] px-3 py-1.5 text-xs font-semibold text-destructive hover:bg-destructive/10 disabled:opacity-50"
+            >
+              {purgeDeliveredBusy ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Trash2 className="h-3.5 w-3.5" />
+              )}
+              Excluir entregues
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => { setShowArchived(!showArchived); setSelectedTicket(null); }}
+            className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold ${
+              showArchived
+                ? "border-success/25 bg-success/10 text-success"
+                : "border-border bg-card text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {showArchived ? <ArchiveRestore className="h-3.5 w-3.5" /> : <Archive className="h-3.5 w-3.5" />}
+            {showArchived ? "Ativos" : "Arquivo"}
+          </button>
+        </div>
       </div>
 
       {/* ── Search & Filter ── */}
