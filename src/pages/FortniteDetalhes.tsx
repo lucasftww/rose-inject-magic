@@ -244,7 +244,7 @@ const FortniteDetalhes = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 pt-4 pb-28 sm:pb-20">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 pt-4 pb-32 sm:pb-20">
         <Link
           to="/contas?game=fortnite"
           className="mb-5 inline-flex items-center gap-2 rounded-lg border border-border bg-card/50 px-4 py-2 text-sm text-muted-foreground transition-all hover:text-foreground"
@@ -669,13 +669,13 @@ const FortniteDetalhes = () => {
         )}
       </div>
 
-      {/* Sticky mobile bottom bar */}
+      {/* Sticky mobile bottom bar — min-w-0 + truncate evita overflow horizontal (flex default min-width:auto). */}
       {item && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 sm:hidden">
-          <div className="border-t border-border bg-card px-4 py-3 safe-area-bottom">
-            <div className="flex items-center gap-3">
-              <div className="flex flex-col min-w-0">
-                <span className="text-lg font-bold leading-tight text-positive">
+        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 w-full max-w-[100dvw] overflow-x-hidden sm:hidden">
+          <div className="pointer-events-auto border-t border-border bg-card px-3 py-3 safe-area-bottom sm:px-4">
+            <div className="mx-auto flex w-full max-w-lg min-w-0 items-center gap-2 sm:gap-3">
+              <div className="flex min-w-0 shrink-0 flex-col">
+                <span className="truncate text-base font-bold leading-tight tabular-nums text-positive sm:text-lg">
                   {lockedPriceBrl !== null ? formatPriceBrl(lockedPriceBrl) : getDisplayPrice(item, "fortnite")}
                 </span>
               </div>
@@ -684,10 +684,11 @@ const FortniteDetalhes = () => {
                 onClick={handleBuyNow}
                 disabled={checkingAvailability}
                 aria-busy={checkingAvailability}
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-positive py-3.5 text-sm font-bold uppercase tracking-wider text-positive-foreground transition-all active:scale-[0.98] disabled:opacity-60"
+                aria-label={checkingAvailability ? "Verificando disponibilidade" : "Comprar agora"}
+                className="flex min-h-[48px] min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-positive px-2 py-3 text-xs font-bold uppercase tracking-wider text-positive-foreground transition-all active:scale-[0.98] disabled:opacity-60 touch-manipulation sm:px-3 sm:text-sm"
               >
-                {checkingAvailability ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShoppingCart className="h-4 w-4" />}
-                {checkingAvailability ? "Verificando..." : "Comprar Agora"}
+                {checkingAvailability ? <Loader2 className="h-4 w-4 shrink-0 animate-spin" /> : <ShoppingCart className="h-4 w-4 shrink-0" />}
+                <span className="min-w-0 truncate">{checkingAvailability ? "Verificando…" : "Comprar"}</span>
               </button>
             </div>
           </div>
