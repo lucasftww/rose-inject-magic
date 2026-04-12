@@ -33,6 +33,11 @@ import {
 } from "@/lib/valorantData";
 import { getListingCardTitle } from "@/lib/lztDisplayTitles";
 import {
+  compareFortniteCardRows,
+  metaFromFortniteApiItem,
+  type FortniteCosmeticDbRow,
+} from "@/lib/fortniteCosmeticSort";
+import {
   hideImgOnError,
   setBorderAndBoxShadow,
   clearBorderAndBoxShadow,
@@ -328,16 +333,22 @@ type LztMarketListResponse = {
 // RARITY_PRIORITY, SkinEntry, fetchAllValorantSkins imported from @/lib/valorantData
 
 // Fortnite-API: fetch all BR cosmetics (smallIcon)
-const fetchFortniteSkins = async (): Promise<Map<string, { name: string; image: string }>> => {
+const fetchFortniteSkins = async (): Promise<Map<string, FortniteCosmeticDbRow>> => {
   try {
     const data = await safeJsonFetch<FortniteCosmeticsResponse>("https://fortnite-api.com/v2/cosmetics/br?language=pt-BR");
-    const map = new Map<string, { name: string; image: string }>();
+    const map = new Map<string, FortniteCosmeticDbRow>();
     const raw = data.data;
     const list: FortniteCosmeticItem[] = Array.isArray(raw) ? raw : raw?.items ?? [];
     for (const item of list) {
       const image = item.images?.smallIcon || item.images?.icon;
       if (image && item.id) {
-        map.set(item.id.toLowerCase(), { name: item.name || item.id, image });
+        const meta = metaFromFortniteApiItem(item);
+        map.set(item.id.toLowerCase(), {
+          name: item.name || item.id,
+          image,
+          rarityValue: meta.rarityValue,
+          ageKey: meta.ageKey,
+        });
       }
     }
     return map;
@@ -761,48 +772,40 @@ const LolCard = memo(({ item, champKeyMap, priceLabel, queryClient }: { item: Lz
 LolCard.displayName = "LolCard";
 
 // ─── Fortnite Card ───
-const FortniteCard = memo(({ item, skinsDb, priceLabel, queryClient }: { item: LztItem; skinsDb: Map<string, { name: string; image: string }>; priceLabel: string; queryClient: QueryClient }) => {
+const FortniteCard = memo(({ item, skinsDb, priceLabel, queryClient }: { item: LztItem; skinsDb: Map<string, FortniteCosmeticDbRow>; priceLabel: string; queryClient: QueryClient }) => {
   const vbucks = (item.fortnite_balance || item.fortnite_vbucks) ?? 0;
   const skinCount = item.fortnite_skin_count ?? 0;
   const level = item.fortnite_level ?? 0;
 
   const cleanedTitle = getListingCardTitle(item, "fortnite");
 
-  // fortniteSkins is an array of { id, title, rarity } from LZT API
+  // fortniteSkins: ordem LZT → reordenamos por raridade + temporada (OG) antes de mostrar 6 no card
   const skinPreviews = useMemo(() => {
+    const fallbackRow = (id: string, title?: string): FortniteCosmeticDbRow => ({
+      name: title || id,
+      image: `https://fortnite-api.com/images/cosmetics/br/${String(id).toLowerCase()}/smallicon.png`,
+      rarityValue: "",
+      ageKey: 999999,
+    });
+
     const fortniteSkins: Array<{ id: string; title?: string }> = Array.isArray(item.fortniteSkins) ? item.fortniteSkins : [];
-    const results: { name: string; image: string }[] = [];
+    const rows: FortniteCosmeticDbRow[] = [];
     for (const s of fortniteSkins) {
       const found = skinsDb.get(String(s.id).toLowerCase());
-      if (found) {
-        results.push(found);
-      } else {
-        // Fallback: direct URL from fortnite-api.com using the cosmetic id
-        results.push({
-          name: s.title || s.id,
-          image: `https://fortnite-api.com/images/cosmetics/br/${String(s.id).toLowerCase()}/smallicon.png`,
-        });
-      }
-      if (results.length >= 6) break;
+      rows.push(found ?? fallbackRow(s.id, s.title));
     }
-    // If no skins, try pickaxes
-    if (results.length === 0) {
+
+    if (rows.length === 0) {
       const pickaxes: Array<{ id: string; title?: string }> = Array.isArray(item.fortnitePickaxe) ? item.fortnitePickaxe : [];
       for (const p of pickaxes) {
         if (p.id === "defaultpickaxe") continue;
         const found = skinsDb.get(String(p.id).toLowerCase());
-        if (found) {
-          results.push(found);
-        } else {
-          results.push({
-            name: p.title || p.id,
-            image: `https://fortnite-api.com/images/cosmetics/br/${String(p.id).toLowerCase()}/smallicon.png`,
-          });
-        }
-        if (results.length >= 6) break;
+        rows.push(found ?? fallbackRow(p.id, p.title));
       }
     }
-    return results;
+
+    rows.sort(compareFortniteCardRows);
+    return rows.slice(0, 6);
   }, [item.fortniteSkins, item.fortnitePickaxe, skinsDb]);
 
   return (
@@ -1338,7 +1341,7 @@ const Contas = () => {
     enabled: gameTab === "lol",
   });
 
-  const { data: fnSkinsDb = new Map<string, { name: string; image: string }>() } = useQuery({
+  const { data: fnSkinsDb = new Map<string, FortniteCosmeticDbRow>() } = useQuery({
     queryKey: ["fortnite-cosmetics"],
     queryFn: fetchFortniteSkins,
     staleTime: 1000 * 60 * 60 * 6,

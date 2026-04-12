@@ -21,6 +21,7 @@ import { lztItemAsFortniteExtras } from "@/lib/lztMergedItemExtras";
 import { hideImgOnError, setImgOpacityOnError, withHTMLElementTarget } from "@/lib/domEventHelpers";
 import { errorMessage } from "@/lib/errorMessage";
 import { getProxiedImageUrl, cleanLztDescription } from "@/lib/lztImageProxy";
+import { compareFortniteCardRows, metaFromFortniteApiItem } from "@/lib/fortniteCosmeticSort";
 
 const FN_PURPLE = "hsl(265,80%,65%)";
 const FN_BLUE = "hsl(210,100%,56%)";
@@ -47,20 +48,31 @@ const fetchAccountDetail = async (itemId: string) => {
 };
 
 // Fetch all Fortnite cosmetics (outfits, pickaxes, emotes, gliders) from fortnite-api.com
-const fetchFortniteCosmetics = async (): Promise<Map<string, { name: string; image: string; rarity: string }>> => {
+type FortniteCosmeticRow = {
+  name: string;
+  image: string;
+  rarity: string;
+  rarityValue: string;
+  ageKey: number;
+};
+
+const fetchFortniteCosmetics = async (): Promise<Map<string, FortniteCosmeticRow>> => {
   try {
     // Use /v2/cosmetics/br which covers ALL types: outfits, pickaxes, emotes, gliders, backpacks
     const res = await fetch("https://fortnite-api.com/v2/cosmetics/br?language=pt-BR");
     if (!res.ok) throw new Error("Failed");
     const data = await res.json();
-    const map = new Map<string, { name: string; image: string; rarity: string }>();
+    const map = new Map<string, FortniteCosmeticRow>();
     for (const item of (data.data || [])) {
       const image = item.images?.smallIcon || item.images?.icon || item.images?.featured;
       if (image && item.id) {
+        const meta = metaFromFortniteApiItem(item);
         map.set(item.id.toLowerCase(), {
           name: item.name || item.id,
           image,
           rarity: item.rarity?.displayValue || item.rarity?.value || "",
+          rarityValue: meta.rarityValue,
+          ageKey: meta.ageKey,
         });
       }
     }
@@ -75,6 +87,8 @@ interface CosmeticPreview {
   name: string;
   image: string;
   rarity: string;
+  rarityValue: string;
+  ageKey: number;
 }
 
 const rarityColors: Record<string, string> = {
@@ -143,15 +157,39 @@ const FortniteDetalhes = () => {
         name: found?.name || c.title || c.id,
         image: found?.image || `https://fortnite-api.com/images/cosmetics/br/${String(c.id).toLowerCase()}/smallicon.png`,
         rarity: found?.rarity || c.rarity || "",
+        rarityValue: found?.rarityValue || "",
+        ageKey: found?.ageKey ?? 999999,
       });
     }
     return results;
   }, [cosmeticsDb]);
 
-  const skinPreviews = useMemo(() => buildPreviews(raw?.fortniteSkins || []), [raw?.fortniteSkins, buildPreviews]);
-  const pickaxePreviews = useMemo(() => buildPreviews(raw?.fortnitePickaxe || []), [raw?.fortnitePickaxe, buildPreviews]);
-  const dancePreviews = useMemo(() => buildPreviews(raw?.fortniteDance || []), [raw?.fortniteDance, buildPreviews]);
-  const gliderPreviews = useMemo(() => buildPreviews(raw?.fortniteGliders || []), [raw?.fortniteGliders, buildPreviews]);
+  const sortPreviewList = useCallback((list: CosmeticPreview[]) => {
+    const toRow = (c: CosmeticPreview) => ({
+      name: c.name,
+      image: c.image,
+      rarityValue: c.rarityValue,
+      ageKey: c.ageKey,
+    });
+    return [...list].sort((a, b) => compareFortniteCardRows(toRow(a), toRow(b)));
+  }, []);
+
+  const skinPreviews = useMemo(
+    () => sortPreviewList(buildPreviews(raw?.fortniteSkins || [])),
+    [raw?.fortniteSkins, buildPreviews, sortPreviewList],
+  );
+  const pickaxePreviews = useMemo(
+    () => sortPreviewList(buildPreviews(raw?.fortnitePickaxe || [])),
+    [raw?.fortnitePickaxe, buildPreviews, sortPreviewList],
+  );
+  const dancePreviews = useMemo(
+    () => sortPreviewList(buildPreviews(raw?.fortniteDance || [])),
+    [raw?.fortniteDance, buildPreviews, sortPreviewList],
+  );
+  const gliderPreviews = useMemo(
+    () => sortPreviewList(buildPreviews(raw?.fortniteGliders || [])),
+    [raw?.fortniteGliders, buildPreviews, sortPreviewList],
+  );
 
   const tabPreviews: Record<InventoryTab, CosmeticPreview[]> = {
     skins: skinPreviews,
@@ -164,7 +202,13 @@ const FortniteDetalhes = () => {
 
   // Sort alphabetically and filter by search
   const currentPreviews = useMemo(() => {
-    const sorted = [...allCurrentPreviews].sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+    const toRow = (c: CosmeticPreview) => ({
+      name: c.name,
+      image: c.image,
+      rarityValue: c.rarityValue,
+      ageKey: c.ageKey,
+    });
+    const sorted = [...allCurrentPreviews].sort((a, b) => compareFortniteCardRows(toRow(a), toRow(b)));
     if (!inventorySearch.trim()) return sorted;
     const q = inventorySearch.toLowerCase().trim();
     return sorted.filter(c => c.name.toLowerCase().includes(q));

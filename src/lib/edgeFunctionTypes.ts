@@ -73,6 +73,8 @@ export interface FortniteCosmeticItem {
   id?: string;
   name?: string;
   images?: { smallIcon?: string; icon?: string };
+  rarity?: { value?: string; displayValue?: string };
+  introduction?: { chapter?: string | number; season?: string | number };
 }
 
 export interface FortniteCosmeticsResponse {
