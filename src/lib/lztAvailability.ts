@@ -2,6 +2,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
 import { supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
 import { lztAccountDetailQueryKey } from "@/lib/lztAccountDetailQuery";
+import { notifyLztAccountDetailGone } from "@/lib/lztPrefetch";
 import {
   type LztDetailItem,
   itemFailsLztNotSoldBeforePolicy,
@@ -154,6 +155,7 @@ export const checkLztAvailability = async (
         return false;
       }
       if (res.status === 410 || res.status === 403) {
+        if (res.status === 410) notifyLztAccountDetailGone(gameType, normalizedId);
         const sold = isSoldMessage(errBody);
         const removed = res.status === 403;
         toast({

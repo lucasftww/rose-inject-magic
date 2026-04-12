@@ -6,12 +6,32 @@ import { lztAccountDetailQueryKey } from "@/lib/lztAccountDetailQuery";
 const detailPrefetchGoneKeys = new Set<string>();
 const MAX_DETAIL_GONE_KEYS = 400;
 
+/**
+ * Disparado quando `lzt-market?action=detail` devolve 410 — a grelha de Contas pode remover o card
+ * (lista/cache de sessão desatualizados) sem novo GET na consola.
+ */
+export const LZT_ACCOUNT_DETAIL_GONE_EVENT = "royal:lzt-account-detail-gone";
+
 function rememberDetailPrefetchGone(dedupeKey: string): void {
   detailPrefetchGoneKeys.add(dedupeKey);
   while (detailPrefetchGoneKeys.size > MAX_DETAIL_GONE_KEYS) {
     const oldest = detailPrefetchGoneKeys.values().next().value;
     if (oldest === undefined) break;
     detailPrefetchGoneKeys.delete(oldest);
+  }
+}
+
+/** Marca o item como “gone” para prefetch e avisa a UI (ex.: Contas) para tirar da lista. */
+export function notifyLztAccountDetailGone(gameType: string, itemId: string | number): void {
+  const id = String(itemId);
+  rememberDetailPrefetchGone(`${gameType}:${id}`);
+  if (typeof window === "undefined") return;
+  try {
+    window.dispatchEvent(
+      new CustomEvent(LZT_ACCOUNT_DETAIL_GONE_EVENT, { detail: { gameType, itemId: id } }),
+    );
+  } catch {
+    /* ignore */
   }
 }
 
@@ -41,7 +61,7 @@ async function runDetailPrefetch(
       },
     );
     if (res.status === 410) {
-      rememberDetailPrefetchGone(dedupeKey);
+      notifyLztAccountDetailGone(gameType, id);
       return;
     }
     if (!res.ok) return;

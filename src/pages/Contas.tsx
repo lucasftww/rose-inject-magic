@@ -46,7 +46,7 @@ import {
 } from "@/lib/domEventHelpers";
 import { errorName } from "@/lib/errorMessage";
 import { isRecord } from "@/types/ticketChat";
-import { prefetchAccountDetail } from "@/lib/lztPrefetch";
+import { prefetchAccountDetail, LZT_ACCOUNT_DETAIL_GONE_EVENT } from "@/lib/lztPrefetch";
 
 import weaponAres from "@/assets/weapon-ares.png";
 import weaponBandit from "@/assets/weapon-bandit.png";
@@ -1504,6 +1504,33 @@ const Contas = () => {
     },
     [flushCacheToSession],
   );
+
+  // Detail 410 (vendida / filtros): remove da grelha e do cache de sessão — evita novos GET ao hover e lista “fantasma”.
+  useEffect(() => {
+    const onDetailGone = (ev: Event) => {
+      const ce = ev as CustomEvent<{ itemId?: string }>;
+      const goneId = ce.detail?.itemId != null ? String(ce.detail.itemId) : "";
+      if (!goneId) return;
+      setStreamedItems((prev) => prev.filter((i) => String(i.item_id) !== goneId));
+      const cache = fetchCacheRef.current;
+      for (const [key, entry] of cache.entries()) {
+        const filtered = entry.items.filter((i) => String(i.item_id) !== goneId);
+        if (filtered.length !== entry.items.length) {
+          cache.set(key, { ...entry, items: filtered });
+        }
+      }
+      flushCacheToSession();
+      queryClient.removeQueries({
+        predicate: (q) => {
+          const k = q.queryKey;
+          return Array.isArray(k) && k[0] === "lzt-account-detail" && String(k[2]) === goneId;
+        },
+      });
+    };
+    window.addEventListener(LZT_ACCOUNT_DETAIL_GONE_EVENT, onDetailGone as EventListener);
+    return () => window.removeEventListener(LZT_ACCOUNT_DETAIL_GONE_EVENT, onDetailGone as EventListener);
+  }, [flushCacheToSession, queryClient]);
+
   const MAX_PAGES = 8;
   const [firstPageLoaded, setFirstPageLoaded] = useState(false);
 
