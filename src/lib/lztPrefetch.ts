@@ -11,7 +11,11 @@ export const prefetchAccountDetail = (
   const id = String(itemId);
   const key = lztAccountDetailQueryKey(gameType, id);
 
-  // Skip if already cached and fresh
+  const state = queryClient.getQueryState(key);
+  /** Evita novo GET a cada hover quando o último pedido falhou (ex.: 410 conta indisponível). */
+  if (state?.status === "error") return;
+  if (state?.fetchStatus === "fetching") return;
+
   const existing = queryClient.getQueryData(key);
   if (existing) return;
 
