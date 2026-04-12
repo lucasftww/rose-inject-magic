@@ -190,14 +190,14 @@ function getContentCeilingBrl(item: LztItem, gameType?: string) {
 /**
  * Final sale price in BRL for storefront + checkout.
  * - Respects per-game `markup` from `lzt_config` (must not be silently overridden by content ceiling).
- * - Optional `maxCustomerBrl` from `lzt_config.max_fetch_price`: max **displayed** price to the customer.
+ * - `lzt_config.max_fetch_price` is **only** used to bound the LZT list `pmax` (which listings we fetch), not to
+ *   flatten every card to the same displayed price (that broke sorting and made unrelated accounts share one price).
  */
 function getDisplayedPriceBrl(
   item: LztItem,
   overridePrice?: number,
   gameType?: string,
   markup?: number,
-  maxCustomerBrl?: number,
 ) {
   if (typeof overridePrice === "number" && overridePrice > 0) return overridePrice;
 
@@ -240,11 +240,6 @@ function getDisplayedPriceBrl(
   const MIN_PROFIT_BRL = 20.0;
   const safeProfitPrice = costBrl + MIN_PROFIT_BRL;
   if (final < safeProfitPrice) final = safeProfitPrice;
-
-  // Admin "Preço máximo (LZT)" — max final BRL shown to the customer
-  if (typeof maxCustomerBrl === "number" && maxCustomerBrl > 0 && final > maxCustomerBrl) {
-    final = maxCustomerBrl;
-  }
 
   return final < MIN_PRICE_BRL ? MIN_PRICE_BRL : Math.round(final * 100) / 100;
 }
@@ -694,12 +689,10 @@ Deno.serve(async (req) => {
     else if ((gameType === "riot" || gameType === "valorant") && lztConfig?.markup_valorant) activeMarkup = Number(lztConfig.markup_valorant);
     else if (lztConfig?.markup_multiplier) activeMarkup = Number(lztConfig.markup_multiplier);
 
-    /** Admin UI: "Preço Máximo (LZT)" — caps final BRL shown to customers (see `getDisplayedPriceBrl`). */
+    /** Admin "Preço Máximo (LZT)": max **customer BRL** used to derive LZT `pmax` when the user did not set `pmax`. */
     const maxFetchRaw = Number(lztConfig?.max_fetch_price);
-    const maxCustomerBrl =
-      Number.isFinite(maxFetchRaw) && maxFetchRaw > 0 ? maxFetchRaw : undefined;
-    /** When the client does not send `pmax`, bound LZT API fetch so we do not pull irrelevant ultra-expensive listings. */
-    const listFetchCapBrl = maxCustomerBrl ?? 2500;
+    const listFetchCapBrl =
+      Number.isFinite(maxFetchRaw) && maxFetchRaw > 0 ? maxFetchRaw : 2500;
 
     // DETAIL: Get single item
     let apiUrl: string;
@@ -892,7 +885,7 @@ Deno.serve(async (req) => {
     }
 
     const shouldCache = action !== "detail" && action !== "fast-buy" && action !== "change-price" && action !== "image-proxy";
-    const cacheKey = `${apiUrl}|m=${activeMarkup}|max=${maxCustomerBrl ?? "na"}`;
+    const cacheKey = `${apiUrl}|m=${activeMarkup}|max=${listFetchCapBrl}`;
     // Align in-memory + CDN TTL with fresh responses (preview 60s, list 30s; detail bypasses this cache)
     const listCacheMaxAge = previewMode ? 60 : 30;
     const listMemoryTtlMs = previewMode ? 60_000 : 30_000;
@@ -1023,7 +1016,7 @@ Deno.serve(async (req) => {
         // More robust check for canBuyItem (catch false or null if it's supposed to be buyable)
         if (item.canBuyItem === false) { filteredByOther++; return false; }
         
-        const displayedPriceBrl = getDisplayedPriceBrl(item, undefined, gameType, activeMarkup, maxCustomerBrl);
+        const displayedPriceBrl = getDisplayedPriceBrl(item, undefined, gameType, activeMarkup);
         
         if (!shouldKeepItem(item, gameType, displayedPriceBrl)) {
           filteredByOther++;
@@ -1065,7 +1058,7 @@ Deno.serve(async (req) => {
         if (gameType === "fortnite" && item.fortnite_outfit_count != null && item.fortnite_skin_count == null) {
           item.fortnite_skin_count = item.fortnite_outfit_count;
         }
-        item.price_brl = getDisplayedPriceBrl(item, overrideMap.get(String(item.item_id)), gameType, activeMarkup, maxCustomerBrl);
+        item.price_brl = getDisplayedPriceBrl(item, overrideMap.get(String(item.item_id)), gameType, activeMarkup);
 
         // Strip heavy fields
         for (const field of STRIP_FIELDS) delete item[field];
@@ -1154,7 +1147,7 @@ Deno.serve(async (req) => {
         ? Number(overrideRow.custom_price_brl)
         : undefined;
 
-      data.item.price_brl = getDisplayedPriceBrl(data.item, overridePrice, gameType, activeMarkup, maxCustomerBrl);
+      data.item.price_brl = getDisplayedPriceBrl(data.item, overridePrice, gameType, activeMarkup);
 
       const passesStrict = shouldKeepItem(data.item, gameType, data.item.price_brl);
       const passesNoValue = passesStrict || shouldKeepItem(data.item, gameType, data.item.price_brl, {

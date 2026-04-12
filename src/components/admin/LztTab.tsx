@@ -236,53 +236,45 @@ const LztTab = () => {
               <Gamepad2 className="h-4 w-4 text-success" /> Margem de Lucro por Categoria
             </h3>
             <p className="text-xs text-muted-foreground mt-1">
-              Defina o multiplicador de preço para cada jogo. Os exemplos abaixo usam o mesmo teto <strong className="text-foreground/90">Preço Máximo (LZT)</strong> que a loja aplica ao valor final.
+              Defina o multiplicador sobre o custo em R$ (após conversão RUB/USD). O preço final na loja ainda passa por piso/teto por conteúdo na edge <code className="text-[10px]">lzt-market</code>.
             </p>
             <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {(() => {
-                const maxBrlParsed = parseFloat(maxPrice);
-                const siteMaxCap =
-                  Number.isFinite(maxBrlParsed) && maxBrlParsed > 0 ? maxBrlParsed : null;
-                const afterCap = (baseBrl: number, mult: number) => {
-                  const raw = baseBrl * mult;
-                  return siteMaxCap != null ? Math.min(raw, siteMaxCap) : raw;
-                };
-                return gameMarkupFields.map((field) => {
-                  const parsed = parseFloat(markups[field.key]);
-                  const previewMult = Number.isFinite(parsed) && parsed >= 1 ? parsed : 1;
-                  const raw10 = 10 * previewMult;
-                  const raw50 = 50 * previewMult;
-                  const ex10 = afterCap(10, previewMult);
-                  const ex50 = afterCap(50, previewMult);
-                  const previewTouchesCap =
-                    siteMaxCap != null && (raw10 > siteMaxCap || raw50 > siteMaxCap);
-                  return (
-                <div key={field.key} className="rounded-lg border border-border bg-secondary/30 p-4">
-                  <label className={`text-xs font-bold ${field.color}`}>{field.label}</label>
-                  <div className="mt-2 flex items-center gap-2">
-                    <input
-                      type="number"
-                      step="0.1"
-                      min="1"
-                      value={markups[field.key]}
-                      onChange={(e) => setMarkups(prev => ({ ...prev, [field.key]: e.target.value }))}
-                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-success/50"
-                    />
-                    <span className="text-sm font-bold text-muted-foreground">x</span>
+              {gameMarkupFields.map((field) => {
+                const parsed = parseFloat(markups[field.key]);
+                const previewMult = Number.isFinite(parsed) && parsed >= 1 ? parsed : 1;
+                const ex10 = 10 * previewMult;
+                const ex50 = 50 * previewMult;
+                return (
+                  <div key={field.key} className="rounded-lg border border-border bg-secondary/30 p-4">
+                    <label className={`text-xs font-bold ${field.color}`}>{field.label}</label>
+                    <div className="mt-2 flex items-center gap-2">
+                      <input
+                        type="number"
+                        step="0.1"
+                        min="1"
+                        value={markups[field.key]}
+                        onChange={(e) => setMarkups((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                        className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-success/50"
+                      />
+                      <span className="text-sm font-bold text-muted-foreground">x</span>
+                    </div>
+                    <div className="mt-2 flex justify-between gap-1 text-[10px] text-muted-foreground">
+                      <span>
+                        R$10 →{" "}
+                        <span className={field.color}>
+                          R${ex10.toFixed(0)}
+                        </span>
+                      </span>
+                      <span>
+                        R$50 →{" "}
+                        <span className={field.color}>
+                          R${ex50.toFixed(0)}
+                        </span>
+                      </span>
+                    </div>
                   </div>
-                  <div className="mt-2 flex justify-between gap-1 text-[10px] text-muted-foreground">
-                    <span>R$10 → <span className={field.color}>R${ex10.toFixed(0)}</span></span>
-                    <span>R$50 → <span className={field.color}>R${ex50.toFixed(0)}</span></span>
-                  </div>
-                  {previewTouchesCap && siteMaxCap != null && (
-                    <p className="mt-1.5 text-[9px] leading-snug text-muted-foreground">
-                      Limitado ao teto R${siteMaxCap.toFixed(0)} (igual às contas no site).
-                    </p>
-                  )}
-                </div>
-                  );
-                });
-              })()}
+                );
+              })}
             </div>
           </div>
 
@@ -293,14 +285,15 @@ const LztTab = () => {
             </h3>
             <div className="mt-4 flex flex-wrap items-end gap-4">
               <div>
-                <label className="text-xs font-medium text-muted-foreground">Preço Máximo (LZT)</label>
+                <label className="text-xs font-medium text-muted-foreground">Preço máximo (limite de busca LZT)</label>
                 <div className="mt-1 flex items-center gap-2">
                   <span className="text-sm font-bold text-muted-foreground">R$</span>
                   <input type="number" step="10" min="1" value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)}
                     className="w-32 rounded-lg border border-border bg-secondary/50 px-4 py-2.5 text-sm text-foreground outline-none focus:border-success/50" />
                 </div>
                 <p className="mt-1 text-[10px] text-muted-foreground max-w-md">
-                  Teto em R$ para o valor final mostrado nas contas (depois de margens e custo). Também orienta o limite de busca na API LZT. Se for menor que o preço calculado pelo multiplicador, o valor exibido fica limitado a este teto.
+                  Em R$ ao cliente: usado para montar o <strong className="text-foreground/90">pmax</strong> na API LZT quando o visitante não escolhe filtro de preço — evita puxar anúncios caríssimos.{" "}
+                  <strong className="text-foreground/90">Não</strong> força todos os preços do site para este valor; o valor de cada conta continua a ser margem + piso/teto por conteúdo.
                 </p>
               </div>
               <button onClick={handleSaveConfig} disabled={saving}

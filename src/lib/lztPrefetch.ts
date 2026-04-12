@@ -7,6 +7,43 @@ const detailPrefetchGoneKeys = new Set<string>();
 
 const detailPrefetchInFlight = new Set<string>();
 
+/** Atraso antes do GET: reduz pedidos 410 ao cruzar a grelha sem intenção de abrir o detalhe. */
+const PREFETCH_HOVER_MS = 420;
+const prefetchHoverTimers = new Map<string, ReturnType<typeof setTimeout>>();
+
+async function runDetailPrefetch(
+  queryClient: QueryClient,
+  gameType: string,
+  id: string,
+  dedupeKey: string,
+  key: readonly ["lzt-account-detail", string, string],
+): Promise<void> {
+  detailPrefetchInFlight.add(dedupeKey);
+  try {
+    const res = await fetch(
+      `${supabaseUrl}/functions/v1/lzt-market?action=detail&item_id=${encodeURIComponent(id)}&game_type=${encodeURIComponent(gameType)}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          apikey: supabaseAnonKey,
+          Authorization: `Bearer ${supabaseAnonKey}`,
+        },
+      },
+    );
+    if (res.status === 410) {
+      detailPrefetchGoneKeys.add(dedupeKey);
+      return;
+    }
+    if (!res.ok) return;
+    const json: unknown = await res.json();
+    queryClient.setQueryData(key, json);
+  } catch {
+    /* ignore */
+  } finally {
+    detailPrefetchInFlight.delete(dedupeKey);
+  }
+}
+
 /** Prefetch account detail data into React Query cache on hover for instant navigation. */
 export const prefetchAccountDetail = (
   queryClient: QueryClient,
@@ -26,31 +63,17 @@ export const prefetchAccountDetail = (
   if (state?.fetchStatus === "fetching") return;
   if (detailPrefetchInFlight.has(dedupeKey)) return;
 
-  detailPrefetchInFlight.add(dedupeKey);
+  const prevTimer = prefetchHoverTimers.get(dedupeKey);
+  if (prevTimer != null) clearTimeout(prevTimer);
 
-  void (async () => {
-    try {
-      const res = await fetch(
-        `${supabaseUrl}/functions/v1/lzt-market?action=detail&item_id=${encodeURIComponent(id)}&game_type=${encodeURIComponent(gameType)}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            apikey: supabaseAnonKey,
-            Authorization: `Bearer ${supabaseAnonKey}`,
-          },
-        },
-      );
-      if (res.status === 410) {
-        detailPrefetchGoneKeys.add(dedupeKey);
-        return;
-      }
-      if (!res.ok) return;
-      const json: unknown = await res.json();
-      queryClient.setQueryData(key, json);
-    } catch {
-      /* ignore */
-    } finally {
-      detailPrefetchInFlight.delete(dedupeKey);
-    }
-  })();
+  prefetchHoverTimers.set(
+    dedupeKey,
+    window.setTimeout(() => {
+      prefetchHoverTimers.delete(dedupeKey);
+      if (detailPrefetchGoneKeys.has(dedupeKey)) return;
+      if (queryClient.getQueryData(key) != null) return;
+      if (detailPrefetchInFlight.has(dedupeKey)) return;
+      void runDetailPrefetch(queryClient, gameType, id, dedupeKey, key);
+    }, PREFETCH_HOVER_MS),
+  );
 };
