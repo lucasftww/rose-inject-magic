@@ -258,24 +258,29 @@ async function sha256Hash(message: string | null | undefined): Promise<string> {
   }
 }
 
+function resolveMetaTestEventCode(dbValue: string | null | undefined, envValue: string | undefined): string | undefined {
+  const raw = String(dbValue ?? "").trim() || String(envValue ?? "").trim();
+  if (raw.length < 4 || raw.length > 64) return undefined;
+  if (!/^[A-Za-z0-9_-]+$/.test(raw)) return undefined;
+  return raw;
+}
+
 async function sendServerPurchaseEvent(supabaseAdmin: SupabaseAdminClient, payment: PaymentRow, req: Request) {
   try {
-    const { data: capiTokenRow } = await supabaseAdmin
-      .from("system_credentials")
-      .select("value")
-      .eq("env_key", "META_ACCESS_TOKEN")
-      .maybeSingle();
-
-    const { data: pixelIdRow } = await supabaseAdmin
-      .from("system_credentials")
-      .select("value")
-      .eq("env_key", "META_PIXEL_ID")
-      .maybeSingle();
+    const [{ data: capiTokenRow }, { data: pixelIdRow }, { data: testCodeRow }] = await Promise.all([
+      supabaseAdmin.from("system_credentials").select("value").eq("env_key", "META_ACCESS_TOKEN").maybeSingle(),
+      supabaseAdmin.from("system_credentials").select("value").eq("env_key", "META_PIXEL_ID").maybeSingle(),
+      supabaseAdmin.from("system_credentials").select("value").eq("env_key", "META_TEST_EVENT_CODE").maybeSingle(),
+    ]);
 
     const accessToken =
       String(capiTokenRow?.value || "").trim() || Deno.env.get("META_ACCESS_TOKEN")?.trim() || "";
     const pixelId =
       String(pixelIdRow?.value || "").trim() || Deno.env.get("META_PIXEL_ID")?.trim() || "";
+    const metaTestEventCode = resolveMetaTestEventCode(
+      testCodeRow?.value as string | undefined,
+      Deno.env.get("META_TEST_EVENT_CODE"),
+    );
 
     if (!accessToken || !pixelId) {
       console.warn("CAPI Purchase skipped: set META_ACCESS_TOKEN and META_PIXEL_ID in system_credentials or Edge secrets.");
@@ -370,7 +375,18 @@ async function sendServerPurchaseEvent(supabaseAdmin: SupabaseAdminClient, payme
       if (ua) userData.client_user_agent = ua;
     }
 
-    const contentIds = cartItems.map((i) => i.productId);
+    const contentIds = cartItems.map((i) => String(i.productId)).filter(Boolean);
+    const contents = cartItems.map((i) => ({
+      id: String(i.productId),
+      quantity: Math.max(1, Math.min(1000, Math.floor(Number(i.quantity) || 1))),
+    }));
+    const contentName =
+      cartItems.length === 1
+        ? firstItem.productName
+        : (() => {
+            const joined = cartItems.map((i) => i.productName).join(", ");
+            return joined.length <= 500 ? joined : `${cartItems.length} produtos — ${joined.slice(0, 420)}…`;
+          })();
 
     const eventData = {
       event_name: "Purchase",
@@ -380,16 +396,19 @@ async function sendServerPurchaseEvent(supabaseAdmin: SupabaseAdminClient, payme
       event_source_url: browserData.event_source_url || req.headers.get("referer") || "https://royalstorebr.com/",
       user_data: userData,
       custom_data: {
-        content_name: firstItem.productName,
+        content_name: contentName,
         content_category: category,
         content_ids: contentIds,
-        contents: contentIds.map((id: string) => ({ id, quantity: 1 })),
+        contents,
         content_type: "product",
         value: totalValue,
         currency: "BRL",
         transaction_id: payment.id,
       },
     };
+
+    const graphPayload: Record<string, unknown> = { data: [eventData] };
+    if (metaTestEventCode) graphPayload.test_event_code = metaTestEventCode;
 
     const url = `https://graph.facebook.com/${META_GRAPH_VERSION}/${pixelId}/events?access_token=${accessToken}`;
 
@@ -399,7 +418,7 @@ async function sendServerPurchaseEvent(supabaseAdmin: SupabaseAdminClient, payme
         const res = await fetch(url, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ data: [eventData] }),
+          body: JSON.stringify(graphPayload),
         });
         if (res.ok) {
           console.log(`CAPI Purchase sent successfully (attempt ${attempt}):`, payment.id);

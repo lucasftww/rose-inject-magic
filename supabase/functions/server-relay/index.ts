@@ -9,6 +9,14 @@ const corsHeaders = {
 const GRAPH_API_VERSION = "v21.0";
 const DEFAULT_PIXEL_ID = "706054019233816";
 
+/** Código "Testar eventos" no Events Manager — só credenciais/servidor (nunca confiar no body do cliente). */
+function resolveMetaTestEventCode(dbValue: string | null | undefined, envValue: string | undefined): string | undefined {
+  const raw = String(dbValue ?? "").trim() || String(envValue ?? "").trim();
+  if (raw.length < 4 || raw.length > 64) return undefined;
+  if (!/^[A-Za-z0-9_-]+$/.test(raw)) return undefined;
+  return raw;
+}
+
 /** Meta CAPI custom_data: only safe shapes to reduce 400 from Graph API. */
 function sanitizeCustomData(raw: unknown): Record<string, unknown> {
   const out: Record<string, unknown> = {};
@@ -83,13 +91,18 @@ Deno.serve(async (req) => {
   const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
   try {
-    const [capiTokenRow, pixelIdRow] = await Promise.all([
+    const [capiTokenRow, pixelIdRow, testCodeRow] = await Promise.all([
       supabaseAdmin.from("system_credentials").select("value").eq("env_key", "META_ACCESS_TOKEN").maybeSingle(),
       supabaseAdmin.from("system_credentials").select("value").eq("env_key", "META_PIXEL_ID").maybeSingle(),
+      supabaseAdmin.from("system_credentials").select("value").eq("env_key", "META_TEST_EVENT_CODE").maybeSingle(),
     ]);
 
     const ACCESS_TOKEN = capiTokenRow.data?.value || Deno.env.get("META_ACCESS_TOKEN");
     const PIXEL_ID = pixelIdRow.data?.value || Deno.env.get("META_PIXEL_ID") || DEFAULT_PIXEL_ID;
+    const META_TEST_EVENT_CODE = resolveMetaTestEventCode(
+      testCodeRow.data?.value as string | undefined,
+      Deno.env.get("META_TEST_EVENT_CODE"),
+    );
 
     if (!ACCESS_TOKEN) {
       return new Response(JSON.stringify({ error: "META_ACCESS_TOKEN not configured" }), {
@@ -192,10 +205,11 @@ Deno.serve(async (req) => {
       custom_data: safeCustom,
     };
 
-    const payload = { data: [eventData] };
+    const graphPayload: Record<string, unknown> = { data: [eventData] };
+    if (META_TEST_EVENT_CODE) graphPayload.test_event_code = META_TEST_EVENT_CODE;
 
     const url = `https://graph.facebook.com/${GRAPH_API_VERSION}/${PIXEL_ID}/events?access_token=${ACCESS_TOKEN}`;
-    const bodyStr = JSON.stringify(payload);
+    const bodyStr = JSON.stringify(graphPayload);
 
     let lastError: unknown = null;
     for (let attempt = 1; attempt <= 3; attempt++) {

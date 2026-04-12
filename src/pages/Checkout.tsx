@@ -521,7 +521,7 @@ const Checkout = () => {
               contentIds,
               contents,
               value: finalPriceRef.current,
-              transactionId: paymentIdRef.current || "unknown",
+              transactionId: paymentId,
             });
           }
         }

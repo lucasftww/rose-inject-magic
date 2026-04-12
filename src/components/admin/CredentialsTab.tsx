@@ -50,6 +50,13 @@ const CREDENTIAL_PRESETS: { name: string; env_key: string; description: string; 
     help_url: "https://business.facebook.com/events_manager",
   },
   {
+    name: "Meta — Test Event Code (opcional)",
+    env_key: "META_TEST_EVENT_CODE",
+    description:
+      "Código da aba «Testar eventos» no Events Manager. Envia CAPI (relay + compra) só para testes. Apaga este valor em produção.",
+    help_url: "https://developers.facebook.com/docs/marketing-api/conversions-api/using-the-api#test",
+  },
+  {
     name: "MisticPay — Client ID",
     env_key: "MISTICPAY_CLIENT_ID",
     description: "Client ID do gateway MisticPay.",

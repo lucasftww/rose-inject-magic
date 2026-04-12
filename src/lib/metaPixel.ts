@@ -21,7 +21,10 @@ import { supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
  *
  * Deduplication:
  *   InitiateCheckout → random event_id (Pixel + CAPI via relay)
- *   Purchase → deterministic purchase_${transactionId} + sessionStorage guard
+ *   Purchase → deterministic purchase_${transactionId} + sessionStorage guard (+ memória na mesma página)
+ *
+ * Test Events (Events Manager): definir META_TEST_EVENT_CODE em system_credentials ou secret da Edge
+ * (server-relay + pix-payment). Remover em produção para contar só eventos reais.
  */
 
 
@@ -94,6 +97,9 @@ let _countryHash = "";
 sha256("br").then((h) => { _countryHash = h; });
 
 // ─── Cached user identity ───────────────────────────────────────────────────
+
+/** Evita Purchase duplicado no mesmo carregamento se sessionStorage falhar ou for lento. */
+const _purchaseFiredThisDocument = new Set<string>();
 
 let _cachedUserData: { em?: string; external_id?: string; ph?: string; fn?: string; ln?: string } = {};
 let _pixelInitWithAM = false;
@@ -536,14 +542,26 @@ export const trackPurchase = (
 ) => {
   if (typeof window === "undefined") return;
 
-  const eventId = `purchase_${data.transactionId}`;
+  const tid = data.transactionId;
+  if (!tid || tid === "unknown") {
+    devLog("trackPurchase skipped: missing transactionId");
+    return;
+  }
 
-  const storageKey = `_meta_purchase_${data.transactionId}`;
+  const eventId = `purchase_${tid}`;
+  const storageKey = `_meta_purchase_${tid}`;
+
+  if (_purchaseFiredThisDocument.has(tid)) return;
   try {
     if (sessionStorage.getItem(storageKey)) return;
+  } catch (e: unknown) {
+    devLog("trackPurchase sessionStorage read failed", e);
+  }
+  _purchaseFiredThisDocument.add(tid);
+  try {
     sessionStorage.setItem(storageKey, eventId);
   } catch (e: unknown) {
-    devLog("trackPurchase sessionStorage failed", e);
+    devLog("trackPurchase sessionStorage write failed", e);
   }
 
   const contents =
