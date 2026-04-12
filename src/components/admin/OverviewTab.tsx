@@ -278,7 +278,8 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
   const filteredPayments = useMemo(() => filterByPeriod(allPayments, period), [allPayments, period]);
   const filteredOrders = useMemo(() => filterByPeriod(allOrders, period, "created_at"), [allOrders, period]);
   const periodRevenue = useMemo(() => filteredPayments.reduce((s, p) => s + Number(p.amount) / 100, 0), [filteredPayments]);
-  const periodOrderCount = filteredOrders.length;
+  /** Tickets cuja data de criação cai no período (pode divergir de pagamentos no mesmo período). */
+  const periodTicketCount = filteredOrders.length;
   const periodPaidCount = filteredPayments.length;
 
   // Period-filtered costs — consistent with revenue period
@@ -374,10 +375,12 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
         <div className="rounded-xl border border-border bg-card p-4">
           <div className="flex items-center gap-2 mb-2">
             <ShoppingCart className="h-4 w-4 text-info" />
-            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Pedidos</span>
+            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Pagamentos</span>
           </div>
-          <p className="text-2xl font-bold text-foreground tracking-tight">{periodOrderCount}</p>
-          <p className="text-[11px] text-muted-foreground mt-0.5">{periodPaidCount} faturas pagas</p>
+          <p className="text-2xl font-bold text-foreground tracking-tight">{periodPaidCount}</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">
+            {periodTicketCount} ticket{periodTicketCount === 1 ? "" : "s"} criado{periodTicketCount === 1 ? "" : "s"} no período (por data do ticket)
+          </p>
         </div>
 
         <div className="rounded-xl border border-border bg-card p-4">
@@ -470,6 +473,13 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
             ) : recentPayments.map((p) => {
               const cartItems = paymentCartSnapshot(p.cart_snapshot);
               const productName = cartItems[0]?.productName || "—";
+              const amountBrl = Number(p.amount) / 100;
+              const priceLabel =
+                amountBrl <= 0 && p.payment_method === "free"
+                  ? "Grátis"
+                  : amountBrl <= 0
+                    ? "R$ 0,00"
+                    : `R$ ${amountBrl.toFixed(2).replace(".", ",")}`;
 
               return (
                 <div key={p.id} className="flex items-center gap-3 px-4 py-2.5">
@@ -483,7 +493,7 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
                       {p.paid_at ? timeAgo(p.paid_at) : timeAgo(p.created_at || new Date().toISOString())}
                     </p>
                   </div>
-                  <span className="text-sm font-bold text-foreground shrink-0">R$ {(Number(p.amount) / 100).toFixed(2)}</span>
+                  <span className="text-sm font-bold text-foreground shrink-0">{priceLabel}</span>
                 </div>
               );
             })}
