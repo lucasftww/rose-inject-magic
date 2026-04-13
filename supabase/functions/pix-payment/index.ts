@@ -1085,7 +1085,7 @@ async function fulfillLztAccount(supabaseAdmin: SupabaseAdminClient, payment: Pa
   if (!price) {
     console.log(`Fetching current price for LZT item ${itemId}...`);
     try {
-      const detailRes = await fetch(`https://api.lzt.market/${encodeURIComponent(itemId)}`, {
+      const detailRes = await fetch(`https://api.lzt.market/${encodeURIComponent(String(itemId))}`, {
         headers: { Authorization: `Bearer ${LZT_TOKEN}`, Accept: "application/json" },
       });
       const detailCt = detailRes.headers.get("content-type") || "";
@@ -1111,7 +1111,7 @@ async function fulfillLztAccount(supabaseAdmin: SupabaseAdminClient, payment: Pa
   // Pre-check: verify account is still available before purchasing
   console.log(`Pre-checking availability for LZT item ${itemId}...`);
   try {
-    const checkRes = await fetch(`https://api.lzt.market/${encodeURIComponent(itemId)}`, {
+    const checkRes = await fetch(`https://api.lzt.market/${encodeURIComponent(String(itemId))}`, {
       headers: { Authorization: `Bearer ${LZT_TOKEN}`, Accept: "application/json" },
     });
     const checkCt = checkRes.headers.get("content-type") || "";
@@ -1150,7 +1150,7 @@ async function fulfillLztAccount(supabaseAdmin: SupabaseAdminClient, payment: Pa
   console.log(`Purchasing LZT account ${itemId} at price ${price} ${currency}`);
 
   try {
-    const buyUrl = `https://api.lzt.market/${encodeURIComponent(itemId)}/fast-buy?price=${encodeURIComponent(price)}${currency ? `&currency=${encodeURIComponent(currency)}` : ""}`;
+    const buyUrl = `https://api.lzt.market/${encodeURIComponent(String(itemId))}/fast-buy?price=${encodeURIComponent(price)}${currency ? `&currency=${encodeURIComponent(currency)}` : ""}`;
 
     // Retry fast-buy up to 4 times with exponential backoff
     // LZT API returns 403 "retry_request" as a temporary rate-limit signal
