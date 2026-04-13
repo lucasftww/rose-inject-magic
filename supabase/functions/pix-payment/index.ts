@@ -1626,19 +1626,20 @@ async function fulfillRobotProduct(
     }
 
     // Success! Paid: deliver key. Free (fallback): never expose key — só loader / conta no programa.
-    const rawKey = String(buyData.data?.key || "");
+    const buyDataInner = (buyData as Record<string, unknown>).data as Record<string, unknown> | undefined;
+    const rawKey = String(buyDataInner?.key || "");
     const formattedKey = rawKey.length >= 8 && !rawKey.includes("-")
       ? rawKey.match(/.{1,4}/g)?.join("-") || rawKey
       : rawKey;
-    const gameName = buyData.data?.gameName || item.productName || "";
-    const amountSpent = buyData.data?.amountSpent || 0;
-    const robotBalance = buyData.data?.balance ?? null;
-    const buyGame = buyData.data?.game as Record<string, unknown> | undefined;
+    const gameName = buyDataInner?.gameName || item.productName || "";
+    const amountSpent = buyDataInner?.amountSpent || 0;
+    const robotBalance = buyDataInner?.balance ?? null;
+    const buyGame = buyDataInner?.game as Record<string, unknown> | undefined;
     const isFreeGame =
       snapshotGameFree ||
       buyGame?.free === true ||
       robotGameIsFreeFlag(buyGame) ||
-      buyData.data?.finalAmount === 0;
+      buyDataInner?.finalAmount === 0;
     const buyDl = robotGameDownloadFields(buyGame);
     const downloadUrl = buyDl.downloadUrl || snapDl.downloadUrl || null;
     const fileName = buyDl.fileName || snapDl.fileName || null;
@@ -1876,7 +1877,7 @@ async function validateAndCalculatePrice(
       const hasOverride = priceOverride && Number(priceOverride.custom_price_brl) > 0;
       const overridePrice = hasOverride ? Number(priceOverride.custom_price_brl) : null;
 
-      const gameCategory = item.lztGame || item.gameCategory || "";
+      const gameCategory = item.lztGame || (item as Record<string, unknown>).gameCategory as string || "";
       const toMarkup = (v: unknown, fallback: number): number => {
         const n = Number(v);
         return Number.isFinite(n) && n >= 1 ? n : fallback;
