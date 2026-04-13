@@ -56,6 +56,7 @@ function log(level: "INFO" | "WARN" | "ERROR", ctx: string, msg: string, data?: 
 type RobotCredentials = { username: string; password: string };
 
 interface RobotGameApiRow {
+  [key: string]: unknown;
   id?: unknown;
   prices?: Record<string, unknown>;
   maxKeys?: unknown;
@@ -639,7 +640,7 @@ async function assignDiscordClientRole(supabaseAdmin: SupabaseAdminClient, userI
       return;
     }
 
-    const discordUserId = discordIdentity.provider_id;
+    const discordUserId = (discordIdentity as Record<string, unknown>).provider_id ?? (discordIdentity as Record<string, unknown>).identity_id;
 
     // Add role via Discord API
     const res = await fetch(
@@ -666,7 +667,7 @@ async function assignDiscordClientRole(supabaseAdmin: SupabaseAdminClient, userI
 
 // Helper: fulfill order (deliver stock, create tickets, record coupon)
 async function fulfillOrder(supabaseAdmin: SupabaseAdminClient, payment: PaymentRow) {
-  log("INFO", "fulfillOrder", "Starting fulfillment", { paymentId: payment.id, userId: payment.user_id, itemCount: payment.cart_snapshot?.length, amount: payment.amount });
+  log("INFO", "fulfillOrder", "Starting fulfillment", { paymentId: payment.id, userId: payment.user_id, itemCount: Array.isArray(payment.cart_snapshot) ? payment.cart_snapshot.length : 0, amount: payment.amount });
   const cartItems = payment.cart_snapshot as Array<{
     productId: string;
     planId: string;
@@ -835,12 +836,13 @@ async function fulfillOrder(supabaseAdmin: SupabaseAdminClient, payment: Payment
             paid_price: item.price || 0,
           });
 
-          await supabaseAdmin.rpc("increment_reseller_purchases", { _reseller_id: resellerData.id }).catch(() => {
-            supabaseAdmin
+          const rpcResult = await supabaseAdmin.rpc("increment_reseller_purchases", { _reseller_id: resellerData.id });
+          if (rpcResult.error) {
+            await supabaseAdmin
               .from("resellers")
               .update({ total_purchases: (resellerData.total_purchases || 0) + 1 })
               .eq("id", resellerData.id);
-          });
+          }
         }
       }
     }
@@ -854,7 +856,8 @@ async function fulfillOrder(supabaseAdmin: SupabaseAdminClient, payment: Payment
       .insert({ coupon_id: payment.coupon_id, user_id: payment.user_id });
     
     // Increment current_uses on the coupon so max_uses limit works
-    await supabaseAdmin.rpc("increment_coupon_uses", { _coupon_id: payment.coupon_id }).catch(async () => {
+    const couponRpcResult = await supabaseAdmin.rpc("increment_coupon_uses", { _coupon_id: payment.coupon_id });
+    if (couponRpcResult.error) {
       // Fallback: manual increment if RPC doesn't exist
       const { data: coupon } = await supabaseAdmin
         .from("coupons")
@@ -867,7 +870,7 @@ async function fulfillOrder(supabaseAdmin: SupabaseAdminClient, payment: Payment
           .update({ current_uses: (coupon.current_uses || 0) + 1 })
           .eq("id", payment.coupon_id);
       }
-    });
+    }
   }
 }
 
@@ -1082,7 +1085,7 @@ async function fulfillLztAccount(supabaseAdmin: SupabaseAdminClient, payment: Pa
   if (!price) {
     console.log(`Fetching current price for LZT item ${itemId}...`);
     try {
-      const detailRes = await fetch(`https://api.lzt.market/${encodeURIComponent(itemId)}`, {
+      const detailRes = await fetch(`https://api.lzt.market/${encodeURIComponent(String(itemId))}`, {
         headers: { Authorization: `Bearer ${LZT_TOKEN}`, Accept: "application/json" },
       });
       const detailCt = detailRes.headers.get("content-type") || "";
@@ -1108,7 +1111,7 @@ async function fulfillLztAccount(supabaseAdmin: SupabaseAdminClient, payment: Pa
   // Pre-check: verify account is still available before purchasing
   console.log(`Pre-checking availability for LZT item ${itemId}...`);
   try {
-    const checkRes = await fetch(`https://api.lzt.market/${encodeURIComponent(itemId)}`, {
+    const checkRes = await fetch(`https://api.lzt.market/${encodeURIComponent(String(itemId))}`, {
       headers: { Authorization: `Bearer ${LZT_TOKEN}`, Accept: "application/json" },
     });
     const checkCt = checkRes.headers.get("content-type") || "";
@@ -1147,7 +1150,7 @@ async function fulfillLztAccount(supabaseAdmin: SupabaseAdminClient, payment: Pa
   console.log(`Purchasing LZT account ${itemId} at price ${price} ${currency}`);
 
   try {
-    const buyUrl = `https://api.lzt.market/${encodeURIComponent(itemId)}/fast-buy?price=${encodeURIComponent(price)}${currency ? `&currency=${encodeURIComponent(currency)}` : ""}`;
+    const buyUrl = `https://api.lzt.market/${encodeURIComponent(String(itemId))}/fast-buy?price=${encodeURIComponent(price)}${currency ? `&currency=${encodeURIComponent(currency)}` : ""}`;
 
     // Retry fast-buy up to 4 times with exponential backoff
     // LZT API returns 403 "retry_request" as a temporary rate-limit signal
@@ -1323,7 +1326,7 @@ async function fulfillLztAccount(supabaseAdmin: SupabaseAdminClient, payment: Pa
         ticket_id: ticket.id,
         sender_id: payment.user_id,
         sender_role: "staff",
-        message: `✅ Conta #${itemId} comprada com sucesso!\n\nDados brutos:\n\`\`\`\n${rawCredentials || JSON.stringify(buyData?.item?.loginData || buyData, null, 2).substring(0, 800)}\n\`\`\`\n\nSe precisar de ajuda para acessar, envie uma mensagem aqui.`,
+        message: `✅ Conta #${itemId} comprada com sucesso!\n\nDados brutos:\n\`\`\`\n${rawCredentials || JSON.stringify((buyData as Record<string, unknown>)?.item ?? buyData, null, 2).substring(0, 800)}\n\`\`\`\n\nSe precisar de ajuda para acessar, envie uma mensagem aqui.`,
       });
     }
 
@@ -1587,7 +1590,7 @@ async function fulfillRobotProduct(
     log("INFO", "fulfillRobot", "Robot buy response", { status: buyRes.status, body: JSON.stringify(buyData).substring(0, 500), expectedPrice: robotSnapshot.expectedPrice, duration });
 
     if (!buyRes.ok || !buyData.success) {
-      const reason = buyData.message || `HTTP ${buyRes.status}`;
+      const reason = String(buyData.message || `HTTP ${buyRes.status}`);
       log("ERROR", "fulfillRobot", "Robot buy failed", { reason, robotGameId, duration });
 
       const { data: ticket } = await supabaseAdmin
@@ -1623,19 +1626,20 @@ async function fulfillRobotProduct(
     }
 
     // Success! Paid: deliver key. Free (fallback): never expose key — só loader / conta no programa.
-    const rawKey = String(buyData.data?.key || "");
+    const buyDataInner = (buyData as Record<string, unknown>).data as Record<string, unknown> | undefined;
+    const rawKey = String(buyDataInner?.key || "");
     const formattedKey = rawKey.length >= 8 && !rawKey.includes("-")
       ? rawKey.match(/.{1,4}/g)?.join("-") || rawKey
       : rawKey;
-    const gameName = buyData.data?.gameName || item.productName || "";
-    const amountSpent = buyData.data?.amountSpent || 0;
-    const robotBalance = buyData.data?.balance ?? null;
-    const buyGame = buyData.data?.game as Record<string, unknown> | undefined;
+    const gameName = buyDataInner?.gameName || item.productName || "";
+    const amountSpent = buyDataInner?.amountSpent || 0;
+    const robotBalance = buyDataInner?.balance ?? null;
+    const buyGame = buyDataInner?.game as Record<string, unknown> | undefined;
     const isFreeGame =
       snapshotGameFree ||
       buyGame?.free === true ||
       robotGameIsFreeFlag(buyGame) ||
-      buyData.data?.finalAmount === 0;
+      buyDataInner?.finalAmount === 0;
     const buyDl = robotGameDownloadFields(buyGame);
     const downloadUrl = buyDl.downloadUrl || snapDl.downloadUrl || null;
     const fileName = buyDl.fileName || snapDl.fileName || null;
@@ -1873,7 +1877,7 @@ async function validateAndCalculatePrice(
       const hasOverride = priceOverride && Number(priceOverride.custom_price_brl) > 0;
       const overridePrice = hasOverride ? Number(priceOverride.custom_price_brl) : null;
 
-      const gameCategory = item.lztGame || item.gameCategory || "";
+      const gameCategory = item.lztGame || (item as Record<string, unknown>).gameCategory as string || "";
       const toMarkup = (v: unknown, fallback: number): number => {
         const n = Number(v);
         return Number.isFinite(n) && n >= 1 ? n : fallback;
@@ -2625,7 +2629,7 @@ Deno.serve(async (req) => {
       });
 
       const mpRaw = await mpRes.text();
-      let mpData: { data?: unknown; message?: string; error?: string } = {};
+      let mpData: { data?: Record<string, unknown>; message?: string; error?: string } = {};
       try {
         mpData = mpRaw ? (JSON.parse(mpRaw) as typeof mpData) : {};
       } catch {
@@ -2752,7 +2756,7 @@ Deno.serve(async (req) => {
           console.error("MisticPay status non-JSON:", mpRes.status, mpRaw.substring(0, 400));
         }
         if (mpRes.ok && mpData.transaction) {
-          const newStatus = mapMisticPayStatus(mpData.transaction.transactionState);
+          const newStatus = mapMisticPayStatus(mpData.transaction.transactionState || "");
 
           if (newStatus !== payment.status) {
             const updates: Record<string, unknown> = { status: newStatus };
