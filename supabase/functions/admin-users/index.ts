@@ -95,7 +95,7 @@ serve(async (req) => {
           const { data, error } = await query;
           if (error) throw error;
           if (!data || data.length === 0) break;
-          allData = allData.concat(data as T[]);
+          allData = allData.concat(data as unknown as T[]);
           if (data.length < PAGE_SIZE) break;
           from += PAGE_SIZE;
         }
