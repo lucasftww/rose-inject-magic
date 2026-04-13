@@ -848,7 +848,7 @@ const Raspadinha = () => {
               <User className="h-4 w-4" />
               Contas
               <span className="rounded-full bg-info/20 px-1.5 py-0.5 text-[9px] font-bold text-info border border-info/30">
-                R$ 5,50
+                R$ {CONTAS_PRICE.toFixed(2).replace(".", ",")}
               </span>
             </button>
           </div>
