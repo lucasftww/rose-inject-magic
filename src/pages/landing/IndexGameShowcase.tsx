@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef, useCallback } from "react";
+import React, { useMemo, useState, useRef, useCallback } from "react";
 import type { ReactNode, MouseEvent } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Loader2 } from "lucide-react";
@@ -287,7 +287,7 @@ const ContasSection = () => {
 };
 
 // ─── TiltCard (3D tilt on hover — disabled on touch devices) ────────────────
-const TiltCard = ({ children }: { children: ReactNode }) => {
+const TiltCard = React.forwardRef<HTMLDivElement, { children: ReactNode }>(({ children }, ref) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const isTouchDevice = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
 
@@ -312,7 +312,11 @@ const TiltCard = ({ children }: { children: ReactNode }) => {
 
   return (
     <div
-      ref={cardRef}
+      ref={(node) => {
+        (cardRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+        if (typeof ref === "function") ref(node);
+        else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
+      }}
       onMouseMove={isTouchDevice ? undefined : handleMouseMove}
       onMouseLeave={isTouchDevice ? undefined : handleMouseLeave}
       style={{ transition: "transform 0.15s ease-out", willChange: isTouchDevice ? "auto" : "transform" }}
@@ -320,7 +324,8 @@ const TiltCard = ({ children }: { children: ReactNode }) => {
       {children}
     </div>
   );
-};
+});
+TiltCard.displayName = "TiltCard";
 
 // ─── GameCard (exact user-provided component) ───────────────────────────────
 interface GameCardGame {
