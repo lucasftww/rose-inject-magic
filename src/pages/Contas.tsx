@@ -1017,7 +1017,10 @@ const fetchAccountsRaw = async (
     return await safeJsonFetch<LztMarketListResponse>(
       `${supabaseUrl}/functions/v1/lzt-market?${queryParams.toString()}`,
       {
-      headers: { apikey: supabaseAnonKey },
+      headers: {
+        apikey: supabaseAnonKey,
+        Authorization: `Bearer ${supabaseAnonKey}`,
+      },
       signal,
     }
     );
@@ -1850,7 +1853,11 @@ const Contas = () => {
         void (async () => {
           try {
             const res = await fetch(`${supabaseUrl}/functions/v1/lzt-market?${qp.toString()}`, {
-              headers: { "Content-Type": "application/json", apikey: supabaseAnonKey },
+              headers: {
+                "Content-Type": "application/json",
+                apikey: supabaseAnonKey,
+                Authorization: `Bearer ${supabaseAnonKey}`,
+              },
             });
             if (runId !== prefetchRunIdRef.current) return;
             if (!res.ok) return;
