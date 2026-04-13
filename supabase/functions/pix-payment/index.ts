@@ -481,13 +481,26 @@ async function sendDiscordSaleNotification(supabaseAdmin: SupabaseAdminClient, p
     const now = new Date();
     const brTime = now.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
 
-    // Fetch buyer info
+    // Fetch buyer info — fallback to profile when customer_data is empty (e.g. scratch cards)
     let buyerName = "—";
     let buyerEmail = "—";
     const custData = payment.customer_data as Record<string, string> | null;
     if (custData) {
       buyerName = custData.name || custData.nome || "—";
       buyerEmail = custData.email || "—";
+    }
+    // Fallback: fetch profile username + auth email when customer_data is missing
+    if (buyerName === "—" && payment.user_id) {
+      try {
+        const { data: profile } = await supabaseAdmin
+          .from("profiles")
+          .select("username")
+          .eq("user_id", payment.user_id)
+          .maybeSingle();
+        if (profile?.username) buyerName = profile.username;
+        const { data: { user: authUser } } = await supabaseAdmin.auth.admin.getUserById(payment.user_id);
+        if (authUser?.email && buyerEmail === "—") buyerEmail = authUser.email;
+      } catch { /* non-critical */ }
     }
 
     const embed = {
