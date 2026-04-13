@@ -98,12 +98,12 @@ export const prefetchAccountDetail = (
 
   prefetchHoverTimers.set(
     dedupeKey,
-    window.setTimeout((() => {
+    window.setTimeout(() => {
       prefetchHoverTimers.delete(dedupeKey);
       if (detailPrefetchGoneKeys.has(dedupeKey)) return;
       if (queryClient.getQueryData(key) != null) return;
       if (detailPrefetchInFlight.has(dedupeKey)) return;
       void runDetailPrefetch(queryClient, gameType, id, dedupeKey, key);
-    }, PREFETCH_HOVER_MS),
+    }, PREFETCH_HOVER_MS) as unknown as ReturnType<typeof setTimeout>,
   );
 };
