@@ -1326,7 +1326,7 @@ async function fulfillLztAccount(supabaseAdmin: SupabaseAdminClient, payment: Pa
         ticket_id: ticket.id,
         sender_id: payment.user_id,
         sender_role: "staff",
-        message: `✅ Conta #${itemId} comprada com sucesso!\n\nDados brutos:\n\`\`\`\n${rawCredentials || JSON.stringify(buyData?.item?.loginData || buyData, null, 2).substring(0, 800)}\n\`\`\`\n\nSe precisar de ajuda para acessar, envie uma mensagem aqui.`,
+        message: `✅ Conta #${itemId} comprada com sucesso!\n\nDados brutos:\n\`\`\`\n${rawCredentials || JSON.stringify((buyData as Record<string, unknown>)?.item ?? buyData, null, 2).substring(0, 800)}\n\`\`\`\n\nSe precisar de ajuda para acessar, envie uma mensagem aqui.`,
       });
     }
 
