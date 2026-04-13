@@ -558,14 +558,14 @@ const ValorantCard = memo(({ item, skinsMap, priceLabel, queryClient }: { item: 
               <>
                 <button
                   onClick={prevSkin}
-                  className="absolute left-0.5 top-1/2 -translate-y-1/2 z-[2] flex h-5 w-5 items-center justify-center rounded-full bg-background/70 text-foreground/70 opacity-0 group-hover:opacity-100 transition-opacity duration-150 hover:bg-background/90"
+                  className="absolute left-0.5 top-1/2 -translate-y-1/2 z-[2] flex h-5 w-5 items-center justify-center rounded-full bg-background/70 text-foreground/70 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-150 hover:bg-background/90"
                   aria-label="Skin anterior"
                 >
                   <ChevronLeft className="h-3 w-3" />
                 </button>
                 <button
                   onClick={nextSkin}
-                  className="absolute right-0.5 top-1/2 -translate-y-1/2 z-[2] flex h-5 w-5 items-center justify-center rounded-full bg-background/70 text-foreground/70 opacity-0 group-hover:opacity-100 transition-opacity duration-150 hover:bg-background/90"
+                  className="absolute right-0.5 top-1/2 -translate-y-1/2 z-[2] flex h-5 w-5 items-center justify-center rounded-full bg-background/70 text-foreground/70 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-150 hover:bg-background/90"
                   aria-label="Próxima skin"
                 >
                   <ChevronRight className="h-3 w-3" />
