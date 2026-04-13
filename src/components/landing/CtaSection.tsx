@@ -1,8 +1,9 @@
+import { forwardRef } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-const CtaSection = () => {
+const CtaSection = forwardRef<HTMLElement>(function CtaSection(_, ref) {
   const { t } = useTranslation();
 
   return (
