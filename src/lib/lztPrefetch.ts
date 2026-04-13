@@ -96,14 +96,13 @@ export const prefetchAccountDetail = (
   const prevTimer = prefetchHoverTimers.get(dedupeKey);
   if (prevTimer != null) clearTimeout(prevTimer);
 
-  prefetchHoverTimers.set(
-    dedupeKey,
-    window.setTimeout(() => {
-      prefetchHoverTimers.delete(dedupeKey);
-      if (detailPrefetchGoneKeys.has(dedupeKey)) return;
-      if (queryClient.getQueryData(key) != null) return;
-      if (detailPrefetchInFlight.has(dedupeKey)) return;
-      void runDetailPrefetch(queryClient, gameType, id, dedupeKey, key);
-    }, PREFETCH_HOVER_MS) as unknown as ReturnType<typeof setTimeout>,
-  );
+  const timerId = window.setTimeout(() => {
+    prefetchHoverTimers.delete(dedupeKey);
+    if (detailPrefetchGoneKeys.has(dedupeKey)) return;
+    if (queryClient.getQueryData(key) != null) return;
+    if (detailPrefetchInFlight.has(dedupeKey)) return;
+    void runDetailPrefetch(queryClient, gameType, id, dedupeKey, key);
+  }, PREFETCH_HOVER_MS);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  prefetchHoverTimers.set(dedupeKey, timerId as any);
 };
