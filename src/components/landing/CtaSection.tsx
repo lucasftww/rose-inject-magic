@@ -1,12 +1,13 @@
+import { forwardRef } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-const CtaSection = () => {
+const CtaSection = forwardRef<HTMLElement>(function CtaSection(_, ref) {
   const { t } = useTranslation();
 
   return (
-    <section className="border-t border-border bg-background px-5 sm:px-6 py-14 sm:py-32 relative overflow-hidden">
+    <section ref={ref} className="border-t border-border bg-background px-5 sm:px-6 py-14 sm:py-32 relative overflow-hidden">
       {/* Subtle glow */}
       <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[300px] w-[500px] sm:h-[400px] sm:w-[700px] rounded-full bg-[radial-gradient(ellipse_at_center,_hsl(197,100%,50%,0.06)_0%,_transparent_70%)]" />
 
@@ -44,6 +45,6 @@ const CtaSection = () => {
       </div>
     </section>
   );
-};
+});
 
 export default CtaSection;
