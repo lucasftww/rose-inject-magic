@@ -2629,7 +2629,7 @@ Deno.serve(async (req) => {
       });
 
       const mpRaw = await mpRes.text();
-      let mpData: { data?: unknown; message?: string; error?: string } = {};
+      let mpData: { data?: Record<string, unknown>; message?: string; error?: string } = {};
       try {
         mpData = mpRaw ? (JSON.parse(mpRaw) as typeof mpData) : {};
       } catch {
@@ -2756,7 +2756,7 @@ Deno.serve(async (req) => {
           console.error("MisticPay status non-JSON:", mpRes.status, mpRaw.substring(0, 400));
         }
         if (mpRes.ok && mpData.transaction) {
-          const newStatus = mapMisticPayStatus(mpData.transaction.transactionState);
+          const newStatus = mapMisticPayStatus(mpData.transaction.transactionState || "");
 
           if (newStatus !== payment.status) {
             const updates: Record<string, unknown> = { status: newStatus };
