@@ -429,7 +429,7 @@ const GameCard = React.forwardRef<HTMLDivElement, { game: GameCardGame; count: n
 GameCard.displayName = "GameCard";
 
 // ─── Software Section ───────────────────────────────────────────────────────
-const SoftwareSection = () => {
+const SoftwareSection = React.forwardRef<HTMLElement>(function SoftwareSection(_props, ref) {
   const { t } = useTranslation();
 
   const { data: games = [], isLoading } = useQuery({
@@ -480,7 +480,7 @@ const SoftwareSection = () => {
   );
 
   return (
-    <section className="border-t border-border bg-background px-4 sm:px-6 py-12 sm:py-20">
+    <section ref={ref} className="border-t border-border bg-background px-4 sm:px-6 py-12 sm:py-20">
       <div className="mx-auto max-w-7xl">
         <SectionHeader subtitle={t("products.subtitle")} title={t("products.title")} />
 
@@ -509,7 +509,8 @@ const SoftwareSection = () => {
       </div>
     </section>
   );
-};
+});
+SoftwareSection.displayName = "SoftwareSection";
 
 export default function IndexGameShowcase() {
   return (
