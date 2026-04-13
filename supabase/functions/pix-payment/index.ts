@@ -1590,7 +1590,7 @@ async function fulfillRobotProduct(
     log("INFO", "fulfillRobot", "Robot buy response", { status: buyRes.status, body: JSON.stringify(buyData).substring(0, 500), expectedPrice: robotSnapshot.expectedPrice, duration });
 
     if (!buyRes.ok || !buyData.success) {
-      const reason = buyData.message || `HTTP ${buyRes.status}`;
+      const reason = String(buyData.message || `HTTP ${buyRes.status}`);
       log("ERROR", "fulfillRobot", "Robot buy failed", { reason, robotGameId, duration });
 
       const { data: ticket } = await supabaseAdmin
