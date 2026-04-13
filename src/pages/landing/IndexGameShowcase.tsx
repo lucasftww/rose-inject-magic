@@ -231,11 +231,11 @@ const SectionHeader = ({ subtitle, title }: { subtitle: string; title: string })
 );
 
 // ─── Accounts Section ───────────────────────────────────────────────────────
-const ContasSection = () => {
+const ContasSection = React.forwardRef<HTMLElement>(function ContasSection(_props, ref) {
   const { t } = useTranslation();
 
   return (
-    <section className="border-t border-border bg-background px-4 sm:px-6 py-12 sm:py-20">
+    <section ref={ref} className="border-t border-border bg-background px-4 sm:px-6 py-12 sm:py-20">
       <div className="mx-auto max-w-7xl">
         <SectionHeader subtitle={t("accounts.subtitle")} title={t("accounts.title")} />
 
@@ -284,7 +284,8 @@ const ContasSection = () => {
       </div>
     </section>
   );
-};
+});
+ContasSection.displayName = "ContasSection";
 
 // ─── TiltCard (3D tilt on hover — disabled on touch devices) ────────────────
 const TiltCard = React.forwardRef<HTMLDivElement, { children: ReactNode }>(({ children }, ref) => {
