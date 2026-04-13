@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef, useCallback } from "react";
+import React, { useMemo, useState, useRef, useCallback } from "react";
 import type { ReactNode, MouseEvent } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Loader2 } from "lucide-react";
@@ -231,11 +231,11 @@ const SectionHeader = ({ subtitle, title }: { subtitle: string; title: string })
 );
 
 // ─── Accounts Section ───────────────────────────────────────────────────────
-const ContasSection = () => {
+const ContasSection = React.forwardRef<HTMLElement>(function ContasSection(_props, ref) {
   const { t } = useTranslation();
 
   return (
-    <section className="border-t border-border bg-background px-4 sm:px-6 py-12 sm:py-20">
+    <section ref={ref} className="border-t border-border bg-background px-4 sm:px-6 py-12 sm:py-20">
       <div className="mx-auto max-w-7xl">
         <SectionHeader subtitle={t("accounts.subtitle")} title={t("accounts.title")} />
 
@@ -284,10 +284,11 @@ const ContasSection = () => {
       </div>
     </section>
   );
-};
+});
+ContasSection.displayName = "ContasSection";
 
 // ─── TiltCard (3D tilt on hover — disabled on touch devices) ────────────────
-const TiltCard = ({ children }: { children: ReactNode }) => {
+const TiltCard = React.forwardRef<HTMLDivElement, { children: ReactNode }>(({ children }, ref) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const isTouchDevice = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
 
@@ -312,7 +313,11 @@ const TiltCard = ({ children }: { children: ReactNode }) => {
 
   return (
     <div
-      ref={cardRef}
+      ref={(node) => {
+        (cardRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+        if (typeof ref === "function") ref(node);
+        else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
+      }}
       onMouseMove={isTouchDevice ? undefined : handleMouseMove}
       onMouseLeave={isTouchDevice ? undefined : handleMouseLeave}
       style={{ transition: "transform 0.15s ease-out", willChange: isTouchDevice ? "auto" : "transform" }}
@@ -320,7 +325,8 @@ const TiltCard = ({ children }: { children: ReactNode }) => {
       {children}
     </div>
   );
-};
+});
+TiltCard.displayName = "TiltCard";
 
 // ─── GameCard (exact user-provided component) ───────────────────────────────
 interface GameCardGame {
@@ -335,7 +341,7 @@ interface GameCardGame {
   characterHover?: string;
 }
 
-function GameCard({ game, count, t }: { game: GameCardGame; count: number; t: TFunction }) {
+const GameCard = React.forwardRef<HTMLDivElement, { game: GameCardGame; count: number; t: TFunction }>(function GameCard({ game, count, t }, ref) {
   const hasProducts = count > 0;
   const [isHovered, setIsHovered] = useState(false);
   const characterPositionClass = "absolute bottom-0 right-0 w-[40%] sm:w-[50%]";
@@ -419,10 +425,11 @@ function GameCard({ game, count, t }: { game: GameCardGame; count: number; t: TF
       </Link>
     </TiltCard>
   );
-}
+});
+GameCard.displayName = "GameCard";
 
 // ─── Software Section ───────────────────────────────────────────────────────
-const SoftwareSection = () => {
+const SoftwareSection = React.forwardRef<HTMLElement>(function SoftwareSection(_props, ref) {
   const { t } = useTranslation();
 
   const { data: games = [], isLoading } = useQuery({
@@ -473,7 +480,7 @@ const SoftwareSection = () => {
   );
 
   return (
-    <section className="border-t border-border bg-background px-4 sm:px-6 py-12 sm:py-20">
+    <section ref={ref} className="border-t border-border bg-background px-4 sm:px-6 py-12 sm:py-20">
       <div className="mx-auto max-w-7xl">
         <SectionHeader subtitle={t("products.subtitle")} title={t("products.title")} />
 
@@ -502,7 +509,8 @@ const SoftwareSection = () => {
       </div>
     </section>
   );
-};
+});
+SoftwareSection.displayName = "SoftwareSection";
 
 export default function IndexGameShowcase() {
   return (

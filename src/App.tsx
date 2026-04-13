@@ -15,14 +15,15 @@ import NotFound from "./pages/NotFound";
 import { GlobalErrorBoundary } from "@/components/GlobalErrorBoundary";
 
 /** Wrapper that feeds the current route key into the error boundary so it resets on navigation */
-const LocationAwareErrorBoundary = ({ children }: { children: React.ReactNode }) => {
+const LocationAwareErrorBoundary = React.forwardRef<HTMLDivElement, { children: React.ReactNode }>(({ children }, _ref) => {
   const location = useLocation();
   return (
     <GlobalErrorBoundary locationKey={location.key + location.pathname}>
       {children}
     </GlobalErrorBoundary>
   );
-};
+});
+LocationAwareErrorBoundary.displayName = "LocationAwareErrorBoundary";
 
 // Retry wrapper for lazy imports — retries up to 3 times with delay to recover from transient network/chunk errors
 // On final retry, forces a full page reload to bust stale chunk references after a new deploy
