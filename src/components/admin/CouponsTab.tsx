@@ -58,7 +58,7 @@ const CouponsTab = () => {
     setFormValue(String(coupon.discount_value));
     setFormMaxUses(coupon.max_uses !== null ? String(coupon.max_uses) : "");
     setFormMinOrder(coupon.min_order_value ? String(coupon.min_order_value) : "");
-    setFormActive(coupon.active);
+    setFormActive(coupon.active ?? true);
     setFormExpires(coupon.expires_at ? coupon.expires_at.slice(0, 16) : "");
     // Load associated products
     const { data } = await supabase.from("coupon_products").select("product_id").eq("coupon_id", coupon.id);
