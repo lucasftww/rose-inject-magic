@@ -340,7 +340,7 @@ interface GameCardGame {
   characterHover?: string;
 }
 
-function GameCard({ game, count, t }: { game: GameCardGame; count: number; t: TFunction }) {
+const GameCard = React.forwardRef<HTMLDivElement, { game: GameCardGame; count: number; t: TFunction }>(function GameCard({ game, count, t }, ref) {
   const hasProducts = count > 0;
   const [isHovered, setIsHovered] = useState(false);
   const characterPositionClass = "absolute bottom-0 right-0 w-[40%] sm:w-[50%]";
@@ -424,7 +424,8 @@ function GameCard({ game, count, t }: { game: GameCardGame; count: number; t: TF
       </Link>
     </TiltCard>
   );
-}
+});
+GameCard.displayName = "GameCard";
 
 // ─── Software Section ───────────────────────────────────────────────────────
 const SoftwareSection = () => {
