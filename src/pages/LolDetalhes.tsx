@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useMemo, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "@/hooks/use-toast";
 import { useLztMarkup } from "@/hooks/useLztMarkup";
@@ -851,31 +852,37 @@ const LolDetalhes = () => {
         )}
       </div>
 
-      {/* Sticky mobile bottom bar — min-w-0 + truncate evita overflow horizontal no flex. */}
-      {item && (
-        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 w-full max-w-[100dvw] overflow-x-hidden sm:hidden">
-          <div className="pointer-events-auto border-t border-border bg-card px-3 py-3 safe-area-bottom sm:px-4">
-            <div className="mx-auto flex w-full max-w-lg min-w-0 items-center gap-2 sm:gap-3">
-              <div className="flex min-w-0 shrink-0 flex-col">
-                <span className="truncate text-base font-bold leading-tight tabular-nums text-positive sm:text-lg">
-                  {lockedPriceBrl !== null ? formatPriceBrl(lockedPriceBrl) : getDisplayPrice(item, "lol")}
-                </span>
+      {/* Mobile bottom bar: portal no body + translateZ(0) — mesmo padrão Fortnite/Valorant (fixed estável em páginas longas com Framer). */}
+      {item &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            className="pointer-events-none fixed inset-x-0 bottom-0 z-40 w-full min-w-0 sm:hidden [transform:translateZ(0)]"
+            style={{ WebkitTransform: "translateZ(0)" }}
+          >
+            <div className="pointer-events-auto border-t border-border/60 bg-background/95 px-3 py-3 shadow-[0_-8px_32px_-8px_rgba(0,0,0,0.35)] backdrop-blur-md safe-area-bottom sm:px-4">
+              <div className="mx-auto flex w-full max-w-lg min-w-0 items-center gap-2 sm:gap-3">
+                <div className="flex min-w-0 shrink-0 flex-col">
+                  <span className="truncate text-base font-bold leading-tight tabular-nums text-positive sm:text-lg">
+                    {lockedPriceBrl !== null ? formatPriceBrl(lockedPriceBrl) : getDisplayPrice(item, "lol")}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleBuyNow}
+                  disabled={checkingAvailability || lightboxIndex !== null}
+                  aria-busy={checkingAvailability}
+                  aria-label={checkingAvailability ? "Verificando disponibilidade" : "Comprar agora"}
+                  className="flex min-h-[48px] min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-positive px-2 py-3 text-xs font-bold uppercase tracking-wider text-positive-foreground transition-all active:scale-[0.98] disabled:opacity-60 touch-manipulation sm:px-3 sm:text-sm"
+                >
+                  {checkingAvailability ? <Loader2 className="h-4 w-4 shrink-0 animate-spin" /> : <ShoppingCart className="h-4 w-4 shrink-0" />}
+                  <span className="min-w-0 truncate">{checkingAvailability ? "Verificando…" : "Comprar"}</span>
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={handleBuyNow}
-                disabled={checkingAvailability}
-                aria-busy={checkingAvailability}
-                aria-label={checkingAvailability ? "Verificando disponibilidade" : "Comprar agora"}
-                className="flex min-h-[48px] min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-positive px-2 py-3 text-xs font-bold uppercase tracking-wider text-positive-foreground transition-all active:scale-[0.98] disabled:opacity-60 touch-manipulation sm:px-3 sm:text-sm"
-              >
-                {checkingAvailability ? <Loader2 className="h-4 w-4 shrink-0 animate-spin" /> : <ShoppingCart className="h-4 w-4 shrink-0" />}
-                <span className="min-w-0 truncate">{checkingAvailability ? "Verificando…" : "Comprar"}</span>
-              </button>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 };
