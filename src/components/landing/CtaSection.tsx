@@ -45,6 +45,6 @@ const CtaSection = forwardRef<HTMLElement>(function CtaSection(_, ref) {
       </div>
     </section>
   );
-};
+});
 
 export default CtaSection;
