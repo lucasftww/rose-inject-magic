@@ -104,7 +104,7 @@ const Header = forwardRef<HTMLDivElement>((_props, _ref) => {
     <>
       <header className="fixed left-0 right-0 z-50 top-0 royal-header-enter">
         <div
-          className="relative flex h-14 sm:h-16 items-center px-5 sm:px-8 lg:px-10 transition-[background,border-color] duration-500"
+          className="relative flex h-16 sm:h-[72px] items-center px-5 sm:px-8 lg:px-10 transition-[background,border-color] duration-500"
           style={{
             background: "hsla(0,0%,6%,0.92)",
             borderBottom: "1px solid hsla(0,0%,100%,0.06)",
@@ -118,10 +118,10 @@ const Header = forwardRef<HTMLDivElement>((_props, _ref) => {
                 width={44}
                 height={44}
                 decoding="async"
-                className="h-10 w-10 sm:h-9 sm:w-9 object-contain shrink-0 transition-transform duration-300 ease-out group-hover:-rotate-[8deg]"
+                className="h-11 w-11 sm:h-10 sm:w-10 object-contain shrink-0 transition-transform duration-300 ease-out group-hover:-rotate-[8deg]"
               />
               <span
-                className="text-base sm:text-lg tracking-[0.14em] whitespace-nowrap hidden sm:inline"
+                className="text-lg sm:text-xl tracking-[0.14em] whitespace-nowrap hidden sm:inline"
                 style={{ fontFamily: "'Valorant', sans-serif" }}
               >
                 <span className="text-success">ROYAL</span>
@@ -340,7 +340,7 @@ const Header = forwardRef<HTMLDivElement>((_props, _ref) => {
       )}
 
       {/* Spacer */}
-      <div className="h-14 sm:h-16" />
+      <div className="h-16 sm:h-[72px]" />
     </>
   );
 });
