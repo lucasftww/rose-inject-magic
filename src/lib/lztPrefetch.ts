@@ -98,7 +98,7 @@ export const prefetchAccountDetail = (
 
   prefetchHoverTimers.set(
     dedupeKey,
-    window.setTimeout(() => {
+    window.setTimeout((() => {
       prefetchHoverTimers.delete(dedupeKey);
       if (detailPrefetchGoneKeys.has(dedupeKey)) return;
       if (queryClient.getQueryData(key) != null) return;
