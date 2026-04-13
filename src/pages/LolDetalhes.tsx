@@ -26,14 +26,14 @@ import type { LztMarketLolDetailResponse } from "@/lib/edgeFunctionTypes";
 
 import { rankMap } from "@/lib/valorantData";
 
-import lolRankFerroImg from "@/assets/lol-rank-ferro.png";
+import lolRankFerroImg from "@/assets/lol-rank-ferro.webp";
 import lolRankBronzeImg from "@/assets/lol-rank-bronze.webp";
-import lolRankPrataImg from "@/assets/lol-rank-prata.png";
-import lolRankOuroImg from "@/assets/lol-rank-ouro.png";
-import lolRankPlatinaImg from "@/assets/lol-rank-platina.png";
-import lolRankEsmeraldaImg from "@/assets/lol-rank-esmeralda.png";
+import lolRankPrataImg from "@/assets/lol-rank-prata.webp";
+import lolRankOuroImg from "@/assets/lol-rank-ouro.webp";
+import lolRankPlatinaImg from "@/assets/lol-rank-platina.webp";
+import lolRankEsmeraldaImg from "@/assets/lol-rank-esmeralda.webp";
 import lolRankDiamanteImg from "@/assets/lol-rank-diamante.webp";
-import lolRankMestreImg from "@/assets/lol-rank-mestre.png";
+import lolRankMestreImg from "@/assets/lol-rank-mestre.webp";
 
 // ─── LoL rank config ───
 const lolRankConfig: Record<string, { color: string; img: string | null }> = {
