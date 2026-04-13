@@ -518,8 +518,18 @@ const ValorantCard = memo(({ item, skinsMap, priceLabel, queryClient }: { item: 
     }
     results.sort((a, b) => b.rarity - a.rarity);
     const premium = results.filter(s => s.rarity >= 2);
-    return (premium.length >= 4 ? premium : results.filter(s => s.rarity > 0).length >= 4 ? results.filter(s => s.rarity > 0) : results).slice(0, 12);
-  }, [inventoryUuids, skinsMap, skinsMapReady]);
+    const pool = (premium.length >= 4 ? premium : results.filter(s => s.rarity > 0).length >= 4 ? results.filter(s => s.rarity > 0) : results).slice(0, 12);
+    // Rotate starting skin based on item_id to avoid visual repetition across cards
+    if (pool.length > 1) {
+      const hash = item.item_id ? [...String(item.item_id)].reduce((acc, c) => acc + c.charCodeAt(0), 0) : 0;
+      const offset = hash % pool.length;
+      if (offset > 0) {
+        const rotated = [...pool.slice(offset), ...pool.slice(0, offset)];
+        return rotated;
+      }
+    }
+    return pool;
+  }, [inventoryUuids, skinsMap, skinsMapReady, item.item_id]);
 
   const [skinIdx, setSkinIdx] = useState(0);
   const currentIdx = skinPreviews.length > 0 ? skinIdx % skinPreviews.length : 0;
