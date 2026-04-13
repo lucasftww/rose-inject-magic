@@ -548,7 +548,7 @@ const ValorantCard = memo(({ item, skinsMap, priceLabel, queryClient }: { item: 
           <>
             <div className="relative z-[1] w-full h-full flex items-center justify-center">
               <SmoothImg
-                key={skinPreviews[currentIdx].uuid || currentIdx}
+                key={currentIdx}
                 src={getProxiedImageUrl(skinPreviews[currentIdx].image)}
                 alt={skinPreviews[currentIdx].name}
                 className="w-full h-full object-contain p-2"
