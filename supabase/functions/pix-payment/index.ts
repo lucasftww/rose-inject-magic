@@ -857,6 +857,7 @@ async function fulfillOrder(supabaseAdmin: SupabaseAdminClient, payment: Payment
     
     // Increment current_uses on the coupon so max_uses limit works
     const couponRpcResult = await supabaseAdmin.rpc("increment_coupon_uses", { _coupon_id: payment.coupon_id });
+    if (couponRpcResult.error) {
       // Fallback: manual increment if RPC doesn't exist
       const { data: coupon } = await supabaseAdmin
         .from("coupons")
@@ -869,7 +870,7 @@ async function fulfillOrder(supabaseAdmin: SupabaseAdminClient, payment: Payment
           .update({ current_uses: (coupon.current_uses || 0) + 1 })
           .eq("id", payment.coupon_id);
       }
-    });
+    }
   }
 }
 
