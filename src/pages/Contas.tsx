@@ -518,8 +518,23 @@ const ValorantCard = memo(({ item, skinsMap, priceLabel, queryClient }: { item: 
     }
     results.sort((a, b) => b.rarity - a.rarity);
     const premium = results.filter(s => s.rarity >= 2);
-    return (premium.length >= 4 ? premium : results.filter(s => s.rarity > 0).length >= 4 ? results.filter(s => s.rarity > 0) : results).slice(0, 6);
+    return (premium.length >= 4 ? premium : results.filter(s => s.rarity > 0).length >= 4 ? results.filter(s => s.rarity > 0) : results).slice(0, 12);
   }, [inventoryUuids, skinsMap, skinsMapReady]);
+
+  const [skinIdx, setSkinIdx] = useState(0);
+  const currentIdx = skinPreviews.length > 0 ? skinIdx % skinPreviews.length : 0;
+
+  const prevSkin = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setSkinIdx(i => (i - 1 + skinPreviews.length) % skinPreviews.length);
+  }, [skinPreviews.length]);
+
+  const nextSkin = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setSkinIdx(i => (i + 1) % skinPreviews.length);
+  }, [skinPreviews.length]);
 
   return (
     <Link
@@ -529,51 +544,47 @@ const ValorantCard = memo(({ item, skinsMap, priceLabel, queryClient }: { item: 
     >
       <div className="relative flex h-28 sm:h-36 items-center justify-center overflow-hidden bg-secondary/20">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--success)/0.06),transparent_70%)]" />
-        {skinPreviews.length === 1 ? (
-          <div className="relative z-[1] w-full h-full flex items-center justify-center bg-secondary/30">
-            <SmoothImg src={getProxiedImageUrl(skinPreviews[0].image)} alt={skinPreviews[0].name} className="w-full h-full object-contain" />
-          </div>
-        ) : skinPreviews.length === 2 ? (
-          <div className="relative z-[1] grid grid-cols-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
-            {skinPreviews.map((skin, i) => (
-              <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/30 p-0.5">
-                <SmoothImg src={getProxiedImageUrl(skin.image)} alt={skin.name} className="w-full h-full object-contain" />
-              </div>
-            ))}
-          </div>
-        ) : skinPreviews.length === 3 ? (
-          <div className="relative z-[1] grid grid-cols-2 grid-rows-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
-            {skinPreviews.slice(0, 2).map((skin, i) => (
-              <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/30 p-0.5">
-                <SmoothImg src={getProxiedImageUrl(skin.image)} alt={skin.name} className="w-full h-full object-contain" />
-              </div>
-            ))}
-            <div className="flex items-center justify-center w-full h-full rounded bg-secondary/30 p-0.5 col-span-2">
-              <SmoothImg src={getProxiedImageUrl(skinPreviews[2].image)} alt={skinPreviews[2].name} className="w-full h-full object-contain" />
+        {skinPreviews.length > 0 ? (
+          <>
+            <div className="relative z-[1] w-full h-full flex items-center justify-center">
+              <SmoothImg
+                key={currentIdx}
+                src={getProxiedImageUrl(skinPreviews[currentIdx].image)}
+                alt={skinPreviews[currentIdx].name}
+                className="w-full h-full object-contain p-2"
+              />
             </div>
-          </div>
-        ) : skinPreviews.length === 4 ? (
-          <div className="relative z-[1] grid grid-cols-2 grid-rows-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
-            {skinPreviews.map((skin, i) => (
-              <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/30 p-0.5">
-                <SmoothImg src={getProxiedImageUrl(skin.image)} alt={skin.name} className="w-full h-full object-contain" />
-              </div>
-            ))}
-          </div>
-        ) : skinPreviews.length > 0 ? (
-          <div className="relative z-[1] grid grid-cols-3 grid-rows-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
-            {skinPreviews.map((skin, i) => (
-              <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/30 p-0.5">
-                <SmoothImg src={getProxiedImageUrl(skin.image)} alt={skin.name} className="w-full h-full object-contain" />
-              </div>
-            ))}
-          </div>
+            {skinPreviews.length > 1 && (
+              <>
+                <button
+                  onClick={prevSkin}
+                  className="absolute left-0.5 top-1/2 -translate-y-1/2 z-[2] flex h-5 w-5 items-center justify-center rounded-full bg-background/70 text-foreground/70 opacity-0 group-hover:opacity-100 transition-opacity duration-150 hover:bg-background/90"
+                  aria-label="Skin anterior"
+                >
+                  <ChevronLeft className="h-3 w-3" />
+                </button>
+                <button
+                  onClick={nextSkin}
+                  className="absolute right-0.5 top-1/2 -translate-y-1/2 z-[2] flex h-5 w-5 items-center justify-center rounded-full bg-background/70 text-foreground/70 opacity-0 group-hover:opacity-100 transition-opacity duration-150 hover:bg-background/90"
+                  aria-label="Próxima skin"
+                >
+                  <ChevronRight className="h-3 w-3" />
+                </button>
+                {/* Dots indicator */}
+                <div className="absolute bottom-1 left-1/2 -translate-x-1/2 z-[2] flex items-center gap-0.5">
+                  {skinPreviews.slice(0, 5).map((_, i) => (
+                    <span key={i} className={`block h-[3px] rounded-full transition-all duration-200 ${i === currentIdx % Math.min(skinPreviews.length, 5) ? "w-2.5 bg-success" : "w-1 bg-foreground/30"}`} />
+                  ))}
+                  {skinPreviews.length > 5 && (
+                    <span className="text-[7px] text-foreground/40 ml-0.5">+{skinPreviews.length - 5}</span>
+                  )}
+                </div>
+              </>
+            )}
+          </>
         ) : hasInventoryData && !skinsMapReady ? (
-          /* Skeleton while Valorant API loads — avoids flashing the raw LZT screenshot */
-          <div className="relative z-[1] grid grid-cols-3 grid-rows-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="w-full h-full rounded bg-secondary/50 animate-pulse" />
-            ))}
+          <div className="relative z-[1] flex items-center justify-center w-full h-full">
+            <div className="w-3/4 h-3/4 rounded bg-secondary/50 animate-pulse" />
           </div>
         ) : item.imagePreviewLinks?.direct?.weapons ? (
           <LztPreviewImage url={item.imagePreviewLinks.direct.weapons} />
