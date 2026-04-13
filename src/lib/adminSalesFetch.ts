@@ -41,7 +41,7 @@ export async function fetchAdminSalesTickets(): Promise<SaleTicket[]> {
     for (let i = 0; i < ids.length; i += CHUNK) chunks.push(ids.slice(i, i + CHUNK));
     const results = await Promise.all(
       chunks.map((chunk) =>
-        (supabase.from(table as never).select(select) as never)
+        (supabase.from(table as never).select(select) as any)
           .in(column, chunk)
           .then((r: { data?: Tables<T>[] | null }) => (r.data ?? []) as Tables<T>[]),
       ),

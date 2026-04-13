@@ -104,6 +104,6 @@ export const prefetchAccountDetail = (
       if (queryClient.getQueryData(key) != null) return;
       if (detailPrefetchInFlight.has(dedupeKey)) return;
       void runDetailPrefetch(queryClient, gameType, id, dedupeKey, key);
-    }, PREFETCH_HOVER_MS),
+    }, PREFETCH_HOVER_MS) as unknown as ReturnType<typeof setTimeout>,
   );
 };

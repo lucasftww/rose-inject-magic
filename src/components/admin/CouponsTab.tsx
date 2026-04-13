@@ -10,11 +10,11 @@ interface Coupon {
   discount_type: string;
   discount_value: number;
   max_uses: number | null;
-  current_uses: number;
-  min_order_value: number;
-  active: boolean;
+  current_uses: number | null;
+  min_order_value: number | null;
+  active: boolean | null;
   expires_at: string | null;
-  created_at: string;
+  created_at: string | null;
 }
 
 interface CouponProduct {
@@ -58,7 +58,7 @@ const CouponsTab = () => {
     setFormValue(String(coupon.discount_value));
     setFormMaxUses(coupon.max_uses !== null ? String(coupon.max_uses) : "");
     setFormMinOrder(coupon.min_order_value ? String(coupon.min_order_value) : "");
-    setFormActive(coupon.active);
+    setFormActive(coupon.active ?? true);
     setFormExpires(coupon.expires_at ? coupon.expires_at.slice(0, 16) : "");
     // Load associated products
     const { data } = await supabase.from("coupon_products").select("product_id").eq("coupon_id", coupon.id);
