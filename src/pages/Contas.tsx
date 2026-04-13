@@ -546,13 +546,49 @@ const ValorantCard = memo(({ item, skinsMap, priceLabel, queryClient }: { item: 
     setSkinIdx(i => (i + 1) % skinPreviews.length);
   }, [skinPreviews.length]);
 
+  // Touch swipe for skin carousel
+  const touchRef = useRef<{ startX: number; startY: number; swiped: boolean } | null>(null);
+  const carouselRef = useRef<HTMLDivElement>(null);
+
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
+    if (skinPreviews.length <= 1) return;
+    const t = e.touches[0];
+    touchRef.current = { startX: t.clientX, startY: t.clientY, swiped: false };
+  }, [skinPreviews.length]);
+
+  const onTouchMove = useCallback((e: React.TouchEvent) => {
+    const ref = touchRef.current;
+    if (!ref || ref.swiped) return;
+    const dx = e.touches[0].clientX - ref.startX;
+    const dy = e.touches[0].clientY - ref.startY;
+    // Only swipe horizontally if |dx| > |dy| to avoid blocking scroll
+    if (Math.abs(dx) > 25 && Math.abs(dx) > Math.abs(dy) * 1.2) {
+      ref.swiped = true;
+      if (dx < 0) {
+        setSkinIdx(i => (i + 1) % skinPreviews.length);
+      } else {
+        setSkinIdx(i => (i - 1 + skinPreviews.length) % skinPreviews.length);
+      }
+    }
+  }, [skinPreviews.length]);
+
+  const onTouchEnd = useCallback(() => {
+    touchRef.current = null;
+  }, []);
+
   return (
     <Link
       to={`/conta/${item.item_id}`}
       onPointerEnter={() => prefetchAccountDetail(queryClient, "valorant", item.item_id)}
       className="group touch-manipulation cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-colors duration-200 hover:border-success/50 sm:hover:shadow-[0_4px_24px_hsl(var(--success)/0.12)] flex flex-col h-full no-underline text-inherit"
     >
-      <div className="relative flex h-28 sm:h-36 items-center justify-center overflow-hidden bg-secondary/20">
+      <div
+        ref={carouselRef}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        className="relative flex h-28 sm:h-36 items-center justify-center overflow-hidden bg-secondary/20"
+      >
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--success)/0.06),transparent_70%)]" />
         {skinPreviews.length > 0 ? (
           <>
