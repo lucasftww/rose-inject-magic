@@ -271,7 +271,6 @@ const Checkout = () => {
       .select("method, enabled")
       .then(({ data, error }) => {
         if (error || !data) {
-          // Fallback: only enable PIX since card/crypto are not supported by the current gateway
           setEnabledMethods({ pix: true });
           return;
         }
@@ -280,8 +279,7 @@ const Checkout = () => {
           if (typeof r.method === "string") map[r.method] = r.enabled ?? false;
         }
         setEnabledMethods(map);
-      })
-      .catch(() => {
+      }, () => {
         setEnabledMethods({ pix: true });
       });
   }, []);
