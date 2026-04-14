@@ -30,6 +30,16 @@ const DEFAULT_CONFIG: LztConfig = {
   markup_minecraft: 3,
 };
 
+function multiplierToMarginPercent(multiplier: number): number {
+  if (!Number.isFinite(multiplier) || multiplier <= 0) return 0;
+  return (multiplier - 1) * 100;
+}
+
+function marginPercentToMultiplier(marginPercent: number): number {
+  if (!Number.isFinite(marginPercent)) return 1;
+  return 1 + marginPercent / 100;
+}
+
 function mapLztConfigRow(row: Tables<"lzt_config"> | null | undefined): Partial<LztConfig> | null {
   if (!row) return null;
   const mult = row.markup_multiplier ?? 3;
@@ -92,19 +102,19 @@ const LztTab = () => {
     setConfig(resolved);
     setMaxPrice(String(resolved.max_fetch_price));
     setMarkups({
-      markup_valorant: String(resolved.markup_valorant ?? resolved.markup_multiplier),
-      markup_lol: String(resolved.markup_lol ?? resolved.markup_multiplier),
-      markup_fortnite: String(resolved.markup_fortnite ?? resolved.markup_multiplier),
-      markup_minecraft: String(resolved.markup_minecraft ?? resolved.markup_multiplier),
+      markup_valorant: multiplierToMarginPercent(resolved.markup_valorant ?? resolved.markup_multiplier).toFixed(1),
+      markup_lol: multiplierToMarginPercent(resolved.markup_lol ?? resolved.markup_multiplier).toFixed(1),
+      markup_fortnite: multiplierToMarginPercent(resolved.markup_fortnite ?? resolved.markup_multiplier).toFixed(1),
+      markup_minecraft: multiplierToMarginPercent(resolved.markup_minecraft ?? resolved.markup_multiplier).toFixed(1),
     });
   };
 
   // Per-game markup state
   const [markups, setMarkups] = useState({
-    markup_valorant: String(DEFAULT_CONFIG.markup_valorant),
-    markup_lol: String(DEFAULT_CONFIG.markup_lol),
-    markup_fortnite: String(DEFAULT_CONFIG.markup_fortnite),
-    markup_minecraft: String(DEFAULT_CONFIG.markup_minecraft),
+    markup_valorant: multiplierToMarginPercent(DEFAULT_CONFIG.markup_valorant).toFixed(1),
+    markup_lol: multiplierToMarginPercent(DEFAULT_CONFIG.markup_lol).toFixed(1),
+    markup_fortnite: multiplierToMarginPercent(DEFAULT_CONFIG.markup_fortnite).toFixed(1),
+    markup_minecraft: multiplierToMarginPercent(DEFAULT_CONFIG.markup_minecraft).toFixed(1),
   });
 
   const totalBought = dbStats ? Number(dbStats.total_bought) : 0;
@@ -133,12 +143,12 @@ const LztTab = () => {
 
     const parsedMarkups: Record<string, number> = {};
     for (const field of gameMarkupFields) {
-      const val = parseFloat(markups[field.key]);
-      if (isNaN(val) || val < 1) {
-        toast({ title: `Multiplicador ${field.label} mínimo é 1x`, variant: "destructive" });
+      const marginPercent = parseFloat(markups[field.key]);
+      if (isNaN(marginPercent) || marginPercent < 0) {
+        toast({ title: `Margem ${field.label} inválida (mínimo 0%)`, variant: "destructive" });
         return;
       }
-      parsedMarkups[field.key] = val;
+      parsedMarkups[field.key] = marginPercentToMultiplier(marginPercent);
     }
 
     // Preserva `markup_multiplier` da linha atual (fallback em código legado); não sobrescrever com média dos jogos.
@@ -248,12 +258,13 @@ const LztTab = () => {
               <Gamepad2 className="h-4 w-4 text-success" /> Margem de Lucro por Categoria
             </h3>
             <p className="text-xs text-muted-foreground mt-1">
-              Defina o multiplicador sobre o custo em R$ (após conversão RUB/USD). O preço final na loja ainda passa por piso/teto por conteúdo na edge <code className="text-[10px]">lzt-market</code>.
+              Defina a margem de lucro (%) sobre o custo em R$ (após conversão RUB/USD). O preço final na loja ainda passa por piso/teto por conteúdo na edge <code className="text-[10px]">lzt-market</code>.
             </p>
             <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {gameMarkupFields.map((field) => {
                 const parsed = parseFloat(markups[field.key]);
-                const previewMult = Number.isFinite(parsed) && parsed >= 1 ? parsed : 1;
+                const previewMarginPercent = Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+                const previewMult = marginPercentToMultiplier(previewMarginPercent);
                 const ex10 = 10 * previewMult;
                 const ex50 = 50 * previewMult;
                 return (
@@ -263,7 +274,7 @@ const LztTab = () => {
                       <input
                         type="number"
                         step="0.1"
-                        min="1"
+                        min="0"
                         value={markups[field.key]}
                         onChange={(e) => {
                           lztConfigFormDirtyRef.current = true;
@@ -271,7 +282,7 @@ const LztTab = () => {
                         }}
                         className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-success/50"
                       />
-                      <span className="text-sm font-bold text-muted-foreground">x</span>
+                      <span className="text-sm font-bold text-muted-foreground">%</span>
                     </div>
                     <div className="mt-2 flex justify-between gap-1 text-[10px] text-muted-foreground">
                       <span>
