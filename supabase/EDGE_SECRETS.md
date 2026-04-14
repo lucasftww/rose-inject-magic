@@ -16,6 +16,7 @@ As funções também leem variáveis de ambiente quando o valor não está na ta
 |-----|-------------------|----------------------|
 | LZT Market | `LZT_MARKET_TOKEN` ou `LZT_API_TOKEN` | `lzt-market`, `pix-payment` |
 | Meta CAPI | `META_ACCESS_TOKEN`, `META_PIXEL_ID` | `pix-payment`, `server-relay` (preferência: linhas em `system_credentials`) |
+| UTMify Orders | `UTMIFY_API_TOKEN` | `pix-payment` (envio server-side de vendas) |
 | MisticPay | `MISTICPAY_CLIENT_ID`, `MISTICPAY_CLIENT_SECRET` | `pix-payment` |
 | Robot API | `ROBOT_API_USERNAME`, `ROBOT_API_PASSWORD` | `pix-payment` |
 | Discord | `DISCORD_BOT_TOKEN` | `pix-payment` |
@@ -50,6 +51,7 @@ Tens **duas formas** equivalentes para a maioria das chaves: **tabela `system_cr
 | `LZT_MARKET_TOKEN` ou `LZT_API_TOKEN` | API LZT Market (catálogo de contas, compra, proxy de imagens). Basta **uma** das duas com o JWT/token válido. |
 | `META_ACCESS_TOKEN` | Meta Conversions API (eventos de compra). Já podes ter isto só como secret; na mesma, podes espelhar aqui. |
 | `META_PIXEL_ID` | ID do teu Pixel (para CAPI bater certo com o pixel do site). |
+| `UTMIFY_API_TOKEN` | Token da API da UTMify para enviar pedidos pagos para tracking de vendas. |
 | `MISTICPAY_CLIENT_ID` / `MISTICPAY_CLIENT_SECRET` | Gateway de pagamento (se não usares só secrets). |
 | `ROBOT_API_USERNAME` / `ROBOT_API_PASSWORD` | Integração Robot (se aplicável). |
 | `DISCORD_WEBHOOK_URL`, `DISCORD_GUILD_ID`, `DISCORD_CLIENT_ROLE_ID` | Notificações / cargos Discord, conforme o fluxo que uses. |

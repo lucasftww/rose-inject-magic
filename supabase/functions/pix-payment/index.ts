@@ -267,7 +267,33 @@ function resolveMetaTestEventCode(dbValue: string | null | undefined, envValue: 
   return raw;
 }
 
-async function sendServerPurchaseEvent(supabaseAdmin: SupabaseAdminClient, payment: PaymentRow, req: Request) {
+function isSha256Hex(value: string): boolean {
+  return /^[a-f0-9]{64}$/i.test(value.trim());
+}
+
+async function toSha256OrPassthrough(value: unknown): Promise<string> {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+  if (isSha256Hex(raw)) return raw.toLowerCase();
+  return await sha256Hash(raw);
+}
+
+function buildMetaTrackingPayload(metaUserData: unknown, req: Request): Record<string, unknown> | null {
+  const base =
+    metaUserData && typeof metaUserData === "object" && !Array.isArray(metaUserData)
+      ? { ...(metaUserData as Record<string, unknown>) }
+      : {};
+  const sourceUrl =
+    pickFirstString(
+      (base as Record<string, unknown>).event_source_url,
+      req.headers.get("referer"),
+      req.headers.get("origin"),
+    );
+  if (sourceUrl) base.event_source_url = sourceUrl;
+  return Object.keys(base).length > 0 ? base : null;
+}
+
+async function sendServerPurchaseEvent(supabaseAdmin: SupabaseAdminClient, payment: PaymentRow, req: Request): Promise<boolean> {
   try {
     const [{ data: capiTokenRow }, { data: pixelIdRow }, { data: testCodeRow }] = await Promise.all([
       supabaseAdmin.from("system_credentials").select("value").eq("env_key", "META_ACCESS_TOKEN").maybeSingle(),
@@ -286,7 +312,7 @@ async function sendServerPurchaseEvent(supabaseAdmin: SupabaseAdminClient, payme
 
     if (!accessToken || !pixelId) {
       console.warn("CAPI Purchase skipped: set META_ACCESS_TOKEN and META_PIXEL_ID in system_credentials or Edge secrets.");
-      return;
+      return false;
     }
 
     const cartItems = (payment.cart_snapshot || []) as Array<{
@@ -297,7 +323,7 @@ async function sendServerPurchaseEvent(supabaseAdmin: SupabaseAdminClient, payme
       quantity?: number;
       lztGame?: string;
     }>;
-    if (cartItems.length === 0) return;
+    if (cartItems.length === 0) return false;
 
     const firstItem = cartItems[0];
     const totalValue = (payment.amount || 0) / 100; // amount is in centavos
@@ -326,13 +352,13 @@ async function sendServerPurchaseEvent(supabaseAdmin: SupabaseAdminClient, payme
     // IMPORTANT: browserData.em and browserData.ph are ALREADY SHA-256 hashed from the frontend.
     // Only hash raw values from customerData as fallback.
     if (browserData.em) {
-      userData.em = browserData.em; // already hashed
+      userData.em = await toSha256OrPassthrough(browserData.em);
     } else if (customerData.email) {
       userData.em = await sha256Hash(customerData.email);
     }
 
     if (browserData.ph) {
-      userData.ph = browserData.ph; // already hashed
+      userData.ph = await toSha256OrPassthrough(browserData.ph);
     } else if (customerData.phone) {
       let phone = String(customerData.phone).replace(/\D/g, "");
       if (phone && !phone.startsWith("55") && phone.length >= 10) phone = "55" + phone;
@@ -341,10 +367,10 @@ async function sendServerPurchaseEvent(supabaseAdmin: SupabaseAdminClient, payme
     
     if (browserData.fbp) userData.fbp = browserData.fbp;
     if (browserData.fbc) userData.fbc = browserData.fbc;
-    if (browserData.external_id) userData.external_id = browserData.external_id;
-    if (browserData.fn) userData.fn = browserData.fn;
-    if (browserData.ln) userData.ln = browserData.ln;
-    if (browserData.country) userData.country = browserData.country;
+    if (browserData.external_id) userData.external_id = await toSha256OrPassthrough(browserData.external_id);
+    if (browserData.fn) userData.fn = await toSha256OrPassthrough(browserData.fn);
+    if (browserData.ln) userData.ln = await toSha256OrPassthrough(browserData.ln);
+    if (browserData.country) userData.country = await toSha256OrPassthrough(browserData.country);
     if (browserData.client_user_agent) userData.client_user_agent = browserData.client_user_agent;
 
     // 2. Extra fallbacks from customer_data naming
@@ -424,7 +450,7 @@ async function sendServerPurchaseEvent(supabaseAdmin: SupabaseAdminClient, payme
         });
         if (res.ok) {
           console.log(`CAPI Purchase sent successfully (attempt ${attempt}):`, payment.id);
-          return;
+          return true;
         }
         const errBody = await res.text();
         console.error(`CAPI Purchase attempt ${attempt} failed:`, res.status, errBody);
@@ -436,24 +462,230 @@ async function sendServerPurchaseEvent(supabaseAdmin: SupabaseAdminClient, payme
   } catch (err) {
     console.error("sendServerPurchaseEvent error:", err);
   }
+  return false;
+}
+
+const UTMIFY_ORDERS_ENDPOINT = "https://api.utmify.com.br/api-credentials/orders";
+
+function pickFirstString(...values: unknown[]): string {
+  for (const value of values) {
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      if (trimmed) return trimmed;
+    }
+  }
+  return "";
+}
+
+function digitsOnly(value: unknown): string {
+  return String(value ?? "").replace(/\D/g, "");
+}
+
+function extractTrackingParameters(payment: PaymentRow, req: Request): Record<string, string> {
+  const tracking: Record<string, string> = {};
+  const allowed = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"] as const;
+  const browserData = (payment.meta_tracking || {}) as Record<string, unknown>;
+  const customerData = (payment.customer_data || {}) as Record<string, unknown>;
+
+  for (const key of allowed) {
+    const value = pickFirstString(browserData[key], customerData[key]);
+    if (value) tracking[key] = value;
+  }
+
+  const sourceUrl = pickFirstString(
+    browserData.event_source_url,
+    customerData.event_source_url,
+    req.headers.get("referer"),
+    req.headers.get("origin"),
+  );
+  if (sourceUrl) {
+    try {
+      const parsed = new URL(sourceUrl);
+      for (const key of allowed) {
+        if (tracking[key]) continue;
+        const value = parsed.searchParams.get(key)?.trim();
+        if (value) tracking[key] = value;
+      }
+    } catch {
+      // ignore malformed URL
+    }
+  }
+
+  return tracking;
+}
+
+function mapPaymentMethodForUtmify(method: unknown): string {
+  const raw = String(method || "").trim().toLowerCase();
+  if (raw === "card") return "credit_card";
+  if (raw === "pix") return "pix";
+  if (raw === "crypto") return "pix";
+  if (raw === "free") return "free_price";
+  return "pix";
+}
+
+async function sendUtmifyOrderEvent(supabaseAdmin: SupabaseAdminClient, payment: PaymentRow, req: Request): Promise<boolean> {
+  try {
+    const [{ data: utmifyTokenRow }, { data: profileRow }] = await Promise.all([
+      supabaseAdmin.from("system_credentials").select("value").eq("env_key", "UTMIFY_API_TOKEN").maybeSingle(),
+      supabaseAdmin.from("profiles").select("username").eq("user_id", payment.user_id).maybeSingle(),
+    ]);
+    const apiToken =
+      String(utmifyTokenRow?.value || "").trim() || Deno.env.get("UTMIFY_API_TOKEN")?.trim() || "";
+    if (!apiToken) {
+      console.warn("UTMify skipped: set UTMIFY_API_TOKEN in system_credentials or Edge secrets.");
+      return false;
+    }
+
+    const customerData = (payment.customer_data || {}) as Record<string, unknown>;
+    const cartItems = (payment.cart_snapshot || []) as Array<Record<string, unknown>>;
+    if (cartItems.length === 0) return false;
+
+    const clientIp =
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      req.headers.get("x-real-ip") ||
+      req.headers.get("cf-connecting-ip") || "";
+
+    const products = cartItems.map((item, idx) => {
+      const quantity = Math.max(1, Math.min(1000, Math.floor(Number(item.quantity) || 1)));
+      const unitPriceInCents = Math.max(0, Math.round(Number(item.price || 0) * 100));
+      const id = pickFirstString(item.productId, item.lzt_item_id, item.id, `${idx + 1}`);
+      const name = pickFirstString(item.productName, item.planName, item.game, `Produto ${idx + 1}`);
+      return {
+        id,
+        name,
+        quantity,
+        priceInCents: unitPriceInCents,
+      };
+    });
+
+    const payload = {
+      orderId: String(payment.id),
+      platform: "Royal Store",
+      paymentMethod: mapPaymentMethodForUtmify(payment.payment_method),
+      status: "paid",
+      approvedDate: pickFirstString(payment.paid_at, new Date().toISOString()),
+      createdAt: pickFirstString(payment.created_at, new Date().toISOString()),
+      customer: {
+        name: pickFirstString(customerData.name, customerData.nome, profileRow?.username, "Cliente Royal Store"),
+        email: pickFirstString(customerData.email),
+        phone: digitsOnly(customerData.phone),
+        document: digitsOnly(customerData.document || customerData.cpf),
+        country: "BR",
+        ip: clientIp,
+      },
+      products,
+      trackingParameters: extractTrackingParameters(payment, req),
+      commission: {
+        totalPriceInCents: Math.max(0, Math.round(Number(payment.amount || 0))),
+        gatewayFeeInCents: 0,
+        userCommissionInCents: 0,
+        currency: "BRL",
+      },
+    };
+
+    const response = await fetch(UTMIFY_ORDERS_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-token": apiToken,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const body = await response.text();
+      console.error("UTMify order send failed:", response.status, body.slice(0, 600));
+      return false;
+    }
+    console.log("UTMify order sent:", payment.id);
+    return true;
+  } catch (err) {
+    console.error("sendUtmifyOrderEvent error:", err);
+  }
+  return false;
+}
+
+const PURCHASE_TRACKING_EVENT_NAME = "purchase";
+
+async function hasPurchaseTrackingSent(
+  supabaseAdmin: SupabaseAdminClient,
+  paymentId: string,
+  provider: string,
+): Promise<boolean> {
+  const { data, error } = await supabaseAdmin
+    .from("payment_tracking_events")
+    .select("id")
+    .eq("payment_id", paymentId)
+    .eq("provider", provider)
+    .eq("event_name", PURCHASE_TRACKING_EVENT_NAME)
+    .maybeSingle();
+  if (error) {
+    console.error("hasPurchaseTrackingSent error:", error);
+    return false;
+  }
+  return Boolean(data?.id);
+}
+
+async function markPurchaseTrackingSent(
+  supabaseAdmin: SupabaseAdminClient,
+  paymentId: string,
+  provider: string,
+): Promise<void> {
+  const { error } = await supabaseAdmin.from("payment_tracking_events").upsert(
+    {
+      payment_id: paymentId,
+      provider,
+      event_name: PURCHASE_TRACKING_EVENT_NAME,
+      status: "sent",
+    },
+    { onConflict: "payment_id,provider,event_name", ignoreDuplicates: true },
+  );
+  if (error) {
+    console.error("markPurchaseTrackingSent error:", error);
+  }
+}
+
+async function sendPurchaseTrackingEvents(supabaseAdmin: SupabaseAdminClient, payment: PaymentRow, req: Request) {
+  const paymentId = String(payment.id || "").trim();
+  if (!paymentId) return;
+
+  const providers: Array<{
+    key: string;
+    sender: () => Promise<boolean>;
+  }> = [
+    { key: "meta_capi", sender: () => sendServerPurchaseEvent(supabaseAdmin, payment, req) },
+    { key: "utmify", sender: () => sendUtmifyOrderEvent(supabaseAdmin, payment, req) },
+  ];
+
+  for (const provider of providers) {
+    const alreadySent = await hasPurchaseTrackingSent(supabaseAdmin, paymentId, provider.key);
+    if (alreadySent) continue;
+    const sent = await provider.sender();
+    if (sent) {
+      await markPurchaseTrackingSent(supabaseAdmin, paymentId, provider.key);
+    }
+  }
+}
+
+async function getDiscordWebhookUrls(supabaseAdmin: SupabaseAdminClient): Promise<string[]> {
+  const { data: webhookCred } = await supabaseAdmin
+    .from("system_credentials")
+    .select("value")
+    .eq("env_key", "DISCORD_WEBHOOK_URL")
+    .maybeSingle();
+  const fromDb = String(webhookCred?.value || "").trim();
+  const fromEnv = String(Deno.env.get("DISCORD_WEBHOOK_URL") || "").trim();
+  const values = [fromDb, fromEnv].filter((v) => v.length > 0);
+  return Array.from(new Set(values));
 }
 
 // Helper: send Discord webhook notification on sale
 async function sendDiscordSaleNotification(supabaseAdmin: SupabaseAdminClient, payment: PaymentRow) {
   try {
-    // Primary webhook (new sales channel)
-    const HARDCODED_WEBHOOK = "https://discord.com/api/webhooks/1491623069540679810/zaHVAKAxgOy14dsoE0myhfCRHEOnDH8KxvxAMLRyiQrrhQG58JTZ6oBbVFJiHjS9gUDg";
-
-    // Also try legacy webhook from DB
-    const { data: webhookCred } = await supabaseAdmin
-      .from("system_credentials")
-      .select("value")
-      .eq("env_key", "DISCORD_WEBHOOK_URL")
-      .maybeSingle();
-
-    const webhookUrls = [HARDCODED_WEBHOOK];
-    if (webhookCred?.value && webhookCred.value !== HARDCODED_WEBHOOK) {
-      webhookUrls.push(webhookCred.value);
+    const webhookUrls = await getDiscordWebhookUrls(supabaseAdmin);
+    if (webhookUrls.length === 0) {
+      console.warn("Discord sale notification skipped: missing DISCORD_WEBHOOK_URL.");
+      return;
     }
 
     const cartItems = payment.cart_snapshot as Array<{
@@ -573,12 +805,17 @@ async function sendDiscordSaleNotification(supabaseAdmin: SupabaseAdminClient, p
 }
 // Helper: send Discord alert when manual delivery is needed
 async function sendDiscordManualDeliveryAlert(
+  supabaseAdmin: SupabaseAdminClient,
   payment: PaymentRow,
   reason: string,
   details: { productName?: string; ticketId?: string; type?: string; game?: string; itemId?: string },
 ) {
   try {
-    const WEBHOOK = "https://discord.com/api/webhooks/1491623069540679810/zaHVAKAxgOy14dsoE0myhfCRHEOnDH8KxvxAMLRyiQrrhQG58JTZ6oBbVFJiHjS9gUDg";
+    const webhookUrls = await getDiscordWebhookUrls(supabaseAdmin);
+    if (webhookUrls.length === 0) {
+      console.warn("Discord manual alert skipped: missing DISCORD_WEBHOOK_URL.");
+      return;
+    }
     const now = new Date();
     const brTime = now.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
     const totalBrl = (payment.amount / 100).toFixed(2);
@@ -608,13 +845,23 @@ async function sendDiscordManualDeliveryAlert(
       timestamp: now.toISOString(),
     };
 
-    const res = await fetch(WEBHOOK, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content: "@everyone ⚡ **Entrega manual pendente!**", embeds: [embed] }),
-    });
-    if (!res.ok) console.error("Discord manual alert error:", res.status, await res.text());
-    else console.log("Discord manual delivery alert sent");
+    const results = await Promise.allSettled(
+      webhookUrls.map((url) =>
+        fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content: "@everyone ⚡ **Entrega manual pendente!**", embeds: [embed] }),
+        }),
+      ),
+    );
+    for (const [i, r] of results.entries()) {
+      if (r.status === "fulfilled" && !r.value.ok) {
+        console.error(`Discord manual webhook ${i} error:`, r.value.status, await r.value.text());
+      } else if (r.status === "rejected") {
+        console.error(`Discord manual webhook ${i} network error:`, r.reason);
+      }
+    }
+    console.log("Discord manual delivery alert(s) sent");
   } catch (err) {
     console.error("Discord manual alert error:", err);
   }
@@ -794,7 +1041,7 @@ async function fulfillOrder(supabaseAdmin: SupabaseAdminClient, payment: Payment
             sender_role: "staff",
             message: "✅ **Pagamento confirmado com sucesso!**\n\n⚠️ No momento este item está fora de estoque.\n\n🔄 **O que vai acontecer agora?**\nNossa equipe já foi notificada e fará a entrega manual o mais rápido possível.\n\n💬 Se tiver qualquer dúvida, envie uma mensagem aqui neste chat.",
           });
-          await sendDiscordManualDeliveryAlert(payment, "Estoque vazio para o plano selecionado", {
+          await sendDiscordManualDeliveryAlert(supabaseAdmin, payment, "Estoque vazio para o plano selecionado", {
             productName: item.productName, ticketId: ticket.id, type: "stock-empty",
           });
         }
@@ -1064,7 +1311,7 @@ async function fulfillLztAccount(supabaseAdmin: SupabaseAdminClient, payment: Pa
         message: customerMessage,
       });
       // Alert team via Discord
-      await sendDiscordManualDeliveryAlert(payment, reason, {
+      await sendDiscordManualDeliveryAlert(supabaseAdmin, payment, reason, {
         productName: item.productName, ticketId: ticket.id, type: "lzt-account", game: lztGame, itemId: String(itemId),
       });
     }
@@ -1407,7 +1654,7 @@ async function fulfillRobotProduct(
         sender_role: "staff",
         message: `✅ **Pagamento confirmado com sucesso!**\n\n⚠️ Houve uma indisponibilidade temporária no sistema de entrega automática.\n\n🔄 **O que vai acontecer agora?**\nNossa equipe já foi notificada e fará a entrega manual do seu produto o mais rápido possível (geralmente em poucos minutos).\n\n💬 Se tiver qualquer dúvida, envie uma mensagem aqui neste chat.`,
       });
-      await sendDiscordManualDeliveryAlert(payment, "Credentials not configured", {
+      await sendDiscordManualDeliveryAlert(supabaseAdmin, payment, "Credentials not configured", {
         productName: item.productName, ticketId: ticket.id, type: "robot-project",
       });
     }
@@ -1459,7 +1706,7 @@ async function fulfillRobotProduct(
 
       // Alert team via Discord
       if (ticket) {
-        await sendDiscordManualDeliveryAlert(payment, robotSnapshot.reason, {
+        await sendDiscordManualDeliveryAlert(supabaseAdmin, payment, robotSnapshot.reason, {
           productName: item.productName, ticketId: ticket.id, type: "robot-project",
         });
       }
@@ -1574,7 +1821,7 @@ async function fulfillRobotProduct(
       }
 
       if (ticket) {
-        await sendDiscordManualDeliveryAlert(payment, reason, {
+        await sendDiscordManualDeliveryAlert(supabaseAdmin, payment, reason, {
           productName: item.productName, ticketId: ticket.id, type: "robot-project",
         });
       }
@@ -1630,7 +1877,7 @@ async function fulfillRobotProduct(
 
       // Alert team via Discord
       if (ticket) {
-        await sendDiscordManualDeliveryAlert(payment, reason, {
+        await sendDiscordManualDeliveryAlert(supabaseAdmin, payment, reason, {
           productName: item.productName, ticketId: ticket.id, type: "robot-project",
         });
       }
@@ -1758,7 +2005,7 @@ async function fulfillRobotProduct(
         sender_role: "staff",
         message: "✅ Pagamento confirmado! ⚠️ Erro ao gerar key. Equipe irá entregar manualmente.",
       });
-      await sendDiscordManualDeliveryAlert(payment, errorMessage(err), {
+      await sendDiscordManualDeliveryAlert(supabaseAdmin, payment, errorMessage(err), {
         productName: item.productName, ticketId: ticket.id, type: "robot-project",
       });
     }
@@ -2355,6 +2602,7 @@ Deno.serve(async (req) => {
 
       if (payment.status === "COMPLETED") {
         console.log("Webhook: payment already completed:", payment.id);
+        void sendPurchaseTrackingEvents(supabaseAdmin, payment, req);
         return new Response(JSON.stringify({ success: true, message: "Already completed" }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -2381,7 +2629,7 @@ Deno.serve(async (req) => {
           log("INFO", "webhook", "Fulfilling completed payment", { paymentId: payment.id, userId: payment.user_id, amount: payment.amount });
           await fulfillOrder(supabaseAdmin, payment);
           await sendDiscordSaleNotification(supabaseAdmin, payment);
-          await sendServerPurchaseEvent(supabaseAdmin, payment, req);
+          void sendPurchaseTrackingEvents(supabaseAdmin, payment, req);
           await assignDiscordClientRole(supabaseAdmin, payment.user_id);
         }
       }
@@ -2533,6 +2781,7 @@ Deno.serve(async (req) => {
     if (action === "create" && req.method === "POST") {
       const body = await req.json();
       const { cart_snapshot, coupon_id, meta_user_data, customer_data } = body;
+      const metaTracking = buildMetaTrackingPayload(meta_user_data, req);
 
       const [validationResult, profileResult] = await Promise.all([
         validateAndCalculatePrice(supabaseAdmin, cart_snapshot as CartSnapshotItem[], userId, coupon_id),
@@ -2568,7 +2817,7 @@ Deno.serve(async (req) => {
             coupon_id: coupon_id || null,
             discount_amount: validatedDiscount,
             payment_method: "free",
-            meta_tracking: meta_user_data || null,
+            meta_tracking: metaTracking,
             customer_data: customer_data || null,
           })
           .select("*")
@@ -2584,7 +2833,7 @@ Deno.serve(async (req) => {
 
         await fulfillOrder(supabaseAdmin, payment);
         await sendDiscordSaleNotification(supabaseAdmin, payment);
-        await sendServerPurchaseEvent(supabaseAdmin, payment, req);
+        void sendPurchaseTrackingEvents(supabaseAdmin, payment, req);
         await assignDiscordClientRole(supabaseAdmin, payment.user_id);
 
         lastPaymentCreateMap.set(userId, Date.now());
@@ -2686,7 +2935,7 @@ Deno.serve(async (req) => {
           coupon_id: coupon_id || null,
           discount_amount: validatedDiscount,
           payment_method: "pix",
-          meta_tracking: meta_user_data || null,
+          meta_tracking: metaTracking,
           customer_data: customer_data || null,
         })
         .select("id")
@@ -2747,6 +2996,7 @@ Deno.serve(async (req) => {
       }
 
       if (payment.status === "COMPLETED") {
+        void sendPurchaseTrackingEvents(supabaseAdmin, payment, req);
         return new Response(JSON.stringify({ success: true, status: "COMPLETED" }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -2787,7 +3037,7 @@ Deno.serve(async (req) => {
             if (newStatus === "COMPLETED" && updatedPayment) {
               await fulfillOrder(supabaseAdmin, payment);
               await sendDiscordSaleNotification(supabaseAdmin, payment);
-              await sendServerPurchaseEvent(supabaseAdmin, payment, req);
+              void sendPurchaseTrackingEvents(supabaseAdmin, payment, req);
               await assignDiscordClientRole(supabaseAdmin, payment.user_id);
             }
           }
@@ -2843,6 +3093,7 @@ Deno.serve(async (req) => {
       }
 
       if (payment.status === "COMPLETED") {
+        void sendPurchaseTrackingEvents(supabaseAdmin, payment, req);
         return new Response(JSON.stringify({ success: true, status: "COMPLETED", message: "Já foi aprovado" }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -2862,7 +3113,7 @@ Deno.serve(async (req) => {
       if (updatedPayment) {
         await fulfillOrder(supabaseAdmin, payment);
         await sendDiscordSaleNotification(supabaseAdmin, payment);
-        await sendServerPurchaseEvent(supabaseAdmin, payment, req);
+        void sendPurchaseTrackingEvents(supabaseAdmin, payment, req);
         await assignDiscordClientRole(supabaseAdmin, payment.user_id);
       }
 

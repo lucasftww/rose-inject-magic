@@ -398,6 +398,13 @@ const Checkout = () => {
   /* ── PIX charge ── */
   const createPixCharge = async () => {
     if (!user || loading) return;
+    if (cartFinalPrice === 0) {
+      toast({
+        title: "Pedido gratuito em processamento",
+        description: "Aguarde alguns segundos enquanto concluímos automaticamente.",
+      });
+      return;
+    }
     setLoading(true);
     await setAdvancedMatching({
       email: formData.email,
