@@ -39,7 +39,7 @@ const detailPrefetchInFlight = new Set<string>();
 
 /** Atraso antes do GET: reduz pedidos 410 ao cruzar a grelha sem intenção de abrir o detalhe. */
 const PREFETCH_HOVER_MS = 420;
-const prefetchHoverTimers = new Map<string, ReturnType<typeof setTimeout>>();
+const prefetchHoverTimers = new Map<string, ReturnType<typeof window.setTimeout>>();
 
 async function runDetailPrefetch(
   queryClient: QueryClient,
@@ -103,6 +103,5 @@ export const prefetchAccountDetail = (
     if (detailPrefetchInFlight.has(dedupeKey)) return;
     void runDetailPrefetch(queryClient, gameType, id, dedupeKey, key);
   }, PREFETCH_HOVER_MS);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  prefetchHoverTimers.set(dedupeKey, timerId as any);
+  prefetchHoverTimers.set(dedupeKey, timerId);
 };
