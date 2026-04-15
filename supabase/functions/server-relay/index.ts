@@ -26,6 +26,9 @@ function sanitizeCustomData(raw: unknown): Record<string, unknown> {
   if (typeof o.content_name === "string") {
     out.content_name = o.content_name.trim().slice(0, 500);
   }
+  if (typeof o.content_category === "string") {
+    out.content_category = o.content_category.trim().slice(0, 200);
+  }
   if (Array.isArray(o.content_ids)) {
     out.content_ids = o.content_ids.map((id) => String(id)).filter(Boolean).slice(0, 100);
   }
