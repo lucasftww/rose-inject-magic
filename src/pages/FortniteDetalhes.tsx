@@ -261,6 +261,7 @@ const FortniteDetalhes = () => {
       contentIds: [`lzt-fn-${item.item_id}`],
       value: lockedPriceBrl,
       contentCategory: "fortnite",
+      section: "contas",
     });
 
     const added = addItem({

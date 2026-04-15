@@ -67,6 +67,7 @@ const sanitizeRelayCustomData = (data: Record<string, unknown>): Record<string, 
       .slice(0, 100);
   }
   if (typeof data.content_type === "string") out.content_type = data.content_type.trim().slice(0, 50);
+  if (typeof data.section === "string") out.section = data.section.trim().slice(0, 50);
   if (data.value != null) {
     const v = Number(data.value);
     if (Number.isFinite(v) && v >= 0) out.value = Math.round(v * 100) / 100;
@@ -375,6 +376,8 @@ interface TrackingData {
   transactionId?: string;
   /** Nome ou slug do jogo (ex: "valorant", "fortnite"). Enviado como content_category. */
   contentCategory?: string;
+  /** Segmentação estável de catálogo para Conversões Personalizadas. */
+  section?: "contas" | "produtos" | "multi";
 }
 
 /** Collect user_data for CAPI from cookies/storage + cached identity */
@@ -531,6 +534,7 @@ export const trackInitiateCheckout = (data: TrackingData) => {
     value: data.value,
     currency: data.currency || "BRL",
     ...(data.contentCategory ? { content_category: data.contentCategory } : {}),
+    ...(data.section ? { section: data.section } : {}),
   };
 
   if (window.fbq) {

@@ -143,6 +143,7 @@ const MinecraftDetalhes = () => {
       contentIds: [`lzt-mc-${item.item_id}`],
       value: lockedPriceBrl,
       contentCategory: "minecraft",
+      section: "contas",
     });
 
     const added = addItem({

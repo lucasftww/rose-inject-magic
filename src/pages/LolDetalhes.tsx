@@ -377,6 +377,7 @@ const LolDetalhes = () => {
       contentIds: [`lzt-lol-${item.item_id}`],
       value: lockedPriceBrl,
       contentCategory: "lol",
+      section: "contas",
     });
 
     const added = addItem({

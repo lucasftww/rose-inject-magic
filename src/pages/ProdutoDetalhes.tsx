@@ -344,6 +344,7 @@ const ProdutoDetalhes = () => {
       contentIds: [product.id],
       value: finalItemPrice,
       contentCategory: normalizedGameCategory || undefined,
+      section: "produtos",
     });
 
     const added = addItem({
