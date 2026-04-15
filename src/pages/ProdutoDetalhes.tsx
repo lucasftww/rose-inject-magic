@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { supabase, supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
 import { safeJsonFetch } from "@/lib/apiUtils";
 import type { PixPaymentCreateResult } from "@/lib/edgeFunctionTypes";
-import { getUserData, trackInitiateCheckout, trackPurchase } from "@/lib/metaPixel";
+import { getUserData, trackInitiateCheckout } from "@/lib/metaPixel";
 import { getYouTubeId, getYouTubeEmbedUrl, getYouTubeThumbnail } from "@/lib/videoUtils";
 import { useCart } from "@/hooks/useCart";
 import { useReseller } from "@/hooks/useReseller";
@@ -53,6 +53,30 @@ interface ReviewData {
   created_at: string;
   user_id: string;
   username?: string;
+}
+
+type PurchaseSuccessPayload = {
+  contentName: string;
+  contentIds: string[];
+  contents: { id: string; quantity: number }[];
+  value: number;
+  contentCategory?: string;
+};
+
+function buildSuccessUrl(paymentId: string, gameSlugOrName?: string, ticketId?: string | null): string {
+  const params = new URLSearchParams({ payment_id: paymentId });
+  const game = (gameSlugOrName || "").trim().toLowerCase();
+  if (game) params.set("game", game);
+  if (ticketId) params.set("ticket_id", ticketId);
+  return `/pedido/sucesso?${params.toString()}`;
+}
+
+function savePendingPurchasePayload(paymentId: string, payload: PurchaseSuccessPayload): void {
+  try {
+    sessionStorage.setItem(`pending_purchase_${paymentId}`, JSON.stringify(payload));
+  } catch {
+    // ignore temporary storage failures
+  }
 }
 
 const ProdutoDetalhes = () => {
@@ -286,16 +310,16 @@ const ProdutoDetalhes = () => {
         );
         if (!res.success) throw new Error(res.error || "Não foi possível concluir");
         if (res.claimed_free && res.payment_id) {
-          trackPurchase({
+          savePendingPurchasePayload(res.payment_id, {
             contentName: product.name,
             contentIds: [product.id],
             contents: [{ id: product.id, quantity: 1 }],
             value: 0,
-            transactionId: res.payment_id,
             contentCategory: game?.slug || game?.name || undefined,
           });
-        }
-        if (res.claimed_free && res.ticket_id) {
+          toast({ title: "Pronto!", description: "Pagamento confirmado." });
+          navigate(buildSuccessUrl(res.payment_id, game?.slug || game?.name, res.ticket_id), { replace: true });
+        } else if (res.claimed_free && res.ticket_id) {
           toast({ title: "Pronto!", description: "Abrindo o pedido com o link de download." });
           navigate(`/pedido/${res.ticket_id}`);
         } else if (res.claimed_free) {
