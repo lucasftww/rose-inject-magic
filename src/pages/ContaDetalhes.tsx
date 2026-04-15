@@ -7,6 +7,7 @@ import { ArrowLeft, Shield, Loader2, ChevronRight, ChevronLeft, CheckCircle2, Sh
 import { Skeleton } from "@/components/ui/Skeleton";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useMemo, useCallback, useEffect, forwardRef } from "react";
+import { createPortal } from "react-dom";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "@/hooks/use-toast";
 import { useLztMarkup } from "@/hooks/useLztMarkup";
@@ -878,26 +879,29 @@ const ContaDetalhes = () => {
 
             {/* Inventory Tabs - Full width below */}
             {(skinUuids.length > 0 || agentUuids.length > 0 || buddyUuids.length > 0) &&
-          <div className="mt-4 sm:mt-5">
-                {/* Tab buttons + Search */}
+          <div className="mt-8">
+                {/* Tab bar */}
                 <div className="flex flex-col gap-3 mb-5">
-                  <div className="flex w-full gap-2">
+                  <div className="flex items-center gap-1 border-b border-border">
                     {tabs.map((tab) =>
                       <button
                         key={tab.key}
                         onClick={() => { setActiveTab(tab.key); setInventorySearch(""); }}
-                        className={`flex flex-1 items-center justify-center gap-1.5 sm:gap-2 rounded-xl px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
+                        className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-semibold transition-all border-b-2 -mb-px ${
                           activeTab === tab.key
-                            ? "bg-success/10 text-success"
-                            : "bg-secondary/40 text-muted-foreground hover:bg-secondary/60"
+                            ? "border-success text-foreground"
+                            : "border-transparent text-muted-foreground hover:text-foreground"
                         }`}
                       >
-                        {tab.icon}
-                        <span>{tab.label}</span>
+                        {tab.label}
                         {tab.count > 0 && (
-                          <span className={`rounded-full px-1.5 sm:px-2 py-0.5 text-[10px] font-bold ${
-                            activeTab === tab.key ? "bg-success/20 text-success" : "bg-secondary text-muted-foreground"
-                          }`}>
+                          <span
+                            className="rounded-full px-1.5 py-0.5 text-[10px] font-bold"
+                            style={{
+                              background: activeTab === tab.key ? "hsl(var(--success) / 0.25)" : "hsl(var(--secondary))",
+                              color: activeTab === tab.key ? "hsl(var(--success))" : "hsl(var(--muted-foreground))",
+                            }}
+                          >
                             {tab.count}
                           </span>
                         )}
