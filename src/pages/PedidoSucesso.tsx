@@ -12,6 +12,7 @@ type PurchasePayload = {
   contents: { id: string; quantity: number }[];
   value: number;
   contentCategory?: string;
+  section?: "contas" | "produtos" | "multi";
 };
 
 function readPendingPurchasePayload(paymentId: string): PurchasePayload | null {
@@ -32,6 +33,9 @@ function readPendingPurchasePayload(paymentId: string): PurchasePayload | null {
         quantity: Math.max(1, Math.floor(Number(c.quantity) || 1)),
       })).filter((c) => c.id.length > 0),
       value,
+      ...(parsed.section === "contas" || parsed.section === "produtos" || parsed.section === "multi"
+        ? { section: parsed.section }
+        : {}),
       ...(typeof parsed.contentCategory === "string" && parsed.contentCategory ? { contentCategory: parsed.contentCategory } : {}),
     };
   } catch {
@@ -45,6 +49,7 @@ const PedidoSucesso = () => {
 
   const paymentId = searchParams.get("payment_id") || "";
   const gameParam = (searchParams.get("game") || "").trim();
+  const sectionParam = (searchParams.get("section") || "").trim();
   const ticketId = (searchParams.get("ticket_id") || "").trim();
 
   const fallbackCategory = useMemo(() => {
@@ -53,6 +58,13 @@ const PedidoSucesso = () => {
     return normalized;
   }, [gameParam]);
 
+  const fallbackSection = useMemo(() => {
+    if (sectionParam === "contas" || sectionParam === "produtos" || sectionParam === "multi") {
+      return sectionParam;
+    }
+    return undefined;
+  }, [sectionParam]);
+
   useEffect(() => {
     if (!paymentId) return;
     const payload = readPendingPurchasePayload(paymentId);
@@ -60,9 +72,10 @@ const PedidoSucesso = () => {
     trackPurchase({
       ...payload,
       ...(payload.contentCategory ? {} : fallbackCategory ? { contentCategory: fallbackCategory } : {}),
+      ...(payload.section ? {} : fallbackSection ? { section: fallbackSection } : {}),
       transactionId: paymentId,
     });
-  }, [paymentId, fallbackCategory]);
+  }, [paymentId, fallbackCategory, fallbackSection]);
 
   return (
     <div className="min-h-screen bg-background">

@@ -62,6 +62,7 @@ type PurchaseSuccessPayload = {
   contents: { id: string; quantity: number }[];
   value: number;
   contentCategory?: string;
+  section?: "contas" | "produtos" | "multi";
 };
 
 function buildSuccessUrl(paymentId: string, gameSlugOrName?: string, ticketId?: string | null): string {
@@ -318,6 +319,7 @@ const ProdutoDetalhes = () => {
             contents: [{ id: product.id, quantity: 1 }],
             value: 0,
             contentCategory: normalizedGameCategory || undefined,
+            section: "produtos",
           });
           toast({ title: "Pronto!", description: "Pagamento confirmado." });
           navigate(buildSuccessUrl(res.payment_id, game?.slug || game?.name, res.ticket_id), { replace: true });

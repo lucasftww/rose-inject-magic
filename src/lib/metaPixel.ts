@@ -585,6 +585,7 @@ export const trackPurchase = (
     currency: data.currency || "BRL",
     transaction_id: data.transactionId,
     ...(data.contentCategory ? { content_category: data.contentCategory } : {}),
+    ...(data.section ? { section: data.section } : {}),
   };
 
   if (window.fbq) {

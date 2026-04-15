@@ -30,6 +30,7 @@ type PurchaseSuccessPayload = {
   contents: { id: string; quantity: number }[];
   value: number;
   contentCategory?: string;
+  section?: "contas" | "produtos" | "multi";
 };
 
 /** Derive a single game slug from cart items for success URL routing. */
@@ -240,6 +241,7 @@ const Checkout = () => {
   const checkoutEmailUserIdRef = useRef<string | null>(null);
   const [enabledMethods, setEnabledMethods] = useState<Record<string, boolean> | null>(null);
   const hasLztItems = items.some((i) => i.type === "lzt-account");
+  const pixOnlyGateway = true;
 
   // Coupon state
   const urlCouponId = searchParams.get("coupon_id");
@@ -568,6 +570,14 @@ const Checkout = () => {
   const handleSelectMethodRef = useRef(false);
   const handleSelectMethod = (method: PaymentMethod) => {
     if (loading || handleSelectMethodRef.current) return; // prevent double-submit
+    if (pixOnlyGateway && method !== "pix") {
+      toast({
+        title: "Método indisponível",
+        description: "No momento, apenas PIX está disponível.",
+        variant: "destructive",
+      });
+      return;
+    }
     handleSelectMethodRef.current = true;
     setPaymentMethod(method);
     const done = () => { handleSelectMethodRef.current = false; };
@@ -585,6 +595,7 @@ const Checkout = () => {
   const statusPollFailCountRef = useRef(0);
   const statusPollNotifiedRef = useRef(false);
   const statusPollInFlightRef = useRef(false);
+  const completedTicketIdRef = useRef<string | null>(null);
   useEffect(() => { cartSnapshotRef.current = cartSnapshot; }, [cartSnapshot]);
   useEffect(() => { finalPriceRef.current = finalPrice; }, [finalPrice]);
   useEffect(() => { paymentIdRef.current = paymentId; }, [paymentId]);
@@ -609,6 +620,9 @@ const Checkout = () => {
         );
         if (cancelled) return;
         statusPollFailCountRef.current = 0;
+        if (typeof data.ticket_id === "string" && data.ticket_id) {
+          completedTicketIdRef.current = data.ticket_id;
+        }
         if (data.status && data.status !== "ACTIVE") {
           setPaymentStatus(data.status);
           if (intervalRef.current) clearInterval(intervalRef.current);
@@ -635,12 +649,21 @@ const Checkout = () => {
   }, [paymentId, paymentStatus, paymentMethod]);
 
   useEffect(() => {
+    if (!pixOnlyGateway) return;
+    if (paymentMethod === "card" || paymentMethod === "crypto") {
+      setPaymentMethod(null);
+      setCardPaymentUrl(null);
+      setCryptoData(null);
+    }
+  }, [paymentMethod, pixOnlyGateway]);
+
+  useEffect(() => {
     if (paymentStatus !== "COMPLETED" || !paymentId || redirectToSuccessDoneRef.current) return;
     redirectToSuccessDoneRef.current = true;
     const snap = cartSnapshotRef.current;
     const purchasePayload = buildMetaPurchasePayloadFromCartItems(snap, finalPriceRef.current);
     if (purchasePayload) savePendingPurchasePayload(paymentId, purchasePayload);
-    navigate(buildSuccessUrl(paymentId, snap), { replace: true });
+    navigate(buildSuccessUrl(paymentId, snap, completedTicketIdRef.current), { replace: true });
   }, [paymentStatus, paymentId, navigate]);
 
   const copyCode = () => {
@@ -1010,7 +1033,7 @@ const Checkout = () => {
                   )}
 
                   {/* Card */}
-                  {enabledMethods.card !== false && !hasLztItems && (
+                  {!pixOnlyGateway && enabledMethods.card !== false && !hasLztItems && (
                     <button
                       onClick={() => setPaymentMethod("card")}
                       className={`group relative flex flex-col items-center gap-2 rounded-lg border-2 p-4 transition-all ${
@@ -1026,7 +1049,7 @@ const Checkout = () => {
                   )}
 
                   {/* Crypto */}
-                  {enabledMethods.crypto !== false && (
+                  {!pixOnlyGateway && enabledMethods.crypto !== false && (
                     <button
                       onClick={() => setPaymentMethod("crypto")}
                       className={`group relative flex flex-col items-center gap-2 rounded-lg border-2 p-4 transition-all ${

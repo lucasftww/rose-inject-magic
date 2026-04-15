@@ -70,10 +70,14 @@ function normalizeCartItemsFromStorage(parsed: unknown): CartItem[] {
     // Restore gameName for tracking (content_category in Meta Pixel)
     if (typeof o.gameName === "string" && o.gameName) item.gameName = o.gameName;
 
-    if (o.type === "lzt-account") {
+    const lztItemId = typeof o.lztItemId === "string" && o.lztItemId ? o.lztItemId : "";
+    const looksLikeLztPlan = /^lzt-/i.test(planId);
+    const isLztAccount = o.type === "lzt-account" || !!lztItemId || looksLikeLztPlan;
+
+    if (isLztAccount) {
       item.type = "lzt-account";
       item.quantity = 1;
-      if (typeof o.lztItemId === "string" && o.lztItemId) item.lztItemId = o.lztItemId;
+      if (lztItemId) item.lztItemId = lztItemId;
       if (typeof o.lztGame === "string") item.lztGame = o.lztGame;
       const lp = Number(o.lztPrice);
       if (Number.isFinite(lp) && lp >= 0) item.lztPrice = lp;

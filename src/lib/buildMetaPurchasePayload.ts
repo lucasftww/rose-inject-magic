@@ -11,6 +11,7 @@ export function buildMetaPurchasePayloadFromCartItems(
   contents: { id: string; quantity: number }[];
   value: number;
   contentCategory?: string;
+  section?: "contas" | "produtos" | "multi";
 } | null {
   if (items.length === 0) return null;
   const contentIds = items.map((i) => i.productId).filter(Boolean);
@@ -37,6 +38,16 @@ export function buildMetaPurchasePayloadFromCartItems(
     : uniqueGames.length > 1
       ? "multi"
       : undefined;
+  const allContas = items.every((i) => i.type === "lzt-account");
+  const allProdutos = items.every((i) => i.type !== "lzt-account");
+  const section: "contas" | "produtos" | "multi" = allContas ? "contas" : allProdutos ? "produtos" : "multi";
 
-  return { contentName, contentIds, contents, value, ...(contentCategory ? { contentCategory } : {}) };
+  return {
+    contentName,
+    contentIds,
+    contents,
+    value,
+    section,
+    ...(contentCategory ? { contentCategory } : {}),
+  };
 }

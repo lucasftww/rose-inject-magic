@@ -36,6 +36,7 @@ export interface PixPaymentStatusResult {
   success?: boolean;
   error?: string;
   status?: string;
+  ticket_id?: string | null;
 }
 
 export type PixPaymentVerifyResult = PixPaymentStatusResult;

@@ -2983,6 +2983,28 @@ Deno.serve(async (req) => {
 
     // ==================== CHECK PIX STATUS (MisticPay) ====================
     if (action === "status" && req.method === "GET") {
+      const resolveLatestTicketIdForPayment = async (): Promise<string | null> => {
+        try {
+          const snapshot = Array.isArray(payment?.cart_snapshot) ? payment.cart_snapshot : [];
+          const first = snapshot[0] as { productId?: unknown; planId?: unknown } | undefined;
+          const productId = typeof first?.productId === "string" ? first.productId : "";
+          const planId = typeof first?.planId === "string" ? first.planId : "";
+          if (!productId || !planId) return null;
+          const { data: trow } = await supabaseAdmin
+            .from("order_tickets")
+            .select("id")
+            .eq("user_id", userId)
+            .eq("product_id", productId)
+            .eq("product_plan_id", planId)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          return (trow as { id?: string } | null)?.id ?? null;
+        } catch {
+          return null;
+        }
+      };
+
       const paymentId = url.searchParams.get("payment_id");
       if (!paymentId) {
         return new Response(JSON.stringify({ error: "payment_id required" }), {
@@ -3007,7 +3029,8 @@ Deno.serve(async (req) => {
 
       if (payment.status === "COMPLETED") {
         void sendPurchaseTrackingEvents(supabaseAdmin, payment, req);
-        return new Response(JSON.stringify({ success: true, status: "COMPLETED" }), {
+        const ticketId = await resolveLatestTicketIdForPayment();
+        return new Response(JSON.stringify({ success: true, status: "COMPLETED", ticket_id: ticketId }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
@@ -3052,13 +3075,15 @@ Deno.serve(async (req) => {
             }
           }
 
-          return new Response(JSON.stringify({ success: true, status: newStatus }), {
+          const ticketId = newStatus === "COMPLETED" ? await resolveLatestTicketIdForPayment() : null;
+          return new Response(JSON.stringify({ success: true, status: newStatus, ticket_id: ticketId }), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
       }
 
-      return new Response(JSON.stringify({ success: true, status: payment.status }), {
+      const ticketId = payment.status === "COMPLETED" ? await resolveLatestTicketIdForPayment() : null;
+      return new Response(JSON.stringify({ success: true, status: payment.status, ticket_id: ticketId }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
