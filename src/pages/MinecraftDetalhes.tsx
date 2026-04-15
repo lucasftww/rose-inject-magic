@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Header from "@/components/Header";
 import { ArrowLeft, Loader2, ChevronRight, CheckCircle2, Shield, ShoppingCart, Zap } from "lucide-react";
 import { motion } from "framer-motion";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, forwardRef } from "react";
 import { createPortal } from "react-dom";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "@/hooks/use-toast";
@@ -58,7 +58,7 @@ const fetchAccountDetail = async (itemId: string) => {
   return res.json();
 };
 
-const MinecraftDetalhes = () => {
+const MinecraftDetalhes = forwardRef<HTMLDivElement>((_props, _ref) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { getPrice, getDisplayPrice, formatPriceBrl } = useLztMarkup();
@@ -549,6 +549,7 @@ const MinecraftDetalhes = () => {
         )}
     </div>
   );
-};
+});
+MinecraftDetalhes.displayName = "MinecraftDetalhes";
 
 export default MinecraftDetalhes;

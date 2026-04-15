@@ -9,7 +9,7 @@ import {
   CheckCircle2, ShoppingCart, Swords, Star, X, Zap, Trophy, Globe, TrendingUp, Search,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, forwardRef } from "react";
 import { createPortal } from "react-dom";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "@/hooks/use-toast";
@@ -204,7 +204,7 @@ function lolGalleryHeroBlurUrl(entry: SkinPreview): string {
   return entry.thumbImage;
 }
 
-const LolDetalhes = () => {
+const LolDetalhes = forwardRef<HTMLDivElement>((_props, _ref) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { getPrice, getDisplayPrice, formatPriceBrl } = useLztMarkup();
@@ -888,7 +888,8 @@ const LolDetalhes = () => {
         )}
     </div>
   );
-};
+});
+LolDetalhes.displayName = "LolDetalhes";
 
 const StatCell = ({ label, value, color }: { label: string; value: string | number; color?: string }) => (
   <div className="flex flex-col gap-0.5 rounded-lg bg-secondary/40 px-3 py-2.5">

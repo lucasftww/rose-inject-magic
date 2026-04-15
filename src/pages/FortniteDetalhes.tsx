@@ -7,7 +7,7 @@ import {
   CheckCircle2, Shield, ShoppingCart, X, Zap, Gift, Search,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useMemo, useEffect, useCallback, type CSSProperties } from "react";
+import { useState, useMemo, useEffect, useCallback, forwardRef, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "@/hooks/use-toast";
@@ -107,7 +107,7 @@ const getRarityColor = (rarity: string): string =>
 
 type InventoryTab = "skins" | "pickaxes" | "dances" | "gliders";
 
-const FortniteDetalhes = () => {
+const FortniteDetalhes = forwardRef<HTMLDivElement>((_props, _ref) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { getPrice, getDisplayPrice, formatPriceBrl } = useLztMarkup();
@@ -748,7 +748,8 @@ const FortniteDetalhes = () => {
         )}
     </div>
   );
-};
+});
+FortniteDetalhes.displayName = "FortniteDetalhes";
 
 const StatCell = ({ label, value, color }: { label: string; value: string | number; color?: string }) => (
   <div className="flex flex-col gap-0.5 rounded-lg bg-secondary/40 px-3 py-2.5">

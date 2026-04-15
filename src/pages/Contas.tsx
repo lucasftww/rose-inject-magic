@@ -470,7 +470,7 @@ const SmoothImg = memo(forwardRef<HTMLImageElement, React.ImgHTMLAttributes<HTML
 SmoothImg.displayName = "SmoothImg";
 
 // Helper: LZT preview image with fallback to placeholder on error
-const LztPreviewImage = ({ url }: { url: string }) => {
+const LztPreviewImage = forwardRef<HTMLDivElement, { url: string }>(({ url }, ref) => {
   const [failed, setFailed] = useState(false);
   if (failed) {
     return (
@@ -480,7 +480,7 @@ const LztPreviewImage = ({ url }: { url: string }) => {
     );
   }
   return (
-    <div className="relative z-[1] flex items-center justify-center w-full h-full p-3">
+    <div ref={ref} className="relative z-[1] flex items-center justify-center w-full h-full p-3">
       <SmoothImg
         src={getProxiedImageUrl(url)}
         alt="Skins preview"
@@ -489,7 +489,8 @@ const LztPreviewImage = ({ url }: { url: string }) => {
       />
     </div>
   );
-};
+});
+LztPreviewImage.displayName = "LztPreviewImage";
 
 const ValorantCard = memo(({ item, skinsMap, priceLabel, queryClient }: { item: LztItem; skinsMap: Map<string, SkinEntry>; priceLabel: string; queryClient: QueryClient }) => {
   const rank = item.riot_valorant_rank ? rankMap[item.riot_valorant_rank] : null;
