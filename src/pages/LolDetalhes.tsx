@@ -204,7 +204,7 @@ function lolGalleryHeroBlurUrl(entry: SkinPreview): string {
   return entry.thumbImage;
 }
 
-const LolDetalhes = forwardRef<HTMLDivElement>((_props, _ref) => {
+const LolDetalhes = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { getPrice, getDisplayPrice, formatPriceBrl } = useLztMarkup();
