@@ -1121,10 +1121,11 @@ const ContaDetalhes = forwardRef<HTMLDivElement>((_props, _ref) => {
             </div>
           </div>,
           document.body,
-        )}
+         )}
     </div>);
 
-};
+});
+ContaDetalhes.displayName = "ContaDetalhes";
 
 const StatCell = forwardRef<HTMLDivElement, {label: string;value: string | number; color?: string}>(({ label, value, color }, ref) =>
 <div ref={ref} className="flex flex-col gap-0.5 rounded-lg bg-secondary/40 px-3 py-2.5">
@@ -1141,8 +1142,5 @@ const HighlightStat = forwardRef<HTMLDivElement, {label: string;value: string | 
   </div>
 );
 HighlightStat.displayName = "HighlightStat";
-
-});
-ContaDetalhes.displayName = "ContaDetalhes";
 
 export default ContaDetalhes;
