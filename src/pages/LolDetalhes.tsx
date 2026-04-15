@@ -9,7 +9,7 @@ import {
   CheckCircle2, ShoppingCart, Swords, Star, X, Zap, Trophy, Globe, TrendingUp, Search,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useMemo, useEffect, forwardRef } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "@/hooks/use-toast";

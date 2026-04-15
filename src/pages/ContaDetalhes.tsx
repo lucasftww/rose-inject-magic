@@ -6,7 +6,7 @@ import Header from "@/components/Header";
 import { ArrowLeft, Shield, Loader2, ChevronRight, ChevronLeft, CheckCircle2, ShoppingCart, Swords, Users, Star, X, Zap, Search } from "lucide-react";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useMemo, useCallback, useEffect, forwardRef } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "@/hooks/use-toast";
@@ -1134,12 +1134,11 @@ const StatCell = ({ label, value, color }: { label: string; value: string | numb
 );
 
 
-const HighlightStat = forwardRef<HTMLDivElement, {label: string;value: string | number; color?: string}>(({ label, value, color }, ref) =>
-<div ref={ref} className="flex flex-col items-center justify-center py-3 px-2">
+const HighlightStat = ({ label, value, color }: { label: string; value: string | number; color?: string }) => (
+  <div className="flex flex-col items-center justify-center py-3 px-2">
     <span className="text-base font-bold" style={{ color }}>{value}</span>
     <span className="text-[10px] text-muted-foreground">{label}</span>
   </div>
 );
-HighlightStat.displayName = "HighlightStat";
 
 export default ContaDetalhes;

@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Header from "@/components/Header";
 import { ArrowLeft, Loader2, ChevronRight, CheckCircle2, Shield, ShoppingCart, Zap } from "lucide-react";
 import { motion } from "framer-motion";
-import { useState, useEffect, useMemo, forwardRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "@/hooks/use-toast";
