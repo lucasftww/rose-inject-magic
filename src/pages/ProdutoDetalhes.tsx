@@ -292,6 +292,7 @@ const ProdutoDetalhes = () => {
             contents: [{ id: product.id, quantity: 1 }],
             value: 0,
             transactionId: res.payment_id,
+            contentCategory: game?.slug || game?.name || undefined,
           });
         }
         if (res.claimed_free && res.ticket_id) {
