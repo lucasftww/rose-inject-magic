@@ -1,4 +1,5 @@
 import type { CartItem } from "@/hooks/useCart";
+import { normalizeGameSlug } from "@/lib/gameSlug";
 
 /** Payload alinhado com `trackPurchase` / CAPI `pix-payment` para carrinhos multi-linha. */
 export function buildMetaPurchasePayloadFromCartItems(
@@ -26,15 +27,15 @@ export function buildMetaPurchasePayloadFromCartItems(
           return joined.length <= 500 ? joined : `${items.length} produtos — ${joined.slice(0, 420)}…`;
         })();
 
-  // Derive content_category from cart items (lztGame or gameName)
+  // Derive a stable content_category slug from cart items.
   const gameNames = items
-    .map((i) => i.lztGame || i.gameName)
+    .map((i) => normalizeGameSlug(i.lztGame || i.gameName))
     .filter((g): g is string => !!g);
   const uniqueGames = [...new Set(gameNames)];
   const contentCategory = uniqueGames.length === 1
     ? uniqueGames[0]
     : uniqueGames.length > 1
-      ? uniqueGames.join(", ")
+      ? "multi"
       : undefined;
 
   return { contentName, contentIds, contents, value, ...(contentCategory ? { contentCategory } : {}) };

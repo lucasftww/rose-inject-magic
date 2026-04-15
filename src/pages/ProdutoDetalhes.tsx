@@ -242,6 +242,7 @@ const ProdutoDetalhes = () => {
   }, [product, sortedPlans, reviews]);
 
   const selectedPlan = sortedPlans.find(p => p.id === selectedPlanId);
+  const normalizedGameCategory = normalizeGameSlug(game?.slug || game?.name);
 
   const buyNow = async () => {
     if (!product || !selectedPlan || claimingFree) return;
@@ -316,7 +317,7 @@ const ProdutoDetalhes = () => {
             contentIds: [product.id],
             contents: [{ id: product.id, quantity: 1 }],
             value: 0,
-            contentCategory: game?.slug || game?.name || undefined,
+            contentCategory: normalizedGameCategory || undefined,
           });
           toast({ title: "Pronto!", description: "Pagamento confirmado." });
           navigate(buildSuccessUrl(res.payment_id, game?.slug || game?.name, res.ticket_id), { replace: true });
@@ -342,7 +343,7 @@ const ProdutoDetalhes = () => {
       contentName: product.name,
       contentIds: [product.id],
       value: finalItemPrice,
-      contentCategory: game?.slug || game?.name || undefined,
+      contentCategory: normalizedGameCategory || undefined,
     });
 
     const added = addItem({
@@ -352,7 +353,7 @@ const ProdutoDetalhes = () => {
       planId: selectedPlan.id,
       planName: selectedPlan.name,
       price: finalItemPrice,
-      gameName: game?.slug || game?.name || undefined,
+      gameName: normalizedGameCategory || undefined,
     });
     if (added) navigate("/checkout");
   };
