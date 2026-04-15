@@ -8,7 +8,7 @@ const ReviewsSection = React.forwardRef<HTMLElement>(function ReviewsSection(_pr
   const { t } = useTranslation();
 
   return (
-    <section className="border-t border-border bg-background px-4 sm:px-6 py-12 sm:py-20">
+    <section ref={ref} className="border-t border-border bg-background px-4 sm:px-6 py-12 sm:py-20">
       <div className="mx-auto max-w-7xl">
         <div className="text-center sm:text-left">
           <p className="text-[10px] sm:text-sm font-medium uppercase tracking-[0.3em] text-success">{t("reviews.subtitle")}</p>
