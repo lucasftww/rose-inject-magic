@@ -39,7 +39,7 @@ const detailPrefetchInFlight = new Set<string>();
 
 /** Atraso antes do GET: reduz pedidos 410 ao cruzar a grelha sem intenção de abrir o detalhe. */
 const PREFETCH_HOVER_MS = 420;
-const prefetchHoverTimers = new Map<string, ReturnType<typeof window.setTimeout>>();
+const prefetchHoverTimers = new Map<string, number>();
 
 async function runDetailPrefetch(
   queryClient: QueryClient,

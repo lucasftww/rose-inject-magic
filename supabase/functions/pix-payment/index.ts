@@ -900,7 +900,7 @@ async function assignDiscordClientRole(supabaseAdmin: SupabaseAdminClient, userI
       return;
     }
 
-    const discordUserId = (discordIdentity as Record<string, unknown>).provider_id ?? (discordIdentity as Record<string, unknown>).identity_id;
+    const discordUserId = (discordIdentity as unknown as Record<string, unknown>).provider_id ?? (discordIdentity as unknown as Record<string, unknown>).identity_id;
 
     // Add role via Discord API
     const res = await fetch(
