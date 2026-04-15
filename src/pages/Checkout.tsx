@@ -23,6 +23,30 @@ import { Button } from "@/components/ui/button";
 
 type PaymentMethod = "pix" | "card" | "crypto" | null;
 
+/** Derive a single game slug from cart items for URL-based Meta custom conversions. */
+function deriveGameSlug(cartItems: { lztGame?: string; gameName?: string; type?: string }[]): string | null {
+  const games = cartItems
+    .map((i) => i.lztGame || i.gameName)
+    .filter((g): g is string => !!g);
+  const unique = [...new Set(games.map((g) => g.toLowerCase()))];
+  if (unique.length === 1) return unique[0];
+  if (unique.length > 1) return unique.join(",");
+  // Fallback: if all items are regular products (not lzt-account)
+  if (cartItems.every((i) => i.type !== "lzt-account")) return "produto";
+  return null;
+}
+
+/** Inject ?game= into current URL so Meta Pixel sees it when Purchase fires. */
+function injectGameParamIntoUrl(cartItems: { lztGame?: string; gameName?: string; type?: string }[]) {
+  const slug = deriveGameSlug(cartItems);
+  if (!slug) return;
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.set("game", slug);
+    window.history.replaceState(null, "", url.toString());
+  } catch { /* noop */ }
+}
+
 /** Resposta de `validate_coupon` (jsonb) — manter alinhado ao RPC em migrations. */
 type ValidateCouponRpcResult = {
   valid?: boolean;
