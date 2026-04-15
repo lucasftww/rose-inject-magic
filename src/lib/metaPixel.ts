@@ -36,6 +36,12 @@ const STORAGE_KEY_EID = "_meta_eid";
 const STORAGE_KEY_PH = "_meta_ph";
 const STORAGE_KEY_FN = "_meta_fn";
 const STORAGE_KEY_LN = "_meta_ln";
+const STORAGE_KEY_GE = "_meta_ge";
+const STORAGE_KEY_DB = "_meta_db";
+const STORAGE_KEY_CT = "_meta_ct";
+const STORAGE_KEY_ST = "_meta_st";
+const STORAGE_KEY_ZP = "_meta_zp";
+const STORAGE_KEY_SID = "_meta_sid";
 
 const devLog = (label: string, err?: unknown) => {
   if (import.meta.env.DEV) console.debug(`[metaPixel] ${label}`, err);
@@ -103,7 +109,19 @@ sha256("br").then((h) => { _countryHash = h; });
 /** Evita Purchase duplicado no mesmo carregamento se sessionStorage falhar ou for lento. */
 const _purchaseFiredThisDocument = new Set<string>();
 
-let _cachedUserData: { em?: string; external_id?: string; ph?: string; fn?: string; ln?: string } = {};
+let _cachedUserData: {
+  em?: string;
+  external_id?: string;
+  ph?: string;
+  fn?: string;
+  ln?: string;
+  ge?: string;
+  db?: string;
+  ct?: string;
+  st?: string;
+  zp?: string;
+  subscription_id?: string;
+} = {};
 let _pixelInitWithAM = false;
 let _identityReadyPromise: Promise<void> | null = null;
 
@@ -114,6 +132,12 @@ const persistUserData = () => {
     if (_cachedUserData.ph) localStorage.setItem(STORAGE_KEY_PH, _cachedUserData.ph);
     if (_cachedUserData.fn) localStorage.setItem(STORAGE_KEY_FN, _cachedUserData.fn);
     if (_cachedUserData.ln) localStorage.setItem(STORAGE_KEY_LN, _cachedUserData.ln);
+    if (_cachedUserData.ge) localStorage.setItem(STORAGE_KEY_GE, _cachedUserData.ge);
+    if (_cachedUserData.db) localStorage.setItem(STORAGE_KEY_DB, _cachedUserData.db);
+    if (_cachedUserData.ct) localStorage.setItem(STORAGE_KEY_CT, _cachedUserData.ct);
+    if (_cachedUserData.st) localStorage.setItem(STORAGE_KEY_ST, _cachedUserData.st);
+    if (_cachedUserData.zp) localStorage.setItem(STORAGE_KEY_ZP, _cachedUserData.zp);
+    if (_cachedUserData.subscription_id) localStorage.setItem(STORAGE_KEY_SID, _cachedUserData.subscription_id);
   } catch (e: unknown) {
     devLog("persistUserData failed", e);
   }
@@ -126,12 +150,24 @@ const restoreUserData = () => {
     const ph = localStorage.getItem(STORAGE_KEY_PH);
     const fn = localStorage.getItem(STORAGE_KEY_FN);
     const ln = localStorage.getItem(STORAGE_KEY_LN);
+    const ge = localStorage.getItem(STORAGE_KEY_GE);
+    const db = localStorage.getItem(STORAGE_KEY_DB);
+    const ct = localStorage.getItem(STORAGE_KEY_CT);
+    const st = localStorage.getItem(STORAGE_KEY_ST);
+    const zp = localStorage.getItem(STORAGE_KEY_ZP);
+    const sid = localStorage.getItem(STORAGE_KEY_SID);
 
     if (em) _cachedUserData.em = em;
     if (eid) _cachedUserData.external_id = eid;
     if (ph) _cachedUserData.ph = ph;
     if (fn) _cachedUserData.fn = fn;
     if (ln) _cachedUserData.ln = ln;
+    if (ge) _cachedUserData.ge = ge;
+    if (db) _cachedUserData.db = db;
+    if (ct) _cachedUserData.ct = ct;
+    if (st) _cachedUserData.st = st;
+    if (zp) _cachedUserData.zp = zp;
+    if (sid) _cachedUserData.subscription_id = sid;
   } catch (e: unknown) {
     devLog("restoreUserData failed", e);
   }
@@ -160,6 +196,12 @@ export const setAdvancedMatching = async (userData: {
   externalId?: string | null;
   firstName?: string | null;
   lastName?: string | null;
+  gender?: string | null;
+  birthDate?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zip?: string | null;
+  subscriptionId?: string | null;
 }) => {
   const matchData: Record<string, string> = {};
 
@@ -206,6 +248,54 @@ export const setAdvancedMatching = async (userData: {
       }
     }));
   }
+  if (userData.gender) {
+    promises.push(sha256(userData.gender).then(hashed => {
+      if (hashed) {
+        matchData.ge = hashed;
+        _cachedUserData.ge = hashed;
+      }
+    }));
+  }
+  if (userData.birthDate) {
+    promises.push(sha256(userData.birthDate).then(hashed => {
+      if (hashed) {
+        matchData.db = hashed;
+        _cachedUserData.db = hashed;
+      }
+    }));
+  }
+  if (userData.city) {
+    promises.push(sha256(userData.city).then(hashed => {
+      if (hashed) {
+        matchData.ct = hashed;
+        _cachedUserData.ct = hashed;
+      }
+    }));
+  }
+  if (userData.state) {
+    promises.push(sha256(userData.state).then(hashed => {
+      if (hashed) {
+        matchData.st = hashed;
+        _cachedUserData.st = hashed;
+      }
+    }));
+  }
+  if (userData.zip) {
+    promises.push(sha256(userData.zip).then(hashed => {
+      if (hashed) {
+        matchData.zp = hashed;
+        _cachedUserData.zp = hashed;
+      }
+    }));
+  }
+  if (userData.subscriptionId) {
+    promises.push(sha256(userData.subscriptionId).then(hashed => {
+      if (hashed) {
+        matchData.subscription_id = hashed;
+        _cachedUserData.subscription_id = hashed;
+      }
+    }));
+  }
 
   await Promise.all(promises);
 
@@ -229,6 +319,12 @@ const initPixel = () => {
   if (_cachedUserData.ph) matchData.ph = _cachedUserData.ph;
   if (_cachedUserData.fn) matchData.fn = _cachedUserData.fn;
   if (_cachedUserData.ln) matchData.ln = _cachedUserData.ln;
+  if (_cachedUserData.ge) matchData.ge = _cachedUserData.ge;
+  if (_cachedUserData.db) matchData.db = _cachedUserData.db;
+  if (_cachedUserData.ct) matchData.ct = _cachedUserData.ct;
+  if (_cachedUserData.st) matchData.st = _cachedUserData.st;
+  if (_cachedUserData.zp) matchData.zp = _cachedUserData.zp;
+  if (_cachedUserData.subscription_id) matchData.subscription_id = _cachedUserData.subscription_id;
   if (_cachedUserData.external_id) matchData.external_id = _cachedUserData.external_id;
   matchData.country = "br";
 
@@ -250,6 +346,12 @@ export const clearAdvancedMatching = () => {
     localStorage.removeItem(STORAGE_KEY_PH);
     localStorage.removeItem(STORAGE_KEY_FN);
     localStorage.removeItem(STORAGE_KEY_LN);
+    localStorage.removeItem(STORAGE_KEY_GE);
+    localStorage.removeItem(STORAGE_KEY_DB);
+    localStorage.removeItem(STORAGE_KEY_CT);
+    localStorage.removeItem(STORAGE_KEY_ST);
+    localStorage.removeItem(STORAGE_KEY_ZP);
+    localStorage.removeItem(STORAGE_KEY_SID);
   } catch (e: unknown) {
     devLog("clearAdvancedMatching storage failed", e);
   }
@@ -366,6 +468,35 @@ const generateEventId = (prefix: string): string => {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 };
 
+const toCustomEventToken = (value: string): string => {
+  const normalized = value
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^A-Za-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .toUpperCase();
+  return normalized.slice(0, 40);
+};
+
+const emitCustomMirrorEvents = (
+  basePrefix: "IC" | "PURCHASE",
+  customData: Record<string, unknown>,
+) => {
+  if (typeof window === "undefined" || !window.fbq) return;
+
+  const names = new Set<string>();
+  const rawSection = typeof customData.section === "string" ? toCustomEventToken(customData.section) : "";
+  const rawCategory = typeof customData.content_category === "string" ? toCustomEventToken(customData.content_category) : "";
+
+  if (rawSection) names.add(`${basePrefix}_SECTION_${rawSection}`);
+  if (rawCategory) names.add(`${basePrefix}_CATEGORY_${rawCategory}`);
+
+  for (const eventName of names) {
+    window.fbq("trackCustom", eventName, customData);
+  }
+};
+
 interface TrackingData {
   contentName: string;
   contentIds: string[];
@@ -401,6 +532,12 @@ export const getUserData = (): Record<string, string> => {
     if (_cachedUserData.ph) data.ph = _cachedUserData.ph;
     if (_cachedUserData.fn) data.fn = _cachedUserData.fn;
     if (_cachedUserData.ln) data.ln = _cachedUserData.ln;
+    if (_cachedUserData.ge) data.ge = _cachedUserData.ge;
+    if (_cachedUserData.db) data.db = _cachedUserData.db;
+    if (_cachedUserData.ct) data.ct = _cachedUserData.ct;
+    if (_cachedUserData.st) data.st = _cachedUserData.st;
+    if (_cachedUserData.zp) data.zp = _cachedUserData.zp;
+    if (_cachedUserData.subscription_id) data.subscription_id = _cachedUserData.subscription_id;
 
     // external_id: prefer authenticated user ID, fallback to first-party tracking ID
     if (_cachedUserData.external_id) {
@@ -453,6 +590,9 @@ const sendCAPI = async (
       event_time: eventTime,
       ...(sourceUrl ? { event_source_url: sourceUrl } : {}),
       action_source: "website",
+      data_processing_options: [],
+      data_processing_options_country: 0,
+      data_processing_options_state: 0,
       user_data: userData,
       custom_data: safeCustom,
     });
@@ -488,6 +628,9 @@ const sendCAPI = async (
               event_time: eventTime, // use original event_time to ensure proper deduplication
               ...(sourceUrl ? { event_source_url: sourceUrl } : {}),
               action_source: "website",
+              data_processing_options: [],
+              data_processing_options_country: 0,
+              data_processing_options_state: 0,
               user_data: retryData,
               custom_data: safeCustom,
             });
@@ -539,6 +682,7 @@ export const trackInitiateCheckout = (data: TrackingData) => {
 
   if (window.fbq) {
     window.fbq("track", "InitiateCheckout", customData, { eventID: eventId });
+    emitCustomMirrorEvents("IC", customData);
   }
   sendCAPI("InitiateCheckout", eventId, customData);
 
@@ -590,6 +734,7 @@ export const trackPurchase = (
 
   if (window.fbq) {
     window.fbq("track", "Purchase", customData, { eventID: eventId });
+    emitCustomMirrorEvents("PURCHASE", customData);
   }
   sendCAPI("Purchase", eventId, customData);
 

@@ -8,6 +8,9 @@ const corsHeaders = {
 
 const GRAPH_API_VERSION = "v21.0";
 const DEFAULT_PIXEL_ID = "706054019233816";
+const DEFAULT_ALLOWED_ORIGIN_HOSTS = ["royalstorebr.com", "www.royalstorebr.com", "localhost", "127.0.0.1"];
+const MAX_EVENTS_PER_MINUTE_PER_IP = 120;
+const ipWindow = new Map<string, { windowStartMs: number; count: number }>();
 
 /** Código "Testar eventos" no Events Manager — só credenciais/servidor (nunca confiar no body do cliente). */
 function resolveMetaTestEventCode(dbValue: string | null | undefined, envValue: string | undefined): string | undefined {
@@ -45,6 +48,9 @@ function sanitizeCustomData(raw: unknown): Record<string, unknown> {
   if (typeof o.content_type === "string") {
     out.content_type = o.content_type.trim().slice(0, 50);
   }
+  if (typeof o.section === "string") {
+    out.section = o.section.trim().slice(0, 50);
+  }
   if (o.value != null) {
     const v = Number(o.value);
     if (Number.isFinite(v) && v >= 0) out.value = Math.round(v * 100) / 100;
@@ -75,6 +81,38 @@ function resolveEventSourceUrl(
     return origin.slice(0, 2048);
   }
   return undefined;
+}
+
+function isAllowedHost(hostname: string, allowlist: Set<string>): boolean {
+  const normalized = hostname.toLowerCase();
+  if (allowlist.has(normalized)) return true;
+  for (const allowed of allowlist) {
+    if (allowed.startsWith(".")) {
+      if (normalized.endsWith(allowed)) return true;
+      continue;
+    }
+    if (normalized === allowed) return true;
+  }
+  return false;
+}
+
+function parseAllowedOriginHosts(): Set<string> {
+  const raw = String(Deno.env.get("META_ALLOWED_ORIGIN_HOSTS") || "").trim();
+  const values = raw
+    ? raw.split(",").map((v) => v.trim().toLowerCase()).filter(Boolean)
+    : DEFAULT_ALLOWED_ORIGIN_HOSTS;
+  return new Set(values);
+}
+
+function isRateLimited(clientIp: string): boolean {
+  const now = Date.now();
+  const row = ipWindow.get(clientIp);
+  if (!row || now - row.windowStartMs >= 60_000) {
+    ipWindow.set(clientIp, { windowStartMs: now, count: 1 });
+    return false;
+  }
+  row.count += 1;
+  return row.count > MAX_EVENTS_PER_MINUTE_PER_IP;
 }
 
 Deno.serve(async (req) => {
@@ -123,10 +161,28 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const { event_name, event_id, event_time, user_data, custom_data, event_source_url, action_source } = body;
+    const {
+      event_name,
+      event_id,
+      event_time,
+      user_data,
+      custom_data,
+      event_source_url,
+      action_source,
+      data_processing_options,
+      data_processing_options_country,
+      data_processing_options_state,
+    } = body;
 
     if (!event_name || !event_id) {
       return new Response(JSON.stringify({ success: true, ignored: true, reason: "missing event_name or event_id" }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (typeof event_id !== "string" || event_id.trim().length < 4 || event_id.trim().length > 200) {
+      return new Response(JSON.stringify({ success: true, ignored: true, reason: "invalid event_id format" }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -147,7 +203,7 @@ Deno.serve(async (req) => {
     const ALLOWED_USER_DATA = new Set([
       "em", "ph", "fn", "ln", "ge", "db", "ct", "st", "zp", "country",
       "external_id", "client_ip_address", "client_user_agent",
-      "fbp", "fbc", "fb_login_id", "lead_id",
+      "fbp", "fbc", "fb_login_id", "lead_id", "subscription_id",
     ]);
 
     const rawUserData = (user_data || {}) as Record<string, unknown>;
@@ -166,6 +222,12 @@ Deno.serve(async (req) => {
       req.headers.get("x-real-ip") ||
       req.headers.get("cf-connecting-ip") ||
       null;
+    if (clientIp && isRateLimited(clientIp)) {
+      return new Response(JSON.stringify({ success: true, ignored: true, reason: "rate_limited" }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     if (clientIp) {
       userData.client_ip_address = clientIp;
     }
@@ -195,6 +257,23 @@ Deno.serve(async (req) => {
 
     const safeCustom = sanitizeCustomData(custom_data);
     const resolvedUrl = resolveEventSourceUrl(event_source_url, req);
+    const allowedHosts = parseAllowedOriginHosts();
+    if (resolvedUrl) {
+      try {
+        const hostname = new URL(resolvedUrl).hostname;
+        if (!isAllowedHost(hostname, allowedHosts)) {
+          return new Response(JSON.stringify({ success: true, ignored: true, reason: "origin_not_allowed" }), {
+            status: 200,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      } catch {
+        return new Response(JSON.stringify({ success: true, ignored: true, reason: "invalid_event_source_url" }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
 
     const eventData: Record<string, unknown> = {
       event_name,
@@ -209,6 +288,17 @@ Deno.serve(async (req) => {
     };
 
     const graphPayload: Record<string, unknown> = { data: [eventData] };
+    if (Array.isArray(data_processing_options)) {
+      graphPayload.data_processing_options = data_processing_options
+        .filter((v): v is string => typeof v === "string")
+        .slice(0, 5);
+    }
+    if (typeof data_processing_options_country === "number" && Number.isFinite(data_processing_options_country)) {
+      graphPayload.data_processing_options_country = Math.max(0, Math.trunc(data_processing_options_country));
+    }
+    if (typeof data_processing_options_state === "number" && Number.isFinite(data_processing_options_state)) {
+      graphPayload.data_processing_options_state = Math.max(0, Math.trunc(data_processing_options_state));
+    }
     if (META_TEST_EVENT_CODE) graphPayload.test_event_code = META_TEST_EVENT_CODE;
 
     const url = `https://graph.facebook.com/${GRAPH_API_VERSION}/${PIXEL_ID}/events?access_token=${ACCESS_TOKEN}`;

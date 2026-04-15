@@ -322,6 +322,8 @@ async function sendServerPurchaseEvent(supabaseAdmin: SupabaseAdminClient, payme
       price: number;
       quantity?: number;
       lztGame?: string;
+      gameName?: string;
+      type?: string;
     }>;
     if (cartItems.length === 0) return false;
 
@@ -331,27 +333,23 @@ async function sendServerPurchaseEvent(supabaseAdmin: SupabaseAdminClient, payme
     // Deterministic event_id — must match browser-side for deduplication
     const eventId = `purchase_${payment.id}`;
 
-    // Resolve category dynamically from cart item fields
+    // Resolve category consistently with frontend tracking:
+    // - one game => that slug
+    // - multiple games => "multi"
+    // - unknown => fallback inference from text hints
     const gameNames = cartItems
-      .map((i: Record<string, unknown>) => String(i.lztGame || i.gameName || "").trim())
-      .filter((g: string) => g.length > 0);
+      .map((i) => normalizeGameCategory(i.lztGame || i.gameName))
+      .filter((g) => g.length > 0);
     const uniqueGames = [...new Set(gameNames)];
     const category = uniqueGames.length === 1
       ? uniqueGames[0]
       : uniqueGames.length > 1
-        ? uniqueGames.join(", ")
-        : (() => {
-            // Fallback: try to detect from product/plan names for legacy carts without gameName
-            const hint = String(firstItem.lztGame || firstItem.planName || firstItem.productName || "").toLowerCase();
-            if (hint.includes("valorant")) return "valorant";
-            if (hint.includes("fortnite")) return "fortnite";
-            if (hint.includes("roblox")) return "roblox";
-            if (hint.includes("minecraft")) return "minecraft";
-            if (hint.includes("lol") || hint.includes("league")) return "lol";
-            if (hint.includes("cs") || hint.includes("counter")) return "cs2";
-            if (hint.includes("gta")) return "gta";
-            return "";
-          })();
+        ? "multi"
+        : normalizeGameCategory(firstItem.lztGame || firstItem.gameName || firstItem.planName || firstItem.productName);
+
+    const allContas = cartItems.every((i) => i.type === "lzt-account");
+    const allProdutos = cartItems.every((i) => i.type !== "lzt-account");
+    const section: "contas" | "produtos" | "multi" = allContas ? "contas" : allProdutos ? "produtos" : "multi";
 
     // 1. Identity data (em, ph, fbp, fbc, external_id)
     const browserData = (payment.meta_tracking || {}) as Record<string, string>;
@@ -380,6 +378,12 @@ async function sendServerPurchaseEvent(supabaseAdmin: SupabaseAdminClient, payme
     if (browserData.external_id) userData.external_id = await toSha256OrPassthrough(browserData.external_id);
     if (browserData.fn) userData.fn = await toSha256OrPassthrough(browserData.fn);
     if (browserData.ln) userData.ln = await toSha256OrPassthrough(browserData.ln);
+    if (browserData.ge) userData.ge = await toSha256OrPassthrough(browserData.ge);
+    if (browserData.db) userData.db = await toSha256OrPassthrough(browserData.db);
+    if (browserData.ct) userData.ct = await toSha256OrPassthrough(browserData.ct);
+    if (browserData.st) userData.st = await toSha256OrPassthrough(browserData.st);
+    if (browserData.zp) userData.zp = await toSha256OrPassthrough(browserData.zp);
+    if (browserData.subscription_id) userData.subscription_id = await toSha256OrPassthrough(browserData.subscription_id);
     if (browserData.country) userData.country = await toSha256OrPassthrough(browserData.country);
     if (browserData.client_user_agent) userData.client_user_agent = browserData.client_user_agent;
 
@@ -394,6 +398,24 @@ async function sendServerPurchaseEvent(supabaseAdmin: SupabaseAdminClient, payme
     }
     if (!userData.external_id && payment.user_id) {
       userData.external_id = await sha256Hash(payment.user_id);
+    }
+    if (!userData.ge && customerData.gender) {
+      userData.ge = await sha256Hash(String(customerData.gender));
+    }
+    if (!userData.db && customerData.birth_date) {
+      userData.db = await sha256Hash(String(customerData.birth_date));
+    }
+    if (!userData.ct && customerData.city) {
+      userData.ct = await sha256Hash(String(customerData.city));
+    }
+    if (!userData.st && customerData.state) {
+      userData.st = await sha256Hash(String(customerData.state));
+    }
+    if (!userData.zp && customerData.zip) {
+      userData.zp = await sha256Hash(String(customerData.zip));
+    }
+    if (!userData.subscription_id && customerData.subscription_id) {
+      userData.subscription_id = await sha256Hash(String(customerData.subscription_id));
     }
     // Always ensure country is set
     if (!userData.country) {
@@ -436,6 +458,7 @@ async function sendServerPurchaseEvent(supabaseAdmin: SupabaseAdminClient, payme
       custom_data: {
         content_name: contentName,
         content_category: category,
+        section,
         content_ids: contentIds,
         contents,
         content_type: "product",
@@ -446,6 +469,9 @@ async function sendServerPurchaseEvent(supabaseAdmin: SupabaseAdminClient, payme
     };
 
     const graphPayload: Record<string, unknown> = { data: [eventData] };
+    graphPayload.data_processing_options = [];
+    graphPayload.data_processing_options_country = 0;
+    graphPayload.data_processing_options_state = 0;
     if (metaTestEventCode) graphPayload.test_event_code = metaTestEventCode;
 
     const url = `https://graph.facebook.com/${META_GRAPH_VERSION}/${pixelId}/events?access_token=${accessToken}`;
@@ -491,9 +517,82 @@ function digitsOnly(value: unknown): string {
   return String(value ?? "").replace(/\D/g, "");
 }
 
+const GAME_SLUG_ALIASES: Record<string, string> = {
+  "counter strike 2": "cs2",
+  "counter-strike 2": "cs2",
+  "counter-strike-2": "cs2",
+  "counter-strike 2 (free)": "cs2",
+  "counter strike 2 free": "cs2",
+  "counter-strike-2-free": "cs2",
+  "cs2 free": "cs2",
+  "cs2-free": "cs2",
+  cs2: "cs2",
+  "call of duty": "cod",
+  "call-of-duty": "cod",
+  cod: "cod",
+  "arena breakout infinite": "arena-breakout-infinite",
+  "arena-breakout-infinite": "arena-breakout-infinite",
+  "arc raiders": "arc-raiders",
+  "arc-raiders": "arc-raiders",
+  "apex legends": "apex-legends",
+  "apex-legends": "apex-legends",
+  "overwatch 2": "overwatch-2",
+  "overwatch-2": "overwatch-2",
+  "marvel rivals": "marvel-rivals",
+  "marvel-rivals": "marvel-rivals",
+  "dead by daylight": "dead-by-daylight",
+  "dead-by-daylight": "dead-by-daylight",
+  "hell let loose": "hell-let-loose",
+  "hell-let-loose": "hell-let-loose",
+  pubg: "pubg",
+  bloodstrike: "bloodstrike",
+  "farlight 84": "farlight-84",
+  "farlight-84": "farlight-84",
+  bodycam: "bodycam",
+  warface: "warface",
+  spoofers: "spoofers",
+  squad: "squad",
+  bloodhunt: "bloodhunt",
+  fivem: "fivem",
+  dayz: "dayz",
+  rust: "rust",
+  valorant: "valorant",
+  fortnite: "fortnite",
+  minecraft: "minecraft",
+  lol: "lol",
+  produto: "produto",
+  multi: "multi",
+};
+
+function normalizeGameCategory(raw: unknown): string {
+  const normalized = String(raw ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+  if (!normalized) return "";
+  const alias = GAME_SLUG_ALIASES[normalized];
+  if (alias) return alias;
+  return normalized
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
 function extractTrackingParameters(payment: PaymentRow, req: Request): Record<string, string> {
   const tracking: Record<string, string> = {};
-  const allowed = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"] as const;
+  const allowed = [
+    "utm_source",
+    "utm_medium",
+    "utm_campaign",
+    "utm_content",
+    "utm_term",
+    "fbclid",
+    "gclid",
+    "ttclid",
+    "sck",
+  ] as const;
   const browserData = (payment.meta_tracking || {}) as Record<string, unknown>;
   const customerData = (payment.customer_data || {}) as Record<string, unknown>;
 
