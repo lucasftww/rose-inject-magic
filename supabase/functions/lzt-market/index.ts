@@ -730,15 +730,16 @@ Deno.serve(async (req) => {
 
       console.error("LZT API error after retries:", status, detail);
 
-      // For 5xx errors (upstream maintenance etc.), return 200 with fallback
-      // so the Supabase client SDK doesn't throw and the frontend can handle gracefully
-      const isFallbackable = status >= 500;
+      // For 5xx errors on LIST requests (upstream maintenance etc.), return 200 with fallback
+      // so the Supabase client SDK doesn't throw and the frontend can handle gracefully.
+      // Detail requests keep the original status so detail pages show proper error states.
+      const isListRequest = action !== "detail";
+      const isFallbackable = status >= 500 && isListRequest;
       return new Response(
         JSON.stringify({
           error: isFallbackable ? "SERVICE_UNAVAILABLE" : "LZT API error",
           fallback: isFallbackable,
-          items: [],
-          totalItems: 0,
+          ...(isListRequest ? { items: [], totalItems: 0 } : { item: null }),
           status,
           detail,
         }),
