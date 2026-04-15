@@ -1,6 +1,18 @@
--- payment_tracking_events is only written by Edge Functions (service_role bypasses RLS).
--- Remove the permissive FOR ALL / USING (true) policy so anon/authenticated never get broad access
--- if table privileges are ever granted by mistake.
+-- Idempotency log for server-side purchase tracking (Meta CAPI, UTMify, etc.).
+-- Some remotes never had the table despite older migration history; CREATE IF NOT EXISTS is safe.
+-- No permissive RLS policy: Edge uses service_role (bypasses RLS); clients must not have broad access.
+
+CREATE TABLE IF NOT EXISTS public.payment_tracking_events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  payment_id UUID NOT NULL REFERENCES public.payments(id) ON DELETE CASCADE,
+  provider TEXT NOT NULL,
+  event_name TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'sent',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (payment_id, provider, event_name)
+);
+
+ALTER TABLE public.payment_tracking_events ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Service can manage payment tracking events" ON public.payment_tracking_events;
 
