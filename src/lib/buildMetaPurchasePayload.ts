@@ -1,7 +1,7 @@
 import type { CartItem } from "@/hooks/useCart";
 import { normalizeGameSlug } from "@/lib/gameSlug";
 
-/** Fingerprint estável do carrinho para deduplicar `InitiateCheckout` na página `/checkout` (refresh / re-mount). */
+/** Fingerprint estável do carrinho para deduplicar `InitiateCheckout` (localStorage partilhado entre abas, TTL 7d em `metaPixel`). */
 export function buildCartFingerprintForMetaIc(
   items: Pick<CartItem, "productId" | "quantity" | "price">[],
 ): string {

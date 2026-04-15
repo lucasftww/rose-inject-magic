@@ -21,8 +21,9 @@ import { supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
  *
  * InitiateCheckout: só na página `/checkout` (não nas páginas de produto/conta).
  * Deduplication:
- *   InitiateCheckout → random event_id (Pixel + CAPI via relay) + sessionStorage por fingerprint do carrinho
- *   Purchase → deterministic purchase_${transactionId} + sessionStorage guard (+ memória na mesma página)
+ *   InitiateCheckout → random event_id (Pixel + CAPI via relay) + localStorage por fingerprint do carrinho
+ *     (partilhado entre abas; TTL 7d para o mesmo carrinho não poluir se voltar logo)
+ *   Purchase → deterministic purchase_${transactionId} + sessionStorage + localStorage (+ memória na mesma página)
  *
  * Test Events (Events Manager): definir META_TEST_EVENT_CODE em system_credentials ou secret da Edge
  * (server-relay + pix-payment). Remover em produção para contar só eventos reais.
@@ -662,6 +663,39 @@ const sendCAPI = async (
 
 // ─── Event Tracking ─────────────────────────────────────────────────────────
 
+const IC_CART_FP_PREFIX = "_meta_ic_cart_";
+/** Mesmo utilizador / mesmo carrinho: não repetir IC ao abrir outra aba ou voltar ao checkout dentro deste período. */
+const IC_CART_FP_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+function isInitiateCheckoutFingerprintRecent(fp: string): boolean {
+  const key = IC_CART_FP_PREFIX + fp;
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return false;
+    if (raw === "1") return true;
+    const parsed = JSON.parse(raw) as { until?: number };
+    if (typeof parsed?.until === "number" && Number.isFinite(parsed.until)) {
+      if (Date.now() > parsed.until) {
+        localStorage.removeItem(key);
+        return false;
+      }
+      return true;
+    }
+    return true;
+  } catch (e: unknown) {
+    devLog("isInitiateCheckoutFingerprintRecent read failed", e);
+    return false;
+  }
+}
+
+function markInitiateCheckoutFingerprint(fp: string): void {
+  try {
+    localStorage.setItem(IC_CART_FP_PREFIX + fp, JSON.stringify({ until: Date.now() + IC_CART_FP_TTL_MS }));
+  } catch (e: unknown) {
+    devLog("markInitiateCheckoutFingerprint failed", e);
+  }
+}
+
 type InitiateCheckoutOptions = { cartFingerprint?: string };
 
 export const trackInitiateCheckout = (data: TrackingData, opts?: InitiateCheckoutOptions) => {
@@ -669,13 +703,8 @@ export const trackInitiateCheckout = (data: TrackingData, opts?: InitiateCheckou
 
   const fp = String(opts?.cartFingerprint ?? "").trim();
   if (fp.length > 0) {
-    try {
-      const k = `_meta_ic_cart_${fp}`;
-      if (sessionStorage.getItem(k)) return;
-      sessionStorage.setItem(k, "1");
-    } catch (e: unknown) {
-      devLog("trackInitiateCheckout dedupe storage failed", e);
-    }
+    if (isInitiateCheckoutFingerprintRecent(fp)) return;
+    markInitiateCheckoutFingerprint(fp);
   }
 
   const eventId = generateEventId("ic");
@@ -719,15 +748,16 @@ export const trackPurchase = (
 
   if (_purchaseFiredThisDocument.has(tid)) return;
   try {
-    if (sessionStorage.getItem(storageKey)) return;
+    if (sessionStorage.getItem(storageKey) || localStorage.getItem(storageKey)) return;
   } catch (e: unknown) {
-    devLog("trackPurchase sessionStorage read failed", e);
+    devLog("trackPurchase storage read failed", e);
   }
   _purchaseFiredThisDocument.add(tid);
   try {
     sessionStorage.setItem(storageKey, eventId);
+    localStorage.setItem(storageKey, eventId);
   } catch (e: unknown) {
-    devLog("trackPurchase sessionStorage write failed", e);
+    devLog("trackPurchase storage write failed", e);
   }
 
   const contents =
