@@ -260,6 +260,7 @@ const FortniteDetalhes = () => {
       contentName: cleanedTitle,
       contentIds: [`lzt-fn-${item.item_id}`],
       value: lockedPriceBrl,
+      contentCategory: "fortnite",
     });
 
     const added = addItem({

@@ -316,6 +316,7 @@ const ProdutoDetalhes = () => {
       contentName: product.name,
       contentIds: [product.id],
       value: finalItemPrice,
+      contentCategory: game?.slug || game?.name || undefined,
     });
 
     const added = addItem({
@@ -325,6 +326,7 @@ const ProdutoDetalhes = () => {
       planId: selectedPlan.id,
       planName: selectedPlan.name,
       price: finalItemPrice,
+      gameName: game?.slug || game?.name || undefined,
     });
     if (added) navigate("/checkout");
   };
