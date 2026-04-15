@@ -369,6 +369,41 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_tracking_events: {
+        Row: {
+          created_at: string
+          event_name: string
+          id: string
+          payment_id: string
+          provider: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          event_name: string
+          id?: string
+          payment_id: string
+          provider: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          event_name?: string
+          id?: string
+          payment_id?: string
+          provider?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_tracking_events_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payments: {
         Row: {
           amount: number
