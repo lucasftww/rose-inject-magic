@@ -7,7 +7,7 @@ import {
   CheckCircle2, Shield, ShoppingCart, X, Zap, Gift, Search,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useMemo, useEffect, useCallback, type CSSProperties } from "react";
+import { useState, useMemo, useEffect, useCallback, forwardRef, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "@/hooks/use-toast";
