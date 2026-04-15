@@ -15,15 +15,14 @@ import NotFound from "./pages/NotFound";
 import { GlobalErrorBoundary } from "@/components/GlobalErrorBoundary";
 
 /** Wrapper that feeds the current route key into the error boundary so it resets on navigation */
-const LocationAwareErrorBoundary = React.forwardRef<HTMLDivElement, { children: React.ReactNode }>(({ children }, _ref) => {
+function LocationAwareErrorBoundary({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   return (
     <GlobalErrorBoundary locationKey={location.key + location.pathname}>
       {children}
     </GlobalErrorBoundary>
   );
-});
-LocationAwareErrorBoundary.displayName = "LocationAwareErrorBoundary";
+}
 
 // Retry wrapper for lazy imports — retries up to 3 times with delay to recover from transient network/chunk errors
 // On final retry, forces a full page reload to bust stale chunk references after a new deploy
@@ -83,12 +82,13 @@ const Auth = lazyRetry(() => import("./pages/Auth"));
 // Admin panel — lazy-loaded INSIDE AdminGuard so the bundle never downloads for non-admins
 const AdminPanel = lazyRetry(() => import("./pages/AdminPanel"));
 
-const LazyFallback = React.forwardRef<HTMLDivElement>((_props, ref) => (
-  <div ref={ref} className="min-h-screen flex items-center justify-center bg-background">
-    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary" />
-  </div>
-));
-LazyFallback.displayName = "LazyFallback";
+function LazyFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary" />
+    </div>
+  );
+}
 
 /** Per-route Suspense so navigating from home → shop does not blank the whole app behind a spinner */
 function SuspenseRoute({ children }: { children: React.ReactNode }) {
