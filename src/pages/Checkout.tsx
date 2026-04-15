@@ -44,12 +44,23 @@ function deriveGameSlug(cartItems: { lztGame?: string; gameName?: string; type?:
   return null;
 }
 
+/** Keep Purchase URL split by section to avoid mixing contas/produtos conversions. */
+function deriveSectionSlug(cartItems: { type?: string }[]): "contas" | "produtos" | "multi" {
+  if (cartItems.length === 0) return "produtos";
+  const allContas = cartItems.every((i) => i.type === "lzt-account");
+  if (allContas) return "contas";
+  const allProdutos = cartItems.every((i) => i.type !== "lzt-account");
+  if (allProdutos) return "produtos";
+  return "multi";
+}
+
 function buildSuccessUrl(
   paymentId: string,
   cartItems: { lztGame?: string; gameName?: string; type?: string }[],
   ticketId?: string | null,
 ): string {
   const params = new URLSearchParams({ payment_id: paymentId });
+  params.set("section", deriveSectionSlug(cartItems));
   const gameSlug = deriveGameSlug(cartItems);
   if (gameSlug) params.set("game", gameSlug);
   if (ticketId) params.set("ticket_id", ticketId);

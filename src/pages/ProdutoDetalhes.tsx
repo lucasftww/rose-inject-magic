@@ -64,7 +64,7 @@ type PurchaseSuccessPayload = {
 };
 
 function buildSuccessUrl(paymentId: string, gameSlugOrName?: string, ticketId?: string | null): string {
-  const params = new URLSearchParams({ payment_id: paymentId });
+  const params = new URLSearchParams({ payment_id: paymentId, section: "produtos" });
   const game = (gameSlugOrName || "").trim().toLowerCase();
   if (game) params.set("game", game);
   if (ticketId) params.set("ticket_id", ticketId);
