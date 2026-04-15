@@ -549,8 +549,6 @@ const MinecraftDetalhes = forwardRef<HTMLDivElement>((_props, _ref) => {
         )}
     </div>
   );
-};
-
 });
 MinecraftDetalhes.displayName = "MinecraftDetalhes";
 
