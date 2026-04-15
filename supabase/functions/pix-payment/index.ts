@@ -331,17 +331,27 @@ async function sendServerPurchaseEvent(supabaseAdmin: SupabaseAdminClient, payme
     // Deterministic event_id — must match browser-side for deduplication
     const eventId = `purchase_${payment.id}`;
 
-    // Resolve category
-    const gameName = firstItem.lztGame || firstItem.planName || "";
-    const lower = gameName.toLowerCase();
-    let category = "Outros";
-    if (lower.includes("valorant")) category = "Valorant";
-    else if (lower.includes("fortnite")) category = "Fortnite";
-    else if (lower.includes("roblox")) category = "Roblox";
-    else if (lower.includes("minecraft")) category = "Minecraft";
-    else if (lower.includes("lol") || lower.includes("league")) category = "League of Legends";
-    else if (lower.includes("cs") || lower.includes("counter")) category = "CS2";
-    else if (lower.includes("gta")) category = "GTA";
+    // Resolve category dynamically from cart item fields
+    const gameNames = cartItems
+      .map((i: Record<string, unknown>) => String(i.lztGame || i.gameName || "").trim())
+      .filter((g: string) => g.length > 0);
+    const uniqueGames = [...new Set(gameNames)];
+    const category = uniqueGames.length === 1
+      ? uniqueGames[0]
+      : uniqueGames.length > 1
+        ? uniqueGames.join(", ")
+        : (() => {
+            // Fallback: try to detect from product/plan names for legacy carts without gameName
+            const hint = String(firstItem.lztGame || firstItem.planName || firstItem.productName || "").toLowerCase();
+            if (hint.includes("valorant")) return "valorant";
+            if (hint.includes("fortnite")) return "fortnite";
+            if (hint.includes("roblox")) return "roblox";
+            if (hint.includes("minecraft")) return "minecraft";
+            if (hint.includes("lol") || hint.includes("league")) return "lol";
+            if (hint.includes("cs") || hint.includes("counter")) return "cs2";
+            if (hint.includes("gta")) return "gta";
+            return "";
+          })();
 
     // 1. Identity data (em, ph, fbp, fbc, external_id)
     const browserData = (payment.meta_tracking || {}) as Record<string, string>;
