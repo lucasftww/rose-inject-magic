@@ -357,6 +357,7 @@ const Checkout = () => {
         }
         const freePayload = buildMetaPurchasePayloadFromCartItems(items, 0);
         if (freePayload && result.payment_id) {
+          injectGameParamIntoUrl(items);
           trackPurchase({ ...freePayload, transactionId: result.payment_id });
         }
         clearCart();
@@ -447,6 +448,7 @@ const Checkout = () => {
       if (result.claimed_free) {
         const freePayload = buildMetaPurchasePayloadFromCartItems(items, 0);
         if (freePayload && result.payment_id) {
+          injectGameParamIntoUrl(items);
           trackPurchase({ ...freePayload, transactionId: result.payment_id });
         }
         clearCart();
@@ -577,6 +579,7 @@ const Checkout = () => {
           if (intervalRef.current) clearInterval(intervalRef.current);
           if (data.status === "COMPLETED") {
             const snap = cartSnapshotRef.current;
+            injectGameParamIntoUrl(snap);
             const purchasePayload = buildMetaPurchasePayloadFromCartItems(snap, finalPriceRef.current);
             if (purchasePayload) {
               trackPurchase({ ...purchasePayload, transactionId: paymentId });
