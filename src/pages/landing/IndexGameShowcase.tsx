@@ -221,14 +221,17 @@ const GAME_CATEGORIES = [
 ];
 
 // ─── Shared Section Header ──────────────────────────────────────────────────
-const SectionHeader = ({ subtitle, title }: { subtitle: string; title: string }) => (
-  <div className="text-center sm:text-left">
-    <p className="text-[10px] sm:text-sm font-medium uppercase tracking-[0.3em] text-success">{subtitle}</p>
-    <h2 className="mt-1.5 sm:mt-3 text-xl sm:text-4xl font-bold tracking-tight text-foreground md:text-6xl" style={{ fontFamily: "'Valorant', sans-serif" }}>
-      {title}
-    </h2>
-  </div>
-);
+const SectionHeader = React.forwardRef<HTMLDivElement, { subtitle: string; title: string }>(function SectionHeader({ subtitle, title }, ref) {
+  return (
+    <div ref={ref} className="text-center sm:text-left">
+      <p className="text-[10px] sm:text-sm font-medium uppercase tracking-[0.3em] text-success">{subtitle}</p>
+      <h2 className="mt-1.5 sm:mt-3 text-xl sm:text-4xl font-bold tracking-tight text-foreground md:text-6xl" style={{ fontFamily: "'Valorant', sans-serif" }}>
+        {title}
+      </h2>
+    </div>
+  );
+});
+SectionHeader.displayName = "SectionHeader";
 
 // ─── Accounts Section ───────────────────────────────────────────────────────
 const ContasSection = React.forwardRef<HTMLElement>(function ContasSection(_props, ref) {

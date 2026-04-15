@@ -1,9 +1,10 @@
+import React from "react";
 import { Link } from "react-router-dom";
 import { Star } from "lucide-react";
 import { reviews } from "./reviewsData";
 import { useTranslation } from "react-i18next";
 
-const ReviewsSection = () => {
+const ReviewsSection = React.forwardRef<HTMLElement>(function ReviewsSection(_props, ref) {
   const { t } = useTranslation();
 
   return (
