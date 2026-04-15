@@ -406,13 +406,13 @@ const LolDetalhes = () => {
     <div className="min-h-screen bg-background">
       <Header />
       <div className="mx-auto max-w-6xl px-4 sm:px-6 pt-4 pb-32 sm:pb-20">
-        <button
-          onClick={() => navigate("/contas?game=lol")}
-          className="mb-5 flex items-center gap-2 rounded-lg border border-border bg-card/50 px-4 py-2 text-sm text-muted-foreground transition-all hover:border-[hsl(198,100%,45%)/40%] hover:text-[hsl(198,100%,45%)]"
+        <Link
+          to="/contas?game=lol"
+          className="mb-5 inline-flex items-center gap-2 rounded-lg border border-border bg-card/50 px-4 py-2 text-sm text-muted-foreground transition-all hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
           Voltar para Contas LoL
-        </button>
+        </Link>
 
         {isLoading && (
           <div className="flex flex-col items-center justify-center py-32">
@@ -642,29 +642,30 @@ const LolDetalhes = () => {
             {(skinPreviews.length > 0 || champPreviews.length > 0) && (
               <div className="mt-6">
                 {/* Tabs + Search */}
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-5">
-                  <div className="flex gap-2">
+              <div className="flex flex-col gap-3 mb-5">
+                  <div className="flex items-center gap-1 border-b border-border">
                     {([
-                      { key: "skins" as const, label: "Skins", count: skinPreviews.length, icon: <Star className="h-4 w-4" /> },
-                      { key: "champions" as const, label: "Campeões", count: champPreviews.length, icon: <Swords className="h-4 w-4" /> },
+                      { key: "skins" as const, label: "Skins", count: skinPreviews.length },
+                      { key: "champions" as const, label: "Campeões", count: champPreviews.length },
                     ]).map((tab) => (
                       <button
                         key={tab.key}
                         onClick={() => { setActiveTab(tab.key); setSearchQuery(""); }}
-                        className={`flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-all ${
+                        className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-semibold transition-all border-b-2 -mb-px ${
                           activeTab === tab.key
-                            ? "border-[hsl(198,100%,45%)] bg-[hsl(198,100%,45%,0.1)] text-[hsl(198,100%,45%)]"
-                            : "border-border bg-card text-muted-foreground hover:border-muted-foreground/50"
+                            ? "border-[hsl(198,100%,45%)] text-foreground"
+                            : "border-transparent text-muted-foreground hover:text-foreground"
                         }`}
                       >
-                        {tab.icon}
                         {tab.label}
                         {tab.count > 0 && (
-                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                            activeTab === tab.key
-                              ? "bg-[hsl(198,100%,45%,0.2)] text-[hsl(198,100%,45%)]"
-                              : "bg-secondary text-muted-foreground"
-                          }`}>
+                          <span
+                            className="rounded-full px-1.5 py-0.5 text-[10px] font-bold"
+                            style={{
+                              background: activeTab === tab.key ? `${LOL_BLUE}25` : "hsl(var(--secondary))",
+                              color: activeTab === tab.key ? LOL_BLUE : "hsl(var(--muted-foreground))",
+                            }}
+                          >
                             {tab.count}
                           </span>
                         )}
@@ -672,15 +673,16 @@ const LolDetalhes = () => {
                     ))}
                   </div>
 
-                  {/* Search input */}
-                  <div className="relative flex-1 max-w-xs">
+                  {/* Search */}
+                  <div className="relative max-w-xs">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                     <input
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder={activeTab === "skins" ? "Buscar skin..." : "Buscar campeão..."}
-                      className="w-full rounded-lg border border-border bg-card pl-9 pr-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-[hsl(198,100%,45%)] transition-colors"
+                      className="w-full rounded-lg border border-border bg-card pl-9 pr-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none transition-colors"
+                      style={{ borderColor: searchQuery ? LOL_BLUE : undefined }}
                     />
                     {searchQuery && (
                       <button
@@ -889,16 +891,16 @@ const LolDetalhes = () => {
 };
 
 const StatCell = ({ label, value, color }: { label: string; value: string | number; color?: string }) => (
-  <div className="flex items-center justify-between rounded-lg border border-border bg-secondary/30 px-4 py-3">
-    <span className="text-xs text-muted-foreground">{label}</span>
-    <span className="text-sm font-bold" style={{ color: color || "hsl(var(--foreground))" }}>{value}</span>
+  <div className="flex flex-col gap-0.5 rounded-lg bg-secondary/40 px-3 py-2.5">
+    <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</span>
+    <span className="text-base font-bold" style={{ color }}>{value}</span>
   </div>
 );
 
 const StatHighlight = ({ label, value, color }: { label: string; value: string | number; color?: string }) => (
-  <div className="flex flex-col items-center py-3 px-1.5">
-    <span className="text-[10px] text-muted-foreground mb-0.5">{label}</span>
-    <span className="text-base font-bold" style={{ color: color || "hsl(var(--foreground))" }}>{value}</span>
+  <div className="flex flex-col items-center justify-center py-3 px-2">
+    <span className="text-base font-bold" style={{ color }}>{value}</span>
+    <span className="text-[10px] text-muted-foreground">{label}</span>
   </div>
 );
 
