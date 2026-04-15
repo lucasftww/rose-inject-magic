@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Check, ChevronRight, Package } from "lucide-react";
 import Header from "@/components/Header";
 import { trackPurchase } from "@/lib/metaPixel";
+import { normalizeGameSlug } from "@/lib/gameSlug";
 
 type PurchasePayload = {
   contentName: string;
@@ -47,8 +48,9 @@ const PedidoSucesso = () => {
   const ticketId = (searchParams.get("ticket_id") || "").trim();
 
   const fallbackCategory = useMemo(() => {
-    if (!gameParam || gameParam === "produto" || gameParam === "multi") return undefined;
-    return gameParam;
+    const normalized = normalizeGameSlug(gameParam);
+    if (!normalized || normalized === "produto" || normalized === "multi") return undefined;
+    return normalized;
   }, [gameParam]);
 
   useEffect(() => {

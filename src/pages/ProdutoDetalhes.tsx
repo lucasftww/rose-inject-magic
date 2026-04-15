@@ -7,6 +7,7 @@ import { supabase, supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/
 import { safeJsonFetch } from "@/lib/apiUtils";
 import type { PixPaymentCreateResult } from "@/lib/edgeFunctionTypes";
 import { getUserData, trackInitiateCheckout } from "@/lib/metaPixel";
+import { normalizeGameSlug } from "@/lib/gameSlug";
 import { getYouTubeId, getYouTubeEmbedUrl, getYouTubeThumbnail } from "@/lib/videoUtils";
 import { useCart } from "@/hooks/useCart";
 import { useReseller } from "@/hooks/useReseller";
@@ -65,7 +66,7 @@ type PurchaseSuccessPayload = {
 
 function buildSuccessUrl(paymentId: string, gameSlugOrName?: string, ticketId?: string | null): string {
   const params = new URLSearchParams({ payment_id: paymentId, section: "produtos" });
-  const game = (gameSlugOrName || "").trim().toLowerCase();
+  const game = normalizeGameSlug(gameSlugOrName);
   if (game) params.set("game", game);
   if (ticketId) params.set("ticket_id", ticketId);
   return `/pedido/sucesso?${params.toString()}`;

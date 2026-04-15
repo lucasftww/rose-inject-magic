@@ -17,6 +17,7 @@ import { buildMetaPurchasePayloadFromCartItems } from "@/lib/buildMetaPurchasePa
 import { safeJsonFetch, ApiError } from "@/lib/apiUtils";
 import { safeHttpUrl } from "@/lib/safeUrl";
 import { buildCartSnapshotFromItems } from "@/lib/buildCartSnapshot";
+import { normalizeGameSlug } from "@/lib/gameSlug";
 import type { PixPaymentCreateResult, PixPaymentStatusResult } from "@/lib/edgeFunctionTypes";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -34,9 +35,9 @@ type PurchaseSuccessPayload = {
 /** Derive a single game slug from cart items for success URL routing. */
 function deriveGameSlug(cartItems: { lztGame?: string; gameName?: string; type?: string }[]): string | null {
   const games = cartItems
-    .map((i) => i.lztGame || i.gameName)
+    .map((i) => normalizeGameSlug(i.lztGame || i.gameName))
     .filter((g): g is string => !!g);
-  const unique = [...new Set(games.map((g) => g.toLowerCase()))];
+  const unique = [...new Set(games)];
   if (unique.length === 1) return unique[0];
   if (unique.length > 1) return "multi";
   // Fallback: if all items are regular products (not lzt-account)
