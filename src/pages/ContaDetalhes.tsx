@@ -910,15 +910,15 @@ const ContaDetalhes = () => {
                   </div>
 
                   {/* Search */}
-                  <div className="relative w-full max-w-md">
+                  <div className="relative max-w-xs">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                     <input
-                      type="search"
-                      enterKeyHint="search"
+                      type="text"
                       value={inventorySearch}
                       onChange={(e) => setInventorySearch(e.target.value)}
-                      placeholder="Buscar skin, agente ou buddy…"
-                      className="w-full rounded-xl border border-border bg-card pl-10 pr-10 py-3 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-success/25 focus:border-success/50 transition-shadow"
+                      placeholder="Buscar item..."
+                      className="w-full rounded-lg border border-border bg-card pl-9 pr-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none transition-colors"
+                      style={{ borderColor: inventorySearch ? "hsl(var(--success))" : undefined }}
                     />
                     {inventorySearch && (
                       <button
