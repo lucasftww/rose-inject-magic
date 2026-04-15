@@ -67,6 +67,9 @@ function normalizeCartItemsFromStorage(parsed: unknown): CartItem[] {
       quantity,
     };
 
+    // Restore gameName for tracking (content_category in Meta Pixel)
+    if (typeof o.gameName === "string" && o.gameName) item.gameName = o.gameName;
+
     if (o.type === "lzt-account") {
       item.type = "lzt-account";
       item.quantity = 1;
