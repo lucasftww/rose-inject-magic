@@ -1849,6 +1849,14 @@ const Contas = () => {
 
       setFirstPageLoaded(true);
       setIsRefetching(false);
+
+      // LZT API in maintenance — show friendly error instead of empty list
+      if (data?.fallback) {
+        setStreamError(new Error("O marketplace de contas está em manutenção temporária. Tente novamente em alguns minutos."));
+        setStreamingDone(true);
+        return;
+      }
+
       const firstPageItems: LztItem[] = data?.items ?? [];
       const hasMore = data?.hasNextPage ?? firstPageItems.length >= 15;
       setHasNextPage(hasMore);
