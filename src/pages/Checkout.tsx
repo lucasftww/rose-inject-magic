@@ -285,8 +285,7 @@ const Checkout = () => {
   const cpfComplete = cpfDigits.length === 11;
   const cpfValid = cpfComplete && validateCpfChecksum(formData.document);
 
-  // InitiateCheckout nas páginas de detalhe + aqui como fallback (carrinho sem IC, links diretos).
-  // `cartFingerprint` em `trackInitiateCheckout` evita duplicar com «comprar agora» na mesma sessão.
+  // InitiateCheckout apenas aqui (checkout). `cartFingerprint` evita duplicar ao refrescar / re-mount.
 
   useEffect(() => {
     if (authLoading || !user || items.length === 0 || paymentId) return;

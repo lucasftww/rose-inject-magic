@@ -12,8 +12,6 @@ import { createPortal } from "react-dom";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "@/hooks/use-toast";
 import { useLztMarkup } from "@/hooks/useLztMarkup";
-import { trackInitiateCheckout } from "@/lib/metaPixel";
-import { buildCartFingerprintForMetaIc } from "@/lib/buildMetaPurchasePayload";
 import { checkLztAvailability } from "@/lib/lztAvailability";
 import { supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
 import { getLztDetailDisplayTitle } from "@/lib/lztDisplayTitles";
@@ -256,18 +254,6 @@ const FortniteDetalhes = () => {
     const available = await checkLztAvailability(String(item.item_id), "fortnite", { queryClient });
     setCheckingAvailability(false);
     if (!available) return;
-
-    const line = { productId: `lzt-fn-${item.item_id}`, quantity: 1, price: lockedPriceBrl };
-    trackInitiateCheckout(
-      {
-        contentName: cleanedTitle,
-        contentIds: [line.productId],
-        value: lockedPriceBrl,
-        contentCategory: "fortnite",
-        section: "contas",
-      },
-      { cartFingerprint: buildCartFingerprintForMetaIc([line]) },
-    );
 
     const added = addItem({
       productId: `lzt-fn-${item.item_id}`,

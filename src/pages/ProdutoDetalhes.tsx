@@ -6,8 +6,7 @@ import { motion } from "framer-motion";
 import { supabase, supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
 import { safeJsonFetch } from "@/lib/apiUtils";
 import type { PixPaymentCreateResult } from "@/lib/edgeFunctionTypes";
-import { getUserData, trackInitiateCheckout } from "@/lib/metaPixel";
-import { buildCartFingerprintForMetaIc } from "@/lib/buildMetaPurchasePayload";
+import { getUserData } from "@/lib/metaPixel";
 import { normalizeGameSlug } from "@/lib/gameSlug";
 import { getYouTubeId, getYouTubeEmbedUrl, getYouTubeThumbnail } from "@/lib/videoUtils";
 import { useCart } from "@/hooks/useCart";
@@ -341,18 +340,6 @@ const ProdutoDetalhes = () => {
       }
       return;
     }
-
-    const line = { productId: product.id, quantity: 1, price: finalItemPrice };
-    trackInitiateCheckout(
-      {
-        contentName: product.name,
-        contentIds: [product.id],
-        value: finalItemPrice,
-        contentCategory: normalizedGameCategory || undefined,
-        section: "produtos",
-      },
-      { cartFingerprint: buildCartFingerprintForMetaIc([line]) },
-    );
 
     const added = addItem({
       productId: product.id,

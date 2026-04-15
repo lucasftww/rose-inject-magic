@@ -19,8 +19,9 @@ import { supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
  *   external_id            — SHA-256 hashed user ID (or hashed first-party tracking ID for anonymous)
  *   country                — "br" (hashed) for all users
  *
+ * InitiateCheckout: só na página `/checkout` (não nas páginas de produto/conta).
  * Deduplication:
- *   InitiateCheckout → random event_id (Pixel + CAPI via relay)
+ *   InitiateCheckout → random event_id (Pixel + CAPI via relay) + sessionStorage por fingerprint do carrinho
  *   Purchase → deterministic purchase_${transactionId} + sessionStorage guard (+ memória na mesma página)
  *
  * Test Events (Events Manager): definir META_TEST_EVENT_CODE em system_credentials ou secret da Edge

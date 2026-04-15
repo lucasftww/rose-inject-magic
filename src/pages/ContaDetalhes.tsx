@@ -11,8 +11,6 @@ import { createPortal } from "react-dom";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "@/hooks/use-toast";
 import { useLztMarkup } from "@/hooks/useLztMarkup";
-import { trackInitiateCheckout } from "@/lib/metaPixel";
-import { buildCartFingerprintForMetaIc } from "@/lib/buildMetaPurchasePayload";
 import { checkLztAvailability } from "@/lib/lztAvailability";
 import { supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
 
@@ -519,18 +517,6 @@ const ContaDetalhes = () => {
     const available = await checkLztAvailability(String(item.item_id), "valorant", { queryClient });
     setCheckingAvailability(false);
     if (!available) return;
-
-    const line = { productId: `lzt-${item.item_id}`, quantity: 1, price: lockedPriceBrl };
-    trackInitiateCheckout(
-      {
-        contentName: cleanedTitle,
-        contentIds: [line.productId],
-        value: lockedPriceBrl,
-        contentCategory: "valorant",
-        section: "contas",
-      },
-      { cartFingerprint: buildCartFingerprintForMetaIc([line]) },
-    );
 
     const added = addItem({
       productId: `lzt-${item.item_id}`,
