@@ -339,6 +339,9 @@ type LztMarketListResponse = {
   page?: number;
   perPage?: number;
   totalItems?: number;
+  /** True when LZT API is in maintenance — frontend should show friendly message */
+  fallback?: boolean;
+  error?: string;
 };
 
 // ─── Data fetchers ───
