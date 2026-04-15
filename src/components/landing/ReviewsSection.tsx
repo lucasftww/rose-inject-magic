@@ -71,6 +71,7 @@ const ReviewsSection = React.forwardRef<HTMLElement>(function ReviewsSection(_pr
       </div>
     </section>
   );
-};
+});
+ReviewsSection.displayName = "ReviewsSection";
 
 export default ReviewsSection;
