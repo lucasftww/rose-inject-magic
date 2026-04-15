@@ -623,15 +623,13 @@ const ContaDetalhes = () => {
     <div className="min-h-screen bg-background">
       <Header />
       <div className="mx-auto max-w-6xl px-4 min-[400px]:px-5 sm:px-6 pt-3 sm:pt-4 pb-28 sm:pb-20">
-        <button
-          type="button"
-          onClick={() => navigate("/contas")}
-          aria-label="Voltar para lista de contas"
-          className="mb-4 sm:mb-5 inline-flex items-center gap-2 rounded-full border border-border/80 bg-card/90 px-4 py-2 text-sm font-medium text-muted-foreground shadow-sm backdrop-blur-sm transition-all hover:border-success/50 hover:text-success hover:shadow-md active:scale-[0.98] touch-manipulation"
+        <Link
+          to="/contas"
+          className="mb-5 inline-flex items-center gap-2 rounded-lg border border-border bg-card/50 px-4 py-2 text-sm text-muted-foreground transition-all hover:text-foreground"
         >
-          <ArrowLeft className="h-4 w-4 shrink-0" />
-          Voltar às contas
-        </button>
+          <ArrowLeft className="h-4 w-4" />
+          Voltar para Contas Valorant
+        </Link>
 
         {isLoading &&
         <div className="flex flex-col items-center justify-center py-32">
@@ -657,18 +655,18 @@ const ContaDetalhes = () => {
         {item &&
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
             {/* Breadcrumb */}
-            <div className="mb-5 sm:mb-6 flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground overflow-x-auto scrollbar-hide">
-              <button onClick={() => navigate("/")} className="hover:text-success transition-colors shrink-0">Início</button>
-              <ChevronRight className="h-3 w-3 shrink-0" />
-              <button onClick={() => navigate("/contas")} className="hover:text-success transition-colors shrink-0">Valorant</button>
-              <ChevronRight className="h-3 w-3 shrink-0" />
-              <span className="text-foreground font-medium truncate">{rank?.name || "Unranked"}</span>
+            <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
+              <Link to="/" className="hover:text-foreground transition-colors">Início</Link>
+              <ChevronRight className="h-3 w-3" />
+              <Link to="/contas" className="hover:text-foreground transition-colors">Contas</Link>
+              <ChevronRight className="h-3 w-3" />
+              <span className="text-success font-medium">Valorant #{item.item_id}</span>
             </div>
 
             {/* Mobile: preço/CTA primeiro (conversão); desktop: galeria à esquerda */}
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-5 lg:gap-8">
-              {/* ── Gallery + Rank + Stats ── */}
-              <div className="space-y-4 order-2 lg:order-1 lg:col-span-3">
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+              {/* ── LEFT COLUMN: Gallery + Rank + Stats ── */}
+              <div className="lg:col-span-3 space-y-4 order-1">
                 {/* Skin carousel */}
                 {skinItems.length > 0 && !skinsLoading ? (
                   <div className="rounded-2xl border border-border/60 bg-card overflow-hidden aspect-[4/3] sm:aspect-[16/10] relative group">
@@ -784,11 +782,10 @@ const ContaDetalhes = () => {
               </div>
 
               {/* ── Purchase card ── */}
-              <div className="order-1 lg:order-2 lg:col-span-2">
+              {/* ── RIGHT COLUMN: Purchase Card ── */}
+              <div className="lg:col-span-2 order-2">
                 <div className="lg:sticky lg:top-20 space-y-4">
-                  {/* Main purchase card */}
-                  <div className="rounded-2xl border border-success/25 bg-gradient-to-b from-card to-secondary/10 p-5 sm:p-6 space-y-5 shadow-[0_0_0_1px_hsl(var(--success)/0.08),0_12px_40px_-12px_hsl(0_0%_0%/0.35)]">
-                    {/* Title */}
+                  <div className="rounded-2xl border bg-card p-5 sm:p-6 space-y-5" style={{ borderColor: "hsl(var(--success) / 0.3)", boxShadow: "0 0 40px hsl(var(--success) / 0.08)" }}>
                     <h1 className="text-base sm:text-lg font-bold text-foreground leading-snug">{cleanedTitle}</h1>
 
                     {/* Badges */}
@@ -803,11 +800,10 @@ const ContaDetalhes = () => {
                       </span>
                     </div>
 
-                    {/* Benefits */}
                     <div className="space-y-2 text-sm text-muted-foreground">
-                      <p className="flex items-center gap-2.5"><span className="text-success font-bold">✓</span> Entrega automática</p>
-                      <p className="flex items-center gap-2.5"><span className="text-success font-bold">✓</span> Liberação instantânea</p>
-                      <p className="flex items-center gap-2.5"><span className="text-success font-bold">✓</span> Garantia de acesso</p>
+                      <p className="flex items-center gap-2.5"><span className="font-bold text-success">✓</span> Entrega automática</p>
+                      <p className="flex items-center gap-2.5"><span className="font-bold text-success">✓</span> Liberação instantânea</p>
+                      <p className="flex items-center gap-2.5"><span className="font-bold text-success">✓</span> Email e senha inclusos</p>
                     </div>
 
                     {/* Separator */}
@@ -821,14 +817,12 @@ const ContaDetalhes = () => {
                       </p>
                     </div>
 
-                    {/* CTA Button */}
                     <button
                       type="button"
                       onClick={handleBuyNow}
                       disabled={checkingAvailability}
                       aria-busy={checkingAvailability}
-                      aria-label={checkingAvailability ? "Verificando disponibilidade" : "Comprar esta conta agora"}
-                      className="flex w-full min-h-[52px] items-center justify-center gap-2.5 rounded-xl bg-positive py-4 text-sm font-bold uppercase tracking-[0.18em] text-positive-foreground shadow-md transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-60 touch-manipulation"
+                      className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-positive py-4 text-sm font-bold uppercase tracking-[0.2em] text-positive-foreground transition-all active:scale-[0.98] disabled:opacity-60"
                     >
                       {checkingAvailability ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
                       {checkingAvailability ? "VERIFICANDO..." : "COMPRAR AGORA"}
