@@ -292,6 +292,7 @@ const ProdutoDetalhes = () => {
             contents: [{ id: product.id, quantity: 1 }],
             value: 0,
             transactionId: res.payment_id,
+            contentCategory: game?.slug || game?.name || undefined,
           });
         }
         if (res.claimed_free && res.ticket_id) {
@@ -316,6 +317,7 @@ const ProdutoDetalhes = () => {
       contentName: product.name,
       contentIds: [product.id],
       value: finalItemPrice,
+      contentCategory: game?.slug || game?.name || undefined,
     });
 
     const added = addItem({
@@ -325,6 +327,7 @@ const ProdutoDetalhes = () => {
       planId: selectedPlan.id,
       planName: selectedPlan.name,
       price: finalItemPrice,
+      gameName: game?.slug || game?.name || undefined,
     });
     if (added) navigate("/checkout");
   };

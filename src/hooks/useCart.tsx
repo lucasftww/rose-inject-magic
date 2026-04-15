@@ -15,6 +15,8 @@ export interface CartItem {
   lztCurrency?: string;
   lztGame?: string;
   skinsCount?: number;
+  /** Nome ou slug do jogo para tracking (ex: "valorant", "cs2"). */
+  gameName?: string;
 }
 
 interface CartContextType {

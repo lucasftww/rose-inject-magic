@@ -9,6 +9,7 @@ export function buildMetaPurchasePayloadFromCartItems(
   contentIds: string[];
   contents: { id: string; quantity: number }[];
   value: number;
+  contentCategory?: string;
 } | null {
   if (items.length === 0) return null;
   const contentIds = items.map((i) => i.productId).filter(Boolean);
@@ -24,5 +25,17 @@ export function buildMetaPurchasePayloadFromCartItems(
           const joined = items.map((i) => i.productName).join(", ");
           return joined.length <= 500 ? joined : `${items.length} produtos — ${joined.slice(0, 420)}…`;
         })();
-  return { contentName, contentIds, contents, value };
+
+  // Derive content_category from cart items (lztGame or gameName)
+  const gameNames = items
+    .map((i) => i.lztGame || i.gameName)
+    .filter((g): g is string => !!g);
+  const uniqueGames = [...new Set(gameNames)];
+  const contentCategory = uniqueGames.length === 1
+    ? uniqueGames[0]
+    : uniqueGames.length > 1
+      ? uniqueGames.join(", ")
+      : undefined;
+
+  return { contentName, contentIds, contents, value, ...(contentCategory ? { contentCategory } : {}) };
 }

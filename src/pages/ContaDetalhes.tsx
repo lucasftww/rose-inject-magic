@@ -522,6 +522,7 @@ const ContaDetalhes = () => {
       contentName: cleanedTitle,
       contentIds: [`lzt-${item.item_id}`],
       value: lockedPriceBrl,
+      contentCategory: "valorant",
     });
 
     const added = addItem({

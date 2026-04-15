@@ -52,6 +52,7 @@ const relayAuthHeaders = (): Record<string, string> => ({
 const sanitizeRelayCustomData = (data: Record<string, unknown>): Record<string, unknown> => {
   const out: Record<string, unknown> = {};
   if (typeof data.content_name === "string") out.content_name = data.content_name.trim().slice(0, 500);
+  if (typeof data.content_category === "string") out.content_category = data.content_category.trim().slice(0, 200);
   if (Array.isArray(data.content_ids)) {
     out.content_ids = data.content_ids.map((id) => String(id)).filter(Boolean).slice(0, 100);
   }
@@ -372,6 +373,8 @@ interface TrackingData {
   value: number;
   currency?: string;
   transactionId?: string;
+  /** Nome ou slug do jogo (ex: "valorant", "fortnite"). Enviado como content_category. */
+  contentCategory?: string;
 }
 
 /** Collect user_data for CAPI from cookies/storage + cached identity */
@@ -527,6 +530,7 @@ export const trackInitiateCheckout = (data: TrackingData) => {
     content_type: "product",
     value: data.value,
     currency: data.currency || "BRL",
+    ...(data.contentCategory ? { content_category: data.contentCategory } : {}),
   };
 
   if (window.fbq) {
@@ -576,6 +580,7 @@ export const trackPurchase = (
     value: data.value,
     currency: data.currency || "BRL",
     transaction_id: data.transactionId,
+    ...(data.contentCategory ? { content_category: data.contentCategory } : {}),
   };
 
   if (window.fbq) {
