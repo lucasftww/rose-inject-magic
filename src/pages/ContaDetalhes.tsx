@@ -1092,47 +1092,52 @@ const ContaDetalhes = () => {
       </div>
 
       {/* Sticky mobile bottom bar */}
-      {item && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 sm:hidden pointer-events-none">
-          <div className="pointer-events-auto border-t border-border/60 bg-background/95 px-4 py-3 shadow-[0_-8px_32px_-8px_rgba(0,0,0,0.35)] backdrop-blur-md safe-area-bottom">
-            <div className="mx-auto flex max-w-lg items-center gap-3">
-              <div className="flex min-w-0 flex-col">
-                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/80">Total</span>
-                <span className="truncate text-lg font-bold tabular-nums text-success">
-                  {lockedPriceBrl !== null ? formatPriceBrl(lockedPriceBrl) : getDisplayPrice(item, "valorant")}
-                </span>
+      {item &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            className="pointer-events-none fixed inset-x-0 bottom-0 z-40 w-full min-w-0 sm:hidden [transform:translateZ(0)]"
+            style={{ WebkitTransform: "translateZ(0)" }}
+          >
+            <div className="pointer-events-auto border-t border-border/60 bg-background/95 px-3 py-3 shadow-[0_-8px_32px_-8px_rgba(0,0,0,0.35)] backdrop-blur-md safe-area-bottom sm:px-4">
+              <div className="mx-auto flex w-full max-w-lg min-w-0 items-center gap-2 sm:gap-3">
+                <div className="flex min-w-0 shrink-0 flex-col">
+                  <span className="truncate text-base font-bold leading-tight tabular-nums text-positive sm:text-lg">
+                    {lockedPriceBrl !== null ? formatPriceBrl(lockedPriceBrl) : getDisplayPrice(item, "valorant")}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleBuyNow}
+                  disabled={checkingAvailability}
+                  aria-busy={checkingAvailability}
+                  aria-label={checkingAvailability ? "Verificando disponibilidade" : "Comprar agora"}
+                  className="flex min-h-[48px] min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-positive px-2 py-3 text-xs font-bold uppercase tracking-wider text-positive-foreground transition-all active:scale-[0.98] disabled:opacity-60 touch-manipulation sm:px-3 sm:text-sm"
+                >
+                  {checkingAvailability ? <Loader2 className="h-4 w-4 shrink-0 animate-spin" /> : <ShoppingCart className="h-4 w-4 shrink-0" />}
+                  <span className="min-w-0 truncate">{checkingAvailability ? "Verificando…" : "Comprar"}</span>
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={handleBuyNow}
-                disabled={checkingAvailability}
-                aria-busy={checkingAvailability}
-                aria-label={checkingAvailability ? "Verificando disponibilidade" : "Comprar agora"}
-                className="flex min-h-[48px] min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-positive px-3 py-3 text-xs font-bold uppercase tracking-wider text-positive-foreground shadow-md transition-all active:scale-[0.98] disabled:opacity-60 touch-manipulation"
-              >
-                {checkingAvailability ? <Loader2 className="h-4 w-4 shrink-0 animate-spin" /> : <ShoppingCart className="h-4 w-4 shrink-0" />}
-                <span className="truncate">{checkingAvailability ? "Verificando…" : "Comprar"}</span>
-              </button>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
     </div>);
 
 };
 
-const StatCell = forwardRef<HTMLDivElement, {label: string;value: string | number;}>(({ label, value }, ref) =>
-<div ref={ref} className="flex items-center justify-between rounded-lg bg-secondary/30 px-3.5 py-3">
-    <span className="text-[11px] text-muted-foreground/70 font-medium">{label}</span>
-    <span className="text-sm font-bold text-foreground">{value}</span>
+const StatCell = forwardRef<HTMLDivElement, {label: string;value: string | number; color?: string}>(({ label, value, color }, ref) =>
+<div ref={ref} className="flex flex-col gap-0.5 rounded-lg bg-secondary/40 px-3 py-2.5">
+    <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</span>
+    <span className="text-base font-bold" style={{ color }}>{value}</span>
   </div>);
 StatCell.displayName = "StatCell";
 
 
-const HighlightStat = forwardRef<HTMLDivElement, {label: string;value: string | number;}>(({ label, value }, ref) =>
-<div ref={ref} className="flex flex-col items-center py-3.5 px-1.5">
-    <span className="text-[10px] text-muted-foreground mb-1">{label}</span>
-    <span className="text-base font-bold text-success">{value}</span>
+const HighlightStat = forwardRef<HTMLDivElement, {label: string;value: string | number; color?: string}>(({ label, value, color }, ref) =>
+<div ref={ref} className="flex flex-col items-center justify-center py-3 px-2">
+    <span className="text-base font-bold" style={{ color }}>{value}</span>
+    <span className="text-[10px] text-muted-foreground">{label}</span>
   </div>
 );
 HighlightStat.displayName = "HighlightStat";
