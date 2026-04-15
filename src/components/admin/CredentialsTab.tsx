@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useAdminCredentialsList } from "@/hooks/useAdminData";
-import { Key, Eye, EyeOff, CheckCircle, ExternalLink, Plus, Pencil, Trash2, Loader2, X, Save } from "lucide-react";
+import { Key, CheckCircle, ExternalLink, Plus, Pencil, Trash2, Loader2, X, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { toast } from "@/hooks/use-toast";
@@ -24,7 +24,7 @@ function credentialFromRow(r: CredentialRow): Credential {
     id: (r as unknown as Record<string, unknown>).id as string | undefined,
     name: r.name,
     env_key: r.env_key,
-    value: r.value,
+    value: "",
     description: r.description,
     help_url: r.help_url,
   };
@@ -86,12 +86,12 @@ const CredentialsTab = () => {
   const { data: credentialRows = [], isPending: loading, isError, error, refetch: refetchCredentials } =
     useAdminCredentialsList();
   const credentials = useMemo(() => credentialRows.map(credentialFromRow), [credentialRows]);
-  const [visibleKeys, setVisibleKeys] = useState<Set<string>>(new Set());
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Credential | null>(null);
   /** Linha em edição identificada por env_key (sempre existe; evita .eq("id", undefined) se não houver coluna id). */
   const [editingRowEnvKey, setEditingRowEnvKey] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [credentialSecretLoading, setCredentialSecretLoading] = useState(false);
 
   const [formName, setFormName] = useState("");
   const [formEnvKey, setFormEnvKey] = useState("");
@@ -130,6 +130,7 @@ const CredentialsTab = () => {
     setFormValue("");
     setEditing(null);
     setEditingRowEnvKey(null);
+    setCredentialSecretLoading(false);
     setShowForm(true);
   };
 
@@ -138,6 +139,7 @@ const CredentialsTab = () => {
     setEditing(null);
     setEditingRowEnvKey(null);
     setShowForm(false);
+    setCredentialSecretLoading(false);
   };
 
   const openEdit = (cred: Credential) => {
@@ -145,10 +147,24 @@ const CredentialsTab = () => {
     setEditingRowEnvKey(cred.env_key);
     setFormName(cred.name);
     setFormEnvKey(cred.env_key);
-    setFormValue(cred.value);
+    setFormValue("");
     setFormDescription(cred.description || "");
     setFormHelpUrl(cred.help_url || "");
+    setCredentialSecretLoading(true);
     setShowForm(true);
+    void supabase
+      .from("system_credentials")
+      .select("value")
+      .eq("env_key", cred.env_key)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        setCredentialSecretLoading(false);
+        if (error) {
+          toast({ title: "Erro ao carregar valor", description: error.message, variant: "destructive" });
+          return;
+        }
+        if (data?.value != null) setFormValue(data.value);
+      });
   };
 
   const handleSave = async () => {
@@ -164,16 +180,20 @@ const CredentialsTab = () => {
         setSaving(false);
         return;
       }
-      const { error } = await supabase
-        .from("system_credentials")
-        .update({
-          name: formName.trim(),
-          env_key: formEnvKey.trim().toUpperCase(),
-          value: formValue,
-          description: formDescription.trim() || null,
-          help_url: formHelpUrl.trim() || null,
-        })
-        .eq("env_key", rowEnvKey);
+      const updateRow: {
+        name: string;
+        env_key: string;
+        description: string | null;
+        help_url: string | null;
+        value?: string;
+      } = {
+        name: formName.trim(),
+        env_key: formEnvKey.trim().toUpperCase(),
+        description: formDescription.trim() || null,
+        help_url: formHelpUrl.trim() || null,
+      };
+      if (formValue.trim().length > 0) updateRow.value = formValue;
+      const { error } = await supabase.from("system_credentials").update(updateRow).eq("env_key", rowEnvKey);
       if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
       else { toast({ title: "Credencial atualizada!" }); resetForm(); void refetchCredentials(); }
     } else {
@@ -199,15 +219,6 @@ const CredentialsTab = () => {
     const { error } = await supabase.from("system_credentials").delete().eq("env_key", cred.env_key);
     if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
     else { toast({ title: "Credencial excluída!" }); void refetchCredentials(); }
-  };
-
-  const toggleVisibility = (envKey: string) => {
-    setVisibleKeys((prev) => {
-      const next = new Set(prev);
-      if (next.has(envKey)) next.delete(envKey);
-      else next.add(envKey);
-      return next;
-    });
   };
 
   return (
@@ -268,8 +279,18 @@ const CredentialsTab = () => {
             </div>
             <div className="sm:col-span-2">
               <label className="text-xs font-medium text-muted-foreground">Valor</label>
-              <input type="password" autoComplete="off" value={formValue} onChange={(e) => setFormValue(e.target.value.slice(0, 500))} placeholder="Cole o valor da credencial aqui"
-                className="mt-1 w-full rounded-lg border border-border bg-secondary/50 px-4 py-2.5 text-sm font-mono text-foreground placeholder:text-muted-foreground outline-none focus:border-success/50" />
+              <input
+                type="password"
+                autoComplete="off"
+                value={formValue}
+                onChange={(e) => setFormValue(e.target.value.slice(0, 500))}
+                placeholder={editing ? "Deixe vazio para manter o valor atual" : "Cole o valor da credencial aqui"}
+                disabled={Boolean(editing && credentialSecretLoading)}
+                className="mt-1 w-full rounded-lg border border-border bg-secondary/50 px-4 py-2.5 text-sm font-mono text-foreground placeholder:text-muted-foreground outline-none focus:border-success/50 disabled:opacity-60"
+              />
+              {editing && credentialSecretLoading && (
+                <p className="mt-1 text-xs text-muted-foreground">A carregar valor seguro…</p>
+              )}
             </div>
             <div className="sm:col-span-2">
               <label className="text-xs font-medium text-muted-foreground">Descrição (opcional)</label>
@@ -283,7 +304,7 @@ const CredentialsTab = () => {
             </div>
           </form>
           <div className="mt-6 flex gap-3">
-            <button onClick={handleSave} disabled={saving}
+            <button onClick={handleSave} disabled={saving || Boolean(editing && credentialSecretLoading)}
               className="flex items-center gap-2 rounded-lg bg-success px-6 py-2.5 text-sm font-semibold text-success-foreground disabled:opacity-50">
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} {editing ? "Salvar" : "Criar"}
             </button>
@@ -315,9 +336,9 @@ const CredentialsTab = () => {
                   <h3 className="text-sm font-bold text-foreground">{cred.name}</h3>
                   {cred.description && <p className="mt-0.5 text-xs text-muted-foreground">{cred.description}</p>}
                   <div className="mt-2 flex items-center gap-2">
-                    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold ${cred.value ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"}`}>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2.5 py-0.5 text-[10px] font-bold text-muted-foreground">
                       <CheckCircle className="h-3 w-3" />
-                      {cred.value ? "Configurada" : "Não configurada"}
+                      Valor só ao editar
                     </span>
                     <code className="rounded bg-secondary px-2 py-0.5 text-[10px] font-mono text-muted-foreground">
                       {cred.env_key}
@@ -332,10 +353,6 @@ const CredentialsTab = () => {
                     <ExternalLink className="h-3.5 w-3.5" />
                   </a>
                 )}
-                <button onClick={() => toggleVisibility(cred.env_key)}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground hover:border-success hover:text-success">
-                  {visibleKeys.has(cred.env_key) ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                </button>
                 <button onClick={() => openEdit(cred)}
                   className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground hover:border-accent hover:text-accent">
                   <Pencil className="h-3.5 w-3.5" />
@@ -347,13 +364,6 @@ const CredentialsTab = () => {
               </div>
             </div>
 
-            {visibleKeys.has(cred.env_key) && (
-              <div className="mt-3 rounded-lg border border-border bg-secondary/50 px-4 py-2.5">
-                <p className="text-xs font-mono text-foreground break-all">
-                  {cred.value || <span className="text-muted-foreground italic">Sem valor definido</span>}
-                </p>
-              </div>
-            )}
           </div>
           );
         })}

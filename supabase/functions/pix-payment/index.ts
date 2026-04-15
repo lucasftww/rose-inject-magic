@@ -716,42 +716,44 @@ async function sendUtmifyOrderEvent(supabaseAdmin: SupabaseAdminClient, payment:
 
 const PURCHASE_TRACKING_EVENT_NAME = "purchase";
 
-async function hasPurchaseTrackingSent(
+/** Atomically claim a send slot so concurrent workers cannot double-post CAPI/UTMify for the same payment. */
+async function tryClaimPurchaseTrackingSend(
   supabaseAdmin: SupabaseAdminClient,
   paymentId: string,
   provider: string,
-): Promise<boolean> {
+): Promise<{ claimed: true; rowId: string } | { claimed: false }> {
   const { data, error } = await supabaseAdmin
     .from("payment_tracking_events")
-    .select("id")
-    .eq("payment_id", paymentId)
-    .eq("provider", provider)
-    .eq("event_name", PURCHASE_TRACKING_EVENT_NAME)
-    .maybeSingle();
-  if (error) {
-    console.error("hasPurchaseTrackingSent error:", error);
-    return false;
-  }
-  return Boolean(data?.id);
-}
-
-async function markPurchaseTrackingSent(
-  supabaseAdmin: SupabaseAdminClient,
-  paymentId: string,
-  provider: string,
-): Promise<void> {
-  const { error } = await supabaseAdmin.from("payment_tracking_events").upsert(
-    {
+    .insert({
       payment_id: paymentId,
       provider,
       event_name: PURCHASE_TRACKING_EVENT_NAME,
-      status: "sent",
-    },
-    { onConflict: "payment_id,provider,event_name", ignoreDuplicates: true },
-  );
+      status: "sending",
+    })
+    .select("id")
+    .maybeSingle();
+
   if (error) {
-    console.error("markPurchaseTrackingSent error:", error);
+    if (error.code === "23505") return { claimed: false };
+    console.error("tryClaimPurchaseTrackingSend error:", error);
+    return { claimed: false };
   }
+  const rowId = data?.id != null ? String(data.id) : "";
+  if (!rowId) return { claimed: false };
+  return { claimed: true, rowId };
+}
+
+async function finalizePurchaseTrackingSent(supabaseAdmin: SupabaseAdminClient, rowId: string): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from("payment_tracking_events")
+    .update({ status: "sent" })
+    .eq("id", rowId);
+  if (error) console.error("finalizePurchaseTrackingSent error:", error);
+}
+
+async function releasePurchaseTrackingClaim(supabaseAdmin: SupabaseAdminClient, rowId: string): Promise<void> {
+  const { error } = await supabaseAdmin.from("payment_tracking_events").delete().eq("id", rowId);
+  if (error) console.error("releasePurchaseTrackingClaim error:", error);
 }
 
 async function sendPurchaseTrackingEvents(supabaseAdmin: SupabaseAdminClient, payment: PaymentRow, req: Request) {
@@ -767,11 +769,15 @@ async function sendPurchaseTrackingEvents(supabaseAdmin: SupabaseAdminClient, pa
   ];
 
   for (const provider of providers) {
-    const alreadySent = await hasPurchaseTrackingSent(supabaseAdmin, paymentId, provider.key);
-    if (alreadySent) continue;
-    const sent = await provider.sender();
-    if (sent) {
-      await markPurchaseTrackingSent(supabaseAdmin, paymentId, provider.key);
+    const claim = await tryClaimPurchaseTrackingSend(supabaseAdmin, paymentId, provider.key);
+    if (!claim.claimed) continue;
+    try {
+      const sent = await provider.sender();
+      if (sent) await finalizePurchaseTrackingSent(supabaseAdmin, claim.rowId);
+      else await releasePurchaseTrackingClaim(supabaseAdmin, claim.rowId);
+    } catch (err) {
+      console.error("sendPurchaseTrackingEvents sender error:", err);
+      await releasePurchaseTrackingClaim(supabaseAdmin, claim.rowId);
     }
   }
 }

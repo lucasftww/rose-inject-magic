@@ -83,6 +83,25 @@ function resolveEventSourceUrl(
   return undefined;
 }
 
+function hostnameFromHttpUrl(raw: string | null | undefined): string | null {
+  const u = String(raw ?? "").trim();
+  if (!u.startsWith("http://") && !u.startsWith("https://")) return null;
+  try {
+    return new URL(u).hostname.toLowerCase();
+  } catch {
+    return null;
+  }
+}
+
+/** When Origin/Referer are present (browser), their host must match the same allowlist as event_source_url. */
+function assertRequestOriginAllowed(req: Request, allowedHosts: Set<string>): string | null {
+  const originHost = hostnameFromHttpUrl(req.headers.get("origin"));
+  if (originHost && !isAllowedHost(originHost, allowedHosts)) return "origin_header_not_allowed";
+  const refererHost = hostnameFromHttpUrl(req.headers.get("referer"));
+  if (refererHost && !isAllowedHost(refererHost, allowedHosts)) return "referer_not_allowed";
+  return null;
+}
+
 function isAllowedHost(hostname: string, allowlist: Set<string>): boolean {
   const normalized = hostname.toLowerCase();
   if (allowlist.has(normalized)) return true;
@@ -188,6 +207,15 @@ Deno.serve(async (req) => {
       });
     }
 
+    const allowedHostsEarly = parseAllowedOriginHosts();
+    const originReject = assertRequestOriginAllowed(req, allowedHostsEarly);
+    if (originReject) {
+      return new Response(JSON.stringify({ success: true, ignored: true, reason: originReject }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Only allow InitiateCheckout and Purchase (rest is manual pixel only)
     if (event_name !== "InitiateCheckout" && event_name !== "Purchase") {
       console.log(`Relay skipped event: ${event_name}. Only InitiateCheckout and Purchase are allowed.`);
@@ -257,7 +285,7 @@ Deno.serve(async (req) => {
 
     const safeCustom = sanitizeCustomData(custom_data);
     const resolvedUrl = resolveEventSourceUrl(event_source_url, req);
-    const allowedHosts = parseAllowedOriginHosts();
+    const allowedHosts = allowedHostsEarly;
     if (resolvedUrl) {
       try {
         const hostname = new URL(resolvedUrl).hostname;

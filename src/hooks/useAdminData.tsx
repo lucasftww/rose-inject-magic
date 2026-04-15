@@ -128,7 +128,7 @@ export function useAdminCredentialsList() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("system_credentials")
-        .select("*")
+        .select("name, env_key, description, help_url, created_at, updated_at")
         .order("created_at", { ascending: true });
       if (error) throw error;
       return data ?? [];

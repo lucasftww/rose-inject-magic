@@ -1,6 +1,22 @@
 import type { CartItem } from "@/hooks/useCart";
 import { normalizeGameSlug } from "@/lib/gameSlug";
 
+/** Fingerprint estável do carrinho para deduplicar `InitiateCheckout` (ex.: comprar agora → checkout). */
+export function buildCartFingerprintForMetaIc(
+  items: Pick<CartItem, "productId" | "quantity" | "price">[],
+): string {
+  if (items.length === 0) return "";
+  return [...items]
+    .map((i) => {
+      const id = String(i.productId || "").trim();
+      const qty = Math.max(1, Math.floor(Number(i.quantity) || 1));
+      const price = Number.isFinite(i.price) && i.price >= 0 ? i.price : 0;
+      return `${id}:${qty}:${price.toFixed(4)}`;
+    })
+    .sort()
+    .join("|");
+}
+
 /** Payload alinhado com `trackPurchase` / CAPI `pix-payment` para carrinhos multi-linha. */
 export function buildMetaPurchasePayloadFromCartItems(
   items: CartItem[],

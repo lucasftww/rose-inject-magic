@@ -661,8 +661,21 @@ const sendCAPI = async (
 
 // ─── Event Tracking ─────────────────────────────────────────────────────────
 
-export const trackInitiateCheckout = (data: TrackingData) => {
+type InitiateCheckoutOptions = { cartFingerprint?: string };
+
+export const trackInitiateCheckout = (data: TrackingData, opts?: InitiateCheckoutOptions) => {
   if (typeof window === "undefined") return;
+
+  const fp = String(opts?.cartFingerprint ?? "").trim();
+  if (fp.length > 0) {
+    try {
+      const k = `_meta_ic_cart_${fp}`;
+      if (sessionStorage.getItem(k)) return;
+      sessionStorage.setItem(k, "1");
+    } catch (e: unknown) {
+      devLog("trackInitiateCheckout dedupe storage failed", e);
+    }
+  }
 
   const eventId = generateEventId("ic");
   const contents =

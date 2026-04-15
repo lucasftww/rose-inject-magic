@@ -13,7 +13,7 @@ import {
 import logoRoyal from "@/assets/logo-royal.png";
 import { motion } from "framer-motion";
 import { getUserData, setAdvancedMatching } from "@/lib/metaPixel";
-import { buildMetaPurchasePayloadFromCartItems } from "@/lib/buildMetaPurchasePayload";
+import { buildMetaPurchasePayloadFromCartItems, buildCartFingerprintForMetaIc } from "@/lib/buildMetaPurchasePayload";
 import { safeJsonFetch, ApiError } from "@/lib/apiUtils";
 import { safeHttpUrl } from "@/lib/safeUrl";
 import { buildCartSnapshotFromItems } from "@/lib/buildCartSnapshot";
@@ -241,7 +241,10 @@ const Checkout = () => {
   const checkoutEmailUserIdRef = useRef<string | null>(null);
   const [enabledMethods, setEnabledMethods] = useState<Record<string, boolean> | null>(null);
   const hasLztItems = items.some((i) => i.type === "lzt-account");
-  const pixOnlyGateway = true;
+  const pixOnlyGateway = useMemo(() => {
+    if (enabledMethods == null) return true;
+    return enabledMethods.card !== true && enabledMethods.crypto !== true;
+  }, [enabledMethods]);
 
   // Coupon state
   const urlCouponId = searchParams.get("coupon_id");
@@ -282,8 +285,30 @@ const Checkout = () => {
   const cpfComplete = cpfDigits.length === 11;
   const cpfValid = cpfComplete && validateCpfChecksum(formData.document);
 
-  // InitiateCheckout is already tracked on the product detail pages (ProdutoDetalhes, ContaDetalhes, etc.)
-  // before navigating here, so we do NOT fire it again to avoid duplicate events in Meta.
+  // InitiateCheckout nas páginas de detalhe + aqui como fallback (carrinho sem IC, links diretos).
+  // `cartFingerprint` em `trackInitiateCheckout` evita duplicar com «comprar agora» na mesma sessão.
+
+  useEffect(() => {
+    if (authLoading || !user || items.length === 0 || paymentId) return;
+    const fp = buildCartFingerprintForMetaIc(items);
+    if (!fp) return;
+    const payload = buildMetaPurchasePayloadFromCartItems(items, Math.max(0, cartFinalPrice));
+    if (!payload) return;
+    void import("@/lib/metaPixel").then(({ trackInitiateCheckout }) => {
+      trackInitiateCheckout(
+        {
+          contentName: payload.contentName,
+          contentIds: payload.contentIds,
+          contents: payload.contents,
+          value: payload.value,
+          currency: "BRL",
+          ...(payload.contentCategory ? { contentCategory: payload.contentCategory } : {}),
+          ...(payload.section ? { section: payload.section } : {}),
+        },
+        { cartFingerprint: fp },
+      );
+    });
+  }, [authLoading, user, items, paymentId, cartFinalPrice]);
 
   useEffect(() => {
     if (formData.email.includes("@") && formData.name.length > 2) {
