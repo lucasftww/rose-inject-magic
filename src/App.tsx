@@ -68,6 +68,7 @@ const Dashboard = lazyRetry(() => import("./pages/Dashboard"));
 const Avaliacoes = lazyRetry(() => import("./pages/Avaliacoes"));
 const MeusPedidos = lazyRetry(() => import("./pages/MeusPedidos"));
 const PedidoChat = lazyRetry(() => import("./pages/PedidoChat"));
+const PedidoSucesso = lazyRetry(() => import("./pages/PedidoSucesso"));
 const Checkout = lazyRetry(() => import("./pages/Checkout"));
 const Raspadinha = lazyRetry(() => import("./pages/Raspadinha"));
 const ResetPassword = lazyRetry(() => import("./pages/ResetPassword"));
@@ -130,6 +131,7 @@ const App = () => (
                 <Route path="/dashboard" element={<SuspenseRoute><Dashboard /></SuspenseRoute>} />
 
                 <Route path="/meus-pedidos" element={<SuspenseRoute><MeusPedidos /></SuspenseRoute>} />
+                <Route path="/pedido/sucesso" element={<SuspenseRoute><PedidoSucesso /></SuspenseRoute>} />
                 <Route path="/pedido/:id" element={<SuspenseRoute><PedidoChat /></SuspenseRoute>} />
                 <Route path="/checkout" element={<SuspenseRoute><Checkout /></SuspenseRoute>} />
 

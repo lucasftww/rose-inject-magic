@@ -7,12 +7,12 @@ import { supabase, supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/
 import { toast } from "@/hooks/use-toast";
 import {
   Loader2, Copy, Check, Clock, ArrowLeft, Package, ShieldCheck, Zap,
-  CreditCard, Wallet, Sparkles, ChevronRight, ExternalLink, Lock,
+  CreditCard, Wallet, Sparkles, ExternalLink, Lock,
   CheckCircle, AlertCircle, Trash2, Tag,
 } from "lucide-react";
 import logoRoyal from "@/assets/logo-royal.png";
 import { motion } from "framer-motion";
-import { trackPurchase, getUserData, setAdvancedMatching } from "@/lib/metaPixel";
+import { getUserData, setAdvancedMatching } from "@/lib/metaPixel";
 import { buildMetaPurchasePayloadFromCartItems } from "@/lib/buildMetaPurchasePayload";
 import { safeJsonFetch, ApiError } from "@/lib/apiUtils";
 import { safeHttpUrl } from "@/lib/safeUrl";
@@ -23,28 +23,45 @@ import { Button } from "@/components/ui/button";
 
 type PaymentMethod = "pix" | "card" | "crypto" | null;
 
-/** Derive a single game slug from cart items for URL-based Meta custom conversions. */
+type PurchaseSuccessPayload = {
+  contentName: string;
+  contentIds: string[];
+  contents: { id: string; quantity: number }[];
+  value: number;
+  contentCategory?: string;
+};
+
+/** Derive a single game slug from cart items for success URL routing. */
 function deriveGameSlug(cartItems: { lztGame?: string; gameName?: string; type?: string }[]): string | null {
   const games = cartItems
     .map((i) => i.lztGame || i.gameName)
     .filter((g): g is string => !!g);
   const unique = [...new Set(games.map((g) => g.toLowerCase()))];
   if (unique.length === 1) return unique[0];
-  if (unique.length > 1) return unique.join(",");
+  if (unique.length > 1) return "multi";
   // Fallback: if all items are regular products (not lzt-account)
   if (cartItems.every((i) => i.type !== "lzt-account")) return "produto";
   return null;
 }
 
-/** Inject ?game= into current URL so Meta Pixel sees it when Purchase fires. */
-function injectGameParamIntoUrl(cartItems: { lztGame?: string; gameName?: string; type?: string }[]) {
-  const slug = deriveGameSlug(cartItems);
-  if (!slug) return;
+function buildSuccessUrl(
+  paymentId: string,
+  cartItems: { lztGame?: string; gameName?: string; type?: string }[],
+  ticketId?: string | null,
+): string {
+  const params = new URLSearchParams({ payment_id: paymentId });
+  const gameSlug = deriveGameSlug(cartItems);
+  if (gameSlug) params.set("game", gameSlug);
+  if (ticketId) params.set("ticket_id", ticketId);
+  return `/pedido/sucesso?${params.toString()}`;
+}
+
+function savePendingPurchasePayload(paymentId: string, payload: PurchaseSuccessPayload): void {
   try {
-    const url = new URL(window.location.href);
-    url.searchParams.set("game", slug);
-    window.history.replaceState(null, "", url.toString());
-  } catch { /* noop */ }
+    sessionStorage.setItem(`pending_purchase_${paymentId}`, JSON.stringify(payload));
+  } catch {
+    // ignore temporary storage failures
+  }
 }
 
 /** Resposta de `validate_coupon` (jsonb) — manter alinhado ao RPC em migrations. */
@@ -356,15 +373,16 @@ const Checkout = () => {
           return;
         }
         const freePayload = buildMetaPurchasePayloadFromCartItems(items, 0);
-        if (freePayload && result.payment_id) {
-          injectGameParamIntoUrl(items);
-          trackPurchase({ ...freePayload, transactionId: result.payment_id });
-        }
+        if (freePayload && result.payment_id) savePendingPurchasePayload(result.payment_id, freePayload);
         clearCart();
-        if (result.ticket_id) {
-          toast({ title: "Pronto!", description: "Abrindo o pedido com o download." });
+        if (result.payment_id) {
+          toast({ title: "Pronto!", description: "Pagamento confirmado." });
+          navigate(buildSuccessUrl(result.payment_id, items, result.ticket_id), { replace: true });
+        } else if (result.ticket_id) {
           navigate(`/pedido/${result.ticket_id}`);
-        } else navigate("/meus-pedidos");
+        } else {
+          navigate("/meus-pedidos");
+        }
       } catch (e: unknown) {
         freeCheckoutClaimRef.current = false;
         toast({ title: "Erro", description: e instanceof Error ? e.message : String(e), variant: "destructive" });
@@ -447,13 +465,17 @@ const Checkout = () => {
       if (!result.success) throw new Error(result.error || "Erro ao criar cobrança");
       if (result.claimed_free) {
         const freePayload = buildMetaPurchasePayloadFromCartItems(items, 0);
-        if (freePayload && result.payment_id) {
-          injectGameParamIntoUrl(items);
-          trackPurchase({ ...freePayload, transactionId: result.payment_id });
-        }
+        if (freePayload && result.payment_id) savePendingPurchasePayload(result.payment_id, freePayload);
         clearCart();
-        if (result.ticket_id) { toast({ title: "Pronto!", description: "Abrindo o pedido." }); navigate(`/pedido/${result.ticket_id}`); }
-        else navigate("/meus-pedidos");
+        if (result.payment_id) {
+          toast({ title: "Pronto!", description: "Pagamento confirmado." });
+          navigate(buildSuccessUrl(result.payment_id, items, result.ticket_id), { replace: true });
+        } else if (result.ticket_id) {
+          toast({ title: "Pronto!", description: "Abrindo o pedido." });
+          navigate(`/pedido/${result.ticket_id}`);
+        } else {
+          navigate("/meus-pedidos");
+        }
         return;
       }
       setPaymentId(result.payment_id ?? null);
@@ -547,6 +569,7 @@ const Checkout = () => {
   const cartSnapshotRef = useRef(cartSnapshot);
   const finalPriceRef = useRef(finalPrice);
   const paymentIdRef = useRef(paymentId);
+  const redirectToSuccessDoneRef = useRef(false);
   const statusPollFailCountRef = useRef(0);
   const statusPollNotifiedRef = useRef(false);
   const statusPollInFlightRef = useRef(false);
@@ -577,14 +600,6 @@ const Checkout = () => {
         if (data.status && data.status !== "ACTIVE") {
           setPaymentStatus(data.status);
           if (intervalRef.current) clearInterval(intervalRef.current);
-          if (data.status === "COMPLETED") {
-            const snap = cartSnapshotRef.current;
-            injectGameParamIntoUrl(snap);
-            const purchasePayload = buildMetaPurchasePayloadFromCartItems(snap, finalPriceRef.current);
-            if (purchasePayload) {
-              trackPurchase({ ...purchasePayload, transactionId: paymentId });
-            }
-          }
         }
       } catch (e) {
         if (cancelled) return;
@@ -606,6 +621,15 @@ const Checkout = () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, [paymentId, paymentStatus, paymentMethod]);
+
+  useEffect(() => {
+    if (paymentStatus !== "COMPLETED" || !paymentId || redirectToSuccessDoneRef.current) return;
+    redirectToSuccessDoneRef.current = true;
+    const snap = cartSnapshotRef.current;
+    const purchasePayload = buildMetaPurchasePayloadFromCartItems(snap, finalPriceRef.current);
+    if (purchasePayload) savePendingPurchasePayload(paymentId, purchasePayload);
+    navigate(buildSuccessUrl(paymentId, snap), { replace: true });
+  }, [paymentStatus, paymentId, navigate]);
 
   const copyCode = () => {
     if (chargeData?.brCode) {
@@ -635,29 +659,9 @@ const Checkout = () => {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <div className="mx-auto max-w-3xl px-4 sm:px-6 pt-4 pb-20">
-          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }} className="text-center">
-            <motion.div initial={{ scale: 0, rotate: -180 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.2 }} className="mx-auto mb-8 relative">
-              <div className="absolute inset-0 h-24 w-24 mx-auto rounded-full bg-emerald-500/20 blur-2xl animate-pulse" />
-              <div className="relative flex h-24 w-24 mx-auto items-center justify-center rounded-full border-2 border-emerald-500/40 bg-gradient-to-br from-emerald-500/20 to-emerald-500/5">
-                <Check className="h-12 w-12 text-emerald-500" strokeWidth={2.5} />
-              </div>
-            </motion.div>
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3" style={{ fontFamily: "'Valorant', sans-serif" }}>
-              <span className="text-emerald-500">PAGAMENTO</span> CONFIRMADO
-            </h1>
-            <p className="text-sm text-muted-foreground mb-12 max-w-md mx-auto">
-              Seus produtos já estão disponíveis. Obrigado por comprar na Royal Store!
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <button onClick={() => navigate("/dashboard?tab=purchases")} className="group inline-flex items-center justify-center gap-2.5 rounded-md bg-emerald-500 px-8 py-3.5 text-sm font-bold uppercase tracking-wider text-white transition-all hover:bg-emerald-600">
-                <Package className="h-4 w-4" /> Meus Pedidos <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-              </button>
-              <button onClick={() => navigate("/produtos")} className="inline-flex items-center justify-center gap-2 rounded-md border border-border px-8 py-3.5 text-sm font-medium text-muted-foreground transition-all hover:text-foreground hover:bg-card">
-                Continuar comprando
-              </button>
-            </div>
-          </motion.div>
+        <div className="mx-auto max-w-2xl px-4 sm:px-6 pt-16 pb-20 text-center">
+          <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
+          <p className="mt-4 text-sm text-muted-foreground">Pagamento aprovado. Redirecionando para a página final...</p>
         </div>
       </div>
     );
