@@ -204,7 +204,7 @@ function lolGalleryHeroBlurUrl(entry: SkinPreview): string {
   return entry.thumbImage;
 }
 
-const LolDetalhes = () => {
+const LolDetalhes = forwardRef<HTMLDivElement>((_props, _ref) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { getPrice, getDisplayPrice, formatPriceBrl } = useLztMarkup();
@@ -903,5 +903,8 @@ const StatHighlight = ({ label, value, color }: { label: string; value: string |
     <span className="text-[10px] text-muted-foreground">{label}</span>
   </div>
 );
+
+});
+LolDetalhes.displayName = "LolDetalhes";
 
 export default LolDetalhes;

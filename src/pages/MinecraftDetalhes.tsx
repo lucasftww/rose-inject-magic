@@ -58,7 +58,7 @@ const fetchAccountDetail = async (itemId: string) => {
   return res.json();
 };
 
-const MinecraftDetalhes = () => {
+const MinecraftDetalhes = forwardRef<HTMLDivElement>((_props, _ref) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { getPrice, getDisplayPrice, formatPriceBrl } = useLztMarkup();
@@ -550,5 +550,8 @@ const MinecraftDetalhes = () => {
     </div>
   );
 };
+
+});
+MinecraftDetalhes.displayName = "MinecraftDetalhes";
 
 export default MinecraftDetalhes;

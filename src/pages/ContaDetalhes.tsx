@@ -457,7 +457,7 @@ const fetchValorantBuddies = async (uuids: string[]): Promise<SimpleGalleryItem[
   return typedMatched.filter((x): x is SimpleGalleryItem => typeof x.image === "string" && x.image.length > 0);
 };
 
-const ContaDetalhes = () => {
+const ContaDetalhes = forwardRef<HTMLDivElement>((_props, _ref) => {
   const { id } = useParams<{id: string;}>();
   const navigate = useNavigate();
   const { getPrice, getDisplayPrice, formatPriceBrl } = useLztMarkup();
@@ -1141,5 +1141,8 @@ const HighlightStat = forwardRef<HTMLDivElement, {label: string;value: string | 
   </div>
 );
 HighlightStat.displayName = "HighlightStat";
+
+});
+ContaDetalhes.displayName = "ContaDetalhes";
 
 export default ContaDetalhes;

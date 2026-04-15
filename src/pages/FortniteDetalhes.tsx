@@ -107,7 +107,7 @@ const getRarityColor = (rarity: string): string =>
 
 type InventoryTab = "skins" | "pickaxes" | "dances" | "gliders";
 
-const FortniteDetalhes = () => {
+const FortniteDetalhes = forwardRef<HTMLDivElement>((_props, _ref) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { getPrice, getDisplayPrice, formatPriceBrl } = useLztMarkup();
@@ -763,5 +763,8 @@ const StatHighlight = ({ label, value, color }: { label: string; value: string |
     <span className="text-[10px] text-muted-foreground">{label}</span>
   </div>
 );
+
+});
+FortniteDetalhes.displayName = "FortniteDetalhes";
 
 export default FortniteDetalhes;
