@@ -888,8 +888,7 @@ const LolDetalhes = () => {
         )}
     </div>
   );
-});
-LolDetalhes.displayName = "LolDetalhes";
+};
 
 const StatCell = ({ label, value, color }: { label: string; value: string | number; color?: string }) => (
   <div className="flex flex-col gap-0.5 rounded-lg bg-secondary/40 px-3 py-2.5">
