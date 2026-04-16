@@ -19,7 +19,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.server-relay]
-verify_jwt = false
+verify_jwt = true
 
 [functions.robot-project]
 verify_jwt = false

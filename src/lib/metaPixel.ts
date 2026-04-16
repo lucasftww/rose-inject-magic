@@ -1,4 +1,4 @@
-import { supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
+import { supabase, supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
 
 /**
  * Meta Pixel + Conversions API (CAPI) — Enterprise-grade tracking
@@ -60,12 +60,24 @@ function disableSpaAutoPageView(): void {
   }
 }
 
-/** Headers exigidas pelo gateway Supabase + JSON para Edge Functions. */
-const relayAuthHeaders = (): Record<string, string> => ({
-  "Content-Type": "application/json",
-  apikey: supabaseAnonKey,
-  Authorization: `Bearer ${supabaseAnonKey}`,
-});
+/** Headers do relay: JWT real do utilizador + apikey do projeto. */
+const relayAuthHeaders = async (): Promise<Record<string, string> | null> => {
+  try {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const token = String(session?.access_token || "").trim();
+    if (!token) return null;
+    return {
+      "Content-Type": "application/json",
+      apikey: supabaseAnonKey,
+      Authorization: `Bearer ${token}`,
+    };
+  } catch (e: unknown) {
+    devLog("relayAuthHeaders failed", e);
+    return null;
+  }
+};
 
 /** Reduz campos inválidos que costumam gerar 400 na Meta CAPI. */
 const sanitizeRelayCustomData = (data: Record<string, unknown>): Record<string, unknown> => {
@@ -583,6 +595,11 @@ const sendCAPI = async (
   try {
     if (!supabaseAnonKey.trim()) return;
     if (!eventName?.trim() || !eventId?.trim()) return;
+    const headers = await relayAuthHeaders();
+    if (!headers) {
+      devLog("sendCAPI skipped: missing session token");
+      return;
+    }
 
     const url = `${new URL(supabaseUrl).origin}/functions/v1/server-relay`;
 
@@ -614,7 +631,7 @@ const sendCAPI = async (
 
     void fetch(url, {
       method: "POST",
-      headers: relayAuthHeaders(),
+      headers,
       body,
       keepalive: true,
       credentials: "omit",
@@ -651,7 +668,7 @@ const sendCAPI = async (
             });
             void fetch(url, {
               method: "POST",
-              headers: relayAuthHeaders(),
+              headers,
               body: retryBody,
               keepalive: true,
               credentials: "omit",
