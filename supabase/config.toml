@@ -19,7 +19,9 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.server-relay]
-verify_jwt = true
+# Gateway com verify_jwt=true devolve 401 UNAUTHORIZED_UNSUPPORTED_TOKEN_ALGORITHM para alguns access tokens (ex. ES256).
+# Autenticação do utilizador é validada dentro da função com auth.getUser().
+verify_jwt = false
 
 [functions.robot-project]
 verify_jwt = false

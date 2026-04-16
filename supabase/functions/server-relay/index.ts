@@ -151,6 +151,45 @@ Deno.serve(async (req) => {
   const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
   try {
+    const anonKey =
+      Deno.env.get("SUPABASE_ANON_KEY")?.trim() ||
+      Deno.env.get("SUPABASE_PUBLISHABLE_KEY")?.trim();
+    if (!anonKey) {
+      console.error("server-relay: missing SUPABASE_ANON_KEY or SUPABASE_PUBLISHABLE_KEY");
+      return new Response(JSON.stringify({ error: "Server misconfiguration" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const rawAuth = req.headers.get("Authorization") || req.headers.get("authorization") || "";
+    const bearer = rawAuth.startsWith("Bearer ") ? rawAuth.slice(7).trim() : "";
+    if (!bearer || bearer === anonKey) {
+      return new Response(JSON.stringify({ success: true, ignored: true, reason: "missing_user_jwt" }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const jwtParts = bearer.split(".");
+    if (jwtParts.length !== 3) {
+      return new Response(JSON.stringify({ success: true, ignored: true, reason: "invalid_jwt_shape" }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const userClient = createClient(SUPABASE_URL, anonKey, {
+      global: { headers: { Authorization: `Bearer ${bearer}` } },
+    });
+    const { data: userResult, error: userErr } = await userClient.auth.getUser();
+    if (userErr || !userResult?.user?.id) {
+      console.warn("server-relay: user JWT rejected", userErr?.message || "no user");
+      return new Response(JSON.stringify({ success: true, ignored: true, reason: "jwt_auth_failed" }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const [capiTokenRow, pixelIdRow, testCodeRow] = await Promise.all([
       supabaseAdmin.from("system_credentials").select("value").eq("env_key", "META_ACCESS_TOKEN").maybeSingle(),
       supabaseAdmin.from("system_credentials").select("value").eq("env_key", "META_PIXEL_ID").maybeSingle(),
