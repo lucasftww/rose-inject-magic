@@ -8,7 +8,8 @@ import { supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
  *   Browser → fbq events with Advanced Matching
  *   Server  → Edge Function server-relay with event_id deduplication
  *
- * Events (ativos): InitiateCheckout, Purchase — PageView/ViewContent não são enviados por pedido do negócio
+ * Events (ativos): InitiateCheckout, Purchase — sem PageView manual; `disablePushState` corta PageView
+ * automático em cada `history.pushState` (React Router / SPA) para o funil não inflar no Gestor.
  * Categories: Valorant, Fortnite, Roblox, Minecraft, LoL, CS2, GTA
  *
  * user_data sent to CAPI:
@@ -48,6 +49,16 @@ const STORAGE_KEY_SID = "_meta_sid";
 const devLog = (label: string, err?: unknown) => {
   if (import.meta.env.DEV) console.debug(`[metaPixel] ${label}`, err);
 };
+
+/** Evita PageView automático da Meta em cada navegação client-side (SPA). Ver blog Meta Pixel + SPAs. */
+function disableSpaAutoPageView(): void {
+  try {
+    if (typeof window === "undefined" || !window.fbq) return;
+    window.fbq.disablePushState = true;
+  } catch (e: unknown) {
+    devLog("disableSpaAutoPageView failed", e);
+  }
+}
 
 /** Headers exigidas pelo gateway Supabase + JSON para Edge Functions. */
 const relayAuthHeaders = (): Record<string, string> => ({
@@ -309,6 +320,7 @@ export const setAdvancedMatching = async (userData: {
   if (typeof window !== "undefined" && window.fbq) {
     _pixelInitWithAM = true;
     window.fbq("init", PIXEL_ID, { ...matchData, external_id: matchData.external_id || undefined });
+    disableSpaAutoPageView();
   }
 };
 
@@ -332,6 +344,7 @@ const initPixel = () => {
 
   _pixelInitWithAM = true;
   window.fbq("init", PIXEL_ID, Object.keys(matchData).length > 0 ? matchData : undefined);
+  disableSpaAutoPageView();
 };
 
 // Eager initialization on module load
