@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import { useAuth } from "@/hooks/useAuth";
-import { useCart } from "@/hooks/useCart";
+import { useCart, type CartItem } from "@/hooks/useCart";
 import { supabase, supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import {
@@ -75,6 +75,33 @@ function savePendingPurchasePayload(paymentId: string, payload: PurchaseSuccessP
   } catch {
     // ignore temporary storage failures
   }
+}
+
+/** Segundo IC só se o total validado no servidor divergir do cliente (fingerprint distinta `:sv:`). */
+function trackInitiateCheckoutAfterServerValidation(
+  cartItems: CartItem[],
+  clientFinal: number,
+  serverTotal: number,
+): void {
+  if (cartItems.length === 0 || Math.abs(serverTotal - clientFinal) < 1e-6) return;
+  const fp = buildCartFingerprintForMetaIc(cartItems);
+  if (!fp) return;
+  const payload = buildMetaPurchasePayloadFromCartItems(cartItems, Math.max(0, serverTotal));
+  if (!payload) return;
+  void import("@/lib/metaPixel").then(({ trackInitiateCheckout }) => {
+    trackInitiateCheckout(
+      {
+        contentName: payload.contentName,
+        contentIds: payload.contentIds,
+        contents: payload.contents,
+        value: payload.value,
+        currency: "BRL",
+        ...(payload.contentCategory ? { contentCategory: payload.contentCategory } : {}),
+        ...(payload.section ? { section: payload.section } : {}),
+      },
+      { cartFingerprint: `${fp}:sv:${Math.round(serverTotal * 100)}` },
+    );
+  });
 }
 
 /** Resposta de `validate_coupon` (jsonb) — manter alinhado ao RPC em migrations. */
@@ -291,7 +318,7 @@ const Checkout = () => {
     if (authLoading || !user || items.length === 0 || paymentId) return;
     const fp = buildCartFingerprintForMetaIc(items);
     if (!fp) return;
-    const payload = buildMetaPurchasePayloadFromCartItems(items, Math.max(0, cartFinalPrice));
+    const payload = buildMetaPurchasePayloadFromCartItems(items, Math.max(0, finalPrice));
     if (!payload) return;
     void import("@/lib/metaPixel").then(({ trackInitiateCheckout }) => {
       trackInitiateCheckout(
@@ -307,7 +334,7 @@ const Checkout = () => {
         { cartFingerprint: fp },
       );
     });
-  }, [authLoading, user, items, paymentId, cartFinalPrice]);
+  }, [authLoading, user, items, paymentId, finalPrice]);
 
   useEffect(() => {
     if (formData.email.includes("@") && formData.name.length > 2) {
@@ -520,6 +547,7 @@ const Checkout = () => {
       setChargeData(result.charge ?? null);
       const serverTotal = result.validated_amount ?? cartFinalPrice;
       const serverDiscount = result.validated_discount ?? discountAmount;
+      trackInitiateCheckoutAfterServerValidation(items, cartFinalPrice, serverTotal);
       setDisplayPrice({ total: serverTotal + serverDiscount, final: serverTotal, discount: serverDiscount });
       setCartSnapshot([...items]);
       clearCart();
@@ -549,6 +577,7 @@ const Checkout = () => {
       setCardPaymentUrl(cardUrl);
       const serverTotal = result.validated_amount ?? cartFinalPrice;
       const serverDiscount = result.validated_discount ?? discountAmount;
+      trackInitiateCheckoutAfterServerValidation(items, cartFinalPrice, serverTotal);
       setDisplayPrice({ total: serverTotal + serverDiscount, final: serverTotal, discount: serverDiscount });
       setCartSnapshot([...items]);
       clearCart();
@@ -579,6 +608,7 @@ const Checkout = () => {
       setCryptoData(result.crypto ?? null);
       const serverTotal = result.validated_amount ?? cartFinalPrice;
       const serverDiscount = result.validated_discount ?? discountAmount;
+      trackInitiateCheckoutAfterServerValidation(items, cartFinalPrice, serverTotal);
       setDisplayPrice({ total: serverTotal + serverDiscount, final: serverTotal, discount: serverDiscount });
       setCartSnapshot([...items]);
       clearCart();

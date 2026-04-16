@@ -45,7 +45,9 @@
     -->
     <script>
     (function(){
-      var PIXEL_ID = '706054019233816';
+      /* Vite substitui %VITE_META_PIXEL_ID% no build/dev; fallback se vazio ou placeholder. */
+      var envPixel = String('%VITE_META_PIXEL_ID%').trim();
+      var PIXEL_ID = /^\d{10,20}$/.test(envPixel) ? envPixel : '706054019233816';
       function bootMetaPixel(){
         try {
           if (window.fbq) return;

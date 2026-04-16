@@ -4,6 +4,7 @@ import {
   isLztItemStateAwaiting,
   isLztItemStateSoldOrRemoved,
 } from "../_shared/lztItemGuards.ts";
+import { GAME_SLUG_ALIASES } from "../_shared/gameSlugAliases.ts";
 import { getDisplayedPriceBrl } from "../_shared/lztPricingModel.ts";
 import type {
   CartSnapshotItem,
@@ -516,53 +517,6 @@ function pickFirstString(...values: unknown[]): string {
 function digitsOnly(value: unknown): string {
   return String(value ?? "").replace(/\D/g, "");
 }
-
-const GAME_SLUG_ALIASES: Record<string, string> = {
-  "counter strike 2": "cs2",
-  "counter-strike 2": "cs2",
-  "counter-strike-2": "cs2",
-  "counter-strike 2 (free)": "cs2",
-  "counter strike 2 free": "cs2",
-  "counter-strike-2-free": "cs2",
-  "cs2 free": "cs2",
-  "cs2-free": "cs2",
-  cs2: "cs2",
-  "call of duty": "cod",
-  "call-of-duty": "cod",
-  cod: "cod",
-  "arena breakout infinite": "arena-breakout-infinite",
-  "arena-breakout-infinite": "arena-breakout-infinite",
-  "arc raiders": "arc-raiders",
-  "arc-raiders": "arc-raiders",
-  "apex legends": "apex-legends",
-  "apex-legends": "apex-legends",
-  "overwatch 2": "overwatch-2",
-  "overwatch-2": "overwatch-2",
-  "marvel rivals": "marvel-rivals",
-  "marvel-rivals": "marvel-rivals",
-  "dead by daylight": "dead-by-daylight",
-  "dead-by-daylight": "dead-by-daylight",
-  "hell let loose": "hell-let-loose",
-  "hell-let-loose": "hell-let-loose",
-  pubg: "pubg",
-  bloodstrike: "bloodstrike",
-  "farlight 84": "farlight-84",
-  "farlight-84": "farlight-84",
-  bodycam: "bodycam",
-  warface: "warface",
-  spoofers: "spoofers",
-  squad: "squad",
-  bloodhunt: "bloodhunt",
-  fivem: "fivem",
-  dayz: "dayz",
-  rust: "rust",
-  valorant: "valorant",
-  fortnite: "fortnite",
-  minecraft: "minecraft",
-  lol: "lol",
-  produto: "produto",
-  multi: "multi",
-};
 
 function normalizeGameCategory(raw: unknown): string {
   const normalized = String(raw ?? "")

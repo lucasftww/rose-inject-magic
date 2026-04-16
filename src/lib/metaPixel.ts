@@ -2,7 +2,7 @@ import { supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
 
 /**
  * Meta Pixel + Conversions API (CAPI) — Enterprise-grade tracking
- * Pixel ID: 706054019233816
+ * Pixel ID: `VITE_META_PIXEL_ID` (fallback 706054019233816; mesmo default em index.html)
  *
  * Architecture:
  *   Browser → fbq events with Advanced Matching
