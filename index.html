@@ -70,6 +70,8 @@
           }(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
           fbq('set', 'autoConfig', false, PIXEL_ID);
           fbq('init', PIXEL_ID);
+          /* Um único init vem daqui; metaPixel.ts não volta a chamar fbq('init') (evita Duplicate Pixel ID). */
+          try { window.__ROYAL_META_HEAD_INIT__ = true; } catch (e) {}
           /* SPA (React Router): sem PageView em cada pushState — funil mais limpo para tráfego pago */
           try { fbq.disablePushState = true; } catch (e) {}
           /* PageView explícito não é enviado; InitiateCheckout (checkout) + Purchase (sucesso) no Gestor */

@@ -63,10 +63,18 @@ function disableSpaAutoPageView(): void {
 /** Headers do relay: JWT real do utilizador + apikey do projeto. */
 const relayAuthHeaders = async (): Promise<Record<string, string> | null> => {
   try {
-    const {
+    let {
       data: { session },
     } = await supabase.auth.getSession();
-    const token = String(session?.access_token || "").trim();
+    let token = String(session?.access_token || "").trim();
+    const expMs = session?.expires_at ? session.expires_at * 1000 : 0;
+    if (token && expMs > 0 && expMs < Date.now() + 120_000) {
+      const { data, error } = await supabase.auth.refreshSession();
+      if (!error && data.session?.access_token) {
+        session = data.session;
+        token = String(data.session.access_token).trim();
+      }
+    }
     if (!token) return null;
     return {
       "Content-Type": "application/json",
@@ -329,16 +337,31 @@ export const setAdvancedMatching = async (userData: {
 
   persistUserData();
 
+  /* Não chamar fbq('init') outra vez: index.html já inicializa (evita Duplicate Pixel ID).
+   * Hashes ficam em storage e entram no CAPI via getUserData() + server-relay. */
   if (typeof window !== "undefined" && window.fbq) {
     _pixelInitWithAM = true;
-    window.fbq("init", PIXEL_ID, { ...matchData, external_id: matchData.external_id || undefined });
     disableSpaAutoPageView();
   }
 };
 
-/** Initialize the Pixel with cached data or default settings */
+function headDidInitMetaPixel(): boolean {
+  try {
+    return (window as unknown as { __ROYAL_META_HEAD_INIT__?: boolean }).__ROYAL_META_HEAD_INIT__ === true;
+  } catch {
+    return false;
+  }
+}
+
+/** Um único fbq('init') vem de index.html; aqui só disablePushState ou init fallback. */
 const initPixel = () => {
   if (typeof window === "undefined" || !window.fbq || _pixelInitWithAM) return;
+
+  if (headDidInitMetaPixel()) {
+    _pixelInitWithAM = true;
+    disableSpaAutoPageView();
+    return;
+  }
 
   const matchData: Record<string, string> = {};
   if (_cachedUserData.em) matchData.em = _cachedUserData.em;
@@ -359,9 +382,13 @@ const initPixel = () => {
   disableSpaAutoPageView();
 };
 
-// Eager initialization on module load
+// Head pode inicializar o pixel depois do bundle; re-tentar sem segundo fbq('init') quando flag existir.
 if (typeof window !== "undefined") {
-  initPixel();
+  const kick = () => initPixel();
+  kick();
+  window.addEventListener("load", kick);
+  setTimeout(kick, 400);
+  setTimeout(kick, 2000);
 }
 
 export const clearAdvancedMatching = () => {
