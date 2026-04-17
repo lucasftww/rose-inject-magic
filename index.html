@@ -45,8 +45,8 @@
     -->
     <script>
     (function(){
-      /* Vite substitui %VITE_META_PIXEL_ID% no build/dev; fallback se vazio ou placeholder. */
-      var envPixel = String('%VITE_META_PIXEL_ID%').trim();
+      /* Substituído em vite.config (plugin html-meta-pixel-id); fallback no JS se intacto. */
+      var envPixel = String('__ROYAL_META_PIXEL_ID__').trim();
       var PIXEL_ID = /^\d{10,20}$/.test(envPixel) ? envPixel : '706054019233816';
       function bootMetaPixel(){
         try {
