@@ -40,20 +40,21 @@ const CREDENTIAL_PRESETS: { name: string; env_key: string; description: string; 
   {
     name: "Meta — CAPI Access Token",
     env_key: "META_ACCESS_TOKEN",
-    description: "Token Graph API para eventos de conversão (compras).",
+    description:
+      "Token Graph API (Conversions API). Obrigatório para o server-relay e confirmação de compra enviarem eventos ao Meta; sem isto só o Pixel no browser conta.",
     help_url: "https://developers.facebook.com/docs/marketing-api/conversions-api/get-started",
   },
   {
     name: "Meta — Pixel ID",
     env_key: "META_PIXEL_ID",
-    description: "ID numérico do teu Pixel (o mesmo do site).",
+    description: "ID numérico do Pixel (opcional se for igual ao VITE_META_PIXEL_ID e só usares o fallback no site).",
     help_url: "https://business.facebook.com/events_manager",
   },
   {
     name: "Meta — Test Event Code (opcional)",
     env_key: "META_TEST_EVENT_CODE",
     description:
-      "Código da aba «Testar eventos» no Events Manager. Envia CAPI (relay + compra) só para testes. Apaga este valor em produção.",
+      "Código em «Testar eventos» no Events Manager. Usa para validar CAPI em tempo real; remove quando não estiveres a depurar.",
     help_url: "https://developers.facebook.com/docs/marketing-api/conversions-api/using-the-api#test",
   },
   {

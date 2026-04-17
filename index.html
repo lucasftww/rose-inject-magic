@@ -72,9 +72,10 @@
           fbq('init', PIXEL_ID);
           /* Um único init vem daqui; metaPixel.ts não volta a chamar fbq('init') (evita Duplicate Pixel ID). */
           try { window.__ROYAL_META_HEAD_INIT__ = true; } catch (e) {}
-          /* SPA (React Router): sem PageView em cada pushState — funil mais limpo para tráfego pago */
+          /* SPA: sem PageView extra em cada pushState (React Router). Um PageView por carregamento completo (F5 / entrada). */
           try { fbq.disablePushState = true; } catch (e) {}
-          /* PageView explícito não é enviado; InitiateCheckout (checkout) + Purchase (sucesso) no Gestor */
+          try { fbq('track', 'PageView'); } catch (e) {}
+          /* Conversões: InitiateCheckout + Purchase (metaPixel.ts) + CAPI (server-relay) */
         } catch (e) { /* Pixel opcional: não quebrar a página */ }
       }
       function schedule(){

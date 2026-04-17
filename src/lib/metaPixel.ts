@@ -8,8 +8,8 @@ import { supabase, supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/
  *   Browser → fbq events with Advanced Matching
  *   Server  → Edge Function server-relay with event_id deduplication
  *
- * Events (ativos): InitiateCheckout, Purchase — sem PageView manual; `disablePushState` corta PageView
- * automático em cada `history.pushState` (React Router / SPA) para o funil não inflar no Gestor.
+ * Events (ativos): PageView (1× por load completo em `index.html` após `init`), InitiateCheckout, Purchase.
+ * `disablePushState` no head evita PageView automático em cada `history.pushState` (React Router / SPA).
  * Segmentação: `section` + `content_category` em custom_data (sem eventos trackCustom espelho).
  * Categories: Valorant, Fortnite, Roblox, Minecraft, LoL, CS2, GTA
  *
