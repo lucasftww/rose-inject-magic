@@ -10,6 +10,7 @@ import { supabase, supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/
  *
  * Events (ativos): InitiateCheckout, Purchase — sem PageView manual; `disablePushState` corta PageView
  * automático em cada `history.pushState` (React Router / SPA) para o funil não inflar no Gestor.
+ * Segmentação: `section` + `content_category` em custom_data (sem eventos trackCustom espelho).
  * Categories: Valorant, Fortnite, Roblox, Minecraft, LoL, CS2, GTA
  *
  * user_data sent to CAPI:
@@ -522,35 +523,6 @@ const generateEventId = (prefix: string): string => {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 };
 
-const toCustomEventToken = (value: string): string => {
-  const normalized = value
-    .trim()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^A-Za-z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "")
-    .toUpperCase();
-  return normalized.slice(0, 40);
-};
-
-const emitCustomMirrorEvents = (
-  basePrefix: "IC" | "PURCHASE",
-  customData: Record<string, unknown>,
-) => {
-  if (typeof window === "undefined" || !window.fbq) return;
-
-  const names = new Set<string>();
-  const rawSection = typeof customData.section === "string" ? toCustomEventToken(customData.section) : "";
-  const rawCategory = typeof customData.content_category === "string" ? toCustomEventToken(customData.content_category) : "";
-
-  if (rawSection) names.add(`${basePrefix}_SECTION_${rawSection}`);
-  if (rawCategory) names.add(`${basePrefix}_CATEGORY_${rawCategory}`);
-
-  for (const eventName of names) {
-    window.fbq("trackCustom", eventName, customData);
-  }
-};
-
 interface TrackingData {
   contentName: string;
   contentIds: string[];
@@ -782,7 +754,6 @@ export const trackInitiateCheckout = (data: TrackingData, opts?: InitiateCheckou
 
   if (window.fbq) {
     window.fbq("track", "InitiateCheckout", customData, { eventID: eventId });
-    emitCustomMirrorEvents("IC", customData);
   }
   sendCAPI("InitiateCheckout", eventId, customData);
 
@@ -835,7 +806,6 @@ export const trackPurchase = (
 
   if (window.fbq) {
     window.fbq("track", "Purchase", customData, { eventID: eventId });
-    emitCustomMirrorEvents("PURCHASE", customData);
   }
   sendCAPI("Purchase", eventId, customData);
 

@@ -49,4 +49,38 @@ describe("buildCartSnapshotFromItems", () => {
     expect(snap[0].lztCurrency).toBe("rub");
     expect(snap[0].skinsCount).toBe(40);
   });
+
+  it("includes gameName for LZT and product rows when set", () => {
+    const lzt: CartItem[] = [
+      {
+        productId: "lzt-1",
+        productName: "Conta",
+        productImage: null,
+        planId: "lzt-account",
+        planName: "Conta",
+        price: 10,
+        quantity: 1,
+        type: "lzt-account",
+        lztItemId: "x",
+        lztGame: "valorant",
+        gameName: "valorant",
+        lztPrice: 1,
+        lztCurrency: "rub",
+      },
+    ];
+    const prod: CartItem[] = [
+      {
+        productId: "p1",
+        productName: "Plano",
+        productImage: null,
+        planId: "plan",
+        planName: "30d",
+        price: 20,
+        quantity: 1,
+        gameName: "cs2",
+      },
+    ];
+    expect(buildCartSnapshotFromItems(lzt)[0].gameName).toBe("valorant");
+    expect(buildCartSnapshotFromItems(prod)[0].gameName).toBe("cs2");
+  });
 });
