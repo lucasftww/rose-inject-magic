@@ -47,6 +47,7 @@ import {
 import { errorName } from "@/lib/errorMessage";
 import { isRecord } from "@/types/ticketChat";
 import { prefetchAccountDetail, LZT_ACCOUNT_DETAIL_GONE_EVENT } from "@/lib/lztPrefetch";
+import { getProxiedImageUrl } from "@/lib/lztImageProxy";
 
 import weaponAres from "@/assets/weapon-ares.png";
 import weaponBandit from "@/assets/weapon-bandit.png";
@@ -68,15 +69,6 @@ import weaponStinger from "@/assets/weapon-stinger.png";
 import weaponVandal from "@/assets/weapon-vandal.png";
 
 type GameTab = "valorant" | "lol" | "fortnite" | "minecraft";
-
-const getProxiedImageUrl = (url: string) => {
-  if (!url) return "";
-  // Only proxy lzt.market images (require auth). Public CDNs load directly for speed.
-  if (url.includes("lzt.market") || url.includes("img.lzt.market")) {
-    return `${supabaseUrl}/functions/v1/lzt-market?action=image-proxy&url=${encodeURIComponent(url)}`;
-  }
-  return url;
-};
 
 /** Data Dragon champion keys from champion.json are already valid (e.g. LeeSin); do not sentence-case them. */
 const ddragonChampionId = (internalNameFromMap: string) => internalNameFromMap;
@@ -1883,7 +1875,7 @@ const Contas = () => {
     }
   }, [buildParams, debouncedParamsKey, fetchWithRetry, cacheSet, gameTab]);
 
-  // Prefetch adjacent game tabs in background for instant switching (staggered to avoid 429 Rate Limits)
+  // Prefetch only the next game tab (ring order) to cut background egress; dedupe per tab per session.
   const prefetchRef = useRef(new Set<string>());
   const prefetchTimeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const prefetchRunIdRef = useRef(0);
@@ -1898,49 +1890,46 @@ const Contas = () => {
     prefetchRunIdRef.current += 1;
     const runId = prefetchRunIdRef.current;
 
-    const allTabs: GameTab[] = ["valorant", "lol", "fortnite", "minecraft"];
-    const otherTabs = allTabs.filter(t => t !== gameTab);
-    let delayMultiplier = 0;
+    // Only prefetch the *next* tab in fixed order (cuts ~3× background list egress vs warming all three).
+    const tabOrder: GameTab[] = ["valorant", "lol", "fortnite", "minecraft"];
+    const idx = tabOrder.indexOf(gameTab);
+    if (idx < 0) return;
+    const tab = tabOrder[(idx + 1) % tabOrder.length];
 
-    for (const tab of otherTabs) {
-      if (prefetchRef.current.has(tab)) continue;
-      prefetchRef.current.add(tab);
+    if (prefetchRef.current.has(tab)) return;
+    prefetchRef.current.add(tab);
 
-      const gameTypeMap: Record<GameTab, string> = { valorant: "riot", lol: "lol", fortnite: "fortnite", minecraft: "minecraft" };
-      const qp = new URLSearchParams();
-      qp.set("page", "1");
-      qp.set("order_by", "pdate_to_down");
-      qp.set("game_type", gameTypeMap[tab]);
-      if (tab === "fortnite") qp.set("smin", "10");
-      if (tab === "valorant") qp.append("country[]", "Bra");
-      if (tab === "lol") qp.append("lol_region[]", "BR1");
+    const gameTypeMap: Record<GameTab, string> = { valorant: "riot", lol: "lol", fortnite: "fortnite", minecraft: "minecraft" };
+    const qp = new URLSearchParams();
+    qp.set("page", "1");
+    qp.set("order_by", "pdate_to_down");
+    qp.set("game_type", gameTypeMap[tab]);
+    if (tab === "fortnite") qp.set("smin", "10");
+    if (tab === "valorant") qp.append("country[]", "Bra");
+    if (tab === "lol") qp.append("lol_region[]", "BR1");
 
-      const delayMs = delayMultiplier * 800; // 800ms stagger to reduce API load at 100k+ DAU
-      const timeoutId = setTimeout(() => {
-        if (runId !== prefetchRunIdRef.current) return;
-        void (async () => {
-          try {
-            const res = await fetch(`${supabaseUrl}/functions/v1/lzt-market?${qp.toString()}`, {
-              headers: {
-                "Content-Type": "application/json",
-                apikey: supabaseAnonKey,
-                Authorization: `Bearer ${supabaseAnonKey}`,
-              },
-            });
-            if (runId !== prefetchRunIdRef.current) return;
-            if (!res.ok) return;
-            const data = await res.json();
-            if (runId !== prefetchRunIdRef.current) return;
-            const items: LztItem[] = data?.items ?? [];
-            const hasMore = data?.hasNextPage ?? items.length >= 15;
-            cacheSet(`__prefetch__${tab}`, { items, hasNextPage: hasMore, currentPage: 1, timestamp: Date.now() });
-          } catch { /* silent */ }
-        })();
-      }, delayMs);
-      prefetchTimeoutsRef.current.push(timeoutId);
-
-      delayMultiplier++;
-    }
+    const timeoutId = setTimeout(() => {
+      if (runId !== prefetchRunIdRef.current) return;
+      void (async () => {
+        try {
+          const res = await fetch(`${supabaseUrl}/functions/v1/lzt-market?${qp.toString()}`, {
+            headers: {
+              "Content-Type": "application/json",
+              apikey: supabaseAnonKey,
+              Authorization: `Bearer ${supabaseAnonKey}`,
+            },
+          });
+          if (runId !== prefetchRunIdRef.current) return;
+          if (!res.ok) return;
+          const data = await res.json();
+          if (runId !== prefetchRunIdRef.current) return;
+          const items: LztItem[] = data?.items ?? [];
+          const hasMore = data?.hasNextPage ?? items.length >= 15;
+          cacheSet(`__prefetch__${tab}`, { items, hasNextPage: hasMore, currentPage: 1, timestamp: Date.now() });
+        } catch { /* silent */ }
+      })();
+    }, 0);
+    prefetchTimeoutsRef.current.push(timeoutId);
   }, [gameTab, cacheSet, clearPrefetchTimeouts]);
 
   useEffect(() => () => clearPrefetchTimeouts(), [clearPrefetchTimeouts]);
@@ -1999,11 +1988,10 @@ const Contas = () => {
     return () => { controller.abort(); loadMoreControllerRef.current?.abort(); };
   }, [debouncedParamsKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Trigger prefetch after initial load completes
+  // Trigger prefetch after initial load completes (delayed so quick bounces do not pull extra list JSON)
   useEffect(() => {
     if (firstPageLoaded && streamedItems.length > 0) {
-      // Re-enabled Staggered Prefetch (Safe from 429 API Rate Limit)
-      const timer = setTimeout(prefetchAdjacentTabs, 200);
+      const timer = setTimeout(prefetchAdjacentTabs, 1200);
       return () => clearTimeout(timer);
     }
   }, [firstPageLoaded, gameTab, prefetchAdjacentTabs]); // eslint-disable-line react-hooks/exhaustive-deps
