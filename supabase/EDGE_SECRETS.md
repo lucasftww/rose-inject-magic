@@ -6,7 +6,30 @@
 npx supabase secrets list
 ```
 
+**Credenciais na base (sem revelar valores):** com o projeto ligado (`supabase link`), corre:
+
+```sh
+npm run verify:supabase-credentials
+```
+
+Equivalente a `npx supabase db query --linked -f scripts/sql/admin_credentials_status.sql`. Lista cada `env_key` e se está **configured** (valor não vazio).
+
 O Supabase injeta automaticamente `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (e variantes) nas Edge Functions; não é preciso duplicar no Dashboard, salvo cenários especiais. O `secrets list` mostra apenas **nomes** e **digest** (hash), não o valor — serve para confirmar que um nome existe.
+
+## Roteiro de testes manuais (integrações)
+
+| Integração | Teste mínimo |
+|------------|----------------|
+| LZT | Loja → contas LZT: lista carrega; admin → LZT sem erro de token. |
+| MisticPay / Pix | Checkout de teste até webhook / status pago; logs `pix-payment` sem erro de credencial. |
+| Meta CAPI | Compra de teste; Event Manager / logs `pix-payment` e `server-relay` sem `META_ACCESS_TOKEN not configured`. |
+| UTMify | Se usas: após pagamento, verifica envio (logs `pix-payment`) ou painel UTMify. |
+| Robot | Só se vendes planos Robot: fluxo que chama API Robot; logs sem falha de user/pass. |
+| server-relay | Navegação logada no site: eventos browser ao Meta; `Origin` do teu domínio tem de estar em `META_ALLOWED_ORIGIN_HOSTS` ou no default do código. |
+
+## Segurança (token Supabase CLI)
+
+Se alguma vez partilhaste um **Access Token** (`sbp_…`) em chat ou captura de ecrã, revoga-o em [Account → Access Tokens](https://supabase.com/dashboard/account/tokens) e cria outro. Não commites tokens no Git.
 
 ## Deploy só de funções alteradas (rápido)
 
