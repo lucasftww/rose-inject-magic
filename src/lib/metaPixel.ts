@@ -8,8 +8,8 @@ import { supabase, supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/
  *   Browser → fbq events with Advanced Matching
  *   Server  → Edge Function server-relay with event_id deduplication
  *
- * Events (ativos): PageView (1× por load completo em `index.html` após `init`), InitiateCheckout, Purchase.
- * `disablePushState` no head evita PageView automático em cada `history.pushState` (React Router / SPA).
+ * Events (ativos): PageView (1× load inicial em `index.html` + 1× por navegação SPA em `RouteTracker`), InitiateCheckout, Purchase.
+ * `disablePushState` no head evita o PageView *automático* da Meta em cada `history.pushState`; o nosso `trackSpaPageView()` dispara só quando a rota muda.
  * Segmentação: `section` + `content_category` em custom_data (sem eventos trackCustom espelho).
  * Categories: Valorant, Fortnite, Roblox, Minecraft, LoL, CS2, GTA
  *
@@ -26,9 +26,6 @@ import { supabase, supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/
  *   InitiateCheckout → random event_id (Pixel + CAPI via relay) + localStorage por fingerprint do carrinho
  *     (partilhado entre abas; TTL 7d para o mesmo carrinho não poluir se voltar logo)
  *   Purchase → deterministic purchase_${transactionId} + sessionStorage + localStorage (+ memória na mesma página)
- *
- * Test Events (Events Manager): definir META_TEST_EVENT_CODE em system_credentials ou secret da Edge
- * (server-relay + pix-payment). Remover em produção para contar só eventos reais.
  */
 
 
@@ -58,6 +55,20 @@ function disableSpaAutoPageView(): void {
     window.fbq.disablePushState = true;
   } catch (e: unknown) {
     devLog("disableSpaAutoPageView failed", e);
+  }
+}
+
+/**
+ * PageView em navegação client-side (React Router).
+ * O primeiro PageView do visitante vem do `index.html` após init; não duplicar no primeiro paint da SPA.
+ */
+export function trackSpaPageView(): void {
+  if (typeof window === "undefined") return;
+  try {
+    if (!window.fbq) return;
+    window.fbq("track", "PageView");
+  } catch (e: unknown) {
+    devLog("trackSpaPageView failed", e);
   }
 }
 

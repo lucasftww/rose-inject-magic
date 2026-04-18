@@ -114,7 +114,7 @@ const Auth = () => {
 
   if (loading || user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-black">
+      <div className="min-h-dvh flex items-center justify-center bg-black">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-8 w-8 animate-spin text-success" />
           {user && <p className="text-white/40 text-xs animate-pulse">{t("auth.redirecting")}</p>}
@@ -130,7 +130,7 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center lg:justify-end overflow-hidden">
+    <div className="min-h-dvh relative flex items-center justify-center lg:justify-end overflow-hidden">
       <img
         src="/images/auth-bg.webp"
         alt=""

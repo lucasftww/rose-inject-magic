@@ -233,7 +233,7 @@ const Dashboard = () => {
 
   if (authLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="flex min-h-dvh items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-success" />
       </div>
     );
@@ -249,7 +249,7 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       <Header />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 pt-4 pb-20">
         {/* Profile Header */}

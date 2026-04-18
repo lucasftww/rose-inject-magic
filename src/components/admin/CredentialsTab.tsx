@@ -41,21 +41,22 @@ const CREDENTIAL_PRESETS: { name: string; env_key: string; description: string; 
     name: "Meta — CAPI Access Token",
     env_key: "META_ACCESS_TOKEN",
     description:
-      "Token Graph API (Conversions API). Obrigatório para o server-relay e confirmação de compra enviarem eventos ao Meta; sem isto só o Pixel no browser conta.",
+      "Token Graph API (Conversions API). Obrigatório para server-relay + pix-payment enviarem Purchase/IC à Meta; sem isto o Pixel no browser ainda dispara, mas o servidor não confirma conversões.",
     help_url: "https://developers.facebook.com/docs/marketing-api/conversions-api/get-started",
   },
   {
     name: "Meta — Pixel ID",
     env_key: "META_PIXEL_ID",
-    description: "ID numérico do Pixel (opcional se for igual ao VITE_META_PIXEL_ID e só usares o fallback no site).",
+    description:
+      "ID numérico do mesmo Pixel do site. Deve coincidir com VITE_META_PIXEL_ID no build (.env) — senão CAPI e Pixel podem reportar pixels diferentes.",
     help_url: "https://business.facebook.com/events_manager",
   },
   {
-    name: "Meta — Test Event Code (opcional)",
-    env_key: "META_TEST_EVENT_CODE",
+    name: "UTMify — API Token",
+    env_key: "UTMIFY_API_TOKEN",
     description:
-      "Código em «Testar eventos» no Events Manager. Usa para validar CAPI em tempo real; remove quando não estiveres a depurar.",
-    help_url: "https://developers.facebook.com/docs/marketing-api/conversions-api/using-the-api#test",
+      "Token da API UTMify (envio server-side de pedidos pagos). Obténs-no na UTMify; cola aqui — a migração já pode ter criado a linha vazia; basta editar e guardar.",
+    help_url: "https://utmify.help.center/category/112-integracoes-via-api",
   },
   {
     name: "MisticPay — Client ID",
@@ -234,8 +235,8 @@ const CredentialsTab = () => {
         </button>
       </div>
       <p className="mt-2 text-sm text-muted-foreground">
-        Gerencie as chaves de API e credenciais do sistema. As credenciais são armazenadas de forma segura no banco de dados.
-        O código das funções Edge lê primeiro esta tabela e só depois os secrets do Supabase.
+        Gerencie as chaves de API e credenciais do sistema. Os valores ficam na tabela <span className="font-mono text-xs">system_credentials</span>{" "}
+        (esta página); as Edge Functions usam primeiro estes registos e só depois variáveis de ambiente do Supabase, se existirem.
       </p>
 
       {missingPresets.length > 0 && (
@@ -243,7 +244,7 @@ const CredentialsTab = () => {
           <p className="text-sm font-semibold text-foreground">Sugestão — ainda falta configurar</p>
           <p className="mt-1 text-xs text-muted-foreground">
             Clica num modelo para abrir o formulário com a chave (ENV) correta; depois cola o valor real e guarda.
-            Eu não tenho acesso aos teus tokens: tens de os copiar de LZT Market, Meta Business e MisticPay.
+            Os tokens vêm das tuas contas (LZT Market, Meta Business, MisticPay, UTMify, etc.).
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             {missingPresets.map((p) => (

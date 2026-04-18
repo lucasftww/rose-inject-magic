@@ -358,7 +358,7 @@ const ProdutoDetalhes = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-dvh bg-background">
         <Header />
         <div className="flex items-center justify-center pt-16">
           <Loader2 className="h-8 w-8 animate-spin text-success" />
@@ -369,7 +369,7 @@ const ProdutoDetalhes = () => {
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-dvh bg-background">
         <Header />
         <div className="mx-auto max-w-lg px-4 pt-8 text-center sm:pt-12">
           <Package className="mx-auto h-14 w-14 text-muted-foreground/25 sm:h-16 sm:w-16" />
@@ -389,7 +389,7 @@ const ProdutoDetalhes = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       <Header />
       <div className="mx-auto max-w-7xl px-4 min-[400px]:px-5 sm:px-6 pt-3 sm:pt-4 pb-32 sm:pb-20">
         {/* Back button */}

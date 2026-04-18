@@ -888,7 +888,7 @@ const TicketsTab = ({
   // ─── Render ─────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex flex-col h-[calc(100vh-200px)] overflow-hidden">
+    <div className="flex flex-col h-[calc(100dvh-200px)] overflow-hidden">
       {/* ── Header ── */}
       <div className="flex items-center justify-between mb-3 flex-shrink-0">
         <div className="flex items-center gap-2.5">

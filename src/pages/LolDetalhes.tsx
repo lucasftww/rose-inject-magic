@@ -395,7 +395,7 @@ const LolDetalhes = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       <Header />
       <div className="mx-auto max-w-6xl px-4 sm:px-6 pt-4 pb-32 sm:pb-20">
         <Link

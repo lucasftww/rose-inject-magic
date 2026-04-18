@@ -852,7 +852,7 @@ const PedidoChat = () => {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-dvh bg-background">
         <Header />
         <div className="flex items-center justify-center pt-16">
           <Loader2 className="h-8 w-8 animate-spin text-success" />
@@ -863,7 +863,7 @@ const PedidoChat = () => {
 
   if (!ticket) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-dvh bg-background">
         <Header />
         <div className="mx-auto max-w-3xl px-6 pt-4 text-center">
           <Package className="mx-auto h-16 w-16 text-muted-foreground/20" />
@@ -879,7 +879,7 @@ const PedidoChat = () => {
   const statusLabel = ticket.status_label || ticket.status || "—";
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       <Header />
 
       <div className="mx-auto max-w-4xl px-4 sm:px-6 pt-4 pb-10">
@@ -953,7 +953,7 @@ const PedidoChat = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.1 }}
           className="flex flex-col rounded-2xl border border-border bg-card overflow-hidden"
-          style={{ height: "calc(100vh - 320px)", minHeight: 420, maxHeight: 750 }}
+          style={{ height: "clamp(420px, calc(100dvh - 320px), 750px)" }}
         >
           {/* ── Delivery Banner ── */}
           {(stockContent || isFreeNoKey || tutorialText || tutorialFileUrl) && (

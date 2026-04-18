@@ -1286,6 +1286,51 @@ export type Database = {
       }
     }
     Functions: {
+      admin_finance_completed_payments: {
+        Args: { p_limit?: number }
+        Returns: Array<{
+          id: string
+          amount: number
+          status: string
+          created_at: string
+          paid_at: string | null
+          cart_snapshot: Json | null
+          payment_method: string | null
+          discount_amount: number
+          user_id: string
+        }>
+      }
+      admin_finance_lzt_sales: {
+        Args: { p_limit?: number }
+        Returns: Array<{
+          buy_price: number
+          sell_price: number
+          profit: number
+          created_at: string
+          game: string | null
+        }>
+      }
+      admin_finance_reseller_purchases: {
+        Args: { p_limit?: number }
+        Returns: Array<{
+          original_price: number
+          paid_price: number
+          created_at: string
+        }>
+      }
+      admin_finance_order_tickets: {
+        Args: { p_limit?: number }
+        Returns: Array<{
+          id: string
+          product_id: string
+          product_plan_id: string
+          user_id: string
+          metadata: Json | null
+          status: string | null
+          created_at: string | null
+          status_label: string | null
+        }>
+      }
       admin_finance_summary: { Args: { _since?: string }; Returns: Json }
       admin_lzt_stats: { Args: never; Returns: Json }
       admin_overview_stats: { Args: never; Returns: Json }

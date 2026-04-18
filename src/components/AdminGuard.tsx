@@ -103,7 +103,7 @@ const AdminGuard = ({ children }: { children: ReactNode }) => {
   // Still checking auth or verifying role → show spinner, never the children
   if (loading || serverVerified === null) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="flex min-h-dvh items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-success" />
       </div>
     );

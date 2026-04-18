@@ -1,8 +1,14 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { Json } from "@/integrations/supabase/types";
-import { fetchAllRows } from "@/lib/supabaseAllRows";
+import {
+  fetchAdminCompletedPaymentsBulk,
+  fetchAdminLztSalesBulk,
+  fetchAdminResellerPurchasesBulk,
+  type AdminPaymentFinanceRow,
+  type AdminLztSaleBulkRow,
+  type AdminResellerPurchaseBulkRow,
+} from "@/lib/adminFinanceBulk";
 import { getCached, setCache, getUsdToBrl, invalidateAdminCache } from "@/lib/adminCache";
 import { buildRobotSalesLedgerFromPayments } from "@/lib/adminRobotSalesLedger";
 import { paymentCartSnapshot, type PaymentCartLine } from "@/types/paymentCart";
@@ -18,31 +24,9 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, AreaChart, Area, Legend
 } from "recharts";
 
-interface PaymentRow {
-  id: string;
-  amount: number;
-  status: string;
-  created_at: string;
-  paid_at: string | null;
-  cart_snapshot: Json | null;
-  payment_method: string | null;
-  discount_amount: number;
-  user_id: string;
-}
-
-interface LztSale {
-  buy_price: number;
-  sell_price: number;
-  profit: number;
-  created_at: string;
-  game: string | null;
-}
-
-interface ResellerPurchase {
-  original_price: number;
-  paid_price: number;
-  created_at: string;
-}
+type PaymentRow = AdminPaymentFinanceRow;
+type LztSale = AdminLztSaleBulkRow;
+type ResellerPurchase = AdminResellerPurchaseBulkRow;
 
 interface RobotTicket {
   id: string;
@@ -178,25 +162,9 @@ async function fetchFinanceDashboard(): Promise<{
     const cachedReseller = getCached<ResellerPurchase[]>(CACHE_KEY_RESELLER);
 
     const [paymentsData, lztData, resellerData, robotProductsRes] = await Promise.all([
-      cachedPayments
-        ? Promise.resolve(cachedPayments)
-        : fetchAllRows<PaymentRow>("payments", {
-            select: "id, amount, status, created_at, paid_at, cart_snapshot, payment_method, discount_amount, user_id",
-            filters: [{ column: "status", op: "eq", value: "COMPLETED" }],
-            order: { column: "paid_at", ascending: false },
-          }),
-      cachedLzt
-        ? Promise.resolve(cachedLzt)
-        : fetchAllRows<LztSale>("lzt_sales", {
-            select: "buy_price, sell_price, profit, created_at, game",
-            order: { column: "created_at", ascending: false },
-          }),
-      cachedReseller
-        ? Promise.resolve(cachedReseller)
-        : fetchAllRows<ResellerPurchase>("reseller_purchases", {
-            select: "original_price, paid_price, created_at",
-            order: { column: "created_at", ascending: false },
-          }),
+      cachedPayments ? Promise.resolve(cachedPayments) : fetchAdminCompletedPaymentsBulk(),
+      cachedLzt ? Promise.resolve(cachedLzt) : fetchAdminLztSalesBulk(),
+      cachedReseller ? Promise.resolve(cachedReseller) : fetchAdminResellerPurchasesBulk(),
       supabase.from("products").select("id, name, robot_game_id, robot_markup_percent").not("robot_game_id", "is", null),
     ]);
 
@@ -277,7 +245,7 @@ const FinanceTab = () => {
   const { data, isPending: loading, refetch, isFetching } = useQuery({
     queryKey: ["admin", "finance"],
     queryFn: fetchFinanceDashboard,
-    staleTime: 3 * 60 * 1000,
+    staleTime: 5 * 60 * 1000,
   });
 
   const payments = useMemo(() => data?.payments ?? [], [data]);
@@ -475,7 +443,12 @@ const FinanceTab = () => {
     <div className="space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h2 className="text-lg font-bold text-foreground">Financeiro</h2>
+        <div>
+          <h2 className="text-lg font-bold text-foreground">Financeiro</h2>
+          <p className="mt-0.5 text-[10px] text-muted-foreground max-w-xl">
+            Agregações usam os registos mais recentes até ao limite configurado (evita timeouts). «Todo o período» reflete esse conjunto.
+          </p>
+        </div>
         <div className="flex items-center gap-2">
           <div className="flex gap-0.5 bg-secondary rounded-lg p-0.5">
             {PERIOD_OPTIONS.map(([key, label]) => (

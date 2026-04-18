@@ -64,7 +64,7 @@ const ResetPassword = () => {
 
   if (checking) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-dvh bg-background">
         <Header />
         <div className="flex items-center justify-center pt-32">
           <Loader2 className="h-8 w-8 animate-spin text-success" />
@@ -75,7 +75,7 @@ const ResetPassword = () => {
 
   if (!isRecovery) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-dvh bg-background">
         <Header />
         <div className="mx-auto max-w-md px-4 pt-32 text-center">
           <Lock className="mx-auto h-12 w-12 text-muted-foreground/40 mb-4" />
@@ -96,7 +96,7 @@ const ResetPassword = () => {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-dvh bg-background">
         <Header />
         <div className="mx-auto max-w-md px-4 pt-32 text-center">
           <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border-2 border-success/40 bg-success/10">
@@ -110,7 +110,7 @@ const ResetPassword = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       <Header />
       <div className="mx-auto max-w-md px-4 pt-24 pb-20">
         <div className="rounded-xl border border-border bg-card p-6">

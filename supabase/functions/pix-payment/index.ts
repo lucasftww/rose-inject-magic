@@ -260,13 +260,6 @@ async function sha256Hash(message: string | null | undefined): Promise<string> {
   }
 }
 
-function resolveMetaTestEventCode(dbValue: string | null | undefined, envValue: string | undefined): string | undefined {
-  const raw = String(dbValue ?? "").trim() || String(envValue ?? "").trim();
-  if (raw.length < 4 || raw.length > 64) return undefined;
-  if (!/^[A-Za-z0-9_-]+$/.test(raw)) return undefined;
-  return raw;
-}
-
 function isSha256Hex(value: string): boolean {
   return /^[a-f0-9]{64}$/i.test(value.trim());
 }
@@ -295,20 +288,15 @@ function buildMetaTrackingPayload(metaUserData: unknown, req: Request): Record<s
 
 async function sendServerPurchaseEvent(supabaseAdmin: SupabaseAdminClient, payment: PaymentRow, req: Request): Promise<boolean> {
   try {
-    const [{ data: capiTokenRow }, { data: pixelIdRow }, { data: testCodeRow }] = await Promise.all([
+    const [{ data: capiTokenRow }, { data: pixelIdRow }] = await Promise.all([
       supabaseAdmin.from("system_credentials").select("value").eq("env_key", "META_ACCESS_TOKEN").maybeSingle(),
       supabaseAdmin.from("system_credentials").select("value").eq("env_key", "META_PIXEL_ID").maybeSingle(),
-      supabaseAdmin.from("system_credentials").select("value").eq("env_key", "META_TEST_EVENT_CODE").maybeSingle(),
     ]);
 
     const accessToken =
       String(capiTokenRow?.value || "").trim() || Deno.env.get("META_ACCESS_TOKEN")?.trim() || "";
     const pixelId =
       String(pixelIdRow?.value || "").trim() || Deno.env.get("META_PIXEL_ID")?.trim() || "";
-    const metaTestEventCode = resolveMetaTestEventCode(
-      testCodeRow?.value as string | undefined,
-      Deno.env.get("META_TEST_EVENT_CODE"),
-    );
 
     if (!accessToken || !pixelId) {
       console.warn("CAPI Purchase skipped: set META_ACCESS_TOKEN and META_PIXEL_ID in system_credentials or Edge secrets.");
@@ -472,7 +460,6 @@ async function sendServerPurchaseEvent(supabaseAdmin: SupabaseAdminClient, payme
     graphPayload.data_processing_options = [];
     graphPayload.data_processing_options_country = 0;
     graphPayload.data_processing_options_state = 0;
-    if (metaTestEventCode) graphPayload.test_event_code = metaTestEventCode;
 
     const url = `https://graph.facebook.com/${META_GRAPH_VERSION}/${pixelId}/events?access_token=${accessToken}`;
 
@@ -594,7 +581,9 @@ async function sendUtmifyOrderEvent(supabaseAdmin: SupabaseAdminClient, payment:
     const apiToken =
       String(utmifyTokenRow?.value || "").trim() || Deno.env.get("UTMIFY_API_TOKEN")?.trim() || "";
     if (!apiToken) {
-      console.warn("UTMify skipped: set UTMIFY_API_TOKEN in system_credentials or Edge secrets.");
+      log("INFO", "utmify", "skipped_no_api_token", {
+        hint: "Defina UTMIFY_API_TOKEN em Admin → Credenciais (ou secret da Edge como fallback).",
+      });
       return false;
     }
 
@@ -659,7 +648,7 @@ async function sendUtmifyOrderEvent(supabaseAdmin: SupabaseAdminClient, payment:
       console.error("UTMify order send failed:", response.status, body.slice(0, 600));
       return false;
     }
-    console.log("UTMify order sent:", payment.id);
+    log("INFO", "utmify", "order_sent", { payment_id: payment.id });
     return true;
   } catch (err) {
     console.error("sendUtmifyOrderEvent error:", err);

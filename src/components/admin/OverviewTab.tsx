@@ -2,7 +2,11 @@ import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database, Tables } from "@/integrations/supabase/types";
-import { fetchAllRows } from "@/lib/supabaseAllRows";
+import {
+  fetchAdminCompletedPaymentsBulk,
+  fetchAdminLztSalesBulk,
+  fetchAdminOrderTicketsBulk,
+} from "@/lib/adminFinanceBulk";
 import { getCached, setCache, invalidateAdminCache } from "@/lib/adminCache";
 import { buildRobotSalesLedgerFromPayments } from "@/lib/adminRobotSalesLedger";
 import { paymentCartSnapshot } from "@/types/paymentCart";
@@ -119,22 +123,49 @@ async function fetchOverviewDashboard(): Promise<OverviewDashboardData> {
         supabase.from("payments").select("*").eq("status", "COMPLETED").order("paid_at", { ascending: false }).limit(12),
         cachedPayments
           ? Promise.resolve(cachedPayments)
-          : fetchAllRows<PaymentAggregate>("payments", {
-              select: "id, amount, discount_amount, user_id, cart_snapshot, status, created_at, paid_at",
-              filters: [{ column: "status", op: "eq", value: "COMPLETED" }],
-            }),
+          : fetchAdminCompletedPaymentsBulk().then((rows) =>
+              rows.map(
+                (r): PaymentAggregate => ({
+                  id: r.id,
+                  amount: r.amount,
+                  discount_amount: r.discount_amount,
+                  user_id: r.user_id,
+                  cart_snapshot: r.cart_snapshot,
+                  status: r.status,
+                  created_at: r.created_at,
+                  paid_at: r.paid_at,
+                }),
+              ),
+            ),
         supabase.from("products").select("id, name, robot_game_id, robot_markup_percent").not("robot_game_id", "is", null),
         supabase.from("order_tickets").select("id", { count: "exact", head: true }).in("status", ["open", "waiting", "waiting_staff"]),
         cachedOrders
           ? Promise.resolve(cachedOrders)
-          : fetchAllRows<OrderTicketRow>("order_tickets", {
-              select: "id, product_id, product_plan_id, user_id, metadata, status, created_at, status_label",
-            }),
+          : fetchAdminOrderTicketsBulk().then((rows) =>
+              rows.map(
+                (r): OrderTicketRow => ({
+                  id: r.id,
+                  product_id: r.product_id,
+                  product_plan_id: r.product_plan_id,
+                  user_id: r.user_id,
+                  metadata: r.metadata,
+                  status: r.status,
+                  created_at: r.created_at,
+                  status_label: r.status_label,
+                  stock_item_id: null,
+                }),
+              ),
+            ),
         cachedLztCosts
           ? Promise.resolve(cachedLztCosts)
-          : fetchAllRows<LztSalesCostRow>("lzt_sales", {
-              select: "buy_price, created_at",
-            }),
+          : fetchAdminLztSalesBulk().then((rows) =>
+              rows.map(
+                (s): LztSalesCostRow => ({
+                  buy_price: s.buy_price,
+                  created_at: s.created_at,
+                }),
+              ),
+            ),
       ]);
 
       // Persist to shared cache
@@ -240,7 +271,7 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
   const { data, isPending: loading, refetch, isFetching } = useQuery({
     queryKey: ["admin", "overview"],
     queryFn: fetchOverviewDashboard,
-    staleTime: 3 * 60 * 1000,
+    staleTime: 5 * 60 * 1000,
   });
 
   const openTickets = data?.openTickets ?? 0;

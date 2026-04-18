@@ -736,7 +736,7 @@ const Checkout = () => {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-dvh bg-background">
         <Header />
         <div className="flex items-center justify-center pt-16"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
       </div>
@@ -746,7 +746,7 @@ const Checkout = () => {
   /* ── COMPLETED ── */
   if (paymentStatus === "COMPLETED") {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-dvh bg-background">
         <Header />
         <div className="mx-auto max-w-2xl px-4 sm:px-6 pt-16 pb-20 text-center">
           <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
@@ -759,7 +759,7 @@ const Checkout = () => {
   /* ── EXPIRED / FAILED / CANCELLED ── */
   if (paymentStatus === "EXPIRED" || paymentStatus === "FAILED" || paymentStatus === "CANCELLED") {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-dvh bg-background">
         <Header />
         <div className="mx-auto max-w-2xl px-4 sm:px-6 pt-4 pb-20 text-center">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
@@ -784,7 +784,7 @@ const Checkout = () => {
   /* ── LOADING ── */
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-dvh bg-background">
         <Header />
         <div className="mx-auto max-w-3xl px-4 pt-4">
           {/* Stepper */}
@@ -834,7 +834,7 @@ const Checkout = () => {
   /* ── PIX / Card / Crypto payment view ── */
   if (paymentId && (chargeData || cardPaymentUrl || cryptoData)) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-dvh bg-background">
         <Header />
         <div className="mx-auto max-w-5xl px-4 sm:px-6 pt-4 pb-20">
           {/* Stepper bar */}
@@ -1027,7 +1027,7 @@ const Checkout = () => {
   const productImage = firstItem?.productImage;
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
+    <div className="min-h-dvh bg-background relative overflow-hidden">
       <div className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 h-[600px] w-[800px] bg-primary/[0.03] blur-[120px] rounded-full" />
 
       <Header />

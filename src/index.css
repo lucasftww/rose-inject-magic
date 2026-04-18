@@ -67,6 +67,11 @@
       --success: 197 85% 44%;
     }
   }
+
+  /* Mobile WebKit: menos flash cinza ao tocar em links/botões */
+  body {
+    -webkit-tap-highlight-color: transparent;
+  }
 }
 
 @layer utilities {

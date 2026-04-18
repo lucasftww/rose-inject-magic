@@ -28,8 +28,8 @@ export type { RobotProjectSalesPeriod } from "@/lib/adminRobotProjectFetch";
  * preventing redundant network requests when switching between admin tabs.
  */
 
-const ADMIN_STALE_TIME = 2 * 60 * 1000; // 2 minutes
-const ADMIN_HEAVY_STALE_TIME = 3 * 60 * 1000; // 3 minutes — overview / finance / payments list
+const ADMIN_STALE_TIME = 3 * 60 * 1000; // 3 minutes
+const ADMIN_HEAVY_STALE_TIME = 5 * 60 * 1000; // 5 minutes — alinhado com adminCache + Finance/Overview
 
 // ─── Products (id, name) — used by CouponsTab, ResellersTab, ScratchCardTab ───
 export function useAdminProductsList() {

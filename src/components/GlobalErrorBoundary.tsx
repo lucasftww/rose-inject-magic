@@ -69,7 +69,7 @@ export class GlobalErrorBoundary extends Component<Props, State> {
   public render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="min-h-dvh bg-background flex items-center justify-center p-4">
           <div className="max-w-md w-full bg-card border border-border rounded-xl p-8 text-center shadow-lg">
             <h1 className="text-2xl font-bold text-foreground mb-4">
               {this.state.isChunkError ? "Erro de Conexão" : "Ops! Algo deu errado."}

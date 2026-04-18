@@ -564,7 +564,7 @@ const GameSelectScreen = ({
   }, [games, gameSearch]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       <Header />
 
       {/* Hero header */}
@@ -1092,7 +1092,7 @@ const Produtos = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       <Header />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 pt-4 pb-20">
         <button
@@ -1195,7 +1195,7 @@ const Produtos = () => {
 
           {/* ─── Desktop Sidebar ─── */}
           <aside className="hidden shrink-0 lg:block lg:w-72">
-            <div className="sticky top-28 max-h-[calc(100vh-8rem)] overflow-y-auto space-y-4 scrollbar-hide">
+            <div className="sticky top-28 max-h-[calc(100dvh-8rem)] overflow-y-auto space-y-4 scrollbar-hide">
               <div className="rounded-lg border border-border bg-card p-5">
                 <div className="flex items-center justify-between">
                   <h3 className="flex items-center gap-2 text-base font-bold text-foreground">

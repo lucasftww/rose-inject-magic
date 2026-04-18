@@ -613,7 +613,7 @@ const ContaDetalhes = () => {
   const activeItems = sortedActiveItems;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       <Header />
       <div className="mx-auto max-w-6xl px-4 min-[400px]:px-5 sm:px-6 pt-3 sm:pt-4 pb-28 sm:pb-20">
         <Link

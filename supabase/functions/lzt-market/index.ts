@@ -294,20 +294,18 @@ Deno.serve(async (req) => {
     // Fetch LZT token from system_credentials table
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
-    // Update rates and fetch configs in parallel with overall timeout
-    try {
-      console.log("Starting backend fetch tasks...");
-      await Promise.race([
-        updateRates(),
-        new Promise((_, reject) => setTimeout(() => reject(new Error("Rates timeout")), 5000))
-      ]).catch(e => console.warn("Rates fetch timed out or failed:", e));
-    } catch (e) { 
-      console.warn("Critical error in rate update loop:", e);
-    }
+    // FX rates + DB em paralelo: a lista já não espera só pelo awesomeapi antes de ir à BD (menos latência na 1ª resposta).
+    const ratesPromise = Promise.race([
+      updateRates(),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Rates timeout")), 5000)),
+    ]).catch((e) => {
+      console.warn("Rates fetch timed out or failed:", e);
+    });
 
     const [lztCredsRes, lztConfigRow] = await Promise.all([
       supabaseAdmin.from("system_credentials").select("env_key, value").in("env_key", ["LZT_API_TOKEN", "LZT_MARKET_TOKEN"]),
       supabaseAdmin.from("lzt_config").select("max_fetch_price, currency, markup_multiplier, markup_valorant, markup_lol, markup_fortnite, markup_minecraft").limit(1).maybeSingle(),
+      ratesPromise,
     ]);
 
     const tokenFromDb = lztTokenFromCredentialRows(lztCredsRes?.data);

@@ -16,7 +16,7 @@ As funções também leem variáveis de ambiente quando o valor não está na ta
 |-----|-------------------|----------------------|
 | LZT Market | `LZT_MARKET_TOKEN` ou `LZT_API_TOKEN` | `lzt-market`, `pix-payment` |
 | Meta CAPI | `META_ACCESS_TOKEN`, `META_PIXEL_ID` | `pix-payment`, `server-relay` (preferência: linhas em `system_credentials`) |
-| UTMify Orders | `UTMIFY_API_TOKEN` | `pix-payment` (envio server-side de vendas) |
+| UTMify Orders | `UTMIFY_API_TOKEN` | `pix-payment` — **preferir Admin → Credenciais**; secret da Edge só como fallback |
 | MisticPay | `MISTICPAY_CLIENT_ID`, `MISTICPAY_CLIENT_SECRET` | `pix-payment` |
 | Robot API | `ROBOT_API_USERNAME`, `ROBOT_API_PASSWORD` | `pix-payment` |
 | Discord | `DISCORD_BOT_TOKEN` | `pix-payment` |

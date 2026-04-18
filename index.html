@@ -15,6 +15,7 @@
     <link rel="dns-prefetch" href="https://media.valorant-api.com" />
     <link rel="dns-prefetch" href="https://fortnite-api.com" />
     <link rel="dns-prefetch" href="https://ddragon.leagueoflegends.com" />
+    <link rel="dns-prefetch" href="https://cdn.utmify.com.br" />
     <link rel="canonical" href="/" id="canonical-link" />
     <script>document.addEventListener('DOMContentLoaded',function(){document.getElementById('canonical-link').href=location.origin+location.pathname})</script>
 
@@ -72,7 +73,7 @@
           fbq('init', PIXEL_ID);
           /* Um único init vem daqui; metaPixel.ts não volta a chamar fbq('init') (evita Duplicate Pixel ID). */
           try { window.__ROYAL_META_HEAD_INIT__ = true; } catch (e) {}
-          /* SPA: sem PageView extra em cada pushState (React Router). Um PageView por carregamento completo (F5 / entrada). */
+          /* SPA: PageView automático da Meta desativado; navegações disparam em RouteTracker.trackSpaPageView */
           try { fbq.disablePushState = true; } catch (e) {}
           try { fbq('track', 'PageView'); } catch (e) {}
           /* Conversões: InitiateCheckout + Purchase (metaPixel.ts) + CAPI (server-relay) */

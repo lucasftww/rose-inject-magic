@@ -1991,7 +1991,7 @@ const Contas = () => {
   // Trigger prefetch after initial load completes (delayed so quick bounces do not pull extra list JSON)
   useEffect(() => {
     if (firstPageLoaded && streamedItems.length > 0) {
-      const timer = setTimeout(prefetchAdjacentTabs, 1200);
+      const timer = setTimeout(prefetchAdjacentTabs, 900);
       return () => clearTimeout(timer);
     }
   }, [firstPageLoaded, gameTab, prefetchAdjacentTabs]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -2525,7 +2525,7 @@ const Contas = () => {
   );
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       <Header />
       <div className="mx-auto max-w-7xl px-3 min-[400px]:px-4 sm:px-6 pt-4 pb-20">
 
@@ -2715,7 +2715,7 @@ const Contas = () => {
 
           {/* ─── Desktop Sidebar ─── */}
           <aside className="hidden shrink-0 lg:block lg:w-72">
-            <div className="sticky top-28 max-h-[calc(100vh-8rem)] overflow-y-auto space-y-4 scrollbar-hide">
+            <div className="sticky top-28 max-h-[calc(100dvh-8rem)] overflow-y-auto space-y-4 scrollbar-hide">
               <div className="rounded-lg border bg-card p-5 transition-colors duration-300" style={{ borderColor: isValorant ? 'hsl(var(--border))' : `${accentColor}25` }}>
                 <div className="flex items-center justify-between">
                   <h3 className="flex items-center gap-2 text-base font-bold text-foreground">

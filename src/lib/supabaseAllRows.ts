@@ -24,6 +24,7 @@ export async function fetchAllRows<T = unknown>(
     limit?: number;
   } = {}
 ): Promise<T[]> {
+  /** PostgREST costuma limitar a 1000 linhas/pedido; não aumentar sem alinhar «Max rows» no projeto Supabase. */
   const PAGE_SIZE = 1000;
   let allData: T[] = [];
   let from = 0;
@@ -41,7 +42,11 @@ export async function fetchAllRows<T = unknown>(
       query = query.order(order.column, { ascending: order.ascending ?? true });
     }
 
-    const to = limit ? Math.min(from + PAGE_SIZE - 1, limit - 1) : from + PAGE_SIZE - 1;
+    const remaining = limit !== undefined ? Math.max(0, limit - allData.length) : PAGE_SIZE;
+    const chunk = Math.min(PAGE_SIZE, remaining || PAGE_SIZE);
+    if (chunk === 0) break;
+
+    const to = from + chunk - 1;
     query = query.range(from, to);
 
     const { data, error } = await query;
@@ -49,11 +54,10 @@ export async function fetchAllRows<T = unknown>(
     if (!data || data.length === 0) break;
 
     allData = allData.concat(data as T[]);
+    from += data.length;
 
-    if (data.length < PAGE_SIZE) break;
-    if (limit && allData.length >= limit) break;
-
-    from += PAGE_SIZE;
+    if (limit !== undefined && allData.length >= limit) break;
+    if (data.length < chunk) break;
   }
 
   return limit ? allData.slice(0, limit) : allData;

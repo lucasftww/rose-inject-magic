@@ -174,7 +174,7 @@ const AdminPanel = () => {
   const activeLabel = tabGroups.flatMap(g => g.tabs).find(t => t.id === activeTab)?.label || "";
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
 
       {/* Mobile Sheet Sidebar */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>

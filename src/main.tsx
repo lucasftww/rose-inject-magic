@@ -3,6 +3,7 @@ import App from "./App.tsx";
 import "./index.css";
 import "./i18n";
 import { initErrorTracker } from "./lib/errorTracker";
+import { runMetaDevChecks } from "./lib/metaDevChecks";
 import { supabaseUrl } from "./integrations/supabase/client";
 
 function injectResourceHints() {
@@ -30,5 +31,6 @@ function injectResourceHints() {
 injectResourceHints();
 
 initErrorTracker();
+runMetaDevChecks();
 
 createRoot(document.getElementById("root")!).render(<App />);

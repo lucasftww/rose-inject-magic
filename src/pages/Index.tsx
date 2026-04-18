@@ -38,11 +38,11 @@ const Index = () => {
   ];
 
   return (
-    <div className="relative min-h-screen bg-background overflow-x-hidden">
+    <div className="relative min-h-dvh bg-background overflow-x-hidden">
       <Header />
 
       {/* ═══ HERO ═══ */}
-      <main className="relative flex min-h-[90vh] sm:min-h-screen flex-col items-center justify-center px-4 sm:px-6 pt-16 sm:pt-0 pb-6 sm:pb-16 text-center overflow-hidden">
+      <main className="relative flex min-h-[90dvh] sm:min-h-dvh flex-col items-center justify-center px-4 sm:px-6 pt-16 sm:pt-0 pb-6 sm:pb-16 text-center overflow-hidden">
         {/* Hero background image */}
         <div className="pointer-events-none absolute inset-0 z-0">
           <img
