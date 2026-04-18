@@ -6,7 +6,20 @@
 npx supabase secrets list
 ```
 
-O Supabase injeta automaticamente `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (e variantes) nas Edge Functions; não é preciso duplicar no Dashboard, salvo cenários especiais.
+O Supabase injeta automaticamente `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (e variantes) nas Edge Functions; não é preciso duplicar no Dashboard, salvo cenários especiais. O `secrets list` mostra apenas **nomes** e **digest** (hash), não o valor — serve para confirmar que um nome existe.
+
+## Deploy só de funções alteradas (rápido)
+
+Para publicar apenas **lzt-market**, **pix-payment** e **server-relay** (as que mais mudam com LZT/Meta/Pix):
+
+```sh
+# PowerShell: se necessário
+# $env:SUPABASE_ACCESS_TOKEN="sbp_..."
+
+node scripts/deploy-edge-functions.mjs lzt-market pix-payment server-relay
+```
+
+O deploy completo de todas as funções continua em `npm run deploy:supabase-functions`.
 
 ## Secrets opcionais (fallback por código)
 
@@ -16,6 +29,7 @@ As funções também leem variáveis de ambiente quando o valor não está na ta
 |-----|-------------------|----------------------|
 | LZT Market | `LZT_MARKET_TOKEN` ou `LZT_API_TOKEN` | `lzt-market`, `pix-payment` |
 | Meta CAPI | `META_ACCESS_TOKEN`, `META_PIXEL_ID` | `pix-payment`, `server-relay` (preferência: linhas em `system_credentials`) |
+| Meta (browser) | `META_ALLOWED_ORIGIN_HOSTS` | `server-relay` — lista **separada por vírgulas** de hostnames permitidos para `Origin`/`Referer` e validação de `event_source_url`. Se vazio, usa default no código (`royalstorebr.com`, `www.…`, `localhost`, `127.0.0.1`). |
 | UTMify Orders | `UTMIFY_API_TOKEN` | `pix-payment` — **preferir Admin → Credenciais**; secret da Edge só como fallback |
 | MisticPay | `MISTICPAY_CLIENT_ID`, `MISTICPAY_CLIENT_SECRET` | `pix-payment` |
 | Robot API | `ROBOT_API_USERNAME`, `ROBOT_API_PASSWORD` | `pix-payment` |
@@ -77,7 +91,14 @@ Na consola do projeto: **Table Editor** → `system_credentials` → inserir/edi
 
 - **LZT:** abre a página de contas LZT na loja; se carregar itens sem erro de token, está configurado.
 - **Meta CAPI:** após uma compra de teste, vê os logs da função `pix-payment` no Dashboard (avisos se token/pixel faltarem).
+- **server-relay (Pixel browser):** pedidos de `Origin`/`Referer` fora de `META_ALLOWED_ORIGIN_HOSTS` são rejeitados; ajusta o secret se mudares domínio de produção ou preview.
 - Lista de secrets: `npx supabase secrets list` (só confirma nomes definidos na Edge, não substitui a tabela).
+
+### Checklist: doc ↔ projeto (referência)
+
+No código, **LZT** e **META_PIXEL_ID** costumam vir sobretudo de **`system_credentials`**; por isso **não** é obrigatório ver `LZT_*` ou `META_PIXEL_ID` no `secrets list`. Já **MisticPay**, **Discord**, **Meta token**, **hosts permitidos** e **LOVABLE** aparecem frequentemente como secrets nomeados.
+
+Um projeto “bem montado” costuma ter no mínimo (Edge ou DB): credenciais LZT, MisticPay, Meta (token + pixel), e o que usares de Discord/UTMify/Robot. Cruza com `secrets list` e com **Admin → Credenciais** até não faltar nada para os fluxos que usas em produção.
 
 ## Migrações e `db push`
 
