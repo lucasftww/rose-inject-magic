@@ -1590,25 +1590,26 @@ const Contas = () => {
   const [firstPageLoaded, setFirstPageLoaded] = useState(false);
 
   // ─── Asset maps (only load when needed) ───
+  // Mapas pesados só depois da 1ª página LZT: na 1ª visita o browser dedica a fila ao `lzt-market` (perceção mais rápida).
   const { data: skinsMap = new Map() } = useQuery({
     queryKey: ["all-valorant-skins"],
     queryFn: fetchAllValorantSkins,
     staleTime: 1000 * 60 * 60,
-    enabled: gameTab === "valorant",
+    enabled: gameTab === "valorant" && firstPageLoaded,
   });
 
   const { data: champKeyMap = new Map<number, string>() } = useQuery({
     queryKey: ["lol-champ-key-map"],
     queryFn: fetchLolChampKeyMap,
     staleTime: 1000 * 60 * 60 * 6,
-    enabled: gameTab === "lol",
+    enabled: gameTab === "lol" && firstPageLoaded,
   });
 
   const { data: fnSkinsDb = new Map<string, FortniteCosmeticDbRow>() } = useQuery({
     queryKey: ["fortnite-cosmetics"],
     queryFn: fetchFortniteSkins,
     staleTime: 1000 * 60 * 60 * 6,
-    enabled: gameTab === "fortnite",
+    enabled: gameTab === "fortnite" && firstPageLoaded,
   });
 
   const buildParams = useCallback((pageNum: number = 1): Record<string, string | string[]> => {

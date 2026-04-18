@@ -21,7 +21,11 @@ function injectResourceHints() {
       /* ignore */
     }
   }
-  for (const href of ["https://connect.facebook.net", "https://www.facebook.com"]) {
+  for (const href of [
+    "https://connect.facebook.net",
+    "https://www.facebook.com",
+    "https://economia.awesomeapi.com.br",
+  ]) {
     const d = document.createElement("link");
     d.rel = "dns-prefetch";
     d.href = href;

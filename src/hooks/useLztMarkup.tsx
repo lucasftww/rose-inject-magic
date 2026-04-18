@@ -35,7 +35,10 @@ function toMarkup(v: unknown, fallback: number): number {
   return Number.isFinite(n) && n >= 1 ? n : fallback;
 }
 
-async function fetchStorefrontPricing(): Promise<StorefrontPricing> {
+/** Query key partilhada com prefetch em `App` (Contas / detalhes). */
+export const LZT_STOREFRONT_PRICING_QUERY_KEY = ["lzt-storefront-pricing"] as const;
+
+export async function fetchStorefrontPricing(): Promise<StorefrontPricing> {
   const [fxRes, cfgRes] = await Promise.all([
     fetch("https://economia.awesomeapi.com.br/json/last/USD-BRL,RUB-BRL"),
     supabase
@@ -109,7 +112,7 @@ export function getLztItemBrlPrice(item: LztPriceInput, game?: GameCategory, ctx
 
 export const useLztMarkup = () => {
   const { data: pricing } = useQuery({
-    queryKey: ["lzt-storefront-pricing"],
+    queryKey: LZT_STOREFRONT_PRICING_QUERY_KEY,
     queryFn: fetchStorefrontPricing,
     staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,

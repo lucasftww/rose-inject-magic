@@ -6,7 +6,9 @@ import { queryClient } from "@/lib/queryClient";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { CartProvider } from "@/hooks/useCart";
-import React, { lazy, Suspense } from "react";
+import React, { lazy, Suspense, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { fetchStorefrontPricing, LZT_STOREFRONT_PRICING_QUERY_KEY } from "@/hooks/useLztMarkup";
 import AdminGuard from "@/components/AdminGuard";
 import RouteTracker from "@/components/RouteTracker";
 
@@ -96,8 +98,22 @@ function SuspenseRoute({ children }: { children: React.ReactNode }) {
   return <Suspense fallback={<LazyFallback />}>{children}</Suspense>;
 }
 
+/** Warm FX + lzt_config antes de abrir Contas — evita competir com o 1º GET lzt-market na fila HTTP. */
+function PrefetchLztStorefrontPricing() {
+  const qc = useQueryClient();
+  useEffect(() => {
+    void qc.prefetchQuery({
+      queryKey: LZT_STOREFRONT_PRICING_QUERY_KEY,
+      queryFn: fetchStorefrontPricing,
+      staleTime: 5 * 60 * 1000,
+    });
+  }, [qc]);
+  return null;
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
+    <PrefetchLztStorefrontPricing />
     <AuthProvider>
       <CartProvider>
         <TooltipProvider>
