@@ -23,7 +23,7 @@ const LZT_ALLOWED_IMAGE_DOMAINS = [
   "ddragon.leagueoflegends.com", "fortnite-api.com", "mineskin.eu",
   "akamaihd.net", "capes.dev",
 ];
-const RETRYABLE_STATUSES = [429, 502, 503, 504];
+const RETRYABLE_STATUSES = [429, 502, 503, 504, 524];
 /** Evita que o isolate fique à espera indefinidamente da LZT (origem típica de 504 no gateway Supabase). */
 const LZT_SINGLE_FETCH_TIMEOUT_MS = 14_000;
 let RUB_TO_BRL = 0.055; // Updated fallback
@@ -102,6 +102,23 @@ function trimFortniteListPayloadForList(item: LztItem): void {
   const pick = item.fortnitePickaxe;
   if (Array.isArray(pick) && pick.length > FN_LIST_PICKAXES_MAX) {
     item.fortnitePickaxe = pick.slice(0, FN_LIST_PICKAXES_MAX);
+  }
+}
+
+/** Lista: `fortnitePastSeasons` pode ter dezenas de objetos grandes; o filtro BP no cliente só precisa de `purchasedVIP`. */
+function trimFortnitePastSeasonsForList(item: LztItem): void {
+  const ps = item.fortnitePastSeasons;
+  if (!Array.isArray(ps) || ps.length === 0) return;
+  const vip = ps.filter(
+    (s: unknown) => s && typeof s === "object" && (s as LztItem).purchasedVIP === true,
+  ) as LztItem[];
+  if (vip.length > 0) {
+    item.fortnitePastSeasons = vip.map((s) => ({
+      purchasedVIP: true as const,
+      ...(typeof s.seasonNumber === "number" ? { seasonNumber: s.seasonNumber } : {}),
+    }));
+  } else {
+    delete item.fortnitePastSeasons;
   }
 }
 
@@ -980,6 +997,7 @@ Deno.serve(async (req) => {
 
         if (gameType === "fortnite") {
           trimFortniteListPayloadForList(item);
+          trimFortnitePastSeasonsForList(item);
         }
 
         if (previewMode) {
@@ -1015,6 +1033,16 @@ Deno.serve(async (req) => {
             }
           }
           item.valorantInventory = trimmed;
+        }
+
+        if (item.imagePreviewLinks?.direct) {
+          item.imagePreviewLinks = {
+            direct: {
+              weapons: item.imagePreviewLinks.direct.weapons,
+              agents: item.imagePreviewLinks.direct.agents,
+              buddies: item.imagePreviewLinks.direct.buddies,
+            },
+          };
         }
       }
 

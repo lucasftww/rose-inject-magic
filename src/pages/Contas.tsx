@@ -5,7 +5,8 @@ import { ChevronLeft, ChevronRight, ChevronDown, Search, SlidersHorizontal, Doll
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { safeJsonFetch } from "@/lib/apiUtils";
+import { safeJsonFetch, ApiError } from "@/lib/apiUtils";
+import { throwApiError } from "@/lib/apiErrors";
 import { supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
 import type {
   DDragonChampionJson,
@@ -1034,8 +1035,23 @@ const Contas = () => {
         const parentAborted = controller.signal.aborted;
         const attemptTimedOut = attemptSignal.didTimeout();
         if (parentAborted || (errName === "AbortError" && !attemptTimedOut)) throw err;
+
+        if (err instanceof ApiError) {
+          const retryable =
+            err.status === 429 || (err.status >= 502 && err.status <= 504) || err.status === 524;
+          if (retryable && attempt < retries) {
+            const delay =
+              err.status === 429 ? 1200 + 900 * attempt : 400 * Math.pow(2, attempt);
+            await waitWithAbort(delay, controller.signal);
+            continue;
+          }
+          if (err.status === 404) {
+            throw new Error("O serviço de mercado não foi encontrado. Verifique a configuração da Supabase.");
+          }
+          throwApiError(err.status || 500);
+        }
+
         if (attempt >= retries) throw err;
-        // Backoff curto: 400ms, 800ms, 1.6s — lista deve falhar rápido ou recuperar sem parecer “travado”
         await waitWithAbort(400 * Math.pow(2, attempt), controller.signal);
       } finally {
         attemptSignal.cleanup();

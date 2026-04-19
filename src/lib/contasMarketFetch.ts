@@ -71,13 +71,16 @@ export async function fetchAccountsRaw(
     return out;
   } catch (err: unknown) {
     if (perfDiag && t0) {
-      console.info("[Contas perf] lzt-market", Math.round(performance.now() - t0), "ms (erro)", qsShort);
+      const st = err instanceof ApiError ? ` status=${err.status}` : "";
+      console.info("[Contas perf] lzt-market", Math.round(performance.now() - t0), "ms (erro)" + st, qsShort);
     }
     if (err instanceof ApiError) {
       if (err.status === 404) {
         throw new Error("O serviço de mercado não foi encontrado. Verifique a configuração da Supabase.");
       }
-      throwApiError(err.status || 500);
+      const s = err.status || 500;
+      if (s === 429 || (s >= 502 && s <= 504) || s === 524) throw err;
+      throwApiError(s);
     }
     throw err;
   }

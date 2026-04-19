@@ -5,7 +5,7 @@ export function throwApiError(status: number): never {
   if (status === 410) {
     throw new Error("Esta conta já foi vendida. Escolha outra conta disponível.");
   }
-  if (status === 502 || status === 503) {
+  if (status === 502 || status === 503 || status === 504 || status === 524) {
     throw new Error("O serviço de contas está temporariamente instável. Tente novamente em alguns segundos.");
   }
   if (status === 429) {
