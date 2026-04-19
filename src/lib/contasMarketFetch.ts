@@ -55,14 +55,23 @@ export async function fetchAccountsRaw(
       const n = Array.isArray(out.items) ? out.items.length : 0;
       let approxKb = 0;
       try {
-        approxKb = Math.round(JSON.stringify(out).length / 1024);
+        const items = out.items;
+        if (Array.isArray(items) && items.length > 0) {
+          const sampleN = Math.min(4, items.length);
+          let sum = 0;
+          for (let i = 0; i < sampleN; i++) sum += JSON.stringify(items[i]).length;
+          const avg = sum / sampleN;
+          approxKb = Math.round((512 + avg * items.length) / 1024);
+        } else {
+          approxKb = Math.round(JSON.stringify(out).length / 1024);
+        }
       } catch {
         approxKb = 0;
       }
       console.info(
         "[Contas perf] lzt-market",
         `${Math.round(performance.now() - t0)} ms`,
-        `~${approxKb} KB JSON`,
+        `~${approxKb} KB JSON (est.)`,
         `${n} items`,
         "(compare TTFB vs Content Download in Network)",
         qsShort,
