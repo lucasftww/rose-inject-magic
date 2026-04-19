@@ -12,12 +12,7 @@ import {
   ADMIN_MAX_RESELLER_PURCHASES,
 } from "@/lib/adminDataLimits";
 import type { RpcErrorish } from "@/lib/adminFinancePostgrest";
-import {
-  devWarnAdminRpc,
-  isAuthLikeRpcError,
-  normRpcCode,
-  rpcErrorBlob,
-} from "@/lib/adminFinancePostgrest";
+import { devWarnAdminRpc, isAuthLikeRpcError } from "@/lib/adminFinancePostgrest";
 
 /** Após 1ª falha recuperável, evita novos POST /rpc/* (400 no Network) até invalidar cache admin. */
 const FINANCE_BULK_REST_ONLY_KEY = "rose_admin_finance_bulk_rest_only";
@@ -51,22 +46,22 @@ function shouldFallbackRestForFinanceBulk(error: RpcErrorish): boolean {
   return Boolean(error) && !isAuthLikeRpcError(error);
 }
 
-/** PostgREST não encontrou overload com estes argumentos — tentar só defaults do SQL. */
-function shouldRetryRpcWithoutNamedLimit(err: RpcErrorish): boolean {
-  if (!err || isAuthLikeRpcError(err)) return false;
-  const c = normRpcCode(err);
-  const m = rpcErrorBlob(err);
-  if (c === "PGRST203" || c === "PGRST204" || c === "PGRST205") return true;
-  if (c === "42725") return true;
-  if (m.includes("no function matches")) return true;
-  if (m.includes("could not find the function")) return true;
-  if (m.includes("does not exist") && m.includes("function") && m.includes("admin_finance")) return true;
-  if (m.includes("unexpected") && (m.includes("parameter") || m.includes("argument"))) return true;
-  if (m.includes("unknown") && (m.includes("parameter") || m.includes("argument"))) return true;
-  if (m.includes("not match") && m.includes("function")) return true;
-  if (m.includes("overload")) return true;
-  return false;
-}
+/** Evita 2× o mesmo POST quando Finance + Overview montam em paralelo antes do cache. */
+let inFlightCompletedPayments: Promise<AdminPaymentFinanceRow[]> | null = null;
+let inFlightLztSales: Promise<AdminLztSaleBulkRow[]> | null = null;
+let inFlightResellerPurchases: Promise<AdminResellerPurchaseBulkRow[]> | null = null;
+let inFlightOrderTickets: Promise<
+  Array<{
+    id: string;
+    product_id: string;
+    product_plan_id: string;
+    user_id: string;
+    metadata: Json | null;
+    status: string | null;
+    created_at: string | null;
+    status_label: string | null;
+  }>
+> | null = null;
 
 export interface AdminPaymentFinanceRow {
   id: string;
@@ -106,24 +101,30 @@ export async function fetchAdminCompletedPaymentsBulk(): Promise<AdminPaymentFin
     return fetchAllRows<AdminPaymentFinanceRow>("payments", restArgs);
   }
 
-  let { data, error } = await supabase.rpc(rpcName, {
-    p_limit: ADMIN_MAX_PAYMENTS_COMPLETED,
-  });
-  if (error) devWarnAdminRpc("bulk", rpcName, "RPC com p_limit", error);
-  if (error && shouldRetryRpcWithoutNamedLimit(error)) {
-    ({ data, error } = await supabase.rpc(rpcName));
-    if (error) devWarnAdminRpc("bulk", rpcName, "RPC sem p_limit (retry)", error);
-  }
-  if (!error && Array.isArray(data)) {
-    return mapRows(data as Record<string, unknown>[]);
-  }
-  if (shouldFallbackRestForFinanceBulk(error)) {
-    devWarnAdminRpc("bulk", rpcName, "fallback REST", error);
-    const rows = await fetchAllRows<AdminPaymentFinanceRow>("payments", restArgs);
-    writeFinanceBulkRestOnly();
-    return rows;
-  }
-  throw error ?? new Error("admin_finance_completed_payments");
+  if (inFlightCompletedPayments) return inFlightCompletedPayments;
+
+  inFlightCompletedPayments = (async (): Promise<AdminPaymentFinanceRow[]> => {
+    try {
+      let { data, error } = await supabase.rpc(rpcName, {
+        p_limit: ADMIN_MAX_PAYMENTS_COMPLETED,
+      });
+      if (error) devWarnAdminRpc("bulk", rpcName, "RPC com p_limit", error);
+      if (!error && Array.isArray(data)) {
+        return mapRows(data as Record<string, unknown>[]);
+      }
+      if (shouldFallbackRestForFinanceBulk(error)) {
+        devWarnAdminRpc("bulk", rpcName, "fallback REST", error);
+        const rows = await fetchAllRows<AdminPaymentFinanceRow>("payments", restArgs);
+        writeFinanceBulkRestOnly();
+        return rows;
+      }
+      throw error ?? new Error("admin_finance_completed_payments");
+    } finally {
+      inFlightCompletedPayments = null;
+    }
+  })();
+
+  return inFlightCompletedPayments;
 }
 
 export interface AdminLztSaleBulkRow {
@@ -155,24 +156,30 @@ export async function fetchAdminLztSalesBulk(): Promise<AdminLztSaleBulkRow[]> {
     return fetchAllRows<AdminLztSaleBulkRow>("lzt_sales", restArgs);
   }
 
-  let { data, error } = await supabase.rpc(rpcName, {
-    p_limit: ADMIN_MAX_LZT_SALES_ROWS,
-  });
-  if (error) devWarnAdminRpc("bulk", rpcName, "RPC com p_limit", error);
-  if (error && shouldRetryRpcWithoutNamedLimit(error)) {
-    ({ data, error } = await supabase.rpc(rpcName));
-    if (error) devWarnAdminRpc("bulk", rpcName, "RPC sem p_limit (retry)", error);
-  }
-  if (!error && Array.isArray(data)) {
-    return mapRows(data as Record<string, unknown>[]);
-  }
-  if (shouldFallbackRestForFinanceBulk(error)) {
-    devWarnAdminRpc("bulk", rpcName, "fallback REST", error);
-    const rows = await fetchAllRows<AdminLztSaleBulkRow>("lzt_sales", restArgs);
-    writeFinanceBulkRestOnly();
-    return rows;
-  }
-  throw error ?? new Error("admin_finance_lzt_sales");
+  if (inFlightLztSales) return inFlightLztSales;
+
+  inFlightLztSales = (async (): Promise<AdminLztSaleBulkRow[]> => {
+    try {
+      let { data, error } = await supabase.rpc(rpcName, {
+        p_limit: ADMIN_MAX_LZT_SALES_ROWS,
+      });
+      if (error) devWarnAdminRpc("bulk", rpcName, "RPC com p_limit", error);
+      if (!error && Array.isArray(data)) {
+        return mapRows(data as Record<string, unknown>[]);
+      }
+      if (shouldFallbackRestForFinanceBulk(error)) {
+        devWarnAdminRpc("bulk", rpcName, "fallback REST", error);
+        const rows = await fetchAllRows<AdminLztSaleBulkRow>("lzt_sales", restArgs);
+        writeFinanceBulkRestOnly();
+        return rows;
+      }
+      throw error ?? new Error("admin_finance_lzt_sales");
+    } finally {
+      inFlightLztSales = null;
+    }
+  })();
+
+  return inFlightLztSales;
 }
 
 export interface AdminResellerPurchaseBulkRow {
@@ -200,24 +207,30 @@ export async function fetchAdminResellerPurchasesBulk(): Promise<AdminResellerPu
     return fetchAllRows<AdminResellerPurchaseBulkRow>("reseller_purchases", restArgs);
   }
 
-  let { data, error } = await supabase.rpc(rpcName, {
-    p_limit: ADMIN_MAX_RESELLER_PURCHASES,
-  });
-  if (error) devWarnAdminRpc("bulk", rpcName, "RPC com p_limit", error);
-  if (error && shouldRetryRpcWithoutNamedLimit(error)) {
-    ({ data, error } = await supabase.rpc(rpcName));
-    if (error) devWarnAdminRpc("bulk", rpcName, "RPC sem p_limit (retry)", error);
-  }
-  if (!error && Array.isArray(data)) {
-    return mapRows(data as Record<string, unknown>[]);
-  }
-  if (shouldFallbackRestForFinanceBulk(error)) {
-    devWarnAdminRpc("bulk", rpcName, "fallback REST", error);
-    const rows = await fetchAllRows<AdminResellerPurchaseBulkRow>("reseller_purchases", restArgs);
-    writeFinanceBulkRestOnly();
-    return rows;
-  }
-  throw error ?? new Error("admin_finance_reseller_purchases");
+  if (inFlightResellerPurchases) return inFlightResellerPurchases;
+
+  inFlightResellerPurchases = (async (): Promise<AdminResellerPurchaseBulkRow[]> => {
+    try {
+      let { data, error } = await supabase.rpc(rpcName, {
+        p_limit: ADMIN_MAX_RESELLER_PURCHASES,
+      });
+      if (error) devWarnAdminRpc("bulk", rpcName, "RPC com p_limit", error);
+      if (!error && Array.isArray(data)) {
+        return mapRows(data as Record<string, unknown>[]);
+      }
+      if (shouldFallbackRestForFinanceBulk(error)) {
+        devWarnAdminRpc("bulk", rpcName, "fallback REST", error);
+        const rows = await fetchAllRows<AdminResellerPurchaseBulkRow>("reseller_purchases", restArgs);
+        writeFinanceBulkRestOnly();
+        return rows;
+      }
+      throw error ?? new Error("admin_finance_reseller_purchases");
+    } finally {
+      inFlightResellerPurchases = null;
+    }
+  })();
+
+  return inFlightResellerPurchases;
 }
 
 export async function fetchAdminOrderTicketsBulk(): Promise<
@@ -255,22 +268,28 @@ export async function fetchAdminOrderTicketsBulk(): Promise<
     return fetchAllRows("order_tickets", restArgs);
   }
 
-  let { data, error } = await supabase.rpc(rpcName, {
-    p_limit: ADMIN_MAX_ORDER_TICKETS,
-  });
-  if (error) devWarnAdminRpc("bulk", rpcName, "RPC com p_limit", error);
-  if (error && shouldRetryRpcWithoutNamedLimit(error)) {
-    ({ data, error } = await supabase.rpc(rpcName));
-    if (error) devWarnAdminRpc("bulk", rpcName, "RPC sem p_limit (retry)", error);
-  }
-  if (!error && Array.isArray(data)) {
-    return mapRows(data as Record<string, unknown>[]);
-  }
-  if (shouldFallbackRestForFinanceBulk(error)) {
-    devWarnAdminRpc("bulk", rpcName, "fallback REST", error);
-    const rows = await fetchAllRows("order_tickets", restArgs);
-    writeFinanceBulkRestOnly();
-    return rows;
-  }
-  throw error ?? new Error("admin_finance_order_tickets");
+  if (inFlightOrderTickets) return inFlightOrderTickets;
+
+  inFlightOrderTickets = (async () => {
+    try {
+      let { data, error } = await supabase.rpc(rpcName, {
+        p_limit: ADMIN_MAX_ORDER_TICKETS,
+      });
+      if (error) devWarnAdminRpc("bulk", rpcName, "RPC com p_limit", error);
+      if (!error && Array.isArray(data)) {
+        return mapRows(data as Record<string, unknown>[]);
+      }
+      if (shouldFallbackRestForFinanceBulk(error)) {
+        devWarnAdminRpc("bulk", rpcName, "fallback REST", error);
+        const rows = await fetchAllRows("order_tickets", restArgs);
+        writeFinanceBulkRestOnly();
+        return rows;
+      }
+      throw error ?? new Error("admin_finance_order_tickets");
+    } finally {
+      inFlightOrderTickets = null;
+    }
+  })();
+
+  return inFlightOrderTickets;
 }
