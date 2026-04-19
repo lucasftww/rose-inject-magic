@@ -4,12 +4,12 @@
 
 export type RpcErrorish = { message?: string; code?: string; details?: string; hint?: string } | null;
 
-export function rpcErrorBlob(err: RpcErrorish): string {
+function rpcErrorBlob(err: RpcErrorish): string {
   if (!err) return "";
   return [err.message, err.details, err.hint].filter(Boolean).join(" ").toLowerCase();
 }
 
-export function normRpcCode(err: RpcErrorish): string {
+function normRpcCode(err: RpcErrorish): string {
   return String(err?.code || "").toUpperCase();
 }
 

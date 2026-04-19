@@ -1493,6 +1493,7 @@ const Contas = () => {
       <div className="relative mt-5">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <input
+          name="contas-search"
           type="text"
           placeholder={searchPlaceholder}
           value={searchQuery}
@@ -1553,7 +1554,7 @@ const Contas = () => {
           <div className="mt-6">
             <label className="flex cursor-pointer items-center gap-3">
               <div className="relative">
-                <input type="checkbox" checked={onlyKnife} onChange={(e) => { setOnlyKnife(e.target.checked); setDisplayPage(1); }} className="peer sr-only" />
+                <input name="contas-only-knife" type="checkbox" checked={onlyKnife} onChange={(e) => { setOnlyKnife(e.target.checked); setDisplayPage(1); }} className="peer sr-only" />
                 <div className="h-5 w-9 rounded-full border border-border bg-secondary transition-colors peer-checked:border-success peer-checked:bg-success" />
                 <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-foreground/60 transition-all peer-checked:left-[18px] peer-checked:bg-success-foreground" />
               </div>
@@ -1567,7 +1568,7 @@ const Contas = () => {
               <Globe className="h-4 w-4 text-success" />
               Região
             </p>
-            <select value={valRegion} onChange={(e) => { setValRegion(e.target.value); setDisplayPage(1); }}
+            <select name="contas-valorant-region" value={valRegion} onChange={(e) => { setValRegion(e.target.value); setDisplayPage(1); }}
               className="w-full rounded-lg border border-border bg-secondary/50 py-2 px-3 text-sm text-foreground outline-none transition-colors focus:border-success/50 appearance-none cursor-pointer">
               {valorantRegions.map((region) => (
                 <option key={region.id} value={region.id}>{region.label}</option>
@@ -1603,21 +1604,21 @@ const Contas = () => {
             <p className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
               <Trophy className="h-4 w-4 text-[hsl(198,100%,45%)]" />Mín. Campeões
             </p>
-            <input type="number" min="0" placeholder="Ex: 50" value={lolChampMin} onChange={(e) => { setLolChampMin(e.target.value); setDisplayPage(1); }}
+            <input name="contas-lol-champ-min" type="number" min="0" placeholder="Ex: 50" value={lolChampMin} onChange={(e) => { setLolChampMin(e.target.value); setDisplayPage(1); }}
               className="w-full rounded-lg border border-border bg-secondary/50 py-2 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-[hsl(198,100%,45%,0.5)] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none" />
           </div>
           <div className="mt-4">
             <p className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
               <Star className="h-4 w-4 text-[hsl(198,100%,45%)]" />Mín. Skins LoL
             </p>
-            <input type="number" min="0" placeholder="Ex: 10" value={lolSkinsMin} onChange={(e) => { setLolSkinsMin(e.target.value); setDisplayPage(1); }}
+            <input name="contas-lol-skins-min" type="number" min="0" placeholder="Ex: 10" value={lolSkinsMin} onChange={(e) => { setLolSkinsMin(e.target.value); setDisplayPage(1); }}
               className="w-full rounded-lg border border-border bg-secondary/50 py-2 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-[hsl(198,100%,45%,0.5)] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none" />
           </div>
           <div className="mt-6">
             <p className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
               <Globe className="h-4 w-4 text-[hsl(198,100%,45%)]" />Região
             </p>
-            <select value={lolRegion} onChange={(e) => { setLolRegion(e.target.value); setDisplayPage(1); }}
+            <select name="contas-lol-region" value={lolRegion} onChange={(e) => { setLolRegion(e.target.value); setDisplayPage(1); }}
               className="w-full rounded-lg border border-border bg-secondary/50 py-2 px-3 text-sm text-foreground outline-none transition-colors focus:border-[hsl(198,100%,45%,0.5)] appearance-none cursor-pointer">
               {lolRegions.map((region) => (
                 <option key={region.id} value={region.id}>{region.label}</option>
@@ -1639,7 +1640,7 @@ const Contas = () => {
               </svg>
               Mín. V-Bucks
             </p>
-            <input type="number" min="0" placeholder="Ex: 1000" value={fnVbMin} onChange={(e) => { setFnVbMin(e.target.value); setDisplayPage(1); }}
+            <input name="contas-fn-vbucks-min" type="number" min="0" placeholder="Ex: 1000" value={fnVbMin} onChange={(e) => { setFnVbMin(e.target.value); setDisplayPage(1); }}
               className="w-full rounded-lg border border-border bg-secondary/50 py-2 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
               onFocus={e => (e.currentTarget.style.borderColor = `${FN_PURPLE}80`)} onBlur={e => (e.currentTarget.style.borderColor = '')} />
           </div>
@@ -1647,7 +1648,7 @@ const Contas = () => {
             <p className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
               <Star className="h-4 w-4" style={{ color: FN_PURPLE }} />Mín. Skins
             </p>
-            <input type="number" min="10" placeholder="Mín: 10" value={fnSkinsMin} onChange={(e) => { setFnSkinsMin(e.target.value); setDisplayPage(1); }}
+            <input name="contas-fn-skins-min" type="number" min="10" placeholder="Mín: 10" value={fnSkinsMin} onChange={(e) => { setFnSkinsMin(e.target.value); setDisplayPage(1); }}
               className="w-full rounded-lg border border-border bg-secondary/50 py-2 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
               onFocus={e => (e.currentTarget.style.borderColor = `${FN_PURPLE}80`)} onBlur={e => (e.currentTarget.style.borderColor = '')} />
             {fnSkinsMin && Number(fnSkinsMin) < 10 && (
@@ -1658,14 +1659,14 @@ const Contas = () => {
             <p className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
               <TrendingUp className="h-4 w-4" style={{ color: FN_PURPLE }} />Mín. Nível
             </p>
-            <input type="number" min="0" placeholder="Ex: 100" value={fnLevelMin} onChange={(e) => { setFnLevelMin(e.target.value); setDisplayPage(1); }}
+            <input name="contas-fn-level-min" type="number" min="0" placeholder="Ex: 100" value={fnLevelMin} onChange={(e) => { setFnLevelMin(e.target.value); setDisplayPage(1); }}
               className="w-full rounded-lg border border-border bg-secondary/50 py-2 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
               onFocus={e => (e.currentTarget.style.borderColor = `${FN_PURPLE}80`)} onBlur={e => (e.currentTarget.style.borderColor = '')} />
           </div>
           <div className="mt-5">
             <label className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-border p-3 transition-all"
               style={fnHasBattlePass ? { borderColor: FN_PURPLE, background: `${FN_PURPLE}10` } : {}}>
-              <input type="checkbox" checked={fnHasBattlePass} onChange={(e) => { setFnHasBattlePass(e.target.checked); setDisplayPage(1); }} className="sr-only" />
+              <input name="contas-fn-battle-pass" type="checkbox" checked={fnHasBattlePass} onChange={(e) => { setFnHasBattlePass(e.target.checked); setDisplayPage(1); }} className="sr-only" />
               <div className="h-4 w-4 rounded-sm border-2 flex items-center justify-center flex-shrink-0 transition-colors" style={{ borderColor: fnHasBattlePass ? FN_PURPLE : undefined, background: fnHasBattlePass ? FN_PURPLE : "transparent" }}>
                 {fnHasBattlePass && <span className="text-[9px] font-bold text-white">✓</span>}
               </div>
@@ -1689,7 +1690,7 @@ const Contas = () => {
             <div className="flex gap-2">
               <label className="flex flex-1 cursor-pointer items-center gap-2 rounded-lg border border-border p-2.5 transition-all"
                 style={mcJava ? { borderColor: MC_GREEN, background: `${MC_GREEN}10` } : {}}>
-                <input type="checkbox" checked={mcJava} onChange={(e) => { setMcJava(e.target.checked); setDisplayPage(1); }} className="sr-only" />
+                <input name="contas-mc-java" type="checkbox" checked={mcJava} onChange={(e) => { setMcJava(e.target.checked); setDisplayPage(1); }} className="sr-only" />
                 <div className="h-3.5 w-3.5 rounded-sm border-2 flex items-center justify-center flex-shrink-0" style={{ borderColor: mcJava ? MC_GREEN : undefined, background: mcJava ? MC_GREEN : "transparent" }}>
                   {mcJava && <span className="text-[8px] font-bold text-white">✓</span>}
                 </div>
@@ -1697,7 +1698,7 @@ const Contas = () => {
               </label>
               <label className="flex flex-1 cursor-pointer items-center gap-2 rounded-lg border border-border p-2.5 transition-all"
                 style={mcBedrock ? { borderColor: MC_GREEN, background: `${MC_GREEN}10` } : {}}>
-                <input type="checkbox" checked={mcBedrock} onChange={(e) => { setMcBedrock(e.target.checked); setDisplayPage(1); }} className="sr-only" />
+                <input name="contas-mc-bedrock" type="checkbox" checked={mcBedrock} onChange={(e) => { setMcBedrock(e.target.checked); setDisplayPage(1); }} className="sr-only" />
                 <div className="h-3.5 w-3.5 rounded-sm border-2 flex items-center justify-center flex-shrink-0" style={{ borderColor: mcBedrock ? MC_GREEN : undefined, background: mcBedrock ? MC_GREEN : "transparent" }}>
                   {mcBedrock && <span className="text-[8px] font-bold text-white">✓</span>}
                 </div>
@@ -1709,7 +1710,7 @@ const Contas = () => {
             <p className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
               <Trophy className="h-4 w-4" style={{ color: MC_GREEN }} />Mín. Nível Hypixel
             </p>
-            <input type="number" min="0" placeholder="Ex: 50" value={mcHypixelLvlMin} onChange={(e) => { setMcHypixelLvlMin(e.target.value); setDisplayPage(1); }}
+            <input name="contas-mc-hypixel-min" type="number" min="0" placeholder="Ex: 50" value={mcHypixelLvlMin} onChange={(e) => { setMcHypixelLvlMin(e.target.value); setDisplayPage(1); }}
               className="w-full rounded-lg border border-border bg-secondary/50 py-2 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
               onFocus={e => (e.currentTarget.style.borderColor = `${MC_GREEN}80`)} onBlur={e => (e.currentTarget.style.borderColor = '')} />
           </div>
@@ -1717,14 +1718,14 @@ const Contas = () => {
             <p className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
               <Star className="h-4 w-4" style={{ color: MC_GREEN }} />Mín. Capes
             </p>
-            <input type="number" min="0" placeholder="Ex: 1" value={mcCapesMin} onChange={(e) => { setMcCapesMin(e.target.value); setDisplayPage(1); }}
+            <input name="contas-mc-capes-min" type="number" min="0" placeholder="Ex: 1" value={mcCapesMin} onChange={(e) => { setMcCapesMin(e.target.value); setDisplayPage(1); }}
               className="w-full rounded-lg border border-border bg-secondary/50 py-2 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
               onFocus={e => (e.currentTarget.style.borderColor = `${MC_GREEN}80`)} onBlur={e => (e.currentTarget.style.borderColor = '')} />
           </div>
           <div className="mt-4">
             <label className="flex cursor-pointer items-center gap-3">
               <div className="relative">
-                <input type="checkbox" checked={mcNoBan} onChange={(e) => { setMcNoBan(e.target.checked); setDisplayPage(1); }} className="peer sr-only" />
+                <input name="contas-mc-no-ban" type="checkbox" checked={mcNoBan} onChange={(e) => { setMcNoBan(e.target.checked); setDisplayPage(1); }} className="peer sr-only" />
                 <div className="h-5 w-9 rounded-full border border-border bg-secondary transition-colors peer-checked:border-[hsl(120,60%,45%)] peer-checked:bg-[hsl(120,60%,45%)]" />
                 <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-foreground/60 transition-all peer-checked:left-[18px] peer-checked:bg-white" />
               </div>
@@ -1744,12 +1745,12 @@ const Contas = () => {
           <div className="mt-3 flex items-center gap-2">
             <div className="relative flex-1">
               <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">R$</span>
-              <input type="number" min="0" placeholder="Mín" value={priceMin} onChange={(e) => { setPriceMin(e.target.value.slice(0, 7)); setDisplayPage(1); }} onFocus={e => (e.currentTarget.style.borderColor = `${accentColor}80`)} onBlur={priceFieldBlur} className="w-full rounded-lg border border-border bg-secondary/50 py-2 pl-8 pr-2 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none" />
+              <input name="contas-price-min" type="number" min="0" placeholder="Mín" value={priceMin} onChange={(e) => { setPriceMin(e.target.value.slice(0, 7)); setDisplayPage(1); }} onFocus={e => (e.currentTarget.style.borderColor = `${accentColor}80`)} onBlur={priceFieldBlur} className="w-full rounded-lg border border-border bg-secondary/50 py-2 pl-8 pr-2 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none" />
             </div>
             <span className="text-xs text-muted-foreground">—</span>
             <div className="relative flex-1">
               <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">R$</span>
-              <input type="number" min="0" placeholder="Máx" value={priceMax} onChange={(e) => { setPriceMax(e.target.value.slice(0, 7)); setDisplayPage(1); }} onFocus={e => (e.currentTarget.style.borderColor = `${accentColor}80`)} onBlur={priceFieldBlur} className="w-full rounded-lg border border-border bg-secondary/50 py-2 pl-8 pr-2 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none" />
+              <input name="contas-price-max" type="number" min="0" placeholder="Máx" value={priceMax} onChange={(e) => { setPriceMax(e.target.value.slice(0, 7)); setDisplayPage(1); }} onFocus={e => (e.currentTarget.style.borderColor = `${accentColor}80`)} onBlur={priceFieldBlur} className="w-full rounded-lg border border-border bg-secondary/50 py-2 pl-8 pr-2 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none" />
             </div>
           </div>
         )}
@@ -1764,9 +1765,9 @@ const Contas = () => {
           </button>
           {invOpen && (
             <div className="mt-3 flex items-center gap-2">
-              <input type="number" min="0" placeholder="Mín" value={invMin} onChange={(e) => { setInvMin(e.target.value.slice(0, 7)); setDisplayPage(1); }} onFocus={e => (e.currentTarget.style.borderColor = `${accentColor}80`)} onBlur={e => (e.currentTarget.style.borderColor = '')} className="w-full flex-1 rounded-lg border border-border bg-secondary/50 py-2 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none" />
+              <input name="contas-inv-min" type="number" min="0" placeholder="Mín" value={invMin} onChange={(e) => { setInvMin(e.target.value.slice(0, 7)); setDisplayPage(1); }} onFocus={e => (e.currentTarget.style.borderColor = `${accentColor}80`)} onBlur={e => (e.currentTarget.style.borderColor = '')} className="w-full flex-1 rounded-lg border border-border bg-secondary/50 py-2 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none" />
               <span className="text-xs text-muted-foreground">—</span>
-              <input type="number" min="0" placeholder="Máx" value={invMax} onChange={(e) => { setInvMax(e.target.value.slice(0, 7)); setDisplayPage(1); }} onFocus={e => (e.currentTarget.style.borderColor = `${accentColor}80`)} onBlur={e => (e.currentTarget.style.borderColor = '')} className="w-full flex-1 rounded-lg border border-border bg-secondary/50 py-2 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none" />
+              <input name="contas-inv-max" type="number" min="0" placeholder="Máx" value={invMax} onChange={(e) => { setInvMax(e.target.value.slice(0, 7)); setDisplayPage(1); }} onFocus={e => (e.currentTarget.style.borderColor = `${accentColor}80`)} onBlur={e => (e.currentTarget.style.borderColor = '')} className="w-full flex-1 rounded-lg border border-border bg-secondary/50 py-2 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none" />
             </div>
           )}
         </div>
@@ -1781,9 +1782,9 @@ const Contas = () => {
           </button>
           {lvlOpen && (
             <div className="mt-3 flex items-center gap-2">
-              <input type="number" min="0" placeholder="Mín" value={lvlMin} onChange={(e) => { setLvlMin(e.target.value.slice(0, 4)); setDisplayPage(1); }} onFocus={e => (e.currentTarget.style.borderColor = `${accentColor}80`)} onBlur={e => (e.currentTarget.style.borderColor = '')} className="w-full flex-1 rounded-lg border border-border bg-secondary/50 py-2 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none" />
+              <input name="contas-level-min" type="number" min="0" placeholder="Mín" value={lvlMin} onChange={(e) => { setLvlMin(e.target.value.slice(0, 4)); setDisplayPage(1); }} onFocus={e => (e.currentTarget.style.borderColor = `${accentColor}80`)} onBlur={e => (e.currentTarget.style.borderColor = '')} className="w-full flex-1 rounded-lg border border-border bg-secondary/50 py-2 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none" />
               <span className="text-xs text-muted-foreground">—</span>
-              <input type="number" min="0" placeholder="Máx" value={lvlMax} onChange={(e) => { setLvlMax(e.target.value.slice(0, 4)); setDisplayPage(1); }} onFocus={e => (e.currentTarget.style.borderColor = `${accentColor}80`)} onBlur={e => (e.currentTarget.style.borderColor = '')} className="w-full flex-1 rounded-lg border border-border bg-secondary/50 py-2 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none" />
+              <input name="contas-level-max" type="number" min="0" placeholder="Máx" value={lvlMax} onChange={(e) => { setLvlMax(e.target.value.slice(0, 4)); setDisplayPage(1); }} onFocus={e => (e.currentTarget.style.borderColor = `${accentColor}80`)} onBlur={e => (e.currentTarget.style.borderColor = '')} className="w-full flex-1 rounded-lg border border-border bg-secondary/50 py-2 px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none" />
             </div>
           )}
         </div>

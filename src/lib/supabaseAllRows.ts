@@ -34,7 +34,31 @@ export async function fetchAllRows<T = unknown>(
 
     if (filters) {
       for (const f of filters) {
-        query = (query as any)[f.op](f.column, f.value);
+        switch (f.op) {
+          case "eq":
+            query = query.eq(f.column, f.value);
+            break;
+          case "neq":
+            query = query.neq(f.column, f.value);
+            break;
+          case "gt":
+            query = query.gt(f.column, f.value);
+            break;
+          case "gte":
+            query = query.gte(f.column, f.value);
+            break;
+          case "lt":
+            query = query.lt(f.column, f.value);
+            break;
+          case "lte":
+            query = query.lte(f.column, f.value);
+            break;
+          case "in":
+            query = query.in(f.column, Array.isArray(f.value) ? f.value : [f.value]);
+            break;
+          default:
+            break;
+        }
       }
     }
 

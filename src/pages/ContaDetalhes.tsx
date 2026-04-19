@@ -239,11 +239,12 @@ const buildSkinLookup = (skins: unknown[]): Map<string, ValorantSkinItem> => {
 
 /** Valorant API catálogo muda raramente — cache 1h reduz payload repetido em cada detalhe. */
 const VALORANT_API_CACHE_MS = 1000 * 60 * 60;
-let weaponSkinsCatalogCache: { data: Record<string, any>[]; expiry: number } | null = null;
-let skinLevelsCatalogCache: { data: Record<string, any>[]; expiry: number } | null = null;
-let skinChromasCatalogCache: { data: Record<string, any>[]; expiry: number } | null = null;
+type ValorantApiRow = Record<string, unknown>;
+let weaponSkinsCatalogCache: { data: ValorantApiRow[]; expiry: number } | null = null;
+let skinLevelsCatalogCache: { data: ValorantApiRow[]; expiry: number } | null = null;
+let skinChromasCatalogCache: { data: ValorantApiRow[]; expiry: number } | null = null;
 
-async function getWeaponSkinsCatalog(): Promise<Record<string, any>[]> {
+async function getWeaponSkinsCatalog(): Promise<ValorantApiRow[]> {
   const now = Date.now();
   if (weaponSkinsCatalogCache && weaponSkinsCatalogCache.expiry > now) {
     return weaponSkinsCatalogCache.data;
@@ -251,12 +252,12 @@ async function getWeaponSkinsCatalog(): Promise<Record<string, any>[]> {
   const skinsRes = await fetch("https://valorant-api.com/v1/weapons/skins?language=pt-BR");
   if (!skinsRes.ok) return [];
   const skinsData = await skinsRes.json();
-  const data: Record<string, any>[] = Array.isArray(skinsData.data) ? skinsData.data : [];
+  const data: ValorantApiRow[] = Array.isArray(skinsData.data) ? (skinsData.data as ValorantApiRow[]) : [];
   weaponSkinsCatalogCache = { data, expiry: now + VALORANT_API_CACHE_MS };
   return data;
 }
 
-async function getSkinLevelsCatalog(): Promise<Record<string, any>[]> {
+async function getSkinLevelsCatalog(): Promise<ValorantApiRow[]> {
   const now = Date.now();
   if (skinLevelsCatalogCache && skinLevelsCatalogCache.expiry > now) {
     return skinLevelsCatalogCache.data;
@@ -265,11 +266,11 @@ async function getSkinLevelsCatalog(): Promise<Record<string, any>[]> {
   if (!res.ok) return [];
   const json = await res.json();
   const data = Array.isArray(json.data) ? json.data : [];
-  skinLevelsCatalogCache = { data: data as Record<string, any>[], expiry: now + VALORANT_API_CACHE_MS };
+  skinLevelsCatalogCache = { data: data as ValorantApiRow[], expiry: now + VALORANT_API_CACHE_MS };
   return data;
 }
 
-async function getSkinChromasCatalog(): Promise<Record<string, any>[]> {
+async function getSkinChromasCatalog(): Promise<ValorantApiRow[]> {
   const now = Date.now();
   if (skinChromasCatalogCache && skinChromasCatalogCache.expiry > now) {
     return skinChromasCatalogCache.data;
@@ -278,7 +279,7 @@ async function getSkinChromasCatalog(): Promise<Record<string, any>[]> {
   if (!res.ok) return [];
   const json = await res.json();
   const data = Array.isArray(json.data) ? json.data : [];
-  skinChromasCatalogCache = { data: data as Record<string, any>[], expiry: now + VALORANT_API_CACHE_MS };
+  skinChromasCatalogCache = { data: data as ValorantApiRow[], expiry: now + VALORANT_API_CACHE_MS };
   return data;
 }
 

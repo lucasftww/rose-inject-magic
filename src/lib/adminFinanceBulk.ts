@@ -105,7 +105,7 @@ export async function fetchAdminCompletedPaymentsBulk(): Promise<AdminPaymentFin
 
   inFlightCompletedPayments = (async (): Promise<AdminPaymentFinanceRow[]> => {
     try {
-      let { data, error } = await supabase.rpc(rpcName, {
+      const { data, error } = await supabase.rpc(rpcName, {
         p_limit: ADMIN_MAX_PAYMENTS_COMPLETED,
       });
       if (error) devWarnAdminRpc("bulk", rpcName, "RPC com p_limit", error);
@@ -160,7 +160,7 @@ export async function fetchAdminLztSalesBulk(): Promise<AdminLztSaleBulkRow[]> {
 
   inFlightLztSales = (async (): Promise<AdminLztSaleBulkRow[]> => {
     try {
-      let { data, error } = await supabase.rpc(rpcName, {
+      const { data, error } = await supabase.rpc(rpcName, {
         p_limit: ADMIN_MAX_LZT_SALES_ROWS,
       });
       if (error) devWarnAdminRpc("bulk", rpcName, "RPC com p_limit", error);
@@ -211,7 +211,7 @@ export async function fetchAdminResellerPurchasesBulk(): Promise<AdminResellerPu
 
   inFlightResellerPurchases = (async (): Promise<AdminResellerPurchaseBulkRow[]> => {
     try {
-      let { data, error } = await supabase.rpc(rpcName, {
+      const { data, error } = await supabase.rpc(rpcName, {
         p_limit: ADMIN_MAX_RESELLER_PURCHASES,
       });
       if (error) devWarnAdminRpc("bulk", rpcName, "RPC com p_limit", error);
@@ -272,7 +272,7 @@ export async function fetchAdminOrderTicketsBulk(): Promise<
 
   inFlightOrderTickets = (async () => {
     try {
-      let { data, error } = await supabase.rpc(rpcName, {
+      const { data, error } = await supabase.rpc(rpcName, {
         p_limit: ADMIN_MAX_ORDER_TICKETS,
       });
       if (error) devWarnAdminRpc("bulk", rpcName, "RPC com p_limit", error);

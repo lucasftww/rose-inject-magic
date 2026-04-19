@@ -40,11 +40,12 @@ export async function fetchAdminSalesTickets(): Promise<SaleTicket[]> {
     const chunks: string[][] = [];
     for (let i = 0; i < ids.length; i += CHUNK) chunks.push(ids.slice(i, i + CHUNK));
     const results = await Promise.all(
-      chunks.map((chunk) =>
-        (supabase.from(table as never).select(select) as any)
-          .in(column, chunk)
-          .then((r: { data?: Tables<T>[] | null }) => (r.data ?? []) as Tables<T>[]),
-      ),
+      chunks.map((chunk) => {
+        const query = supabase.from(table as never).select(select) as unknown as {
+          in: (col: string, values: string[]) => Promise<{ data?: Tables<T>[] | null }>;
+        };
+        return query.in(column, chunk).then((r) => (r.data ?? []) as Tables<T>[]);
+      }),
     );
     return results.flat();
   };
