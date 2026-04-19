@@ -52,7 +52,21 @@ export async function fetchAccountsRaw(
       }
     );
     if (perfDiag && t0) {
-      console.info("[Contas perf] lzt-market", Math.round(performance.now() - t0), "ms", qsShort);
+      const n = Array.isArray(out.items) ? out.items.length : 0;
+      let approxKb = 0;
+      try {
+        approxKb = Math.round(JSON.stringify(out).length / 1024);
+      } catch {
+        approxKb = 0;
+      }
+      console.info(
+        "[Contas perf] lzt-market",
+        `${Math.round(performance.now() - t0)} ms`,
+        `~${approxKb} KB JSON`,
+        `${n} items`,
+        "(compare TTFB vs Content Download in Network)",
+        qsShort,
+      );
     }
     return out;
   } catch (err: unknown) {
