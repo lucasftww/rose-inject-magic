@@ -56,18 +56,19 @@ O app estará disponível em `http://localhost:8080` (porta definida em `vite.co
 | `npm run typecheck` | Verificação TypeScript (`tsc --noEmit`) |
 | `npm run test` | Rodar testes com Vitest |
 | `npm run supabase:repair-migrations` | Alinhar histórico de migrações local/remoto (só metadados; requer `supabase link` + login) |
-| `npm run knip` | Procurar exports/ficheiros não usados (shadcn e `types.ts` gerado ignorados em `knip.json`) |
+| `npm run knip` | Procurar exports/ficheiros não usados (shadcn e `types.ts` gerado ignorados em `knip.json`; incluído em `npm run check`) |
 
 ### Validação do projeto
 
-Antes de um PR ou deploy, confirma que os quatro passos terminam sem erros:
+Antes de um PR ou deploy, confirma que os passos terminam sem erros (ou corre `npm run check`, que inclui tudo):
 
 ```sh
-npm run typecheck && npm run lint && npm run test && npm run build
+npm run typecheck && npm run lint && npm run knip && npm run test && npm run build
 ```
 
 - **`typecheck`** — TypeScript (`tsc --noEmit`)
 - **`lint`** — ESLint
+- **`knip`** — dependências e exports órfãos (ver `knip.json`)
 - **`test`** — Vitest
 - **`build`** — bundle de produção com Vite
 
@@ -111,6 +112,8 @@ O projeto está configurado para deploy na **Vercel** com:
 - Headers de segurança (HSTS, X-Frame-Options, etc.)
 - Cache imutável para assets estáticos
 - SPA fallback (`rewrites` para `index.html`)
+
+**GitHub Actions — Supabase** (`.github/workflows/supabase-deploy.yml`): em push para `main` que altere `supabase/functions`, `supabase/migrations`, o script de deploy ou o workflow, corre deploy das Edge Functions. É **obrigatório** definir o secret do repositório **`SUPABASE_ACCESS_TOKEN`** (token `sbp_...` em [Account tokens](https://supabase.com/dashboard/account/tokens)); sem ele o job falha de propósito no primeiro passo. Opcional: **`SUPABASE_DB_PASSWORD`** para correr `supabase db push` no CI. Estado dos runs: separador [Actions](https://github.com/lucasftww/rose-inject-magic/actions) no GitHub.
 
 ## 📄 Licença
 

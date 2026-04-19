@@ -9,5 +9,4 @@ export {
   itemFailsNotSoldBeforePolicy,
   shouldKeepItem,
   type LztFxRates,
-  type LztItemLike,
 } from "../../supabase/functions/_shared/lztPricingModel.ts";

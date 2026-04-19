@@ -85,7 +85,7 @@ function itemRowFromPriceInput(input: LztPriceInput): Record<string, unknown> {
   };
 }
 
-export type LztPricingContext = { rates: LztFxRates; markup: number };
+type LztPricingContext = { rates: LztFxRates; markup: number };
 
 /**
  * Fallback BRL quando `price_brl` falha — alinhado ao modelo `getDisplayedPriceBrl` da edge.
