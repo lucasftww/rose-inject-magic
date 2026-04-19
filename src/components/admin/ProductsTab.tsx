@@ -538,16 +538,24 @@ const ProductsTab = () => {
 
   const getGameName = (gameId: string | null | undefined) => games.find(g => g.id === (gameId ?? ""))?.name || "—";
 
-  const filtered = (() => {
+  const filtered = useMemo(() => {
+    const nameByGameId = new Map(games.map((g) => [g.id, g.name] as const));
+    const gameLabel = (id: string | null | undefined) => (id && nameByGameId.get(id)) || "—";
     let list = filterGameId === "all" ? products : products.filter((p) => p.game_id === filterGameId);
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      list = list.filter(p => p.name.toLowerCase().includes(q) || getGameName(p.game_id).toLowerCase().includes(q));
+      list = list.filter(
+        (p) => p.name.toLowerCase().includes(q) || gameLabel(p.game_id).toLowerCase().includes(q),
+      );
     }
     return list;
-  })();
+  }, [products, filterGameId, searchQuery, games]);
+
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
-  const paginatedProducts = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  const paginatedProducts = useMemo(
+    () => filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE),
+    [filtered, currentPage],
+  );
 
   useEffect(() => { setCurrentPage(1); }, [filterGameId, searchQuery]);
 
@@ -579,8 +587,15 @@ const ProductsTab = () => {
     }
   };
 
-  const activeCount = products.filter(p => p.active).length;
-  const totalPlans = products.reduce((acc, p) => acc + (p.product_plans?.length || 0), 0);
+  const { activeCount, totalPlans } = useMemo(() => {
+    let active = 0;
+    let plans = 0;
+    for (const p of products) {
+      if (p.active) active++;
+      plans += p.product_plans?.length || 0;
+    }
+    return { activeCount: active, totalPlans: plans };
+  }, [products]);
 
   return (
     <div className="space-y-6">

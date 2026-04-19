@@ -88,18 +88,25 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
   const loading = isPending;
 
   const stats = useMemo(() => {
-    const total = tickets.length;
-    const delivered = tickets.filter((t) => t.status === "delivered").length;
-    const pending = tickets.filter((t) => t.status !== "delivered" && t.status !== "closed" && t.status !== "archived").length;
-    const revenue = tickets
-      .filter((t) => t.status === "delivered")
-      .reduce((sum, t) => {
+    let delivered = 0;
+    let pending = 0;
+    let revenue = 0;
+    let lztCount = 0;
+    let robotCount = 0;
+    for (const t of tickets) {
+      const st = t.status;
+      if (st === "delivered") {
+        delivered++;
         const v = Number(t.plan_price);
-        return sum + (Number.isFinite(v) ? v : 0);
-      }, 0);
-    const lztCount = tickets.filter((t) => t.metadata?.type === "lzt-account").length;
-    const robotCount = tickets.filter((t) => t.metadata?.type === "robot-project").length;
-    return { total, delivered, pending, revenue, lztCount, robotCount };
+        revenue += Number.isFinite(v) ? v : 0;
+      } else if (st !== "closed" && st !== "archived") {
+        pending++;
+      }
+      const typ = t.metadata?.type;
+      if (typ === "lzt-account") lztCount++;
+      else if (typ === "robot-project") robotCount++;
+    }
+    return { total: tickets.length, delivered, pending, revenue, lztCount, robotCount };
   }, [tickets]);
 
   const filtered = useMemo(() => {
@@ -127,7 +134,10 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
   }, [tickets, statusFilter, typeFilter, search]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
-  const paginated = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
+  const paginated = useMemo(
+    () => filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE),
+    [filtered, page],
+  );
 
   useEffect(() => { setPage(1); }, [search, statusFilter, typeFilter]);
 

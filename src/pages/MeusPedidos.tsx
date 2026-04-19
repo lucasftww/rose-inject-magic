@@ -170,13 +170,31 @@ const MeusPedidos = () => {
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
   const safePage = Math.min(page, totalPages);
-  const paginated = filtered.slice((safePage - 1) * ITEMS_PER_PAGE, safePage * ITEMS_PER_PAGE);
+  const paginated = useMemo(
+    () => filtered.slice((safePage - 1) * ITEMS_PER_PAGE, safePage * ITEMS_PER_PAGE),
+    [filtered, safePage],
+  );
 
   useEffect(() => { setPage(1); }, [search, tipo, statusFilter]);
 
-  // Stats
-  const delivered = byType.filter(t => t.status === "delivered").length;
-  const pending = byType.filter(t => t.status === "open").length;
+  const { delivered, pending } = useMemo(() => {
+    let d = 0;
+    let p = 0;
+    for (const t of byType) {
+      if (t.status === "delivered") d++;
+      if (t.status === "open") p++;
+    }
+    return { delivered: d, pending: p };
+  }, [byType]);
+
+  const statusCounts = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const t of byType) {
+      const s = t.status ?? "";
+      m[s] = (m[s] || 0) + 1;
+    }
+    return m;
+  }, [byType]);
 
   if (authLoading || loading) {
     return (
@@ -273,7 +291,7 @@ const MeusPedidos = () => {
         {/* Status filter tabs */}
         <div className="flex gap-2 overflow-x-auto pb-1 mb-6">
           {ALL_STATUSES.map((s) => {
-            const count = s === "all" ? byType.length : byType.filter(t => t.status === s).length;
+            const count = s === "all" ? byType.length : (statusCounts[s] ?? 0);
             return (
               <button
                 key={s}

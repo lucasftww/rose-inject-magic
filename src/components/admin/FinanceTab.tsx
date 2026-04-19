@@ -309,8 +309,13 @@ const FinanceTab = () => {
   const buyersChange = pctChange(uniqueBuyers, prevBuyers);
 
   // Exclude R$0 payments (free products) from average ticket to avoid deflating the metric
-  const paidFp = fp.filter(p => p.amount > 0);
-  const paidPp = pp.filter(p => p.amount > 0);
+  const { paidFp, paidPp } = useMemo(
+    () => ({
+      paidFp: fp.filter((p) => p.amount > 0),
+      paidPp: pp.filter((p) => p.amount > 0),
+    }),
+    [fp, pp],
+  );
   const avgTicket = paidFp.length > 0 ? totalRevenue / paidFp.length : 0;
   const prevAvgTicket = paidPp.length > 0 ? prevRevenue / paidPp.length : 0;
   const avgTicketChange = pctChange(avgTicket, prevAvgTicket);
