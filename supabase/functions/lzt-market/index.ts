@@ -24,6 +24,8 @@ const LZT_ALLOWED_IMAGE_DOMAINS = [
   "akamaihd.net", "capes.dev",
 ];
 const RETRYABLE_STATUSES = [429, 502, 503, 504];
+/** Evita que o isolate fique à espera indefinidamente da LZT (origem típica de 504 no gateway Supabase). */
+const LZT_SINGLE_FETCH_TIMEOUT_MS = 14_000;
 let RUB_TO_BRL = 0.055; // Updated fallback
 let USD_TO_BRL = 5.16; // Updated fallback
 let lastFxFetch = 0;
@@ -152,6 +154,22 @@ const globalLztCache = new Map<string, { data: unknown; expiry: number }>();
 /** Pedidos LZT idênticos em voo: N utilizadores → 1 fetch ao api.lzt.market (por isolate). */
 const inflightRawLztFetch = new Map<string, Promise<Response>>();
 
+async function fetchLztOnce(apiUrl: string, token: string): Promise<Response> {
+  const ac = new AbortController();
+  const tid = setTimeout(() => ac.abort(), LZT_SINGLE_FETCH_TIMEOUT_MS);
+  try {
+    return await fetch(apiUrl, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
+      signal: ac.signal,
+    });
+  } finally {
+    clearTimeout(tid);
+  }
+}
+
 async function dedupedLztListFetch(apiUrl: string, token: string, dedupeKey: string): Promise<Response> {
   let p = inflightRawLztFetch.get(dedupeKey);
   if (!p) {
@@ -162,12 +180,12 @@ async function dedupedLztListFetch(apiUrl: string, token: string, dedupeKey: str
           const delay = 350 * Math.pow(2, attempt - 1);
           await new Promise((r) => setTimeout(r, delay));
         }
-        response = await fetch(apiUrl, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-          },
-        });
+        try {
+          response = await fetchLztOnce(apiUrl, token);
+        } catch (e) {
+          console.warn(`LZT list fetch attempt ${attempt + 1} failed:`, e);
+          response = new Response("LZT upstream timeout or network error", { status: 504 });
+        }
         if (response.ok || !RETRYABLE_STATUSES.includes(response.status)) break;
         console.warn(`LZT API attempt ${attempt + 1}: ${response.status}`);
       }
@@ -285,7 +303,19 @@ Deno.serve(async (req) => {
       const upstreamHeaders: Record<string, string> = { Accept: "image/*,*/*" };
       if (needsLztBearer) upstreamHeaders.Authorization = `Bearer ${token}`;
 
-      const response = await fetch(imageUrl, { headers: upstreamHeaders });
+      const imgAc = new AbortController();
+      const imgTid = setTimeout(() => imgAc.abort(), 12_000);
+      let response: Response;
+      try {
+        response = await fetch(imageUrl, { headers: upstreamHeaders, signal: imgAc.signal });
+      } catch (e) {
+        return new Response(JSON.stringify({ error: "Image fetch timeout", detail: String(e) }), {
+          status: 504,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      } finally {
+        clearTimeout(imgTid);
+      }
 
       if (!response.ok) {
         return new Response(JSON.stringify({ error: "Image fetch failed", status: response.status }), {
@@ -734,12 +764,12 @@ Deno.serve(async (req) => {
           console.log(`LZT retry attempt ${attempt + 1} after ${delay}ms...`);
           await new Promise((r) => setTimeout(r, delay));
         }
-        response = await fetch(apiUrl, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-          },
-        });
+        try {
+          response = await fetchLztOnce(apiUrl, token);
+        } catch (e) {
+          console.warn(`LZT detail/single fetch attempt ${attempt + 1} failed:`, e);
+          response = new Response("LZT upstream timeout or network error", { status: 504 });
+        }
         if (response.ok || !RETRYABLE_STATUSES.includes(response.status)) break;
         console.warn(`LZT API attempt ${attempt + 1}: ${response.status}`);
       }
