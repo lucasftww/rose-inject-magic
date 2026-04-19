@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef, useMemo, memo, forwardRef, type CSSProperties, type FocusEvent } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo, useDeferredValue, memo, forwardRef, type CSSProperties, type FocusEvent } from "react";
 import { useLztMarkup, getLztItemBrlPrice, type GameCategory } from "@/hooks/useLztMarkup";
 import Header from "@/components/Header";
 import { ChevronLeft, ChevronRight, ChevronDown, Search, SlidersHorizontal, DollarSign, Crosshair, Loader2, RefreshCw, Globe, TrendingUp, Star, Shield, Trophy, AlertTriangle, X, ArrowRight } from "lucide-react";
@@ -2131,18 +2131,33 @@ const Contas = () => {
     [gameTab],
   );
 
+  /** Filtra preço com valor adiado — ao digitar pmin/pmax não reprocessa milhares de linhas a cada tecla. */
+  const deferredPriceMinList = useDeferredValue(priceMin);
+  const deferredPriceMaxList = useDeferredValue(priceMax);
+
   const allItems = useMemo(() => {
+    const fnLvlMin = gameTab === "fortnite" ? Number(fnLevelMin) || 0 : 0;
+    const fnBp = gameTab === "fortnite" && fnHasBattlePass;
+    const minBrl = Number(deferredPriceMinList);
+    const maxBrl = Number(deferredPriceMaxList);
+    const hasPriceBand = (Number.isFinite(minBrl) && minBrl > 0) || (Number.isFinite(maxBrl) && maxBrl > 0);
+    const needsClientSort = sortBy === "price_to_up" || sortBy === "price_to_down";
+    const needsLolStrip = gameTab === "lol";
+
+    if (!needsLolStrip && fnLvlMin <= 0 && !fnBp && !hasPriceBand && !needsClientSort) {
+      return streamedItems;
+    }
+
     let filtered = [...streamedItems];
-    if (gameTab === "lol") {
+    if (needsLolStrip) {
       filtered = filtered.filter((item) => !isLikelyWrongGameInLolList(item));
     }
     // Fortnite client-side filters (level & battle pass not available as API params)
     if (gameTab === "fortnite") {
-      const lvlMin = Number(fnLevelMin) || 0;
-      if (lvlMin > 0) {
-        filtered = filtered.filter((item) => (item.fortnite_level ?? 0) >= lvlMin);
+      if (fnLvlMin > 0) {
+        filtered = filtered.filter((item) => (item.fortnite_level ?? 0) >= fnLvlMin);
       }
-      if (fnHasBattlePass) {
+      if (fnBp) {
         filtered = filtered.filter((item) => {
           const seasons = item.fortnitePastSeasons;
           return Array.isArray(seasons) && seasons.some((s: Record<string, unknown>) => s.purchasedVIP === true);
@@ -2151,10 +2166,7 @@ const Contas = () => {
     }
 
     // Region filter is done server-side via country[] / lol_region[].
-    // Price: API + edge aplicam pmin/pmax, mas durante "Atualizando contas…" a lista antiga ficava
-    // visível (mesmo fora da faixa). Filtrar em BRL alinhado ao cartão evita incoerência e contagem errada.
-    const minBrl = Number(priceMin);
-    const maxBrl = Number(priceMax);
+    // Price: API + edge aplicam pmin/pmax; filtro local usa deferred para não bloquear a UI ao digitar.
     if (Number.isFinite(minBrl) && minBrl > 0) {
       filtered = filtered.filter((item) => getBrlPrice(item) >= minBrl);
     }
@@ -2173,7 +2185,16 @@ const Contas = () => {
     // Default sort (pdate_to_down = "Mais Recentes"): preserve API date order for ALL games.
     // The API already returns items sorted by publication date descending.
     return filtered;
-  }, [streamedItems, sortBy, gameTab, getBrlPrice, fnLevelMin, fnHasBattlePass, priceMin, priceMax]);
+  }, [
+    streamedItems,
+    sortBy,
+    gameTab,
+    getBrlPrice,
+    fnLevelMin,
+    fnHasBattlePass,
+    deferredPriceMinList,
+    deferredPriceMaxList,
+  ]);
   const totalDisplayPages = Math.max(1, Math.ceil(allItems.length / ITEMS_PER_PAGE));
 
   // Clamp displayPage when allItems shrinks (e.g. after price filtering)

@@ -293,13 +293,13 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
 
   // Period-filtered costs — consistent with revenue period
   const periodLztCost = useMemo(() => {
-    const filtered = filterByPeriod(lztSales.map(s => ({ ...s, paid_at: null })), period, "created_at");
-    return filtered.reduce((s, l) => s + l.buy_price, 0);
+    const filtered = filterByPeriod(lztSales, period, "created_at");
+    return filtered.reduce((s, l) => s + Number(l.buy_price), 0);
   }, [lztSales, period]);
 
   const periodRobotCost = useMemo(() => {
-    const filtered = filterByPeriod(robotCosts.map(r => ({ ...r, paid_at: null })), period, "created_at");
-    return filtered.reduce((s, r) => s + r.cost, 0);
+    const filtered = filterByPeriod(robotCosts, period, "created_at");
+    return filtered.reduce((s, r) => s + Number(r.cost), 0);
   }, [robotCosts, period]);
 
   // Note: discount_amount is NOT subtracted from profit because payments.amount

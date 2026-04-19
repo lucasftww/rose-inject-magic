@@ -522,23 +522,28 @@ const TicketsTab = ({
 
   // ─── Filtering & Pagination ─────────────────────────────────────────────
 
-  const filteredTickets = tickets.filter((t) => {
-    if (showArchived ? t.status !== "archived" : t.status === "archived") return false;
-    if (filterStatus !== "all" && t.status !== filterStatus) return false;
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      return (
-        t.product_name?.toLowerCase().includes(q) ||
-        t.id.toLowerCase().includes(q) ||
-        t.buyer_email?.toLowerCase().includes(q) ||
-        t.buyer_username?.toLowerCase().includes(q)
-      );
-    }
-    return true;
-  });
+  const filteredTickets = useMemo(() => {
+    return tickets.filter((t) => {
+      if (showArchived ? t.status !== "archived" : t.status === "archived") return false;
+      if (filterStatus !== "all" && t.status !== filterStatus) return false;
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        return (
+          t.product_name?.toLowerCase().includes(q) ||
+          t.id.toLowerCase().includes(q) ||
+          t.buyer_email?.toLowerCase().includes(q) ||
+          t.buyer_username?.toLowerCase().includes(q)
+        );
+      }
+      return true;
+    });
+  }, [tickets, showArchived, filterStatus, searchQuery]);
 
   const totalPages = Math.max(1, Math.ceil(filteredTickets.length / ITEMS_PER_PAGE));
-  const paginatedTickets = filteredTickets.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  const paginatedTickets = useMemo(
+    () => filteredTickets.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE),
+    [filteredTickets, currentPage],
+  );
 
   useEffect(() => { setCurrentPage(1); }, [searchQuery, filterStatus, showArchived]);
 

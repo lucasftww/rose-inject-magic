@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminUsers } from "@/hooks/useAdminUsers";
 import { supabase } from "@/integrations/supabase/client";
@@ -76,22 +76,27 @@ const UsersTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
     return new Date(date).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
   };
 
-  const filtered = users.filter((u) => {
-    const roles = Array.isArray(u.roles) ? u.roles : [];
-    if (filterStatus === "banned" && !u.banned) return false;
-    if (filterStatus === "admin" && !roles.includes("admin")) return false;
-    if (filterStatus === "normal" && (u.banned || roles.includes("admin"))) return false;
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      const email = (u.email || "").toLowerCase();
-      const uname = (u.username || "").toLowerCase();
-      return email.includes(q) || uname.includes(q) || u.id.toLowerCase().includes(q);
-    }
-    return true;
-  });
+  const filtered = useMemo(() => {
+    return users.filter((u) => {
+      const roles = Array.isArray(u.roles) ? u.roles : [];
+      if (filterStatus === "banned" && !u.banned) return false;
+      if (filterStatus === "admin" && !roles.includes("admin")) return false;
+      if (filterStatus === "normal" && (u.banned || roles.includes("admin"))) return false;
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        const email = (u.email || "").toLowerCase();
+        const uname = (u.username || "").toLowerCase();
+        return email.includes(q) || uname.includes(q) || u.id.toLowerCase().includes(q);
+      }
+      return true;
+    });
+  }, [users, filterStatus, searchQuery]);
 
   const totalUserPages = Math.max(1, Math.ceil(filtered.length / USERS_PER_PAGE));
-  const paginatedUsers = filtered.slice((userPage - 1) * USERS_PER_PAGE, userPage * USERS_PER_PAGE);
+  const paginatedUsers = useMemo(
+    () => filtered.slice((userPage - 1) * USERS_PER_PAGE, userPage * USERS_PER_PAGE),
+    [filtered, userPage],
+  );
 
   // Reset page when filters change
   useEffect(() => { setUserPage(1); }, [searchQuery, filterStatus]);
