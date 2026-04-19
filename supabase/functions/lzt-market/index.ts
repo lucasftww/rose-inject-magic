@@ -1075,8 +1075,12 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Shorter cache: list 30s (60s preview), detail 10s
+    // Shorter cache: lista ~60s (preview 90s), detalhe 10s
     const cacheMaxAge = action === "detail" ? 10 : listCacheMaxAge;
+    const responseCacheControl =
+      action === "detail"
+        ? `public, max-age=${cacheMaxAge}, s-maxage=${cacheMaxAge}, stale-while-revalidate=30`
+        : listCacheControl;
 
     if (shouldCache) {
       // Free up memory if cache gets too large (>200 items)
