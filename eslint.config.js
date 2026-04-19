@@ -21,14 +21,20 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       "@typescript-eslint/no-unused-vars": "off",
-      // Historically the codebase uses `any` widely; re-enable as "warn" when tightening types file-by-file.
-      "@typescript-eslint/no-explicit-any": "off",
+      // Gradual tightening: warn keeps CI green; fix hotspots over time (see max-warnings in package.json lint script).
+      "@typescript-eslint/no-explicit-any": "warn",
     },
   },
   {
     files: ["src/components/ui/**/*.{ts,tsx}"],
     rules: {
       "react-refresh/only-export-components": "off",
+    },
+  },
+  {
+    files: ["supabase/functions/**/*.{ts,tsx}"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
     },
   },
 );

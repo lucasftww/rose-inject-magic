@@ -3,6 +3,9 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "overrides": {
     "esbuild": "^0.25.0"
   },
@@ -15,10 +18,12 @@
     "typecheck": "tsc --noEmit",
     "verify:lzt-guards": "node scripts/verify-lzt-guards-barrel.mjs",
     "verify:lzt-pricing": "node scripts/verify-lzt-pricing-barrel.mjs",
-    "check": "npm run verify:lzt-guards && npm run verify:lzt-pricing && npm run typecheck && npm run lint && npm run knip && npm run test && npm run build",
+    "check": "npm run verify:lzt-guards && npm run verify:lzt-pricing && npm run typecheck && npm run lint && npm run knip && npm run test && npm run build && npm run test:e2e",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:install": "playwright install chromium",
     "supabase:repair-migrations": "node scripts/repair-migration-history.mjs",
     "verify:supabase-credentials": "npx supabase db query --linked -f scripts/sql/admin_credentials_status.sql -o table --agent no",
     "deploy:supabase-functions": "node scripts/deploy-edge-functions.mjs",
@@ -49,6 +54,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
+    "@playwright/test": "^1.59.1",
     "@testing-library/jest-dom": "^6.6.0",
     "@types/node": "^22.16.5",
     "@types/react": "^18.3.23",

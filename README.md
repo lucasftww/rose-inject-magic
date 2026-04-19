@@ -22,7 +22,7 @@ Loja online de cheats e contas para **Valorant**, **CS2**, **League of Legends**
 
 ### Pré-requisitos
 
-- [Node.js](https://nodejs.org/) **v20+** (recomendado **v24**, alinhado ao CI no GitHub) e npm
+- [Node.js](https://nodejs.org/) **v20+** (recomendado **v24**, alinhado ao CI no GitHub) e npm — com [nvm](https://github.com/nvm-sh/nvm) ou [fnm](https://github.com/Schniz/fnm), usa o ficheiro **`.nvmrc`** na raiz (`nvm use` / `fnm use`).
 - Conta no [Supabase](https://supabase.com/) com o projeto configurado
 
 ### Instalação
@@ -55,25 +55,34 @@ O app estará disponível em `http://localhost:8080` (porta definida em `vite.co
 | `npm run lint` | Análise estática com ESLint |
 | `npm run typecheck` | Verificação TypeScript (`tsc --noEmit`) |
 | `npm run test` | Rodar testes com Vitest |
+| `npm run test:e2e` | Testes end-to-end (Playwright) contra `vite preview` — na primeira vez: `npm run test:e2e:install` |
+| `npm run test:e2e:install` | Instala só o browser Chromium usado nos E2E |
 | `npm run supabase:repair-migrations` | Alinhar histórico de migrações local/remoto (só metadados; requer `supabase link` + login) |
 | `npm run knip` | Procurar exports/ficheiros não usados (shadcn e `types.ts` gerado ignorados em `knip.json`; incluído em `npm run check`) |
-| `npm run check` | Pipeline completo: barrels LZT, `typecheck`, `lint`, `knip`, `test`, `build` (o mesmo que o workflow **CI** no GitHub) |
+| `npm run check` | Pipeline completo: barrels LZT, `typecheck`, `lint`, `knip`, `test`, `build`, **E2E** (igual ao workflow **CI** no GitHub) |
 
 ### Validação do projeto
 
-Antes de um PR ou deploy, confirma que os passos terminam sem erros (ou corre `npm run check`, que inclui tudo):
+O comando único recomendado é:
 
 ```sh
-npm run typecheck && npm run lint && npm run knip && npm run test && npm run build
+npm run check
 ```
 
-- **`typecheck`** — TypeScript (`tsc --noEmit`)
-- **`lint`** — ESLint
-- **`knip`** — dependências e exports órfãos (ver `knip.json`)
-- **`test`** — Vitest
-- **`build`** — bundle de produção com Vite
+Inclui: barrels LZT, **`typecheck`**, **`lint`** (com aviso gradual em `any`), **`knip`**, **`test`** (Vitest), **`build`** (Vite produção) e **`test:e2e`** (Playwright). O passo **`build`** em modo produção exige **`VITE_SUPABASE_URL`** e **`VITE_SUPABASE_PUBLISHABLE_KEY`** (ficheiro `.env` ou variáveis de ambiente); o CI do GitHub injeta os mesmos valores públicos que o fallback de desenvolvimento em `client.ts` para o build passar sem secrets privados.
 
-**CI no GitHub:** em cada push ou pull request para `main`, o workflow [`.github/workflows/ci.yml`](https://github.com/lucasftww/rose-inject-magic/blob/main/.github/workflows/ci.yml) corre `npm run check` (não precisa de secrets). Complementa o deploy Supabase (`.github/workflows/supabase-deploy.yml`).
+**CI no GitHub:** em cada push ou pull request para `main`, o workflow [`.github/workflows/ci.yml`](https://github.com/lucasftww/rose-inject-magic/blob/main/.github/workflows/ci.yml) corre `npm run check` (instala Chromium para Playwright antes). Complementa o deploy Supabase (`.github/workflows/supabase-deploy.yml`).
+
+### Smoke manual em produção
+
+Checklist rápido após deploy (Vercel + Supabase), além do CI automático:
+
+1. Abrir a loja em produção: página inicial carrega, título **Royal Store**, sem erro no consola.
+2. **Auth:** registo/login (fluxo mínimo).
+3. **Loja:** abrir uma categoria de produtos e uma página de detalhe.
+4. **Checkout:** adicionar ao carrinho e avançar até ao passo imediatamente antes do pagamento real (ou fluxo de teste que uses).
+5. **Admin** (se aplicável): login admin e abrir um separador do painel.
+6. **Supabase:** no dashboard, confirmar que as Edge Functions têm deploy recente após alterações em `supabase/functions/`.
 
 ### Frontend, Supabase e Meta CAPI (browser)
 
@@ -94,6 +103,7 @@ Tokens e secrets da Meta no servidor (Edge) mantêm-se documentados em [supabase
 ## 📁 Estrutura do Projeto
 
 ```
+e2e/                 # Testes Playwright (smoke na SPA)
 src/
 ├── assets/           # Imagens e arquivos estáticos
 ├── components/

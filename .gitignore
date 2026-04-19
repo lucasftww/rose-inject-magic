@@ -30,3 +30,8 @@ dist-ssr
 
 # Supabase CLI (link/cache local — não versionar)
 supabase/.temp/
+
+# Playwright
+/playwright-report/
+/test-results/
+/blob-report/
