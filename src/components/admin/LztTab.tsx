@@ -199,8 +199,10 @@ const LztTab = () => {
   };
 
   const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast({ title: "Copiado!" });
+    void navigator.clipboard.writeText(text).then(
+      () => toast({ title: "Copiado!" }),
+      () => toast({ title: "Não foi possível copiar", description: "Permissão do navegador ou contexto inseguro.", variant: "destructive" }),
+    );
   };
 
   const filteredSales = allSales.filter((sale) => {
@@ -215,6 +217,11 @@ const LztTab = () => {
 
   // Reset page when search changes
   useEffect(() => { setSalesPage(0); }, [salesSearch]);
+
+  /** Evita página inexistente quando o filtro reduz `filteredSales` (ex.: estava na p.5 e a busca esvazia páginas). */
+  useEffect(() => {
+    setSalesPage((p) => Math.min(Math.max(0, p), Math.max(0, totalPages - 1)));
+  }, [totalPages]);
 
   if (loading) {
     return (
@@ -447,7 +454,9 @@ const LztTab = () => {
                   <div key={o.lzt_item_id} className="flex items-center justify-between rounded-lg border border-border bg-secondary/30 px-4 py-2">
                     <span className="text-sm font-mono text-foreground">#{o.lzt_item_id}</span>
                     <div className="flex items-center gap-3">
-                      <span className="text-sm font-bold text-success">R$ {Number(o.custom_price_brl).toFixed(2)}</span>
+                      <span className="text-sm font-bold text-success">
+                        R$ {(Number.isFinite(Number(o.custom_price_brl)) ? Number(o.custom_price_brl) : 0).toFixed(2)}
+                      </span>
                       <button
                         onClick={async () => {
                           const { error } = await supabase.from("lzt_price_overrides").delete().eq("lzt_item_id", o.lzt_item_id);
