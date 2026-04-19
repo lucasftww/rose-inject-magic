@@ -5,6 +5,7 @@ import { Search, SlidersHorizontal, DollarSign, ArrowLeft, Loader2, Package, Tag
 import { Skeleton } from "@/components/ui/Skeleton";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
+import { normalizeGameSlug } from "@/lib/gameSlug";
 import type { Tables } from "@/integrations/supabase/types";
 import { useReseller } from "@/hooks/useReseller";
 
@@ -236,6 +237,47 @@ const getLookupKeys = (game: Pick<GameFromDB, 'name' | 'slug'>) => {
   return Array.from(new Set(keys.map(key => key.trim().toLowerCase()).filter(Boolean)));
 };
 
+/** Resolve `?game=` da URL: slug exato e aliases antes do fallback por chaves. */
+const findGameBySearchQuery = (raw: string, gameList: GameFromDB[]): GameFromDB | undefined => {
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(raw).trim();
+  } catch {
+    decoded = raw.trim();
+  }
+  if (!decoded) return undefined;
+  const lower = decoded.toLowerCase();
+
+  const byId = gameList.find((g) => g.id.toLowerCase() === lower);
+  if (byId) return byId;
+
+  const normalizedFromParam = normalizeGameSlug(decoded);
+
+  const exactSlug = gameList.find((g) => (g.slug || "").trim().toLowerCase() === lower);
+  if (exactSlug) return exactSlug;
+
+  if (normalizedFromParam) {
+    const byNormSlug = gameList.find((g) => normalizeGameSlug(g.slug || "") === normalizedFromParam);
+    if (byNormSlug) return byNormSlug;
+    const byNormName = gameList.find((g) => normalizeGameSlug(g.name || "") === normalizedFromParam);
+    if (byNormName) return byNormName;
+  }
+
+  const keyMatches = gameList.filter((g) => getLookupKeys(g).some((k) => k === lower));
+  if (keyMatches.length === 1) return keyMatches[0];
+  if (keyMatches.length > 1) {
+    const slugPref = keyMatches.find((g) => (g.slug || "").trim().toLowerCase() === lower);
+    if (slugPref) return slugPref;
+    if (normalizedFromParam) {
+      const normSlugPref = keyMatches.find((g) => normalizeGameSlug(g.slug || "") === normalizedFromParam);
+      if (normSlugPref) return normSlugPref;
+    }
+    return keyMatches[0];
+  }
+
+  return undefined;
+};
+
 const getShowcaseAssets = (game: Pick<GameFromDB, 'name' | 'slug' | 'image_url'>) => {
   const keys = getLookupKeys(game);
   const overlay = keys.map((key) => softwareCharacterOverlayMap[key]).find(Boolean);
@@ -449,7 +491,7 @@ const priceRanges = [
 ];
 const sortOptions = ["Mais Recentes", "Menor Preço", "Maior Preço"] as const;
 
-const ProductCard = ({ product }: { product: ProductFromDB }) => {
+const ProductCard = ({ product, productsGameQuery }: { product: ProductFromDB; productsGameQuery?: string }) => {
   const navigate = useNavigate();
   const { isReseller, isResellerForProduct, getDiscountedPrice } = useReseller();
   const lowestPrice = useMemo(() => {
@@ -467,9 +509,18 @@ const ProductCard = ({ product }: { product: ProductFromDB }) => {
 
   const isFree = lowestPrice !== null && lowestPrice === 0;
 
+  const productsBackUrl =
+    productsGameQuery != null && productsGameQuery.trim() !== ""
+      ? `/produtos?game=${encodeURIComponent(productsGameQuery.trim())}`
+      : undefined;
+
   return (
     <div
-      onClick={() => navigate(`/produto/${product.id}`)}
+      onClick={() =>
+        navigate(`/produto/${product.id}`, {
+          state: productsBackUrl ? { productsBackUrl } : undefined,
+        })
+      }
       className="group relative cursor-pointer overflow-hidden rounded-xl border border-white/[0.06] bg-card flex flex-col transition-colors duration-200 sm:hover:border-white/[0.12] sm:hover:shadow-[0_8px_30px_rgba(0,0,0,0.3)]"
     >
       {/* Image — square aspect ratio */}
@@ -836,10 +887,10 @@ const Produtos = () => {
   }, []);
 
   const handleGameSelect = useCallback(
-    async (gameId: string) => {
+    async (gameId: string, options?: { skipSingleProductRedirect?: boolean }) => {
       try {
         const game = games.find((g) => g.id === gameId);
-        if (game && game.product_count === 1) {
+        if (game && game.product_count === 1 && !options?.skipSingleProductRedirect) {
           const { data } = await supabase
             .from("products")
             .select("id")
@@ -847,7 +898,8 @@ const Produtos = () => {
             .eq("active", true)
             .limit(1);
           if (data && data.length === 1) {
-            navigate(`/produto/${data[0].id}`);
+            const back = `/produtos?game=${encodeURIComponent(game.slug || game.name)}`;
+            navigate(`/produto/${data[0].id}`, { state: { productsBackUrl: back } });
             return;
           }
         }
@@ -871,16 +923,10 @@ const Produtos = () => {
     }
     if (loadingGames || games.length === 0 || selectedGame) return;
     if (deepLinkHandledParamRef.current === raw) return;
-    let decoded: string;
-    try {
-      decoded = decodeURIComponent(raw).toLowerCase();
-    } catch {
-      decoded = raw.toLowerCase();
-    }
-    const match = games.find((g) => getLookupKeys(g).some((k) => k === decoded));
+    const match = findGameBySearchQuery(raw, games);
     if (!match) return;
     deepLinkHandledParamRef.current = raw;
-    void handleGameSelect(match.id);
+    void handleGameSelect(match.id, { skipSingleProductRedirect: true });
   }, [loadingGames, games, selectedGame, searchParams, handleGameSelect]);
 
   useEffect(() => {
@@ -1252,7 +1298,10 @@ const Produtos = () => {
                   custom={idx}
                   style={{ contentVisibility: 'auto', containIntrinsicSize: 'auto 380px' } as CSSProperties}
                 >
-                  <ProductCard product={product} />
+                  <ProductCard
+                    product={product}
+                    productsGameQuery={currentGame ? currentGame.slug || currentGame.name : undefined}
+                  />
                 </motion.div>
               ))}
               {filtered.length === 0 && (

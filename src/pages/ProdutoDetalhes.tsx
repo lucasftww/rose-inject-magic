@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import Header from "@/components/Header";
 import { ArrowLeft, ChevronLeft, ChevronRight, Cpu, Download, Fingerprint, Loader2, Monitor, Package, Play, ShoppingCart, Sparkles, Star, UserCheck, Zap } from "lucide-react";
 import { motion } from "framer-motion";
@@ -65,6 +65,10 @@ type PurchaseSuccessPayload = {
   section?: "contas" | "produtos" | "multi";
 };
 
+type ProdutoDetalhesLocationState = {
+  productsBackUrl?: string;
+};
+
 function buildSuccessUrl(paymentId: string, gameSlugOrName?: string, ticketId?: string | null): string {
   const params = new URLSearchParams({ payment_id: paymentId, section: "produtos" });
   const game = normalizeGameSlug(gameSlugOrName);
@@ -84,6 +88,7 @@ function savePendingPurchasePayload(paymentId: string, payload: PurchaseSuccessP
 const ProdutoDetalhes = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { addItem } = useCart();
   const { isReseller, isResellerForProduct, getDiscountedPrice, discountPercent } = useReseller();
   const [product, setProduct] = useState<StoreProductDetail | null>(null);
@@ -245,6 +250,20 @@ const ProdutoDetalhes = () => {
   const selectedPlan = sortedPlans.find(p => p.id === selectedPlanId);
   const normalizedGameCategory = normalizeGameSlug(game?.slug || game?.name);
 
+  const catalogListUrl =
+    game && (game.slug || game.name)
+      ? `/produtos?game=${encodeURIComponent(game.slug || game.name)}`
+      : "/produtos";
+
+  const navigateBackToCatalog = () => {
+    const fromState = (location.state as ProdutoDetalhesLocationState | null)?.productsBackUrl;
+    if (typeof fromState === "string" && fromState.startsWith("/")) {
+      navigate(fromState);
+      return;
+    }
+    navigate(catalogListUrl);
+  };
+
   const buyNow = async () => {
     if (!product || !selectedPlan || claimingFree) return;
     const hasResellerDiscount = isReseller && isResellerForProduct(product.id);
@@ -395,8 +414,8 @@ const ProdutoDetalhes = () => {
         {/* Back button */}
         <button
           type="button"
-          onClick={() => navigate(-1)}
-          aria-label="Voltar à página anterior"
+          onClick={navigateBackToCatalog}
+          aria-label="Voltar ao catálogo de produtos"
           className="mb-4 sm:mb-5 inline-flex items-center gap-2 rounded-full border border-border/80 bg-card/90 px-4 py-2 text-sm font-medium text-muted-foreground shadow-sm backdrop-blur-sm transition-all hover:border-success/50 hover:text-success hover:shadow-md active:scale-[0.98] touch-manipulation"
         >
           <ArrowLeft className="h-4 w-4 shrink-0" />
@@ -409,7 +428,7 @@ const ProdutoDetalhes = () => {
           <span className="shrink-0 text-muted-foreground/40">›</span>
           {game && (
             <>
-              <button onClick={() => navigate("/produtos")} className="hover:text-foreground transition-colors shrink-0">{game.name}</button>
+              <button type="button" onClick={() => navigate(catalogListUrl)} className="hover:text-foreground transition-colors shrink-0">{game.name}</button>
               <span className="shrink-0 text-muted-foreground/40">›</span>
             </>
           )}
