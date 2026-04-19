@@ -60,6 +60,7 @@ O app estará disponível em `http://localhost:8080` (porta definida em `vite.co
 | `npm run supabase:repair-migrations` | Alinhar histórico de migrações local/remoto (só metadados; requer `supabase link` + login) |
 | `npm run knip` | Procurar exports/ficheiros não usados (shadcn e `types.ts` gerado ignorados em `knip.json`; incluído em `npm run check`) |
 | `npm run check` | Pipeline completo: barrels LZT, `typecheck`, `lint`, `knip`, `test`, `build`, **E2E** (igual ao workflow **CI** no GitHub) |
+| `npm run check:public` | Igual ao `check`, mas injeta `VITE_SUPABASE_*` públicos (fallback de `client.ts`) — útil sem `.env` local |
 
 ### Validação do projeto
 
@@ -69,7 +70,9 @@ O comando único recomendado é:
 npm run check
 ```
 
-Inclui: barrels LZT, **`typecheck`**, **`lint`** (com aviso gradual em `any`), **`knip`**, **`test`** (Vitest), **`build`** (Vite produção) e **`test:e2e`** (Playwright). O passo **`build`** em modo produção exige **`VITE_SUPABASE_URL`** e **`VITE_SUPABASE_PUBLISHABLE_KEY`** (ficheiro `.env` ou variáveis de ambiente); o CI do GitHub injeta os mesmos valores públicos que o fallback de desenvolvimento em `client.ts` para o build passar sem secrets privados.
+Sem `.env` com URL/chave de produção, usa **`npm run check:public`** (define as mesmas variáveis públicas que o CI e o fallback em `client.ts`).
+
+Inclui: barrels LZT, **`typecheck`**, **`lint`** (com aviso gradual em `any`), **`knip`**, **`test`** (Vitest), **`build`** (Vite produção) e **`test:e2e`** (Playwright). O passo **`build`** em modo produção exige **`VITE_SUPABASE_URL`** e **`VITE_SUPABASE_PUBLISHABLE_KEY`** (`.env`, variáveis de ambiente, ou **`check:public`**); o CI do GitHub injeta os mesmos valores públicos que o fallback de desenvolvimento em `client.ts`.
 
 **CI no GitHub:** em cada push ou pull request para `main`, o workflow [`.github/workflows/ci.yml`](https://github.com/lucasftww/rose-inject-magic/blob/main/.github/workflows/ci.yml) corre `npm run check` (instala Chromium para Playwright antes). Complementa o deploy Supabase (`.github/workflows/supabase-deploy.yml`).
 

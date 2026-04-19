@@ -19,6 +19,7 @@
     "verify:lzt-guards": "node scripts/verify-lzt-guards-barrel.mjs",
     "verify:lzt-pricing": "node scripts/verify-lzt-pricing-barrel.mjs",
     "check": "npm run verify:lzt-guards && npm run verify:lzt-pricing && npm run typecheck && npm run lint && npm run knip && npm run test && npm run build && npm run test:e2e",
+    "check:public": "node scripts/check-with-dev-publishable-env.mjs",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
