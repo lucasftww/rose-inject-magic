@@ -30,7 +30,8 @@
     "supabase:repair-migrations": "node scripts/repair-migration-history.mjs",
     "verify:supabase-credentials": "npx supabase db query --linked -f scripts/sql/admin_credentials_status.sql -o table --agent no",
     "deploy:supabase-functions": "node scripts/deploy-edge-functions.mjs",
-    "deploy:server-relay": "node scripts/deploy-edge-functions.mjs server-relay"
+    "deploy:server-relay": "node scripts/deploy-edge-functions.mjs server-relay",
+    "deploy:vercel": "npx --yes vercel deploy --prod --yes --scope lucaseucontato-1145s-projects"
   },
   "dependencies": {
     "@fontsource/space-grotesk": "^5.2.10",
