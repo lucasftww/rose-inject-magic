@@ -4,7 +4,7 @@ import { fetchAllRows } from "@/lib/supabaseAllRows";
 import { useAdminProductsWithPlans, useAdminStockPlanCounts } from "@/hooks/useAdminData";
 import type { AdminProductWithPlansRow } from "@/types/supabaseQueryResults";
 import { toast } from "@/hooks/use-toast";
-import { Package, ChevronDown, ChevronRight, Plus, Trash2, Loader2, Sparkles, AlertTriangle } from "lucide-react";
+import { Package, ChevronDown, ChevronRight, Plus, Trash2, Loader2, Sparkles, AlertTriangle, Info } from "lucide-react";
 
 interface Product {
   id: string;
@@ -33,7 +33,8 @@ const ITEMS_PER_PAGE = 5;
 
 const StockTab = () => {
   const { data: cachedProducts, isError, isLoading, error: productsQueryError } = useAdminProductsWithPlans();
-  const { data: stockCountRows = [], refetch: refetchStockCounts } = useAdminStockPlanCounts();
+  const { data: stockCountsData, refetch: refetchStockCounts } = useAdminStockPlanCounts();
+  const stockCountsRpcFallback = stockCountsData?.usedRpcFallback ?? false;
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedProduct, setExpandedProduct] = useState<string | null>(null);
@@ -42,11 +43,11 @@ const StockTab = () => {
   const [stockMap, setStockMap] = useState<Record<string, StockItem[]>>({});
   const stockCounts = useMemo(() => {
     const counts: Record<string, { total: number; available: number }> = {};
-    for (const row of stockCountRows) {
+    for (const row of stockCountsData?.rows ?? []) {
       counts[row.plan_id] = { total: row.total, available: row.available };
     }
     return counts;
-  }, [stockCountRows]);
+  }, [stockCountsData]);
   const [loadingStock, setLoadingStock] = useState<string | null>(null);
   const [newStockText, setNewStockText] = useState("");
   const [addingStock, setAddingStock] = useState(false);
@@ -179,6 +180,15 @@ const StockTab = () => {
   return (
     <div>
       <h2 className="text-xl font-bold text-foreground mb-6">Gerenciar Estoque</h2>
+      {stockCountsRpcFallback && (
+        <div className="mb-4 flex items-start gap-2 rounded-lg border border-info/35 bg-info/10 px-3 py-2 text-xs text-info">
+          <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
+          <p>
+            Contagens por plano (RPC <span className="font-mono">admin_stock_counts</span>) indisponíveis — totais por plano aparecem
+            como zero até a RPC estar publicada no Supabase.
+          </p>
+        </div>
+      )}
 
       {products.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-20 text-muted-foreground">

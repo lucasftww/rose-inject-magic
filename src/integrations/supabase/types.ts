@@ -1331,6 +1331,8 @@ export type Database = {
           status_label: string | null
         }>
       }
+      admin_finance_period_rollups: { Args: never; Returns: Json }
+      admin_finance_robot_rollups: { Args: never; Returns: Json }
       admin_finance_summary: { Args: { _since?: string }; Returns: Json }
       admin_lzt_stats: { Args: never; Returns: Json }
       admin_overview_stats: { Args: never; Returns: Json }

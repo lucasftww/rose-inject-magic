@@ -25,6 +25,8 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:install": "playwright install chromium",
+    "supabase:db-push": "supabase db push --linked",
+    "supabase:migration-list": "supabase migration list --linked",
     "supabase:repair-migrations": "node scripts/repair-migration-history.mjs",
     "verify:supabase-credentials": "npx supabase db query --linked -f scripts/sql/admin_credentials_status.sql -o table --agent no",
     "deploy:supabase-functions": "node scripts/deploy-edge-functions.mjs",

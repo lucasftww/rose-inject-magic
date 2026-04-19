@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import type { AdminLztSale as LztSale } from "@/lib/adminLztFetch";
 import { useAdminLztBundle, useAdminLztPriceOverrides } from "@/hooks/useAdminData";
-import { Loader2, DollarSign, TrendingUp, Settings, Save, ShoppingCart, RefreshCw, Copy, ExternalLink, ChevronLeft, ChevronRight, Search, Gamepad2, Tag } from "lucide-react";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { Loader2, DollarSign, TrendingUp, Settings, Save, ShoppingCart, RefreshCw, Copy, ExternalLink, ChevronLeft, ChevronRight, Search, Gamepad2, Tag, Info } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface LztConfig {
@@ -85,6 +86,7 @@ const LztTab = () => {
   const [activeView, setActiveView] = useState<"config" | "sales" | "price">("config");
   const [salesPage, setSalesPage] = useState(0);
   const [salesSearch, setSalesSearch] = useState("");
+  const debouncedSalesSearch = useDebouncedValue(salesSearch, 280);
 
   // Override price state
   const [priceItemId, setPriceItemId] = useState("");
@@ -209,8 +211,8 @@ const LztTab = () => {
   };
 
   const filteredSales = useMemo(() => {
-    if (!salesSearch.trim()) return allSales;
-    const q = salesSearch.toLowerCase();
+    if (!debouncedSalesSearch.trim()) return allSales;
+    const q = debouncedSalesSearch.toLowerCase();
     return allSales.filter((sale) => {
       const id = (sale.lzt_item_id || "").toLowerCase();
       return (
@@ -220,7 +222,7 @@ const LztTab = () => {
         (sale.buyer_user_id || "").toLowerCase().includes(q)
       );
     });
-  }, [allSales, salesSearch]);
+  }, [allSales, debouncedSalesSearch]);
 
   const totalPages = useMemo(
     () => Math.max(1, Math.ceil(filteredSales.length / SALES_PER_PAGE)),
@@ -232,8 +234,10 @@ const LztTab = () => {
     [filteredSales, salesPage],
   );
 
-  // Reset page when search changes
-  useEffect(() => { setSalesPage(0); }, [salesSearch]);
+  // Reset página quando o filtro debounced muda (evita refiltrar milhares de linhas a cada tecla)
+  useEffect(() => {
+    setSalesPage(0);
+  }, [debouncedSalesSearch]);
 
   /** Evita página inexistente quando o filtro reduz `filteredSales` (ex.: estava na p.5 e a busca esvazia páginas). */
   useEffect(() => {
@@ -257,6 +261,15 @@ const LztTab = () => {
         <StatCard icon={<TrendingUp className="h-5 w-5 text-success" />} label="Lucro Total" value={`R$ ${profitDisplay.toFixed(2)}`} highlight />
         <StatCard icon={<ShoppingCart className="h-5 w-5 text-muted-foreground" />} label="Total Vendas" value={String(totalSalesCount)} />
       </div>
+      {lztBundle?.lztStatsRpcFallback && (
+        <div className="flex items-start gap-2 rounded-lg border border-info/35 bg-info/10 px-3 py-2 text-xs text-info">
+          <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
+          <p>
+            Totais agregados (RPC <span className="font-mono">admin_lzt_stats</span>) indisponíveis — os valores deste bloco podem estar a
+            zero ou a reflectir só a lista de vendas carregada. Configuração e histórico de vendas continuam acessíveis.
+          </p>
+        </div>
+      )}
 
       {/* View Tabs */}
       <div className="flex gap-2">
@@ -506,7 +519,7 @@ const LztTab = () => {
               <div className="relative flex-1 sm:flex-none">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                 <input type="text" placeholder="Buscar por ID, título ou comprador..."
-                  value={salesSearch} onChange={(e) => { setSalesSearch(e.target.value); setSalesPage(0); }}
+                  value={salesSearch} onChange={(e) => setSalesSearch(e.target.value)}
                   className="w-full sm:w-72 rounded-lg border border-border bg-secondary/50 pl-9 pr-4 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-success/50" />
               </div>
               <button type="button" onClick={() => void refetchLzt()} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 shrink-0">
@@ -533,7 +546,7 @@ const LztTab = () => {
               <tbody className="divide-y divide-border">
                 {paginatedSales.length === 0 ? (
                   <tr><td colSpan={9} className="py-12 text-center text-sm text-muted-foreground">
-                    {salesSearch ? "Nenhuma venda encontrada." : "Nenhuma venda registrada ainda."}
+                    {debouncedSalesSearch.trim() ? "Nenhuma venda encontrada." : "Nenhuma venda registrada ainda."}
                   </td></tr>
                 ) : paginatedSales.map((sale) => (
                   <tr key={sale.id} className="group hover:bg-secondary/20">

@@ -11,7 +11,7 @@ interface CacheEntry<T> {
 }
 
 const cache = new Map<string, CacheEntry<unknown>>();
-const DEFAULT_TTL = 5 * 60 * 1000; // 5 minutes — alinhado com staleTime das queries admin
+const DEFAULT_TTL = 10 * 60 * 1000; // 10 minutes — alinhado com staleTime das queries admin (Finance/Overview)
 
 export function getCached<T>(key: string, ttl = DEFAULT_TTL): T | null {
   const entry = cache.get(key);

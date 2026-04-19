@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
+import { devWarnAdminRpc, isAdminRpcPostgrestFallbackError } from "@/lib/adminFinancePostgrest";
 import { fetchAllRows } from "@/lib/supabaseAllRows";
 import { asOrderTicketMetadata } from "@/types/orderTicketMetadata";
 import { isRecord } from "@/types/ticketChat";
@@ -26,6 +27,8 @@ type AdminLztBundle = {
   configRow: Tables<"lzt_config"> | null;
   dbStats: Record<string, unknown> | null;
   sales: AdminLztSale[];
+  /** RPC `admin_lzt_stats` falhou com erro PostgREST recuperável — totais agregados omitidos. */
+  lztStatsRpcFallback: boolean;
 };
 
 export async function fetchAdminLztBundle(): Promise<AdminLztBundle> {
@@ -34,9 +37,19 @@ export async function fetchAdminLztBundle(): Promise<AdminLztBundle> {
     supabase.rpc("admin_lzt_stats"),
   ]);
   if (configRes.error) throw configRes.error;
-  if (statsRes.error) throw statsRes.error;
 
-  const dbStats = parseAdminLztStatsPayload(statsRes.data);
+  let lztStatsRpcFallback = false;
+  let dbStats: Record<string, unknown> | null = null;
+  if (statsRes.error) {
+    if (isAdminRpcPostgrestFallbackError(statsRes.error)) {
+      lztStatsRpcFallback = true;
+      devWarnAdminRpc("lzt", "admin_lzt_stats", "agregados omitidos (fallback)", statsRes.error);
+    } else {
+      throw statsRes.error;
+    }
+  } else {
+    dbStats = parseAdminLztStatsPayload(statsRes.data);
+  }
 
   let sales: AdminLztSale[] = [];
   try {
@@ -79,6 +92,7 @@ export async function fetchAdminLztBundle(): Promise<AdminLztBundle> {
     configRow: configRes.data ?? null,
     dbStats,
     sales,
+    lztStatsRpcFallback,
   };
 }
 

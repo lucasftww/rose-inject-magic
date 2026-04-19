@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { useAdminScratchCardBundle } from "@/hooks/useAdminData";
 import { toast } from "@/hooks/use-toast";
-import { Pencil, Loader2, Gift, RefreshCw, Save } from "lucide-react";
+import { Pencil, Loader2, Gift, RefreshCw, Save, Info } from "lucide-react";
 
 interface Prize {
   id: string;
@@ -176,6 +176,15 @@ const ScratchCardTab = () => {
 
   return (
     <div className="space-y-8">
+      {bundle?.scratchStatsRpcFallback && (
+        <div className="flex items-start gap-2 rounded-lg border border-info/35 bg-info/10 px-3 py-2 text-xs text-info">
+          <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
+          <p>
+            Estatísticas agregadas (RPC <span className="font-mono">admin_scratch_stats</span>) indisponíveis — os números abaixo estão a
+            zero. O resto do separador (prémios e configuração) carregou normalmente.
+          </p>
+        </div>
+      )}
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="rounded-lg border border-border bg-card p-5">

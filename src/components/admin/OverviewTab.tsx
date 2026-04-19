@@ -110,9 +110,9 @@ async function fetchOverviewDashboard(): Promise<OverviewDashboardData> {
   let robotCosts: { cost: number; created_at: string }[] = [];
   try {
       // Use shared cache for heavy queries
-      const CACHE_KEY_PAYMENTS = "admin_payments_completed_v2";
-      const CACHE_KEY_ORDERS = "admin_orders_all";
-      const CACHE_KEY_LZT_COSTS = "admin_lzt_costs";
+      const CACHE_KEY_PAYMENTS = "admin_payments_completed_v3";
+      const CACHE_KEY_ORDERS = "admin_orders_all_v3";
+      const CACHE_KEY_LZT_COSTS = "admin_lzt_costs_v3";
 
       const cachedPayments = getCached<PaymentAggregate[]>(CACHE_KEY_PAYMENTS);
       const cachedOrders = getCached<OrderTicketRow[]>(CACHE_KEY_ORDERS);
@@ -271,7 +271,7 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
   const { data, isPending: loading, refetch, isFetching } = useQuery({
     queryKey: ["admin", "overview"],
     queryFn: fetchOverviewDashboard,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 10 * 60 * 1000,
   });
 
   const openTickets = data?.openTickets ?? 0;

@@ -19,6 +19,7 @@ import {
   type RobotProjectSalesPeriod,
 } from "@/lib/adminRobotProjectFetch";
 import { isRecord } from "@/types/ticketChat";
+import { devWarnAdminRpc, isAdminRpcPostgrestFallbackError } from "@/lib/adminFinancePostgrest";
 
 export type { RobotProjectSalesPeriod } from "@/lib/adminRobotProjectFetch";
 
@@ -29,7 +30,7 @@ export type { RobotProjectSalesPeriod } from "@/lib/adminRobotProjectFetch";
  */
 
 const ADMIN_STALE_TIME = 3 * 60 * 1000; // 3 minutes
-const ADMIN_HEAVY_STALE_TIME = 5 * 60 * 1000; // 5 minutes — alinhado com adminCache + Finance/Overview
+const ADMIN_HEAVY_STALE_TIME = 10 * 60 * 1000; // 10 minutes — alinhado com adminCache + Finance/Overview
 
 // ─── Products (id, name) — used by CouponsTab, ResellersTab, ScratchCardTab ───
 export function useAdminProductsList() {
@@ -164,6 +165,8 @@ type ScratchCardAdminBundle = {
   prizes: Tables<"scratch_card_prizes">[];
   config: Tables<"scratch_card_config"> | null;
   stats: { total_plays: number; total_wins: number; total_revenue: number };
+  /** RPC `admin_scratch_stats` falhou com erro PostgREST recuperável — números acima são 0. */
+  scratchStatsRpcFallback?: boolean;
 };
 
 export function useAdminScratchCardBundle() {
@@ -177,13 +180,25 @@ export function useAdminScratchCardBundle() {
       ]);
       if (prizesRes.error) throw prizesRes.error;
       if (configRes.error) throw configRes.error;
-      if (statsRes.error) throw statsRes.error;
-      const stats =
-        statsRes.data != null ? parseAdminScratchStats(statsRes.data) : null;
+      const zeroStats = { total_plays: 0, total_wins: 0, total_revenue: 0 };
+      let scratchStatsRpcFallback = false;
+      let stats = zeroStats;
+      if (statsRes.error) {
+        if (isAdminRpcPostgrestFallbackError(statsRes.error)) {
+          scratchStatsRpcFallback = true;
+          devWarnAdminRpc("hooks", "admin_scratch_stats", "estatísticas = 0 (fallback)", statsRes.error);
+        } else {
+          throw statsRes.error;
+        }
+      } else {
+        const parsed = statsRes.data != null ? parseAdminScratchStats(statsRes.data) : null;
+        stats = parsed ?? zeroStats;
+      }
       return {
         prizes: prizesRes.data ?? [],
         config: configRes.data ?? null,
-        stats: stats ?? { total_plays: 0, total_wins: 0, total_revenue: 0 },
+        stats,
+        scratchStatsRpcFallback,
       };
     },
     staleTime: ADMIN_HEAVY_STALE_TIME,
@@ -215,13 +230,26 @@ export function useAdminResellersRaw() {
   });
 }
 
+type AdminStockPlanCountsData = {
+  rows: { plan_id: string; total: number; available: number }[];
+  /** RPC `admin_stock_counts` falhou com erro PostgREST recuperável — contagens por plano vazias. */
+  usedRpcFallback: boolean;
+};
+
 export function useAdminStockPlanCounts() {
   return useQuery({
     queryKey: ["admin", "stock-plan-counts"],
-    queryFn: async () => {
+    queryFn: async (): Promise<AdminStockPlanCountsData> => {
       const { data, error } = await supabase.rpc("admin_stock_counts");
-      if (error) throw error;
-      return (data as unknown as { plan_id: string; total: number; available: number }[]) ?? [];
+      if (error) {
+        if (isAdminRpcPostgrestFallbackError(error)) {
+          devWarnAdminRpc("hooks", "admin_stock_counts", "contagens vazias (fallback)", error);
+          return { rows: [], usedRpcFallback: true };
+        }
+        throw error;
+      }
+      const rows = (data as unknown as { plan_id: string; total: number; available: number }[]) ?? [];
+      return { rows, usedRpcFallback: false };
     },
     staleTime: 60 * 1000,
   });
@@ -240,6 +268,7 @@ export function useAdminLztBundle() {
     queryKey: ["admin", "lzt", "bundle"],
     queryFn: fetchAdminLztBundle,
     staleTime: ADMIN_HEAVY_STALE_TIME,
+    placeholderData: (previousData) => previousData,
   });
 }
 

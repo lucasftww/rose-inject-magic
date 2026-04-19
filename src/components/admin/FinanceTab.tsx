@@ -9,6 +9,19 @@ import {
   type AdminLztSaleBulkRow,
   type AdminResellerPurchaseBulkRow,
 } from "@/lib/adminFinanceBulk";
+import {
+  fetchAdminFinancePeriodRollups,
+  rollupPayment,
+  rollupLzt,
+  rollupReseller,
+  rollupRobot,
+  type AdminFinanceRollups,
+} from "@/lib/adminFinanceRollups";
+import {
+  ADMIN_MAX_LZT_SALES_ROWS,
+  ADMIN_MAX_PAYMENTS_COMPLETED,
+  ADMIN_MAX_RESELLER_PURCHASES,
+} from "@/lib/adminDataLimits";
 import { getCached, setCache, getUsdToBrl, invalidateAdminCache } from "@/lib/adminCache";
 import { buildRobotSalesLedgerFromPayments } from "@/lib/adminRobotSalesLedger";
 import { paymentCartSnapshot, type PaymentCartLine } from "@/types/paymentCart";
@@ -16,7 +29,7 @@ import type { OrderTicketMetadata } from "@/types/orderTicketMetadata";
 import {
   Loader2, DollarSign, TrendingUp, TrendingDown,
   Download, Wallet, Users, ArrowUp, ArrowDown, Minus, Gamepad2,
-  Receipt, BarChart3, CalendarDays, Package, Zap, RefreshCw
+  Receipt, BarChart3, CalendarDays, Package, Zap, RefreshCw, AlertTriangle, Info,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import {
@@ -149,6 +162,7 @@ async function fetchFinanceDashboard(): Promise<{
   resellerPurchases: ResellerPurchase[];
   robotTickets: RobotTicket[];
   usdToBrl: number;
+  rollups: AdminFinanceRollups | null;
 }> {
   let currentRate = 5.16;
   try {
@@ -159,19 +173,20 @@ async function fetchFinanceDashboard(): Promise<{
 
   try {
     // Use shared cache for heavy queries
-    const CACHE_KEY_PAYMENTS = "admin_payments_completed_v2";
-    const CACHE_KEY_LZT = "admin_lzt_sales_full";
-    const CACHE_KEY_RESELLER = "admin_reseller_purchases";
+    const CACHE_KEY_PAYMENTS = "admin_payments_completed_v3";
+    const CACHE_KEY_LZT = "admin_lzt_sales_full_v3";
+    const CACHE_KEY_RESELLER = "admin_reseller_purchases_v3";
 
     const cachedPayments = getCached<PaymentRow[]>(CACHE_KEY_PAYMENTS);
     const cachedLzt = getCached<LztSale[]>(CACHE_KEY_LZT);
     const cachedReseller = getCached<ResellerPurchase[]>(CACHE_KEY_RESELLER);
 
-    const [paymentsData, lztData, resellerData, robotProductsRes] = await Promise.all([
+    const [paymentsData, lztData, resellerData, robotProductsRes, rollupsData] = await Promise.all([
       cachedPayments ? Promise.resolve(cachedPayments) : fetchAdminCompletedPaymentsBulk(),
       cachedLzt ? Promise.resolve(cachedLzt) : fetchAdminLztSalesBulk(),
       cachedReseller ? Promise.resolve(cachedReseller) : fetchAdminResellerPurchasesBulk(),
       supabase.from("products").select("id, name, robot_game_id, robot_markup_percent").not("robot_game_id", "is", null),
+      fetchAdminFinancePeriodRollups().catch(() => null),
     ]);
 
     // Persist to shared cache
@@ -239,6 +254,7 @@ async function fetchFinanceDashboard(): Promise<{
       resellerPurchases: resellerData,
       robotTickets,
       usdToBrl: currentRate,
+      rollups: rollupsData,
     };
   } catch (err) {
     if (import.meta.env.DEV) console.error("FinanceTab fetchFinanceDashboard error:", err);
@@ -251,7 +267,7 @@ const FinanceTab = () => {
   const { data, isPending: loading, refetch, isFetching } = useQuery({
     queryKey: ["admin", "finance"],
     queryFn: fetchFinanceDashboard,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 10 * 60 * 1000,
   });
 
   const payments = useMemo(() => data?.payments ?? [], [data]);
@@ -259,7 +275,13 @@ const FinanceTab = () => {
   const resellerPurchases = useMemo(() => data?.resellerPurchases ?? [], [data]);
   const robotTickets = useMemo(() => data?.robotTickets ?? [], [data]);
   const usdToBrl = data?.usdToBrl ?? 5.16;
+  const rollups = data?.rollups ?? null;
   const [period, setPeriod] = useState<Period>("24h");
+
+  const hitPaymentsCap = payments.length >= ADMIN_MAX_PAYMENTS_COMPLETED;
+  const hitLztCap = lztSales.length >= ADMIN_MAX_LZT_SALES_ROWS;
+  const hitResellerCap = resellerPurchases.length >= ADMIN_MAX_RESELLER_PURCHASES;
+  const datasetLikelyTruncated = hitPaymentsCap || hitLztCap || hitResellerCap;
 
   // ─── Filtered data ───
   const fp = useMemo(() => filterByPeriod(payments, period), [payments, period]);
@@ -268,9 +290,17 @@ const FinanceTab = () => {
   const fReseller = useMemo(() => filterByPeriod(resellerPurchases, period, "created_at"), [resellerPurchases, period]);
   const fRobot = useMemo(() => filterByPeriod(robotTickets, period, "created_at"), [robotTickets, period]);
 
-  // ─── Revenue metrics ───
-  const totalRevenue = useMemo(() => fp.reduce((s, p) => s + p.amount / 100, 0), [fp]);
-  const prevRevenue = useMemo(() => pp.reduce((s, p) => s + p.amount / 100, 0), [pp]);
+  // ─── Revenue metrics (totais de pagamentos / LZT / revendedor: SQL rollups quando disponível) ───
+  const totalRevenue = useMemo(() => {
+    const cur = rollupPayment(rollups, period, false);
+    if (cur) return cur.revenue_cents / 100;
+    return fp.reduce((s, p) => s + p.amount / 100, 0);
+  }, [rollups, period, fp]);
+  const prevRevenue = useMemo(() => {
+    const prev = rollupPayment(rollups, period, true);
+    if (prev) return prev.revenue_cents / 100;
+    return pp.reduce((s, p) => s + p.amount / 100, 0);
+  }, [rollups, period, pp]);
   const revenueChange = pctChange(totalRevenue, prevRevenue);
 
   const revenueBreakdown = useMemo(() => {
@@ -294,18 +324,43 @@ const FinanceTab = () => {
     return { lzt, robot, stock };
   }, [fp, robotTickets]);
 
-  const lztTotalBought = useMemo(() => fLzt.reduce((s, l) => s + Number(l.buy_price), 0), [fLzt]);
-  const lztTotalProfit = useMemo(() => fLzt.reduce((s, l) => s + Number(l.profit), 0), [fLzt]);
+  const lztTotalBought = useMemo(() => {
+    const cur = rollupLzt(rollups, period, false);
+    if (cur) return Number(cur.buy);
+    return fLzt.reduce((s, l) => s + Number(l.buy_price), 0);
+  }, [rollups, period, fLzt]);
+  const lztTotalProfit = useMemo(() => {
+    const cur = rollupLzt(rollups, period, false);
+    if (cur) return Number(cur.profit);
+    return fLzt.reduce((s, l) => s + Number(l.profit), 0);
+  }, [rollups, period, fLzt]);
 
-  const robotTotalCost = useMemo(() => fRobot.reduce((s, r) => s + r.cost, 0), [fRobot]);
-  const robotTotalProfit = useMemo(() => fRobot.reduce((s, r) => s + r.profit, 0), [fRobot]);
+  const robotTotalCost = useMemo(() => {
+    const cur = rollupRobot(rollups, period, false);
+    if (cur) return Number(cur.cost);
+    return fRobot.reduce((s, r) => s + r.cost, 0);
+  }, [rollups, period, fRobot]);
+  const robotTotalProfit = useMemo(() => {
+    const cur = rollupRobot(rollups, period, false);
+    if (cur) return Number(cur.profit);
+    return fRobot.reduce((s, r) => s + r.profit, 0);
+  }, [rollups, period, fRobot]);
   /** Desconto agregado a revendedores (preço tabela − pago); reduz lucro como custo operacional. */
-  const resellerProgramCost = useMemo(
-    () => fReseller.reduce((s, r) => s + (Number(r.original_price) - Number(r.paid_price)), 0),
-    [fReseller],
-  );
-  const uniqueBuyers = useMemo(() => new Set(fp.map(p => p.user_id)).size, [fp]);
-  const prevBuyers = useMemo(() => new Set(pp.map(p => p.user_id)).size, [pp]);
+  const resellerProgramCost = useMemo(() => {
+    const cur = rollupReseller(rollups, period, false);
+    if (cur) return Number(cur.discount);
+    return fReseller.reduce((s, r) => s + (Number(r.original_price) - Number(r.paid_price)), 0);
+  }, [rollups, period, fReseller]);
+  const uniqueBuyers = useMemo(() => {
+    const cur = rollupPayment(rollups, period, false);
+    if (cur) return cur.buyers;
+    return new Set(fp.map((p) => p.user_id)).size;
+  }, [rollups, period, fp]);
+  const prevBuyers = useMemo(() => {
+    const prev = rollupPayment(rollups, period, true);
+    if (prev) return prev.buyers;
+    return new Set(pp.map((p) => p.user_id)).size;
+  }, [rollups, period, pp]);
   const buyersChange = pctChange(uniqueBuyers, prevBuyers);
 
   // Exclude R$0 payments (free products) from average ticket to avoid deflating the metric
@@ -316,9 +371,28 @@ const FinanceTab = () => {
     }),
     [fp, pp],
   );
-  const avgTicket = paidFp.length > 0 ? totalRevenue / paidFp.length : 0;
-  const prevAvgTicket = paidPp.length > 0 ? prevRevenue / paidPp.length : 0;
+  const avgTicket = useMemo(() => {
+    const cur = rollupPayment(rollups, period, false);
+    const denom = cur && cur.paid_count > 0 ? cur.paid_count : paidFp.length;
+    if (denom === 0) return 0;
+    return totalRevenue / denom;
+  }, [rollups, period, paidFp.length, totalRevenue]);
+  const prevAvgTicket = useMemo(() => {
+    const prev = rollupPayment(rollups, period, true);
+    if (prev && prev.paid_count > 0) return (prev.revenue_cents / 100) / prev.paid_count;
+    if (prev && prev.paid_count === 0) return 0;
+    return paidPp.length > 0 ? prevRevenue / paidPp.length : 0;
+  }, [rollups, period, paidPp.length, prevRevenue]);
   const avgTicketChange = pctChange(avgTicket, prevAvgTicket);
+
+  const transactionCount = useMemo(() => {
+    const cur = rollupPayment(rollups, period, false);
+    return cur?.count ?? fp.length;
+  }, [rollups, period, fp.length]);
+  const prevTransactionCount = useMemo(() => {
+    const prev = rollupPayment(rollups, period, true);
+    return prev?.count ?? pp.length;
+  }, [rollups, period, pp.length]);
 
   // Note: discount_amount is NOT included in costs because payments.amount
   // already stores the post-discount value (the actual money received).
@@ -433,7 +507,7 @@ const FinanceTab = () => {
       <div class="card"><p class="card-label">Receita</p><p class="card-value green">R$ ${fmt(totalRevenue)}</p></div>
       <div class="card"><p class="card-label">Lucro</p><p class="card-value green">R$ ${fmt(netProfit)}</p></div>
       <div class="card"><p class="card-label">Margem</p><p class="card-value">${profitMargin.toFixed(1)}%</p></div>
-      <div class="card"><p class="card-label">Transações</p><p class="card-value">${fp.length}</p></div>
+      <div class="card"><p class="card-label">Transações</p><p class="card-value">${transactionCount}</p></div>
     </div>
     <p class="section">Custos</p><div class="grid">
       <div class="card"><p class="card-label">Custo LZT</p><p class="card-value">R$ ${fmt(lztTotalBought)}</p></div>
@@ -459,9 +533,42 @@ const FinanceTab = () => {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h2 className="text-lg font-bold text-foreground">Financeiro</h2>
-          <p className="mt-0.5 text-[10px] text-muted-foreground max-w-xl">
-            Agregações usam os registos mais recentes até ao limite configurado (evita timeouts). «Todo o período» reflete esse conjunto.
-          </p>
+          <div className="mt-0.5 max-w-xl space-y-1.5">
+            <p className="text-[10px] text-muted-foreground">
+              Conjunto carregado: até {ADMIN_MAX_PAYMENTS_COMPLETED.toLocaleString("pt-BR")} pagamentos,{" "}
+              {ADMIN_MAX_LZT_SALES_ROWS.toLocaleString("pt-BR")} vendas LZT,{" "}
+              {ADMIN_MAX_RESELLER_PURCHASES.toLocaleString("pt-BR")} compras revendedor (sempre os mais recentes), para gráficos e
+              cart_snapshot. Com a RPC de rollups ativa, receita, compradores, transações e custos LZT/revendedor no período reflectem a
+              base completa.
+            </p>
+            {rollups && (
+              <p className="text-[10px] text-primary">
+                Rollups SQL ativos: totais do período (receita, LZT, revendedor, Robot via cart_snapshot, compradores, transações) não
+                dependem do limite da amostra. Gráficos e pizza Estoque/LZT/Robot por tipo continuam na amostra em memória; o detalhe
+                por produto Robot abaixo também.
+              </p>
+            )}
+            {!rollups && (
+              <div className="flex items-start gap-1.5 rounded-md border border-info/35 bg-info/10 px-2 py-1.5 text-[10px] text-info">
+                <Info className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
+                <p>
+                  Totais por período (agregação SQL / rollups) indisponíveis — cartões e gráficos usam só a amostra carregada. Publique as
+                  funções <span className="font-mono">admin_finance_period_rollups</span> no Supabase ou execute{" "}
+                  <span className="font-mono">npm run supabase:db-push</span> com o CLI ligado ao projecto.
+                </p>
+              </div>
+            )}
+            {datasetLikelyTruncated && (
+              <div className="flex items-start gap-1.5 rounded-md border border-warning/30 bg-warning/10 px-2 py-1.5 text-[10px] text-warning">
+                <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
+                <p>
+                  {rollups
+                    ? "A amostra em memória foi truncada: curvas e fatias por tipo (cart_snapshot) podem omitir histórico antigo; os cartões que usam SQL acima estão completos para o período."
+                    : "Limite atingido numa ou mais fontes — totais e gráficos podem omitir histórico mais antigo. Aplique a migração admin_finance_period_rollups ou agregações semelhantes no Postgres."}
+                </p>
+              </div>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex gap-0.5 bg-secondary rounded-lg p-0.5">
@@ -533,8 +640,8 @@ const FinanceTab = () => {
 
       {/* Quick Metrics */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard icon={<Receipt className="h-4 w-4 text-info" />} label="Transações" value={String(fp.length)}
-          change={period !== "all" ? pctChange(fp.length, pp.length) : undefined} />
+        <StatCard icon={<Receipt className="h-4 w-4 text-info" />} label="Transações" value={String(transactionCount)}
+          change={period !== "all" ? pctChange(transactionCount, prevTransactionCount) : undefined} />
         <StatCard icon={<Users className="h-4 w-4 text-warning" />} label="Compradores" value={String(uniqueBuyers)}
           change={period !== "all" ? buyersChange : undefined} />
         <StatCard icon={<Wallet className="h-4 w-4 text-positive" />} label="Ticket Médio" value={`R$ ${fmt(avgTicket)}`}
@@ -564,6 +671,12 @@ const FinanceTab = () => {
               <Area type="monotone" dataKey="receita" name="Receita" stroke="hsl(197,100%,50%)" fill="url(#gradReceita)" strokeWidth={2} />
             </AreaChart>
           </ResponsiveContainer>
+          {rollups && (
+            <p className="mt-2 text-[10px] text-muted-foreground">
+              Curva construída a partir da amostra em memória; o total de receita do período nos cartões vem da agregação SQL quando
+              disponível.
+            </p>
+          )}
         </div>
       )}
 

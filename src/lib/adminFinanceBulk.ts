@@ -11,63 +11,29 @@ import {
   ADMIN_MAX_PAYMENTS_COMPLETED,
   ADMIN_MAX_RESELLER_PURCHASES,
 } from "@/lib/adminDataLimits";
-
-type RpcErrorish = { message?: string; code?: string; details?: string; hint?: string } | null;
-
-function rpcErrorBlob(err: RpcErrorish): string {
-  if (!err) return "";
-  return [err.message, err.details, err.hint].filter(Boolean).join(" ").toLowerCase();
-}
-
-/** Função RPC ausente / assinatura antiga no Postgres. */
-function isRpcMissingError(err: RpcErrorish): boolean {
-  if (!err?.message && !err?.code) return false;
-  const m = rpcErrorBlob(err);
-  return (
-    m.includes("does not exist") ||
-    m.includes("function public.admin_finance") ||
-    err?.code === "42883" ||
-    err?.code === "PGRST202"
-  );
-}
-
-/**
- * Erros PostgREST frequentes em 400 (body/query inválido, cache de schema) ou 404 de função:
- * tentamos o mesmo dado via REST com RLS de admin em vez de deixar o painel quebrado.
- */
-function isFinanceRpcFallbackError(err: RpcErrorish): boolean {
-  if (!err) return false;
-  const c = String(err.code || "");
-  /** Sem permissão / JWT inválido: não mascarar com fallback REST (comportamento diferente do RPC). */
-  if (c === "42501" || c === "PGRST301" || c === "PGRST302" || c === "PGRST303") return false;
-  if (rpcErrorBlob(err).includes("forbidden")) return false;
-  if (isRpcMissingError(err)) return true;
-  if (c.startsWith("PGRST")) {
-    const codes = new Set([
-      "PGRST100",
-      "PGRST102",
-      "PGRST108",
-      "PGRST118",
-      "PGRST120",
-      "PGRST200",
-      "PGRST204",
-      "PGRST203",
-      "PGRST205",
-    ]);
-    if (codes.has(c)) return true;
-  }
-  if (rpcErrorBlob(err).includes("schema cache")) return true;
-  return false;
-}
+import type { RpcErrorish } from "@/lib/adminFinancePostgrest";
+import {
+  devWarnAdminRpc,
+  isAdminRpcPostgrestFallbackError,
+  isAuthLikeRpcError,
+  normRpcCode,
+  rpcErrorBlob,
+} from "@/lib/adminFinancePostgrest";
 
 /** PostgREST não encontrou overload com estes argumentos — tentar só defaults do SQL. */
 function shouldRetryRpcWithoutNamedLimit(err: RpcErrorish): boolean {
-  if (!err) return false;
-  const c = String(err.code || "");
+  if (!err || isAuthLikeRpcError(err)) return false;
+  const c = normRpcCode(err);
   const m = rpcErrorBlob(err);
-  if (c === "PGRST203") return true;
+  if (c === "PGRST203" || c === "PGRST204" || c === "PGRST205") return true;
+  if (c === "42725") return true;
   if (m.includes("no function matches")) return true;
-  if (m.includes("could not find the function") && (m.includes("argument") || m.includes("parameter"))) return true;
+  if (m.includes("could not find the function")) return true;
+  if (m.includes("does not exist") && m.includes("function") && m.includes("admin_finance")) return true;
+  if (m.includes("unexpected") && (m.includes("parameter") || m.includes("argument"))) return true;
+  if (m.includes("unknown") && (m.includes("parameter") || m.includes("argument"))) return true;
+  if (m.includes("not match") && m.includes("function")) return true;
+  if (m.includes("overload")) return true;
   return false;
 }
 
@@ -97,16 +63,20 @@ export async function fetchAdminCompletedPaymentsBulk(): Promise<AdminPaymentFin
       user_id: String(r.user_id),
     }));
 
-  let { data, error } = await supabase.rpc("admin_finance_completed_payments", {
+  const rpcName = "admin_finance_completed_payments";
+  let { data, error } = await supabase.rpc(rpcName, {
     p_limit: ADMIN_MAX_PAYMENTS_COMPLETED,
   });
+  if (error) devWarnAdminRpc("bulk", rpcName, "RPC com p_limit", error);
   if (error && shouldRetryRpcWithoutNamedLimit(error)) {
-    ({ data, error } = await supabase.rpc("admin_finance_completed_payments"));
+    ({ data, error } = await supabase.rpc(rpcName));
+    if (error) devWarnAdminRpc("bulk", rpcName, "RPC sem p_limit (retry)", error);
   }
   if (!error && Array.isArray(data)) {
     return mapRows(data as Record<string, unknown>[]);
   }
-  if (error && isFinanceRpcFallbackError(error)) {
+  if (error && isAdminRpcPostgrestFallbackError(error)) {
+    devWarnAdminRpc("bulk", rpcName, "fallback REST", error);
     return fetchAllRows<AdminPaymentFinanceRow>("payments", {
       select: "id, amount, status, created_at, paid_at, cart_snapshot, payment_method, discount_amount, user_id",
       filters: [{ column: "status", op: "eq", value: "COMPLETED" }],
@@ -135,16 +105,20 @@ export async function fetchAdminLztSalesBulk(): Promise<AdminLztSaleBulkRow[]> {
       game: r.game != null ? String(r.game) : null,
     }));
 
-  let { data, error } = await supabase.rpc("admin_finance_lzt_sales", {
+  const rpcName = "admin_finance_lzt_sales";
+  let { data, error } = await supabase.rpc(rpcName, {
     p_limit: ADMIN_MAX_LZT_SALES_ROWS,
   });
+  if (error) devWarnAdminRpc("bulk", rpcName, "RPC com p_limit", error);
   if (error && shouldRetryRpcWithoutNamedLimit(error)) {
-    ({ data, error } = await supabase.rpc("admin_finance_lzt_sales"));
+    ({ data, error } = await supabase.rpc(rpcName));
+    if (error) devWarnAdminRpc("bulk", rpcName, "RPC sem p_limit (retry)", error);
   }
   if (!error && Array.isArray(data)) {
     return mapRows(data as Record<string, unknown>[]);
   }
-  if (error && isFinanceRpcFallbackError(error)) {
+  if (error && isAdminRpcPostgrestFallbackError(error)) {
+    devWarnAdminRpc("bulk", rpcName, "fallback REST", error);
     return fetchAllRows<AdminLztSaleBulkRow>("lzt_sales", {
       select: "buy_price, sell_price, profit, created_at, game",
       order: { column: "created_at", ascending: false },
@@ -168,16 +142,20 @@ export async function fetchAdminResellerPurchasesBulk(): Promise<AdminResellerPu
       created_at: String(r.created_at ?? ""),
     }));
 
-  let { data, error } = await supabase.rpc("admin_finance_reseller_purchases", {
+  const rpcName = "admin_finance_reseller_purchases";
+  let { data, error } = await supabase.rpc(rpcName, {
     p_limit: ADMIN_MAX_RESELLER_PURCHASES,
   });
+  if (error) devWarnAdminRpc("bulk", rpcName, "RPC com p_limit", error);
   if (error && shouldRetryRpcWithoutNamedLimit(error)) {
-    ({ data, error } = await supabase.rpc("admin_finance_reseller_purchases"));
+    ({ data, error } = await supabase.rpc(rpcName));
+    if (error) devWarnAdminRpc("bulk", rpcName, "RPC sem p_limit (retry)", error);
   }
   if (!error && Array.isArray(data)) {
     return mapRows(data as Record<string, unknown>[]);
   }
-  if (error && isFinanceRpcFallbackError(error)) {
+  if (error && isAdminRpcPostgrestFallbackError(error)) {
+    devWarnAdminRpc("bulk", rpcName, "fallback REST", error);
     return fetchAllRows<AdminResellerPurchaseBulkRow>("reseller_purchases", {
       select: "original_price, paid_price, created_at",
       order: { column: "created_at", ascending: false },
@@ -211,16 +189,20 @@ export async function fetchAdminOrderTicketsBulk(): Promise<
       status_label: r.status_label != null ? String(r.status_label) : null,
     }));
 
-  let { data, error } = await supabase.rpc("admin_finance_order_tickets", {
+  const rpcName = "admin_finance_order_tickets";
+  let { data, error } = await supabase.rpc(rpcName, {
     p_limit: ADMIN_MAX_ORDER_TICKETS,
   });
+  if (error) devWarnAdminRpc("bulk", rpcName, "RPC com p_limit", error);
   if (error && shouldRetryRpcWithoutNamedLimit(error)) {
-    ({ data, error } = await supabase.rpc("admin_finance_order_tickets"));
+    ({ data, error } = await supabase.rpc(rpcName));
+    if (error) devWarnAdminRpc("bulk", rpcName, "RPC sem p_limit (retry)", error);
   }
   if (!error && Array.isArray(data)) {
     return mapRows(data as Record<string, unknown>[]);
   }
-  if (error && isFinanceRpcFallbackError(error)) {
+  if (error && isAdminRpcPostgrestFallbackError(error)) {
+    devWarnAdminRpc("bulk", rpcName, "fallback REST", error);
     return fetchAllRows("order_tickets", {
       select: "id, product_id, product_plan_id, user_id, metadata, status, created_at, status_label",
       order: { column: "created_at", ascending: false },
