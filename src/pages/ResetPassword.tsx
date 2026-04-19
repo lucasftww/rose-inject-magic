@@ -126,10 +126,15 @@ const ResetPassword = () => {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="text-xs font-medium text-muted-foreground">Nova Senha</label>
+              <label htmlFor="reset-password-new" className="text-xs font-medium text-muted-foreground">
+                Nova Senha
+              </label>
               <div className="relative mt-1">
                 <input
+                  id="reset-password-new"
+                  name="new-password"
                   type={showPass ? "text" : "password"}
+                  autoComplete="new-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value.slice(0, 100))}
                   placeholder="Mínimo 8 caracteres"
@@ -142,9 +147,14 @@ const ResetPassword = () => {
             </div>
 
             <div>
-              <label className="text-xs font-medium text-muted-foreground">Confirmar Senha</label>
+              <label htmlFor="reset-password-confirm" className="text-xs font-medium text-muted-foreground">
+                Confirmar Senha
+              </label>
               <input
+                id="reset-password-confirm"
+                name="confirm-password"
                 type={showPass ? "text" : "password"}
+                autoComplete="new-password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value.slice(0, 100))}
                 placeholder="Repita a senha"

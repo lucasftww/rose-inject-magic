@@ -1150,10 +1150,15 @@ const Checkout = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Name */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-foreground">Nome completo</label>
+                  <label htmlFor="checkout-full-name" className="text-xs font-medium text-foreground">
+                    Nome completo
+                  </label>
                   <div className="relative">
                     <Input
+                      id="checkout-full-name"
+                      name="name"
                       type="text"
+                      autoComplete="name"
                       value={formData.name}
                       onChange={(e) => setFormData((p) => ({ ...p, name: e.target.value }))}
                       onBlur={() => setTouched((p) => ({ ...p, name: true }))}
@@ -1174,7 +1179,9 @@ const Checkout = () => {
                 {/* CPF */}
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-2">
-                    <label className="text-xs font-medium text-foreground">CPF</label>
+                    <label htmlFor="checkout-cpf" className="text-xs font-medium text-foreground">
+                      CPF
+                    </label>
                     {touched.document && cpfValid && (
                       <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-500">
                         <Check className="h-3 w-3" /> Válido
@@ -1183,7 +1190,11 @@ const Checkout = () => {
                   </div>
                   <div className="relative">
                     <Input
+                      id="checkout-cpf"
+                      name="cpf"
                       type="text"
+                      autoComplete="off"
+                      inputMode="numeric"
                       value={formData.document}
                       onChange={(e) => setFormData((p) => ({ ...p, document: applyCpfMask(e.target.value) }))}
                       onBlur={() => setTouched((p) => ({ ...p, document: true }))}
@@ -1203,10 +1214,15 @@ const Checkout = () => {
 
                 {/* Email */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-foreground">E-mail</label>
+                  <label htmlFor="checkout-email" className="text-xs font-medium text-foreground">
+                    E-mail
+                  </label>
                   <div className="relative">
                     <Input
+                      id="checkout-email"
+                      name="email"
                       type="email"
+                      autoComplete="email"
                       value={formData.email}
                       onChange={(e) => setFormData((p) => ({ ...p, email: e.target.value }))}
                       onBlur={() => setTouched((p) => ({ ...p, email: true }))}
@@ -1226,10 +1242,15 @@ const Checkout = () => {
 
                 {/* Phone */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-foreground">Telefone <span className="text-muted-foreground font-normal">(WhatsApp)</span></label>
+                  <label htmlFor="checkout-phone" className="text-xs font-medium text-foreground">
+                    Telefone <span className="text-muted-foreground font-normal">(WhatsApp)</span>
+                  </label>
                   <div className="relative">
                     <Input
+                      id="checkout-phone"
+                      name="tel"
                       type="tel"
+                      autoComplete="tel"
                       value={formData.phone}
                       onChange={(e) => setFormData((p) => ({ ...p, phone: applyPhoneMask(e.target.value) }))}
                       onBlur={() => setTouched((p) => ({ ...p, phone: true }))}
@@ -1283,9 +1304,14 @@ const Checkout = () => {
                 {/* Coupon */}
                 {!couponApplied ? (
                   <div className="mb-4 pb-4 border-b border-border">
-                    <label className="text-xs font-medium text-muted-foreground mb-2 block">Cupom de desconto</label>
+                    <label htmlFor="checkout-coupon" className="text-xs font-medium text-muted-foreground mb-2 block">
+                      Cupom de desconto
+                    </label>
                     <div className="flex gap-2">
                       <Input
+                        id="checkout-coupon"
+                        name="coupon"
+                        autoComplete="off"
                         value={couponCode}
                         onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); setCouponError(""); }}
                         placeholder="CÓDIGO"

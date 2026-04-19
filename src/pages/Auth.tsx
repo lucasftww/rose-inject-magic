@@ -220,8 +220,12 @@ const Auth = () => {
 
               <form onSubmit={handleSubmit} autoComplete="on" className="flex flex-col gap-4">
                 <div>
-                  <label className="text-sm font-semibold text-white mb-1.5 block">{t("auth.email")}</label>
+                  <label htmlFor="auth-email" className="text-sm font-semibold text-white mb-1.5 block">
+                    {t("auth.email")}
+                  </label>
                   <Input
+                    id="auth-email"
+                    name="email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -235,9 +239,13 @@ const Auth = () => {
 
                 {mode !== "recovery" && (
                   <div>
-                    <label className="text-sm font-semibold text-white mb-1.5 block">{t("auth.password")}</label>
+                    <label htmlFor="auth-password" className="text-sm font-semibold text-white mb-1.5 block">
+                      {t("auth.password")}
+                    </label>
                     <div className="relative">
                       <Input
+                        id="auth-password"
+                        name={mode === "login" ? "password" : "new-password"}
                         type={showPassword ? "text" : "password"}
                         autoComplete={mode === "login" ? "current-password" : "new-password"}
                         value={password}
@@ -261,8 +269,12 @@ const Auth = () => {
 
                 {mode === "signup" && (
                   <div>
-                    <label className="text-sm font-semibold text-white mb-1.5 block">{t("auth.confirmPassword")}</label>
+                    <label htmlFor="auth-confirm-password" className="text-sm font-semibold text-white mb-1.5 block">
+                      {t("auth.confirmPassword")}
+                    </label>
                     <Input
+                      id="auth-confirm-password"
+                      name="confirm-password"
                       type={showPassword ? "text" : "password"}
                       autoComplete="new-password"
                       value={confirmPassword}
