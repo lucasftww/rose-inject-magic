@@ -186,9 +186,15 @@ function normalizeListSortParam(raw: string | null | undefined): string {
   return LIST_SORT_VALUES.has(v) ? v : "pdate_to_down";
 }
 
-/** Parâmetro `order_by` enviado à LZT (alinhado ao sort da UI). */
+/** Parâmetro `order_by` enviado à LZT.
+ * Para performance, pedimos sempre por data (mais recente) e aplicamos sort de preço no cliente.
+ */
 function listOrderByForLztApi(uiSort: string): string {
-  return normalizeListSortParam(uiSort);
+  const normalized = normalizeListSortParam(uiSort);
+  if (normalized === "price_to_up" || normalized === "price_to_down") {
+    return "pdate_to_down";
+  }
+  return normalized;
 }
 
 // ─── Data fetchers ───
