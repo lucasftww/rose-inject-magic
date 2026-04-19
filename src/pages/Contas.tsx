@@ -197,6 +197,25 @@ function listOrderByForLztApi(uiSort: string): string {
   return normalized;
 }
 
+function createAttemptSignal(parent: AbortSignal, timeoutMs: number) {
+  const controller = new AbortController();
+  let timedOut = false;
+  const onParentAbort = () => controller.abort();
+  parent.addEventListener("abort", onParentAbort, { once: true });
+  const timerId = window.setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, timeoutMs);
+  return {
+    signal: controller.signal,
+    didTimeout: () => timedOut,
+    cleanup: () => {
+      window.clearTimeout(timerId);
+      parent.removeEventListener("abort", onParentAbort);
+    },
+  };
+}
+
 // ─── Data fetchers ───
 
 // RARITY_PRIORITY, SkinEntry, fetchAllValorantSkins imported from @/lib/valorantData
@@ -981,23 +1000,28 @@ const Contas = () => {
     async (
       params: Record<string, string | string[]>,
       controller: AbortController,
-      retries = 3
+      retries = lightDevice ? 1 : 2
     ): Promise<LztMarketListResponse> => {
     for (let attempt = 0; attempt <= retries; attempt++) {
       if (controller.signal.aborted) throw new Error("aborted");
+      const attemptSignal = createAttemptSignal(controller.signal, lightDevice ? 9000 : 12000);
       try {
-        return await fetchAccountsRaw(params, controller.signal);
+        return await fetchAccountsRaw(params, attemptSignal.signal);
       } catch (err: unknown) {
         const errName = errorName(err);
-        if (controller.signal.aborted || errName === "AbortError") throw err;
+        const parentAborted = controller.signal.aborted;
+        const attemptTimedOut = attemptSignal.didTimeout();
+        if (parentAborted || (errName === "AbortError" && !attemptTimedOut)) throw err;
         if (attempt >= retries) throw err;
         // Backoff curto: 400ms, 800ms, 1.6s — lista deve falhar rápido ou recuperar sem parecer “travado”
         await waitWithAbort(400 * Math.pow(2, attempt), controller.signal);
+      } finally {
+        attemptSignal.cleanup();
       }
     }
     throw new Error("fetchWithRetry: retries exhausted");
   },
-    [],
+    [lightDevice],
   );
 
   const fetchMultiplePages = useCallback(async (controller: AbortController) => {
@@ -1317,20 +1341,21 @@ const Contas = () => {
     }
 
     // Region filter is done server-side via country[] / lol_region[].
-    // Price: API + edge aplicam pmin/pmax; filtro local usa deferred para não bloquear a UI ao digitar.
-    if (Number.isFinite(minBrl) && minBrl > 0) {
-      filtered = filtered.filter((item) => getBrlPrice(item) >= minBrl);
-    }
-    if (Number.isFinite(maxBrl) && maxBrl > 0) {
-      filtered = filtered.filter((item) => getBrlPrice(item) <= maxBrl);
-    }
-
-    // If user explicitly chose a price sort, use BRL display price for accurate ordering
-    if (sortBy === "price_to_up") {
-      return filtered.sort((a, b) => getBrlPrice(a) - getBrlPrice(b));
-    }
-    if (sortBy === "price_to_down") {
-      return filtered.sort((a, b) => getBrlPrice(b) - getBrlPrice(a));
+    // Price filter/sort: compute BRL price once per item to avoid repeated conversion work.
+    if (hasPriceBand || needsClientSort) {
+      let withPrice = filtered.map((item) => ({ item, brlPrice: getBrlPrice(item) }));
+      if (Number.isFinite(minBrl) && minBrl > 0) {
+        withPrice = withPrice.filter((row) => row.brlPrice >= minBrl);
+      }
+      if (Number.isFinite(maxBrl) && maxBrl > 0) {
+        withPrice = withPrice.filter((row) => row.brlPrice <= maxBrl);
+      }
+      if (sortBy === "price_to_up") {
+        withPrice.sort((a, b) => a.brlPrice - b.brlPrice);
+      } else if (sortBy === "price_to_down") {
+        withPrice.sort((a, b) => b.brlPrice - a.brlPrice);
+      }
+      return withPrice.map((row) => row.item);
     }
 
     // Default sort (pdate_to_down = "Mais Recentes"): preserve API date order for ALL games.

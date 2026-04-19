@@ -44,6 +44,13 @@ const ddragonChampionId = (internalNameFromMap: string) => internalNameFromMap;
 
 // Smooth-loading image: defers src until card is near viewport via Intersection Observer,
 // then fades in on load. Avoids DNS/connection overhead for off-screen images.
+const likelySlowDevice =
+  typeof window !== "undefined" &&
+  (window.matchMedia?.("(pointer: coarse)").matches === true ||
+    (() => {
+      const conn = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
+      return Boolean(conn?.saveData) || conn?.effectiveType === "2g" || conn?.effectiveType === "slow-2g";
+    })());
 const smoothImgObserver =
   typeof IntersectionObserver !== "undefined"
     ? new IntersectionObserver(
@@ -60,7 +67,7 @@ const smoothImgObserver =
             }
           }
         },
-        { rootMargin: "400px 0px" },
+        { rootMargin: likelySlowDevice ? "140px 0px" : "260px 0px" },
       )
     : null;
 
@@ -99,6 +106,7 @@ const SmoothImg = memo(forwardRef<HTMLImageElement, ImgHTMLAttributes<HTMLImageE
       alt={alt || ""}
       className={`${className || ""} transition-opacity duration-200 ${loaded ? "opacity-100" : "opacity-0"}`}
       loading="lazy"
+      fetchPriority="low"
       decoding="async"
       referrerPolicy="no-referrer"
       onLoad={() => setLoaded(true)}
