@@ -3,6 +3,7 @@
  * Prevents duplicate fetches when switching between Overview, Finance, Sales tabs.
  */
 
+import { clearFinanceBulkRpcRestHint } from "@/lib/adminFinanceBulk";
 import { queryClient } from "@/lib/queryClient";
 
 interface CacheEntry<T> {
@@ -34,6 +35,7 @@ export function registerCacheInvalidator(fn: () => void): void {
 }
 
 export function invalidateAdminCache(): void {
+  clearFinanceBulkRpcRestHint();
   cache.clear();
   _externalInvalidators.forEach(fn => fn());
   void queryClient.invalidateQueries({ queryKey: ["admin"] });

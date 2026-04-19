@@ -14,11 +14,42 @@ import {
 import type { RpcErrorish } from "@/lib/adminFinancePostgrest";
 import {
   devWarnAdminRpc,
-  isAdminRpcPostgrestFallbackError,
   isAuthLikeRpcError,
   normRpcCode,
   rpcErrorBlob,
 } from "@/lib/adminFinancePostgrest";
+
+/** Após 1ª falha recuperável, evita novos POST /rpc/* (400 no Network) até invalidar cache admin. */
+const FINANCE_BULK_REST_ONLY_KEY = "rose_admin_finance_bulk_rest_only";
+
+export function clearFinanceBulkRpcRestHint(): void {
+  try {
+    sessionStorage.removeItem(FINANCE_BULK_REST_ONLY_KEY);
+  } catch {
+    /* private mode / SSR */
+  }
+}
+
+function readFinanceBulkRestOnly(): boolean {
+  try {
+    return sessionStorage.getItem(FINANCE_BULK_REST_ONLY_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function writeFinanceBulkRestOnly(): void {
+  try {
+    sessionStorage.setItem(FINANCE_BULK_REST_ONLY_KEY, "1");
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Qualquer falha de RPC que não seja sessão/JWT → mesmo dado via REST (RLS admin). */
+function shouldFallbackRestForFinanceBulk(error: RpcErrorish): boolean {
+  return Boolean(error) && !isAuthLikeRpcError(error);
+}
 
 /** PostgREST não encontrou overload com estes argumentos — tentar só defaults do SQL. */
 function shouldRetryRpcWithoutNamedLimit(err: RpcErrorish): boolean {
@@ -64,6 +95,17 @@ export async function fetchAdminCompletedPaymentsBulk(): Promise<AdminPaymentFin
     }));
 
   const rpcName = "admin_finance_completed_payments";
+  const restArgs = {
+    select: "id, amount, status, created_at, paid_at, cart_snapshot, payment_method, discount_amount, user_id" as const,
+    filters: [{ column: "status", op: "eq" as const, value: "COMPLETED" }],
+    order: { column: "paid_at" as const, ascending: false },
+    limit: ADMIN_MAX_PAYMENTS_COMPLETED,
+  };
+
+  if (readFinanceBulkRestOnly()) {
+    return fetchAllRows<AdminPaymentFinanceRow>("payments", restArgs);
+  }
+
   let { data, error } = await supabase.rpc(rpcName, {
     p_limit: ADMIN_MAX_PAYMENTS_COMPLETED,
   });
@@ -75,14 +117,11 @@ export async function fetchAdminCompletedPaymentsBulk(): Promise<AdminPaymentFin
   if (!error && Array.isArray(data)) {
     return mapRows(data as Record<string, unknown>[]);
   }
-  if (error && isAdminRpcPostgrestFallbackError(error)) {
+  if (shouldFallbackRestForFinanceBulk(error)) {
     devWarnAdminRpc("bulk", rpcName, "fallback REST", error);
-    return fetchAllRows<AdminPaymentFinanceRow>("payments", {
-      select: "id, amount, status, created_at, paid_at, cart_snapshot, payment_method, discount_amount, user_id",
-      filters: [{ column: "status", op: "eq", value: "COMPLETED" }],
-      order: { column: "paid_at", ascending: false },
-      limit: ADMIN_MAX_PAYMENTS_COMPLETED,
-    });
+    const rows = await fetchAllRows<AdminPaymentFinanceRow>("payments", restArgs);
+    writeFinanceBulkRestOnly();
+    return rows;
   }
   throw error ?? new Error("admin_finance_completed_payments");
 }
@@ -106,6 +145,16 @@ export async function fetchAdminLztSalesBulk(): Promise<AdminLztSaleBulkRow[]> {
     }));
 
   const rpcName = "admin_finance_lzt_sales";
+  const restArgs = {
+    select: "buy_price, sell_price, profit, created_at, game" as const,
+    order: { column: "created_at" as const, ascending: false },
+    limit: ADMIN_MAX_LZT_SALES_ROWS,
+  };
+
+  if (readFinanceBulkRestOnly()) {
+    return fetchAllRows<AdminLztSaleBulkRow>("lzt_sales", restArgs);
+  }
+
   let { data, error } = await supabase.rpc(rpcName, {
     p_limit: ADMIN_MAX_LZT_SALES_ROWS,
   });
@@ -117,13 +166,11 @@ export async function fetchAdminLztSalesBulk(): Promise<AdminLztSaleBulkRow[]> {
   if (!error && Array.isArray(data)) {
     return mapRows(data as Record<string, unknown>[]);
   }
-  if (error && isAdminRpcPostgrestFallbackError(error)) {
+  if (shouldFallbackRestForFinanceBulk(error)) {
     devWarnAdminRpc("bulk", rpcName, "fallback REST", error);
-    return fetchAllRows<AdminLztSaleBulkRow>("lzt_sales", {
-      select: "buy_price, sell_price, profit, created_at, game",
-      order: { column: "created_at", ascending: false },
-      limit: ADMIN_MAX_LZT_SALES_ROWS,
-    });
+    const rows = await fetchAllRows<AdminLztSaleBulkRow>("lzt_sales", restArgs);
+    writeFinanceBulkRestOnly();
+    return rows;
   }
   throw error ?? new Error("admin_finance_lzt_sales");
 }
@@ -143,6 +190,16 @@ export async function fetchAdminResellerPurchasesBulk(): Promise<AdminResellerPu
     }));
 
   const rpcName = "admin_finance_reseller_purchases";
+  const restArgs = {
+    select: "original_price, paid_price, created_at" as const,
+    order: { column: "created_at" as const, ascending: false },
+    limit: ADMIN_MAX_RESELLER_PURCHASES,
+  };
+
+  if (readFinanceBulkRestOnly()) {
+    return fetchAllRows<AdminResellerPurchaseBulkRow>("reseller_purchases", restArgs);
+  }
+
   let { data, error } = await supabase.rpc(rpcName, {
     p_limit: ADMIN_MAX_RESELLER_PURCHASES,
   });
@@ -154,13 +211,11 @@ export async function fetchAdminResellerPurchasesBulk(): Promise<AdminResellerPu
   if (!error && Array.isArray(data)) {
     return mapRows(data as Record<string, unknown>[]);
   }
-  if (error && isAdminRpcPostgrestFallbackError(error)) {
+  if (shouldFallbackRestForFinanceBulk(error)) {
     devWarnAdminRpc("bulk", rpcName, "fallback REST", error);
-    return fetchAllRows<AdminResellerPurchaseBulkRow>("reseller_purchases", {
-      select: "original_price, paid_price, created_at",
-      order: { column: "created_at", ascending: false },
-      limit: ADMIN_MAX_RESELLER_PURCHASES,
-    });
+    const rows = await fetchAllRows<AdminResellerPurchaseBulkRow>("reseller_purchases", restArgs);
+    writeFinanceBulkRestOnly();
+    return rows;
   }
   throw error ?? new Error("admin_finance_reseller_purchases");
 }
@@ -190,6 +245,16 @@ export async function fetchAdminOrderTicketsBulk(): Promise<
     }));
 
   const rpcName = "admin_finance_order_tickets";
+  const restArgs = {
+    select: "id, product_id, product_plan_id, user_id, metadata, status, created_at, status_label" as const,
+    order: { column: "created_at" as const, ascending: false },
+    limit: ADMIN_MAX_ORDER_TICKETS,
+  };
+
+  if (readFinanceBulkRestOnly()) {
+    return fetchAllRows("order_tickets", restArgs);
+  }
+
   let { data, error } = await supabase.rpc(rpcName, {
     p_limit: ADMIN_MAX_ORDER_TICKETS,
   });
@@ -201,13 +266,11 @@ export async function fetchAdminOrderTicketsBulk(): Promise<
   if (!error && Array.isArray(data)) {
     return mapRows(data as Record<string, unknown>[]);
   }
-  if (error && isAdminRpcPostgrestFallbackError(error)) {
+  if (shouldFallbackRestForFinanceBulk(error)) {
     devWarnAdminRpc("bulk", rpcName, "fallback REST", error);
-    return fetchAllRows("order_tickets", {
-      select: "id, product_id, product_plan_id, user_id, metadata, status, created_at, status_label",
-      order: { column: "created_at", ascending: false },
-      limit: ADMIN_MAX_ORDER_TICKETS,
-    });
+    const rows = await fetchAllRows("order_tickets", restArgs);
+    writeFinanceBulkRestOnly();
+    return rows;
   }
   throw error ?? new Error("admin_finance_order_tickets");
 }
