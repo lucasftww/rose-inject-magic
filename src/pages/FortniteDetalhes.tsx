@@ -1,5 +1,4 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { throwApiError } from "@/lib/apiErrors";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Header from "@/components/Header";
 import {
@@ -13,7 +12,7 @@ import { useCart } from "@/hooks/useCart";
 import { toast } from "@/hooks/use-toast";
 import { useLztMarkup } from "@/hooks/useLztMarkup";
 import { checkLztAvailability } from "@/lib/lztAvailability";
-import { supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
+import { fetchLztAccountDetail, LZT_ACCOUNT_DETAIL_STALE_MS } from "@/lib/lztAccountDetailFetch";
 import { getLztDetailDisplayTitle } from "@/lib/lztDisplayTitles";
 import { lztAccountDetailQueryKey } from "@/lib/lztAccountDetailQuery";
 import type { LztFortniteCosmeticEntry, LztFortniteItemExtras } from "@/types/lztGameDetailExtras";
@@ -25,27 +24,6 @@ import { compareFortniteCardRows, metaFromFortniteApiItem } from "@/lib/fortnite
 
 const FN_PURPLE = "hsl(265,80%,65%)";
 const FN_BLUE = "hsl(210,100%,56%)";
-
-const fetchAccountDetail = async (itemId: string) => {
-  const res = await fetch(
-    `${supabaseUrl}/functions/v1/lzt-market?action=detail&item_id=${encodeURIComponent(itemId)}&game_type=fortnite`,
-    {
-      headers: {
-        "Content-Type": "application/json",
-        apikey: supabaseAnonKey,
-        Authorization: `Bearer ${supabaseAnonKey}`,
-      },
-    }
-  );
-  if (!res.ok) {
-    const body = await res.json().catch(() => null);
-    if (res.status === 410) {
-      throw new Error(body?.error === "Account already sold" ? "Esta conta já foi vendida." : "Esta conta não está mais disponível.");
-    }
-    throwApiError(res.status);
-  }
-  return res.json();
-};
 
 // Fetch all Fortnite cosmetics (outfits, pickaxes, emotes, gliders) from fortnite-api.com
 type FortniteCosmeticRow = {
@@ -131,9 +109,9 @@ const FortniteDetalhes = () => {
 
   const { data, isLoading, error } = useQuery({
     queryKey: lztAccountDetailQueryKey("fortnite", id ?? ""),
-    queryFn: () => fetchAccountDetail(id!),
+    queryFn: ({ signal }) => fetchLztAccountDetail("fortnite", id!, signal),
     enabled: !!id,
-    staleTime: 1000 * 30, // 30 seconds
+    staleTime: LZT_ACCOUNT_DETAIL_STALE_MS,
     retry: false,
   });
 

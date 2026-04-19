@@ -1,5 +1,4 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { throwApiError } from "@/lib/apiErrors";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Header from "@/components/Header";
 import { ArrowLeft, Loader2, ChevronRight, CheckCircle2, Shield, ShoppingCart, Zap } from "lucide-react";
@@ -10,7 +9,7 @@ import { useCart } from "@/hooks/useCart";
 import { toast } from "@/hooks/use-toast";
 import { useLztMarkup } from "@/hooks/useLztMarkup";
 import { checkLztAvailability } from "@/lib/lztAvailability";
-import { supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
+import { fetchLztAccountDetail, LZT_ACCOUNT_DETAIL_STALE_MS } from "@/lib/lztAccountDetailFetch";
 import { getLztDetailDisplayTitle } from "@/lib/lztDisplayTitles";
 import { lztAccountDetailQueryKey } from "@/lib/lztAccountDetailQuery";
 import type { LztMinecraftCapeEntry, LztMinecraftItemExtras } from "@/types/lztGameDetailExtras";
@@ -36,27 +35,6 @@ const fetchCapes = async (username: string): Promise<Record<string, CapeEntry>> 
   return res.json();
 };
 
-const fetchAccountDetail = async (itemId: string) => {
-  const res = await fetch(
-    `${supabaseUrl}/functions/v1/lzt-market?action=detail&item_id=${encodeURIComponent(itemId)}&game_type=minecraft`,
-    {
-      headers: {
-        "Content-Type": "application/json",
-        apikey: supabaseAnonKey,
-        Authorization: `Bearer ${supabaseAnonKey}`,
-      },
-    }
-  );
-  if (!res.ok) {
-    const body = await res.json().catch(() => null);
-    if (res.status === 410) {
-      throw new Error(body?.error === "Account already sold" ? "Esta conta já foi vendida." : "Esta conta não está mais disponível.");
-    }
-    throwApiError(res.status);
-  }
-  return res.json();
-};
-
 const MinecraftDetalhes = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -69,9 +47,9 @@ const MinecraftDetalhes = () => {
 
   const { data, isLoading, error } = useQuery({
     queryKey: lztAccountDetailQueryKey("minecraft", id ?? ""),
-    queryFn: () => fetchAccountDetail(id!),
+    queryFn: ({ signal }) => fetchLztAccountDetail("minecraft", id!, signal),
     enabled: !!id,
-    staleTime: 1000 * 30, // 30 seconds
+    staleTime: LZT_ACCOUNT_DETAIL_STALE_MS,
     retry: false,
   });
 

@@ -1,5 +1,4 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { throwApiError } from "@/lib/apiErrors";
 import { translateRegion } from "@/lib/regionTranslation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Header from "@/components/Header";
@@ -12,7 +11,7 @@ import { useCart } from "@/hooks/useCart";
 import { toast } from "@/hooks/use-toast";
 import { useLztMarkup } from "@/hooks/useLztMarkup";
 import { checkLztAvailability } from "@/lib/lztAvailability";
-import { supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
+import { fetchLztAccountDetail, LZT_ACCOUNT_DETAIL_STALE_MS } from "@/lib/lztAccountDetailFetch";
 
 import { rankMap, rarityMap, fetchAllValorantSkins, rankUnranked, RARITY_PRIORITY, type SkinEntry } from "@/lib/valorantData";
 import { getLztDetailDisplayTitle } from "@/lib/lztDisplayTitles";
@@ -20,29 +19,6 @@ import { lztAccountDetailQueryKey } from "@/lib/lztAccountDetailQuery";
 import { getJsonDataArray } from "@/lib/jsonResponse";
 import { errorMessage } from "@/lib/errorMessage";
 import { isRecord } from "@/types/ticketChat";
-
-const fetchAccountDetail = async (itemId: string) => {
-  const res = await fetch(
-    `${supabaseUrl}/functions/v1/lzt-market?action=detail&item_id=${encodeURIComponent(itemId)}&game_type=valorant`,
-    {
-      headers: {
-        "Content-Type": "application/json",
-        apikey: supabaseAnonKey,
-        Authorization: `Bearer ${supabaseAnonKey}`,
-      },
-    }
-  );
-  if (!res.ok) {
-    const body = await res.json().catch(() => null);
-    if (res.status === 410) {
-      throw new Error(body?.error === "Account already sold" 
-        ? "Esta conta já foi vendida." 
-        : "Esta conta não está mais disponível.");
-    }
-    throwApiError(res.status);
-  }
-  return res.json();
-};
 
 // RARITY_PRIORITY imported from @/lib/valorantData
 
@@ -484,9 +460,9 @@ const ContaDetalhes = () => {
 
   const { data, isLoading, error } = useQuery({
     queryKey: lztAccountDetailQueryKey("valorant", id ?? ""),
-    queryFn: () => fetchAccountDetail(id!),
+    queryFn: ({ signal }) => fetchLztAccountDetail("valorant", id!, signal),
     enabled: !!id,
-    staleTime: 1000 * 30, // 30 seconds
+    staleTime: LZT_ACCOUNT_DETAIL_STALE_MS,
     retry: false,
   });
 

@@ -1,6 +1,10 @@
 import { QueryClient } from "@tanstack/react-query";
-import { supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
 import { lztAccountDetailQueryKey } from "@/lib/lztAccountDetailQuery";
+import {
+  fetchLztAccountDetail,
+  isLztDetailHttpError,
+  LZT_ACCOUNT_DETAIL_STALE_MS,
+} from "@/lib/lztAccountDetailFetch";
 
 /** Contas 410 (vendida/indisponível): não repetir GET ao passar o rato. */
 const detailPrefetchGoneKeys = new Set<string>();
@@ -50,25 +54,13 @@ async function runDetailPrefetch(
 ): Promise<void> {
   detailPrefetchInFlight.add(dedupeKey);
   try {
-    const res = await fetch(
-      `${supabaseUrl}/functions/v1/lzt-market?action=detail&item_id=${encodeURIComponent(id)}&game_type=${encodeURIComponent(gameType)}`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          apikey: supabaseAnonKey,
-          Authorization: `Bearer ${supabaseAnonKey}`,
-        },
-      },
-    );
-    if (res.status === 410) {
-      notifyLztAccountDetailGone(gameType, id);
-      return;
-    }
-    if (!res.ok) return;
-    const json: unknown = await res.json();
-    queryClient.setQueryData(key, json);
-  } catch {
-    /* ignore */
+    await queryClient.prefetchQuery({
+      queryKey: key,
+      queryFn: ({ signal }) => fetchLztAccountDetail(gameType, id, signal),
+      staleTime: LZT_ACCOUNT_DETAIL_STALE_MS,
+    });
+  } catch (e: unknown) {
+    if (isLztDetailHttpError(e, 410)) notifyLztAccountDetailGone(gameType, id);
   } finally {
     detailPrefetchInFlight.delete(dedupeKey);
   }
