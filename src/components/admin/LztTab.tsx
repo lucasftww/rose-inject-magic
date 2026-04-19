@@ -72,7 +72,7 @@ const LztTab = () => {
     refetch: refetchLzt,
   } = useAdminLztBundle();
   const { data: overrides = [], refetch: refetchOverrides } = useAdminLztPriceOverrides();
-  const allSales = lztBundle?.sales ?? [];
+  const allSales = useMemo(() => lztBundle?.sales ?? [], [lztBundle?.sales]);
   const dbStats = lztBundle?.dbStats ?? null;
 
   const [saving, setSaving] = useState(false);

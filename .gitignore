@@ -31,6 +31,9 @@ dist-ssr
 # Supabase CLI (link/cache local — não versionar)
 supabase/.temp/
 
+# Deno (só usado para `deno check` em edge functions localmente)
+/deno.lock
+
 # Playwright
 /playwright-report/
 /test-results/
