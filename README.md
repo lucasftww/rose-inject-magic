@@ -22,7 +22,7 @@ Loja online de cheats e contas para **Valorant**, **CS2**, **League of Legends**
 
 ### Pré-requisitos
 
-- [Node.js](https://nodejs.org/) v18+ e npm
+- [Node.js](https://nodejs.org/) **v20+** (recomendado **v24**, alinhado ao CI no GitHub) e npm
 - Conta no [Supabase](https://supabase.com/) com o projeto configurado
 
 ### Instalação
@@ -57,6 +57,7 @@ O app estará disponível em `http://localhost:8080` (porta definida em `vite.co
 | `npm run test` | Rodar testes com Vitest |
 | `npm run supabase:repair-migrations` | Alinhar histórico de migrações local/remoto (só metadados; requer `supabase link` + login) |
 | `npm run knip` | Procurar exports/ficheiros não usados (shadcn e `types.ts` gerado ignorados em `knip.json`; incluído em `npm run check`) |
+| `npm run check` | Pipeline completo: barrels LZT, `typecheck`, `lint`, `knip`, `test`, `build` (o mesmo que o workflow **CI** no GitHub) |
 
 ### Validação do projeto
 
@@ -71,6 +72,8 @@ npm run typecheck && npm run lint && npm run knip && npm run test && npm run bui
 - **`knip`** — dependências e exports órfãos (ver `knip.json`)
 - **`test`** — Vitest
 - **`build`** — bundle de produção com Vite
+
+**CI no GitHub:** em cada push ou pull request para `main`, o workflow [`.github/workflows/ci.yml`](https://github.com/lucasftww/rose-inject-magic/blob/main/.github/workflows/ci.yml) corre `npm run check` (não precisa de secrets). Complementa o deploy Supabase (`.github/workflows/supabase-deploy.yml`).
 
 ### Frontend, Supabase e Meta CAPI (browser)
 
