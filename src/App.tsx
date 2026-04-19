@@ -99,16 +99,37 @@ function SuspenseRoute({ children }: { children: React.ReactNode }) {
   return <Suspense fallback={<LazyFallback />}>{children}</Suspense>;
 }
 
-/** Warm FX + lzt_config antes de abrir Contas — evita competir com o 1º GET lzt-market na fila HTTP. */
+/** FX + `lzt_config`: nas outras rotas prefetch já; em `/contas` adia para idle — liberta banda para chunk + lista LZT. */
 function PrefetchLztStorefrontPricing() {
   const qc = useQueryClient();
+  const location = useLocation();
   useEffect(() => {
-    void qc.prefetchQuery({
-      queryKey: LZT_STOREFRONT_PRICING_QUERY_KEY,
-      queryFn: fetchStorefrontPricing,
-      staleTime: 5 * 60 * 1000,
-    });
-  }, [qc]);
+    const run = () =>
+      void qc.prefetchQuery({
+        queryKey: LZT_STOREFRONT_PRICING_QUERY_KEY,
+        queryFn: fetchStorefrontPricing,
+        staleTime: 5 * 60 * 1000,
+      });
+
+    if (location.pathname !== "/contas") {
+      run();
+      return;
+    }
+
+    let idleId = 0;
+    const cancel = () => {
+      if (typeof window.cancelIdleCallback === "function" && idleId) window.cancelIdleCallback(idleId);
+      else window.clearTimeout(idleId as number);
+    };
+
+    const useIdle =
+      typeof window.requestIdleCallback === "function" && typeof window.cancelIdleCallback === "function";
+    idleId = useIdle
+      ? window.requestIdleCallback(run, { timeout: 2800 })
+      : (window.setTimeout(run, 450) as unknown as number);
+
+    return cancel;
+  }, [qc, location.pathname]);
   return null;
 }
 
@@ -136,13 +157,13 @@ function PrefetchContasChunkOnIdle() {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <PrefetchLztStorefrontPricing />
     <AuthProvider>
       <CartProvider>
         <TooltipProvider>
           <Toaster />
           <Sonner />
           <BrowserRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
+            <PrefetchLztStorefrontPricing />
             <PrefetchContasChunkOnIdle />
             <RouteTracker />
             <LocationAwareErrorBoundary>

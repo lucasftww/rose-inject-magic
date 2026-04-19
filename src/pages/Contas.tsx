@@ -840,20 +840,18 @@ const Contas = () => {
   const MAX_PAGES = 8;
   const [firstPageLoaded, setFirstPageLoaded] = useState(false);
 
-  // ─── Asset maps (only load when needed) ───
-  // Mapas pesados só depois da 1ª página LZT: na 1ª visita o browser dedica a fila ao `lzt-market` (perceção mais rápida).
+  // ─── Asset maps (por aba): arranca em paralelo ao 1º GET `lzt-market` — mesma ideia LoL/DDragon (HTTP/2 multiplex).
   const { data: skinsMap = new Map() } = useQuery({
     queryKey: ["all-valorant-skins"],
     queryFn: fetchAllValorantSkins,
     staleTime: 1000 * 60 * 60,
-    enabled: gameTab === "valorant" && firstPageLoaded,
+    enabled: gameTab === "valorant",
   });
 
   const { data: champKeyMap = new Map<number, string>() } = useQuery({
     queryKey: ["lol-champ-key-map"],
     queryFn: fetchLolChampKeyMap,
     staleTime: 1000 * 60 * 60 * 6,
-    // Paralelo à 1ª página LZT: HTTP/2 multiplex; quando a lista chega o mapa DDragon costuma já estar pronto.
     enabled: gameTab === "lol",
   });
 
@@ -861,7 +859,7 @@ const Contas = () => {
     queryKey: ["fortnite-cosmetics"],
     queryFn: fetchFortniteSkins,
     staleTime: 1000 * 60 * 60 * 6,
-    enabled: gameTab === "fortnite" && firstPageLoaded,
+    enabled: gameTab === "fortnite",
   });
 
   const buildParams = useCallback((pageNum: number = 1): Record<string, string | string[]> => {
