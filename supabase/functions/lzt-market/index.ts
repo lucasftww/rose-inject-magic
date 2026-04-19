@@ -736,6 +736,8 @@ Deno.serve(async (req) => {
     // Align in-memory + CDN TTL with fresh responses (preview 60s, list 30s; detail bypasses this cache)
     const listCacheMaxAge = previewMode ? 90 : 60;
     const listMemoryTtlMs = previewMode ? 90_000 : 60_000;
+    /** Navegação repetida: o browser pode servir JSON “velho” enquanto revalida em background. */
+    const listCacheControl = `public, max-age=${listCacheMaxAge}, s-maxage=${listCacheMaxAge}, stale-while-revalidate=120`;
 
     if (shouldCache) {
       const cached = globalLztCache.get(cacheKey);
@@ -746,7 +748,7 @@ Deno.serve(async (req) => {
           headers: {
             ...corsHeaders,
             "Content-Type": "application/json",
-            "Cache-Control": `public, max-age=${listCacheMaxAge}, s-maxage=${listCacheMaxAge}`,
+            "Cache-Control": listCacheControl,
           },
         });
       }
@@ -1065,7 +1067,7 @@ Deno.serve(async (req) => {
       headers: {
         ...corsHeaders,
         "Content-Type": "application/json",
-        "Cache-Control": `public, max-age=${cacheMaxAge}, s-maxage=${cacheMaxAge}`,
+        "Cache-Control": responseCacheControl,
       },
     });
   } catch (error: unknown) {

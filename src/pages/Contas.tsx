@@ -30,6 +30,7 @@ import {
   type LztMarketListResponse,
 } from "@/lib/contasMarketTypes";
 import { fetchAccountsRaw, waitWithAbort } from "@/lib/contasMarketFetch";
+import { isContasPerfDiagEnabled } from "@/lib/contasPerfDiag";
 import { isLikelyWrongGameInLolList } from "@/lib/contasLolFilter";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { lolRankFilters } from "@/lib/contasLolRankFilters";
@@ -306,6 +307,28 @@ const Contas = () => {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, []);
+
+  // Console: localhost sempre; produção com `?perf=1` (ex.: medir chunk vs lzt-market em royalstorebr.com).
+  useEffect(() => {
+    if (!isContasPerfDiagEnabled()) return;
+    const id = requestAnimationFrame(() => {
+      const entries = performance.getEntriesByType("resource") as PerformanceResourceTiming[];
+      for (const e of entries) {
+        if (e.initiatorType !== "script") continue;
+        if (!/contas/i.test(e.name)) continue;
+        let tail = e.name;
+        try {
+          const d = decodeURIComponent(e.name);
+          const i = d.lastIndexOf("/");
+          tail = i >= 0 ? d.slice(Math.max(0, i - 24)) : d;
+        } catch {
+          /* keep raw */
+        }
+        console.info("[Contas perf] chunk (resource)", `${Math.round(e.duration)} ms`, tail);
+      }
+    });
+    return () => cancelAnimationFrame(id);
+  }, [searchParams]);
 
   // ─── Helper: read query param with default ───
   const qp = (key: string, fallback: string = "") => searchParams.get(key) ?? fallback;

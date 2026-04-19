@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { prefetchContasChunk } from "@/lib/prefetchContasChunk";
 import { AuthProvider } from "@/hooks/useAuth";
 import { CartProvider } from "@/hooks/useCart";
 import React, { lazy, Suspense, useEffect } from "react";
@@ -111,6 +112,28 @@ function PrefetchLztStorefrontPricing() {
   return null;
 }
 
+/** Baixa o chunk de `/contas` em idle nas páginas com mais tráfego → clique abre a lista mais cedo. */
+function PrefetchContasChunkOnIdle() {
+  const location = useLocation();
+  useEffect(() => {
+    if (location.pathname !== "/" && location.pathname !== "/produtos") return;
+    let cancelled = false;
+    const run = () => {
+      if (!cancelled) prefetchContasChunk();
+    };
+    const useIdle = typeof window.requestIdleCallback === "function" && typeof window.cancelIdleCallback === "function";
+    const idleId = useIdle
+      ? window.requestIdleCallback(run, { timeout: 5500 })
+      : window.setTimeout(run, 2200);
+    return () => {
+      cancelled = true;
+      if (useIdle) window.cancelIdleCallback(idleId as number);
+      else window.clearTimeout(idleId as number);
+    };
+  }, [location.pathname]);
+  return null;
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <PrefetchLztStorefrontPricing />
@@ -120,6 +143,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
+            <PrefetchContasChunkOnIdle />
             <RouteTracker />
             <LocationAwareErrorBoundary>
               <Routes>

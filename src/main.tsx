@@ -5,6 +5,7 @@ import "./i18n";
 import { initErrorTracker } from "./lib/errorTracker";
 import { runMetaDevChecks } from "./lib/metaDevChecks";
 import { supabaseUrl } from "./integrations/supabase/client";
+import { prefetchContasChunk } from "./lib/prefetchContasChunk";
 
 function injectResourceHints() {
   if (typeof document === "undefined") return;
@@ -33,6 +34,11 @@ function injectResourceHints() {
   }
 }
 injectResourceHints();
+
+/** Anúncios com destino `/contas`: começa o download do chunk lazy em paralelo ao boot do React. */
+if (typeof window !== "undefined" && window.location.pathname === "/contas") {
+  prefetchContasChunk();
+}
 
 initErrorTracker();
 runMetaDevChecks();

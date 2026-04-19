@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import { Star, ArrowRight, Loader2, Zap, Shield, Clock } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { prefetchContasChunk } from "@/lib/prefetchContasChunk";
 
 const IndexGameShowcase = lazy(() => import("@/pages/landing/IndexGameShowcase"));
 const ReviewsSection = lazy(() => import("@/components/landing/ReviewsSection"));
@@ -86,7 +87,12 @@ const Index = () => {
 
         {/* CTAs */}
         <div className="z-10 mt-5 sm:mt-10 flex w-full max-w-xs sm:max-w-md flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-3 mx-auto">
-          <Link to="/contas" className="touch-manipulation group relative flex w-full sm:w-auto items-center justify-center gap-2 bg-foreground px-6 sm:px-8 py-3 sm:py-3.5 text-[12px] sm:text-sm font-bold tracking-wide text-background transition-all hover:opacity-90 rounded-xl shadow-[0_4px_20px_rgba(255,255,255,0.15)]">
+          <Link
+            to="/contas"
+            onPointerEnter={prefetchContasChunk}
+            onTouchStart={prefetchContasChunk}
+            className="touch-manipulation group relative flex w-full sm:w-auto items-center justify-center gap-2 bg-foreground px-6 sm:px-8 py-3 sm:py-3.5 text-[12px] sm:text-sm font-bold tracking-wide text-background transition-all hover:opacity-90 rounded-xl shadow-[0_4px_20px_rgba(255,255,255,0.15)]"
+          >
             <span className="relative flex items-center gap-2">
               {t("hero.viewAccounts")}
               <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 transition-transform group-hover:translate-x-0.5" />

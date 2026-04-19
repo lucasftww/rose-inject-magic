@@ -6,6 +6,7 @@ import logoRoyal from "@/assets/logo-royal.png";
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { prefetchContasChunk } from "@/lib/prefetchContasChunk";
 
 const LOL_BLUE = "hsl(198,100%,45%)";
 
@@ -134,10 +135,13 @@ const Header = forwardRef<HTMLDivElement>((_props, _ref) => {
               {NAV_ITEMS.map((item) => {
                 const active = isActive(item.href);
                 const Icon = item.icon;
+                const warmContas = item.href === "/contas" ? prefetchContasChunk : undefined;
                 return (
                   <Link
                     key={item.href}
                     to={item.href}
+                    onPointerEnter={warmContas}
+                    onFocus={warmContas}
                     className={`relative flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium tracking-[0.02em] transition-colors duration-150 ${
                       active
                         ? "text-success bg-success/[0.08]"
@@ -267,6 +271,7 @@ const Header = forwardRef<HTMLDivElement>((_props, _ref) => {
               {NAV_ITEMS.map((item, i) => {
                 const active = isActive(item.href);
                 const Icon = item.icon;
+                const warmContas = item.href === "/contas" ? prefetchContasChunk : undefined;
                 return (
                   <div
                     key={item.href}
@@ -276,6 +281,8 @@ const Header = forwardRef<HTMLDivElement>((_props, _ref) => {
                     <Link
                       to={item.href}
                       onClick={requestCloseOverlay}
+                      onPointerEnter={warmContas}
+                      onFocus={warmContas}
                       className={`flex items-center gap-3.5 px-4 py-3 rounded-xl text-[15px] font-medium transition-colors ${
                         active ? "text-success bg-success/[0.08]" : "text-foreground/60 hover:text-foreground hover:bg-foreground/[0.04]"
                       }`}

@@ -1,6 +1,7 @@
 import { supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
 import { safeJsonFetch, ApiError } from "@/lib/apiUtils";
 import { throwApiError } from "@/lib/apiErrors";
+import { isContasPerfDiagEnabled } from "@/lib/contasPerfDiag";
 import type { LztMarketListResponse } from "./contasMarketTypes";
 
 export function waitWithAbort(ms: number, signal: AbortSignal): Promise<void> {
@@ -35,8 +36,12 @@ export async function fetchAccountsRaw(
     else queryParams.set(k, v);
   }
 
+  const perfDiag = isContasPerfDiagEnabled();
+  const t0 = perfDiag ? performance.now() : 0;
+  const qsShort = queryParams.toString().slice(0, 100);
+
   try {
-    return await safeJsonFetch<LztMarketListResponse>(
+    const out = await safeJsonFetch<LztMarketListResponse>(
       `${supabaseUrl}/functions/v1/lzt-market?${queryParams.toString()}`,
       {
         headers: {
@@ -46,7 +51,14 @@ export async function fetchAccountsRaw(
         signal,
       }
     );
+    if (perfDiag && t0) {
+      console.info("[Contas perf] lzt-market", Math.round(performance.now() - t0), "ms", qsShort);
+    }
+    return out;
   } catch (err: unknown) {
+    if (perfDiag && t0) {
+      console.info("[Contas perf] lzt-market", Math.round(performance.now() - t0), "ms (erro)", qsShort);
+    }
     if (err instanceof ApiError) {
       if (err.status === 404) {
         throw new Error("O serviço de mercado não foi encontrado. Verifique a configuração da Supabase.");
