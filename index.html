@@ -39,13 +39,13 @@
       defer
     ></script>
     <!--
-      Meta Pixel + pedidos a google-analytics.com/g/collect (GA4, ex. via UTMify): se vires
-      ERR_BLOCKED_BY_CLIENT ou falta de fbevents.js, é bloqueador de anúncios / modo estrito —
-      não é bug da app. Erros tipo "Receiving end does not exist" ou css-procedural.js vêm de
-      extensões do browser.
+      Meta Pixel: `vite dev` injecta LOAD=false (sem fbevents.js); `vite build` injecta true. CSP/eval no Issues: hosting ou extensão.
+      ERR_BLOCKED_BY_CLIENT / falta fbevents: bloqueador ou modo estrito. "Receiving end does not exist": extensão.
     -->
     <script>
     (function(){
+      var LOAD_META_PIXEL = __ROYAL_LOAD_META_PIXEL__;
+      if (!LOAD_META_PIXEL) return;
       /* Substituído em vite.config (plugin html-meta-pixel-id); fallback no JS se intacto. */
       var envPixel = String('__ROYAL_META_PIXEL_ID__').trim();
       var PIXEL_ID = /^\d{10,20}$/.test(envPixel) ? envPixel : '706054019233816';

@@ -12,7 +12,7 @@ function resolveMetaPixelId(mode: string): string {
 }
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ command, mode }) => {
   const metaPixelId = resolveMetaPixelId(mode);
 
   return {
@@ -28,8 +28,11 @@ export default defineConfig(({ mode }) => {
         name: "html-meta-pixel-id",
         enforce: "pre",
         transformIndexHtml(html) {
-          // Token próprio (evita aviso Vite por %VITE_*% em index.html sem .env)
-          return html.replace(/__ROYAL_META_PIXEL_ID__/g, metaPixelId);
+          /** Só em `vite build` (qualquer --mode); em `vite dev` não carrega fbevents.js — menos avisos no Issues. Builds `build:dev` mantêm o pixel. */
+          const loadMetaPixel = command === "build";
+          return html
+            .replace(/__ROYAL_META_PIXEL_ID__/g, metaPixelId)
+            .replace(/__ROYAL_LOAD_META_PIXEL__/g, loadMetaPixel ? "true" : "false");
         },
       },
       react(),
