@@ -90,6 +90,21 @@ function trimLolInventoryForList(inv: Record<string, unknown>): void {
   }
 }
 
+/** Lista Fortnite: `fortniteSkins` pode ter centenas de entradas → MB de JSON; o card usa ~6 após sort no cliente. */
+const FN_LIST_SKINS_MAX = 96;
+const FN_LIST_PICKAXES_MAX = 36;
+
+function trimFortniteListPayloadForList(item: LztItem): void {
+  const skins = item.fortniteSkins;
+  if (Array.isArray(skins) && skins.length > FN_LIST_SKINS_MAX) {
+    item.fortniteSkins = skins.slice(0, FN_LIST_SKINS_MAX);
+  }
+  const pick = item.fortnitePickaxe;
+  if (Array.isArray(pick) && pick.length > FN_LIST_PICKAXES_MAX) {
+    item.fortnitePickaxe = pick.slice(0, FN_LIST_PICKAXES_MAX);
+  }
+}
+
 function convertBrlToSellerPrice(brlAmount: number, currency: string, markup: number) {
   if (!Number.isFinite(brlAmount) || brlAmount <= 0) return null;
 
@@ -961,6 +976,10 @@ Deno.serve(async (req) => {
 
         if (gameType === "lol" && item.lolInventory && typeof item.lolInventory === "object") {
           trimLolInventoryForList(item.lolInventory as Record<string, unknown>);
+        }
+
+        if (gameType === "fortnite") {
+          trimFortniteListPayloadForList(item);
         }
 
         if (previewMode) {
