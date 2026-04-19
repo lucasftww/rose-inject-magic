@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import type { PostgrestError } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
@@ -208,15 +208,29 @@ const LztTab = () => {
     );
   };
 
-  const filteredSales = allSales.filter((sale) => {
-    if (!salesSearch.trim()) return true;
+  const filteredSales = useMemo(() => {
+    if (!salesSearch.trim()) return allSales;
     const q = salesSearch.toLowerCase();
-    const id = (sale.lzt_item_id || "").toLowerCase();
-    return id.includes(q) || (sale.title || "").toLowerCase().includes(q) || (sale.game || "").toLowerCase().includes(q) || (sale.buyer_user_id || "").toLowerCase().includes(q);
-  });
+    return allSales.filter((sale) => {
+      const id = (sale.lzt_item_id || "").toLowerCase();
+      return (
+        id.includes(q) ||
+        (sale.title || "").toLowerCase().includes(q) ||
+        (sale.game || "").toLowerCase().includes(q) ||
+        (sale.buyer_user_id || "").toLowerCase().includes(q)
+      );
+    });
+  }, [allSales, salesSearch]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredSales.length / SALES_PER_PAGE));
-  const paginatedSales = filteredSales.slice(salesPage * SALES_PER_PAGE, (salesPage + 1) * SALES_PER_PAGE);
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(filteredSales.length / SALES_PER_PAGE)),
+    [filteredSales.length],
+  );
+
+  const paginatedSales = useMemo(
+    () => filteredSales.slice(salesPage * SALES_PER_PAGE, (salesPage + 1) * SALES_PER_PAGE),
+    [filteredSales, salesPage],
+  );
 
   // Reset page when search changes
   useEffect(() => { setSalesPage(0); }, [salesSearch]);

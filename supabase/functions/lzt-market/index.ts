@@ -171,7 +171,8 @@ async function dedupedLztListFetch(apiUrl: string, token: string, dedupeKey: str
         if (response.ok || !RETRYABLE_STATUSES.includes(response.status)) break;
         console.warn(`LZT API attempt ${attempt + 1}: ${response.status}`);
       }
-      return response!;
+      if (!response) throw new Error("LZT list fetch: no response");
+      return response;
     })().finally(() => {
       inflightRawLztFetch.delete(dedupeKey);
     });
