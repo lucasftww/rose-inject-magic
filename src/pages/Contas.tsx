@@ -7,7 +7,6 @@ import { Link, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { safeJsonFetch, ApiError } from "@/lib/apiUtils";
 import { throwApiError } from "@/lib/apiErrors";
-import { supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
 import type {
   DDragonChampionJson,
   DDragonVersionList,
@@ -276,6 +275,8 @@ const fetchLolChampKeyMap = async (): Promise<Map<number, string>> => {
   }
 };
 
+/** Após mostrar lista do prefetch na troca de aba: atrasa o GET de reconciliação para não competir com paint/chunk. */
+const CONTAS_RECONCILE_AFTER_PREFETCH_MS = 450;
 
 const Contas = () => {
   const queryClient = useQueryClient();
@@ -729,6 +730,8 @@ const Contas = () => {
   const abortRef = useRef<AbortController | null>(null);
   /** Abort só do “carregar mais” — separado do `abortRef` da listagem principal. */
   const loadMoreControllerRef = useRef<AbortController | null>(null);
+  /** Reconciliação pós-prefetch (agendada): limpar ao mudar filtros/aba ou ao desmontar. */
+  const prefetchReconcileTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevGameTabRef = useRef(gameTab);
   
   const isValorant = gameTab === "valorant";
@@ -1173,28 +1176,20 @@ const Contas = () => {
     prefetchRef.current.add(tab);
 
     const gameTypeMap: Record<GameTab, string> = { valorant: "riot", lol: "lol", fortnite: "fortnite", minecraft: "minecraft" };
-    const qp = new URLSearchParams();
-    qp.set("page", "1");
-    qp.set("order_by", "pdate_to_down");
-    qp.set("game_type", gameTypeMap[tab]);
-    if (tab === "fortnite") qp.set("smin", "10");
-    if (tab === "valorant") qp.append("country[]", "Bra");
-    if (tab === "lol") qp.append("lol_region[]", "BR1");
+    const listParams: Record<string, string | string[]> = {
+      page: "1",
+      order_by: "pdate_to_down",
+      game_type: gameTypeMap[tab],
+    };
+    if (tab === "fortnite") listParams.smin = "10";
+    if (tab === "valorant") listParams["country[]"] = ["Bra"];
+    if (tab === "lol") listParams["lol_region[]"] = ["BR1"];
 
     const timeoutId = setTimeout(() => {
       if (runId !== prefetchRunIdRef.current) return;
       void (async () => {
         try {
-          const res = await fetch(`${supabaseUrl}/functions/v1/lzt-market?${qp.toString()}`, {
-            headers: {
-              "Content-Type": "application/json",
-              apikey: supabaseAnonKey,
-              Authorization: `Bearer ${supabaseAnonKey}`,
-            },
-          });
-          if (runId !== prefetchRunIdRef.current) return;
-          if (!res.ok) return;
-          const data = await res.json();
+          const data = await fetchAccountsRaw(listParams);
           if (runId !== prefetchRunIdRef.current) return;
           const items: LztItem[] = data?.items ?? [];
           const hasMore = data?.hasNextPage ?? items.length >= 15;
@@ -1229,22 +1224,30 @@ const Contas = () => {
 
       // Sempre reconciliar com a API: prefetch pode ter `price_brl` antigo (markup mudou no admin).
       const paramsSnapshot = buildParams(1);
-      void (async () => {
-        try {
-          const data = await fetchWithRetry(paramsSnapshot, controller);
-          if (controller.signal.aborted) return;
-          const items: LztItem[] = data?.items ?? [];
-          const hasMore = data?.hasNextPage ?? items.length >= 15;
-          setStreamedItems(items);
-          setHasNextPage(hasMore);
-          setCurrentPage(1);
-          cacheSet(cacheKey, { items, hasNextPage: hasMore, currentPage: 1, timestamp: Date.now() });
-        } catch (e: unknown) {
-          if (import.meta.env.DEV) {
-            console.warn("Contas: reconciliação pós-prefetch falhou", e instanceof Error ? e.message : String(e));
+      if (prefetchReconcileTimeoutRef.current) {
+        clearTimeout(prefetchReconcileTimeoutRef.current);
+        prefetchReconcileTimeoutRef.current = null;
+      }
+      prefetchReconcileTimeoutRef.current = setTimeout(() => {
+        prefetchReconcileTimeoutRef.current = null;
+        void (async () => {
+          try {
+            if (controller.signal.aborted) return;
+            const data = await fetchWithRetry(paramsSnapshot, controller);
+            if (controller.signal.aborted) return;
+            const items: LztItem[] = data?.items ?? [];
+            const hasMore = data?.hasNextPage ?? items.length >= 15;
+            setStreamedItems(items);
+            setHasNextPage(hasMore);
+            setCurrentPage(1);
+            cacheSet(cacheKey, { items, hasNextPage: hasMore, currentPage: 1, timestamp: Date.now() });
+          } catch (e: unknown) {
+            if (import.meta.env.DEV) {
+              console.warn("Contas: reconciliação pós-prefetch falhou", e instanceof Error ? e.message : String(e));
+            }
           }
-        }
-      })();
+        })();
+      }, CONTAS_RECONCILE_AFTER_PREFETCH_MS);
       return;
     }
 
@@ -1254,11 +1257,22 @@ const Contas = () => {
 
   useEffect(() => {
     abortRef.current?.abort();
+    if (prefetchReconcileTimeoutRef.current) {
+      clearTimeout(prefetchReconcileTimeoutRef.current);
+      prefetchReconcileTimeoutRef.current = null;
+    }
     loadMoreControllerRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
     fetchMultiplePagesWithPrefetch(controller);
-    return () => { controller.abort(); loadMoreControllerRef.current?.abort(); };
+    return () => {
+      controller.abort();
+      loadMoreControllerRef.current?.abort();
+      if (prefetchReconcileTimeoutRef.current) {
+        clearTimeout(prefetchReconcileTimeoutRef.current);
+        prefetchReconcileTimeoutRef.current = null;
+      }
+    };
   }, [debouncedParamsKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Trigger prefetch after initial load completes (delayed so quick bounces do not pull extra list JSON)
@@ -1435,6 +1449,10 @@ const Contas = () => {
 
   const refetch = () => {
     abortRef.current?.abort();
+    if (prefetchReconcileTimeoutRef.current) {
+      clearTimeout(prefetchReconcileTimeoutRef.current);
+      prefetchReconcileTimeoutRef.current = null;
+    }
     const controller = new AbortController();
     abortRef.current = controller;
     setDisplayPage(1);
