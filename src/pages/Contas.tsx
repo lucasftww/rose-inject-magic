@@ -1095,6 +1095,16 @@ function gameTabFromSearchParams(sp: URLSearchParams): GameTab {
   return "valorant";
 }
 
+/** Atualiza só depois do delay — evita `setSearchParams` a cada tecla (pesado no celular). */
+function useDebouncedValue<T>(value: T, delayMs: number): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(value), delayMs);
+    return () => clearTimeout(t);
+  }, [value, delayMs]);
+  return debounced;
+}
+
 const Contas = () => {
   const queryClient = useQueryClient();
   const { getDisplayPrice } = useLztMarkup();
@@ -1238,6 +1248,29 @@ const Contas = () => {
   const lztListOrderBy = useMemo(() => listOrderByForLztApi(sortBy), [sortBy]);
 
   const [searchQuery, setSearchQuery] = useState(() => qp("q"));
+
+  const [coarsePointer, setCoarsePointer] = useState(
+    () => typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)").matches === true,
+  );
+  useEffect(() => {
+    const mq = window.matchMedia("(pointer: coarse)");
+    const update = () => setCoarsePointer(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
+  const navConn =
+    typeof navigator !== "undefined"
+      ? (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection
+      : undefined;
+  const saveData = Boolean(navConn?.saveData);
+  const slowNetwork =
+    saveData || navConn?.effectiveType === "2g" || navConn?.effectiveType === "slow-2g";
+  const lightDevice = coarsePointer || slowNetwork;
+  const listSearchDebounceMs = lightDevice ? 480 : 280;
+  const urlSearchDebounceMs = lightDevice ? 520 : 320;
+  const searchQueryForUrl = useDebouncedValue(searchQuery, urlSearchDebounceMs);
   const [lvlMin, setLvlMin] = useState(() => qp("lvlMin"));
   const [lvlMax, setLvlMax] = useState(() => qp("lvlMax"));
   const [invMin, setInvMin] = useState(() => qp("invMin"));
@@ -1423,7 +1456,7 @@ const Contas = () => {
       else next.delete("game");
 
       // Shared
-      set("q", searchQuery);
+      set("q", searchQueryForUrl);
       set("sort", sortBy, "pdate_to_down");
       set("pmin", priceMin);
       set("pmax", priceMax);
@@ -1463,7 +1496,7 @@ const Contas = () => {
       return next;
     }, { replace: true });
   }, [
-    gameTab, searchQuery, sortBy, priceMin, priceMax,
+    gameTab, searchQueryForUrl, sortBy, priceMin, priceMax,
     selectedRank, selectedWeapon, onlyKnife, valRegion,
     lolRank, lolChampMin, lolSkinsMin, lolRegion,
     fnVbMin, fnSkinsMin, fnLevelMin, fnHasBattlePass,
@@ -1714,7 +1747,7 @@ const Contas = () => {
   }, [searchQuery, onlyKnife, selectedRank, selectedWeapon, debouncedInvMin, debouncedInvMax, lvlMin, lvlMax, gameTab, lolRank, lolChampMin, lolSkinsMin, fnVbMin, fnSkinsMin, mcJava, mcBedrock, mcHypixelLvlMin, mcCapesMin, mcNoBan, lolRegion, valRegion, lztListOrderBy, debouncedPriceMin, debouncedPriceMax]);
 
   const paramsKey = JSON.stringify(buildParams(1)) + gameTab;
-  // Debounce: busca por título (280ms), inventário Valorant (420ms), faixa de preço (280ms + flush ao sair do campo). Resto dispara fetch na hora.
+  // Debounce: busca por título (280ms desktop / ~480ms touch ou rede lenta), inventário Valorant (420ms), faixa de preço. Resto dispara fetch na hora.
   const nonSearchParamsKey = useMemo(
     () =>
       JSON.stringify({
@@ -1788,11 +1821,10 @@ const Contas = () => {
     }
     // No actual change from current debounced value: skip debounce timer
     if (debouncedParamsKey === paramsKey) return;
-    // Search text changed: debounce 280ms
-    const delay = 280;
-    const handler = setTimeout(() => setDebouncedParamsKey(paramsKey), delay);
+    // Search text changed: debounce (maior no touch/rede lenta — menos pedidos LZT e menos abort/retry)
+    const handler = setTimeout(() => setDebouncedParamsKey(paramsKey), listSearchDebounceMs);
     return () => clearTimeout(handler);
-  }, [paramsKey, nonSearchParamsKey, searchQuery, debouncedParamsKey]);
+  }, [paramsKey, nonSearchParamsKey, searchQuery, debouncedParamsKey, listSearchDebounceMs]);
 
   const fetchWithRetry = useCallback(
     async (
@@ -1916,6 +1948,8 @@ const Contas = () => {
     prefetchRunIdRef.current += 1;
     const runId = prefetchRunIdRef.current;
 
+    if (lightDevice) return;
+
     // Only prefetch the *next* tab in fixed order (cuts ~3× background list egress vs warming all three).
     const tabOrder: GameTab[] = ["valorant", "lol", "fortnite", "minecraft"];
     const idx = tabOrder.indexOf(gameTab);
@@ -1956,7 +1990,7 @@ const Contas = () => {
       })();
     }, 0);
     prefetchTimeoutsRef.current.push(timeoutId);
-  }, [gameTab, cacheSet, clearPrefetchTimeouts]);
+  }, [gameTab, cacheSet, clearPrefetchTimeouts, lightDevice]);
 
   useEffect(() => () => clearPrefetchTimeouts(), [clearPrefetchTimeouts]);
 
