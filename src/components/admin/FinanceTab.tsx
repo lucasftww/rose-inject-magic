@@ -17,11 +17,6 @@ import {
   rollupRobot,
   type AdminFinanceRollups,
 } from "@/lib/adminFinanceRollups";
-import {
-  ADMIN_MAX_LZT_SALES_ROWS,
-  ADMIN_MAX_PAYMENTS_COMPLETED,
-  ADMIN_MAX_RESELLER_PURCHASES,
-} from "@/lib/adminDataLimits";
 import { getCached, setCache, getUsdToBrl, invalidateAdminCache } from "@/lib/adminCache";
 import { buildRobotSalesLedgerFromPayments } from "@/lib/adminRobotSalesLedger";
 import { paymentCartSnapshot, type PaymentCartLine } from "@/types/paymentCart";
@@ -29,7 +24,7 @@ import type { OrderTicketMetadata } from "@/types/orderTicketMetadata";
 import {
   Loader2, DollarSign, TrendingUp, TrendingDown,
   Download, Wallet, Users, ArrowUp, ArrowDown, Minus, Gamepad2,
-  Receipt, BarChart3, CalendarDays, Package, Zap, RefreshCw, AlertTriangle, Info,
+  Receipt, BarChart3, CalendarDays, Package, Zap, RefreshCw,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import {
@@ -277,11 +272,6 @@ const FinanceTab = () => {
   const usdToBrl = data?.usdToBrl ?? 5.16;
   const rollups = data?.rollups ?? null;
   const [period, setPeriod] = useState<Period>("24h");
-
-  const hitPaymentsCap = payments.length >= ADMIN_MAX_PAYMENTS_COMPLETED;
-  const hitLztCap = lztSales.length >= ADMIN_MAX_LZT_SALES_ROWS;
-  const hitResellerCap = resellerPurchases.length >= ADMIN_MAX_RESELLER_PURCHASES;
-  const datasetLikelyTruncated = hitPaymentsCap || hitLztCap || hitResellerCap;
 
   // ─── Filtered data ───
   const fp = useMemo(() => filterByPeriod(payments, period), [payments, period]);
@@ -533,42 +523,6 @@ const FinanceTab = () => {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h2 className="text-lg font-bold text-foreground">Financeiro</h2>
-          <div className="mt-0.5 max-w-xl space-y-1.5">
-            <p className="text-[10px] text-muted-foreground">
-              Conjunto carregado: até {ADMIN_MAX_PAYMENTS_COMPLETED.toLocaleString("pt-BR")} pagamentos,{" "}
-              {ADMIN_MAX_LZT_SALES_ROWS.toLocaleString("pt-BR")} vendas LZT,{" "}
-              {ADMIN_MAX_RESELLER_PURCHASES.toLocaleString("pt-BR")} compras revendedor (sempre os mais recentes), para gráficos e
-              cart_snapshot. Com a RPC de rollups ativa, receita, compradores, transações e custos LZT/revendedor no período reflectem a
-              base completa.
-            </p>
-            {rollups && (
-              <p className="text-[10px] text-primary">
-                Rollups SQL ativos: totais do período (receita, LZT, revendedor, Robot via cart_snapshot, compradores, transações) não
-                dependem do limite da amostra. Gráficos e pizza Estoque/LZT/Robot por tipo continuam na amostra em memória; o detalhe
-                por produto Robot abaixo também.
-              </p>
-            )}
-            {!rollups && (
-              <div className="flex items-start gap-1.5 rounded-md border border-info/35 bg-info/10 px-2 py-1.5 text-[10px] text-info">
-                <Info className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
-                <p>
-                  Totais por período (agregação SQL / rollups) indisponíveis — cartões e gráficos usam só a amostra carregada. Publique as
-                  funções <span className="font-mono">admin_finance_period_rollups</span> no Supabase ou execute{" "}
-                  <span className="font-mono">npm run supabase:db-push</span> com o CLI ligado ao projecto.
-                </p>
-              </div>
-            )}
-            {datasetLikelyTruncated && (
-              <div className="flex items-start gap-1.5 rounded-md border border-warning/30 bg-warning/10 px-2 py-1.5 text-[10px] text-warning">
-                <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
-                <p>
-                  {rollups
-                    ? "A amostra em memória foi truncada: curvas e fatias por tipo (cart_snapshot) podem omitir histórico antigo; os cartões que usam SQL acima estão completos para o período."
-                    : "Limite atingido numa ou mais fontes — totais e gráficos podem omitir histórico mais antigo. Aplique a migração admin_finance_period_rollups ou agregações semelhantes no Postgres."}
-                </p>
-              </div>
-            )}
-          </div>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex gap-0.5 bg-secondary rounded-lg p-0.5">
@@ -671,12 +625,6 @@ const FinanceTab = () => {
               <Area type="monotone" dataKey="receita" name="Receita" stroke="hsl(197,100%,50%)" fill="url(#gradReceita)" strokeWidth={2} />
             </AreaChart>
           </ResponsiveContainer>
-          {rollups && (
-            <p className="mt-2 text-[10px] text-muted-foreground">
-              Curva construída a partir da amostra em memória; o total de receita do período nos cartões vem da agregação SQL quando
-              disponível.
-            </p>
-          )}
         </div>
       )}
 
