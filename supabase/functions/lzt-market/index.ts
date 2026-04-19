@@ -149,6 +149,38 @@ function enrichDetailItemFromNestedInventory(item: LztItem, gameType: string) {
 
 const globalLztCache = new Map<string, { data: unknown; expiry: number }>();
 
+/** Pedidos LZT idênticos em voo: N utilizadores → 1 fetch ao api.lzt.market (por isolate). */
+const inflightRawLztFetch = new Map<string, Promise<Response>>();
+
+async function dedupedLztListFetch(apiUrl: string, token: string, dedupeKey: string): Promise<Response> {
+  let p = inflightRawLztFetch.get(dedupeKey);
+  if (!p) {
+    p = (async (): Promise<Response> => {
+      let response: Response | null = null;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        if (attempt > 0) {
+          const delay = 350 * Math.pow(2, attempt - 1);
+          await new Promise((r) => setTimeout(r, delay));
+        }
+        response = await fetch(apiUrl, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        });
+        if (response.ok || !RETRYABLE_STATUSES.includes(response.status)) break;
+        console.warn(`LZT API attempt ${attempt + 1}: ${response.status}`);
+      }
+      return response!;
+    })().finally(() => {
+      inflightRawLztFetch.delete(dedupeKey);
+    });
+    inflightRawLztFetch.set(dedupeKey, p);
+  }
+  const res = await p;
+  return res.clone();
+}
+
 function lztTokenFromCredentialRows(rows: unknown[] | null | undefined): string {
   const byLztKey = new Map<string, string>();
   for (const r of rows || []) {
@@ -692,20 +724,24 @@ Deno.serve(async (req) => {
     console.log("Fetching:", apiUrl);
 
     let response: Response | null = null;
-    for (let attempt = 0; attempt < 3; attempt++) {
-      if (attempt > 0) {
-        const delay = 350 * Math.pow(2, attempt - 1); // 350ms, 700ms — menos fila para o utilizador
-        console.log(`LZT retry attempt ${attempt + 1} after ${delay}ms...`);
-        await new Promise((r) => setTimeout(r, delay));
+    if (shouldCache) {
+      response = await dedupedLztListFetch(apiUrl, token, cacheKey);
+    } else {
+      for (let attempt = 0; attempt < 3; attempt++) {
+        if (attempt > 0) {
+          const delay = 350 * Math.pow(2, attempt - 1); // 350ms, 700ms — menos fila para o utilizador
+          console.log(`LZT retry attempt ${attempt + 1} after ${delay}ms...`);
+          await new Promise((r) => setTimeout(r, delay));
+        }
+        response = await fetch(apiUrl, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        });
+        if (response.ok || !RETRYABLE_STATUSES.includes(response.status)) break;
+        console.warn(`LZT API attempt ${attempt + 1}: ${response.status}`);
       }
-      response = await fetch(apiUrl, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-        },
-      });
-      if (response.ok || !RETRYABLE_STATUSES.includes(response.status)) break;
-      console.warn(`LZT API attempt ${attempt + 1}: ${response.status}`);
     }
 
     if (!response || !response.ok) {
