@@ -70,6 +70,26 @@ function normalizeCurrency(currency?: string | null) {
   return "rub";
 }
 
+/** Lista LoL: `lolInventory.Skin` pode ter centenas de entradas → payload enorme; o card só precisa de ~6 previews. */
+const LOL_LIST_SKIN_ENTRIES_MAX = 72;
+const LOL_LIST_CHAMP_ENTRIES_MAX = 24;
+
+function trimLolInventoryForList(inv: Record<string, unknown>): void {
+  const skin = inv["Skin"];
+  if (Array.isArray(skin)) {
+    if (skin.length > LOL_LIST_SKIN_ENTRIES_MAX) inv["Skin"] = skin.slice(0, LOL_LIST_SKIN_ENTRIES_MAX);
+  } else if (skin && typeof skin === "object") {
+    const ent = Object.entries(skin as Record<string, unknown>);
+    if (ent.length > LOL_LIST_SKIN_ENTRIES_MAX) {
+      inv["Skin"] = Object.fromEntries(ent.slice(0, LOL_LIST_SKIN_ENTRIES_MAX));
+    }
+  }
+  const champ = inv["Champion"];
+  if (Array.isArray(champ) && champ.length > LOL_LIST_CHAMP_ENTRIES_MAX) {
+    inv["Champion"] = champ.slice(0, LOL_LIST_CHAMP_ENTRIES_MAX);
+  }
+}
+
 function convertBrlToSellerPrice(brlAmount: number, currency: string, markup: number) {
   if (!Number.isFinite(brlAmount) || brlAmount <= 0) return null;
 
@@ -938,6 +958,10 @@ Deno.serve(async (req) => {
 
         // Strip heavy fields
         for (const field of STRIP_FIELDS) delete item[field];
+
+        if (gameType === "lol" && item.lolInventory && typeof item.lolInventory === "object") {
+          trimLolInventoryForList(item.lolInventory as Record<string, unknown>);
+        }
 
         if (previewMode) {
           delete item.valorantInventory;

@@ -853,7 +853,8 @@ const Contas = () => {
     queryKey: ["lol-champ-key-map"],
     queryFn: fetchLolChampKeyMap,
     staleTime: 1000 * 60 * 60 * 6,
-    enabled: gameTab === "lol" && firstPageLoaded,
+    // Paralelo à 1ª página LZT: HTTP/2 multiplex; quando a lista chega o mapa DDragon costuma já estar pronto.
+    enabled: gameTab === "lol",
   });
 
   const { data: fnSkinsDb = new Map<string, FortniteCosmeticDbRow>() } = useQuery({
