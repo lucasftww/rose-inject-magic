@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef, useMemo, memo, forwardRef, type CSSProperties } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo, memo, forwardRef, type CSSProperties, type FocusEvent } from "react";
 import { useLztMarkup, getLztItemBrlPrice, type GameCategory } from "@/hooks/useLztMarkup";
 import Header from "@/components/Header";
 import { ChevronLeft, ChevronRight, ChevronDown, Search, SlidersHorizontal, DollarSign, Crosshair, Loader2, RefreshCw, Globe, TrendingUp, Star, Shield, Trophy, AlertTriangle, X, ArrowRight } from "lucide-react";
@@ -1187,13 +1187,27 @@ const Contas = () => {
   const [debouncedPriceMax, setDebouncedPriceMax] = useState(() => qp("pmax"));
   const [sortBy, setSortBy] = useState<string>(() => normalizeListSortParam(qp("sort", "pdate_to_down")));
 
+  const flushPriceDebounceToApi = useCallback(() => {
+    setDebouncedPriceMin(priceMin);
+    setDebouncedPriceMax(priceMax);
+  }, [priceMin, priceMax]);
+
   useEffect(() => {
+    if (priceMin === debouncedPriceMin && priceMax === debouncedPriceMax) return;
     const id = window.setTimeout(() => {
       setDebouncedPriceMin(priceMin);
       setDebouncedPriceMax(priceMax);
-    }, 350);
+    }, 280);
     return () => window.clearTimeout(id);
-  }, [priceMin, priceMax]);
+  }, [priceMin, priceMax, debouncedPriceMin, debouncedPriceMax]);
+
+  const priceFieldBlur = useCallback(
+    (e: FocusEvent<HTMLInputElement>) => {
+      e.currentTarget.style.borderColor = "";
+      flushPriceDebounceToApi();
+    },
+    [flushPriceDebounceToApi],
+  );
 
   // ?sort= na URL: voltar/avançar e links com valor inválido.
   // Só reagir a `searchParams` (não incluir `sortBy`): com `sortBy` nas deps, ao clicar num filtro o
@@ -1700,7 +1714,7 @@ const Contas = () => {
   }, [searchQuery, onlyKnife, selectedRank, selectedWeapon, debouncedInvMin, debouncedInvMax, lvlMin, lvlMax, gameTab, lolRank, lolChampMin, lolSkinsMin, fnVbMin, fnSkinsMin, mcJava, mcBedrock, mcHypixelLvlMin, mcCapesMin, mcNoBan, lolRegion, valRegion, lztListOrderBy, debouncedPriceMin, debouncedPriceMax]);
 
   const paramsKey = JSON.stringify(buildParams(1)) + gameTab;
-  // Debounce: busca por título (280ms), inventário Valorant (420ms), faixa de preço (350ms no estado debounced). Resto dispara fetch na hora.
+  // Debounce: busca por título (280ms), inventário Valorant (420ms), faixa de preço (280ms + flush ao sair do campo). Resto dispara fetch na hora.
   const nonSearchParamsKey = useMemo(
     () =>
       JSON.stringify({
@@ -2499,12 +2513,12 @@ const Contas = () => {
           <div className="mt-3 flex items-center gap-2">
             <div className="relative flex-1">
               <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">R$</span>
-              <input type="number" min="0" placeholder="Mín" value={priceMin} onChange={(e) => { setPriceMin(e.target.value.slice(0, 7)); setDisplayPage(1); }} onFocus={e => (e.currentTarget.style.borderColor = `${accentColor}80`)} onBlur={e => (e.currentTarget.style.borderColor = '')} className="w-full rounded-lg border border-border bg-secondary/50 py-2 pl-8 pr-2 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none" />
+              <input type="number" min="0" placeholder="Mín" value={priceMin} onChange={(e) => { setPriceMin(e.target.value.slice(0, 7)); setDisplayPage(1); }} onFocus={e => (e.currentTarget.style.borderColor = `${accentColor}80`)} onBlur={priceFieldBlur} className="w-full rounded-lg border border-border bg-secondary/50 py-2 pl-8 pr-2 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none" />
             </div>
             <span className="text-xs text-muted-foreground">—</span>
             <div className="relative flex-1">
               <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">R$</span>
-              <input type="number" min="0" placeholder="Máx" value={priceMax} onChange={(e) => { setPriceMax(e.target.value.slice(0, 7)); setDisplayPage(1); }} onFocus={e => (e.currentTarget.style.borderColor = `${accentColor}80`)} onBlur={e => (e.currentTarget.style.borderColor = '')} className="w-full rounded-lg border border-border bg-secondary/50 py-2 pl-8 pr-2 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none" />
+              <input type="number" min="0" placeholder="Máx" value={priceMax} onChange={(e) => { setPriceMax(e.target.value.slice(0, 7)); setDisplayPage(1); }} onFocus={e => (e.currentTarget.style.borderColor = `${accentColor}80`)} onBlur={priceFieldBlur} className="w-full rounded-lg border border-border bg-secondary/50 py-2 pl-8 pr-2 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none" />
             </div>
           </div>
         )}

@@ -565,7 +565,8 @@ Deno.serve(async (req) => {
       if (userPmin) {
         const brlMin = Number(userPmin);
         if (brlMin > 0) {
-          if (brlMin <= MIN_PRICE_BRL) {
+          // `<` e não `<=`: com mínimo exatamente MIN_PRICE_BRL o utilizador quer filtrar a partir desse valor.
+          if (brlMin < MIN_PRICE_BRL) {
             params.delete("pmin");
           } else {
             const sellerPmin = convertBrlToSellerPrice(brlMin, effectiveCurrency, activeMarkup);
