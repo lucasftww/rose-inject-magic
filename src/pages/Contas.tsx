@@ -1182,7 +1182,18 @@ const Contas = () => {
   // ─── Shared filters ───
   const [priceMin, setPriceMin] = useState(() => qp("pmin"));
   const [priceMax, setPriceMax] = useState(() => qp("pmax"));
+  /** Preço na API: debounce para não disparar 1 fetch LZT por dígito em pmin/pmax. */
+  const [debouncedPriceMin, setDebouncedPriceMin] = useState(() => qp("pmin"));
+  const [debouncedPriceMax, setDebouncedPriceMax] = useState(() => qp("pmax"));
   const [sortBy, setSortBy] = useState<string>(() => normalizeListSortParam(qp("sort", "pdate_to_down")));
+
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      setDebouncedPriceMin(priceMin);
+      setDebouncedPriceMax(priceMax);
+    }, 350);
+    return () => window.clearTimeout(id);
+  }, [priceMin, priceMax]);
 
   // ?sort= na URL: voltar/avançar e links com valor inválido.
   // Só reagir a `searchParams` (não incluir `sortBy`): com `sortBy` nas deps, ao clicar num filtro o
@@ -1619,9 +1630,9 @@ const Contas = () => {
     params.order_by = lztListOrderBy;
     if (searchQuery) params.title = searchQuery;
 
-    // Send price filters to API so server filters before returning
-    if (priceMin && Number(priceMin) > 0) params.pmin = priceMin;
-    if (priceMax && Number(priceMax) > 0) params.pmax = priceMax;
+    // Send price filters to API (debounced — evita rajada de pedidos ao digitar a faixa)
+    if (debouncedPriceMin && Number(debouncedPriceMin) > 0) params.pmin = debouncedPriceMin;
+    if (debouncedPriceMax && Number(debouncedPriceMax) > 0) params.pmax = debouncedPriceMax;
 
     if (gameTab === "valorant") {
       params.game_type = "riot";
@@ -1686,10 +1697,10 @@ const Contas = () => {
     }
 
     return params;
-  }, [searchQuery, onlyKnife, selectedRank, selectedWeapon, debouncedInvMin, debouncedInvMax, lvlMin, lvlMax, gameTab, lolRank, lolChampMin, lolSkinsMin, fnVbMin, fnSkinsMin, mcJava, mcBedrock, mcHypixelLvlMin, mcCapesMin, mcNoBan, lolRegion, valRegion, lztListOrderBy, priceMin, priceMax]);
+  }, [searchQuery, onlyKnife, selectedRank, selectedWeapon, debouncedInvMin, debouncedInvMax, lvlMin, lvlMax, gameTab, lolRank, lolChampMin, lolSkinsMin, fnVbMin, fnSkinsMin, mcJava, mcBedrock, mcHypixelLvlMin, mcCapesMin, mcNoBan, lolRegion, valRegion, lztListOrderBy, debouncedPriceMin, debouncedPriceMax]);
 
   const paramsKey = JSON.stringify(buildParams(1)) + gameTab;
-  // Só o campo "busca por título" usa debounce. Preço, inv, nível, mínimos etc. disparam fetch na hora (mais fluido).
+  // Debounce: busca por título (280ms), inventário Valorant (420ms), faixa de preço (350ms no estado debounced). Resto dispara fetch na hora.
   const nonSearchParamsKey = useMemo(
     () =>
       JSON.stringify({
@@ -1708,8 +1719,8 @@ const Contas = () => {
         mcNoBan,
         mcHypixelLvlMin,
         mcCapesMin,
-        priceMin,
-        priceMax,
+        pmin: debouncedPriceMin,
+        pmax: debouncedPriceMax,
         invMin: debouncedInvMin,
         invMax: debouncedInvMax,
         lvlMin,
@@ -1733,8 +1744,8 @@ const Contas = () => {
       mcNoBan,
       mcHypixelLvlMin,
       mcCapesMin,
-      priceMin,
-      priceMax,
+      debouncedPriceMin,
+      debouncedPriceMax,
       debouncedInvMin,
       debouncedInvMax,
       lvlMin,
@@ -2091,8 +2102,17 @@ const Contas = () => {
       }
     }
 
-    // Region filter is now done server-side via country[] API param
-    // Price filtering is done server-side via pmin/pmax — no duplicate client-side filter needed
+    // Region filter is done server-side via country[] / lol_region[].
+    // Price: API + edge aplicam pmin/pmax, mas durante "Atualizando contas…" a lista antiga ficava
+    // visível (mesmo fora da faixa). Filtrar em BRL alinhado ao cartão evita incoerência e contagem errada.
+    const minBrl = Number(priceMin);
+    const maxBrl = Number(priceMax);
+    if (Number.isFinite(minBrl) && minBrl > 0) {
+      filtered = filtered.filter((item) => getBrlPrice(item) >= minBrl);
+    }
+    if (Number.isFinite(maxBrl) && maxBrl > 0) {
+      filtered = filtered.filter((item) => getBrlPrice(item) <= maxBrl);
+    }
 
     // If user explicitly chose a price sort, use BRL display price for accurate ordering
     if (sortBy === "price_to_up") {
@@ -2105,7 +2125,7 @@ const Contas = () => {
     // Default sort (pdate_to_down = "Mais Recentes"): preserve API date order for ALL games.
     // The API already returns items sorted by publication date descending.
     return filtered;
-  }, [streamedItems, sortBy, gameTab, getBrlPrice, fnLevelMin, fnHasBattlePass]);
+  }, [streamedItems, sortBy, gameTab, getBrlPrice, fnLevelMin, fnHasBattlePass, priceMin, priceMax]);
   const totalDisplayPages = Math.max(1, Math.ceil(allItems.length / ITEMS_PER_PAGE));
 
   // Clamp displayPage when allItems shrinks (e.g. after price filtering)
@@ -2156,6 +2176,7 @@ const Contas = () => {
     setValRegion("br");
     setLolRegion("BR1");
     setPriceMin(""); setPriceMax("");
+    setDebouncedPriceMin(""); setDebouncedPriceMax("");
     setSearchQuery(""); setOnlyKnife(false);
     setInvMin(""); setInvMax("");
     setDebouncedInvMin(""); setDebouncedInvMax("");
