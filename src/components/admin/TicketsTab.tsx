@@ -568,9 +568,20 @@ const TicketsTab = ({
   const CopyField = ({ label, value }: { label: string; value: string }) => {
     const [fieldCopied, setFieldCopied] = useState(false);
     const handleCopy = () => {
-      navigator.clipboard.writeText(value);
-      setFieldCopied(true);
-      setTimeout(() => setFieldCopied(false), 2000);
+      void navigator.clipboard.writeText(value).then(
+        () => {
+          setFieldCopied(true);
+          setTimeout(() => setFieldCopied(false), 2000);
+          toast({ title: "Copiado!" });
+        },
+        () => {
+          toast({
+            title: "Não foi possível copiar",
+            description: "Permissão do navegador ou contexto inseguro.",
+            variant: "destructive",
+          });
+        },
+      );
     };
     return (
       <div>
@@ -1182,9 +1193,20 @@ const TicketsTab = ({
                           </button>
                           <button
                             onClick={() => {
-                              navigator.clipboard.writeText(stockContent);
-                              setStockCopied(true);
-                              setTimeout(() => setStockCopied(false), 2000);
+                              void navigator.clipboard.writeText(stockContent).then(
+                                () => {
+                                  setStockCopied(true);
+                                  setTimeout(() => setStockCopied(false), 2000);
+                                  toast({ title: "Copiado!" });
+                                },
+                                () => {
+                                  toast({
+                                    title: "Não foi possível copiar",
+                                    description: "Permissão do navegador ou contexto inseguro.",
+                                    variant: "destructive",
+                                  });
+                                },
+                              );
                             }}
                             className="rounded p-1 text-muted-foreground hover:text-foreground"
                           >

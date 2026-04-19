@@ -120,6 +120,9 @@ const LztTab = () => {
   const totalBought = dbStats ? Number(dbStats.total_bought) : 0;
   const totalSold = dbStats ? Number(dbStats.total_sold) : 0;
   const totalProfit = dbStats ? Number(dbStats.total_profit) : 0;
+  const boughtDisplay = Number.isFinite(totalBought) ? totalBought : 0;
+  const soldDisplay = Number.isFinite(totalSold) ? totalSold : 0;
+  const profitDisplay = Number.isFinite(totalProfit) ? totalProfit : 0;
   const totalSalesCount = dbStats ? Number(dbStats.total_count) : allSales.length;
 
   useEffect(() => {
@@ -235,9 +238,9 @@ const LztTab = () => {
     <div className="space-y-6">
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard icon={<DollarSign className="h-5 w-5 text-success" />} label="Gasto Total (Compra)" value={`R$ ${totalBought.toFixed(2)}`} />
-        <StatCard icon={<ShoppingCart className="h-5 w-5 text-success" />} label="Receita (Venda)" value={`R$ ${totalSold.toFixed(2)}`} />
-        <StatCard icon={<TrendingUp className="h-5 w-5 text-success" />} label="Lucro Total" value={`R$ ${totalProfit.toFixed(2)}`} highlight />
+        <StatCard icon={<DollarSign className="h-5 w-5 text-success" />} label="Gasto Total (Compra)" value={`R$ ${boughtDisplay.toFixed(2)}`} />
+        <StatCard icon={<ShoppingCart className="h-5 w-5 text-success" />} label="Receita (Venda)" value={`R$ ${soldDisplay.toFixed(2)}`} />
+        <StatCard icon={<TrendingUp className="h-5 w-5 text-success" />} label="Lucro Total" value={`R$ ${profitDisplay.toFixed(2)}`} highlight />
         <StatCard icon={<ShoppingCart className="h-5 w-5 text-muted-foreground" />} label="Total Vendas" value={String(totalSalesCount)} />
       </div>
 

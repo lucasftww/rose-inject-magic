@@ -81,6 +81,10 @@ const PaymentsListTab = () => {
   const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
   const paginated = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
 
+  useEffect(() => {
+    setPage((p) => Math.min(p, totalPages));
+  }, [totalPages]);
+
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -142,7 +146,7 @@ const PaymentsListTab = () => {
                         <span className="text-[10px] text-muted-foreground font-mono truncate max-w-[80px]">{p.user_id.slice(0, 8)}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-xs font-bold text-foreground">R$ {(p.amount / 100).toFixed(2)}</td>
+                    <td className="px-4 py-3 text-xs font-bold text-foreground">R$ {((Number(p.amount) || 0) / 100).toFixed(2)}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-bold shadow-sm ${statusColors[p.status ?? ""] || "bg-muted text-muted-foreground border-border"}`}>
                         {p.status ?? "—"}
@@ -226,7 +230,7 @@ const PaymentsListTab = () => {
                 </div>
                 <div className="space-y-1">
                   <span className="text-[10px] uppercase font-bold text-muted-foreground">Valor</span>
-                  <p className="text-lg font-bold text-foreground">R$ {(selectedPayment.amount / 100).toFixed(2)}</p>
+                  <p className="text-lg font-bold text-foreground">R$ {((Number(selectedPayment.amount) || 0) / 100).toFixed(2)}</p>
                 </div>
                 <div className="space-y-1">
                   <span className="text-[10px] uppercase font-bold text-muted-foreground">ID do Pagamento</span>

@@ -68,14 +68,20 @@ const CHART_TOOLTIP = {
   labelStyle: { color: "hsl(0,0%,70%)" },
 };
 
-const fmt = (v: number) => v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmt = (v: number) => {
+  const n = Number.isFinite(v) ? v : 0;
+  return n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
 const fmtCompact = (v: number) => {
-  if (v >= 10000) return `${(v / 1000).toFixed(1)}k`;
-  return fmt(v);
+  const n = Number.isFinite(v) ? v : 0;
+  if (n >= 10000) return `${(n / 1000).toFixed(1)}k`;
+  return fmt(n);
 };
 const pctChange = (current: number, previous: number) => {
-  if (previous === 0) return current > 0 ? 100 : 0;
-  return ((current - previous) / previous) * 100;
+  const c = Number.isFinite(current) ? current : 0;
+  const p = Number.isFinite(previous) ? previous : 0;
+  if (p === 0) return c > 0 ? 100 : 0;
+  return ((c - p) / p) * 100;
 };
 
 const filterByPeriod = <T extends { created_at: string; paid_at?: string | null }>(
@@ -314,7 +320,10 @@ const FinanceTab = () => {
   // Including it would double-count discounts and artificially lower margins.
   const totalCosts = lztTotalBought + robotTotalCost + resellerProgramCost;
   const netProfit = totalRevenue - totalCosts;
-  const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
+  const profitMargin =
+    totalRevenue > 0 && Number.isFinite(netProfit) && Number.isFinite(totalRevenue)
+      ? (netProfit / totalRevenue) * 100
+      : 0;
 
   const robotByProduct = useMemo(() => {
     const prods: Record<string, { count: number; revenue: number; cost: number; profit: number }> = {};

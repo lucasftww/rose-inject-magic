@@ -93,7 +93,10 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
     const pending = tickets.filter((t) => t.status !== "delivered" && t.status !== "closed" && t.status !== "archived").length;
     const revenue = tickets
       .filter((t) => t.status === "delivered")
-      .reduce((sum, t) => sum + (t.plan_price || 0), 0);
+      .reduce((sum, t) => {
+        const v = Number(t.plan_price);
+        return sum + (Number.isFinite(v) ? v : 0);
+      }, 0);
     const lztCount = tickets.filter((t) => t.metadata?.type === "lzt-account").length;
     const robotCount = tickets.filter((t) => t.metadata?.type === "robot-project").length;
     return { total, delivered, pending, revenue, lztCount, robotCount };
@@ -134,10 +137,20 @@ const SalesTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
   }, [totalPages]);
 
   const copyToClipboard = (text: string, id: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
-    toast({ title: "Copiado!" });
+    void navigator.clipboard.writeText(text).then(
+      () => {
+        setCopiedId(id);
+        setTimeout(() => setCopiedId(null), 2000);
+        toast({ title: "Copiado!" });
+      },
+      () => {
+        toast({
+          title: "Não foi possível copiar",
+          description: "Permissão do navegador ou contexto inseguro.",
+          variant: "destructive",
+        });
+      },
+    );
   };
 
   const CopyField = ({ label, value, copyKey }: { label: string; value: string; copyKey: string }) => (

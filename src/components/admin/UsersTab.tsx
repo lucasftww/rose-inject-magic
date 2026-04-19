@@ -96,6 +96,10 @@ const UsersTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void 
   // Reset page when filters change
   useEffect(() => { setUserPage(1); }, [searchQuery, filterStatus]);
 
+  useEffect(() => {
+    setUserPage((p) => Math.min(p, totalUserPages));
+  }, [totalUserPages]);
+
   return (
     <div>
       <div className="flex items-center justify-between">
