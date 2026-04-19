@@ -38,9 +38,21 @@ function toMarkup(v: unknown, fallback: number): number {
 /** Query key partilhada com prefetch em `App` (Contas / detalhes). */
 export const LZT_STOREFRONT_PRICING_QUERY_KEY = ["lzt-storefront-pricing"] as const;
 
+async function fetchAwesomeFxCappedMs(timeoutMs: number): Promise<Response | null> {
+  const ctrl = new AbortController();
+  const tid = window.setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    return await fetch("https://economia.awesomeapi.com.br/json/last/USD-BRL,RUB-BRL", { signal: ctrl.signal });
+  } catch {
+    return null;
+  } finally {
+    window.clearTimeout(tid);
+  }
+}
+
 export async function fetchStorefrontPricing(): Promise<StorefrontPricing> {
   const [fxRes, cfgRes] = await Promise.all([
-    fetch("https://economia.awesomeapi.com.br/json/last/USD-BRL,RUB-BRL"),
+    fetchAwesomeFxCappedMs(2000),
     supabase
       .from("lzt_config")
       .select("markup_multiplier, markup_valorant, markup_lol, markup_fortnite, markup_minecraft")
@@ -50,7 +62,7 @@ export async function fetchStorefrontPricing(): Promise<StorefrontPricing> {
 
   let rub = DEFAULT_LZT_FX.rub;
   let usd = DEFAULT_LZT_FX.usd;
-  if (fxRes.ok) {
+  if (fxRes && fxRes.ok) {
     try {
       const fxData = await fxRes.json();
       const usdBid = Number(fxData?.USDBRL?.bid);

@@ -1783,8 +1783,8 @@ const Contas = () => {
         const errName = errorName(err);
         if (controller.signal.aborted || errName === "AbortError") throw err;
         if (attempt >= retries) throw err;
-        // Exponential backoff: 1s, 2s, 4s
-        await waitWithAbort(1000 * Math.pow(2, attempt), controller.signal);
+        // Backoff curto: 400ms, 800ms, 1.6s — lista deve falhar rápido ou recuperar sem parecer “travado”
+        await waitWithAbort(400 * Math.pow(2, attempt), controller.signal);
       }
     }
     throw new Error("fetchWithRetry: retries exhausted");

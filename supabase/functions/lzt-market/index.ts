@@ -294,18 +294,12 @@ Deno.serve(async (req) => {
     // Fetch LZT token from system_credentials table
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
-    // FX rates + DB em paralelo: a lista já não espera só pelo awesomeapi antes de ir à BD (menos latência na 1ª resposta).
-    const ratesPromise = Promise.race([
-      updateRates(),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Rates timeout")), 5000)),
-    ]).catch((e) => {
-      console.warn("Rates fetch timed out or failed:", e);
-    });
+    // FX em background: NÃO await com credenciais — `Promise.all` com awesomeapi atrasava até 5s a 1ª ida à LZT (cold start + ads direto em /contas).
+    void updateRates();
 
     const [lztCredsRes, lztConfigRow] = await Promise.all([
       supabaseAdmin.from("system_credentials").select("env_key, value").in("env_key", ["LZT_API_TOKEN", "LZT_MARKET_TOKEN"]),
       supabaseAdmin.from("lzt_config").select("max_fetch_price, currency, markup_multiplier, markup_valorant, markup_lol, markup_fortnite, markup_minecraft").limit(1).maybeSingle(),
-      ratesPromise,
     ]);
 
     const tokenFromDb = lztTokenFromCredentialRows(lztCredsRes?.data);
@@ -676,8 +670,8 @@ Deno.serve(async (req) => {
     const shouldCache = action !== "detail" && action !== "fast-buy" && action !== "change-price" && action !== "image-proxy";
     const cacheKey = `${apiUrl}|m=${activeMarkup}|max=${listFetchCapBrl}`;
     // Align in-memory + CDN TTL with fresh responses (preview 60s, list 30s; detail bypasses this cache)
-    const listCacheMaxAge = previewMode ? 60 : 30;
-    const listMemoryTtlMs = previewMode ? 60_000 : 30_000;
+    const listCacheMaxAge = previewMode ? 90 : 60;
+    const listMemoryTtlMs = previewMode ? 90_000 : 60_000;
 
     if (shouldCache) {
       const cached = globalLztCache.get(cacheKey);
@@ -699,7 +693,7 @@ Deno.serve(async (req) => {
     let response: Response | null = null;
     for (let attempt = 0; attempt < 3; attempt++) {
       if (attempt > 0) {
-        const delay = 1000 * Math.pow(2, attempt - 1); // 1s, 2s
+        const delay = 350 * Math.pow(2, attempt - 1); // 350ms, 700ms — menos fila para o utilizador
         console.log(`LZT retry attempt ${attempt + 1} after ${delay}ms...`);
         await new Promise((r) => setTimeout(r, delay));
       }
