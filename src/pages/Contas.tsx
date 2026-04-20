@@ -1112,7 +1112,7 @@ const Contas = () => {
     async (
       params: Record<string, string | string[]>,
       controller: AbortController,
-      retries = lightDevice ? 0 : 1
+      retries = 0
     ): Promise<LztMarketListResponse> => {
     for (let attempt = 0; attempt <= retries; attempt++) {
       if (controller.signal.aborted) throw new Error("aborted");
