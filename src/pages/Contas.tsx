@@ -1,4 +1,14 @@
-import { useState, useCallback, useEffect, useRef, useMemo, useDeferredValue, type CSSProperties, type FocusEvent } from "react";
+import {
+  useState,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useMemo,
+  useDeferredValue,
+  type CSSProperties,
+  type FocusEvent,
+} from "react";
 import { useLztMarkup, getLztItemBrlPrice, type GameCategory } from "@/hooks/useLztMarkup";
 import Header from "@/components/Header";
 import { ChevronLeft, ChevronRight, ChevronDown, Search, SlidersHorizontal, DollarSign, Crosshair, Loader2, RefreshCw, Globe, TrendingUp, Star, Trophy, AlertTriangle, X } from "lucide-react";
@@ -284,14 +294,15 @@ const Contas = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [gameTab, setGameTab] = useState<GameTab>(() => gameTabFromSearchParams(searchParams));
 
-  // Voltar/avançar no navegador ou link direto: manter aba alinhada a ?game=
-  useEffect(() => {
+  // URL → estado antes do fetch da lista: evita GET `lzt-market` abortado quando `debouncedParamsKey`
+  // muda logo após o primeiro paint (useEffect de fetch corre depois dos layout effects).
+  useLayoutEffect(() => {
     const tab = gameTabFromSearchParams(searchParams);
     setGameTab((prev) => (prev === tab ? prev : tab));
   }, [searchParams]);
 
   // Aba Steam removida: links antigos ?game=steam → Valorant (preserva outros query params)
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (searchParams.get("game") === "steam") {
       setSearchParams(
         (prev) => {
@@ -418,7 +429,7 @@ const Contas = () => {
   // Só reagir a `searchParams` (não incluir `sortBy`): com `sortBy` nas deps, ao clicar num filtro o
   // URL ainda não tinha `sort=…` e `normalizeListSortParam(null)` virava `pdate_to_down`, repor o
   // estado e anulava o clique.
-  useEffect(() => {
+  useLayoutEffect(() => {
     const raw = searchParams.get("sort");
     if (raw == null || raw === "") {
       setSortBy(normalizeListSortParam(raw));
@@ -498,7 +509,7 @@ const Contas = () => {
 
   // Voltar/avançar ou editar URL: estado dos filtros vinha só do mount inicial — ficava dessincronizado.
   // `sort` continua com efeito dedicado (normalização); aqui não mexemos em sortBy.
-  useEffect(() => {
+  useLayoutEffect(() => {
     const tab = gameTabFromSearchParams(searchParams);
     const get = (k: string, d = "") => searchParams.get(k) ?? d;
 
