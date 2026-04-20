@@ -6,6 +6,17 @@ import {
   LZT_ACCOUNT_DETAIL_STALE_MS,
 } from "@/lib/lztAccountDetailFetch";
 
+/** Modo agressivo: hover prefetch só com `?warm=1` (evita rajada/cancel na grelha). */
+const ENABLE_DETAIL_HOVER_PREFETCH =
+  typeof window !== "undefined" &&
+  (() => {
+    try {
+      return new URLSearchParams(window.location.search).get("warm") === "1";
+    } catch {
+      return false;
+    }
+  })();
+
 /** Contas 410 (vendida/indisponível): não repetir GET ao passar o rato. */
 const detailPrefetchGoneKeys = new Set<string>();
 const MAX_DETAIL_GONE_KEYS = 400;
@@ -94,6 +105,7 @@ export const prefetchAccountDetail = (
   gameType: string,
   itemId: string | number,
 ) => {
+  if (!ENABLE_DETAIL_HOVER_PREFETCH) return;
   if (typeof navigator !== "undefined") {
     const conn = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } })
       .connection;

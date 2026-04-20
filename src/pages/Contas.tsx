@@ -293,6 +293,16 @@ const CONTAS_ADJACENT_PREFETCH_DELAY_MS = 2800;
 const CONTAS_PREFETCH_STABLE_WINDOW_MS = 2000;
 /** Se o utilizador trocar de aba logo após prefetch, não reconciliar imediatamente para evitar fetch descartado. */
 const CONTAS_RECONCILE_TAB_GUARD_MS = 1000;
+/** Modo agressivo: só ativa warmup de abas com `?warm=1` explícito para teste. */
+const CONTAS_ENABLE_ADJACENT_PREFETCH =
+  typeof window !== "undefined" &&
+  (() => {
+    try {
+      return new URLSearchParams(window.location.search).get("warm") === "1";
+    } catch {
+      return false;
+    }
+  })();
 
 const Contas = () => {
   const queryClient = useQueryClient();
@@ -1199,6 +1209,7 @@ const Contas = () => {
   const prefetchRunIdRef = useRef(0);
 
   const canRunAdjacentPrefetch = useMemo(() => {
+    if (!CONTAS_ENABLE_ADJACENT_PREFETCH) return false;
     if (lightDevice) return false;
     if (searchQuery.trim() !== "") return false;
     if (sortBy !== "pdate_to_down") return false;
