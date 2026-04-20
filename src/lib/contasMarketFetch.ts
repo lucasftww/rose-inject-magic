@@ -4,6 +4,26 @@ import { throwApiError } from "@/lib/apiErrors";
 import { isContasPerfDiagEnabled } from "@/lib/contasPerfDiag";
 import type { LztMarketListResponse } from "./contasMarketTypes";
 
+/**
+ * Assinatura estável do GET da lista LZT (chaves ordenadas).
+ * Usar em vez de `JSON.stringify(params)` evita falsos “novos filtros” só por ordem de chaves
+ * e alinha a chave de cache com o URL real do `lzt-market`.
+ */
+export function lztMarketListQuerySignature(params: Record<string, string | string[]>): string {
+  const keys = Object.keys(params).sort((a, b) => a.localeCompare(b));
+  const queryParams = new URLSearchParams();
+  for (const k of keys) {
+    const v = params[k];
+    if (v === undefined) continue;
+    if (Array.isArray(v)) {
+      for (const val of v) queryParams.append(k, val);
+    } else {
+      queryParams.set(k, String(v));
+    }
+  }
+  return queryParams.toString();
+}
+
 export function waitWithAbort(ms: number, signal: AbortSignal): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     if (signal.aborted) {

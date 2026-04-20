@@ -39,7 +39,7 @@ import {
   type LztItem,
   type LztMarketListResponse,
 } from "@/lib/contasMarketTypes";
-import { fetchAccountsRaw, waitWithAbort } from "@/lib/contasMarketFetch";
+import { fetchAccountsRaw, lztMarketListQuerySignature, waitWithAbort } from "@/lib/contasMarketFetch";
 import { isContasPerfDiagEnabled } from "@/lib/contasPerfDiag";
 import { isLikelyWrongGameInLolList } from "@/lib/contasLolFilter";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
@@ -304,8 +304,8 @@ const CONTAS_ENABLE_ADJACENT_PREFETCH =
     }
   })();
 
-/** Funde várias mudanças de `debouncedParamsKey` no mesmo “burst” (hidratação, sync URL→estado) num único GET — menos `lzt-market` com status cancelado. */
-const CONTAS_LIST_FETCH_KEY_COALESCE_MS = 52;
+/** Funde mudanças de `debouncedParamsKey` no mesmo burst (hidratação, sync URL→estado, debounces curtos). */
+const CONTAS_LIST_FETCH_KEY_COALESCE_MS = 120;
 
 function listAttemptTimeoutMs(tab: GameTab, light: boolean): number {
   // Minecraft costuma responder perto de 12s em horários de pico; dar margem evita abortar "quase concluído".
@@ -319,7 +319,7 @@ const Contas = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [gameTab, setGameTab] = useState<GameTab>(() => gameTabFromSearchParams(searchParams));
 
-  // URL → estado antes do fetch da lista: layout effects antes do GET; `listFetchKey` coalesce (~52ms)
+  // URL → estado antes do fetch da lista: layout effects antes do GET; `listFetchKey` coalesce (~120ms)
   // absorve rajadas de `debouncedParamsKey` (hidratação/sync) e reduz `lzt-market` cancelado na rede.
   useLayoutEffect(() => {
     const tab = gameTabFromSearchParams(searchParams);
@@ -983,7 +983,7 @@ const Contas = () => {
     return params;
   }, [searchQuery, onlyKnife, selectedRank, selectedWeapon, debouncedInvMin, debouncedInvMax, lvlMin, lvlMax, gameTab, lolRank, lolChampMin, lolSkinsMin, fnVbMin, fnSkinsMin, mcJava, mcBedrock, mcHypixelLvlMin, mcCapesMin, mcNoBan, lolRegion, valRegion, lztListOrderBy, debouncedPriceMin, debouncedPriceMax]);
 
-  const paramsKey = JSON.stringify(buildParams(1)) + gameTab;
+  const paramsKey = `${lztMarketListQuerySignature(buildParams(1))}\0${gameTab}`;
   useEffect(() => {
     lastUserListInteractionAtRef.current = Date.now();
   }, [paramsKey]);
