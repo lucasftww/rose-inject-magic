@@ -247,13 +247,13 @@ const CONTAS_ENABLE_ADJACENT_PREFETCH =
   })();
 
 /** Funde mudanças de `debouncedParamsKey` no mesmo burst (hidratação, sync URL→estado, debounces curtos). */
-const CONTAS_LIST_FETCH_KEY_COALESCE_MS = 340;
-const CONTAS_NON_SEARCH_DEBOUNCE_MS = 220;
+const CONTAS_LIST_FETCH_KEY_COALESCE_MS = 450;
+const CONTAS_NON_SEARCH_DEBOUNCE_MS = 320;
 
 function listAttemptTimeoutMs(tab: GameTab, light: boolean): number {
-  // Minecraft costuma responder perto de 12s em horários de pico; dar margem evita abortar "quase concluído".
-  if (tab === "minecraft") return light ? 13000 : 16000;
-  return light ? 9000 : 12000;
+  // Mantém UX responsiva: falha mais rápido e deixa cache/fallback assumirem.
+  if (tab === "minecraft") return light ? 11000 : 13000;
+  return light ? 7000 : 9500;
 }
 
 const Contas = () => {
@@ -1092,7 +1092,7 @@ const Contas = () => {
     async (
       params: Record<string, string | string[]>,
       controller: AbortController,
-      retries = lightDevice ? 1 : 2
+      retries = lightDevice ? 0 : 1
     ): Promise<LztMarketListResponse> => {
     for (let attempt = 0; attempt <= retries; attempt++) {
       if (controller.signal.aborted) throw new Error("aborted");
