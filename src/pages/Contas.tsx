@@ -288,7 +288,11 @@ const fetchLolChampKeyMap = async (): Promise<Map<number, string>> => {
 /** Após mostrar lista do prefetch na troca de aba: atrasa o GET de reconciliação para não competir com paint/chunk. */
 const CONTAS_RECONCILE_AFTER_PREFETCH_MS = 450;
 /** Prefetch de aba adjacente só depois de estabilizar a interação inicial. */
-const CONTAS_ADJACENT_PREFETCH_DELAY_MS = 1800;
+const CONTAS_ADJACENT_PREFETCH_DELAY_MS = 2800;
+/** Janela mínima sem mudança de filtros/aba antes de disparar prefetch de aba adjacente. */
+const CONTAS_PREFETCH_STABLE_WINDOW_MS = 2000;
+/** Se o utilizador trocar de aba logo após prefetch, não reconciliar imediatamente para evitar fetch descartado. */
+const CONTAS_RECONCILE_TAB_GUARD_MS = 1000;
 
 const Contas = () => {
   const queryClient = useQueryClient();
@@ -745,6 +749,11 @@ const Contas = () => {
   const loadMoreControllerRef = useRef<AbortController | null>(null);
   /** Reconciliação pós-prefetch (agendada): limpar ao mudar filtros/aba ou ao desmontar. */
   const prefetchReconcileTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Número de requests lzt-market em voo (lista/reconciliação/prefetch). */
+  const listMarketInFlightRef = useRef(0);
+  /** Última interação que altera filtros/aba/lista (para estabilidade antes de prefetch). */
+  const lastUserListInteractionAtRef = useRef(Date.now());
+  const lastGameTabChangeAtRef = useRef(Date.now());
   const prevGameTabRef = useRef(gameTab);
   
   const isValorant = gameTab === "valorant";
@@ -956,6 +965,28 @@ const Contas = () => {
   }, [searchQuery, onlyKnife, selectedRank, selectedWeapon, debouncedInvMin, debouncedInvMax, lvlMin, lvlMax, gameTab, lolRank, lolChampMin, lolSkinsMin, fnVbMin, fnSkinsMin, mcJava, mcBedrock, mcHypixelLvlMin, mcCapesMin, mcNoBan, lolRegion, valRegion, lztListOrderBy, debouncedPriceMin, debouncedPriceMax]);
 
   const paramsKey = JSON.stringify(buildParams(1)) + gameTab;
+  useEffect(() => {
+    lastUserListInteractionAtRef.current = Date.now();
+  }, [paramsKey]);
+  useEffect(() => {
+    lastGameTabChangeAtRef.current = Date.now();
+  }, [gameTab]);
+
+  const fetchAccountsRawTracked = useCallback(
+    async (
+      params: Record<string, string | string[]>,
+      signal?: AbortSignal,
+    ): Promise<LztMarketListResponse> => {
+      listMarketInFlightRef.current += 1;
+      try {
+        return await fetchAccountsRaw(params, signal);
+      } finally {
+        listMarketInFlightRef.current = Math.max(0, listMarketInFlightRef.current - 1);
+      }
+    },
+    [],
+  );
+
   // Debounce: busca por título (280ms desktop / ~480ms touch ou rede lenta), inventário Valorant (420ms), faixa de preço. Resto dispara fetch na hora.
   const nonSearchParamsKey = useMemo(
     () =>
@@ -1045,7 +1076,7 @@ const Contas = () => {
       if (controller.signal.aborted) throw new Error("aborted");
       const attemptSignal = createAttemptSignal(controller.signal, lightDevice ? 9000 : 12000);
       try {
-        return await fetchAccountsRaw(params, attemptSignal.signal);
+        return await fetchAccountsRawTracked(params, attemptSignal.signal);
       } catch (err: unknown) {
         const errName = errorName(err);
         const parentAborted = controller.signal.aborted;
@@ -1075,7 +1106,7 @@ const Contas = () => {
     }
     throw new Error("fetchWithRetry: retries exhausted");
   },
-    [lightDevice],
+    [lightDevice, fetchAccountsRawTracked],
   );
 
   const fetchMultiplePages = useCallback(async (controller: AbortController) => {
@@ -1227,6 +1258,8 @@ const Contas = () => {
     const runId = prefetchRunIdRef.current;
 
     if (!canRunAdjacentPrefetch) return;
+    if (listMarketInFlightRef.current > 0) return;
+    if (Date.now() - lastUserListInteractionAtRef.current < CONTAS_PREFETCH_STABLE_WINDOW_MS) return;
 
     // Only prefetch the *next* tab in fixed order (cuts ~3× background list egress vs warming all three).
     const tabOrder: GameTab[] = ["valorant", "lol", "fortnite", "minecraft"];
@@ -1249,9 +1282,11 @@ const Contas = () => {
 
     const timeoutId = setTimeout(() => {
       if (runId !== prefetchRunIdRef.current) return;
+      if (listMarketInFlightRef.current > 0) return;
+      if (Date.now() - lastUserListInteractionAtRef.current < CONTAS_PREFETCH_STABLE_WINDOW_MS) return;
       void (async () => {
         try {
-          const data = await fetchAccountsRaw(listParams);
+          const data = await fetchAccountsRawTracked(listParams);
           if (runId !== prefetchRunIdRef.current) return;
           const items: LztItem[] = data?.items ?? [];
           const hasMore = data?.hasNextPage ?? items.length >= 15;
@@ -1260,7 +1295,7 @@ const Contas = () => {
       })();
     }, 0);
     prefetchTimeoutsRef.current.push(timeoutId);
-  }, [gameTab, cacheSet, clearPrefetchTimeouts, canRunAdjacentPrefetch]);
+  }, [gameTab, cacheSet, clearPrefetchTimeouts, canRunAdjacentPrefetch, fetchAccountsRawTracked]);
 
   useEffect(() => () => clearPrefetchTimeouts(), [clearPrefetchTimeouts]);
 
@@ -1295,6 +1330,7 @@ const Contas = () => {
         void (async () => {
           try {
             if (controller.signal.aborted) return;
+            if (Date.now() - lastGameTabChangeAtRef.current < CONTAS_RECONCILE_TAB_GUARD_MS) return;
             const data = await fetchWithRetry(paramsSnapshot, controller);
             if (controller.signal.aborted) return;
             const items: LztItem[] = data?.items ?? [];
