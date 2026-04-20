@@ -9,6 +9,7 @@ import {
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
@@ -187,6 +188,9 @@ const AdminPanel = () => {
                 <Home className="h-4 w-4" />
               </button>
             </SheetTitle>
+            <SheetDescription className="sr-only">
+              Navegacao lateral do painel administrativo.
+            </SheetDescription>
           </SheetHeader>
           <div className="overflow-y-auto h-[calc(100%-60px)] scrollbar-hide">
             <SidebarNav activeTab={activeTab} onSelect={handleTabSelect} />

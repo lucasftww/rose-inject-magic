@@ -23,11 +23,21 @@ export function clearFinanceBulkRpcRestHint(): void {
   } catch {
     /* private mode / SSR */
   }
+  try {
+    localStorage.removeItem(FINANCE_BULK_REST_ONLY_KEY);
+  } catch {
+    /* private mode / SSR */
+  }
 }
 
 function readFinanceBulkRestOnly(): boolean {
   try {
-    return sessionStorage.getItem(FINANCE_BULK_REST_ONLY_KEY) === "1";
+    if (sessionStorage.getItem(FINANCE_BULK_REST_ONLY_KEY) === "1") return true;
+  } catch {
+    /* ignore */
+  }
+  try {
+    return localStorage.getItem(FINANCE_BULK_REST_ONLY_KEY) === "1";
   } catch {
     return false;
   }
@@ -36,6 +46,11 @@ function readFinanceBulkRestOnly(): boolean {
 function writeFinanceBulkRestOnly(): void {
   try {
     sessionStorage.setItem(FINANCE_BULK_REST_ONLY_KEY, "1");
+  } catch {
+    /* ignore */
+  }
+  try {
+    localStorage.setItem(FINANCE_BULK_REST_ONLY_KEY, "1");
   } catch {
     /* ignore */
   }

@@ -77,16 +77,28 @@ async function fetchProductsWithRobot(): Promise<ProductWithRobot[]> {
 
   const stockCounts: Record<string, number> = {};
   if (planIds.length > 0) {
-    const stockPromises = planIds.map(async (planId: string) => {
-      const { count } = await supabase
-        .from("stock_items")
-        .select("id", { count: "exact", head: true })
-        .eq("product_plan_id", planId)
-        .eq("used", false);
-      const productId = planToProduct[planId];
-      if (productId) stockCounts[productId] = (stockCounts[productId] || 0) + (count || 0);
-    });
-    await Promise.all(stockPromises);
+    const CHUNK_SIZE = 200;
+    const chunks: string[][] = [];
+    for (let i = 0; i < planIds.length; i += CHUNK_SIZE) {
+      chunks.push(planIds.slice(i, i + CHUNK_SIZE));
+    }
+    const results = await Promise.all(
+      chunks.map(async (chunk) => {
+        const { data } = await supabase
+          .from("stock_items")
+          .select("product_plan_id")
+          .in("product_plan_id", chunk)
+          .eq("used", false);
+        return data ?? [];
+      }),
+    );
+    for (const row of results.flat()) {
+      const planId = row.product_plan_id;
+      if (!planId) continue;
+      const productId = planToProduct[String(planId)];
+      if (!productId) continue;
+      stockCounts[productId] = (stockCounts[productId] || 0) + 1;
+    }
   }
 
   return products.map((p) => ({
