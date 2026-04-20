@@ -967,6 +967,14 @@ const Contas = () => {
         return await fetchAccountsRaw(params, signal);
       } finally {
         listMarketInFlightRef.current = Math.max(0, listMarketInFlightRef.current - 1);
+        if (listMarketInFlightRef.current === 0) {
+          const queued = queuedListFetchKeyRef.current;
+          if (queued && queued !== listFetchKeyCommittedRef.current) {
+            queuedListFetchKeyRef.current = null;
+            listFetchKeyCommittedRef.current = queued;
+            setListFetchKey(queued);
+          }
+        }
       }
     },
     [],
@@ -1031,6 +1039,7 @@ const Contas = () => {
   const [listFetchKey, setListFetchKey] = useState(paramsKey);
   const listFetchKeyCommittedRef = useRef(paramsKey);
   const listFetchKeyCoalesceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const queuedListFetchKeyRef = useRef<string | null>(null);
   useEffect(() => {
     if (debouncedParamsKey === listFetchKeyCommittedRef.current) return;
     if (listFetchKeyCoalesceTimerRef.current) {
@@ -1039,6 +1048,10 @@ const Contas = () => {
     }
     listFetchKeyCoalesceTimerRef.current = setTimeout(() => {
       listFetchKeyCoalesceTimerRef.current = null;
+      if (listMarketInFlightRef.current > 0) {
+        queuedListFetchKeyRef.current = debouncedParamsKey;
+        return;
+      }
       listFetchKeyCommittedRef.current = debouncedParamsKey;
       setListFetchKey(debouncedParamsKey);
     }, CONTAS_LIST_FETCH_KEY_COALESCE_MS);

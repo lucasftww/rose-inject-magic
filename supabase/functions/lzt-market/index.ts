@@ -885,6 +885,7 @@ Deno.serve(async (req) => {
 
     const shouldCache = action !== "detail" && action !== "fast-buy" && action !== "change-price" && action !== "image-proxy";
     const cacheKey = `${apiUrl}|m=${activeMarkup}|max=${listFetchCapBrl}`;
+    const staleCached = shouldCache ? globalLztCache.get(cacheKey) : null;
     // Align in-memory + CDN TTL with fresh responses (preview 90s, list 75s; detail bypasses this cache)
     const listCacheMaxAge = previewMode ? 90 : 75;
     const listMemoryTtlMs = previewMode ? 90_000 : 75_000;
@@ -966,6 +967,27 @@ Deno.serve(async (req) => {
         fallback: status >= 500 && action !== "detail",
         ...buildPerfSnapshot(reqStartedAt, perfMarks),
       });
+
+      // For 5xx errors on LIST requests (upstream maintenance etc.), return stale cache when available.
+      if (status >= 500 && action !== "detail" && staleCached?.data) {
+        const cachedData = staleCached.data as Record<string, unknown>;
+        return new Response(
+          JSON.stringify({
+            ...cachedData,
+            stale: true,
+            stale_reason: "upstream_error",
+            upstream_status: status,
+          }),
+          {
+            status: 200,
+            headers: {
+              ...corsHeaders,
+              "Content-Type": "application/json",
+              "Cache-Control": listCacheControl,
+            },
+          },
+        );
+      }
 
       // For 5xx errors on LIST requests (upstream maintenance etc.), return 200 with fallback
       // so the Supabase client SDK doesn't throw and the frontend can handle gracefully.
