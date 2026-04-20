@@ -25,9 +25,11 @@ const LZT_ALLOWED_IMAGE_DOMAINS = [
 ];
 const RETRYABLE_STATUSES = [429, 502, 503, 504, 524];
 /** Evita que o isolate fique à espera indefinidamente da LZT (origem típica de 504 no gateway Supabase). */
-const LZT_LIST_FETCH_TIMEOUT_MS = 8_000;
+const LZT_LIST_PAGE1_FETCH_TIMEOUT_MS = 8_000;
+const LZT_LIST_PAGE_N_FETCH_TIMEOUT_MS = 6_500;
 const LZT_DETAIL_FETCH_TIMEOUT_MS = 12_000;
-const LZT_LIST_FETCH_MAX_ATTEMPTS = 2;
+const LZT_LIST_PAGE1_FETCH_MAX_ATTEMPTS = 2;
+const LZT_LIST_PAGE_N_FETCH_MAX_ATTEMPTS = 1;
 const LZT_DETAIL_FETCH_MAX_ATTEMPTS = 2;
 /** Em produção, evita ruído: logs INFO de performance só para requests lentos. */
 const PERF_LOG_THRESHOLD_MS = 1200;
@@ -250,14 +252,23 @@ async function dedupedLztListFetch(apiUrl: string, token: string, dedupeKey: str
   let p = inflightRawLztFetch.get(dedupeKey);
   if (!p) {
     p = (async (): Promise<Response> => {
+      let page = 1;
+      try {
+        page = Math.max(1, Number(new URL(apiUrl).searchParams.get("page") || "1"));
+      } catch {
+        page = 1;
+      }
+      const isFirstPage = page <= 1;
+      const maxAttempts = isFirstPage ? LZT_LIST_PAGE1_FETCH_MAX_ATTEMPTS : LZT_LIST_PAGE_N_FETCH_MAX_ATTEMPTS;
+      const timeoutMs = isFirstPage ? LZT_LIST_PAGE1_FETCH_TIMEOUT_MS : LZT_LIST_PAGE_N_FETCH_TIMEOUT_MS;
       let response: Response | null = null;
-      for (let attempt = 0; attempt < LZT_LIST_FETCH_MAX_ATTEMPTS; attempt++) {
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
         if (attempt > 0) {
           const delay = 350 * Math.pow(2, attempt - 1);
           await new Promise((r) => setTimeout(r, delay));
         }
         try {
-          response = await fetchLztOnce(apiUrl, token, LZT_LIST_FETCH_TIMEOUT_MS);
+          response = await fetchLztOnce(apiUrl, token, timeoutMs);
         } catch (e) {
           console.warn(`LZT list fetch attempt ${attempt + 1} failed:`, e);
           response = new Response("LZT upstream timeout or network error", { status: 504 });
