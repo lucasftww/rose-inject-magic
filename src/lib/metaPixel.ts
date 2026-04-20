@@ -10,7 +10,7 @@ import { supabase, supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/
  *
  * Events (ativos): PageView (1× load inicial em `index.html` + 1× por navegação SPA em `RouteTracker`), InitiateCheckout, Purchase.
  * `disablePushState` no head evita o PageView *automático* da Meta em cada `history.pushState`; o nosso `trackSpaPageView()` dispara só quando a rota muda.
- * Segmentação: `section` + `content_category` em custom_data (sem eventos trackCustom espelho).
+ * Contas (`/contas`): `trackCustom` com nomes fixos (`IC_SECTION_CONTAS`, `IC_CATEGORY_*`) para Conversões Personalizadas no Events Manager; checkout continua com `custom_data` em eventos standard.
  * Categories: Valorant, Fortnite, Roblox, Minecraft, LoL, CS2, GTA
  *
  * user_data sent to CAPI:
@@ -69,6 +69,45 @@ export function trackSpaPageView(): void {
     window.fbq("track", "PageView");
   } catch (e: unknown) {
     devLog("trackSpaPageView failed", e);
+  }
+}
+
+/** Abas de jogo na página Contas — nomes alinhados ao Pixel (Events Manager → Eventos personalizados). */
+export type ContasGameTabForPixel = "valorant" | "lol" | "fortnite" | "minecraft";
+
+const IC_CATEGORY_EVENT_BY_TAB: Record<ContasGameTabForPixel, string> = {
+  valorant: "IC_CATEGORY_VALORANT",
+  lol: "IC_CATEGORY_LOL",
+  fortnite: "IC_CATEGORY_FORTNITE",
+  minecraft: "IC_CATEGORY_MINECRAFT",
+};
+
+/** Uma vez por visita à secção Contas — alimenta conversões/regras que usam `IC_SECTION_CONTAS`. */
+export function trackContasSectionCustomEvent(): void {
+  if (typeof window === "undefined" || !window.fbq) return;
+  try {
+    window.fbq("trackCustom", "IC_SECTION_CONTAS", {
+      section: "contas",
+      content_name: "Contas",
+    });
+  } catch (e: unknown) {
+    devLog("trackContasSectionCustomEvent failed", e);
+  }
+}
+
+/** Troca de aba Valorant / LoL / Fortnite / Minecraft — alimenta `IC_CATEGORY_FORTNITE`, etc. */
+export function trackContasCategoryCustomEvent(tab: ContasGameTabForPixel): void {
+  if (typeof window === "undefined" || !window.fbq) return;
+  const eventName = IC_CATEGORY_EVENT_BY_TAB[tab];
+  if (!eventName) return;
+  try {
+    window.fbq("trackCustom", eventName, {
+      section: "contas",
+      content_category: tab,
+      content_name: tab === "valorant" ? "Contas Valorant" : tab === "lol" ? "Contas LoL" : tab === "fortnite" ? "Contas Fortnite" : "Contas Minecraft",
+    });
+  } catch (e: unknown) {
+    devLog("trackContasCategoryCustomEvent failed", e);
   }
 }
 

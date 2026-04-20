@@ -346,6 +346,19 @@ const Contas = () => {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, []);
 
+  // Meta Pixel: conversões personalizadas "IC - Contas - *" dependem de trackCustom (IC_SECTION_CONTAS + IC_CATEGORY_*).
+  useEffect(() => {
+    void import("@/lib/metaPixel").then(({ trackContasSectionCustomEvent }) => {
+      trackContasSectionCustomEvent();
+    });
+  }, []);
+
+  useEffect(() => {
+    void import("@/lib/metaPixel").then(({ trackContasCategoryCustomEvent }) => {
+      trackContasCategoryCustomEvent(gameTab);
+    });
+  }, [gameTab]);
+
   // Console: localhost sempre; produção com `?perf=1` (ex.: medir chunk vs lzt-market em royalstorebr.com).
   useEffect(() => {
     if (!isContasPerfDiagEnabled()) return;
