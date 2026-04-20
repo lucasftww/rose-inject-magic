@@ -266,6 +266,10 @@ function lztTokenFromCredentialRows(rows: unknown[] | null | undefined): string 
 /** Short TTL: image-proxy runs very often; avoid hitting DB on every <img> request. */
 let lztTokenMemoryCache: { token: string; expiry: number } | null = null;
 const LZT_TOKEN_MEMORY_TTL_MS = 5 * 60 * 1000;
+let lztConfigMemoryCache: { data: Record<string, unknown> | null; expiry: number } | null = null;
+const LZT_CONFIG_MEMORY_TTL_MS = 60 * 1000;
+const lztPriceOverrideMemoryCache = new Map<string, { value: number | null; expiry: number }>();
+const LZT_OVERRIDE_MEMORY_TTL_MS = 60 * 1000;
 
 async function resolveLztTokenMinimal(supabaseUrl: string, serviceRoleKey: string): Promise<string> {
   const now = Date.now();
@@ -287,6 +291,73 @@ async function resolveLztTokenMinimal(supabaseUrl: string, serviceRoleKey: strin
     lztTokenMemoryCache = { token, expiry: now + LZT_TOKEN_MEMORY_TTL_MS };
   }
   return token;
+}
+
+async function resolveLztConfigMinimal(
+  supabaseUrl: string,
+  serviceRoleKey: string,
+): Promise<Record<string, unknown> | null> {
+  const now = Date.now();
+  if (lztConfigMemoryCache && lztConfigMemoryCache.expiry > now) {
+    return lztConfigMemoryCache.data;
+  }
+  const admin = createClient(supabaseUrl, serviceRoleKey);
+  const { data } = await admin
+    .from("lzt_config")
+    .select("max_fetch_price, currency, markup_multiplier, markup_valorant, markup_lol, markup_fortnite, markup_minecraft")
+    .limit(1)
+    .maybeSingle();
+  const out = (data || null) as Record<string, unknown> | null;
+  lztConfigMemoryCache = { data: out, expiry: now + LZT_CONFIG_MEMORY_TTL_MS };
+  return out;
+}
+
+async function resolvePriceOverridesByItemIds(
+  supabaseAdmin: ReturnType<typeof createClient>,
+  itemIds: string[],
+): Promise<Map<string, number>> {
+  const now = Date.now();
+  const out = new Map<string, number>();
+  const missing: string[] = [];
+  for (const id of itemIds) {
+    const cached = lztPriceOverrideMemoryCache.get(id);
+    if (cached && cached.expiry > now) {
+      if (typeof cached.value === "number" && Number.isFinite(cached.value) && cached.value > 0) {
+        out.set(id, cached.value);
+      }
+    } else {
+      missing.push(id);
+    }
+  }
+
+  if (missing.length > 0) {
+    const { data: overridesData } = await supabaseAdmin
+      .from("lzt_price_overrides")
+      .select("lzt_item_id, custom_price_brl")
+      .in("lzt_item_id", missing);
+
+    const fromDb = new Map<string, number>();
+    for (const override of overridesData || []) {
+      const id = String((override as { lzt_item_id?: unknown }).lzt_item_id || "");
+      const v = Number((override as { custom_price_brl?: unknown }).custom_price_brl);
+      if (id && Number.isFinite(v) && v > 0) fromDb.set(id, v);
+    }
+    for (const id of missing) {
+      const v = fromDb.get(id);
+      lztPriceOverrideMemoryCache.set(id, {
+        value: typeof v === "number" && Number.isFinite(v) && v > 0 ? v : null,
+        expiry: now + LZT_OVERRIDE_MEMORY_TTL_MS,
+      });
+      if (typeof v === "number" && Number.isFinite(v) && v > 0) out.set(id, v);
+    }
+  }
+
+  // Bound memory for long-lived isolates.
+  if (lztPriceOverrideMemoryCache.size > 4000) {
+    const oldestKey = lztPriceOverrideMemoryCache.keys().next().value;
+    if (oldestKey) lztPriceOverrideMemoryCache.delete(oldestKey);
+  }
+  return out;
 }
 
 function rememberLztToken(token: string) {
@@ -412,18 +483,10 @@ Deno.serve(async (req) => {
     // FX em background: NÃO await com credenciais — `Promise.all` com awesomeapi atrasava até 5s a 1ª ida à LZT (cold start + ads direto em /contas).
     void updateRates();
 
-    const [lztCredsRes, lztConfigRow] = await Promise.all([
-      supabaseAdmin.from("system_credentials").select("env_key, value").in("env_key", ["LZT_API_TOKEN", "LZT_MARKET_TOKEN"]),
-      supabaseAdmin.from("lzt_config").select("max_fetch_price, currency, markup_multiplier, markup_valorant, markup_lol, markup_fortnite, markup_minecraft").limit(1).maybeSingle(),
+    const [token, lztConfig] = await Promise.all([
+      resolveLztTokenMinimal(supabaseUrl, serviceRoleKey),
+      resolveLztConfigMinimal(supabaseUrl, serviceRoleKey),
     ]);
-
-    const tokenFromDb = lztTokenFromCredentialRows(lztCredsRes?.data);
-
-    const token =
-      tokenFromDb ||
-      Deno.env.get("LZT_MARKET_TOKEN")?.trim() ||
-      Deno.env.get("LZT_API_TOKEN")?.trim() ||
-      "";
 
     if (!token) {
       console.error("LZT token missing: configure system_credentials or LZT_MARKET_TOKEN / LZT_API_TOKEN secret");
@@ -575,9 +638,6 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    // lzt_config already fetched in parallel at startup
-    const lztConfig = lztConfigRow.data;
 
     // Compute per-game markup from DB (used for both list and detail)
     let activeMarkup = DEFAULT_MARKUP;
@@ -939,20 +999,9 @@ Deno.serve(async (req) => {
       });
 
       const preIds = passAvailability.map((item: LztItem) => String(item.item_id)).filter(Boolean);
-      const overrideMap = new Map<string, number>();
-      if (preIds.length > 0) {
-        const { data: overridesData } = await supabaseAdmin
-          .from("lzt_price_overrides")
-          .select("lzt_item_id, custom_price_brl")
-          .in("lzt_item_id", preIds);
-
-        if (overridesData) {
-          for (const override of overridesData) {
-            const v = Number(override.custom_price_brl);
-            if (Number.isFinite(v) && v > 0) overrideMap.set(String(override.lzt_item_id), v);
-          }
-        }
-      }
+      const overrideMap = preIds.length > 0
+        ? await resolvePriceOverridesByItemIds(supabaseAdmin, preIds)
+        : new Map<string, number>();
 
       data.items = passAvailability.filter((item: LztItem) => {
         const oid = String(item.item_id);
@@ -1087,15 +1136,8 @@ Deno.serve(async (req) => {
 
       // Check for price override first
       const detailItemId = String(data.item.item_id);
-      const { data: overrideRow } = await supabaseAdmin
-        .from("lzt_price_overrides")
-        .select("custom_price_brl")
-        .eq("lzt_item_id", detailItemId)
-        .maybeSingle();
-
-      const overridePrice = overrideRow && Number(overrideRow.custom_price_brl) > 0
-        ? Number(overrideRow.custom_price_brl)
-        : undefined;
+      const detailOverrideMap = await resolvePriceOverridesByItemIds(supabaseAdmin, [detailItemId]);
+      const overridePrice = detailOverrideMap.get(detailItemId);
 
       const detailFxRates = { rub: RUB_TO_BRL, usd: USD_TO_BRL };
       data.item.price_brl = getDisplayedPriceBrl(data.item, overridePrice, gameType, activeMarkup, detailFxRates);
