@@ -287,6 +287,8 @@ const fetchLolChampKeyMap = async (): Promise<Map<number, string>> => {
 
 /** Após mostrar lista do prefetch na troca de aba: atrasa o GET de reconciliação para não competir com paint/chunk. */
 const CONTAS_RECONCILE_AFTER_PREFETCH_MS = 450;
+/** Prefetch de aba adjacente só depois de estabilizar a interação inicial. */
+const CONTAS_ADJACENT_PREFETCH_DELAY_MS = 1800;
 
 const Contas = () => {
   const queryClient = useQueryClient();
@@ -1165,6 +1167,55 @@ const Contas = () => {
   const prefetchTimeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const prefetchRunIdRef = useRef(0);
 
+  const canRunAdjacentPrefetch = useMemo(() => {
+    if (lightDevice) return false;
+    if (searchQuery.trim() !== "") return false;
+    if (sortBy !== "pdate_to_down") return false;
+    if (priceMin || priceMax || invMin || invMax || lvlMin || lvlMax) return false;
+
+    if (gameTab === "valorant") {
+      return selectedRank === "todos" && selectedWeapon === "todos" && !onlyKnife && valRegion === "br";
+    }
+    if (gameTab === "lol") {
+      return lolRank === "todos" && lolRegion === "BR1" && !lolChampMin && !lolSkinsMin;
+    }
+    if (gameTab === "fortnite") {
+      return !fnVbMin && !fnSkinsMin && !fnLevelMin && !fnHasBattlePass;
+    }
+    if (gameTab === "minecraft") {
+      return !mcJava && !mcBedrock && !mcHypixelLvlMin && !mcCapesMin && !mcNoBan;
+    }
+    return true;
+  }, [
+    lightDevice,
+    searchQuery,
+    sortBy,
+    priceMin,
+    priceMax,
+    invMin,
+    invMax,
+    lvlMin,
+    lvlMax,
+    gameTab,
+    selectedRank,
+    selectedWeapon,
+    onlyKnife,
+    valRegion,
+    lolRank,
+    lolRegion,
+    lolChampMin,
+    lolSkinsMin,
+    fnVbMin,
+    fnSkinsMin,
+    fnLevelMin,
+    fnHasBattlePass,
+    mcJava,
+    mcBedrock,
+    mcHypixelLvlMin,
+    mcCapesMin,
+    mcNoBan,
+  ]);
+
   const clearPrefetchTimeouts = useCallback(() => {
     prefetchTimeoutsRef.current.forEach(clearTimeout);
     prefetchTimeoutsRef.current = [];
@@ -1175,7 +1226,7 @@ const Contas = () => {
     prefetchRunIdRef.current += 1;
     const runId = prefetchRunIdRef.current;
 
-    if (lightDevice) return;
+    if (!canRunAdjacentPrefetch) return;
 
     // Only prefetch the *next* tab in fixed order (cuts ~3× background list egress vs warming all three).
     const tabOrder: GameTab[] = ["valorant", "lol", "fortnite", "minecraft"];
@@ -1209,7 +1260,7 @@ const Contas = () => {
       })();
     }, 0);
     prefetchTimeoutsRef.current.push(timeoutId);
-  }, [gameTab, cacheSet, clearPrefetchTimeouts, lightDevice]);
+  }, [gameTab, cacheSet, clearPrefetchTimeouts, canRunAdjacentPrefetch]);
 
   useEffect(() => () => clearPrefetchTimeouts(), [clearPrefetchTimeouts]);
 
@@ -1289,7 +1340,7 @@ const Contas = () => {
   // Trigger prefetch after initial load completes (delayed so quick bounces do not pull extra list JSON)
   useEffect(() => {
     if (firstPageLoaded && streamedItems.length > 0) {
-      const timer = setTimeout(prefetchAdjacentTabs, 900);
+      const timer = setTimeout(prefetchAdjacentTabs, CONTAS_ADJACENT_PREFETCH_DELAY_MS);
       return () => clearTimeout(timer);
     }
   }, [firstPageLoaded, gameTab, prefetchAdjacentTabs]); // eslint-disable-line react-hooks/exhaustive-deps

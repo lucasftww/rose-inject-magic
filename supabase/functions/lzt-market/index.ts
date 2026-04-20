@@ -91,8 +91,8 @@ function trimLolInventoryForList(inv: Record<string, unknown>): void {
 }
 
 /** Lista Fortnite: `fortniteSkins` pode ter centenas de entradas → MB de JSON; o card usa ~6 após sort no cliente. */
-const FN_LIST_SKINS_MAX = 96;
-const FN_LIST_PICKAXES_MAX = 36;
+const FN_LIST_SKINS_MAX = 72;
+const FN_LIST_PICKAXES_MAX = 24;
 
 function trimFortniteListPayloadForList(item: LztItem): void {
   const skins = item.fortniteSkins;
