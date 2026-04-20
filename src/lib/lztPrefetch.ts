@@ -41,8 +41,28 @@ export function notifyLztAccountDetailGone(gameType: string, itemId: string | nu
 
 const detailPrefetchInFlight = new Set<string>();
 
-/** Atraso antes do GET: reduz pedidos 410 ao cruzar a grelha sem intenção de abrir o detalhe. */
-const PREFETCH_HOVER_MS = 420;
+/** Atraso antes do GET: reduz 410 e rajadas ao cruzar a grelha sem intenção de abrir o detalhe. */
+const PREFETCH_HOVER_MS = 520;
+
+/** Limita GET `detail` em paralelo ao pairar vários cards (Network “Finish” e carga LZT). */
+const PREFETCH_MAX_PARALLEL = 2;
+let prefetchParallelActive = 0;
+const prefetchParallelWaiters: Array<() => void> = [];
+
+async function acquireDetailPrefetchSlot(): Promise<void> {
+  while (prefetchParallelActive >= PREFETCH_MAX_PARALLEL) {
+    await new Promise<void>((resolve) => {
+      prefetchParallelWaiters.push(resolve);
+    });
+  }
+  prefetchParallelActive += 1;
+}
+
+function releaseDetailPrefetchSlot(): void {
+  prefetchParallelActive -= 1;
+  prefetchParallelWaiters.shift()?.();
+}
+
 const prefetchHoverTimers = new Map<string, number>();
 
 async function runDetailPrefetch(
@@ -52,6 +72,7 @@ async function runDetailPrefetch(
   dedupeKey: string,
   key: readonly ["lzt-account-detail", string, string],
 ): Promise<void> {
+  await acquireDetailPrefetchSlot();
   detailPrefetchInFlight.add(dedupeKey);
   try {
     await queryClient.prefetchQuery({
@@ -63,6 +84,7 @@ async function runDetailPrefetch(
     if (isLztDetailHttpError(e, 410)) notifyLztAccountDetailGone(gameType, id);
   } finally {
     detailPrefetchInFlight.delete(dedupeKey);
+    releaseDetailPrefetchSlot();
   }
 }
 
@@ -72,6 +94,13 @@ export const prefetchAccountDetail = (
   gameType: string,
   itemId: string | number,
 ) => {
+  if (typeof navigator !== "undefined") {
+    const conn = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } })
+      .connection;
+    if (conn?.saveData) return;
+    if (conn?.effectiveType === "2g" || conn?.effectiveType === "slow-2g") return;
+  }
+
   const id = String(itemId);
   const key = lztAccountDetailQueryKey(gameType, id);
   const dedupeKey = `${gameType}:${id}`;
