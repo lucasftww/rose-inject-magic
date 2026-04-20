@@ -16,6 +16,26 @@
     <link rel="dns-prefetch" href="https://fortnite-api.com" />
     <link rel="dns-prefetch" href="https://ddragon.leagueoflegends.com" />
     <link rel="dns-prefetch" href="https://cdn.utmify.com.br" />
+    <script>
+      (function () {
+        try {
+          var raw = String("%VITE_SUPABASE_URL%").trim();
+          if (!raw || raw === "%VITE_SUPABASE_URL%") return;
+          var origin = new URL(raw).origin;
+
+          var preconnect = document.createElement("link");
+          preconnect.rel = "preconnect";
+          preconnect.href = origin;
+          preconnect.crossOrigin = "";
+          document.head.appendChild(preconnect);
+
+          var dnsPrefetch = document.createElement("link");
+          dnsPrefetch.rel = "dns-prefetch";
+          dnsPrefetch.href = origin;
+          document.head.appendChild(dnsPrefetch);
+        } catch (e) {}
+      })();
+    </script>
     <link rel="canonical" href="/" id="canonical-link" />
     <script>document.addEventListener('DOMContentLoaded',function(){document.getElementById('canonical-link').href=location.origin+location.pathname})</script>
 
