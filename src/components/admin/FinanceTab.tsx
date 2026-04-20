@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, lazy, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -24,13 +24,9 @@ import type { OrderTicketMetadata } from "@/types/orderTicketMetadata";
 import {
   Loader2, DollarSign, TrendingUp, TrendingDown,
   Download, Wallet, Users, ArrowUp, ArrowDown, Minus, Gamepad2,
-  Receipt, BarChart3, CalendarDays, Package, Zap, RefreshCw,
+  Receipt, BarChart3, Zap, RefreshCw,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import {
-  PieChart as RechartsPie, Pie, Cell, Tooltip, ResponsiveContainer,
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, AreaChart, Area, Legend
-} from "recharts";
 
 type PaymentRow = AdminPaymentFinanceRow;
 type LztSale = AdminLztSaleBulkRow;
@@ -51,6 +47,7 @@ interface RobotTicket {
 }
 
 type Period = "24h" | "7d" | "30d" | "all";
+const FinanceCharts = lazy(() => import("@/components/admin/FinanceCharts"));
 
 const PERIOD_OPTIONS = [
   ["24h", "24h"],
@@ -272,6 +269,7 @@ const FinanceTab = () => {
   const usdToBrl = data?.usdToBrl ?? 5.16;
   const rollups = data?.rollups ?? null;
   const [period, setPeriod] = useState<Period>("24h");
+  const [chartsReady, setChartsReady] = useState(false);
 
   // ─── Filtered data ───
   const fp = useMemo(() => filterByPeriod(payments, period), [payments, period]);
@@ -509,6 +507,20 @@ const FinanceTab = () => {
     if (w) { w.document.write(html); w.document.close(); setTimeout(() => w.print(), 500); }
   };
 
+  useEffect(() => {
+    let cancelled = false;
+    const run = () => {
+      if (!cancelled) setChartsReady(true);
+    };
+    const useIdle = typeof window.requestIdleCallback === "function" && typeof window.cancelIdleCallback === "function";
+    const id = useIdle ? window.requestIdleCallback(run, { timeout: 1400 }) : window.setTimeout(run, 220);
+    return () => {
+      cancelled = true;
+      if (useIdle) window.cancelIdleCallback(id as number);
+      else window.clearTimeout(id as number);
+    };
+  }, []);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -603,65 +615,39 @@ const FinanceTab = () => {
         <StatCard icon={<DollarSign className="h-4 w-4 text-info" />} label="Câmbio USD→BRL" value={`R$ ${usdToBrl.toFixed(2)}`} />
       </div>
 
-      {/* Daily Revenue Chart */}
-      {dailyData.length > 0 && (
-        <div className="rounded-xl border border-border bg-card p-5">
-          <h3 className="text-sm font-bold text-foreground flex items-center gap-2 mb-4">
-            <CalendarDays className="h-4 w-4 text-success" />
-            {period === "24h" ? "Movimentação por Hora" : "Movimentação Diária"}
-          </h3>
-          <ResponsiveContainer width="100%" height={220}>
-            <AreaChart data={dailyData}>
-              <defs>
-                <linearGradient id="gradReceita" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="hsl(197,100%,50%)" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="hsl(197,100%,50%)" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(0,0%,18%)" />
-              <XAxis dataKey="date" tick={{ fill: "hsl(0,0%,55%)", fontSize: 10 }} interval="preserveStartEnd" />
-              <YAxis tick={{ fill: "hsl(0,0%,55%)", fontSize: 10 }} />
-              <Tooltip {...CHART_TOOLTIP} formatter={(value: number) => [`R$ ${fmt(value)}`]} />
-              <Area type="monotone" dataKey="receita" name="Receita" stroke="hsl(197,100%,50%)" fill="url(#gradReceita)" strokeWidth={2} />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
+      {chartsReady ? (
+        <Suspense fallback={<div className="rounded-xl border border-border bg-card p-5 h-[220px] animate-pulse" />}>
+          <FinanceCharts
+            section="daily"
+            period={period}
+            dailyData={dailyData}
+            revenuePieData={revenuePieData}
+            colors={COLORS}
+            chartTooltip={CHART_TOOLTIP}
+            fmt={fmt}
+          />
+        </Suspense>
+      ) : (
+        <div className="rounded-xl border border-border bg-card p-5 h-[220px] animate-pulse" />
       )}
 
       {/* Revenue breakdown + details */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        {/* Pie: Revenue by source */}
-        <div className="rounded-xl border border-border bg-card p-5">
-          <h3 className="text-sm font-bold text-foreground flex items-center gap-2 mb-4">
-            <Package className="h-4 w-4 text-success" />
-            Distribuição por Fonte
-          </h3>
-          {revenuePieData.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">Sem dados</p>
-          ) : (
-            <>
-              <ResponsiveContainer width="100%" height={180}>
-                <RechartsPie>
-                  <Pie data={revenuePieData} cx="50%" cy="50%" innerRadius={50} outerRadius={72} paddingAngle={4} dataKey="value">
-                    {revenuePieData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                  </Pie>
-                  <Tooltip {...CHART_TOOLTIP} formatter={(value: number, name: string) => [`R$ ${fmt(value)}`, name]} />
-                </RechartsPie>
-              </ResponsiveContainer>
-              <div className="mt-3 space-y-1.5">
-                {revenuePieData.map((d, i) => (
-                  <div key={d.name} className="flex items-center justify-between text-xs">
-                    <span className="flex items-center gap-2">
-                      <span className="h-2.5 w-2.5 rounded-full" style={{ background: COLORS[i % COLORS.length] }} />
-                      <span className="text-muted-foreground">{d.name}</span>
-                    </span>
-                    <span className="font-bold text-foreground">R$ {fmt(d.value)}</span>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
+        {chartsReady ? (
+          <Suspense fallback={<div className="rounded-xl border border-border bg-card p-5 h-[220px] animate-pulse" />}>
+            <FinanceCharts
+              section="pie"
+              period={period}
+              dailyData={dailyData}
+              revenuePieData={revenuePieData}
+              colors={COLORS}
+              chartTooltip={CHART_TOOLTIP}
+              fmt={fmt}
+            />
+          </Suspense>
+        ) : (
+          <div className="rounded-xl border border-border bg-card p-5 h-[220px] animate-pulse" />
+        )}
 
         {/* Profit by source */}
         <div className="rounded-xl border border-border bg-card p-5 space-y-4">
