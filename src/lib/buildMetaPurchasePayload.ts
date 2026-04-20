@@ -1,6 +1,31 @@
 import type { CartItem } from "@/hooks/useCart";
 import { normalizeGameSlug } from "@/lib/gameSlug";
 
+/**
+ * Carrinhos antigos / snapshots sem `lztGame` falhavam a regra da Meta:
+ * InitiateCheckout + `section` contém "contas" + `content_category` contém "fortnite".
+ */
+function inferLztAccountCategoryFromProductName(productName: unknown): string | null {
+  if (typeof productName !== "string") return null;
+  const n = productName
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+  if (!n.trim()) return null;
+  if (/\bfortnite\b|v-?bucks|vbucks|battle\s*royale/.test(n)) return "fortnite";
+  if (/\bminecraft\b|hypixel|minecoins?|skyblock/.test(n)) return "minecraft";
+  if (/\bleague\s+of\s+legends\b|\blol\b|champion|summoner/.test(n)) return "lol";
+  if (/\bvalorant\b|radiante|radiant|immortal|\bvp\b|vandal|phantom/.test(n)) return "valorant";
+  return null;
+}
+
+function gameCategorySlugForMetaItem(item: CartItem): string | null {
+  const fromFields = normalizeGameSlug(item.lztGame || item.gameName);
+  if (fromFields) return fromFields;
+  if (item.type === "lzt-account") return inferLztAccountCategoryFromProductName(item.productName);
+  return null;
+}
+
 /** Fingerprint estável do carrinho para deduplicar `InitiateCheckout` (localStorage partilhado entre abas, TTL 7d em `metaPixel`). */
 export function buildCartFingerprintForMetaIc(
   items: Pick<CartItem, "productId" | "quantity" | "price">[],
@@ -44,10 +69,8 @@ export function buildMetaPurchasePayloadFromCartItems(
           return joined.length <= 500 ? joined : `${items.length} produtos — ${joined.slice(0, 420)}…`;
         })();
 
-  // Derive a stable content_category slug from cart items.
-  const gameNames = items
-    .map((i) => normalizeGameSlug(i.lztGame || i.gameName))
-    .filter((g): g is string => !!g);
+  // Derive a stable content_category slug from cart items (campos + inferência por nome).
+  const gameNames = items.map((i) => gameCategorySlugForMetaItem(i)).filter((g): g is string => !!g);
   const uniqueGames = [...new Set(gameNames)];
   const contentCategory = uniqueGames.length === 1
     ? uniqueGames[0]

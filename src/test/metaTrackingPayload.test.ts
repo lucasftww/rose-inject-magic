@@ -86,11 +86,27 @@ describe("Meta IC/Purchase — section + content_category (regras Events Manager
 
   it("conta sem lztGame nem gameName → sem contentCategory (só section contas)", () => {
     const p = buildMetaPurchasePayloadFromCartItems(
-      [makeLztAccount({ lztGame: undefined, gameName: undefined })],
+      [makeLztAccount({ lztGame: undefined, gameName: undefined, productName: "Conta teste" })],
       50,
     );
     expect(p).not.toBeNull();
     expect(p!.section).toBe("contas");
     expect(p!.contentCategory).toBeUndefined();
+  });
+
+  it("conta sem lztGame mas productName com Fortnite → content_category=fortnite (regra Meta IC)", () => {
+    const p = buildMetaPurchasePayloadFromCartItems(
+      [
+        makeLztAccount({
+          lztGame: undefined,
+          gameName: undefined,
+          productName: "Conta Fortnite — 120 skins · nível 250",
+        }),
+      ],
+      199,
+    );
+    expect(p).not.toBeNull();
+    expect(p!.section).toBe("contas");
+    expect(p!.contentCategory).toBe("fortnite");
   });
 });

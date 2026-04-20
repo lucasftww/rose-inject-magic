@@ -21,7 +21,9 @@ import { supabase, supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/
  *   external_id            — SHA-256 hashed user ID (or hashed first-party tracking ID for anonymous)
  *   country                — "br" (hashed) for all users
  *
- * InitiateCheckout: só na página `/checkout` (não nas páginas de produto/conta).
+ * InitiateCheckout: só na página `/checkout` (não nas páginas de produto/conta). Inclui sempre `section` e,
+ * quando possível, `content_category` (slug) — conversões personalizadas tipo “IC - Contas - Fortnite” na Meta
+ * usam este evento com regras em `section` + `content_category`, não `trackCustom` na listagem.
  * Deduplication:
  *   InitiateCheckout → random event_id (Pixel + CAPI via relay) + localStorage por fingerprint do carrinho
  *     (partilhado entre abas; TTL 7d para o mesmo carrinho não poluir se voltar logo)
