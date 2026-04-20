@@ -219,6 +219,8 @@ type ValorantApiRow = Record<string, unknown>;
 let weaponSkinsCatalogCache: { data: ValorantApiRow[]; expiry: number } | null = null;
 let skinLevelsCatalogCache: { data: ValorantApiRow[]; expiry: number } | null = null;
 let skinChromasCatalogCache: { data: ValorantApiRow[]; expiry: number } | null = null;
+let agentsCatalogCache: { data: ValorantApiRow[]; expiry: number } | null = null;
+let buddiesCatalogCache: { data: ValorantApiRow[]; expiry: number } | null = null;
 
 async function getWeaponSkinsCatalog(): Promise<ValorantApiRow[]> {
   const now = Date.now();
@@ -257,6 +259,32 @@ async function getSkinChromasCatalog(): Promise<ValorantApiRow[]> {
   const data = Array.isArray(json.data) ? json.data : [];
   skinChromasCatalogCache = { data: data as ValorantApiRow[], expiry: now + VALORANT_API_CACHE_MS };
   return data;
+}
+
+async function getAgentsCatalog(): Promise<ValorantApiRow[]> {
+  const now = Date.now();
+  if (agentsCatalogCache && agentsCatalogCache.expiry > now) {
+    return agentsCatalogCache.data;
+  }
+  const res = await fetch("https://valorant-api.com/v1/agents?isPlayableCharacter=true&language=pt-BR");
+  if (!res.ok) return [];
+  const json = await res.json();
+  const data = Array.isArray(json.data) ? json.data : [];
+  agentsCatalogCache = { data: data as ValorantApiRow[], expiry: now + VALORANT_API_CACHE_MS };
+  return data as ValorantApiRow[];
+}
+
+async function getBuddiesCatalog(): Promise<ValorantApiRow[]> {
+  const now = Date.now();
+  if (buddiesCatalogCache && buddiesCatalogCache.expiry > now) {
+    return buddiesCatalogCache.data;
+  }
+  const res = await fetch("https://valorant-api.com/v1/buddies?language=pt-BR");
+  if (!res.ok) return [];
+  const json = await res.json();
+  const data = Array.isArray(json.data) ? json.data : [];
+  buddiesCatalogCache = { data: data as ValorantApiRow[], expiry: now + VALORANT_API_CACHE_MS };
+  return data as ValorantApiRow[];
 }
 
 // Fetch skin details from valorant-api.com
@@ -386,9 +414,7 @@ type SimpleGalleryItem = {
 };
 
 const fetchValorantAgents = async (uuids: string[]): Promise<SimpleGalleryItem[]> => {
-  const res = await fetch("https://valorant-api.com/v1/agents?isPlayableCharacter=true&language=pt-BR");
-  if (!res.ok) return [];
-  const data: unknown = await res.json();
+  const data: unknown = { data: await getAgentsCatalog() };
   const uuidSet = new Set(uuids.map((u) => u.toLowerCase()));
 
   const list = getJsonDataArray(data);
@@ -407,9 +433,7 @@ const fetchValorantAgents = async (uuids: string[]): Promise<SimpleGalleryItem[]
 };
 
 const fetchValorantBuddies = async (uuids: string[]): Promise<SimpleGalleryItem[]> => {
-  const res = await fetch("https://valorant-api.com/v1/buddies?language=pt-BR");
-  if (!res.ok) return [];
-  const data: unknown = await res.json();
+  const data: unknown = { data: await getBuddiesCatalog() };
   const uuidSet = new Set(uuids.map((u) => u.toLowerCase()));
 
   const list = getJsonDataArray(data);
