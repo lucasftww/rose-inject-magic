@@ -9,6 +9,10 @@ import { supabase, supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/
  *   Server  → Edge Function server-relay with event_id deduplication
  *
  * Events (ativos): PageView (1× load inicial em `index.html` + 1× por navegação SPA em `RouteTracker`), InitiateCheckout, Purchase.
+ *
+ * Conversões personalizadas na Meta (ex. “IC - Contas - Fortnite” vs “Purchase - Contas - Fortnite”):
+ * - **InitiateCheckout** na rota `/checkout` — `section` + `content_category` (ex. contas + fortnite).
+ * - **Purchase** em `/pedido/sucesso` (pixel) e CAPI no `pix-payment` — mesmos parâmetros no evento Purchase.
  * `disablePushState` no head evita o PageView *automático* da Meta em cada `history.pushState`; o nosso `trackSpaPageView()` dispara só quando a rota muda.
  * Contas (`/contas`): `trackCustom` com nomes fixos (`IC_SECTION_CONTAS`, `IC_CATEGORY_*`) para Conversões Personalizadas no Events Manager; checkout continua com `custom_data` em eventos standard.
  * Categories: Valorant, Fortnite, Roblox, Minecraft, LoL, CS2, GTA

@@ -326,14 +326,24 @@ async function sendServerPurchaseEvent(supabaseAdmin: SupabaseAdminClient, payme
     // - multiple games => "multi"
     // - unknown => fallback inference from text hints
     const gameNames = cartItems
-      .map((i) => normalizeGameCategory(i.lztGame || i.gameName))
+      .map((i) => {
+        const slug = normalizeGameCategory(i.lztGame || i.gameName);
+        if (slug) return slug;
+        if (i.type === "lzt-account") {
+          const inferred = inferLztAccountCategoryFromProductName(i.productName);
+          if (inferred) return inferred;
+        }
+        return "";
+      })
       .filter((g) => g.length > 0);
     const uniqueGames = [...new Set(gameNames)];
     const category = uniqueGames.length === 1
       ? uniqueGames[0]
       : uniqueGames.length > 1
         ? "multi"
-        : normalizeGameCategory(firstItem.lztGame || firstItem.gameName || firstItem.planName || firstItem.productName);
+        : normalizeGameCategory(firstItem.lztGame || firstItem.gameName || firstItem.planName || firstItem.productName) ||
+          inferLztAccountCategoryFromProductName(firstItem.productName) ||
+          "";
 
     const allContas = cartItems.every((i) => i.type === "lzt-account");
     const allProdutos = cartItems.every((i) => i.type !== "lzt-account");
@@ -502,6 +512,21 @@ function pickFirstString(...values: unknown[]): string {
 
 function digitsOnly(value: unknown): string {
   return String(value ?? "").replace(/\D/g, "");
+}
+
+/** Alinhado a `src/lib/buildMetaPurchasePayload.ts` — `content_category` estável para regras Meta (Purchase). */
+function inferLztAccountCategoryFromProductName(productName: unknown): string | null {
+  if (typeof productName !== "string") return null;
+  const n = productName
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+  if (!n.trim()) return null;
+  if (/\bfortnite\b|v-?bucks|vbucks|battle\s*royale/.test(n)) return "fortnite";
+  if (/\bminecraft\b|hypixel|minecoins?|skyblock/.test(n)) return "minecraft";
+  if (/\bleague\s+of\s+legends\b|\blol\b|champion|summoner/.test(n)) return "lol";
+  if (/\bvalorant\b|radiante|radiant|immortal|\bvp\b|vandal|phantom/.test(n)) return "valorant";
+  return null;
 }
 
 function normalizeGameCategory(raw: unknown): string {

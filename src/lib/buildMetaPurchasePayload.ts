@@ -2,8 +2,10 @@ import type { CartItem } from "@/hooks/useCart";
 import { normalizeGameSlug } from "@/lib/gameSlug";
 
 /**
- * Carrinhos antigos / snapshots sem `lztGame` falhavam a regra da Meta:
- * InitiateCheckout + `section` contém "contas" + `content_category` contém "fortnite".
+ * Payload único para **InitiateCheckout** (checkout) e **Purchase** (pedido sucesso / CAPI):
+ * regras tipo “IC - Contas - Fortnite” e “Purchase - Contas - Fortnite” usam `section` + `content_category`.
+ *
+ * Carrinhos antigos / snapshots sem `lztGame`: inferência pelo `productName` (ver regex abaixo).
  */
 function inferLztAccountCategoryFromProductName(productName: unknown): string | null {
   if (typeof productName !== "string") return null;
