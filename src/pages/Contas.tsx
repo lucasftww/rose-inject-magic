@@ -1206,6 +1206,12 @@ const Contas = () => {
 
       // LZT API in maintenance — show friendly error instead of empty list
       if (data?.fallback) {
+        if (cached && cached.items.length > 0) {
+          // Keep stale cache visible when upstream is temporarily unavailable.
+          setStreamingDone(true);
+          setIsRefetching(false);
+          return;
+        }
         setStreamError(new Error("O marketplace de contas está em manutenção temporária. Tente novamente em alguns minutos."));
         setStreamingDone(true);
         return;
@@ -1227,6 +1233,13 @@ const Contas = () => {
     } catch (err: unknown) {
       if (!controller.signal.aborted) {
         if (isAbortLikeError(err)) {
+          setFirstPageLoaded(true);
+          setIsRefetching(false);
+          setStreamingDone(true);
+          return;
+        }
+        if (cached && cached.items.length > 0) {
+          // Preserve last good data instead of showing fatal UI on transient upstream failures.
           setFirstPageLoaded(true);
           setIsRefetching(false);
           setStreamingDone(true);
