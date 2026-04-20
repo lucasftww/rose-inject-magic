@@ -70,9 +70,9 @@ function normalizeCurrency(currency?: string | null) {
   return "rub";
 }
 
-/** Lista LoL: `lolInventory.Skin` pode ter centenas de entradas → payload enorme; o card só precisa de ~6 previews. */
-const LOL_LIST_SKIN_ENTRIES_MAX = 72;
-const LOL_LIST_CHAMP_ENTRIES_MAX = 24;
+/** Lista LoL: `lolInventory.Skin` pode ter centenas de entradas → payload enorme; o card mostra ~6 previews. */
+const LOL_LIST_SKIN_ENTRIES_MAX = 48;
+const LOL_LIST_CHAMP_ENTRIES_MAX = 16;
 
 function trimLolInventoryForList(inv: Record<string, unknown>): void {
   const skin = inv["Skin"];
@@ -91,8 +91,8 @@ function trimLolInventoryForList(inv: Record<string, unknown>): void {
 }
 
 /** Lista Fortnite: `fortniteSkins` pode ter centenas de entradas → MB de JSON; o card usa ~6 após sort no cliente. */
-const FN_LIST_SKINS_MAX = 72;
-const FN_LIST_PICKAXES_MAX = 24;
+const FN_LIST_SKINS_MAX = 48;
+const FN_LIST_PICKAXES_MAX = 16;
 
 function trimFortniteListPayloadForList(item: LztItem): void {
   const skins = item.fortniteSkins;
@@ -785,9 +785,9 @@ Deno.serve(async (req) => {
 
     const shouldCache = action !== "detail" && action !== "fast-buy" && action !== "change-price" && action !== "image-proxy";
     const cacheKey = `${apiUrl}|m=${activeMarkup}|max=${listFetchCapBrl}`;
-    // Align in-memory + CDN TTL with fresh responses (preview 60s, list 30s; detail bypasses this cache)
-    const listCacheMaxAge = previewMode ? 90 : 60;
-    const listMemoryTtlMs = previewMode ? 90_000 : 60_000;
+    // Align in-memory + CDN TTL with fresh responses (preview 90s, list 75s; detail bypasses this cache)
+    const listCacheMaxAge = previewMode ? 90 : 75;
+    const listMemoryTtlMs = previewMode ? 90_000 : 75_000;
     /** Navegação repetida: o browser pode servir JSON “velho” enquanto revalida em background. */
     const listCacheControl = `public, max-age=${listCacheMaxAge}, s-maxage=${listCacheMaxAge}, stale-while-revalidate=120`;
 
@@ -920,6 +920,8 @@ Deno.serve(async (req) => {
         "buyer", "isPersonalAccount", "guarantee", "extended_guarantee",
         "isSmallExf", "auto_bump_period",
         "pending_deletion_date", "update_stat_date",
+        // Campos volumosos que a listagem não usa (detalhe volta a pedir ao LZT)
+        "temp_email", "loginData", "login_data", "item_origin", "renewal",
       ];
 
       const beforeCount = data.items.length;
@@ -1016,15 +1018,16 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        // Trim valorantInventory to max 12 items per category (enough for preview)
+        // Trim valorantInventory — listagem só precisa de amostra para o card (~6 previews)
+        const VAL_LIST_INV_CAP = 10;
         if (item.valorantInventory) {
           const inv = item.valorantInventory;
           const trimmed: Record<string, unknown> = {};
           for (const [key, val] of Object.entries(inv)) {
             if (val && typeof val === "object") {
               const entries = Object.entries(val);
-              if (entries.length > 12) {
-                trimmed[key] = Object.fromEntries(entries.slice(0, 12));
+              if (entries.length > VAL_LIST_INV_CAP) {
+                trimmed[key] = Object.fromEntries(entries.slice(0, VAL_LIST_INV_CAP));
               } else {
                 trimmed[key] = val;
               }
