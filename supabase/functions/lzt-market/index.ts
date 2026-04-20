@@ -26,6 +26,8 @@ const LZT_ALLOWED_IMAGE_DOMAINS = [
 const RETRYABLE_STATUSES = [429, 502, 503, 504, 524];
 /** Evita que o isolate fique à espera indefinidamente da LZT (origem típica de 504 no gateway Supabase). */
 const LZT_SINGLE_FETCH_TIMEOUT_MS = 14_000;
+/** Em produção, evita ruído: logs INFO de performance só para requests lentos. */
+const PERF_LOG_THRESHOLD_MS = 1200;
 let RUB_TO_BRL = 0.055; // Updated fallback
 let USD_TO_BRL = 5.16; // Updated fallback
 let lastFxFetch = 0;
@@ -76,6 +78,11 @@ function buildPerfSnapshot(
     prev = ts;
   }
   return out;
+}
+
+function shouldLogPerfSummary(url: URL, totalMs: number): boolean {
+  if (url.searchParams.get("perf") === "1") return true;
+  return totalMs >= PERF_LOG_THRESHOLD_MS;
 }
 
 function normalizeCurrency(currency?: string | null) {
@@ -893,13 +900,16 @@ Deno.serve(async (req) => {
         const cachedItemsCount = Array.isArray((cachedData as Record<string, unknown>).items)
           ? ((cachedData as Record<string, unknown>).items as unknown[]).length
           : undefined;
-        log("INFO", "lzt-market", "perf summary (cache)", {
-          action,
-          gameType,
-          itemId: itemId || undefined,
-          items_count: cachedItemsCount,
-          ...buildPerfSnapshot(reqStartedAt, perfMarks),
-        });
+        const perf = buildPerfSnapshot(reqStartedAt, perfMarks);
+        if (shouldLogPerfSummary(url, Number(perf.total_ms) || 0)) {
+          log("INFO", "lzt-market", "perf summary (cache)", {
+            action,
+            gameType,
+            itemId: itemId || undefined,
+            items_count: cachedItemsCount,
+            ...perf,
+          });
+        }
         return new Response(JSON.stringify(cachedData), {
           headers: {
             ...corsHeaders,
@@ -1242,14 +1252,17 @@ Deno.serve(async (req) => {
     const itemsCount = action !== "detail" && Array.isArray((data as Record<string, unknown>).items)
       ? ((data as Record<string, unknown>).items as unknown[]).length
       : undefined;
-    log("INFO", "lzt-market", "perf summary", {
-      action,
-      gameType,
-      itemId: itemId || undefined,
-      cache_mode: shouldCache ? "list_mem+cdn" : "direct",
-      items_count: itemsCount,
-      ...buildPerfSnapshot(reqStartedAt, perfMarks),
-    });
+    const perf = buildPerfSnapshot(reqStartedAt, perfMarks);
+    if (shouldLogPerfSummary(url, Number(perf.total_ms) || 0)) {
+      log("INFO", "lzt-market", "perf summary", {
+        action,
+        gameType,
+        itemId: itemId || undefined,
+        cache_mode: shouldCache ? "list_mem+cdn" : "direct",
+        items_count: itemsCount,
+        ...perf,
+      });
+    }
 
     return new Response(JSON.stringify(data), {
       headers: {
