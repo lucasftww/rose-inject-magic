@@ -304,6 +304,12 @@ const CONTAS_ENABLE_ADJACENT_PREFETCH =
     }
   })();
 
+function listAttemptTimeoutMs(tab: GameTab, light: boolean): number {
+  // Minecraft costuma responder perto de 12s em horários de pico; dar margem evita abortar "quase concluído".
+  if (tab === "minecraft") return light ? 13000 : 16000;
+  return light ? 9000 : 12000;
+}
+
 const Contas = () => {
   const queryClient = useQueryClient();
   const { getDisplayPrice } = useLztMarkup();
@@ -1084,7 +1090,8 @@ const Contas = () => {
     ): Promise<LztMarketListResponse> => {
     for (let attempt = 0; attempt <= retries; attempt++) {
       if (controller.signal.aborted) throw new Error("aborted");
-      const attemptSignal = createAttemptSignal(controller.signal, lightDevice ? 9000 : 12000);
+      const timeoutMs = listAttemptTimeoutMs(gameTab, lightDevice);
+      const attemptSignal = createAttemptSignal(controller.signal, timeoutMs);
       try {
         return await fetchAccountsRawTracked(params, attemptSignal.signal);
       } catch (err: unknown) {
@@ -1116,7 +1123,7 @@ const Contas = () => {
     }
     throw new Error("fetchWithRetry: retries exhausted");
   },
-    [lightDevice, fetchAccountsRawTracked],
+    [lightDevice, fetchAccountsRawTracked, gameTab],
   );
 
   const fetchMultiplePages = useCallback(async (controller: AbortController) => {
