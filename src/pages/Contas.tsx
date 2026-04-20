@@ -304,6 +304,9 @@ const CONTAS_ENABLE_ADJACENT_PREFETCH =
     }
   })();
 
+/** Funde várias mudanças de `debouncedParamsKey` no mesmo “burst” (hidratação, sync URL→estado) num único GET — menos `lzt-market` com status cancelado. */
+const CONTAS_LIST_FETCH_KEY_COALESCE_MS = 52;
+
 function listAttemptTimeoutMs(tab: GameTab, light: boolean): number {
   // Minecraft costuma responder perto de 12s em horários de pico; dar margem evita abortar "quase concluído".
   if (tab === "minecraft") return light ? 13000 : 16000;
@@ -316,8 +319,8 @@ const Contas = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [gameTab, setGameTab] = useState<GameTab>(() => gameTabFromSearchParams(searchParams));
 
-  // URL → estado antes do fetch da lista: evita GET `lzt-market` abortado quando `debouncedParamsKey`
-  // muda logo após o primeiro paint (useEffect de fetch corre depois dos layout effects).
+  // URL → estado antes do fetch da lista: layout effects antes do GET; `listFetchKey` coalesce (~52ms)
+  // absorve rajadas de `debouncedParamsKey` (hidratação/sync) e reduz `lzt-market` cancelado na rede.
   useLayoutEffect(() => {
     const tab = gameTabFromSearchParams(searchParams);
     setGameTab((prev) => (prev === tab ? prev : tab));
@@ -1058,6 +1061,29 @@ const Contas = () => {
     ],
   );
   const [debouncedParamsKey, setDebouncedParamsKey] = useState(paramsKey);
+  /** Chave usada para cache + GET da lista — atrás de um debounce curto para absorver rajadas. */
+  const [listFetchKey, setListFetchKey] = useState(paramsKey);
+  const listFetchKeyCommittedRef = useRef(paramsKey);
+  const listFetchKeyCoalesceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (debouncedParamsKey === listFetchKeyCommittedRef.current) return;
+    if (listFetchKeyCoalesceTimerRef.current) {
+      clearTimeout(listFetchKeyCoalesceTimerRef.current);
+      listFetchKeyCoalesceTimerRef.current = null;
+    }
+    listFetchKeyCoalesceTimerRef.current = setTimeout(() => {
+      listFetchKeyCoalesceTimerRef.current = null;
+      listFetchKeyCommittedRef.current = debouncedParamsKey;
+      setListFetchKey(debouncedParamsKey);
+    }, CONTAS_LIST_FETCH_KEY_COALESCE_MS);
+    return () => {
+      if (listFetchKeyCoalesceTimerRef.current) {
+        clearTimeout(listFetchKeyCoalesceTimerRef.current);
+        listFetchKeyCoalesceTimerRef.current = null;
+      }
+    };
+  }, [debouncedParamsKey]);
+
   const prevNonSearchRef = useRef(nonSearchParamsKey);
   const prevSearchTrimRef = useRef(searchQuery.trim());
   useEffect(() => {
@@ -1127,7 +1153,7 @@ const Contas = () => {
   );
 
   const fetchMultiplePages = useCallback(async (controller: AbortController) => {
-    const cacheKey = debouncedParamsKey;
+    const cacheKey = listFetchKey;
     const cached = fetchCacheRef.current.get(cacheKey);
     // (tabChanged is checked inside the branches below)
 
@@ -1208,7 +1234,7 @@ const Contas = () => {
     } finally {
       prevGameTabRef.current = gameTab;
     }
-  }, [buildParams, debouncedParamsKey, fetchWithRetry, cacheSet, gameTab]);
+  }, [buildParams, listFetchKey, fetchWithRetry, cacheSet, gameTab]);
 
   // Prefetch only the next game tab (ring order) to cut background egress; dedupe per tab per session.
   const prefetchRef = useRef(new Set<string>());
@@ -1322,7 +1348,7 @@ const Contas = () => {
     // Check if we have a prefetched result for this game tab
     const prefetchKey = `__prefetch__${gameTab}`;
     const prefetched = fetchCacheRef.current.get(prefetchKey);
-    const cacheKey = debouncedParamsKey;
+    const cacheKey = listFetchKey;
     const cached = fetchCacheRef.current.get(cacheKey);
 
     // Use prefetch if no specific cache exists and filters are at defaults
@@ -1369,7 +1395,7 @@ const Contas = () => {
 
     // Fallback to original logic
     await fetchMultiplePages(controller);
-  }, [buildParams, debouncedParamsKey, fetchMultiplePages, fetchWithRetry, gameTab, cacheSet]);
+  }, [buildParams, listFetchKey, fetchMultiplePages, fetchWithRetry, gameTab, cacheSet]);
 
   useEffect(() => {
     abortRef.current?.abort();
@@ -1389,7 +1415,7 @@ const Contas = () => {
         prefetchReconcileTimeoutRef.current = null;
       }
     };
-  }, [debouncedParamsKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [listFetchKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Trigger prefetch after initial load completes (delayed so quick bounces do not pull extra list JSON)
   useEffect(() => {
@@ -1416,7 +1442,7 @@ const Contas = () => {
 
     const snapshotGameTab = gameTab;
     try {
-      const cacheKey = debouncedParamsKey;
+      const cacheKey = listFetchKey;
       const nextPageNum = currentPage + 1;
       const data = await fetchWithRetry(buildParams(nextPageNum), controller);
       if (controller.signal.aborted || snapshotGameTab !== gameTab) return;
