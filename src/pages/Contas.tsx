@@ -256,6 +256,13 @@ function listAttemptTimeoutMs(tab: GameTab, light: boolean): number {
   return light ? 7000 : 9500;
 }
 
+function isAbortLikeError(err: unknown): boolean {
+  const n = errorName(err);
+  if (n === "AbortError") return true;
+  const msg = err instanceof Error ? err.message : String(err ?? "");
+  return /\babort(ed)?\b/i.test(msg);
+}
+
 const Contas = () => {
   const queryClient = useQueryClient();
   const { getDisplayPrice } = useLztMarkup();
@@ -1076,7 +1083,7 @@ const Contas = () => {
       }
       nonSearchDebounceTimerRef.current = setTimeout(() => {
         nonSearchDebounceTimerRef.current = null;
-        setDebouncedParamsKey(paramsKey);
+      setDebouncedParamsKey(paramsKey);
       }, CONTAS_NON_SEARCH_DEBOUNCE_MS);
       prevSearchTrimRef.current = searchQuery.trim();
       return;
@@ -1219,6 +1226,12 @@ const Contas = () => {
       });
     } catch (err: unknown) {
       if (!controller.signal.aborted) {
+        if (isAbortLikeError(err)) {
+          setFirstPageLoaded(true);
+          setIsRefetching(false);
+          setStreamingDone(true);
+          return;
+        }
         setFirstPageLoaded(true);
         setIsRefetching(false);
         setStreamError(err instanceof Error ? err : new Error(String(err)));
@@ -1361,30 +1374,30 @@ const Contas = () => {
       clearPrefetchReconcileSchedule();
       prefetchReconcileTimeoutRef.current = setTimeout(() => {
         prefetchReconcileTimeoutRef.current = null;
-        void (async () => {
+      void (async () => {
           prefetchReconcileAbortRef.current?.abort();
           const reconcileController = new AbortController();
           prefetchReconcileAbortRef.current = reconcileController;
-          try {
+        try {
             if (Date.now() - lastGameTabChangeAtRef.current < CONTAS_RECONCILE_TAB_GUARD_MS) return;
             const data = await fetchWithRetry(paramsSnapshot, reconcileController);
             if (reconcileController.signal.aborted) return;
-            const items: LztItem[] = data?.items ?? [];
-            const hasMore = data?.hasNextPage ?? items.length >= 15;
-            setStreamedItems(items);
-            setHasNextPage(hasMore);
-            setCurrentPage(1);
-            cacheSet(cacheKey, { items, hasNextPage: hasMore, currentPage: 1, timestamp: Date.now() });
-          } catch (e: unknown) {
-            if (import.meta.env.DEV) {
-              console.warn("Contas: reconciliação pós-prefetch falhou", e instanceof Error ? e.message : String(e));
-            }
+          const items: LztItem[] = data?.items ?? [];
+          const hasMore = data?.hasNextPage ?? items.length >= 15;
+          setStreamedItems(items);
+          setHasNextPage(hasMore);
+          setCurrentPage(1);
+          cacheSet(cacheKey, { items, hasNextPage: hasMore, currentPage: 1, timestamp: Date.now() });
+        } catch (e: unknown) {
+          if (import.meta.env.DEV) {
+            console.warn("Contas: reconciliação pós-prefetch falhou", e instanceof Error ? e.message : String(e));
+          }
           } finally {
             if (prefetchReconcileAbortRef.current === reconcileController) {
               prefetchReconcileAbortRef.current = null;
             }
-          }
-        })();
+        }
+      })();
       }, CONTAS_RECONCILE_AFTER_PREFETCH_MS);
       return;
     }
@@ -1455,6 +1468,7 @@ const Contas = () => {
       });
     } catch (err: unknown) {
       if (!controller.signal.aborted && snapshotGameTab === gameTab) {
+        if (isAbortLikeError(err)) return;
         setStreamError(err instanceof Error ? err : new Error(String(err)));
       }
     } finally {
@@ -1534,11 +1548,11 @@ const Contas = () => {
       if (Number.isFinite(maxBrl) && maxBrl > 0) {
         withPrice = withPrice.filter((row) => row.brlPrice <= maxBrl);
       }
-      if (sortBy === "price_to_up") {
+    if (sortBy === "price_to_up") {
         withPrice.sort((a, b) => a.brlPrice - b.brlPrice);
       } else if (sortBy === "price_to_down") {
         withPrice.sort((a, b) => b.brlPrice - a.brlPrice);
-      }
+    }
       return withPrice.map((row) => row.item);
     }
 

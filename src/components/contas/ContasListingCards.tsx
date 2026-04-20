@@ -117,29 +117,6 @@ const SmoothImg = memo(forwardRef<HTMLImageElement, ImgHTMLAttributes<HTMLImageE
 }));
 SmoothImg.displayName = "SmoothImg";
 
-// Helper: LZT preview image with fallback to placeholder on error
-const LztPreviewImage = forwardRef<HTMLDivElement, { url: string }>(({ url }, ref) => {
-  const [failed, setFailed] = useState(false);
-  if (failed) {
-    return (
-      <div className="flex h-full w-full items-center justify-center">
-        <Crosshair className="h-12 w-12 text-muted-foreground/20" />
-      </div>
-    );
-  }
-  return (
-    <div ref={ref} className="relative z-[1] flex items-center justify-center w-full h-full p-3">
-      <SmoothImg
-        src={getProxiedImageUrl(url)}
-        alt="Skins preview"
-        className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-105"
-        onError={() => setFailed(true)}
-      />
-    </div>
-  );
-});
-LztPreviewImage.displayName = "LztPreviewImage";
-
 export const ValorantCard = memo(({ item, skinsMap, priceLabel, queryClient }: { item: LztItem; skinsMap: Map<string, SkinEntry>; priceLabel: string; queryClient: QueryClient }) => {
   const rank = item.riot_valorant_rank ? rankMap[item.riot_valorant_rank] : null;
   const skinCount = item.riot_valorant_skin_count ?? 0;
@@ -283,8 +260,6 @@ export const ValorantCard = memo(({ item, skinsMap, priceLabel, queryClient }: {
           <div className="relative z-[1] flex items-center justify-center w-full h-full">
             <div className="w-3/4 h-3/4 rounded bg-secondary/50 animate-pulse" />
           </div>
-        ) : item.imagePreviewLinks?.direct?.weapons ? (
-          <LztPreviewImage url={item.imagePreviewLinks.direct.weapons} />
         ) : (
           <div className="flex h-full w-full items-center justify-center"><Crosshair className="h-6 w-6 sm:h-10 sm:w-10 text-muted-foreground/20" /></div>
         )}
@@ -582,8 +557,6 @@ export const FortniteCard = memo(({ item, skinsDb, priceLabel, queryClient }: { 
               <div key={i} className="w-full h-full rounded bg-secondary/50 animate-pulse" />
             ))}
           </div>
-        ) : item.imagePreviewLinks?.direct?.weapons ? (
-          <LztPreviewImage url={item.imagePreviewLinks.direct.weapons} />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
             <svg className="h-8 w-8 text-muted-foreground/20" fill="currentColor" viewBox="0 0 24 24"><path d="m15.767 14.171.097-5.05H12.4V5.197h3.99L16.872 0H7.128v24l5.271-.985V14.17z"/></svg>
@@ -629,8 +602,9 @@ export const MinecraftCard = memo(({ item, priceLabel, queryClient }: { item: Lz
   const cleanedTitle = getListingCardTitle(item, "minecraft");
 
   // mineskin.eu avatar (body render)
+  // Use direct mineskin URL to avoid extra lzt-market image-proxy roundtrips/failures on Minecraft cards.
   const skinUrl = nickname
-    ? getProxiedImageUrl(`https://mineskin.eu/body/${encodeURIComponent(nickname)}/120.png`)
+    ? `https://mineskin.eu/body/${encodeURIComponent(nickname)}/120.png`
     : null;
 
   return (
@@ -646,7 +620,7 @@ export const MinecraftCard = memo(({ item, priceLabel, queryClient }: { item: Lz
         <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse at center, ${MC_GREEN}0a, transparent 70%)` }} />
         {skinUrl ? (
           <div className="relative z-[1] flex items-end justify-center h-full pt-2 pb-1">
-            <img src={skinUrl} alt={nickname || "Skin"} className="h-full w-auto object-contain drop-shadow-2xl transition-transform duration-300 group-hover:scale-105" loading="lazy" onError={hideImgOnError} />
+            <img src={skinUrl} alt={nickname || "Skin"} className="h-full w-auto object-contain drop-shadow-2xl transition-transform duration-300 group-hover:scale-105" loading="lazy" referrerPolicy="no-referrer" onError={hideImgOnError} />
           </div>
         ) : (
           <div className="relative z-[1] flex items-center justify-center h-full">
