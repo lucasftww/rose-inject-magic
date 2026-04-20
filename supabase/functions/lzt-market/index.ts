@@ -64,6 +64,20 @@ function log(level: "INFO" | "WARN" | "ERROR", ctx: string, msg: string, data?: 
   else console.log(JSON.stringify(entry));
 }
 
+function buildPerfSnapshot(
+  t0: number,
+  marks: Record<string, number>,
+): Record<string, number> {
+  const out: Record<string, number> = { total_ms: Date.now() - t0 };
+  const seq = Object.entries(marks).sort((a, b) => a[1] - b[1]);
+  let prev = t0;
+  for (const [name, ts] of seq) {
+    out[`${name}_ms`] = Math.max(0, ts - prev);
+    prev = ts;
+  }
+  return out;
+}
+
 function normalizeCurrency(currency?: string | null) {
   const normalized = String(currency || "rub").trim().toLowerCase();
   if (normalized === "usd" || normalized === "brl") return normalized;
@@ -370,6 +384,12 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const reqStartedAt = Date.now();
+  const perfMarks: Record<string, number> = {};
+  const markPerf = (name: string) => {
+    perfMarks[name] = Date.now();
+  };
+
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")?.trim();
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")?.trim();
@@ -385,6 +405,7 @@ Deno.serve(async (req) => {
 
     const url = new URL(req.url);
     const action = url.searchParams.get("action") || "list";
+    const gameType = url.searchParams.get("game_type") || "riot";
 
     // IMAGE PROXY FIRST: skip FX rates + lzt_config (many parallel <img> hits per page).
     if (action === "image-proxy") {
@@ -432,6 +453,11 @@ Deno.serve(async (req) => {
       try {
         response = await fetch(imageUrl, { headers: upstreamHeaders, signal: imgAc.signal });
       } catch (e) {
+        log("WARN", "lzt-market", "image-proxy timeout", {
+          action,
+          gameType,
+          ...buildPerfSnapshot(reqStartedAt, perfMarks),
+        });
         return new Response(JSON.stringify({ error: "Image fetch timeout", detail: String(e) }), {
           status: 504,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -441,6 +467,12 @@ Deno.serve(async (req) => {
       }
 
       if (!response.ok) {
+        log("WARN", "lzt-market", "image-proxy upstream error", {
+          action,
+          gameType,
+          upstream_status: response.status,
+          ...buildPerfSnapshot(reqStartedAt, perfMarks),
+        });
         return new Response(JSON.stringify({ error: "Image fetch failed", status: response.status }), {
           status: response.status,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -487,6 +519,7 @@ Deno.serve(async (req) => {
       resolveLztTokenMinimal(supabaseUrl, serviceRoleKey),
       resolveLztConfigMinimal(supabaseUrl, serviceRoleKey),
     ]);
+    markPerf("auth_config");
 
     if (!token) {
       console.error("LZT token missing: configure system_credentials or LZT_MARKET_TOKEN / LZT_API_TOKEN secret");
@@ -499,7 +532,6 @@ Deno.serve(async (req) => {
     console.log("Authentication and credentials loaded successfully");
 
     const itemId = url.searchParams.get("item_id");
-    const gameType = url.searchParams.get("game_type") || "riot";
     const previewMode = url.searchParams.get("preview") === "1";
     const requestedLimit = Number(url.searchParams.get("limit") || (previewMode ? "6" : "0"));
     const responseLimit = Number.isFinite(requestedLimit)
@@ -729,8 +761,9 @@ Deno.serve(async (req) => {
         }
       }
 
-      const effectiveCurrency = normalizeCurrency(params.get("currency") || lztConfig?.currency);
-      if (params.get("currency") || lztConfig?.currency) {
+      const cfgCurrency = typeof lztConfig?.currency === "string" ? lztConfig.currency : undefined;
+      const effectiveCurrency = normalizeCurrency(params.get("currency") || cfgCurrency);
+      if (params.get("currency") || cfgCurrency) {
         params.set("currency", effectiveCurrency);
       }
 
@@ -856,6 +889,17 @@ Deno.serve(async (req) => {
       if (cached && cached.expiry > Date.now()) {
         console.log("Serving from global cache:", apiUrl);
         const cachedData = cached.data as Record<string, unknown>;
+        markPerf("cache_hit");
+        const cachedItemsCount = Array.isArray((cachedData as Record<string, unknown>).items)
+          ? ((cachedData as Record<string, unknown>).items as unknown[]).length
+          : undefined;
+        log("INFO", "lzt-market", "perf summary (cache)", {
+          action,
+          gameType,
+          itemId: itemId || undefined,
+          items_count: cachedItemsCount,
+          ...buildPerfSnapshot(reqStartedAt, perfMarks),
+        });
         return new Response(JSON.stringify(cachedData), {
           headers: {
             ...corsHeaders,
@@ -888,6 +932,7 @@ Deno.serve(async (req) => {
         console.warn(`LZT API attempt ${attempt + 1}: ${response.status}`);
       }
     }
+    markPerf("lzt_fetch");
 
     if (!response || !response.ok) {
       const errorText = response ? await response.text() : "No response";
@@ -903,6 +948,14 @@ Deno.serve(async (req) => {
       }
 
       console.error("LZT API error after retries:", status, detail);
+      log("WARN", "lzt-market", "upstream request failed", {
+        action,
+        gameType,
+        itemId: itemId || undefined,
+        upstream_status: status,
+        fallback: status >= 500 && action !== "detail",
+        ...buildPerfSnapshot(reqStartedAt, perfMarks),
+      });
 
       // For 5xx errors on LIST requests (upstream maintenance etc.), return 200 with fallback
       // so the Supabase client SDK doesn't throw and the frontend can handle gracefully.
@@ -925,6 +978,7 @@ Deno.serve(async (req) => {
     }
 
     const data = await parseJsonResponse(response);
+    markPerf("parse_json");
 
     if (!data || typeof data !== "object") {
       return new Response(
@@ -1107,6 +1161,7 @@ Deno.serve(async (req) => {
       } else if (orderBy === "price_to_up") {
         data.items.sort((a: LztItem, b: LztItem) => (Number(a.price_brl) || 0) - (Number(b.price_brl) || 0));
       }
+      markPerf("list_postprocess");
     }
 
     // For detail action, also add price_brl (keep full data)
@@ -1158,6 +1213,7 @@ Deno.serve(async (req) => {
           { status: 410, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
+      markPerf("detail_postprocess");
     }
 
     if (action === "detail" && !data.item) {
@@ -1182,6 +1238,18 @@ Deno.serve(async (req) => {
       }
       globalLztCache.set(cacheKey, { data, expiry: Date.now() + listMemoryTtlMs });
     }
+    markPerf("response_ready");
+    const itemsCount = action !== "detail" && Array.isArray((data as Record<string, unknown>).items)
+      ? ((data as Record<string, unknown>).items as unknown[]).length
+      : undefined;
+    log("INFO", "lzt-market", "perf summary", {
+      action,
+      gameType,
+      itemId: itemId || undefined,
+      cache_mode: shouldCache ? "list_mem+cdn" : "direct",
+      items_count: itemsCount,
+      ...buildPerfSnapshot(reqStartedAt, perfMarks),
+    });
 
     return new Response(JSON.stringify(data), {
       headers: {
