@@ -768,6 +768,16 @@ const Contas = () => {
   const loadMoreControllerRef = useRef<AbortController | null>(null);
   /** Reconciliação pós-prefetch (agendada): limpar ao mudar filtros/aba ou ao desmontar. */
   const prefetchReconcileTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** GET de reconciliação separado do `abortRef` da lista — evita partilhar o mesmo signal que o efeito principal aborta. */
+  const prefetchReconcileAbortRef = useRef<AbortController | null>(null);
+  const clearPrefetchReconcileSchedule = useCallback(() => {
+    if (prefetchReconcileTimeoutRef.current !== null) {
+      clearTimeout(prefetchReconcileTimeoutRef.current);
+      prefetchReconcileTimeoutRef.current = null;
+    }
+    prefetchReconcileAbortRef.current?.abort();
+    prefetchReconcileAbortRef.current = null;
+  }, []);
   /** Número de requests lzt-market em voo (lista/reconciliação/prefetch). */
   const listMarketInFlightRef = useRef(0);
   /** Última interação que altera filtros/aba/lista (para estabilidade antes de prefetch). */
@@ -1365,18 +1375,17 @@ const Contas = () => {
 
       // Sempre reconciliar com a API: prefetch pode ter `price_brl` antigo (markup mudou no admin).
       const paramsSnapshot = buildParams(1);
-      if (prefetchReconcileTimeoutRef.current) {
-        clearTimeout(prefetchReconcileTimeoutRef.current);
-        prefetchReconcileTimeoutRef.current = null;
-      }
+      clearPrefetchReconcileSchedule();
       prefetchReconcileTimeoutRef.current = setTimeout(() => {
         prefetchReconcileTimeoutRef.current = null;
         void (async () => {
+          prefetchReconcileAbortRef.current?.abort();
+          const reconcileController = new AbortController();
+          prefetchReconcileAbortRef.current = reconcileController;
           try {
-            if (controller.signal.aborted) return;
             if (Date.now() - lastGameTabChangeAtRef.current < CONTAS_RECONCILE_TAB_GUARD_MS) return;
-            const data = await fetchWithRetry(paramsSnapshot, controller);
-            if (controller.signal.aborted) return;
+            const data = await fetchWithRetry(paramsSnapshot, reconcileController);
+            if (reconcileController.signal.aborted) return;
             const items: LztItem[] = data?.items ?? [];
             const hasMore = data?.hasNextPage ?? items.length >= 15;
             setStreamedItems(items);
@@ -1387,6 +1396,10 @@ const Contas = () => {
             if (import.meta.env.DEV) {
               console.warn("Contas: reconciliação pós-prefetch falhou", e instanceof Error ? e.message : String(e));
             }
+          } finally {
+            if (prefetchReconcileAbortRef.current === reconcileController) {
+              prefetchReconcileAbortRef.current = null;
+            }
           }
         })();
       }, CONTAS_RECONCILE_AFTER_PREFETCH_MS);
@@ -1395,14 +1408,11 @@ const Contas = () => {
 
     // Fallback to original logic
     await fetchMultiplePages(controller);
-  }, [buildParams, listFetchKey, fetchMultiplePages, fetchWithRetry, gameTab, cacheSet]);
+  }, [buildParams, listFetchKey, fetchMultiplePages, fetchWithRetry, gameTab, cacheSet, clearPrefetchReconcileSchedule]);
 
   useEffect(() => {
     abortRef.current?.abort();
-    if (prefetchReconcileTimeoutRef.current) {
-      clearTimeout(prefetchReconcileTimeoutRef.current);
-      prefetchReconcileTimeoutRef.current = null;
-    }
+    clearPrefetchReconcileSchedule();
     loadMoreControllerRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
@@ -1410,12 +1420,9 @@ const Contas = () => {
     return () => {
       controller.abort();
       loadMoreControllerRef.current?.abort();
-      if (prefetchReconcileTimeoutRef.current) {
-        clearTimeout(prefetchReconcileTimeoutRef.current);
-        prefetchReconcileTimeoutRef.current = null;
-      }
+      clearPrefetchReconcileSchedule();
     };
-  }, [listFetchKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [listFetchKey, clearPrefetchReconcileSchedule]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Trigger prefetch after initial load completes (delayed so quick bounces do not pull extra list JSON)
   useEffect(() => {
@@ -1591,10 +1598,7 @@ const Contas = () => {
 
   const refetch = () => {
     abortRef.current?.abort();
-    if (prefetchReconcileTimeoutRef.current) {
-      clearTimeout(prefetchReconcileTimeoutRef.current);
-      prefetchReconcileTimeoutRef.current = null;
-    }
+    clearPrefetchReconcileSchedule();
     const controller = new AbortController();
     abortRef.current = controller;
     setDisplayPage(1);
