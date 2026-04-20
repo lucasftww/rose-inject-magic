@@ -24,6 +24,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "test:e2e:contas": "playwright test --workers=1 e2e/contas-flow.spec.ts e2e/contas-tab-switch.spec.ts",
     "test:e2e:install": "playwright install chromium",
     "supabase:db-push": "supabase db push --linked",
     "supabase:migration-list": "supabase migration list --linked",

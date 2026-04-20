@@ -247,12 +247,15 @@ const CONTAS_ENABLE_ADJACENT_PREFETCH =
   })();
 
 /** Funde mudanças de `debouncedParamsKey` no mesmo burst (hidratação, sync URL→estado, debounces curtos). */
-const CONTAS_LIST_FETCH_KEY_COALESCE_MS = 450;
-const CONTAS_NON_SEARCH_DEBOUNCE_MS = 320;
+const CONTAS_LIST_FETCH_KEY_COALESCE_MS = 260;
+const CONTAS_NON_SEARCH_DEBOUNCE_MS = 180;
+const CONTAS_MIN_LIST_REFRESH_GAP_MS = 520;
+const CONTAS_LOAD_MORE_MIN_GAP_MS = 650;
+const CONTAS_MANUAL_REFRESH_MIN_GAP_MS = 650;
 
 function listAttemptTimeoutMs(tab: GameTab, light: boolean): number {
   // Mantém UX responsiva: falha mais rápido e deixa cache/fallback assumirem.
-  if (tab === "minecraft") return light ? 11000 : 13000;
+  if (tab === "minecraft") return light ? 8500 : 9500;
   return light ? 7000 : 9500;
 }
 
@@ -269,7 +272,7 @@ const Contas = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [gameTab, setGameTab] = useState<GameTab>(() => gameTabFromSearchParams(searchParams));
 
-  // URL → estado antes do fetch da lista: layout effects antes do GET; `listFetchKey` coalesce (~340ms)
+  // URL → estado antes do fetch da lista: layout effects antes do GET; `listFetchKey` coalesce (~260ms)
   // absorve rajadas de `debouncedParamsKey` (hidratação/sync) e reduz `lzt-market` cancelado na rede.
   useLayoutEffect(() => {
     const tab = gameTabFromSearchParams(searchParams);
@@ -725,10 +728,17 @@ const Contas = () => {
   const [hasNextPage, setHasNextPage] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [loadMoreCoolingDown, setLoadMoreCoolingDown] = useState(false);
+  const [refreshCoolingDown, setRefreshCoolingDown] = useState(false);
   const [isRefetching, setIsRefetching] = useState(false);
+  const [isFetchingAccounts, setIsFetchingAccounts] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   /** Abort só do “carregar mais” — separado do `abortRef` da listagem principal. */
   const loadMoreControllerRef = useRef<AbortController | null>(null);
+  const loadMoreNextAllowedAtRef = useRef(0);
+  const loadMoreCooldownTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const refreshNextAllowedAtRef = useRef(0);
+  const refreshCooldownTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   /** Reconciliação pós-prefetch (agendada): limpar ao mudar filtros/aba ou ao desmontar. */
   const prefetchReconcileTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   /** GET de reconciliação separado do `abortRef` da lista — evita partilhar o mesmo signal que o efeito principal aborta. */
@@ -741,8 +751,52 @@ const Contas = () => {
     prefetchReconcileAbortRef.current?.abort();
     prefetchReconcileAbortRef.current = null;
   }, []);
+  const startLoadMoreCooldown = useCallback((ms = CONTAS_LOAD_MORE_MIN_GAP_MS) => {
+    if (loadMoreCooldownTimerRef.current) {
+      clearTimeout(loadMoreCooldownTimerRef.current);
+      loadMoreCooldownTimerRef.current = null;
+    }
+    if (ms <= 0) {
+      setLoadMoreCoolingDown(false);
+      return;
+    }
+    setLoadMoreCoolingDown(true);
+    loadMoreCooldownTimerRef.current = setTimeout(() => {
+      loadMoreCooldownTimerRef.current = null;
+      setLoadMoreCoolingDown(false);
+    }, ms);
+  }, []);
+  const startManualRefreshCooldown = useCallback((ms = CONTAS_MANUAL_REFRESH_MIN_GAP_MS) => {
+    if (refreshCooldownTimerRef.current) {
+      clearTimeout(refreshCooldownTimerRef.current);
+      refreshCooldownTimerRef.current = null;
+    }
+    if (ms <= 0) {
+      setRefreshCoolingDown(false);
+      return;
+    }
+    setRefreshCoolingDown(true);
+    refreshCooldownTimerRef.current = setTimeout(() => {
+      refreshCooldownTimerRef.current = null;
+      setRefreshCoolingDown(false);
+    }, ms);
+  }, []);
+  useEffect(() => {
+    return () => {
+      if (loadMoreCooldownTimerRef.current) {
+        clearTimeout(loadMoreCooldownTimerRef.current);
+        loadMoreCooldownTimerRef.current = null;
+      }
+      if (refreshCooldownTimerRef.current) {
+        clearTimeout(refreshCooldownTimerRef.current);
+        refreshCooldownTimerRef.current = null;
+      }
+    };
+  }, []);
   /** Número de requests lzt-market em voo (lista/reconciliação/prefetch). */
   const listMarketInFlightRef = useRef(0);
+  /** Requests em voo que devem aparecer como "buscando contas" na UI (exclui prefetch silencioso). */
+  const uiMarketInFlightRef = useRef(0);
   /** Última interação que altera filtros/aba/lista (para estabilidade antes de prefetch). */
   const lastUserListInteractionAtRef = useRef(Date.now());
   const lastGameTabChangeAtRef = useRef(Date.now());
@@ -964,29 +1018,6 @@ const Contas = () => {
     lastGameTabChangeAtRef.current = Date.now();
   }, [gameTab]);
 
-  const fetchAccountsRawTracked = useCallback(
-    async (
-      params: Record<string, string | string[]>,
-      signal?: AbortSignal,
-    ): Promise<LztMarketListResponse> => {
-      listMarketInFlightRef.current += 1;
-      try {
-        return await fetchAccountsRaw(params, signal);
-      } finally {
-        listMarketInFlightRef.current = Math.max(0, listMarketInFlightRef.current - 1);
-        if (listMarketInFlightRef.current === 0) {
-          const queued = queuedListFetchKeyRef.current;
-          if (queued && queued !== listFetchKeyCommittedRef.current) {
-            queuedListFetchKeyRef.current = null;
-            listFetchKeyCommittedRef.current = queued;
-            setListFetchKey(queued);
-          }
-        }
-      }
-    },
-    [],
-  );
-
   // Debounce: busca por título (280ms desktop / ~480ms touch ou rede lenta), inventário Valorant (420ms), faixa de preço. Resto dispara fetch na hora.
   const nonSearchParamsKey = useMemo(
     () =>
@@ -1046,7 +1077,43 @@ const Contas = () => {
   const [listFetchKey, setListFetchKey] = useState(paramsKey);
   const listFetchKeyCommittedRef = useRef(paramsKey);
   const listFetchKeyCoalesceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const listFetchKeyThrottleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const listFetchNextAllowedAtRef = useRef(0);
   const queuedListFetchKeyRef = useRef<string | null>(null);
+  const commitListFetchKey = useCallback((nextKey: string) => {
+    if (!nextKey || nextKey === listFetchKeyCommittedRef.current) return;
+    const now = Date.now();
+    const waitMs = Math.max(0, listFetchNextAllowedAtRef.current - now);
+    if (waitMs <= 0) {
+      if (listFetchKeyThrottleTimerRef.current) {
+        clearTimeout(listFetchKeyThrottleTimerRef.current);
+        listFetchKeyThrottleTimerRef.current = null;
+      }
+      listFetchKeyCommittedRef.current = nextKey;
+      listFetchNextAllowedAtRef.current = Date.now() + CONTAS_MIN_LIST_REFRESH_GAP_MS;
+      setListFetchKey(nextKey);
+      return;
+    }
+    queuedListFetchKeyRef.current = nextKey;
+    if (listFetchKeyThrottleTimerRef.current) return;
+    listFetchKeyThrottleTimerRef.current = setTimeout(() => {
+      listFetchKeyThrottleTimerRef.current = null;
+      const queued = queuedListFetchKeyRef.current;
+      queuedListFetchKeyRef.current = null;
+      if (!queued || queued === listFetchKeyCommittedRef.current) return;
+      listFetchKeyCommittedRef.current = queued;
+      listFetchNextAllowedAtRef.current = Date.now() + CONTAS_MIN_LIST_REFRESH_GAP_MS;
+      setListFetchKey(queued);
+    }, waitMs);
+  }, []);
+  useEffect(() => {
+    return () => {
+      if (listFetchKeyThrottleTimerRef.current) {
+        clearTimeout(listFetchKeyThrottleTimerRef.current);
+        listFetchKeyThrottleTimerRef.current = null;
+      }
+    };
+  }, []);
   useEffect(() => {
     if (debouncedParamsKey === listFetchKeyCommittedRef.current) return;
     if (listFetchKeyCoalesceTimerRef.current) {
@@ -1059,8 +1126,7 @@ const Contas = () => {
         queuedListFetchKeyRef.current = debouncedParamsKey;
         return;
       }
-      listFetchKeyCommittedRef.current = debouncedParamsKey;
-      setListFetchKey(debouncedParamsKey);
+      commitListFetchKey(debouncedParamsKey);
     }, CONTAS_LIST_FETCH_KEY_COALESCE_MS);
     return () => {
       if (listFetchKeyCoalesceTimerRef.current) {
@@ -1068,7 +1134,39 @@ const Contas = () => {
         listFetchKeyCoalesceTimerRef.current = null;
       }
     };
-  }, [debouncedParamsKey]);
+  }, [debouncedParamsKey, commitListFetchKey]);
+
+  const fetchAccountsRawTracked = useCallback(
+    async (
+      params: Record<string, string | string[]>,
+      signal?: AbortSignal,
+      opts?: { silentUi?: boolean },
+    ): Promise<LztMarketListResponse> => {
+      const showLoading = !opts?.silentUi;
+      listMarketInFlightRef.current += 1;
+      if (showLoading) {
+        uiMarketInFlightRef.current += 1;
+        setIsFetchingAccounts(true);
+      }
+      try {
+        return await fetchAccountsRaw(params, signal);
+      } finally {
+        listMarketInFlightRef.current = Math.max(0, listMarketInFlightRef.current - 1);
+        if (showLoading) {
+          uiMarketInFlightRef.current = Math.max(0, uiMarketInFlightRef.current - 1);
+          if (uiMarketInFlightRef.current === 0) setIsFetchingAccounts(false);
+        }
+        if (listMarketInFlightRef.current === 0) {
+          const queued = queuedListFetchKeyRef.current;
+          if (queued && queued !== listFetchKeyCommittedRef.current) {
+            queuedListFetchKeyRef.current = null;
+            commitListFetchKey(queued);
+          }
+        }
+      }
+    },
+    [commitListFetchKey],
+  );
 
   const prevNonSearchRef = useRef(nonSearchParamsKey);
   const prevSearchTrimRef = useRef(searchQuery.trim());
@@ -1349,7 +1447,7 @@ const Contas = () => {
       if (Date.now() - lastUserListInteractionAtRef.current < CONTAS_PREFETCH_STABLE_WINDOW_MS) return;
       void (async () => {
         try {
-          const data = await fetchAccountsRawTracked(listParams);
+          const data = await fetchAccountsRawTracked(listParams, undefined, { silentUi: true });
           if (runId !== prefetchRunIdRef.current) return;
           const items: LztItem[] = data?.items ?? [];
           const hasMore = data?.hasNextPage ?? items.length >= 15;
@@ -1444,6 +1542,13 @@ const Contas = () => {
   const loadMorePages = async () => {
     if (streamError || loadingMore || !hasNextPage) return;
     if (currentPage >= MAX_PAGES) return;
+    const now = Date.now();
+    if (now < loadMoreNextAllowedAtRef.current) {
+      startLoadMoreCooldown(loadMoreNextAllowedAtRef.current - now);
+      return;
+    }
+    loadMoreNextAllowedAtRef.current = now + CONTAS_LOAD_MORE_MIN_GAP_MS;
+    startLoadMoreCooldown();
     setLoadingMore(true);
     // Use a SEPARATE controller so load-more doesn't hijack the main abortRef
     // The main abortRef is only used by fetchMultiplePages (tab/filter changes).
@@ -1607,6 +1712,13 @@ const Contas = () => {
   );
 
   const refetch = () => {
+    const now = Date.now();
+    if (now < refreshNextAllowedAtRef.current) {
+      startManualRefreshCooldown(refreshNextAllowedAtRef.current - now);
+      return;
+    }
+    refreshNextAllowedAtRef.current = now + CONTAS_MANUAL_REFRESH_MIN_GAP_MS;
+    startManualRefreshCooldown();
     abortRef.current?.abort();
     clearPrefetchReconcileSchedule();
     const controller = new AbortController();
@@ -2095,6 +2207,12 @@ const Contas = () => {
             <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">
               {streamError ? "Não foi possível carregar a lista. Tente atualizar." : isLoading ? "Buscando contas disponíveis…" : `${allItems.length} ${allItems.length === 1 ? "conta listada" : "contas listadas"} · página ${displayPage} de ${totalDisplayPages}`}
             </p>
+            {isFetchingAccounts && !isLoading && (
+              <div className="mt-2 inline-flex items-center gap-2 rounded-md border border-border/50 bg-secondary/30 px-2.5 py-1 text-[11px] text-muted-foreground">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" style={{ color: accentColor }} />
+                Buscando contas...
+              </div>
+            )}
             <p className="mt-2.5 inline-flex max-w-full flex-wrap items-center gap-1.5 rounded-full border border-border/50 bg-secondary/30 px-2.5 py-1 text-[10px] min-[400px]:text-[11px] text-muted-foreground sm:px-3">
               Procurando softwares?{" "}
               <Link to="/produtos" className="font-medium underline-offset-2 hover:underline" style={{ color: accentColor }}>Ver Produtos →</Link>
@@ -2108,6 +2226,7 @@ const Contas = () => {
             <button
               type="button"
               onClick={() => refetch()}
+              disabled={isFetchingAccounts || refreshCoolingDown}
               className="flex h-11 w-11 shrink-0 snap-start items-center justify-center rounded border border-border text-muted-foreground transition-colors sm:h-9 sm:w-9 touch-manipulation"
               style={{ "--hover-color": accentColor } as CSSProperties}
               onMouseEnter={(e) => setLinkAccentHover(e, accentColor)}
@@ -2115,7 +2234,7 @@ const Contas = () => {
               title="Atualizar lista (busca de novo na API)"
               aria-label="Atualizar lista de contas"
             >
-              <RefreshCw className="h-4 w-4" />
+              <RefreshCw className={`h-4 w-4 ${(isFetchingAccounts || refreshCoolingDown) ? "animate-spin" : ""}`} />
             </button>
             {sortOptions.map((opt) => (
               <button
@@ -2346,13 +2465,13 @@ const Contas = () => {
                     {hasNextPage && (
                       <button
                         onClick={loadMorePages}
-                        disabled={loadingMore || !!streamError}
+                        disabled={loadingMore || loadMoreCoolingDown || !!streamError}
                         className="flex items-center gap-2 rounded-lg border border-border bg-card px-6 py-2 text-xs font-medium text-muted-foreground transition-colors disabled:opacity-50"
                         onMouseEnter={(e) => setLinkAccentHover(e, accentColor)}
                         onMouseLeave={clearLinkAccentHover}
                       >
-                        {loadingMore ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ChevronDown className="h-3.5 w-3.5" />}
-                        {loadingMore ? "Carregando..." : "Buscar mais contas"}
+                        {loadingMore || loadMoreCoolingDown ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                        {loadingMore ? "Carregando..." : loadMoreCoolingDown ? "Aguarde..." : "Buscar mais contas"}
                       </button>
                     )}
                   </div>

@@ -25,7 +25,10 @@ const LZT_ALLOWED_IMAGE_DOMAINS = [
 ];
 const RETRYABLE_STATUSES = [429, 502, 503, 504, 524];
 /** Evita que o isolate fique à espera indefinidamente da LZT (origem típica de 504 no gateway Supabase). */
-const LZT_SINGLE_FETCH_TIMEOUT_MS = 14_000;
+const LZT_LIST_FETCH_TIMEOUT_MS = 8_000;
+const LZT_DETAIL_FETCH_TIMEOUT_MS = 12_000;
+const LZT_LIST_FETCH_MAX_ATTEMPTS = 2;
+const LZT_DETAIL_FETCH_MAX_ATTEMPTS = 2;
 /** Em produção, evita ruído: logs INFO de performance só para requests lentos. */
 const PERF_LOG_THRESHOLD_MS = 1200;
 let RUB_TO_BRL = 0.055; // Updated fallback
@@ -227,9 +230,9 @@ const globalLztCache = new Map<string, { data: unknown; expiry: number }>();
 /** Pedidos LZT idênticos em voo: N utilizadores → 1 fetch ao api.lzt.market (por isolate). */
 const inflightRawLztFetch = new Map<string, Promise<Response>>();
 
-async function fetchLztOnce(apiUrl: string, token: string): Promise<Response> {
+async function fetchLztOnce(apiUrl: string, token: string, timeoutMs: number): Promise<Response> {
   const ac = new AbortController();
-  const tid = setTimeout(() => ac.abort(), LZT_SINGLE_FETCH_TIMEOUT_MS);
+  const tid = setTimeout(() => ac.abort(), timeoutMs);
   try {
     return await fetch(apiUrl, {
       headers: {
@@ -248,13 +251,13 @@ async function dedupedLztListFetch(apiUrl: string, token: string, dedupeKey: str
   if (!p) {
     p = (async (): Promise<Response> => {
       let response: Response | null = null;
-      for (let attempt = 0; attempt < 3; attempt++) {
+      for (let attempt = 0; attempt < LZT_LIST_FETCH_MAX_ATTEMPTS; attempt++) {
         if (attempt > 0) {
           const delay = 350 * Math.pow(2, attempt - 1);
           await new Promise((r) => setTimeout(r, delay));
         }
         try {
-          response = await fetchLztOnce(apiUrl, token);
+          response = await fetchLztOnce(apiUrl, token, LZT_LIST_FETCH_TIMEOUT_MS);
         } catch (e) {
           console.warn(`LZT list fetch attempt ${attempt + 1} failed:`, e);
           response = new Response("LZT upstream timeout or network error", { status: 504 });
@@ -927,14 +930,14 @@ Deno.serve(async (req) => {
     if (shouldCache) {
       response = await dedupedLztListFetch(apiUrl, token, cacheKey);
     } else {
-      for (let attempt = 0; attempt < 3; attempt++) {
+      for (let attempt = 0; attempt < LZT_DETAIL_FETCH_MAX_ATTEMPTS; attempt++) {
         if (attempt > 0) {
           const delay = 350 * Math.pow(2, attempt - 1); // 350ms, 700ms — menos fila para o utilizador
           console.log(`LZT retry attempt ${attempt + 1} after ${delay}ms...`);
           await new Promise((r) => setTimeout(r, delay));
         }
         try {
-          response = await fetchLztOnce(apiUrl, token);
+          response = await fetchLztOnce(apiUrl, token, LZT_DETAIL_FETCH_TIMEOUT_MS);
         } catch (e) {
           console.warn(`LZT detail/single fetch attempt ${attempt + 1} failed:`, e);
           response = new Response("LZT upstream timeout or network error", { status: 504 });
