@@ -73,7 +73,7 @@ export interface DDragonChampionJson {
 export interface FortniteCosmeticItem {
   id?: string;
   name?: string;
-  images?: { smallIcon?: string; icon?: string };
+  images?: { smallIcon?: string; icon?: string; featured?: string };
   rarity?: { value?: string; displayValue?: string };
   introduction?: { chapter?: string | number; season?: string | number };
 }

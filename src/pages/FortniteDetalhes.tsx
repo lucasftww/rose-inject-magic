@@ -20,45 +20,11 @@ import { lztItemAsFortniteExtras } from "@/lib/lztMergedItemExtras";
 import { hideImgOnError, setImgOpacityOnError, withHTMLElementTarget } from "@/lib/domEventHelpers";
 import { errorMessage } from "@/lib/errorMessage";
 import { getProxiedImageUrl, cleanLztDescription } from "@/lib/lztImageProxy";
-import { compareFortniteCardRows, metaFromFortniteApiItem } from "@/lib/fortniteCosmeticSort";
+import { compareFortniteCardRows } from "@/lib/fortniteCosmeticSort";
+import { fetchFortniteCosmeticsBrMap } from "@/lib/fortniteCosmeticsFetch";
 
 const FN_PURPLE = "hsl(265,80%,65%)";
 const FN_BLUE = "hsl(210,100%,56%)";
-
-// Fetch all Fortnite cosmetics (outfits, pickaxes, emotes, gliders) from fortnite-api.com
-type FortniteCosmeticRow = {
-  name: string;
-  image: string;
-  rarity: string;
-  rarityValue: string;
-  ageKey: number;
-};
-
-const fetchFortniteCosmetics = async (): Promise<Map<string, FortniteCosmeticRow>> => {
-  try {
-    // Use /v2/cosmetics/br which covers ALL types: outfits, pickaxes, emotes, gliders, backpacks
-    const res = await fetch("https://fortnite-api.com/v2/cosmetics/br?language=pt-BR");
-    if (!res.ok) throw new Error("Failed");
-    const data = await res.json();
-    const map = new Map<string, FortniteCosmeticRow>();
-    for (const item of (data.data || [])) {
-      const image = item.images?.smallIcon || item.images?.icon || item.images?.featured;
-      if (image && item.id) {
-        const meta = metaFromFortniteApiItem(item);
-        map.set(item.id.toLowerCase(), {
-          name: item.name || item.id,
-          image,
-          rarity: item.rarity?.displayValue || item.rarity?.value || "",
-          rarityValue: meta.rarityValue,
-          ageKey: meta.ageKey,
-        });
-      }
-    }
-    return map;
-  } catch {
-    return new Map();
-  }
-};
 
 interface CosmeticPreview {
   id: string;
@@ -117,7 +83,7 @@ const FortniteDetalhes = () => {
 
   const { data: cosmeticsDb = new Map() } = useQuery({
     queryKey: ["fortnite-cosmetics"],
-    queryFn: fetchFortniteCosmetics,
+    queryFn: fetchFortniteCosmeticsBrMap,
     staleTime: 1000 * 60 * 60 * 6,
   });
 
@@ -134,7 +100,7 @@ const FortniteDetalhes = () => {
         id: c.id,
         name: found?.name || c.title || c.id,
         image: found?.image || `https://fortnite-api.com/images/cosmetics/br/${String(c.id).toLowerCase()}/smallicon.png`,
-        rarity: found?.rarity || c.rarity || "",
+        rarity: found?.rarityDisplay || c.rarity || "",
         rarityValue: found?.rarityValue || "",
         ageKey: found?.ageKey ?? 999999,
       });

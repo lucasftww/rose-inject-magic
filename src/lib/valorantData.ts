@@ -80,61 +80,61 @@ export const rarityMap: Record<string, { name: string; img: string; color: strin
 export type SkinEntry = { name: string; image: string; rarity: number };
 
 export const fetchAllValorantSkins = async (): Promise<Map<string, SkinEntry>> => {
+  const { loadValorantSkinsMapFromStorage, saveValorantSkinsMapToStorage } = await import(
+    "@/lib/valorantSkinsCache",
+  );
+  const fromLs = loadValorantSkinsMapFromStorage();
+  if (fromLs) return fromLs;
+
   const map = new Map<string, SkinEntry>();
 
   try {
-    const res = await fetch("https://valorant-api.com/v1/weapons/skins?language=pt-BR");
-    if (res.ok) {
-      const data = await res.json();
-      for (const s of (data.data || [])) {
+    const [skinsRes, agentsRes, buddiesRes] = await Promise.all([
+      fetch("https://valorant-api.com/v1/weapons/skins?language=pt-BR"),
+      fetch("https://valorant-api.com/v1/agents?isPlayableCharacter=true&language=pt-BR"),
+      fetch("https://valorant-api.com/v1/buddies?language=pt-BR"),
+    ]);
+
+    if (skinsRes.ok) {
+      const data = await skinsRes.json();
+      for (const s of data.data || []) {
         const image = s.levels?.[0]?.displayIcon || s.displayIcon || s.chromas?.[0]?.fullRender;
         if (!image) continue;
         const rarity = RARITY_PRIORITY[s.contentTierUuid?.toLowerCase()] || 0;
         const entry: SkinEntry = { name: s.displayName, image, rarity };
         if (s.uuid) map.set(s.uuid.toLowerCase(), entry);
-        for (const level of (s.levels || [])) {
+        for (const level of s.levels || []) {
           if (level.uuid) map.set(level.uuid.toLowerCase(), entry);
         }
-        for (const chroma of (s.chromas || [])) {
+        for (const chroma of s.chromas || []) {
           if (chroma.uuid) map.set(chroma.uuid.toLowerCase(), entry);
         }
       }
     }
-  } catch (e: unknown) {
-    console.warn("valorant-api skins fetch failed:", e);
-  }
-
-  try {
-    const res = await fetch("https://valorant-api.com/v1/agents?isPlayableCharacter=true&language=pt-BR");
-    if (res.ok) {
-      const data = await res.json();
-      for (const a of (data.data || [])) {
+    if (agentsRes.ok) {
+      const data = await agentsRes.json();
+      for (const a of data.data || []) {
         const image = a.displayIcon || a.fullPortrait || a.bustPortrait;
         if (!image || !a.uuid) continue;
         map.set(a.uuid.toLowerCase(), { name: a.displayName, image, rarity: 0 });
       }
     }
-  } catch (e: unknown) {
-    console.warn("valorant-api agents fetch failed:", e);
-  }
-
-  try {
-    const res = await fetch("https://valorant-api.com/v1/buddies?language=pt-BR");
-    if (res.ok) {
-      const data = await res.json();
-      for (const b of (data.data || [])) {
+    if (buddiesRes.ok) {
+      const data = await buddiesRes.json();
+      for (const b of data.data || []) {
         const image = b.displayIcon;
         if (!image || !b.uuid) continue;
         const entry: SkinEntry = { name: b.displayName, image, rarity: 0 };
         if (b.uuid) map.set(b.uuid.toLowerCase(), entry);
-        for (const level of (b.levels || [])) {
+        for (const level of b.levels || []) {
           if (level.uuid) map.set(level.uuid.toLowerCase(), entry);
         }
       }
     }
   } catch (e: unknown) {
-    console.warn("valorant-api buddies fetch failed:", e);
+    console.warn("valorant-api parallel fetch failed:", e);
   }
 
+  saveValorantSkinsMapToStorage(map);
   return map;
 };

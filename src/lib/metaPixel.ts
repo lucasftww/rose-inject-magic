@@ -10,7 +10,8 @@ import { supabase, supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/
  *
  * Events (ativos): PageView (1× load inicial em `index.html` + 1× por navegação SPA em `RouteTracker`), InitiateCheckout, Purchase.
  *
- * Conversões personalizadas na Meta (ex. “IC - Contas - Fortnite” vs “Purchase - Contas - Fortnite”):
+ * Conversões personalizadas na Meta (ex. “IC - Contas - Fortnite” / “Purchase - Contas - Fortnite” — **só o nome do caso Fortnite**;
+ * Valorant, LoL, etc. têm regras equivalentes com outro `content_category`):
  * - **InitiateCheckout** na rota `/checkout` — `section` + `content_category` (ex. contas + fortnite).
  * - **Purchase** em `/pedido/sucesso` (pixel) e CAPI no `pix-payment` — mesmos parâmetros no evento Purchase.
  * `disablePushState` no head evita o PageView *automático* da Meta em cada `history.pushState`; o nosso `trackSpaPageView()` dispara só quando a rota muda.

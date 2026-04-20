@@ -5,7 +5,7 @@ import "./i18n";
 import { initErrorTracker } from "./lib/errorTracker";
 import { runMetaDevChecks } from "./lib/metaDevChecks";
 import { supabaseUrl } from "./integrations/supabase/client";
-import { prefetchContasChunk } from "./lib/prefetchContasChunk";
+import { prefetchContasChunk, prefetchAccountDetailChunksForPathname } from "./lib/prefetchContasChunk";
 
 function injectResourceHints() {
   if (typeof document === "undefined") return;
@@ -26,6 +26,9 @@ function injectResourceHints() {
     "https://connect.facebook.net",
     "https://www.facebook.com",
     "https://economia.awesomeapi.com.br",
+    "https://fortnite-api.com",
+    "https://valorant-api.com",
+    "https://ddragon.leagueoflegends.com",
   ]) {
     const d = document.createElement("link");
     d.rel = "dns-prefetch";
@@ -35,9 +38,11 @@ function injectResourceHints() {
 }
 injectResourceHints();
 
-/** Anúncios com destino `/contas`: começa o download do chunk lazy em paralelo ao boot do React. */
-if (typeof window !== "undefined" && window.location.pathname === "/contas") {
-  prefetchContasChunk();
+/** Rotas pesadas: chunk lazy o mais cedo possível (paralelo ao boot do React). */
+if (typeof window !== "undefined") {
+  const p = window.location.pathname;
+  if (p === "/contas") prefetchContasChunk();
+  else prefetchAccountDetailChunksForPathname(p);
 }
 
 initErrorTracker();

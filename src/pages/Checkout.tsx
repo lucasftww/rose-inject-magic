@@ -13,11 +13,10 @@ import {
 import logoRoyal from "@/assets/logo-royal.png";
 import { motion } from "framer-motion";
 import { getUserData, setAdvancedMatching } from "@/lib/metaPixel";
-import { buildMetaPurchasePayloadFromCartItems, buildCartFingerprintForMetaIc } from "@/lib/buildMetaPurchasePayload";
+import { buildMetaPurchasePayloadFromCartItems, buildCartFingerprintForMetaIc, deriveGameQueryParamFromCartItems } from "@/lib/buildMetaPurchasePayload";
 import { safeJsonFetch, ApiError } from "@/lib/apiUtils";
 import { safeHttpUrl } from "@/lib/safeUrl";
 import { buildCartSnapshotFromItems } from "@/lib/buildCartSnapshot";
-import { normalizeGameSlug } from "@/lib/gameSlug";
 import type { PixPaymentCreateResult, PixPaymentStatusResult } from "@/lib/edgeFunctionTypes";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -33,19 +32,6 @@ type PurchaseSuccessPayload = {
   section?: "contas" | "produtos" | "multi";
 };
 
-/** Derive a single game slug from cart items for success URL routing. */
-function deriveGameSlug(cartItems: { lztGame?: string; gameName?: string; type?: string }[]): string | null {
-  const games = cartItems
-    .map((i) => normalizeGameSlug(i.lztGame || i.gameName))
-    .filter((g): g is string => !!g);
-  const unique = [...new Set(games)];
-  if (unique.length === 1) return unique[0];
-  if (unique.length > 1) return "multi";
-  // Fallback: if all items are regular products (not lzt-account)
-  if (cartItems.every((i) => i.type !== "lzt-account")) return "produto";
-  return null;
-}
-
 /** Keep Purchase URL split by section to avoid mixing contas/produtos conversions. */
 function deriveSectionSlug(cartItems: { type?: string }[]): "contas" | "produtos" | "multi" {
   if (cartItems.length === 0) return "produtos";
@@ -58,12 +44,12 @@ function deriveSectionSlug(cartItems: { type?: string }[]): "contas" | "produtos
 
 function buildSuccessUrl(
   paymentId: string,
-  cartItems: { lztGame?: string; gameName?: string; type?: string }[],
+  cartItems: CartItem[],
   ticketId?: string | null,
 ): string {
   const params = new URLSearchParams({ payment_id: paymentId });
   params.set("section", deriveSectionSlug(cartItems));
-  const gameSlug = deriveGameSlug(cartItems);
+  const gameSlug = deriveGameQueryParamFromCartItems(cartItems);
   if (gameSlug) params.set("game", gameSlug);
   if (ticketId) params.set("ticket_id", ticketId);
   return `/pedido/sucesso?${params.toString()}`;

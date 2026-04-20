@@ -137,7 +137,14 @@ function PrefetchLztStorefrontPricing() {
 function PrefetchContasChunkOnIdle() {
   const location = useLocation();
   useEffect(() => {
-    if (location.pathname !== "/" && location.pathname !== "/produtos") return;
+    const p = location.pathname;
+    const warmContas =
+      p === "/" ||
+      p === "/produtos" ||
+      p.startsWith("/lol/") ||
+      p.startsWith("/fortnite/") ||
+      p.startsWith("/minecraft/");
+    if (!warmContas) return;
     let cancelled = false;
     const run = () => {
       if (!cancelled) prefetchContasChunk();

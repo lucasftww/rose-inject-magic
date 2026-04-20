@@ -17,19 +17,15 @@ import { Link, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { safeJsonFetch, ApiError } from "@/lib/apiUtils";
 import { throwApiError } from "@/lib/apiErrors";
-import type {
-  DDragonChampionJson,
-  DDragonVersionList,
-  FortniteCosmeticItem,
-  FortniteCosmeticsResponse,
-} from "@/lib/edgeFunctionTypes";
 
 import {
   rankFerro, rankBronze, rankPrata, rankOuro, rankPlatina,
   rankDiamante, rankAscendente, rankImortal, rankRadianteNew as rankRadiante,
   rankUnranked, fetchAllValorantSkins,
 } from "@/lib/valorantData";
-import { metaFromFortniteApiItem, type FortniteCosmeticDbRow } from "@/lib/fortniteCosmeticSort";
+import { type FortniteCosmeticDbRow } from "@/lib/fortniteCosmeticSort";
+import { fetchFortniteCosmeticsBrMap } from "@/lib/fortniteCosmeticsFetch";
+import { fetchLolChampKeyMap } from "@/lib/lolChampKeyMapFetch";
 import { setLinkAccentHover, clearLinkAccentHover } from "@/lib/domEventHelpers";
 import { errorName } from "@/lib/errorMessage";
 import { LZT_ACCOUNT_DETAIL_GONE_EVENT } from "@/lib/lztPrefetch";
@@ -231,60 +227,6 @@ function createAttemptSignal(parent: AbortSignal, timeoutMs: number) {
 
 // RARITY_PRIORITY, SkinEntry, fetchAllValorantSkins imported from @/lib/valorantData
 
-// Fortnite-API: fetch all BR cosmetics (smallIcon)
-const fetchFortniteSkins = async (): Promise<Map<string, FortniteCosmeticDbRow>> => {
-  try {
-    const data = await safeJsonFetch<FortniteCosmeticsResponse>("https://fortnite-api.com/v2/cosmetics/br?language=pt-BR");
-    const map = new Map<string, FortniteCosmeticDbRow>();
-    const raw = data.data;
-    const list: FortniteCosmeticItem[] = Array.isArray(raw) ? raw : raw?.items ?? [];
-    for (const item of list) {
-      const image = item.images?.smallIcon || item.images?.icon;
-      if (image && item.id) {
-        const meta = metaFromFortniteApiItem(item);
-        map.set(item.id.toLowerCase(), {
-          name: item.name || item.id,
-          image,
-          rarityValue: meta.rarityValue,
-          ageKey: meta.ageKey,
-        });
-      }
-    }
-    return map;
-  } catch (err) {
-    console.warn("Failed to fetch Fortnite skins:", err);
-    return new Map();
-  }
-};
-
-// Data Dragon: champion numeric key -> internal name (e.g., 103 -> "Ahri")
-// Used to resolve LoL skin IDs: skinId = champKey * 1000 + skinNum
-// Loading art URL: https://ddragon.leagueoflegends.com/cdn/img/champion/loading/{Name}_{skinNum}.jpg
-const fetchLolChampKeyMap = async (): Promise<Map<number, string>> => {
-  try {
-    const versions = await safeJsonFetch<DDragonVersionList>("https://ddragon.leagueoflegends.com/api/versions.json");
-    const version = versions[0];
-    if (!version) return new Map();
-
-    const data = await safeJsonFetch<DDragonChampionJson>(
-      `https://ddragon.leagueoflegends.com/cdn/${version}/data/en_US/champion.json`
-    );
-    const map = new Map<number, string>();
-    const champions = data.data ?? {};
-    for (const [internalName, champ] of Object.entries(champions)) {
-      // champ.key is the numeric ID as a string (e.g., "103")
-      const keyStr = champ.key;
-      if (!keyStr) continue;
-      const parsed = parseInt(keyStr, 10);
-      if (Number.isFinite(parsed)) map.set(parsed, internalName);
-    }
-    return map;
-  } catch (err) {
-    console.warn("Failed to fetch LoL champ map:", err);
-    return new Map();
-  }
-};
-
 /** Após mostrar lista do prefetch na troca de aba: atrasa o GET de reconciliação para não competir com paint/chunk. */
 const CONTAS_RECONCILE_AFTER_PREFETCH_MS = 450;
 /** Prefetch de aba adjacente só depois de estabilizar a interação inicial. */
@@ -305,7 +247,7 @@ const CONTAS_ENABLE_ADJACENT_PREFETCH =
   })();
 
 /** Funde mudanças de `debouncedParamsKey` no mesmo burst (hidratação, sync URL→estado, debounces curtos). */
-const CONTAS_LIST_FETCH_KEY_COALESCE_MS = 120;
+const CONTAS_LIST_FETCH_KEY_COALESCE_MS = 180;
 
 function listAttemptTimeoutMs(tab: GameTab, light: boolean): number {
   // Minecraft costuma responder perto de 12s em horários de pico; dar margem evita abortar "quase concluído".
@@ -925,7 +867,7 @@ const Contas = () => {
 
   const { data: fnSkinsDb = new Map<string, FortniteCosmeticDbRow>() } = useQuery({
     queryKey: ["fortnite-cosmetics"],
-    queryFn: fetchFortniteSkins,
+    queryFn: fetchFortniteCosmeticsBrMap,
     staleTime: 1000 * 60 * 60 * 6,
     enabled: gameTab === "fortnite",
   });

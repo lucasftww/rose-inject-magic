@@ -6,6 +6,8 @@
 export type FortniteCosmeticDbRow = {
   name: string;
   image: string;
+  /** `rarity.displayValue` / `rarity.value` (UI — ex. FortniteDetalhes). */
+  rarityDisplay?: string;
   /** `rarity.value` da Fortnite API (lowercase). */
   rarityValue: string;
   /** Menor = temporada mais antiga no Capítulo X; 999999 = sem intro (ex.: loja). */

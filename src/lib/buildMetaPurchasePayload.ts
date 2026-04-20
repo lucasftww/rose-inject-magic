@@ -28,6 +28,16 @@ function gameCategorySlugForMetaItem(item: CartItem): string | null {
   return null;
 }
 
+/** `game` na URL de `/pedido/sucesso` — mesma lógica que `content_category` (incl. inferência pelo nome em contas LZT). Regras de conversão na Meta por URL (`game=fortnite`) dependem disso. */
+export function deriveGameQueryParamFromCartItems(cartItems: CartItem[]): string | null {
+  const games = cartItems.map((i) => gameCategorySlugForMetaItem(i)).filter((g): g is string => !!g);
+  const unique = [...new Set(games)];
+  if (unique.length === 1) return unique[0];
+  if (unique.length > 1) return "multi";
+  if (cartItems.every((i) => i.type !== "lzt-account")) return "produto";
+  return null;
+}
+
 /** Fingerprint estável do carrinho para deduplicar `InitiateCheckout` (localStorage partilhado entre abas, TTL 7d em `metaPixel`). */
 export function buildCartFingerprintForMetaIc(
   items: Pick<CartItem, "productId" | "quantity" | "price">[],
