@@ -203,6 +203,7 @@ function lolGalleryHeroBlurUrl(entry: SkinPreview): string {
 }
 
 const LolDetalhes = () => {
+  const LOL_INVENTORY_BATCH = 18;
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { getPrice, getDisplayPrice, formatPriceBrl } = useLztMarkup();
@@ -210,6 +211,7 @@ const LolDetalhes = () => {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [visibleCount, setVisibleCount] = useState(LOL_INVENTORY_BATCH);
   const { addItem } = useCart();
   const queryClient = useQueryClient();
 
@@ -221,6 +223,7 @@ const LolDetalhes = () => {
     setActiveTab("skins");
     setLockedPriceBrl(null);
     setSearchQuery("");
+    setVisibleCount(LOL_INVENTORY_BATCH);
   }, [id]);
 
   const { data, isLoading, error } = useQuery({
@@ -340,6 +343,18 @@ const LolDetalhes = () => {
 
   const activeItems: (SkinPreview | ChampPreview)[] = activeTab === "skins" ? filteredSkins : filteredChamps;
   const totalItems: (SkinPreview | ChampPreview)[] = activeTab === "skins" ? skinPreviews : champPreviews;
+  const displayedItems = useMemo(
+    () => activeItems.slice(0, visibleCount),
+    [activeItems, visibleCount],
+  );
+
+  useEffect(() => {
+    setVisibleCount(LOL_INVENTORY_BATCH);
+  }, [activeTab, searchQuery, id]);
+
+  const loadMoreInventory = useCallback(() => {
+    setVisibleCount((prev) => prev + LOL_INVENTORY_BATCH);
+  }, []);
 
   // Gallery: skins com arte personalizada primeiro; fallback → campeões
   const galleryItems: SkinPreview[] =
@@ -695,8 +710,9 @@ const LolDetalhes = () => {
                 )}
 
                 {activeItems.length > 0 ? (
+                  <>
                   <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
-                    {activeItems.map((it, i) => (
+                    {displayedItems.map((it, i) => (
                       <motion.div
                         key={`${activeTab}-${"skinNum" in it ? `${it.champName}_${it.skinNum}` : it.champName}`}
                         initial={{ opacity: 0, y: 10 }}
@@ -737,6 +753,17 @@ const LolDetalhes = () => {
                       </motion.div>
                     ))}
                   </div>
+                  {activeItems.length > displayedItems.length && (
+                    <div className="mt-4 flex items-center justify-center">
+                      <button
+                        onClick={loadMoreInventory}
+                        className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:border-[hsl(198,100%,45%)/40%]"
+                      >
+                        Carregar mais ({activeItems.length - displayedItems.length} restantes)
+                      </button>
+                    </div>
+                  )}
+                  </>
                 ) : searchQuery ? (
                   <div className="flex flex-col items-center justify-center py-12 rounded-lg border border-border bg-card">
                     <Search className="h-8 w-8 text-muted-foreground/30 mb-2" />
