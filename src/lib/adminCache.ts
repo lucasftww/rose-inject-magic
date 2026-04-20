@@ -49,6 +49,8 @@ const RATE_TTL = 5 * 60 * 1000; // 5 min
 export async function getUsdToBrl(fallback = 5.16): Promise<number> {
   const cached = getCached<number>("usd_brl", RATE_TTL);
   if (cached !== null) return cached;
+  const failUntil = getCached<number>("usd_brl_block_until", RATE_TTL);
+  if (typeof failUntil === "number" && failUntil > Date.now()) return fallback;
 
   // Deduplicate concurrent calls
   if (_ratePromise && Date.now() - _rateCacheTs < RATE_TTL) return _ratePromise;
@@ -57,12 +59,14 @@ export async function getUsdToBrl(fallback = 5.16): Promise<number> {
   _ratePromise = (async () => {
     try {
       const res = await fetch("https://economia.awesomeapi.com.br/json/last/USD-BRL");
+      if (!res.ok) throw new Error(`usd_brl_http_${res.status}`);
       const data = await res.json();
       const bid = Number(data?.USDBRL?.bid);
       const rate = bid > 0 ? bid : fallback;
       setCache("usd_brl", rate);
       return rate;
     } catch {
+      setCache("usd_brl_block_until", Date.now() + 5 * 60 * 1000);
       setCache("usd_brl", fallback);
       return fallback;
     }

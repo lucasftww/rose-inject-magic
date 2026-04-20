@@ -247,7 +247,8 @@ const CONTAS_ENABLE_ADJACENT_PREFETCH =
   })();
 
 /** Funde mudanças de `debouncedParamsKey` no mesmo burst (hidratação, sync URL→estado, debounces curtos). */
-const CONTAS_LIST_FETCH_KEY_COALESCE_MS = 180;
+const CONTAS_LIST_FETCH_KEY_COALESCE_MS = 340;
+const CONTAS_NON_SEARCH_DEBOUNCE_MS = 220;
 
 function listAttemptTimeoutMs(tab: GameTab, light: boolean): number {
   // Minecraft costuma responder perto de 12s em horários de pico; dar margem evita abortar "quase concluído".
@@ -261,7 +262,7 @@ const Contas = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [gameTab, setGameTab] = useState<GameTab>(() => gameTabFromSearchParams(searchParams));
 
-  // URL → estado antes do fetch da lista: layout effects antes do GET; `listFetchKey` coalesce (~120ms)
+  // URL → estado antes do fetch da lista: layout effects antes do GET; `listFetchKey` coalesce (~340ms)
   // absorve rajadas de `debouncedParamsKey` (hidratação/sync) e reduz `lzt-market` cancelado na rede.
   useLayoutEffect(() => {
     const tab = gameTabFromSearchParams(searchParams);
@@ -1051,11 +1052,19 @@ const Contas = () => {
 
   const prevNonSearchRef = useRef(nonSearchParamsKey);
   const prevSearchTrimRef = useRef(searchQuery.trim());
+  const nonSearchDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    // Non-search filter changes: apply immediately (no debounce)
+    // Non-search filter changes: short debounce to absorb hydration/sync bursts and cut canceled requests.
     if (prevNonSearchRef.current !== nonSearchParamsKey) {
       prevNonSearchRef.current = nonSearchParamsKey;
-      setDebouncedParamsKey(paramsKey);
+      if (nonSearchDebounceTimerRef.current) {
+        clearTimeout(nonSearchDebounceTimerRef.current);
+        nonSearchDebounceTimerRef.current = null;
+      }
+      nonSearchDebounceTimerRef.current = setTimeout(() => {
+        nonSearchDebounceTimerRef.current = null;
+        setDebouncedParamsKey(paramsKey);
+      }, CONTAS_NON_SEARCH_DEBOUNCE_MS);
       prevSearchTrimRef.current = searchQuery.trim();
       return;
     }
@@ -1070,7 +1079,13 @@ const Contas = () => {
     if (debouncedParamsKey === paramsKey) return;
     // Search text changed: debounce (maior no touch/rede lenta — menos pedidos LZT e menos abort/retry)
     const handler = setTimeout(() => setDebouncedParamsKey(paramsKey), listSearchDebounceMs);
-    return () => clearTimeout(handler);
+    return () => {
+      clearTimeout(handler);
+      if (nonSearchDebounceTimerRef.current) {
+        clearTimeout(nonSearchDebounceTimerRef.current);
+        nonSearchDebounceTimerRef.current = null;
+      }
+    };
   }, [paramsKey, nonSearchParamsKey, searchQuery, debouncedParamsKey, listSearchDebounceMs]);
 
   const fetchWithRetry = useCallback(

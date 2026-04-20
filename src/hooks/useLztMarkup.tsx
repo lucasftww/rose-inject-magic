@@ -39,11 +39,16 @@ function toMarkup(v: unknown, fallback: number): number {
 export const LZT_STOREFRONT_PRICING_QUERY_KEY = ["lzt-storefront-pricing"] as const;
 
 async function fetchAwesomeFxCappedMs(timeoutMs: number): Promise<Response | null> {
+  const now = Date.now();
+  const failUntilRaw = Number(sessionStorage.getItem("fx_block_until_ts") || "0");
+  if (Number.isFinite(failUntilRaw) && failUntilRaw > now) return null;
   const ctrl = new AbortController();
   const tid = window.setTimeout(() => ctrl.abort(), timeoutMs);
   try {
     return await fetch("https://economia.awesomeapi.com.br/json/last/USD-BRL,RUB-BRL", { signal: ctrl.signal });
   } catch {
+    // DNS/network failure: avoid hammering this host every render path for a while.
+    try { sessionStorage.setItem("fx_block_until_ts", String(now + 5 * 60 * 1000)); } catch { /* ignore */ }
     return null;
   } finally {
     window.clearTimeout(tid);
