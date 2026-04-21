@@ -25,8 +25,11 @@ describe("Meta IC/Purchase — section + content_category (regras Events Manager
   it.each([
     { lztGame: "valorant" as const, expectedCategory: "valorant" },
     { lztGame: "lol" as const, expectedCategory: "lol" },
+    { lztGame: "League of Legends" as const, expectedCategory: "lol" },
     { lztGame: "fortnite" as const, expectedCategory: "fortnite" },
+    { lztGame: "Fortnite Battle Royale" as const, expectedCategory: "fortnite" },
     { lztGame: "minecraft" as const, expectedCategory: "minecraft" },
+    { lztGame: "Minecraft Java" as const, expectedCategory: "minecraft" },
   ] as const)("contas puras: section=contas, content_category=%s", ({ lztGame, expectedCategory }) => {
     const p = buildMetaPurchasePayloadFromCartItems([makeLztAccount({ lztGame })], 99.9);
     expect(p).not.toBeNull();

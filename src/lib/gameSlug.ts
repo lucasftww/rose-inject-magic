@@ -18,5 +18,9 @@ export function normalizeGameSlug(raw: string | null | undefined): string | null
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
 
-  return slug || null;
+  if (!slug) return null;
+  /** Slug derivado de títulos longos ("League of Legends" → league-of-legends) — alinhar às regras Meta (`lol`, …). */
+  const slugAlias = GAME_SLUG_ALIASES[slug];
+  if (slugAlias) return slugAlias;
+  return slug;
 }

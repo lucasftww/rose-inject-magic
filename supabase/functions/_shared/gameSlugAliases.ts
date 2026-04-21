@@ -44,6 +44,16 @@ export const GAME_SLUG_ALIASES: Record<string, string> = {
   fortnite: "fortnite",
   minecraft: "minecraft",
   lol: "lol",
+  /** Títulos LZT / vitrine — sem isto o Pixel manda `league-of-legends` e a conversão "IC - Contas - LoL" (lol) nunca casa. */
+  "league of legends": "lol",
+  "league-of-legends": "lol",
+  "league-of-legends-account": "lol",
+  "fortnite battle royale": "fortnite",
+  "fortnite-battle-royale": "fortnite",
+  "minecraft java": "minecraft",
+  "minecraft-java": "minecraft",
+  "minecraft bedrock": "minecraft",
+  "minecraft-bedrock": "minecraft",
   produto: "produto",
   multi: "multi",
 };
