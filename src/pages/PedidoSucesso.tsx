@@ -85,13 +85,18 @@ const PedidoSucesso = () => {
       });
       return;
     }
-    /** Novo dispositivo / sessionStorage limpo: URL traz `amount_brl` + `game`/`section` (checkout grava isto). CAPI no servidor já enviou Purchase com valor real; aqui só alinhamos dedupe no browser. */
-    if (amountFromUrl === undefined && !fallbackCategory && !fallbackSection) return;
+    /**
+     * Novo dispositivo / sessionStorage limpo:
+     * só disparamos fallback de Purchase no browser quando `amount_brl` existe.
+     * Sem valor explícito, preferimos não enviar `value=0` (isso distorce ROAS/otimização).
+     * O CAPI do servidor (`pix-payment`) já envia Purchase com valor real.
+     */
+    if (amountFromUrl === undefined) return;
     trackPurchase({
       contentName: "Royal Store",
       contentIds: [paymentId],
       contents: [{ id: paymentId, quantity: 1 }],
-      value: amountFromUrl ?? 0,
+      value: amountFromUrl,
       transactionId: paymentId,
       ...(fallbackCategory ? { contentCategory: fallbackCategory } : {}),
       ...(fallbackSection ? { section: fallbackSection } : {}),
