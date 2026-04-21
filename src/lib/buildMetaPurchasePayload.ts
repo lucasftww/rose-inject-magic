@@ -1,30 +1,18 @@
 import type { CartItem } from "@/hooks/useCart";
 import { normalizeGameSlug } from "@/lib/gameSlug";
+import { inferLztListingGameSlug } from "@/lib/lztListingGameInference";
 
 /**
  * Payload único para **InitiateCheckout** (checkout) e **Purchase** (pedido sucesso / CAPI):
  * regras tipo “IC - Contas - Fortnite” e “Purchase - Contas - Fortnite” usam `section` + `content_category`.
  *
- * Carrinhos antigos / snapshots sem `lztGame`: inferência pelo `productName` (ver regex abaixo).
+ * Carrinhos antigos / snapshots sem `lztGame`: inferência por `productName` / `planName` (`inferLztListingGameSlug`).
  */
-function inferLztAccountCategoryFromProductName(productName: unknown): string | null {
-  if (typeof productName !== "string") return null;
-  const n = productName
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
-  if (!n.trim()) return null;
-  if (/\bfortnite\b|v-?bucks|vbucks|battle\s*royale/.test(n)) return "fortnite";
-  if (/\bminecraft\b|hypixel|minecoins?|skyblock/.test(n)) return "minecraft";
-  if (/\bleague\s+of\s+legends\b|\blol\b|champion|summoner/.test(n)) return "lol";
-  if (/\bvalorant\b|radiante|radiant|immortal|\bvp\b|vandal|phantom/.test(n)) return "valorant";
-  return null;
-}
-
 function gameCategorySlugForMetaItem(item: CartItem): string | null {
-  const fromFields = normalizeGameSlug(item.lztGame || item.gameName);
+  const trimmedLzt = typeof item.lztGame === "string" ? item.lztGame.trim() : "";
+  const fromFields = normalizeGameSlug(trimmedLzt || item.gameName);
   if (fromFields) return fromFields;
-  if (item.type === "lzt-account") return inferLztAccountCategoryFromProductName(item.productName);
+  if (item.type === "lzt-account") return inferLztListingGameSlug(item.productName, item.planName);
   return null;
 }
 

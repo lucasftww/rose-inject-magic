@@ -69,9 +69,10 @@ describe("buildCartSnapshotFromItems - payment payload integrity", () => {
     expect(snap[0].skinsCount).toBeUndefined();
   });
 
-  it("LZT snapshot with lztGame empty string sets empty", () => {
+  it("LZT snapshot sem lztGame infere slug pelo productName (grava no pagamento / CAPI)", () => {
     const snap = buildCartSnapshotFromItems([makeLzt({ lztGame: undefined })]);
-    expect(snap[0].lztGame).toBe("");
+    expect(snap[0].lztGame).toBe("valorant");
+    expect(snap[0].gameName).toBe("valorant");
   });
 
   it("handles mixed cart (product + LZT)", () => {

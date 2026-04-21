@@ -1,5 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import { isRecord } from "@/types/ticketChat";
+import { normalizeGameSlug } from "@/lib/gameSlug";
+import { inferLztListingGameSlug } from "@/lib/lztListingGameInference";
 
 export interface CartItem {
   productId: string;
@@ -84,6 +86,15 @@ function normalizeCartItemsFromStorage(parsed: unknown): CartItem[] {
       if (typeof o.lztCurrency === "string") item.lztCurrency = o.lztCurrency;
       const sc = Number(o.skinsCount);
       if (Number.isFinite(sc) && sc >= 0) item.skinsCount = sc;
+      const lg = typeof item.lztGame === "string" ? item.lztGame.trim() : "";
+      if (!lg) {
+        const fromSlug = normalizeGameSlug(item.gameName);
+        if (fromSlug) item.lztGame = fromSlug;
+        else {
+          const inferred = inferLztListingGameSlug(item.productName, item.planName);
+          if (inferred) item.lztGame = inferred;
+        }
+      }
     }
 
     out.push(item);
