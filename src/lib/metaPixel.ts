@@ -27,7 +27,8 @@ import { supabase, supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/
  * - **`npm run dev`**: Pixel no HTML desligado por defeito — `VITE_ENABLE_META_PIXEL_DEV=true` no `.env` ou `vite preview` após build.
  * - **Deploy Edge**: alterações em `supabase/functions/pix-payment` exigem deploy da função para CAPI servidor atualizar.
  *
- * Deduplicação: IC usa `event_id` aleatório partilhado Pixel+CAPI relay; Purchase usa `purchase_${transactionId}` Pixel+CAPI relay+Graph no pagamento.
+ * Deduplicação: IC usa `event_id` aleatório partilhado Pixel+CAPI relay + fingerprint local (janela curta);
+ * Purchase usa `purchase_${transactionId}` Pixel+CAPI relay+Graph no pagamento.
  */
 
 
@@ -812,7 +813,7 @@ const sendCAPI = async (
 
 const IC_CART_FP_PREFIX = "_meta_ic_cart_";
 /** Mesmo utilizador / mesmo carrinho: não repetir IC ao abrir outra aba ou voltar ao checkout dentro deste período. */
-const IC_CART_FP_TTL_MS = 6 * 60 * 60 * 1000;
+const IC_CART_FP_TTL_MS = 90 * 60 * 1000;
 
 function isInitiateCheckoutFingerprintRecent(fp: string): boolean {
   const key = IC_CART_FP_PREFIX + fp;

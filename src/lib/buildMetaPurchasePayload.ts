@@ -26,7 +26,7 @@ export function deriveGameQueryParamFromCartItems(cartItems: CartItem[]): string
   return null;
 }
 
-/** Fingerprint estável do carrinho para deduplicar `InitiateCheckout` (localStorage partilhado entre abas, TTL 7d em `metaPixel`). */
+/** Fingerprint estável do carrinho para deduplicar `InitiateCheckout` (localStorage partilhado entre abas, TTL curto em `metaPixel`). */
 export function buildCartFingerprintForMetaIc(
   items: Pick<CartItem, "productId" | "quantity" | "price">[],
 ): string {
