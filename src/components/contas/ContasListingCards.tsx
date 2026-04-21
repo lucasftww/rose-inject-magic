@@ -591,10 +591,10 @@ export const MinecraftCard = memo(({ item, priceLabel, queryClient }: { item: Lz
 
   const cleanedTitle = getListingCardTitle(item, "minecraft");
 
-  // mineskin.eu avatar (body render)
+  // mineskin.eu avatar (head render): much lighter than body/120 while still identifiable.
   // Use direct mineskin URL to avoid extra lzt-market image-proxy roundtrips/failures on Minecraft cards.
   const skinUrl = nickname
-    ? `https://mineskin.eu/body/${encodeURIComponent(nickname)}/120.png`
+    ? `https://mineskin.eu/helm/${encodeURIComponent(nickname)}/64.png`
     : null;
 
   return (
