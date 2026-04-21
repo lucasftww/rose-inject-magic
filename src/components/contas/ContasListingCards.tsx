@@ -609,8 +609,13 @@ export const MinecraftCard = memo(({ item, priceLabel, queryClient }: { item: Lz
       <div className="relative flex h-28 sm:h-36 items-center justify-center overflow-hidden bg-secondary/20">
         <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse at center, ${MC_GREEN}0a, transparent 70%)` }} />
         {skinUrl ? (
-          <div className="relative z-[1] flex items-end justify-center h-full pt-2 pb-1">
-            <img src={skinUrl} alt={nickname || "Skin"} className="h-full w-auto object-contain drop-shadow-2xl transition-transform duration-300 group-hover:scale-105" loading="lazy" referrerPolicy="no-referrer" onError={hideImgOnError} />
+          <div className="relative z-[1] flex items-end justify-center h-full w-full pt-2 pb-1">
+            <SmoothImg
+              src={skinUrl}
+              alt={nickname || "Skin"}
+              className="h-full w-auto object-contain drop-shadow-2xl transition-transform duration-300 group-hover:scale-105"
+              onError={hideImgOnError}
+            />
           </div>
         ) : (
           <div className="relative z-[1] flex items-center justify-center h-full">
