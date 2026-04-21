@@ -859,9 +859,14 @@ export const trackInitiateCheckout = (data: TrackingData, opts?: InitiateCheckou
     ...(data.section ? { section: data.section } : {}),
   };
 
-  if (window.fbq) {
-    window.fbq("track", "InitiateCheckout", customData, { eventID: eventId });
-  }
+  runWhenFbqReady(() => {
+    if (!window.fbq) return;
+    try {
+      window.fbq("track", "InitiateCheckout", customData, { eventID: eventId });
+    } catch (e: unknown) {
+      devLog("trackInitiateCheckout fbq failed", e);
+    }
+  });
   sendCAPI("InitiateCheckout", eventId, customData);
 
   return eventId;
@@ -911,9 +916,14 @@ export const trackPurchase = (
     ...(data.section ? { section: data.section } : {}),
   };
 
-  if (window.fbq) {
-    window.fbq("track", "Purchase", customData, { eventID: eventId });
-  }
+  runWhenFbqReady(() => {
+    if (!window.fbq) return;
+    try {
+      window.fbq("track", "Purchase", customData, { eventID: eventId });
+    } catch (e: unknown) {
+      devLog("trackPurchase fbq failed", e);
+    }
+  });
   sendCAPI("Purchase", eventId, customData);
 
   return eventId;

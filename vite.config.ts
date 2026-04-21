@@ -35,8 +35,10 @@ export default defineConfig(({ command, mode }) => {
         name: "html-meta-pixel-id",
         enforce: "pre",
         transformIndexHtml(html) {
-          /** Só em `vite build` (qualquer --mode); em `vite dev` não carrega fbevents.js — menos avisos no Issues. Builds `build:dev` mantêm o pixel. */
-          const loadMetaPixel = command === "build";
+          const env = loadEnv(mode, process.cwd(), "");
+          /** Produção: sempre. Dev: só se `VITE_ENABLE_META_PIXEL_DEV=true` (senão fbevents não carrega e parece “zero eventos”). */
+          const loadMetaPixel =
+            command === "build" || String(env.VITE_ENABLE_META_PIXEL_DEV || "").trim() === "true";
           return html
             .replace(/__ROYAL_SUPABASE_URL_LITERAL__/g, supabaseUrlLiteralForHtml())
             .replace(/__ROYAL_META_PIXEL_ID__/g, metaPixelId)
