@@ -294,6 +294,7 @@ const CONTAS_PROGRESSIVE_RENDER_SETTLE_MS_LIGHT = 420;
 
 function listAttemptTimeoutMs(tab: GameTab, light: boolean): number {
   // Mantém UX responsiva: falha mais rápido e deixa cache/fallback assumirem.
+  if (tab === "fortnite") return light ? 12000 : 13000;
   if (tab === "minecraft") return light ? 8500 : 9500;
   return light ? 7000 : 9500;
 }
