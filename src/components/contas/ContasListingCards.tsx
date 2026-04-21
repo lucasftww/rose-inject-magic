@@ -11,7 +11,7 @@ import {
   type MouseEvent,
   type TouchEvent,
 } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import type { QueryClient } from "@tanstack/react-query";
 import {
   ChevronLeft,
@@ -38,7 +38,6 @@ import { getProxiedImageUrl } from "@/lib/lztImageProxy";
 import type { LztItem } from "@/lib/contasMarketTypes";
 import { lolRankFilters, lolRankToFilterId } from "@/lib/contasLolRankFilters";
 import { FN_PURPLE, FN_BLUE, MC_GREEN } from "@/lib/contasGameAccents";
-import { checkLztAvailability } from "@/lib/lztAvailability";
 
 /** Data Dragon champion keys from champion.json are already valid (e.g. LeeSin); do not sentence-case them. */
 const ddragonChampionId = (internalNameFromMap: string) => internalNameFromMap;
@@ -467,8 +466,6 @@ LolCard.displayName = "LolCard";
 
 // ─── Fortnite Card ───
 export const FortniteCard = memo(({ item, skinsDb, priceLabel, queryClient }: { item: LztItem; skinsDb: Map<string, FortniteCosmeticDbRow>; priceLabel: string; queryClient: QueryClient }) => {
-  const navigate = useNavigate();
-  const openingRef = useRef(false);
   const vbucks = (item.fortnite_balance || item.fortnite_vbucks) ?? 0;
   const skinCount = item.fortnite_skin_count ?? 0;
   const level = item.fortnite_level ?? 0;
@@ -504,28 +501,9 @@ export const FortniteCard = memo(({ item, skinsDb, priceLabel, queryClient }: { 
     return rows.slice(0, FORTNITE_LISTING_PREVIEW_CAP);
   }, [item.fortniteSkins, item.fortnitePickaxe, skinsDb]);
 
-  const handleOpenDetail = useCallback(
-    async (ev: MouseEvent<HTMLAnchorElement>) => {
-      // Preserve native open-in-new-tab/window behavior.
-      if (ev.button !== 0 || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey) return;
-      ev.preventDefault();
-      if (openingRef.current) return;
-      openingRef.current = true;
-      try {
-        const available = await checkLztAvailability(String(item.item_id), "fortnite", { queryClient });
-        if (!available) return;
-        navigate(`/fortnite/${item.item_id}`);
-      } finally {
-        openingRef.current = false;
-      }
-    },
-    [item.item_id, navigate, queryClient],
-  );
-
   return (
     <Link
       to={`/fortnite/${item.item_id}`}
-      onClick={handleOpenDetail}
       onPointerEnter={() => prefetchAccountDetail(queryClient, "fortnite", item.item_id)}
       className="group touch-manipulation cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-colors duration-200 hover:border-[hsl(265,80%,65%)/50%] sm:hover:shadow-[0_4px_24px_hsl(265,80%,65%,0.12)] flex flex-col h-full no-underline text-inherit"
     >
