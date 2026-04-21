@@ -940,11 +940,11 @@ Deno.serve(async (req) => {
     const shouldCache = action !== "detail" && action !== "fast-buy" && action !== "change-price" && action !== "image-proxy";
     const cacheKey = `${apiUrl}|m=${activeMarkup}|max=${listFetchCapBrl}`;
     const staleCached = shouldCache ? globalLztCache.get(cacheKey) : null;
-    // Align in-memory + CDN TTL with fresh responses (preview 90s, list 75s; detail bypasses this cache)
-    const listCacheMaxAge = previewMode ? 90 : 75;
-    const listMemoryTtlMs = previewMode ? 90_000 : 75_000;
+    // Smaller TTL for list reduces "conta já vendida" ghosts without hurting detail latency.
+    const listCacheMaxAge = previewMode ? 45 : 30;
+    const listMemoryTtlMs = previewMode ? 45_000 : 30_000;
     /** Navegação repetida: o browser pode servir JSON “velho” enquanto revalida em background. */
-    const listCacheControl = `public, max-age=${listCacheMaxAge}, s-maxage=${listCacheMaxAge}, stale-while-revalidate=120`;
+    const listCacheControl = `public, max-age=${listCacheMaxAge}, s-maxage=${listCacheMaxAge}, stale-while-revalidate=30`;
 
     if (shouldCache) {
       const cached = globalLztCache.get(cacheKey);

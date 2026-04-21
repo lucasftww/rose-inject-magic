@@ -91,6 +91,21 @@ function purgeSoldIdsFromMarketCache(cache: Map<string, { items: LztItem[] }>, g
   return changed;
 }
 
+function isKnownGoneItemId(itemId: string, goneKeys: ReadonlySet<GoneAccountDetailKey>): boolean {
+  return (
+    goneKeys.has(`valorant:${itemId}`) ||
+    goneKeys.has(`riot:${itemId}`) ||
+    goneKeys.has(`lol:${itemId}`) ||
+    goneKeys.has(`fortnite:${itemId}`) ||
+    goneKeys.has(`minecraft:${itemId}`)
+  );
+}
+
+function dropKnownGoneFromItems(items: LztItem[], goneKeys: ReadonlySet<GoneAccountDetailKey>): LztItem[] {
+  if (items.length === 0 || goneKeys.size === 0) return items;
+  return items.filter((i) => !isKnownGoneItemId(String(i.item_id), goneKeys));
+}
+
 // ─── Region options ───
 const valorantRegions = [
   { id: "all", label: "Todas as regiões" },
@@ -1340,7 +1355,7 @@ const Contas = () => {
         }
       } else {
         // Cached: só mostra indicador de atualização quando o cache já estava velho (evita flicker a cada SWR silencioso)
-        if (cacheAgeMs >= 45000) setIsRefetching(true);
+        if (cacheAgeMs >= 15000) setIsRefetching(true);
       }
 
       const data = await fetchWithRetry(buildParams(1), controller);
@@ -1362,7 +1377,7 @@ const Contas = () => {
         return;
       }
 
-      const firstPageItems: LztItem[] = data?.items ?? [];
+      const firstPageItems: LztItem[] = dropKnownGoneFromItems(data?.items ?? [], readAccountDetailGoneKeys());
       const hasMore = data?.hasNextPage ?? firstPageItems.length >= 15;
       setHasNextPage(hasMore);
       setCurrentPage(1);
@@ -1496,7 +1511,7 @@ const Contas = () => {
         try {
           const data = await fetchAccountsRawTracked(listParams, undefined, { silentUi: true });
           if (runId !== prefetchRunIdRef.current) return;
-          const items: LztItem[] = data?.items ?? [];
+          const items: LztItem[] = dropKnownGoneFromItems(data?.items ?? [], readAccountDetailGoneKeys());
           const hasMore = data?.hasNextPage ?? items.length >= 15;
           cacheSet(`__prefetch__${tab}`, { items, hasNextPage: hasMore, currentPage: 1, timestamp: Date.now() });
         } catch { /* silent */ }
@@ -1516,8 +1531,8 @@ const Contas = () => {
     const cached = fetchCacheRef.current.get(cacheKey);
 
     // Use prefetch if no specific cache exists and filters are at defaults
-    if (!cached && prefetched && Date.now() - prefetched.timestamp < 45000) {
-      setStreamedItems(prefetched.items);
+    if (!cached && prefetched && Date.now() - prefetched.timestamp < 15000) {
+      setStreamedItems(dropKnownGoneFromItems(prefetched.items, readAccountDetailGoneKeys()));
       setStreamingDone(true);
       setStreamError(null);
       setCurrentPage(prefetched.currentPage);
@@ -1540,7 +1555,7 @@ const Contas = () => {
             if (Date.now() - lastGameTabChangeAtRef.current < CONTAS_RECONCILE_TAB_GUARD_MS) return;
             const data = await fetchWithRetry(paramsSnapshot, reconcileController);
             if (reconcileController.signal.aborted) return;
-          const items: LztItem[] = data?.items ?? [];
+          const items: LztItem[] = dropKnownGoneFromItems(data?.items ?? [], readAccountDetailGoneKeys());
           const hasMore = data?.hasNextPage ?? items.length >= 15;
           setStreamedItems(items);
           setHasNextPage(hasMore);
@@ -1614,7 +1629,7 @@ const Contas = () => {
       const nextPageNum = currentPage + 1;
       const data = await fetchWithRetry(buildParams(nextPageNum), controller);
       if (controller.signal.aborted || snapshotGameTab !== gameTab) return;
-      const pageItems: LztItem[] = data?.items ?? [];
+      const pageItems: LztItem[] = dropKnownGoneFromItems(data?.items ?? [], readAccountDetailGoneKeys());
       const nextHasPage = data?.hasNextPage ?? pageItems.length >= 15;
       setHasNextPage(nextHasPage);
       setCurrentPage(nextPageNum);
