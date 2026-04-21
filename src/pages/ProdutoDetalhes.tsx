@@ -69,11 +69,19 @@ type ProdutoDetalhesLocationState = {
   productsBackUrl?: string;
 };
 
-function buildSuccessUrl(paymentId: string, gameSlugOrName?: string, ticketId?: string | null): string {
+function buildSuccessUrl(
+  paymentId: string,
+  gameSlugOrName?: string,
+  ticketId?: string | null,
+  amountBrl?: number | null,
+): string {
   const params = new URLSearchParams({ payment_id: paymentId, section: "produtos" });
   const game = normalizeGameSlug(gameSlugOrName);
   if (game) params.set("game", game);
   if (ticketId) params.set("ticket_id", ticketId);
+  if (amountBrl != null && Number.isFinite(amountBrl) && amountBrl >= 0 && amountBrl <= 99_999_999) {
+    params.set("amount_brl", String(Math.round(amountBrl * 100) / 100));
+  }
   return `/pedido/sucesso?${params.toString()}`;
 }
 
@@ -341,7 +349,7 @@ const ProdutoDetalhes = () => {
             section: "produtos",
           });
           toast({ title: "Pronto!", description: "Pagamento confirmado." });
-          navigate(buildSuccessUrl(res.payment_id, game?.slug || game?.name, res.ticket_id), { replace: true });
+          navigate(buildSuccessUrl(res.payment_id, game?.slug || game?.name, res.ticket_id, 0), { replace: true });
         } else if (res.claimed_free && res.ticket_id) {
           toast({ title: "Pronto!", description: "Abrindo o pedido com o link de download." });
           navigate(`/pedido/${res.ticket_id}`);

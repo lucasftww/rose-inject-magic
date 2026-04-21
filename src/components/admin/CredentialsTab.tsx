@@ -41,7 +41,7 @@ const CREDENTIAL_PRESETS: { name: string; env_key: string; description: string; 
     name: "Meta — CAPI Access Token",
     env_key: "META_ACCESS_TOKEN",
     description:
-      "Token Graph API (Conversions API). Obrigatório para server-relay + pix-payment enviarem Purchase/IC à Meta; sem isto o Pixel no browser ainda dispara, mas o servidor não confirma conversões.",
+      "Token Graph API (Conversions API). Obrigatório para server-relay + pix-payment enviarem Purchase/IC à Meta; sem isto o Pixel no browser ainda dispara, mas o servidor não confirma conversões. Após alterar `supabase/functions/pix-payment`, faz deploy da função (GitHub Action com SUPABASE_ACCESS_TOKEN ou `supabase functions deploy pix-payment`).",
     help_url: "https://developers.facebook.com/docs/marketing-api/conversions-api/get-started",
   },
   {

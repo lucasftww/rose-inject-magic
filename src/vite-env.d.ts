@@ -10,4 +10,6 @@ type MetaPixelFbq = ((
 
 interface Window {
   fbq: MetaPixelFbq;
+  /** Definido em `index.html` quando `fbevents.js` falha ao carregar. */
+  __fbPixelLoadFailed?: boolean;
 }

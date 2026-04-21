@@ -65,17 +65,38 @@ const PedidoSucesso = () => {
     return undefined;
   }, [sectionParam]);
 
+  const amountFromUrl = useMemo(() => {
+    const raw = (searchParams.get("amount_brl") || "").trim().replace(",", ".");
+    if (!raw) return undefined;
+    const n = Number(raw);
+    if (!Number.isFinite(n) || n < 0 || n > 99_999_999) return undefined;
+    return Math.round(n * 100) / 100;
+  }, [searchParams]);
+
   useEffect(() => {
     if (!paymentId) return;
     const payload = readPendingPurchasePayload(paymentId);
-    if (!payload) return;
+    if (payload) {
+      trackPurchase({
+        ...payload,
+        ...(payload.contentCategory ? {} : fallbackCategory ? { contentCategory: fallbackCategory } : {}),
+        ...(payload.section ? {} : fallbackSection ? { section: fallbackSection } : {}),
+        transactionId: paymentId,
+      });
+      return;
+    }
+    /** Novo dispositivo / sessionStorage limpo: URL traz `amount_brl` + `game`/`section` (checkout grava isto). CAPI no servidor já enviou Purchase com valor real; aqui só alinhamos dedupe no browser. */
+    if (amountFromUrl === undefined && !fallbackCategory && !fallbackSection) return;
     trackPurchase({
-      ...payload,
-      ...(payload.contentCategory ? {} : fallbackCategory ? { contentCategory: fallbackCategory } : {}),
-      ...(payload.section ? {} : fallbackSection ? { section: fallbackSection } : {}),
+      contentName: "Royal Store",
+      contentIds: [paymentId],
+      contents: [{ id: paymentId, quantity: 1 }],
+      value: amountFromUrl ?? 0,
       transactionId: paymentId,
+      ...(fallbackCategory ? { contentCategory: fallbackCategory } : {}),
+      ...(fallbackSection ? { section: fallbackSection } : {}),
     });
-  }, [paymentId, fallbackCategory, fallbackSection]);
+  }, [paymentId, fallbackCategory, fallbackSection, amountFromUrl]);
 
   return (
     <div className="min-h-dvh bg-background">

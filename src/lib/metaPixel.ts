@@ -1,38 +1,33 @@
 import { supabase, supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
 
 /**
- * Meta Pixel + Conversions API (CAPI) — Enterprise-grade tracking
- * Pixel ID: `VITE_META_PIXEL_ID` (fallback 706054019233816; mesmo default em index.html)
+ * Meta Pixel (browser) + Conversions API (CAPI) — mapa para configurar o Events Manager / Ads sem surpresas.
  *
- * Architecture:
- *   Browser → fbq events with Advanced Matching
- *   Server  → Edge Function server-relay with event_id deduplication
+ * ─── Matriz: o que o código envia ───────────────────────────────────────────
+ * | Onde no site           | fbq (Pixel)                    | CAPI browser (server-relay)     | CAPI servidor (pix-payment)   |
+ * |------------------------|--------------------------------|----------------------------------|-------------------------------|
+ * | Qualquer rota (1ª carga)| PageView (index.html)        | —                                | —                             |
+ * | Navegação SPA          | PageView (`trackSpaPageView`) | —                                | —                             |
+ * | `/contas` (mount)      | trackCustom `IC_SECTION_CONTAS` + params `section`,`content_name` | — (relay só IC/Purchase standard) | — |
+ * | `/contas` (troca tab)  | trackCustom `IC_CATEGORY_*` + `content_category` = slug jogo   | —                                | —                             |
+ * | `/checkout`            | InitiateCheckout + `section`,`content_category`, value…          | Igual + mesmo `event_id`         | —                             |
+ * | `/pedido/sucesso`      | Purchase + dedupe `purchase_${paymentId}`                      | Igual                             | Purchase (pagamento pago)     |
  *
- * Events (ativos): PageView (1× load inicial em `index.html` + 1× por navegação SPA em `RouteTracker`), InitiateCheckout, Purchase.
+ * Regras na Meta (Conversões personalizadas):
+ * - “IC / Purchase — Contas — Fortnite”: use evento **standard** `InitiateCheckout` ou `Purchase` com filtros em
+ *   `custom_data.section === "contas"` e `custom_data.content_category === "fortnite"` (slug canónico).
+ * - Listagem `/contas`: use **nome do evento personalizado** exatamente `IC_SECTION_CONTAS` ou `IC_CATEGORY_FORTNITE`, etc.
  *
- * Conversões personalizadas na Meta (ex. “IC - Contas - Fortnite” / “Purchase - Contas - Fortnite” — **só o nome do caso Fortnite**;
- * Valorant, LoL, etc. têm regras equivalentes com outro `content_category`):
- * - **InitiateCheckout** na rota `/checkout` — `section` + `content_category` (ex. contas + fortnite).
- * - **Purchase** em `/pedido/sucesso` (pixel) e CAPI no `pix-payment` — mesmos parâmetros no evento Purchase.
- * `disablePushState` no head evita o PageView *automático* da Meta em cada `history.pushState`; o nosso `trackSpaPageView()` dispara só quando a rota muda.
- * Contas (`/contas`): `trackCustom` com nomes fixos (`IC_SECTION_CONTAS`, `IC_CATEGORY_*`) para Conversões Personalizadas no Events Manager; checkout continua com `custom_data` em eventos standard.
- * Categories: Valorant, Fortnite, Roblox, Minecraft, LoL, CS2, GTA
+ * Categorias (`content_category`): slugs `valorant` | `lol` | `fortnite` | `minecraft` | `multi` | `produto` — ver
+ * `buildMetaPurchasePayload.ts`, snapshot de carrinho e `pix-payment` (validação LZT infere jogo pela API se faltar).
  *
- * user_data sent to CAPI:
- *   fbp, fbc              — from cookies / reconstructed from fbclid
- *   client_user_agent      — from browser (server fallback)
- *   client_ip_address      — server-side only (x-forwarded-for)
- *   em                     — SHA-256 hashed email
- *   external_id            — SHA-256 hashed user ID (or hashed first-party tracking ID for anonymous)
- *   country                — "br" (hashed) for all users
+ * Pontos de atenção (produto Meta, não bug da app):
+ * - **Ads Manager “Resultados” (—)** pode ser coluna a otimizar outra métrica / janela de atribuição ≠ detalhe do evento no Events Manager.
+ * - **CAPI browser** precisa de **sessão Supabase** (JWT); `relayAuthHeadersWithRetry` reduz perdas se o token hidratar tarde.
+ * - **`npm run dev`**: Pixel no HTML desligado por defeito — `VITE_ENABLE_META_PIXEL_DEV=true` no `.env` ou `vite preview` após build.
+ * - **Deploy Edge**: alterações em `supabase/functions/pix-payment` exigem deploy da função para CAPI servidor atualizar.
  *
- * InitiateCheckout: só na página `/checkout` (não nas páginas de produto/conta). Inclui sempre `section` e,
- * quando possível, `content_category` (slug) — conversões personalizadas tipo “IC - Contas - Fortnite” na Meta
- * usam este evento com regras em `section` + `content_category`, não `trackCustom` na listagem.
- * Deduplication:
- *   InitiateCheckout → random event_id (Pixel + CAPI via relay) + localStorage por fingerprint do carrinho
- *     (partilhado entre abas; TTL 7d para o mesmo carrinho não poluir se voltar logo)
- *   Purchase → deterministic purchase_${transactionId} + sessionStorage + localStorage (+ memória na mesma página)
+ * Deduplicação: IC usa `event_id` aleatório partilhado Pixel+CAPI relay; Purchase usa `purchase_${transactionId}` Pixel+CAPI relay+Graph no pagamento.
  */
 
 
@@ -196,6 +191,20 @@ const relayAuthHeaders = async (): Promise<Record<string, string> | null> => {
     return null;
   }
 };
+
+const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+/** JWT por vezes hidrata logo após o primeiro paint do `/checkout` — evita CAPI InitiateCheckout/Purchase perdidos. */
+const RELAY_AUTH_RETRY_DELAYS_MS = [0, 120, 260, 500];
+
+async function relayAuthHeadersWithRetry(): Promise<Record<string, string> | null> {
+  for (const delayMs of RELAY_AUTH_RETRY_DELAYS_MS) {
+    if (delayMs > 0) await sleep(delayMs);
+    const h = await relayAuthHeaders();
+    if (h) return h;
+  }
+  return null;
+}
 
 /** Reduz campos inválidos que costumam gerar 400 na Meta CAPI. */
 const sanitizeRelayCustomData = (data: Record<string, unknown>): Record<string, unknown> => {
@@ -703,9 +712,9 @@ const sendCAPI = async (
   try {
     if (!supabaseAnonKey.trim()) return;
     if (!eventName?.trim() || !eventId?.trim()) return;
-    const headers = await relayAuthHeaders();
+    const headers = await relayAuthHeadersWithRetry();
     if (!headers) {
-      devLog("sendCAPI skipped: missing session token");
+      devLog("sendCAPI skipped: no session token after retries (user not logged in or auth still loading)");
       return;
     }
 
@@ -931,5 +940,20 @@ export const trackPurchase = (
   return eventId;
 };
 
-
+if (import.meta.env.DEV && typeof window !== "undefined") {
+  window.setTimeout(() => {
+    try {
+      if (window.fbq) return;
+      if (window.__fbPixelLoadFailed === true) {
+        console.info("[Royal Meta] fbevents.js não carregou (rede, CSP ou bloqueador).");
+        return;
+      }
+      console.info(
+        "[Royal Meta] Sem fbq no browser: em `vite dev` o Pixel está desligado por defeito — VITE_ENABLE_META_PIXEL_DEV=true no .env, ou `npm run build` + `vite preview`.",
+      );
+    } catch {
+      /* ignore */
+    }
+  }, 5000);
+}
 

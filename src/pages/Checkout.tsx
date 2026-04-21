@@ -46,12 +46,16 @@ function buildSuccessUrl(
   paymentId: string,
   cartItems: CartItem[],
   ticketId?: string | null,
+  amountBrl?: number | null,
 ): string {
   const params = new URLSearchParams({ payment_id: paymentId });
   params.set("section", deriveSectionSlug(cartItems));
   const gameSlug = deriveGameQueryParamFromCartItems(cartItems);
   if (gameSlug) params.set("game", gameSlug);
   if (ticketId) params.set("ticket_id", ticketId);
+  if (amountBrl != null && Number.isFinite(amountBrl) && amountBrl >= 0 && amountBrl <= 99_999_999) {
+    params.set("amount_brl", String(Math.round(amountBrl * 100) / 100));
+  }
   return `/pedido/sucesso?${params.toString()}`;
 }
 
@@ -428,7 +432,7 @@ const Checkout = () => {
         clearCart();
         if (result.payment_id) {
           toast({ title: "Pronto!", description: "Pagamento confirmado." });
-          navigate(buildSuccessUrl(result.payment_id, items, result.ticket_id), { replace: true });
+          navigate(buildSuccessUrl(result.payment_id, items, result.ticket_id, 0), { replace: true });
         } else if (result.ticket_id) {
           navigate(`/pedido/${result.ticket_id}`);
         } else {
@@ -520,7 +524,7 @@ const Checkout = () => {
         clearCart();
         if (result.payment_id) {
           toast({ title: "Pronto!", description: "Pagamento confirmado." });
-          navigate(buildSuccessUrl(result.payment_id, items, result.ticket_id), { replace: true });
+          navigate(buildSuccessUrl(result.payment_id, items, result.ticket_id, 0), { replace: true });
         } else if (result.ticket_id) {
           toast({ title: "Pronto!", description: "Abrindo o pedido." });
           navigate(`/pedido/${result.ticket_id}`);
@@ -703,7 +707,7 @@ const Checkout = () => {
     const snap = cartSnapshotRef.current;
     const purchasePayload = buildMetaPurchasePayloadFromCartItems(snap, finalPriceRef.current);
     if (purchasePayload) savePendingPurchasePayload(paymentId, purchasePayload);
-    navigate(buildSuccessUrl(paymentId, snap, completedTicketIdRef.current), { replace: true });
+    navigate(buildSuccessUrl(paymentId, snap, completedTicketIdRef.current, finalPriceRef.current), { replace: true });
   }, [paymentStatus, paymentId, navigate]);
 
   const copyCode = () => {
