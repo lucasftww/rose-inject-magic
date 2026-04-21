@@ -12,6 +12,8 @@ import {
 } from "../_shared/lztPricingModel.ts";
 import { errorMessage } from "../_shared/types.ts";
 
+// bump: dispara CI deploy (paths supabase/functions/**).
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
