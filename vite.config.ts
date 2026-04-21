@@ -15,6 +15,13 @@ function resolveMetaPixelId(mode: string): string {
 export default defineConfig(({ command, mode }) => {
   const metaPixelId = resolveMetaPixelId(mode);
 
+  /** Evita `%VITE_*%` no HTML (avisos no build sem .env) e injecta igual ao cliente. */
+  function supabaseUrlLiteralForHtml(): string {
+    const env = loadEnv(mode, process.cwd(), "");
+    const url = String(env.VITE_SUPABASE_URL ?? "").trim();
+    return JSON.stringify(url);
+  }
+
   return {
     server: {
       host: "::",
@@ -31,6 +38,7 @@ export default defineConfig(({ command, mode }) => {
           /** Só em `vite build` (qualquer --mode); em `vite dev` não carrega fbevents.js — menos avisos no Issues. Builds `build:dev` mantêm o pixel. */
           const loadMetaPixel = command === "build";
           return html
+            .replace(/__ROYAL_SUPABASE_URL_LITERAL__/g, supabaseUrlLiteralForHtml())
             .replace(/__ROYAL_META_PIXEL_ID__/g, metaPixelId)
             .replace(/__ROYAL_LOAD_META_PIXEL__/g, loadMetaPixel ? "true" : "false");
         },
