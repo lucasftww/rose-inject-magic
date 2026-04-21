@@ -79,6 +79,52 @@ export function trackSpaPageView(): void {
   }
 }
 
+/**
+ * O `fbq` só existe depois do `load` + idle no `index.html` — a rota `/contas` monta antes e perdia `trackCustom`.
+ * Enfileira e dispara quando o Pixel estiver pronto (ou abandona após timeout).
+ */
+const FBQ_READY_POLL_MS = 80;
+const FBQ_READY_MAX_POLLS = 100;
+let fbqReadyPollId: ReturnType<typeof setInterval> | null = null;
+const fbqReadyQueue: Array<() => void> = [];
+
+function flushFbqReadyQueue(): void {
+  while (fbqReadyQueue.length > 0) {
+    const fn = fbqReadyQueue.shift();
+    try {
+      fn?.();
+    } catch (e: unknown) {
+      devLog("fbq ready queue runner failed", e);
+    }
+  }
+}
+
+function runWhenFbqReady(fn: () => void): void {
+  if (typeof window === "undefined") return;
+  if (window.fbq) {
+    fn();
+    return;
+  }
+  fbqReadyQueue.push(fn);
+  if (fbqReadyPollId != null) return;
+  let polls = 0;
+  fbqReadyPollId = window.setInterval(() => {
+    polls += 1;
+    if (window.fbq) {
+      window.clearInterval(fbqReadyPollId!);
+      fbqReadyPollId = null;
+      flushFbqReadyQueue();
+      return;
+    }
+    if (polls >= FBQ_READY_MAX_POLLS) {
+      window.clearInterval(fbqReadyPollId!);
+      fbqReadyPollId = null;
+      fbqReadyQueue.length = 0;
+      devLog("runWhenFbqReady: fbq never became available (pixel blocked or slow load)");
+    }
+  }, FBQ_READY_POLL_MS);
+}
+
 /** Abas de jogo na página Contas — nomes alinhados ao Pixel (Events Manager → Eventos personalizados). */
 export type ContasGameTabForPixel = "valorant" | "lol" | "fortnite" | "minecraft";
 
@@ -91,31 +137,35 @@ const IC_CATEGORY_EVENT_BY_TAB: Record<ContasGameTabForPixel, string> = {
 
 /** Uma vez por visita à secção Contas — alimenta conversões/regras que usam `IC_SECTION_CONTAS`. */
 export function trackContasSectionCustomEvent(): void {
-  if (typeof window === "undefined" || !window.fbq) return;
-  try {
-    window.fbq("trackCustom", "IC_SECTION_CONTAS", {
-      section: "contas",
-      content_name: "Contas",
-    });
-  } catch (e: unknown) {
-    devLog("trackContasSectionCustomEvent failed", e);
-  }
+  runWhenFbqReady(() => {
+    if (!window.fbq) return;
+    try {
+      window.fbq("trackCustom", "IC_SECTION_CONTAS", {
+        section: "contas",
+        content_name: "Contas",
+      });
+    } catch (e: unknown) {
+      devLog("trackContasSectionCustomEvent failed", e);
+    }
+  });
 }
 
 /** Troca de aba Valorant / LoL / Fortnite / Minecraft — alimenta `IC_CATEGORY_FORTNITE`, etc. */
 export function trackContasCategoryCustomEvent(tab: ContasGameTabForPixel): void {
-  if (typeof window === "undefined" || !window.fbq) return;
   const eventName = IC_CATEGORY_EVENT_BY_TAB[tab];
   if (!eventName) return;
-  try {
-    window.fbq("trackCustom", eventName, {
-      section: "contas",
-      content_category: tab,
-      content_name: tab === "valorant" ? "Contas Valorant" : tab === "lol" ? "Contas LoL" : tab === "fortnite" ? "Contas Fortnite" : "Contas Minecraft",
-    });
-  } catch (e: unknown) {
-    devLog("trackContasCategoryCustomEvent failed", e);
-  }
+  runWhenFbqReady(() => {
+    if (!window.fbq) return;
+    try {
+      window.fbq("trackCustom", eventName, {
+        section: "contas",
+        content_category: tab,
+        content_name: tab === "valorant" ? "Contas Valorant" : tab === "lol" ? "Contas LoL" : tab === "fortnite" ? "Contas Fortnite" : "Contas Minecraft",
+      });
+    } catch (e: unknown) {
+      devLog("trackContasCategoryCustomEvent failed", e);
+    }
+  });
 }
 
 /** Headers do relay: JWT real do utilizador + apikey do projeto. */
