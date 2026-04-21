@@ -812,7 +812,7 @@ const sendCAPI = async (
 
 const IC_CART_FP_PREFIX = "_meta_ic_cart_";
 /** Mesmo utilizador / mesmo carrinho: não repetir IC ao abrir outra aba ou voltar ao checkout dentro deste período. */
-const IC_CART_FP_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const IC_CART_FP_TTL_MS = 6 * 60 * 60 * 1000;
 
 function isInitiateCheckoutFingerprintRecent(fp: string): boolean {
   const key = IC_CART_FP_PREFIX + fp;
