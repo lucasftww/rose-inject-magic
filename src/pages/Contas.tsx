@@ -274,6 +274,8 @@ const CONTAS_ENABLE_ADJACENT_PREFETCH =
 const CONTAS_MIN_LIST_REFRESH_GAP_MS = 560;
 const CONTAS_LOAD_MORE_MIN_GAP_MS = 650;
 const CONTAS_MANUAL_REFRESH_MIN_GAP_MS = 650;
+const CONTAS_PROGRESSIVE_RENDER_SETTLE_MS_DESKTOP = 260;
+const CONTAS_PROGRESSIVE_RENDER_SETTLE_MS_LIGHT = 420;
 
 function listAttemptTimeoutMs(tab: GameTab, light: boolean): number {
   // Mantém UX responsiva: falha mais rápido e deixa cache/fallback assumirem.
@@ -1642,6 +1644,17 @@ const Contas = () => {
 
   const ITEMS_PER_PAGE = 24;
   const [displayPage, setDisplayPage] = useState(1);
+  const initialCardsPerPaint = lightDevice ? 8 : 12;
+  const [visibleCardsInPage, setVisibleCardsInPage] = useState(ITEMS_PER_PAGE);
+
+  useEffect(() => {
+    setVisibleCardsInPage(initialCardsPerPaint);
+    const settleMs = lightDevice
+      ? CONTAS_PROGRESSIVE_RENDER_SETTLE_MS_LIGHT
+      : CONTAS_PROGRESSIVE_RENDER_SETTLE_MS_DESKTOP;
+    const id = window.setTimeout(() => setVisibleCardsInPage(ITEMS_PER_PAGE), settleMs);
+    return () => window.clearTimeout(id);
+  }, [listFetchKey, displayPage, initialCardsPerPaint, lightDevice]);
 
   const isLoading = !firstPageLoaded && !streamingDone && !streamError;
 
@@ -1739,7 +1752,9 @@ const Contas = () => {
     if (displayPage > totalDisplayPages) setDisplayPage(totalDisplayPages);
   }, [totalDisplayPages, displayPage]);
 
-  const items = allItems.slice((displayPage - 1) * ITEMS_PER_PAGE, displayPage * ITEMS_PER_PAGE);
+  const pageStart = (displayPage - 1) * ITEMS_PER_PAGE;
+  const pageVisible = Math.min(ITEMS_PER_PAGE, Math.max(1, visibleCardsInPage));
+  const items = allItems.slice(pageStart, pageStart + pageVisible);
 
   const catalogGame: GameCategory =
     gameTab === "valorant" ? "valorant" : gameTab === "fortnite" ? "fortnite" : gameTab === "minecraft" ? "minecraft" : "lol";
