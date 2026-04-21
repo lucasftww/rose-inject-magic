@@ -18,7 +18,8 @@ import { fetchLztAccountDetail, LZT_ACCOUNT_DETAIL_STALE_MS } from "@/lib/lztAcc
 import { getLztDetailDisplayTitle } from "@/lib/lztDisplayTitles";
 import { lztAccountDetailQueryKey } from "@/lib/lztAccountDetailQuery";
 import { parseLolSkinIdsFromJsonString, parseLolChampionIdsFromJsonString } from "@/lib/lolInventoryJson";
-import { errorMessage } from "@/lib/errorMessage";
+import { LztAccountDetailErrorPanel } from "@/components/LztAccountDetailErrorPanel";
+import { useLztAccountDetailGoneNotifier } from "@/hooks/useLztAccountDetailGoneNotifier";
 import { getProxiedImageUrl } from "@/lib/lztImageProxy";
 import type { LztMarketLolDetailResponse } from "@/lib/edgeFunctionTypes";
 
@@ -235,6 +236,8 @@ const LolDetalhes = () => {
     retry: false,
   });
 
+  useLztAccountDetailGoneNotifier("lol", id, error);
+
   // Fetch champ data (key map + skin names) from DDragon
   const { data: champData = emptyChampData() } = useQuery({
     queryKey: ["lol-champ-full-data"],
@@ -413,13 +416,15 @@ const LolDetalhes = () => {
     <div className="min-h-dvh bg-background">
       <Header />
       <div className="mx-auto max-w-6xl px-4 sm:px-6 pt-4 pb-32 sm:pb-20">
-        <Link
-          to="/contas?game=lol"
-          className="mb-5 inline-flex items-center gap-2 rounded-lg border border-border bg-card/50 px-4 py-2 text-sm text-muted-foreground transition-all hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Voltar para Contas LoL
-        </Link>
+        {!error && (
+          <Link
+            to="/contas?game=lol"
+            className="mb-5 inline-flex items-center gap-2 rounded-lg border border-border bg-card/50 px-4 py-2 text-sm text-muted-foreground transition-all hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Voltar para Contas LoL
+          </Link>
+        )}
 
         {isLoading && (
           <div className="flex flex-col items-center justify-center py-32">
@@ -429,10 +434,11 @@ const LolDetalhes = () => {
         )}
 
         {error && (
-          <div className="flex flex-col items-center justify-center py-32">
-            <p className="text-lg font-semibold text-destructive">Erro ao carregar conta</p>
-            <p className="mt-1 text-sm text-muted-foreground">{errorMessage(error)}</p>
-          </div>
+          <LztAccountDetailErrorPanel
+            error={error}
+            backTo="/contas?game=lol"
+            backLabel="Voltar para Contas LoL"
+          />
         )}
 
         {item && (

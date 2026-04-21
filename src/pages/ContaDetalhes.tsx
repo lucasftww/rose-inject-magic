@@ -18,6 +18,7 @@ import { getLztDetailDisplayTitle } from "@/lib/lztDisplayTitles";
 import { lztAccountDetailQueryKey } from "@/lib/lztAccountDetailQuery";
 import { getJsonDataArray } from "@/lib/jsonResponse";
 import { errorMessage } from "@/lib/errorMessage";
+import { useLztAccountDetailGoneNotifier } from "@/hooks/useLztAccountDetailGoneNotifier";
 import { isRecord } from "@/types/ticketChat";
 
 // RARITY_PRIORITY imported from @/lib/valorantData
@@ -489,6 +490,8 @@ const ContaDetalhes = () => {
     staleTime: LZT_ACCOUNT_DETAIL_STALE_MS,
     retry: false,
   });
+
+  useLztAccountDetailGoneNotifier("valorant", id, error);
 
   const item = data?.item;
   const rank = item?.riot_valorant_rank ? rankMap[item.riot_valorant_rank] : null;

@@ -18,7 +18,8 @@ import { lztAccountDetailQueryKey } from "@/lib/lztAccountDetailQuery";
 import type { LztFortniteCosmeticEntry, LztFortniteItemExtras } from "@/types/lztGameDetailExtras";
 import { lztItemAsFortniteExtras } from "@/lib/lztMergedItemExtras";
 import { hideImgOnError, setImgOpacityOnError, withHTMLElementTarget } from "@/lib/domEventHelpers";
-import { errorMessage } from "@/lib/errorMessage";
+import { LztAccountDetailErrorPanel } from "@/components/LztAccountDetailErrorPanel";
+import { useLztAccountDetailGoneNotifier } from "@/hooks/useLztAccountDetailGoneNotifier";
 import { getProxiedImageUrl, cleanLztDescription } from "@/lib/lztImageProxy";
 import { compareFortniteCardRows } from "@/lib/fortniteCosmeticSort";
 import { fetchFortniteCosmeticsBrMap } from "@/lib/fortniteCosmeticsFetch";
@@ -80,6 +81,8 @@ const FortniteDetalhes = () => {
     staleTime: LZT_ACCOUNT_DETAIL_STALE_MS,
     retry: false,
   });
+
+  useLztAccountDetailGoneNotifier("fortnite", id, error);
 
   const { data: cosmeticsDb = new Map() } = useQuery({
     queryKey: ["fortnite-cosmetics"],
@@ -227,13 +230,15 @@ const FortniteDetalhes = () => {
     <div className="min-h-dvh bg-background">
       <Header />
       <div className="mx-auto max-w-6xl px-4 sm:px-6 pt-4 pb-32 sm:pb-20">
-        <Link
-          to="/contas?game=fortnite"
-          className="mb-5 inline-flex items-center gap-2 rounded-lg border border-border bg-card/50 px-4 py-2 text-sm text-muted-foreground transition-all hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Voltar para Contas Fortnite
-        </Link>
+        {!error && (
+          <Link
+            to="/contas?game=fortnite"
+            className="mb-5 inline-flex items-center gap-2 rounded-lg border border-border bg-card/50 px-4 py-2 text-sm text-muted-foreground transition-all hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Voltar para Contas Fortnite
+          </Link>
+        )}
 
         {isLoading && (
           <div className="flex flex-col items-center justify-center py-32">
@@ -243,10 +248,11 @@ const FortniteDetalhes = () => {
         )}
 
         {error && (
-          <div className="flex flex-col items-center justify-center py-32">
-            <p className="text-lg font-semibold text-destructive">Erro ao carregar conta</p>
-            <p className="mt-1 text-sm text-muted-foreground">{errorMessage(error)}</p>
-          </div>
+          <LztAccountDetailErrorPanel
+            error={error}
+            backTo="/contas?game=fortnite"
+            backLabel="Voltar para Contas Fortnite"
+          />
         )}
 
         {item && (

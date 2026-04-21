@@ -15,7 +15,8 @@ import { lztAccountDetailQueryKey } from "@/lib/lztAccountDetailQuery";
 import type { LztMinecraftCapeEntry, LztMinecraftItemExtras } from "@/types/lztGameDetailExtras";
 import { lztItemAsMinecraftExtras } from "@/lib/lztMergedItemExtras";
 import { hideImgOnError, setImgOpacityOnError } from "@/lib/domEventHelpers";
-import { errorMessage } from "@/lib/errorMessage";
+import { LztAccountDetailErrorPanel } from "@/components/LztAccountDetailErrorPanel";
+import { useLztAccountDetailGoneNotifier } from "@/hooks/useLztAccountDetailGoneNotifier";
 import { getProxiedImageUrl, cleanLztDescription } from "@/lib/lztImageProxy";
 
 const MC_GREEN = "hsl(120,60%,45%)";
@@ -52,6 +53,8 @@ const MinecraftDetalhes = () => {
     staleTime: LZT_ACCOUNT_DETAIL_STALE_MS,
     retry: false,
   });
+
+  useLztAccountDetailGoneNotifier("minecraft", id, error);
 
   const item = data?.item;
   const raw: LztMinecraftItemExtras | undefined = lztItemAsMinecraftExtras(item);
@@ -135,13 +138,15 @@ const MinecraftDetalhes = () => {
     <div className="min-h-dvh bg-background">
       <Header />
       <div className="mx-auto max-w-6xl px-4 sm:px-6 pt-4 pb-32 sm:pb-20">
-        <Link
-          to="/contas?game=minecraft"
-          className="mb-5 inline-flex items-center gap-2 rounded-lg border border-border bg-card/50 px-4 py-2 text-sm text-muted-foreground transition-all hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Voltar para Contas Minecraft
-        </Link>
+        {!error && (
+          <Link
+            to="/contas?game=minecraft"
+            className="mb-5 inline-flex items-center gap-2 rounded-lg border border-border bg-card/50 px-4 py-2 text-sm text-muted-foreground transition-all hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Voltar para Contas Minecraft
+          </Link>
+        )}
 
         {isLoading && (
           <div className="flex flex-col items-center justify-center py-32">
@@ -151,10 +156,11 @@ const MinecraftDetalhes = () => {
         )}
 
         {error && (
-          <div className="flex flex-col items-center justify-center py-32">
-            <p className="text-lg font-semibold text-destructive">Erro ao carregar conta</p>
-            <p className="mt-1 text-sm text-muted-foreground">{errorMessage(error)}</p>
-          </div>
+          <LztAccountDetailErrorPanel
+            error={error}
+            backTo="/contas?game=minecraft"
+            backLabel="Voltar para Contas Minecraft"
+          />
         )}
 
         {item && (

@@ -5,6 +5,8 @@ import {
   isLztDetailHttpError,
   LZT_ACCOUNT_DETAIL_STALE_MS,
 } from "@/lib/lztAccountDetailFetch";
+import type { GoneAccountDetailKey } from "@/lib/lztAccountDetailGoneStore";
+import { rememberAccountDetailGone } from "@/lib/lztAccountDetailGoneStore";
 
 /** Modo agressivo: hover prefetch só com `?warm=1` (evita rajada/cancel na grelha). */
 const ENABLE_DETAIL_HOVER_PREFETCH =
@@ -27,8 +29,9 @@ const MAX_DETAIL_GONE_KEYS = 400;
  */
 export const LZT_ACCOUNT_DETAIL_GONE_EVENT = "royal:lzt-account-detail-gone";
 
-function rememberDetailPrefetchGone(dedupeKey: string): void {
+function rememberDetailPrefetchGone(dedupeKey: GoneAccountDetailKey): void {
   detailPrefetchGoneKeys.add(dedupeKey);
+  rememberAccountDetailGone(dedupeKey);
   while (detailPrefetchGoneKeys.size > MAX_DETAIL_GONE_KEYS) {
     const oldest = detailPrefetchGoneKeys.values().next().value;
     if (oldest === undefined) break;

@@ -30,6 +30,11 @@ import { setLinkAccentHover, clearLinkAccentHover } from "@/lib/domEventHelpers"
 import { errorName } from "@/lib/errorMessage";
 import { LZT_ACCOUNT_DETAIL_GONE_EVENT } from "@/lib/lztPrefetch";
 import {
+  rememberAccountDetailGone,
+  readAccountDetailGoneKeys,
+  type GoneAccountDetailKey,
+} from "@/lib/lztAccountDetailGoneStore";
+import {
   gameTabFromSearchParams,
   type GameTab,
   type LztItem,
@@ -66,6 +71,25 @@ import weaponShorty from "@/assets/weapon-shorty.png";
 import weaponSpectre from "@/assets/weapon-spectre.png";
 import weaponStinger from "@/assets/weapon-stinger.png";
 import weaponVandal from "@/assets/weapon-vandal.png";
+
+function purgeSoldIdsFromMarketCache(cache: Map<string, { items: LztItem[] }>, goneKeys: ReadonlySet<GoneAccountDetailKey>): boolean {
+  let changed = false;
+  const shouldDrop = (itemId: string) =>
+    goneKeys.has(`valorant:${itemId}`) ||
+    goneKeys.has(`riot:${itemId}`) ||
+    goneKeys.has(`lol:${itemId}`) ||
+    goneKeys.has(`fortnite:${itemId}`) ||
+    goneKeys.has(`minecraft:${itemId}`);
+
+  for (const [mapKey, entry] of cache.entries()) {
+    const filtered = entry.items.filter((i) => !shouldDrop(String(i.item_id)));
+    if (filtered.length !== entry.items.length) {
+      cache.set(mapKey, { ...entry, items: filtered });
+      changed = true;
+    }
+  }
+  return changed;
+}
 
 // ─── Region options ───
 const valorantRegions = [
@@ -246,10 +270,8 @@ const CONTAS_ENABLE_ADJACENT_PREFETCH =
     }
   })();
 
-/** Funde mudanças de `debouncedParamsKey` no mesmo burst (hidratação, sync URL→estado, debounces curtos). */
-const CONTAS_LIST_FETCH_KEY_COALESCE_MS = 260;
-const CONTAS_NON_SEARCH_DEBOUNCE_MS = 180;
-const CONTAS_MIN_LIST_REFRESH_GAP_MS = 520;
+/** Gap mínimo entre dois GET de lista completos — evita cancelar o anterior quando filtros oscilam. */
+const CONTAS_MIN_LIST_REFRESH_GAP_MS = 560;
 const CONTAS_LOAD_MORE_MIN_GAP_MS = 650;
 const CONTAS_MANUAL_REFRESH_MIN_GAP_MS = 650;
 
@@ -272,7 +294,7 @@ const Contas = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [gameTab, setGameTab] = useState<GameTab>(() => gameTabFromSearchParams(searchParams));
 
-  // URL → estado antes do fetch da lista: layout effects antes do GET; `listFetchKey` coalesce (~260ms)
+  // URL → estado antes do fetch da lista: layout effects antes do GET; `listFetchKey` coalesce (~320–400ms)
   // absorve rajadas de `debouncedParamsKey` (hidratação/sync) e reduz `lzt-market` cancelado na rede.
   useLayoutEffect(() => {
     const tab = gameTabFromSearchParams(searchParams);
@@ -465,6 +487,10 @@ const Contas = () => {
   const slowNetwork =
     saveData || navConn?.effectiveType === "2g" || navConn?.effectiveType === "slow-2g";
   const lightDevice = coarsePointer || slowNetwork;
+  /** Funde `debouncedParamsKey`→`listFetchKey`; maior em touch/rede lenta → menos GET cancelados. */
+  const listFetchKeyCoalesceMs = lightDevice ? 400 : 320;
+  /** Debounce curto só para filtros não-busca (sync URL/hidratação em rajadas). */
+  const nonSearchParamsDebounceMs = lightDevice ? 260 : 220;
   const listSearchDebounceMs = lightDevice ? 480 : 280;
   const urlSearchDebounceMs = lightDevice ? 520 : 320;
   const searchQueryForUrl = useDebouncedValue(searchQuery, urlSearchDebounceMs);
@@ -848,6 +874,12 @@ const Contas = () => {
     } catch { /* silent — quota exceeded or unavailable */ }
   }, []);
 
+  useLayoutEffect(() => {
+    if (purgeSoldIdsFromMarketCache(fetchCacheRef.current, readAccountDetailGoneKeys())) {
+      flushCacheToSession();
+    }
+  }, [flushCacheToSession]);
+
   useEffect(
     () => () => {
       if (persistSessionTimerRef.current) {
@@ -886,9 +918,22 @@ const Contas = () => {
   // Detail 410 (vendida / filtros): remove da grelha e do cache de sessão — evita novos GET ao hover e lista “fantasma”.
   useEffect(() => {
     const onDetailGone = (ev: Event) => {
-      const ce = ev as CustomEvent<{ itemId?: string }>;
+      const ce = ev as CustomEvent<{ gameType?: string; itemId?: string }>;
       const goneId = ce.detail?.itemId != null ? String(ce.detail.itemId) : "";
       if (!goneId) return;
+      const gt = ce.detail?.gameType != null ? String(ce.detail.gameType) : "";
+      if (gt === "valorant" || gt === "riot") {
+        rememberAccountDetailGone(`valorant:${goneId}`);
+        rememberAccountDetailGone(`riot:${goneId}`);
+      } else if (gt) {
+        rememberAccountDetailGone(`${gt}:${goneId}` as GoneAccountDetailKey);
+      } else {
+        rememberAccountDetailGone(`valorant:${goneId}`);
+        rememberAccountDetailGone(`riot:${goneId}`);
+        rememberAccountDetailGone(`lol:${goneId}`);
+        rememberAccountDetailGone(`fortnite:${goneId}`);
+        rememberAccountDetailGone(`minecraft:${goneId}`);
+      }
       setStreamedItems((prev) => prev.filter((i) => String(i.item_id) !== goneId));
       const cache = fetchCacheRef.current;
       for (const [key, entry] of cache.entries()) {
@@ -1127,14 +1172,14 @@ const Contas = () => {
         return;
       }
       commitListFetchKey(debouncedParamsKey);
-    }, CONTAS_LIST_FETCH_KEY_COALESCE_MS);
+    }, listFetchKeyCoalesceMs);
     return () => {
       if (listFetchKeyCoalesceTimerRef.current) {
         clearTimeout(listFetchKeyCoalesceTimerRef.current);
         listFetchKeyCoalesceTimerRef.current = null;
       }
     };
-  }, [debouncedParamsKey, commitListFetchKey]);
+  }, [debouncedParamsKey, commitListFetchKey, listFetchKeyCoalesceMs]);
 
   const fetchAccountsRawTracked = useCallback(
     async (
@@ -1181,8 +1226,8 @@ const Contas = () => {
       }
       nonSearchDebounceTimerRef.current = setTimeout(() => {
         nonSearchDebounceTimerRef.current = null;
-      setDebouncedParamsKey(paramsKey);
-      }, CONTAS_NON_SEARCH_DEBOUNCE_MS);
+        setDebouncedParamsKey(paramsKey);
+      }, nonSearchParamsDebounceMs);
       prevSearchTrimRef.current = searchQuery.trim();
       return;
     }
@@ -1204,7 +1249,7 @@ const Contas = () => {
         nonSearchDebounceTimerRef.current = null;
       }
     };
-  }, [paramsKey, nonSearchParamsKey, searchQuery, debouncedParamsKey, listSearchDebounceMs]);
+  }, [paramsKey, nonSearchParamsKey, searchQuery, debouncedParamsKey, listSearchDebounceMs, nonSearchParamsDebounceMs]);
 
   const fetchWithRetry = useCallback(
     async (
