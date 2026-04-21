@@ -331,19 +331,22 @@ async function sendServerPurchaseEvent(supabaseAdmin: SupabaseAdminClient, payme
         const slug = normalizeGameCategory(i.lztGame || i.gameName);
         if (slug) return slug;
         if (i.type === "lzt-account") {
-          const inferred = inferLztAccountCategoryFromProductName(i.productName);
+          const titleBlob = `${String(i.productName || "").trim()} ${String(i.planName || "").trim()}`.trim();
+          const inferred = inferLztAccountCategoryFromProductName(titleBlob);
           if (inferred) return inferred;
         }
         return "";
       })
       .filter((g) => g.length > 0);
     const uniqueGames = [...new Set(gameNames)];
+    const firstTitleBlob =
+      `${String(firstItem.productName || "").trim()} ${String(firstItem.planName || "").trim()}`.trim();
     const category = uniqueGames.length === 1
       ? uniqueGames[0]
       : uniqueGames.length > 1
         ? "multi"
         : normalizeGameCategory(firstItem.lztGame || firstItem.gameName || firstItem.planName || firstItem.productName) ||
-          inferLztAccountCategoryFromProductName(firstItem.productName) ||
+          inferLztAccountCategoryFromProductName(firstTitleBlob) ||
           "";
 
     const allContas = cartItems.every((i) => i.type === "lzt-account");

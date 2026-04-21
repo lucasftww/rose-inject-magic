@@ -71,12 +71,14 @@ function disableSpaAutoPageView(): void {
  */
 export function trackSpaPageView(): void {
   if (typeof window === "undefined") return;
-  try {
+  runWhenFbqReady(() => {
     if (!window.fbq) return;
-    window.fbq("track", "PageView");
-  } catch (e: unknown) {
-    devLog("trackSpaPageView failed", e);
-  }
+    try {
+      window.fbq("track", "PageView");
+    } catch (e: unknown) {
+      devLog("trackSpaPageView failed", e);
+    }
+  });
 }
 
 /**
