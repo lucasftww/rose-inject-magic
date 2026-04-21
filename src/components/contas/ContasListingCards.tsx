@@ -67,7 +67,8 @@ const smoothImgObserver =
             }
           }
         },
-        { rootMargin: likelySlowDevice ? "140px 0px" : "260px 0px" },
+        // Desktop: margem mais pequena → menos miniaturas DDragon/Fortnite em paralelo fora do ecrã.
+        { rootMargin: likelySlowDevice ? "120px 0px" : "140px 0px" },
       )
     : null;
 
@@ -297,6 +298,11 @@ export const ValorantCard = memo(({ item, skinsMap, priceLabel, queryClient }: {
 });
 ValorantCard.displayName = "ValorantCard";
 
+/** Máx. miniaturas no card da lista — cada uma é 1 GET ao DDragon; 4 costuma bastar para leitura rápida. */
+const LOL_LISTING_PREVIEW_CAP = 4;
+/** Mesma ideia: menos pedidos à fortnite-api no cartão da grelha. */
+const FORTNITE_LISTING_PREVIEW_CAP = 4;
+
 // ─── LoL Card ───
 export const LolCard = memo(({ item, champKeyMap, priceLabel, queryClient }: { item: LztItem; champKeyMap: Map<number, string>; priceLabel: string; queryClient: QueryClient }) => {
   const rankText = item.riot_lol_rank || "Unranked";
@@ -340,7 +346,7 @@ export const LolCard = memo(({ item, champKeyMap, priceLabel, queryClient }: { i
           image: `https://ddragon.leagueoflegends.com/cdn/img/champion/tiles/${champName}_${skinNum}.jpg`,
         });
       }
-      if (results.length >= 6) break;
+      if (results.length >= LOL_LISTING_PREVIEW_CAP) break;
     }
 
     if (results.length === 0) {
@@ -353,7 +359,7 @@ export const LolCard = memo(({ item, champKeyMap, priceLabel, queryClient }: { i
             image: `https://ddragon.leagueoflegends.com/cdn/img/champion/tiles/${champName}_0.jpg`,
           });
         }
-        if (results.length >= 6) break;
+        if (results.length >= LOL_LISTING_PREVIEW_CAP) break;
       }
     }
 
@@ -390,17 +396,9 @@ export const LolCard = memo(({ item, champKeyMap, priceLabel, queryClient }: { i
               </div>
             ))}
           </div>
-        ) : skinPreviews.length > 0 ? (
-          <div className="relative z-[1] grid grid-cols-3 grid-rows-2 gap-0 w-full h-full">
-            {skinPreviews.map((skin, i) => (
-              <div key={i} className="relative overflow-hidden">
-                <SmoothImg src={getProxiedImageUrl(skin.image)} alt={skin.name} className="h-full w-full object-cover object-top" />
-              </div>
-            ))}
-          </div>
         ) : hasLolInventoryData && !champKeyMapReady ? (
-          <div className="relative z-[1] grid grid-cols-3 grid-rows-2 gap-0 w-full h-full">
-            {Array.from({ length: 6 }).map((_, i) => (
+          <div className="relative z-[1] grid grid-cols-2 grid-rows-2 gap-0 w-full h-full">
+            {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="bg-secondary/50 animate-pulse" />
             ))}
           </div>
@@ -474,7 +472,7 @@ export const FortniteCard = memo(({ item, skinsDb, priceLabel, queryClient }: { 
 
   const cleanedTitle = getListingCardTitle(item, "fortnite");
 
-  // fortniteSkins: ordem LZT → reordenamos por raridade + temporada (OG) antes de mostrar 6 no card
+  // fortniteSkins: ordem LZT → reordenamos por raridade + temporada (OG) antes de mostrar miniaturas no card
   const skinPreviews = useMemo(() => {
     const fallbackRow = (id: string, title?: string): FortniteCosmeticDbRow => ({
       name: title || id,
@@ -500,7 +498,7 @@ export const FortniteCard = memo(({ item, skinsDb, priceLabel, queryClient }: { 
     }
 
     rows.sort(compareFortniteCardRows);
-    return rows.slice(0, 6);
+    return rows.slice(0, FORTNITE_LISTING_PREVIEW_CAP);
   }, [item.fortniteSkins, item.fortnitePickaxe, skinsDb]);
 
   return (
@@ -542,18 +540,10 @@ export const FortniteCard = memo(({ item, skinsDb, priceLabel, queryClient }: { 
               </div>
             ))}
           </div>
-        ) : skinPreviews.length > 0 ? (
-          <div className="relative z-[1] grid grid-cols-3 grid-rows-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
-            {skinPreviews.map((skin, i) => (
-              <div key={i} className="flex items-center justify-center w-full h-full rounded bg-secondary/20 p-0.5">
-                <SmoothImg src={getProxiedImageUrl(skin.image)} alt={skin.name} className="h-full w-full object-contain drop-shadow-sm" />
-              </div>
-            ))}
-          </div>
         ) : skinsDb.size === 0 && skinCount > 0 ? (
           /* Skeleton while Fortnite API loads */
-          <div className="relative z-[1] grid grid-cols-3 grid-rows-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
-            {Array.from({ length: 6 }).map((_, i) => (
+          <div className="relative z-[1] grid grid-cols-2 grid-rows-2 gap-0.5 sm:gap-1 p-1.5 sm:p-2 w-full h-full place-items-center">
+            {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="w-full h-full rounded bg-secondary/50 animate-pulse" />
             ))}
           </div>
