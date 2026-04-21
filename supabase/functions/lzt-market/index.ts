@@ -96,9 +96,9 @@ function normalizeCurrency(currency?: string | null) {
   return "rub";
 }
 
-/** Lista LoL: `lolInventory.Skin` pode ter centenas de entradas → payload enorme; o card mostra ~6 previews. */
-const LOL_LIST_SKIN_ENTRIES_MAX = 48;
-const LOL_LIST_CHAMP_ENTRIES_MAX = 16;
+/** Lista LoL: `lolInventory.Skin` pode ter centenas de entradas → payload enorme; o card da grelha usa poucas previews. */
+const LOL_LIST_SKIN_ENTRIES_MAX = 28;
+const LOL_LIST_CHAMP_ENTRIES_MAX = 12;
 
 function trimLolInventoryForList(inv: Record<string, unknown>): void {
   const skin = inv["Skin"];
@@ -116,18 +116,56 @@ function trimLolInventoryForList(inv: Record<string, unknown>): void {
   }
 }
 
-/** Lista Fortnite: `fortniteSkins` pode ter centenas de entradas → MB de JSON; o card usa ~6 após sort no cliente. */
-const FN_LIST_SKINS_MAX = 48;
-const FN_LIST_PICKAXES_MAX = 16;
+/** Lista Fortnite: `fortniteSkins` pode ter centenas de entradas → MB de JSON; cliente ordena/filtra com API cosméticos + primeiro N IDs. */
+const FN_LIST_SKINS_MAX = 28;
+const FN_LIST_PICKAXES_MAX = 10;
+
+/** Listagem só precisa de id (+ title opcional fallback); a API pode enviar objetos grandes por skin. */
+function slimFortniteCosmeticRow(raw: unknown): { id: string; title?: string } | null {
+  if (!raw || typeof raw !== "object") return null;
+  const o = raw as Record<string, unknown>;
+  const id = o.id != null ? String(o.id) : "";
+  if (!id) return null;
+  const title =
+    typeof o.title === "string"
+      ? o.title
+      : typeof o.name === "string"
+        ? o.name
+        : undefined;
+  return title ? { id, title } : { id };
+}
+
+/** Campos volumosos que a vitrine Fortnite não usa (detalhe volta a pedir dados completos). */
+const FORTNITE_LIST_DROP_KEYS = [
+  "fortniteDance",
+  "fortniteGliders",
+  "fortniteSpray",
+  "fortniteEmoji",
+  "fortniteToy",
+  "fortniteMusic",
+  "fortniteTrail",
+  "fortniteBuiltInEmotes",
+];
 
 function trimFortniteListPayloadForList(item: LztItem): void {
   const skins = item.fortniteSkins;
-  if (Array.isArray(skins) && skins.length > FN_LIST_SKINS_MAX) {
-    item.fortniteSkins = skins.slice(0, FN_LIST_SKINS_MAX);
+  if (Array.isArray(skins)) {
+    const slim = skins
+      .map(slimFortniteCosmeticRow)
+      .filter((x): x is { id: string; title?: string } => x != null)
+      .slice(0, FN_LIST_SKINS_MAX);
+    item.fortniteSkins = slim;
   }
   const pick = item.fortnitePickaxe;
-  if (Array.isArray(pick) && pick.length > FN_LIST_PICKAXES_MAX) {
-    item.fortnitePickaxe = pick.slice(0, FN_LIST_PICKAXES_MAX);
+  if (Array.isArray(pick)) {
+    const slimPick = pick
+      .map(slimFortniteCosmeticRow)
+      .filter((x): x is { id: string; title?: string } => x != null)
+      .slice(0, FN_LIST_PICKAXES_MAX);
+    item.fortnitePickaxe = slimPick;
+  }
+  for (const k of FORTNITE_LIST_DROP_KEYS) {
+    if (k in item) delete item[k];
   }
 }
 
