@@ -9,17 +9,17 @@ export function prefetchContasChunk(): void {
   contasChunkPromise = import("@/pages/Contas");
 }
 
-export function prefetchFortniteDetalhesChunk(): void {
+function prefetchFortniteDetalhesChunk(): void {
   if (fortniteDetChunkPromise) return;
   fortniteDetChunkPromise = import("@/pages/FortniteDetalhes");
 }
 
-export function prefetchLolDetalhesChunk(): void {
+function prefetchLolDetalhesChunk(): void {
   if (lolDetChunkPromise) return;
   lolDetChunkPromise = import("@/pages/LolDetalhes");
 }
 
-export function prefetchMinecraftDetalhesChunk(): void {
+function prefetchMinecraftDetalhesChunk(): void {
   if (mcDetChunkPromise) return;
   mcDetChunkPromise = import("@/pages/MinecraftDetalhes");
 }

@@ -126,7 +126,7 @@ function runWhenFbqReady(fn: () => void): void {
 }
 
 /** Abas de jogo na página Contas — nomes alinhados ao Pixel (Events Manager → Eventos personalizados). */
-export type ContasGameTabForPixel = "valorant" | "lol" | "fortnite" | "minecraft";
+type ContasGameTabForPixel = "valorant" | "lol" | "fortnite" | "minecraft";
 
 const IC_CATEGORY_EVENT_BY_TAB: Record<ContasGameTabForPixel, string> = {
   valorant: "IC_CATEGORY_VALORANT",
