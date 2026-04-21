@@ -17,5 +17,7 @@ export function inferLztListingGameSlug(...parts: unknown[]): string | null {
   if (/\bminecraft\b|hypixel|minecoins?|skyblock/.test(n)) return "minecraft";
   if (/\bleague\s+of\s+legends\b|\blol\b|champion|summoner/.test(n)) return "lol";
   if (/\bvalorant\b|radiante|radiant|immortal|\bvp\b|vandal|phantom/.test(n)) return "valorant";
+  /** Contas listadas como “Riot” no LZT costumam ser Valorant (evitar após checks de LoL). */
+  if (/\briot\b/.test(n)) return "valorant";
   return null;
 }

@@ -6,6 +6,7 @@ import {
 } from "../_shared/lztItemGuards.ts";
 import { GAME_SLUG_ALIASES } from "../_shared/gameSlugAliases.ts";
 import { getDisplayedPriceBrl } from "../_shared/lztPricingModel.ts";
+import { inferLztGameSlugFromApiItem } from "../_shared/inferLztGameFromApiItem.ts";
 import type {
   CartSnapshotItem,
   PaymentRow,
@@ -2219,7 +2220,17 @@ async function validateAndCalculatePrice(
       const hasOverride = priceOverride && Number(priceOverride.custom_price_brl) > 0;
       const overridePrice = hasOverride ? Number(priceOverride.custom_price_brl) : null;
 
-      const gameCategory = item.lztGame || (item as Record<string, unknown>).gameCategory as string || "";
+      const rawClientGame = String(item.lztGame || (item as Record<string, unknown>).gameCategory || "").trim();
+      let gameCategory = normalizeGameCategory(rawClientGame);
+      if (!gameCategory && lztItem) {
+        gameCategory = normalizeGameCategory(inferLztGameSlugFromApiItem(lztItem));
+      }
+      if (!gameCategory) {
+        const titleBlob = `${String(item.productName || "").trim()} ${String(item.planName || "").trim()}`.trim();
+        const fromTitle = inferLztAccountCategoryFromProductName(titleBlob);
+        gameCategory = fromTitle ? normalizeGameCategory(fromTitle) : "";
+      }
+      const pricingGameType = gameCategory || (lztItem ? inferLztGameSlugFromApiItem(lztItem) : "") || undefined;
       const toMarkup = (v: unknown, fallback: number): number => {
         const n = Number(v);
         return Number.isFinite(n) && n >= 1 ? n : fallback;
@@ -2283,7 +2294,7 @@ async function validateAndCalculatePrice(
         finalPrice = getDisplayedPriceBrl(
           pricingItem,
           overridePrice ?? undefined,
-          gameCategory,
+          pricingGameType,
           markup,
           { rub: RUB_TO_BRL, usd: USD_TO_BRL },
         );
@@ -2293,12 +2304,14 @@ async function validateAndCalculatePrice(
       }
       
       totalAmount += Math.round(finalPrice * 100);
+      const resolvedLztGame = gameCategory || (lztItem ? inferLztGameSlugFromApiItem(lztItem) : "") || undefined;
       validatedCart.push({
         ...item,
         price: finalPrice,
         lztPrice: realLztPrice,
         lztCurrency: realLztCurrency,
         quantity: 1,
+        ...(resolvedLztGame ? { lztGame: resolvedLztGame } : {}),
       });
       continue;
     }

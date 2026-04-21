@@ -151,7 +151,25 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
     // Direct checkout: replace cart with single item
     const price = Number.isFinite(item.price) && item.price >= 0 ? item.price : 0;
-    setItems([{ ...item, price, quantity: 1 }]);
+    let row: CartItem = { ...item, price, quantity: 1 };
+    const lztId = typeof row.lztItemId === "string" && row.lztItemId.trim() ? row.lztItemId.trim() : "";
+    const looksLztPlan = /^lzt-/i.test(String(row.planId || ""));
+    if (row.type === "lzt-account" || lztId || looksLztPlan) {
+      row.type = "lzt-account";
+      row.quantity = 1;
+      if (lztId) row.lztItemId = lztId;
+      const lg = typeof row.lztGame === "string" ? row.lztGame.trim() : "";
+      if (!lg) {
+        const fromSlug = normalizeGameSlug(row.gameName);
+        if (fromSlug) row.lztGame = fromSlug;
+        else {
+          const inferred = inferLztListingGameSlug(row.productName, row.planName);
+          if (inferred) row.lztGame = inferred;
+        }
+      }
+      if (row.lztGame && !row.gameName) row.gameName = row.lztGame;
+    }
+    setItems([row]);
     return true;
   };
 

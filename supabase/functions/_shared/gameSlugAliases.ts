@@ -39,6 +39,8 @@ export const GAME_SLUG_ALIASES: Record<string, string> = {
   dayz: "dayz",
   rust: "rust",
   valorant: "valorant",
+  /** LZT / Riot client — listagens Valorant usam `riot` como game_type. */
+  riot: "valorant",
   fortnite: "fortnite",
   minecraft: "minecraft",
   lol: "lol",
