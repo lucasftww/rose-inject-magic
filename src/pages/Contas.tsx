@@ -1867,8 +1867,10 @@ const Contas = () => {
     isMinecraft && mcNoBan,
     priceMin !== "" || priceMax !== "",
     searchQuery !== "",
-    invMin !== "", invMax !== "",
-    lvlMin !== "", lvlMax !== "",
+    isValorant && invMin !== "",
+    isValorant && invMax !== "",
+    (isValorant || gameTab === "lol") && lvlMin !== "",
+    (isValorant || gameTab === "lol") && lvlMax !== "",
   ].filter(Boolean).length;
 
   const accentColor = isValorant ? "hsl(var(--success))" : isFortnite ? FN_PURPLE : isMinecraft ? MC_GREEN : "hsl(198,100%,45%)";
@@ -2539,18 +2541,20 @@ const Contas = () => {
                       Página {displayPage} de {totalDisplayPages} · {allItems.length} contas
                     </span>
 
-                    {hasNextPage && (
-                      <button
-                        onClick={loadMorePages}
-                        disabled={loadingMore || loadMoreCoolingDown || !!streamError}
-                        className="flex items-center gap-2 rounded-lg border border-border bg-card px-6 py-2 text-xs font-medium text-muted-foreground transition-colors disabled:opacity-50"
-                        onMouseEnter={(e) => setLinkAccentHover(e, accentColor)}
-                        onMouseLeave={clearLinkAccentHover}
-                      >
-                        {loadingMore || loadMoreCoolingDown ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ChevronDown className="h-3.5 w-3.5" />}
-                        {loadingMore ? "Carregando..." : loadMoreCoolingDown ? "Aguarde..." : "Buscar mais contas"}
-                      </button>
-                    )}
+                  </div>
+                )}
+                {hasNextPage && streamingDone && (
+                  <div className={`${totalDisplayPages > 1 ? "mt-3" : "mt-8"} flex justify-center`}>
+                    <button
+                      onClick={loadMorePages}
+                      disabled={loadingMore || loadMoreCoolingDown || !!streamError}
+                      className="flex items-center gap-2 rounded-lg border border-border bg-card px-6 py-2 text-xs font-medium text-muted-foreground transition-colors disabled:opacity-50"
+                      onMouseEnter={(e) => setLinkAccentHover(e, accentColor)}
+                      onMouseLeave={clearLinkAccentHover}
+                    >
+                      {loadingMore || loadMoreCoolingDown ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                      {loadingMore ? "Carregando..." : loadMoreCoolingDown ? "Aguarde..." : "Buscar mais contas"}
+                    </button>
                   </div>
                 )}
               </>

@@ -120,7 +120,6 @@ SmoothImg.displayName = "SmoothImg";
 
 export const ValorantCard = memo(({ item, skinsMap, priceLabel, queryClient }: { item: LztItem; skinsMap: Map<string, SkinEntry>; priceLabel: string; queryClient: QueryClient }) => {
   const rank = item.riot_valorant_rank ? rankMap[item.riot_valorant_rank] : null;
-  const skinCount = item.riot_valorant_skin_count ?? 0;
   const hasKnife = (item.riot_valorant_knife ?? 0) > 0;
 
   const cleanedTitle = getListingCardTitle(item, "valorant");
@@ -135,6 +134,7 @@ export const ValorantCard = memo(({ item, skinsMap, priceLabel, queryClient }: {
   }, [item.valorantInventory]);
 
   const hasInventoryData = inventoryUuids.length > 0;
+  const skinCount = (item.riot_valorant_skin_count ?? 0) > 0 ? (item.riot_valorant_skin_count ?? 0) : inventoryUuids.length;
   const skinsMapReady = skinsMap.size > 0;
 
   const skinPreviews = useMemo(() => {
@@ -309,7 +309,6 @@ export const LolCard = memo(({ item, champKeyMap, priceLabel, queryClient }: { i
   const rankFilterId = lolRankToFilterId(rankText);
   const rankFilterData = lolRankFilters.find(r => r.id === rankFilterId);
   const champCount = item.riot_lol_champion_count ?? 0;
-  const skinCount = item.riot_lol_skin_count ?? 0;
   const level = item.riot_lol_level ?? 0;
   const winRate = item.riot_lol_rank_win_rate;
 
@@ -365,6 +364,7 @@ export const LolCard = memo(({ item, champKeyMap, priceLabel, queryClient }: { i
 
     return results;
   }, [lolInventory, champKeyMap, champKeyMapReady]);
+  const skinCount = (item.riot_lol_skin_count ?? 0) > 0 ? (item.riot_lol_skin_count ?? 0) : skinPreviews.length;
 
   return (
     <Link

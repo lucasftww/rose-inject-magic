@@ -268,6 +268,10 @@ async function fetchOverviewDashboard(): Promise<OverviewDashboardData> {
 
 const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => void }) => {
   const { users: adminUsers, usernameMap } = useAdminUsers();
+  const adminCount = useMemo(
+    () => adminUsers.filter((u) => Array.isArray(u.roles) && u.roles.includes("admin")).length,
+    [adminUsers],
+  );
   const { data, isPending: loading, refetch, isFetching } = useQuery({
     queryKey: ["admin", "overview"],
     queryFn: fetchOverviewDashboard,
@@ -397,7 +401,7 @@ const OverviewTab = ({ onGoToTicket }: { onGoToTicket?: (ticketId: string) => vo
             <Users className="h-4 w-4 text-warning" />
             <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Administradores</span>
           </div>
-          <p className="text-2xl font-bold text-foreground tracking-tight">{adminUsers.length}</p>
+          <p className="text-2xl font-bold text-foreground tracking-tight">{adminCount}</p>
           <p className="text-[11px] text-muted-foreground mt-0.5">
             {openTickets > 0 ? <span className="text-warning font-semibold">{openTickets} ticket{openTickets === 1 ? "" : "s"} aberto{openTickets === 1 ? "" : "s"}</span> : "Nenhum ticket aberto"}
           </p>
