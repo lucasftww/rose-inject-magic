@@ -274,16 +274,8 @@ const CONTAS_ADJACENT_PREFETCH_DELAY_MS = 2800;
 const CONTAS_PREFETCH_STABLE_WINDOW_MS = 2000;
 /** Se o utilizador trocar de aba logo após prefetch, não reconciliar imediatamente para evitar fetch descartado. */
 const CONTAS_RECONCILE_TAB_GUARD_MS = 1000;
-/** Modo agressivo: só ativa warmup de abas com `?warm=1` explícito para teste. */
-const CONTAS_ENABLE_ADJACENT_PREFETCH =
-  typeof window !== "undefined" &&
-  (() => {
-    try {
-      return new URLSearchParams(window.location.search).get("warm") === "1";
-    } catch {
-      return false;
-    }
-  })();
+/** Prefetch de abas desativado para priorizar totalmente a busca da aba ativa. */
+const CONTAS_ENABLE_ADJACENT_PREFETCH = false;
 
 /** Gap mínimo entre dois GET de lista completos — evita cancelar o anterior quando filtros oscilam. */
 const CONTAS_MIN_LIST_REFRESH_GAP_MS = 560;
@@ -295,7 +287,7 @@ const CONTAS_PROGRESSIVE_RENDER_SETTLE_MS_LIGHT = 420;
 function listAttemptTimeoutMs(tab: GameTab, light: boolean): number {
   // Mantém UX responsiva: falha mais rápido e deixa cache/fallback assumirem.
   if (tab === "fortnite") return light ? 12000 : 13000;
-  if (tab === "minecraft") return light ? 8500 : 9500;
+  if (tab === "minecraft") return light ? 6000 : 7000;
   return light ? 7000 : 9500;
 }
 
@@ -1477,10 +1469,10 @@ const Contas = () => {
   }, []);
 
   const prefetchAdjacentTabs = useCallback(() => {
+    clearPrefetchTimeouts();
     // Minecraft estava sofrendo com bursts de requests em background;
     // reduzimos carga para priorizar a busca da aba atual.
     if (gameTab === "minecraft") return;
-    clearPrefetchTimeouts();
     prefetchRunIdRef.current += 1;
     const runId = prefetchRunIdRef.current;
 
@@ -1528,6 +1520,12 @@ const Contas = () => {
 
   // Enhanced fetchMultiplePages: check prefetch cache on tab switch
   const fetchMultiplePagesWithPrefetch = useCallback(async (controller: AbortController) => {
+    // Para Minecraft, evitar qualquer caminho de prefetch/reconcile (tráfego extra percebido como lentidão).
+    if (gameTab === "minecraft") {
+      await fetchMultiplePages(controller);
+      return;
+    }
+
     // Check if we have a prefetched result for this game tab
     const prefetchKey = `__prefetch__${gameTab}`;
     const prefetched = fetchCacheRef.current.get(prefetchKey);
