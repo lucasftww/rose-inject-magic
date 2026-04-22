@@ -782,14 +782,16 @@ Deno.serve(async (req) => {
         if (val) params.set(p, val);
       }
 
-      // Inatividade mínima via `daybreak` na API LZT (Fortnite: 90 dias; demais: 30).
-      const minDays = gameType === "fortnite" ? FORTNITE_MIN_INACTIVE_DAYS : MIN_INACTIVE_DAYS;
-      if (!params.get("daybreak") || Number(params.get("daybreak")) < minDays) {
-        params.set("daybreak", String(minDays));
+      // Inatividade mínima + "não vendido antes":
+      // para Minecraft, esses defaults estavam restringindo demais e zerando resultados.
+      const shouldEnforceQualityDefaults = gameType !== "minecraft";
+      if (shouldEnforceQualityDefaults) {
+        const minDays = gameType === "fortnite" ? FORTNITE_MIN_INACTIVE_DAYS : MIN_INACTIVE_DAYS;
+        if (!params.get("daybreak") || Number(params.get("daybreak")) < minDays) {
+          params.set("daybreak", String(minDays));
+        }
+        params.set("nsb", "1");
       }
-
-      // Todas as categorias: apenas contas que nunca foram vendidas antes no LZT (`nsb`).
-      params.set("nsb", "1");
 
       // Valorant: mínimo de skins na API LZT (`valorant_smin`; não confundir com LoL/FN que usam 10)
       if (gameType === "riot" || gameType === "valorant") {

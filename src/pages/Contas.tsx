@@ -1477,6 +1477,9 @@ const Contas = () => {
   }, []);
 
   const prefetchAdjacentTabs = useCallback(() => {
+    // Minecraft estava sofrendo com bursts de requests em background;
+    // reduzimos carga para priorizar a busca da aba atual.
+    if (gameTab === "minecraft") return;
     clearPrefetchTimeouts();
     prefetchRunIdRef.current += 1;
     const runId = prefetchRunIdRef.current;
