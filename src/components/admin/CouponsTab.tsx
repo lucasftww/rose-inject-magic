@@ -201,6 +201,9 @@ const CouponsTab = () => {
               <label className="text-xs font-medium text-muted-foreground mb-2 block">
                 Produtos permitidos (vazio = todos)
               </label>
+              <p className="mb-2 text-[11px] text-muted-foreground">
+                Restrição por produto aplica-se a produtos da loja; contas LZT usam outro tipo de item no checkout.
+              </p>
               <div className="flex flex-wrap gap-2">
                 {products.map((p) => (
                   <button key={p.id} onClick={() => toggleProduct(p.id)}

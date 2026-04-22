@@ -109,6 +109,10 @@ function parseValidateCouponRpc(data: unknown): ValidateCouponRpcResult {
   return data as ValidateCouponRpcResult;
 }
 
+function isUuidLike(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
 /* ── CPF checksum validation ── */
 function validateCpfChecksum(cpf: string): boolean {
   const digits = cpf.replace(/\D/g, "");
@@ -271,6 +275,10 @@ const Checkout = () => {
   const [couponError, setCouponError] = useState("");
 
   const [cartSnapshot, setCartSnapshot] = useState<typeof items>([]);
+  const couponCartProductIds = useMemo(
+    () => items.map((i) => String(i.productId || "").trim()).filter((id) => isUuidLike(id)),
+    [items],
+  );
 
   const cartTotal = items.reduce((sum, i) => {
     const p = Number.isFinite(i.price) && i.price >= 0 ? i.price : 0;
@@ -454,7 +462,7 @@ const Checkout = () => {
       const { data, error } = await supabase.rpc("validate_coupon", {
         _code: couponCode.trim().toUpperCase(),
         _user_id: user.id,
-        _cart_product_ids: items.map((i) => i.productId),
+        _cart_product_ids: couponCartProductIds,
       });
       if (error) throw error;
       const result = parseValidateCouponRpc(data);
@@ -482,7 +490,12 @@ const Checkout = () => {
       setCouponCode("");
     } catch (e: unknown) {
       if (import.meta.env.DEV) console.warn("validate_coupon:", e instanceof Error ? e.message : String(e));
-      setCouponError("Erro ao validar cupom");
+      const errMsg = e instanceof Error ? e.message : String(e ?? "");
+      if (hasLztItems && /uuid|invalid input syntax/i.test(errMsg)) {
+        setCouponError("Este cupom está vinculado a produtos específicos e não é válido para contas.");
+      } else {
+        setCouponError("Erro ao validar cupom");
+      }
     } finally {
       setCouponLoading(false);
     }
