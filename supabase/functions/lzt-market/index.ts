@@ -158,18 +158,24 @@ const FORTNITE_LIST_DROP_KEYS = [
 function trimFortniteListPayloadForList(item: LztItem): void {
   const skins = item.fortniteSkins;
   if (Array.isArray(skins)) {
-    const slim = skins
-      .map(slimFortniteCosmeticRow)
-      .filter((x): x is { id: string; title?: string } => x != null)
-      .slice(0, FN_LIST_SKINS_MAX);
+    const slim: Array<{ id: string; title?: string }> = [];
+    for (const raw of skins) {
+      const row = slimFortniteCosmeticRow(raw);
+      if (!row) continue;
+      slim.push(row);
+      if (slim.length >= FN_LIST_SKINS_MAX) break;
+    }
     item.fortniteSkins = slim;
   }
   const pick = item.fortnitePickaxe;
   if (Array.isArray(pick)) {
-    const slimPick = pick
-      .map(slimFortniteCosmeticRow)
-      .filter((x): x is { id: string; title?: string } => x != null)
-      .slice(0, FN_LIST_PICKAXES_MAX);
+    const slimPick: Array<{ id: string; title?: string }> = [];
+    for (const raw of pick) {
+      const row = slimFortniteCosmeticRow(raw);
+      if (!row) continue;
+      slimPick.push(row);
+      if (slimPick.length >= FN_LIST_PICKAXES_MAX) break;
+    }
     item.fortnitePickaxe = slimPick;
   }
   for (const k of FORTNITE_LIST_DROP_KEYS) {
@@ -1170,11 +1176,6 @@ Deno.serve(async (req) => {
         return true;
       });
 
-      if (responseLimit > 0 && data.items.length > responseLimit) {
-        data.items = data.items.slice(0, responseLimit);
-        data.perPage = Math.min(Number(data.perPage || responseLimit), responseLimit);
-      }
-
       log("INFO", "lzt-market", "Filtered market items", {
         gameType,
         beforeCount,
@@ -1259,6 +1260,11 @@ Deno.serve(async (req) => {
         data.items.sort((a: LztItem, b: LztItem) => (Number(b.price_brl) || 0) - (Number(a.price_brl) || 0));
       } else if (orderBy === "price_to_up") {
         data.items.sort((a: LztItem, b: LztItem) => (Number(a.price_brl) || 0) - (Number(b.price_brl) || 0));
+      }
+
+      if (responseLimit > 0 && data.items.length > responseLimit) {
+        data.items = data.items.slice(0, responseLimit);
+        data.perPage = Math.min(Number(data.perPage || responseLimit), responseLimit);
       }
       markPerf("list_postprocess");
     }

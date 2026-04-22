@@ -1384,25 +1384,25 @@ const Contas = () => {
         timestamp: Date.now(),
       });
     } catch (err: unknown) {
-      if (!controller.signal.aborted) {
-        if (isAbortLikeError(err)) {
-          setFirstPageLoaded(true);
-          setIsRefetching(false);
-          setStreamingDone(true);
-          return;
-        }
-        if (cached && cached.items.length > 0) {
-          // Preserve last good data instead of showing fatal UI on transient upstream failures.
-          setFirstPageLoaded(true);
-          setIsRefetching(false);
-          setStreamingDone(true);
-          return;
-        }
+      // Request cancellation is expected during rapid filter/tab interactions.
+      // Treat it as "load settled" to avoid skeleton getting stuck.
+      if (controller.signal.aborted || isAbortLikeError(err)) {
         setFirstPageLoaded(true);
         setIsRefetching(false);
-        setStreamError(err instanceof Error ? err : new Error(String(err)));
         setStreamingDone(true);
+        return;
       }
+      if (cached && cached.items.length > 0) {
+        // Preserve last good data instead of showing fatal UI on transient upstream failures.
+        setFirstPageLoaded(true);
+        setIsRefetching(false);
+        setStreamingDone(true);
+        return;
+      }
+      setFirstPageLoaded(true);
+      setIsRefetching(false);
+      setStreamError(err instanceof Error ? err : new Error(String(err)));
+      setStreamingDone(true);
     } finally {
       prevGameTabRef.current = gameTab;
     }
