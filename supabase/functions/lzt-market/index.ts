@@ -29,9 +29,13 @@ const RETRYABLE_STATUSES = [429, 502, 503, 504, 524];
 /** Evita que o isolate fique à espera indefinidamente da LZT (origem típica de 504 no gateway Supabase). */
 const LZT_LIST_PAGE1_FETCH_TIMEOUT_MS = 8_000;
 const LZT_LIST_PAGE_N_FETCH_TIMEOUT_MS = 6_500;
+const LZT_LIST_MINECRAFT_PAGE1_FETCH_TIMEOUT_MS = 16_000;
+const LZT_LIST_MINECRAFT_PAGE_N_FETCH_TIMEOUT_MS = 12_000;
 const LZT_DETAIL_FETCH_TIMEOUT_MS = 12_000;
 const LZT_LIST_PAGE1_FETCH_MAX_ATTEMPTS = 2;
 const LZT_LIST_PAGE_N_FETCH_MAX_ATTEMPTS = 1;
+const LZT_LIST_MINECRAFT_PAGE1_FETCH_MAX_ATTEMPTS = 1;
+const LZT_LIST_MINECRAFT_PAGE_N_FETCH_MAX_ATTEMPTS = 1;
 const LZT_DETAIL_FETCH_MAX_ATTEMPTS = 2;
 /** Em produção, evita ruído: logs INFO de performance só para requests lentos. */
 const PERF_LOG_THRESHOLD_MS = 1200;
@@ -299,8 +303,13 @@ async function dedupedLztListFetch(apiUrl: string, token: string, dedupeKey: str
         page = 1;
       }
       const isFirstPage = page <= 1;
-      const maxAttempts = isFirstPage ? LZT_LIST_PAGE1_FETCH_MAX_ATTEMPTS : LZT_LIST_PAGE_N_FETCH_MAX_ATTEMPTS;
-      const timeoutMs = isFirstPage ? LZT_LIST_PAGE1_FETCH_TIMEOUT_MS : LZT_LIST_PAGE_N_FETCH_TIMEOUT_MS;
+      const isMinecraftList = /\/minecraft(\?|$)/i.test(apiUrl);
+      const maxAttempts = isMinecraftList
+        ? (isFirstPage ? LZT_LIST_MINECRAFT_PAGE1_FETCH_MAX_ATTEMPTS : LZT_LIST_MINECRAFT_PAGE_N_FETCH_MAX_ATTEMPTS)
+        : (isFirstPage ? LZT_LIST_PAGE1_FETCH_MAX_ATTEMPTS : LZT_LIST_PAGE_N_FETCH_MAX_ATTEMPTS);
+      const timeoutMs = isMinecraftList
+        ? (isFirstPage ? LZT_LIST_MINECRAFT_PAGE1_FETCH_TIMEOUT_MS : LZT_LIST_MINECRAFT_PAGE_N_FETCH_TIMEOUT_MS)
+        : (isFirstPage ? LZT_LIST_PAGE1_FETCH_TIMEOUT_MS : LZT_LIST_PAGE_N_FETCH_TIMEOUT_MS);
       let response: Response | null = null;
       for (let attempt = 0; attempt < maxAttempts; attempt++) {
         if (attempt > 0) {
