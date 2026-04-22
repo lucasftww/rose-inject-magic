@@ -26,6 +26,8 @@ const LZT_ALLOWED_IMAGE_DOMAINS = [
   "akamaihd.net", "capes.dev",
 ];
 const RETRYABLE_STATUSES = [429, 502, 503, 504, 524];
+const LZT_API_BASE_URL = "https://api.lzt.market";
+const LZT_API_MINECRAFT_BASE_URL = "https://prod-api.lzt.market";
 /** Evita que o isolate fique à espera indefinidamente da LZT (origem típica de 504 no gateway Supabase). */
 const LZT_LIST_PAGE1_FETCH_TIMEOUT_MS = 8_000;
 const LZT_LIST_PAGE_N_FETCH_TIMEOUT_MS = 6_500;
@@ -757,7 +759,7 @@ Deno.serve(async (req) => {
     // DETAIL: Get single item
     let apiUrl: string;
     if (action === "detail" && itemId) {
-      apiUrl = `https://api.lzt.market/${encodeURIComponent(itemId)}`;
+      apiUrl = `${LZT_API_BASE_URL}/${encodeURIComponent(itemId)}`;
     } else {
       // LIST: accounts with filters
       const params = new URLSearchParams();
@@ -884,7 +886,7 @@ Deno.serve(async (req) => {
         params.delete("lol_smin");
         params.delete("lol_smax");
         params.delete("champion_min");
-        apiUrl = `https://api.lzt.market/fortnite?${params.toString()}`;
+        apiUrl = `${LZT_API_BASE_URL}/fortnite?${params.toString()}`;
       } else if (gameType === "minecraft") {
         // Minecraft-specific params
         const mcParams = [
@@ -908,7 +910,7 @@ Deno.serve(async (req) => {
         params.delete("lol_smin");
         params.delete("lol_smax");
         params.delete("champion_min");
-        apiUrl = `https://api.lzt.market/minecraft?${params.toString()}`;
+        apiUrl = `${LZT_API_MINECRAFT_BASE_URL}/minecraft?${params.toString()}`;
       } else if (gameType === "lol") {
         // LoL uses /riot endpoint but must NOT have any Valorant-specific params
         // Per LZT API docs: LoL uses lol_smin, lol_region[], lol_rank[], champion[]
@@ -935,7 +937,7 @@ Deno.serve(async (req) => {
         params.delete("amax");
         params.delete("inv_min");
         params.delete("inv_max");
-        apiUrl = `https://api.lzt.market/riot?${params.toString()}`;
+        apiUrl = `${LZT_API_BASE_URL}/riot?${params.toString()}`;
       } else {
         // Valorant: remove LoL-specific params only
         params.delete("lol_smin");
@@ -944,7 +946,7 @@ Deno.serve(async (req) => {
         params.delete("lol_level_max");
         params.delete("champion_min");
         params.delete("champion_max");
-        apiUrl = `https://api.lzt.market/riot?${params.toString()}`;
+        apiUrl = `${LZT_API_BASE_URL}/riot?${params.toString()}`;
       }
     }
 
