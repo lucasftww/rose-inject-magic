@@ -101,6 +101,6 @@ export function gameTabFromSearchParams(sp: URLSearchParams): GameTab {
   if (g === "genshin") return "genshin";
   if (g === "honkai") return "honkai";
   if (g === "zzz") return "zzz";
-  if (g === "brawlstars") return "brawlstars";
+  if (g === "brawlstars") return "genshin";
   return "valorant";
 }

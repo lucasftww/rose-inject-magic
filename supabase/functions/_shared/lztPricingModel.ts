@@ -241,6 +241,54 @@ export function itemFailsNotSoldBeforePolicy(item: LztItemLike): boolean {
   return false;
 }
 
+/**
+ * Listagem GET /mihoyo devolve contas mistas (Genshin / HSR / ZZZ). Filtra pelo “pilhar” com contadores.
+ * Linhas ambíguas (tudo 0) mantêm-se — o pedido já inclui *_char_min=1 na API.
+ */
+export function mihoyoItemMatchesGameTab(
+  item: LztItemLike,
+  gameType: "genshin" | "honkai" | "zzz",
+): boolean {
+  const o = item as Record<string, unknown>;
+  const gc = Number(
+    o.genshin_char_count ?? o.genshin_characters ?? o.genshin_character_count ?? o.genshin_chars ?? 0,
+  );
+  const hc = Number(
+    o.honkai_char_count ?? o.honkai_characters ?? o.honkai_character_count ?? o.honkai_chars ?? 0,
+  );
+  const zc = Number(
+    o.zenless_char_count ?? o.zenless_characters ?? o.zenless_character_count ?? o.zenless_chars ?? 0,
+  );
+
+  const ranked = [
+    ["genshin", gc] as const,
+    ["honkai", hc] as const,
+    ["zzz", zc] as const,
+  ].filter(([, n]) => n > 0);
+
+  if (ranked.length === 1) {
+    const tag = ranked[0][0];
+    return tag === gameType;
+  }
+
+  if (gameType === "genshin") {
+    if (gc > 0) return true;
+    if (hc > 0 || zc > 0) return false;
+    return true;
+  }
+  if (gameType === "honkai") {
+    if (hc > 0) return true;
+    if (gc > 0 || zc > 0) return false;
+    return true;
+  }
+  if (gameType === "zzz") {
+    if (zc > 0) return true;
+    if (gc > 0 || hc > 0) return false;
+    return true;
+  }
+  return true;
+}
+
 export function shouldKeepItem(
   item: LztItemLike,
   gameType: string,

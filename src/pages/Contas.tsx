@@ -45,14 +45,13 @@ import { isContasPerfDiagEnabled } from "@/lib/contasPerfDiag";
 import { isLikelyWrongGameInLolList } from "@/lib/contasLolFilter";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { lolRankFilters } from "@/lib/contasLolRankFilters";
-import { FN_PURPLE, FN_BLUE, MC_GREEN, GS_CYAN, HS_VIOLET, ZZZ_AMBER, BRAWL_GOLD } from "@/lib/contasGameAccents";
+import { FN_PURPLE, FN_BLUE, MC_GREEN, GS_CYAN, HS_VIOLET, ZZZ_AMBER } from "@/lib/contasGameAccents";
 import {
   ValorantCard,
   LolCard,
   FortniteCard,
   MinecraftCard,
   MihoyoCard,
-  BrawlStarsCard,
 } from "@/components/contas/ContasListingCards";
 
 import weaponAres from "@/assets/weapon-ares.png";
@@ -298,7 +297,7 @@ function listAttemptTimeoutMs(tab: GameTab, light: boolean): number {
   // Mantém UX responsiva: falha mais rápido e deixa cache/fallback assumirem.
   if (tab === "fortnite") return light ? 12000 : 13000;
   if (tab === "minecraft") return light ? 6000 : 7000;
-  if (tab === "genshin" || tab === "honkai" || tab === "zzz" || tab === "brawlstars") return light ? 11000 : 14000;
+  if (tab === "genshin" || tab === "honkai" || tab === "zzz") return light ? 11000 : 14000;
   return light ? 7000 : 9500;
 }
 
@@ -334,6 +333,20 @@ const Contas = () => {
         { replace: true },
       );
       setGameTab("valorant");
+    }
+  }, [searchParams, setSearchParams]);
+
+  // Brawl Stars retirado da grelha HoYoverse: normaliza URL antiga ?game=brawlstars → Genshin
+  useLayoutEffect(() => {
+    if (searchParams.get("game") === "brawlstars") {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set("game", "genshin");
+          return next;
+        },
+        { replace: true },
+      );
     }
   }, [searchParams, setSearchParams]);
 
@@ -856,7 +869,6 @@ const Contas = () => {
   const isGenshin = gameTab === "genshin";
   const isHonkai = gameTab === "honkai";
   const isZzz = gameTab === "zzz";
-  const isBrawl = gameTab === "brawlstars";
   
   // ─── Persistent Cache (Session Storage) ───
   // Use session storage so when users navigate away and back, it's instant.
@@ -1081,8 +1093,6 @@ const Contas = () => {
       params.game_type = "honkai";
     } else if (gameTab === "zzz") {
       params.game_type = "zzz";
-    } else if (gameTab === "brawlstars") {
-      params.game_type = "brawlstars";
     }
 
     return params;
@@ -1708,7 +1718,7 @@ const Contas = () => {
       genshin: "Contas Genshin Impact | Royal Store",
       honkai: "Contas Honkai: Star Rail | Royal Store",
       zzz: "Contas Zenless Zone Zero | Royal Store",
-      brawlstars: "Contas Brawl Stars | Royal Store",
+      brawlstars: "Contas Genshin Impact | Royal Store",
     };
     document.title = titles[gameTab];
     return () => { document.title = "Royal Store"; };
@@ -1816,7 +1826,7 @@ const Contas = () => {
                 : gameTab === "zzz"
                   ? "zzz"
                   : gameTab === "brawlstars"
-                    ? "brawlstars"
+                    ? "genshin"
                     : "valorant";
 
   const gridRows = useMemo(
@@ -1928,9 +1938,7 @@ const Contas = () => {
             ? HS_VIOLET
             : isZzz
               ? ZZZ_AMBER
-              : isBrawl
-                ? BRAWL_GOLD
-                : "hsl(198,100%,45%)";
+              : "hsl(198,100%,45%)";
   const accentClass = isValorant
     ? "text-success border-success bg-success/10"
     : isFortnite
@@ -1943,9 +1951,7 @@ const Contas = () => {
         ? "text-[hsl(265,72%,62%)] border-[hsl(265,72%,62%)] bg-[hsl(265,72%,62%,0.1)]"
         : isZzz
           ? "text-[hsl(24,92%,58%)] border-[hsl(24,92%,58%)] bg-[hsl(24,92%,58%,0.1)]"
-          : isBrawl
-            ? "text-[hsl(44,98%,52%)] border-[hsl(44,98%,52%)] bg-[hsl(44,98%,52%,0.08)]"
-            : "text-[hsl(198,100%,45%)] border-[hsl(198,100%,45%)] bg-[hsl(198,100%,45%,0.1)]";
+          : "text-[hsl(198,100%,45%)] border-[hsl(198,100%,45%)] bg-[hsl(198,100%,45%,0.1)]";
 
   const searchPlaceholder = isFortnite
     ? "Buscar por skin... (ex: Travis Scott)"
@@ -1953,9 +1959,12 @@ const Contas = () => {
       ? "Buscar por skin... (ex: Reaver)"
       : gameTab === "lol"
         ? "Buscar conta..."
-        : isGenshin || isHonkai || isZzz || isBrawl
+        : isGenshin || isHonkai || isZzz
           ? "Buscar por personagem ou palavra-chave..."
           : "Buscar conta...";
+
+  const hoyoTabInactive =
+    "border border-border/60 bg-secondary/30 text-muted-foreground hover:bg-secondary/45 hover:text-foreground";
 
   const renderFilterContent = () => (
     <>
@@ -2328,54 +2337,45 @@ const Contas = () => {
             <span className="leading-none">Minecraft</span>
           </button>
           </div>
-          <div className="mt-1 grid grid-cols-2 gap-0.5 min-[400px]:gap-1 sm:flex sm:flex-wrap sm:justify-stretch sm:gap-1">
+          <div className="mt-1.5 grid grid-cols-3 gap-1 sm:flex sm:flex-nowrap sm:gap-1">
             <button
               type="button"
               onClick={() => switchTab("genshin")}
-              className={`touch-manipulation flex min-h-11 min-w-0 flex-col sm:flex-row items-center justify-center gap-1 rounded-xl px-1.5 min-[400px]:px-2 sm:flex-1 sm:px-3 py-2.5 text-[11px] min-[400px]:text-xs font-semibold tracking-tight transition-colors duration-200 ${
-                isGenshin ? "ring-2 ring-offset-1 ring-offset-background sm:ring-offset-2" : "text-muted-foreground hover:bg-background/70 hover:text-foreground"
+              className={`touch-manipulation flex min-h-[3rem] min-w-0 flex-col items-center justify-center rounded-xl px-1 py-2.5 text-center text-[10px] min-[400px]:text-[11px] sm:flex-1 sm:px-2 sm:text-xs font-semibold tracking-tight transition-colors duration-200 ${
+                isGenshin
+                  ? "border-transparent bg-[hsl(200,88%,58%,0.12)] text-[hsl(200,88%,58%)] ring-2 ring-[hsl(200,88%,58%,0.35)] ring-offset-1 ring-offset-background sm:ring-offset-2"
+                  : hoyoTabInactive
               }`}
-              style={
-                isGenshin ? { background: `${GS_CYAN}15`, color: GS_CYAN, boxShadow: `0 0 0 2px ${GS_CYAN}55` } : {}
-              }
             >
-              <span className="leading-none">Genshin</span>
+              <span className="leading-tight">Genshin Impact</span>
             </button>
             <button
               type="button"
               onClick={() => switchTab("honkai")}
-              className={`touch-manipulation flex min-h-11 min-w-0 flex-col sm:flex-row items-center justify-center gap-1 rounded-xl px-1.5 min-[400px]:px-2 sm:flex-1 sm:px-3 py-2.5 text-[11px] min-[400px]:text-xs font-semibold tracking-tight transition-colors duration-200 ${
-                isHonkai ? "ring-2 ring-offset-1 ring-offset-background sm:ring-offset-2" : "text-muted-foreground hover:bg-background/70 hover:text-foreground"
+              className={`touch-manipulation flex min-h-[3rem] min-w-0 flex-col items-center justify-center rounded-xl px-1 py-2.5 text-center text-[10px] min-[400px]:text-[11px] sm:flex-1 sm:px-2 sm:text-xs font-semibold tracking-tight transition-colors duration-200 ${
+                isHonkai
+                  ? "border-transparent bg-[hsl(265,72%,62%,0.12)] text-[hsl(265,72%,62%)] ring-2 ring-[hsl(265,72%,62%,0.38)] ring-offset-1 ring-offset-background sm:ring-offset-2"
+                  : hoyoTabInactive
               }`}
-              style={
-                isHonkai ? { background: `${HS_VIOLET}18`, color: HS_VIOLET, boxShadow: `0 0 0 2px ${HS_VIOLET}55` } : {}
-              }
             >
-              <span className="leading-none">Honkai SR</span>
+              <span className="leading-[1.15]">
+                <span className="block sm:inline">Honkai: </span>
+                <span className="block sm:inline">Star Rail</span>
+              </span>
             </button>
             <button
               type="button"
               onClick={() => switchTab("zzz")}
-              className={`touch-manipulation flex min-h-11 min-w-0 flex-col sm:flex-row items-center justify-center gap-1 rounded-xl px-1.5 min-[400px]:px-2 sm:flex-1 sm:px-3 py-2.5 text-[11px] min-[400px]:text-xs font-semibold tracking-tight transition-colors duration-200 ${
-                isZzz ? "ring-2 ring-offset-1 ring-offset-background sm:ring-offset-2" : "text-muted-foreground hover:bg-background/70 hover:text-foreground"
+              className={`touch-manipulation flex min-h-[3rem] min-w-0 flex-col items-center justify-center rounded-xl px-1 py-2.5 text-center text-[10px] min-[400px]:text-[11px] sm:flex-1 sm:px-2 sm:text-xs font-semibold tracking-tight transition-colors duration-200 ${
+                isZzz
+                  ? "border-transparent bg-[hsl(24,92%,58%,0.12)] text-[hsl(24,92%,58%)] ring-2 ring-[hsl(24,92%,58%,0.38)] ring-offset-1 ring-offset-background sm:ring-offset-2"
+                  : hoyoTabInactive
               }`}
-              style={
-                isZzz ? { background: `${ZZZ_AMBER}18`, color: ZZZ_AMBER, boxShadow: `0 0 0 2px ${ZZZ_AMBER}55` } : {}
-              }
             >
-              <span className="leading-none">ZZZ</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => switchTab("brawlstars")}
-              className={`touch-manipulation flex min-h-11 min-w-0 flex-col sm:flex-row items-center justify-center gap-1 rounded-xl px-1.5 min-[400px]:px-2 sm:flex-1 sm:px-3 py-2.5 text-[11px] min-[400px]:text-xs font-semibold tracking-tight transition-colors duration-200 ${
-                isBrawl ? "ring-2 ring-offset-1 ring-offset-background sm:ring-offset-2" : "text-muted-foreground hover:bg-background/70 hover:text-foreground"
-              }`}
-              style={
-                isBrawl ? { background: `${BRAWL_GOLD}14`, color: BRAWL_GOLD, boxShadow: `0 0 0 2px ${BRAWL_GOLD}66` } : {}
-              }
-            >
-              <span className="leading-none">Brawl Stars</span>
+              <span className="leading-[1.15]">
+                <span className="block sm:inline">Zenless Zone </span>
+                <span className="block sm:inline">Zero</span>
+              </span>
             </button>
           </div>
         </nav>
@@ -2397,9 +2397,7 @@ const Contas = () => {
                           ? "Honkai: Star Rail"
                           : isZzz
                             ? "Zenless Zone Zero"
-                            : isBrawl
-                              ? "Brawl Stars"
-                              : "League of Legends"}
+                            : "League of Legends"}
               </span>
             </p>
             <h1
@@ -2418,9 +2416,7 @@ const Contas = () => {
                         ? "Contas Honkai: Star Rail"
                         : isZzz
                           ? "Contas Zenless Zone Zero"
-                          : isBrawl
-                            ? "Contas Brawl Stars"
-                            : "Contas League of Legends"}
+                          : "Contas League of Legends"}
             </h1>
             <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">
               {streamError ? "Não foi possível carregar a lista. Tente atualizar." : isLoading ? "Buscando contas disponíveis…" : `${allItems.length} ${allItems.length === 1 ? "conta listada" : "contas listadas"} · página ${displayPage} de ${totalDisplayPages}`}
@@ -2612,8 +2608,6 @@ const Contas = () => {
                         <MihoyoCard variant="honkai" item={item} priceLabel={priceLabel} queryClient={queryClient} />
                       ) : isZzz ? (
                         <MihoyoCard variant="zzz" item={item} priceLabel={priceLabel} queryClient={queryClient} />
-                      ) : isBrawl ? (
-                        <BrawlStarsCard item={item} priceLabel={priceLabel} queryClient={queryClient} />
                       ) : (
                         <LolCard item={item} champKeyMap={champKeyMap} priceLabel={priceLabel} queryClient={queryClient} />
                       )}

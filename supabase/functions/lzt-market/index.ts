@@ -9,6 +9,7 @@ import {
   MIN_PRICE_BRL,
   getDisplayedPriceBrl,
   shouldKeepItem,
+  mihoyoItemMatchesGameTab,
 } from "../_shared/lztPricingModel.ts";
 import { errorMessage } from "../_shared/types.ts";
 
@@ -818,7 +819,11 @@ Deno.serve(async (req) => {
 
       // Inatividade mínima + "não vendido antes":
       // para Minecraft, esses defaults estavam restringindo demais e zerando resultados.
-      const shouldEnforceQualityDefaults = gameType !== "minecraft";
+      const shouldEnforceQualityDefaults =
+        gameType !== "minecraft" &&
+        gameType !== "genshin" &&
+        gameType !== "honkai" &&
+        gameType !== "zzz";
       if (shouldEnforceQualityDefaults) {
         const minDays = gameType === "fortnite" ? FORTNITE_MIN_INACTIVE_DAYS : MIN_INACTIVE_DAYS;
         if (!params.get("daybreak") || Number(params.get("daybreak")) < minDays) {
@@ -1244,7 +1249,23 @@ Deno.serve(async (req) => {
         const overrideForPrice = hasAdminOverride ? rawOv : undefined;
         const displayedPriceBrl = getDisplayedPriceBrl(item, overrideForPrice, gameType, activeMarkup, listFxRates);
 
-        if (!shouldKeepItem(item, gameType, displayedPriceBrl, { skipValueGate: hasAdminOverride }, listFxRates)) {
+        if (
+          (gameType === "genshin" || gameType === "honkai" || gameType === "zzz") &&
+          !mihoyoItemMatchesGameTab(item, gameType)
+        ) {
+          filteredByOther++;
+          return false;
+        }
+
+        const skipMihoyoMinSkins =
+          gameType === "genshin" || gameType === "honkai" || gameType === "zzz";
+
+        if (
+          !shouldKeepItem(item, gameType, displayedPriceBrl, {
+            skipValueGate: hasAdminOverride,
+            skipMinSkins: skipMihoyoMinSkins,
+          }, listFxRates)
+        ) {
           filteredByOther++;
           return false;
         }
