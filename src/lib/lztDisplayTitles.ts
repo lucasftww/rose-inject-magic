@@ -87,9 +87,11 @@ export function getListingCardTitle(item: LztItemForTitle, game: LztGameKind): s
       return `CONTA LOL • ${skinCount} SKINS • ${rankShort.toUpperCase()} • NV ${level}`;
     }
     case "fortnite": {
-      const skinCount = item.fortnite_skin_count ?? item.fortnite_outfit_count ?? 0;
+      const rawSkinCount = item.fortnite_skin_count ?? item.fortnite_outfit_count ?? 0;
       const level = item.fortnite_level ?? 0;
-      let t = `CONTA FORTNITE • ${skinCount} SKINS`;
+      let t = rawSkinCount > 0
+        ? `CONTA FORTNITE • ${rawSkinCount} SKINS`
+        : "CONTA FORTNITE • SKINS VERIFICADAS";
       if (level > 0) t += ` • NV ${level}`;
       return t;
     }

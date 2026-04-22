@@ -467,7 +467,9 @@ LolCard.displayName = "LolCard";
 // ─── Fortnite Card ───
 export const FortniteCard = memo(({ item, skinsDb, priceLabel, queryClient }: { item: LztItem; skinsDb: Map<string, FortniteCosmeticDbRow>; priceLabel: string; queryClient: QueryClient }) => {
   const vbucks = (item.fortnite_balance || item.fortnite_vbucks) ?? 0;
-  const skinCount = item.fortnite_skin_count ?? 0;
+  const skinCountFromApi = item.fortnite_skin_count ?? item.fortnite_outfit_count ?? 0;
+  const fallbackSkinCount = Array.isArray(item.fortniteSkins) ? item.fortniteSkins.length : 0;
+  const skinCount = skinCountFromApi > 0 ? skinCountFromApi : fallbackSkinCount;
   const level = item.fortnite_level ?? 0;
 
   const cleanedTitle = getListingCardTitle(item, "fortnite");
@@ -559,7 +561,9 @@ export const FortniteCard = memo(({ item, skinsDb, priceLabel, queryClient }: { 
           {level > 0 && <span className="rounded px-1 py-0.5 text-[8px] sm:text-[10px] font-bold text-white" style={{ background: FN_PURPLE }}>Nv.{level}</span>}
           {vbucks > 0 && <span className="rounded px-1 py-0.5 text-[8px] sm:text-[10px] font-bold text-white" style={{ background: FN_BLUE }}>{vbucks.toLocaleString()} VB</span>}
         </div>
-        <span className="text-[9px] sm:text-[11px] font-semibold text-muted-foreground">{skinCount} skins</span>
+        <span className="text-[9px] sm:text-[11px] font-semibold text-muted-foreground">
+          {skinCount > 0 ? `${skinCount} skins` : "Skins verificadas"}
+        </span>
       </div>
       <div className="p-2.5 sm:p-3 flex flex-col flex-1 gap-1.5">
         <div className="flex items-center gap-1.5 rounded-md px-2 py-1" style={{ background: "hsl(142,71%,45%,0.1)", border: "1px solid hsl(142,71%,45%,0.2)" }}>
