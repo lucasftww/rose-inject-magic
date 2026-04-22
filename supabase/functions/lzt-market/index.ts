@@ -24,6 +24,9 @@ const LZT_ALLOWED_IMAGE_DOMAINS = [
   "lzt.market", "api.lzt.market", "s.lzt.market", "img.lzt.market",
   "ddragon.leagueoflegends.com", "fortnite-api.com", "mineskin.eu",
   "akamaihd.net", "capes.dev",
+  "brawlify.com",
+  "hoyoverse.com",
+  "mihoyo.com",
 ];
 const RETRYABLE_STATUSES = [429, 502, 503, 504, 524];
 const LZT_API_BASE_URL = "https://api.lzt.market";
@@ -311,11 +314,11 @@ async function dedupedLztListFetch(apiUrl: string, token: string, dedupeKey: str
         page = 1;
       }
       const isFirstPage = page <= 1;
-      const isMinecraftList = /\/minecraft(\?|$)/i.test(apiUrl);
-      const maxAttempts = isMinecraftList
+      const isProdApiSlowList = /\/(minecraft|mihoyo|supercell)(\?|$)/i.test(apiUrl);
+      const maxAttempts = isProdApiSlowList
         ? (isFirstPage ? LZT_LIST_MINECRAFT_PAGE1_FETCH_MAX_ATTEMPTS : LZT_LIST_MINECRAFT_PAGE_N_FETCH_MAX_ATTEMPTS)
         : (isFirstPage ? LZT_LIST_PAGE1_FETCH_MAX_ATTEMPTS : LZT_LIST_PAGE_N_FETCH_MAX_ATTEMPTS);
-      const timeoutMs = isMinecraftList
+      const timeoutMs = isProdApiSlowList
         ? (isFirstPage ? LZT_LIST_MINECRAFT_PAGE1_FETCH_TIMEOUT_MS : LZT_LIST_MINECRAFT_PAGE_N_FETCH_TIMEOUT_MS)
         : (isFirstPage ? LZT_LIST_PAGE1_FETCH_TIMEOUT_MS : LZT_LIST_PAGE_N_FETCH_TIMEOUT_MS);
       let response: Response | null = null;
@@ -455,6 +458,20 @@ async function resolvePriceOverridesByItemIds(
 function rememberLztToken(token: string) {
   if (!token) return;
   lztTokenMemoryCache = { token, expiry: Date.now() + LZT_TOKEN_MEMORY_TTL_MS };
+}
+
+/** Copia filtros específicos miHoYo/Supercell a partir do query original (prefixos documentados na LZT). */
+function appendLztPrefixedParams(
+  reqUrl: URL,
+  target: URLSearchParams,
+  dotPrefixes: string[],
+  exactKeys: string[] = [],
+) {
+  for (const [k, v] of reqUrl.searchParams.entries()) {
+    if (!exactKeys.includes(k) && !dotPrefixes.some((p) => k.startsWith(p))) continue;
+    if (k.endsWith("[]")) target.append(k, v);
+    else target.set(k, v);
+  }
 }
 
 Deno.serve(async (req) => {
@@ -917,6 +934,64 @@ Deno.serve(async (req) => {
         params.delete("lol_smax");
         params.delete("champion_min");
         apiUrl = `${LZT_API_MINECRAFT_BASE_URL}/minecraft?${params.toString()}`;
+      } else if (gameType === "genshin" || gameType === "honkai" || gameType === "zzz") {
+        params.delete("valorant_smin");
+        params.delete("valorant_smax");
+        params.delete("valorant_level_min");
+        params.delete("valorant_level_max");
+        params.delete("valorant_knife_min");
+        params.delete("valorant_knife_max");
+        params.delete("lol_smin");
+        params.delete("lol_smax");
+        params.delete("lol_level_min");
+        params.delete("lol_level_max");
+        params.delete("champion_min");
+        params.delete("champion_max");
+        params.delete("vp_min");
+        params.delete("vp_max");
+        params.delete("smin");
+        params.delete("smax");
+        appendLztPrefixedParams(url, params, [
+          "genshin_", "honkai_", "zenless_", "constellations_", "eidolons_", "cinemas_",
+        ], ["region", "not_region", "email", "ea", "email_type"]);
+        appendLztPrefixedParams(url, params, [], ["origin[]", "not_origin[]", "email_type[]", "region[]", "not_region[]"]);
+        if (gameType === "genshin" && !params.get("genshin_char_min")) {
+          params.set("genshin_char_min", "1");
+        }
+        if (gameType === "honkai" && !params.get("honkai_char_min")) {
+          params.set("honkai_char_min", "1");
+        }
+        if (gameType === "zzz" && !params.get("zenless_char_min")) {
+          params.set("zenless_char_min", "1");
+        }
+        apiUrl = `${LZT_API_MINECRAFT_BASE_URL}/mihoyo?${params.toString()}`;
+      } else if (gameType === "brawlstars") {
+        params.delete("valorant_smin");
+        params.delete("valorant_smax");
+        params.delete("valorant_level_min");
+        params.delete("valorant_level_max");
+        params.delete("lol_smin");
+        params.delete("lol_smax");
+        params.delete("lol_level_min");
+        params.delete("lol_level_max");
+        params.delete("champion_min");
+        params.delete("champion_max");
+        params.delete("vp_min");
+        params.delete("vp_max");
+        params.delete("smin");
+        params.delete("smax");
+        appendLztPrefixedParams(url, params, [
+          "brawl_", "brawler_", "royale_", "clash_", "brawlers_", "legendary_brawlers",
+          "hypercharges", "town_hall", "builder_hall", "creation_year", "king_level",
+          "total_heroes", "total_troops", "total_spells", "total_builder",
+        ]);
+        appendLztPrefixedParams(url, params, [], [
+          "brawler[]", "skin[]", "region[]", "not_region[]", "email_type[]", "origin[]", "not_origin[]",
+        ]);
+        if (!params.get("brawlers_min")) {
+          params.set("brawlers_min", "3");
+        }
+        apiUrl = `${LZT_API_MINECRAFT_BASE_URL}/supercell?${params.toString()}`;
       } else if (gameType === "lol") {
         // LoL uses /riot endpoint but must NOT have any Valorant-specific params
         // Per LZT API docs: LoL uses lol_smin, lol_region[], lol_rank[], champion[]

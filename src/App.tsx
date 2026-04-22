@@ -66,6 +66,7 @@ const ContaDetalhes = lazyRetry(() => import("./pages/ContaDetalhes"));
 const LolDetalhes = lazyRetry(() => import("./pages/LolDetalhes"));
 const FortniteDetalhes = lazyRetry(() => import("./pages/FortniteDetalhes"));
 const MinecraftDetalhes = lazyRetry(() => import("./pages/MinecraftDetalhes"));
+const LztMarketGameDetail = lazyRetry(() => import("./pages/LztMarketGameDetail"));
 const Status = lazyRetry(() => import("./pages/Status"));
 const Dashboard = lazyRetry(() => import("./pages/Dashboard"));
 const Avaliacoes = lazyRetry(() => import("./pages/Avaliacoes"));
@@ -143,7 +144,11 @@ function PrefetchContasChunkOnIdle() {
       p === "/produtos" ||
       p.startsWith("/lol/") ||
       p.startsWith("/fortnite/") ||
-      p.startsWith("/minecraft/");
+      p.startsWith("/minecraft/") ||
+      p.startsWith("/genshin/") ||
+      p.startsWith("/honkai/") ||
+      p.startsWith("/zzz/") ||
+      p.startsWith("/brawlstars/");
     if (!warmContas) return;
     let cancelled = false;
     const run = () => {
@@ -183,6 +188,10 @@ const App = () => (
                 <Route path="/lol/:id" element={<SuspenseRoute><LolDetalhes /></SuspenseRoute>} />
                 <Route path="/fortnite/:id" element={<SuspenseRoute><FortniteDetalhes /></SuspenseRoute>} />
                 <Route path="/minecraft/:id" element={<SuspenseRoute><MinecraftDetalhes /></SuspenseRoute>} />
+                <Route path="/genshin/:id" element={<SuspenseRoute><LztMarketGameDetail /></SuspenseRoute>} />
+                <Route path="/honkai/:id" element={<SuspenseRoute><LztMarketGameDetail /></SuspenseRoute>} />
+                <Route path="/zzz/:id" element={<SuspenseRoute><LztMarketGameDetail /></SuspenseRoute>} />
+                <Route path="/brawlstars/:id" element={<SuspenseRoute><LztMarketGameDetail /></SuspenseRoute>} />
                 <Route path="/steam/:id" element={<Navigate to="/contas" replace />} />
                 <Route path="/status" element={<SuspenseRoute><Status /></SuspenseRoute>} />
                 <Route

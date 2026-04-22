@@ -34,6 +34,45 @@ export function getContentFloorBrl(item: LztItemLike, gameType?: string): number
     const hasBedrock = Number(item.minecraft_bedrock || 0);
     return capes * 2 + level * 0.1 + hasJava * 3 + hasBedrock * 3;
   }
+  if (gameType === "genshin" || gameType === "honkai" || gameType === "zzz") {
+    const p =
+      gameType === "genshin"
+        ? "genshin"
+        : gameType === "honkai"
+          ? "honkai"
+          : "zenless";
+    const chars = Number(
+      (item as Record<string, unknown>)[`${p}_char_count`] ??
+        (item as Record<string, unknown>)[`${p}_characters`] ??
+        0,
+    );
+    const leg = Number((item as Record<string, unknown>)[`${p}_legendary_count`] ?? 0);
+    const level = Math.min(
+      Number((item as Record<string, unknown>)[`${p}_level`] ?? 0),
+      999,
+    );
+    const cur = Number((item as Record<string, unknown>)[`${p}_currency`] ?? 0);
+    return chars * 1.2 + leg * 4 + level * 0.05 + Math.min(cur, 500000) * 0.00002;
+  }
+  if (gameType === "brawlstars") {
+    const brawlers = Number(
+      (item as Record<string, unknown>).brawlers_count ??
+        (item as Record<string, unknown>).brawl_brawlers_count ??
+        (item as Record<string, unknown>).supercell_brawlers_count ??
+        0,
+    );
+    const cups = Math.min(
+      Number(
+        (item as Record<string, unknown>).brawl_cup ??
+          (item as Record<string, unknown>).brawl_trophies ??
+          (item as Record<string, unknown>).supercell_brawl_cup ??
+          0,
+      ),
+      100000,
+    );
+    const lvl = Math.min(Number((item as Record<string, unknown>).brawl_level ?? 0), 999);
+    return brawlers * 0.8 + cups * 0.004 + lvl * 0.15;
+  }
   const skins = Number(item.riot_valorant_skin_count || 0);
   const knives = Number(item.riot_valorant_knife || item.riot_valorant_knife_count || 0);
   const level = Math.min(Number(item.riot_valorant_level || 0), 500);
@@ -74,6 +113,51 @@ export function getContentCeilingBrl(item: LztItemLike, gameType?: string): numb
     else if (rankStr.includes("MVP")) ceiling += 25;
     else if (rankStr.includes("VIP+")) ceiling += 15;
     else if (rankStr.includes("VIP")) ceiling += 8;
+    return Math.max(ceiling, MIN_PRICE_BRL);
+  }
+  if (gameType === "genshin" || gameType === "honkai" || gameType === "zzz") {
+    const p =
+      gameType === "genshin"
+        ? "genshin"
+        : gameType === "honkai"
+          ? "honkai"
+          : "zenless";
+    const chars = Number(
+      (item as Record<string, unknown>)[`${p}_char_count`] ??
+        (item as Record<string, unknown>)[`${p}_characters`] ??
+        0,
+    );
+    const leg = Number((item as Record<string, unknown>)[`${p}_legendary_count`] ?? 0);
+    const level = Math.min(
+      Number((item as Record<string, unknown>)[`${p}_level`] ?? 0),
+      999,
+    );
+    const cur = Number((item as Record<string, unknown>)[`${p}_currency`] ?? 0);
+    const ceiling =
+      chars * 8 +
+      leg * 35 +
+      level * 0.4 +
+      Math.min(cur, 500000) * 0.00015;
+    return Math.max(ceiling, MIN_PRICE_BRL);
+  }
+  if (gameType === "brawlstars") {
+    const brawlers = Number(
+      (item as Record<string, unknown>).brawlers_count ??
+        (item as Record<string, unknown>).brawl_brawlers_count ??
+        (item as Record<string, unknown>).supercell_brawlers_count ??
+        0,
+    );
+    const cups = Math.min(
+      Number(
+        (item as Record<string, unknown>).brawl_cup ??
+          (item as Record<string, unknown>).brawl_trophies ??
+          (item as Record<string, unknown>).supercell_brawl_cup ??
+          0,
+      ),
+      100000,
+    );
+    const lvl = Math.min(Number((item as Record<string, unknown>).brawl_level ?? 0), 999);
+    const ceiling = brawlers * 5 + cups * 0.025 + lvl * 0.35;
     return Math.max(ceiling, MIN_PRICE_BRL);
   }
   const skins = Number(item.riot_valorant_skin_count || 0);
@@ -182,6 +266,34 @@ export function shouldKeepItem(
       const skins = Number(item.fortnite_skin_count || item.fortnite_outfit_count || 0);
       if (skins < 10) return false;
     }
+    if (gameType === "genshin") {
+      const o = item as Record<string, unknown>;
+      const n = Number(
+        o.genshin_char_count ?? o.genshin_characters ?? o.genshin_character_count ?? o.genshin_chars ?? 0,
+      );
+      if (n < 1) return false;
+    }
+    if (gameType === "honkai") {
+      const o = item as Record<string, unknown>;
+      const n = Number(
+        o.honkai_char_count ?? o.honkai_characters ?? o.honkai_character_count ?? o.honkai_chars ?? 0,
+      );
+      if (n < 1) return false;
+    }
+    if (gameType === "zzz") {
+      const o = item as Record<string, unknown>;
+      const n = Number(
+        o.zenless_char_count ?? o.zenless_characters ?? o.zenless_character_count ?? o.zenless_chars ?? 0,
+      );
+      if (n < 1) return false;
+    }
+    if (gameType === "brawlstars") {
+      const o = item as Record<string, unknown>;
+      const n = Number(
+        o.brawlers_count ?? o.brawl_brawlers_count ?? o.supercell_brawlers_count ?? o.brawler_count ?? 0,
+      );
+      if (n < 3) return false;
+    }
   }
 
   if (opts?.skipValueGate) return true;
@@ -195,7 +307,12 @@ export function shouldKeepItem(
     : rawPrice;
   if (costBrl > 0) {
     const contentCeiling = getContentCeilingBrl(item, gameType);
-    const valueGateRatio = gameType === "fortnite" ? 0.2 : 0.4;
+    const valueGateRatio =
+      gameType === "fortnite"
+        ? 0.2
+        : gameType === "genshin" || gameType === "honkai" || gameType === "zzz" || gameType === "brawlstars"
+          ? 0.3
+          : 0.4;
     if (contentCeiling < costBrl * valueGateRatio) return false;
   }
 

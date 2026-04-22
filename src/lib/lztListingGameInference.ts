@@ -14,6 +14,10 @@ export function inferLztListingGameSlug(...parts: unknown[]): string | null {
     .toLowerCase();
   if (!n.trim()) return null;
   if (/\bfortnite\b|v-?bucks|vbucks|battle\s*royale/.test(n)) return "fortnite";
+  if (/\bgenshin\b|hoyoverse|primogem|tivat/.test(n)) return "genshin";
+  if (/\bhonkai\b|star\s*rail|stellar\s*jade|herta\b/.test(n)) return "honkai";
+  if (/\bzenless\b|\bzzz\b|polychrome|new\s*eridu/.test(n)) return "zzz";
+  if (/\bbrawl\s*stars\b|supercell.*brawl|trof[eé]us.*brawl/.test(n)) return "brawlstars";
   if (/\bminecraft\b|hypixel|minecoins?|skyblock/.test(n)) return "minecraft";
   if (/\bleague\s+of\s+legends\b|\blol\b|champion|summoner/.test(n)) return "lol";
   if (/\bvalorant\b|radiante|radiant|immortal|\bvp\b|vandal|phantom/.test(n)) return "valorant";

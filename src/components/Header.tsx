@@ -7,8 +7,36 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { prefetchContasChunk } from "@/lib/prefetchContasChunk";
+import { GS_CYAN, HS_VIOLET, ZZZ_AMBER, BRAWL_GOLD } from "@/lib/contasGameAccents";
 
 const LOL_BLUE = "hsl(198,100%,45%)";
+
+const CONTAS_ACCENT_BY_GAME_QUERY: Record<string, string> = {
+  lol: LOL_BLUE,
+  genshin: GS_CYAN,
+  honkai: HS_VIOLET,
+  zzz: ZZZ_AMBER,
+  brawlstars: BRAWL_GOLD,
+};
+
+const CONTAS_ACCENT_BY_PATH: Array<[prefix: string, accent: string]> = [
+  ["/lol/", LOL_BLUE],
+  ["/genshin/", GS_CYAN],
+  ["/honkai/", HS_VIOLET],
+  ["/zzz/", ZZZ_AMBER],
+  ["/brawlstars/", BRAWL_GOLD],
+];
+
+function contasNavAccent(pathname: string, search: string): string {
+  for (const [prefix, accent] of CONTAS_ACCENT_BY_PATH) {
+    if (pathname.startsWith(prefix)) return accent;
+  }
+  if (pathname === "/contas") {
+    const game = new URLSearchParams(search).get("game");
+    if (game && CONTAS_ACCENT_BY_GAME_QUERY[game]) return CONTAS_ACCENT_BY_GAME_QUERY[game];
+  }
+  return "hsl(var(--success))";
+}
 
 const CLOSE_FALLBACK_MS = 280;
 
@@ -31,10 +59,6 @@ const Header = forwardRef<HTMLDivElement>((_props, _ref) => {
     { label: t("nav.reviews"), href: "/avaliacoes", icon: Star },
     { label: t("nav.scratchCard"), href: "/raspadinha", icon: Ticket },
   ];
-
-  const isLolContext =
-    location.pathname.startsWith("/lol/") ||
-    (location.pathname === "/contas" && new URLSearchParams(location.search).get("game") === "lol");
 
   const clearCloseFallback = useCallback(() => {
     if (closeFallbackRef.current) {
@@ -98,7 +122,7 @@ const Header = forwardRef<HTMLDivElement>((_props, _ref) => {
   const isActive = (href: string) =>
     href === "/" ? location.pathname === "/" : location.pathname.startsWith(href);
 
-  const accentColor = isLolContext ? LOL_BLUE : "hsl(var(--success))";
+  const accentColor = contasNavAccent(location.pathname, location.search);
   const userInitial = (profile?.username || user?.email?.split("@")[0] || "U").charAt(0).toUpperCase();
 
   return (

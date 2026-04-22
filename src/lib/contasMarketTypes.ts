@@ -1,4 +1,12 @@
-export type GameTab = "valorant" | "lol" | "fortnite" | "minecraft";
+export type GameTab =
+  | "valorant"
+  | "lol"
+  | "fortnite"
+  | "minecraft"
+  | "genshin"
+  | "honkai"
+  | "zzz"
+  | "brawlstars";
 
 export interface LztItem {
   item_id: number;
@@ -90,5 +98,9 @@ export function gameTabFromSearchParams(sp: URLSearchParams): GameTab {
   if (g === "lol") return "lol";
   if (g === "fortnite") return "fortnite";
   if (g === "minecraft") return "minecraft";
+  if (g === "genshin") return "genshin";
+  if (g === "honkai") return "honkai";
+  if (g === "zzz") return "zzz";
+  if (g === "brawlstars") return "brawlstars";
   return "valorant";
 }

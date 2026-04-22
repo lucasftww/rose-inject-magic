@@ -1,9 +1,18 @@
 import { supabaseUrl } from "@/integrations/supabase/client";
 
-/** Proxy LZT Market images through our edge function to avoid CORS/hotlink issues. */
+const PROXY_IF_INCLUDES = [
+  "lzt.market",
+  "img.lzt.market",
+  "brawlify.com",
+  "hoyoverse.com",
+  "mihoyo.com",
+  "webstatic",
+] as const;
+
+/** Proxy external game/CDN images through our edge allowlist to reduce hotlink/CORS breakage. */
 export const getProxiedImageUrl = (url: string): string => {
   if (!url) return "";
-  if (url.includes("lzt.market") || url.includes("img.lzt.market")) {
+  if (PROXY_IF_INCLUDES.some((frag) => url.includes(frag))) {
     return `${supabaseUrl}/functions/v1/lzt-market?action=image-proxy&url=${encodeURIComponent(url)}`;
   }
   return url;

@@ -8,7 +8,15 @@ import {
   type LztFxRates,
 } from "@/lib/lztPricingModel";
 
-export type GameCategory = "valorant" | "lol" | "fortnite" | "minecraft";
+export type GameCategory =
+  | "valorant"
+  | "lol"
+  | "fortnite"
+  | "minecraft"
+  | "genshin"
+  | "honkai"
+  | "zzz"
+  | "brawlstars";
 
 type LztPriceInput = {
   price?: number;
@@ -91,6 +99,10 @@ export async function fetchStorefrontPricing(): Promise<StorefrontPricing> {
       lol: toMarkup(row?.markup_lol, fb),
       fortnite: toMarkup(row?.markup_fortnite, fb),
       minecraft: toMarkup(row?.markup_minecraft, fb),
+      genshin: fb,
+      honkai: fb,
+      zzz: fb,
+      brawlstars: fb,
     },
   };
 }
@@ -143,15 +155,24 @@ export const useLztMarkup = () => {
   const ml = pricing?.markupByGame?.lol ?? fallbackMarkup;
   const mf = pricing?.markupByGame?.fortnite ?? fallbackMarkup;
   const mm = pricing?.markupByGame?.minecraft ?? fallbackMarkup;
+  const mh = pricing?.markupByGame?.genshin ?? fallbackMarkup;
 
   const rates = useMemo(() => ({ rub, usd }), [rub, usd]);
 
   const markupForGame = useCallback(
     (game?: GameCategory) => {
       if (!game) return fallbackMarkup;
-      return game === "valorant" ? mv : game === "lol" ? ml : game === "fortnite" ? mf : mm;
+      return game === "valorant"
+        ? mv
+        : game === "lol"
+          ? ml
+          : game === "fortnite"
+            ? mf
+            : game === "minecraft"
+              ? mm
+              : mh;
     },
-    [mv, ml, mf, mm, fallbackMarkup],
+    [mv, ml, mf, mm, mh, fallbackMarkup],
   );
 
   const pricingCtx = useCallback(

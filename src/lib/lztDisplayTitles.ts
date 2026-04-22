@@ -1,6 +1,14 @@
 import { rankMap } from "@/lib/valorantData";
 
-type LztGameKind = "valorant" | "lol" | "fortnite" | "minecraft";
+export type LztGameKind =
+  | "valorant"
+  | "lol"
+  | "fortnite"
+  | "minecraft"
+  | "genshin"
+  | "honkai"
+  | "zzz"
+  | "brawlstars";
 
 /** Campos mínimos dos itens LZT para montar título de card / detalhe */
 type LztItemForTitle = {
@@ -102,6 +110,34 @@ export function getListingCardTitle(item: LztItemForTitle, game: LztGameKind): s
         hasJava && hasBedrock ? "JAVA + BEDROCK" : hasJava ? "JAVA" : hasBedrock ? "BEDROCK" : "FULL ACCESS";
       const nick = item.minecraft_nickname?.trim();
       return `CONTA MINECRAFT • ${nick ? nick.toUpperCase() : "VERIFICADA"} • ${edition}`;
+    }
+    case "genshin": {
+      const r = item as Record<string, unknown>;
+      const n = Number(r.genshin_char_count ?? r.genshin_characters ?? r.genshin_character_count ?? 0);
+      const lv = Number(r.genshin_level ?? 0);
+      const mid = n > 0 ? `${n} PERSONAGENS` : "VERIFICADA";
+      return `CONTA GENSHIN • ${mid}${lv > 0 ? ` • AR ${lv}` : ""}`;
+    }
+    case "honkai": {
+      const r = item as Record<string, unknown>;
+      const n = Number(r.honkai_char_count ?? r.honkai_characters ?? r.honkai_character_count ?? 0);
+      const lv = Number(r.honkai_level ?? 0);
+      const mid = n > 0 ? `${n} PERSONAGENS` : "VERIFICADA";
+      return `CONTA HONKAI: STAR RAIL • ${mid}${lv > 0 ? ` • TL ${lv}` : ""}`;
+    }
+    case "zzz": {
+      const r = item as Record<string, unknown>;
+      const n = Number(r.zenless_char_count ?? r.zenless_characters ?? r.zenless_character_count ?? 0);
+      const lv = Number(r.zenless_level ?? 0);
+      const mid = n > 0 ? `${n} AGENTES` : "VERIFICADA";
+      return `CONTA ZENLESS ZONE ZERO • ${mid}${lv > 0 ? ` • LV ${lv}` : ""}`;
+    }
+    case "brawlstars": {
+      const r = item as Record<string, unknown>;
+      const br = Number(r.brawlers_count ?? r.brawl_brawlers_count ?? 0);
+      const cups = Number(r.brawl_cup ?? r.brawl_trophies ?? 0);
+      const mid = br > 0 ? `${br} LUTADORES` : "VERIFICADA";
+      return `CONTA BRAWL STARS • ${mid}${cups > 0 ? ` • ${cups.toLocaleString("pt-BR")} TROFÉUS` : ""}`;
     }
   }
 }

@@ -124,13 +124,25 @@ function runWhenFbqReady(fn: () => void): void {
 }
 
 /** Abas de jogo na página Contas — nomes alinhados ao Pixel (Events Manager → Eventos personalizados). */
-type ContasGameTabForPixel = "valorant" | "lol" | "fortnite" | "minecraft";
+type ContasGameTabForPixel =
+  | "valorant"
+  | "lol"
+  | "fortnite"
+  | "minecraft"
+  | "genshin"
+  | "honkai"
+  | "zzz"
+  | "brawlstars";
 
 const IC_CATEGORY_EVENT_BY_TAB: Record<ContasGameTabForPixel, string> = {
   valorant: "IC_CATEGORY_VALORANT",
   lol: "IC_CATEGORY_LOL",
   fortnite: "IC_CATEGORY_FORTNITE",
   minecraft: "IC_CATEGORY_MINECRAFT",
+  genshin: "IC_CATEGORY_GENSHIN",
+  honkai: "IC_CATEGORY_HONKAI",
+  zzz: "IC_CATEGORY_ZZZ",
+  brawlstars: "IC_CATEGORY_BRAWL_STARS",
 };
 
 /** Uma vez por visita à secção Contas — alimenta conversões/regras que usam `IC_SECTION_CONTAS`. */
@@ -158,7 +170,22 @@ export function trackContasCategoryCustomEvent(tab: ContasGameTabForPixel): void
       window.fbq("trackCustom", eventName, {
         section: "contas",
         content_category: tab,
-        content_name: tab === "valorant" ? "Contas Valorant" : tab === "lol" ? "Contas LoL" : tab === "fortnite" ? "Contas Fortnite" : "Contas Minecraft",
+        content_name:
+          tab === "valorant"
+            ? "Contas Valorant"
+            : tab === "lol"
+              ? "Contas LoL"
+              : tab === "fortnite"
+                ? "Contas Fortnite"
+                : tab === "minecraft"
+                  ? "Contas Minecraft"
+                  : tab === "genshin"
+                    ? "Contas Genshin"
+                    : tab === "honkai"
+                      ? "Contas Honkai"
+                      : tab === "zzz"
+                        ? "Contas Zenless"
+                        : "Contas Brawl Stars",
       });
     } catch (e: unknown) {
       devLog("trackContasCategoryCustomEvent failed", e);
