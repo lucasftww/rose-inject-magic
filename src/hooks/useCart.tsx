@@ -151,7 +151,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
     // Direct checkout: replace cart with single item
     const price = Number.isFinite(item.price) && item.price >= 0 ? item.price : 0;
-    let row: CartItem = { ...item, price, quantity: 1 };
+    const row: CartItem = { ...item, price, quantity: 1 };
     const lztId = typeof row.lztItemId === "string" && row.lztItemId.trim() ? row.lztItemId.trim() : "";
     const looksLztPlan = /^lzt-/i.test(String(row.planId || ""));
     if (row.type === "lzt-account" || lztId || looksLztPlan) {
