@@ -262,10 +262,14 @@ const Checkout = () => {
   const checkoutEmailUserIdRef = useRef<string | null>(null);
   const [enabledMethods, setEnabledMethods] = useState<Record<string, boolean> | null>(null);
   const hasLztItems = items.some((i) => i.type === "lzt-account");
+  // Gateway atual (MisticPay) aceita apenas PIX neste projeto.
+  // Evita expor métodos (cartão/cripto) que o backend rejeita com 400.
+  const gatewayPixOnly = true;
   const pixOnlyGateway = useMemo(() => {
+    if (gatewayPixOnly) return true;
     if (enabledMethods == null) return true;
     return enabledMethods.card !== true && enabledMethods.crypto !== true;
-  }, [enabledMethods]);
+  }, [enabledMethods, gatewayPixOnly]);
 
   // Coupon state
   const urlCouponId = searchParams.get("coupon_id");
@@ -1131,6 +1135,11 @@ const Checkout = () => {
                     <span className="text-[10px] text-muted-foreground">Em breve</span>
                   </button>
                 </div>
+              )}
+              {enabledMethods && pixOnlyGateway && (
+                <p className="mt-3 text-xs text-muted-foreground">
+                  No momento, o gateway de pagamento aceita apenas PIX.
+                </p>
               )}
 
               {/* Info box for selected method */}
