@@ -64,6 +64,7 @@ export async function fetchAccountsRaw(
     const out = await safeJsonFetch<LztMarketListResponse>(
       `${supabaseUrl}/functions/v1/lzt-market?${queryParams.toString()}`,
       {
+        cache: "no-store",
         headers: {
           apikey: supabaseAnonKey,
           Authorization: `Bearer ${supabaseAnonKey}`,
