@@ -169,7 +169,7 @@ const LztMarketGameDetail = () => {
           <LztAccountDetailErrorPanel
             error={error}
             backTo={`/contas?game=${cfg.gameType}`}
-            backLabel="Ver outras contas"
+            backLabel="Voltar às contas"
           />
         )}
 

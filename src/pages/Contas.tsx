@@ -41,6 +41,7 @@ import {
   type LztMarketListResponse,
 } from "@/lib/contasMarketTypes";
 import { fetchAccountsRaw, lztMarketListQuerySignature, waitWithAbort } from "@/lib/contasMarketFetch";
+import { prefetchAccountDetailChunkForMarketGame } from "@/lib/prefetchContasChunk";
 import { isContasPerfDiagEnabled } from "@/lib/contasPerfDiag";
 import { isLikelyWrongGameInLolList } from "@/lib/contasLolFilter";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
@@ -353,6 +354,24 @@ const Contas = () => {
     void import("@/lib/metaPixel").then(({ trackContasCategoryCustomEvent }) => {
       trackContasCategoryCustomEvent(gameTab);
     });
+  }, [gameTab]);
+
+  /** Em idle, pré-carrega o bundle JS da página de detalhe da aba ativa (clique não espera pelo chunk). */
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    let idleId = 0;
+    const run = () => {
+      prefetchAccountDetailChunkForMarketGame(gameTab);
+    };
+    const useIdle =
+      typeof window.requestIdleCallback === "function" && typeof window.cancelIdleCallback === "function";
+    idleId = useIdle
+      ? window.requestIdleCallback(run, { timeout: 3200 })
+      : (window.setTimeout(run, 900) as unknown as number);
+    return () => {
+      if (useIdle) window.cancelIdleCallback(idleId as number);
+      else window.clearTimeout(idleId as number);
+    };
   }, [gameTab]);
 
   // Console: localhost sempre; produção com `?perf=1` (ex.: medir chunk vs lzt-market em royalstorebr.com).
@@ -1249,6 +1268,29 @@ const Contas = () => {
   const prevNonSearchRef = useRef(nonSearchParamsKey);
   const prevSearchTrimRef = useRef(searchQuery.trim());
   const nonSearchDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  /**
+   * Troca de aba: sem esperar nonSearch debounce nem throttle da lista anterior.
+   * Não atualizar `prevGameTabRef` aqui — é usado em `fetchMultiplePages` para `tabChanged` (limpar a grelha ao mudar de jogo).
+   */
+  useLayoutEffect(() => {
+    listFetchNextAllowedAtRef.current = 0;
+    if (listFetchKeyThrottleTimerRef.current) {
+      clearTimeout(listFetchKeyThrottleTimerRef.current);
+      listFetchKeyThrottleTimerRef.current = null;
+    }
+    queuedListFetchKeyRef.current = null;
+    if (nonSearchDebounceTimerRef.current) {
+      clearTimeout(nonSearchDebounceTimerRef.current);
+      nonSearchDebounceTimerRef.current = null;
+    }
+    setDebouncedParamsKey(paramsKey);
+    prevNonSearchRef.current = nonSearchParamsKey;
+    prevSearchTrimRef.current = searchQuery.trim();
+    // paramsKey/nonSearch/search alinham ao render da nova aba; só reagimos a gameTab para não saltar o debounce em filtros da mesma aba.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intencional: só flush ao mudar aba de jogo
+  }, [gameTab]);
+
   useEffect(() => {
     // Non-search filter changes: short debounce to absorb hydration/sync bursts and cut canceled requests.
     if (prevNonSearchRef.current !== nonSearchParamsKey) {
@@ -1706,7 +1748,7 @@ const Contas = () => {
       fortnite: "Contas Fortnite | Royal Store",
       minecraft: "Contas Minecraft | Royal Store",
       genshin: "Contas Genshin Impact | Royal Store",
-      honkai: "Contas Honkai Star Rail | Royal Store",
+      honkai: "Contas Honkai: Star Rail | Royal Store",
       zzz: "Contas Zenless Zone Zero | Royal Store",
       brawlstars: "Contas Brawl Stars | Royal Store",
     };
@@ -2331,50 +2373,68 @@ const Contas = () => {
             <span className="leading-none">Minecraft</span>
           </button>
           </div>
-          <div className="mt-1.5 grid grid-cols-2 gap-1 min-[520px]:grid-cols-4 sm:flex sm:flex-nowrap sm:gap-1">
+          <div className="mt-1.5 grid grid-cols-2 gap-0.5 min-[400px]:gap-1 min-[520px]:grid-cols-4 sm:flex sm:flex-nowrap sm:gap-1">
             <button
               type="button"
               onClick={() => switchTab("genshin")}
-              className={`touch-manipulation flex min-h-[3rem] min-w-0 flex-col items-center justify-center rounded-xl px-1 py-2.5 text-center text-[9px] min-[400px]:text-[10px] sm:flex-1 sm:px-2 sm:text-[11px] font-semibold tracking-tight transition-colors duration-200 ${
+              className={`touch-manipulation flex min-h-11 min-w-0 flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-xl px-1.5 min-[400px]:px-2 sm:flex-1 sm:px-3 py-2.5 sm:py-2.5 text-[11px] min-[400px]:text-xs sm:text-sm font-semibold tracking-tight transition-colors duration-200 ${
                 isGenshin
                   ? "border-transparent bg-[hsl(200,88%,58%,0.12)] text-[hsl(200,88%,58%)] ring-2 ring-[hsl(200,88%,58%,0.35)] ring-offset-1 ring-offset-background sm:ring-offset-2"
                   : hoyoTabInactive
               }`}
             >
-              <span className="leading-tight">Genshin Impact</span>
+              <svg className="h-4 w-4 sm:h-[18px] sm:w-[18px] shrink-0 opacity-90" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+                <path d="M12 2l2.15 6.62h6.93l-5.6 4.07 2.14 6.58L12 15.96 6.38 19.27l2.14-6.58L2.92 8.62h6.93L12 2z" />
+              </svg>
+              <span className="leading-tight text-center">Genshin Impact</span>
             </button>
             <button
               type="button"
               onClick={() => switchTab("honkai")}
-              className={`touch-manipulation flex min-h-[3rem] min-w-0 flex-col items-center justify-center rounded-xl px-1 py-2.5 text-center text-[9px] min-[400px]:text-[10px] sm:flex-1 sm:px-2 sm:text-[11px] font-semibold tracking-tight transition-colors duration-200 ${
+              className={`touch-manipulation flex min-h-11 min-w-0 flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-xl px-1.5 min-[400px]:px-2 sm:flex-1 sm:px-3 py-2.5 sm:py-2.5 text-[11px] min-[400px]:text-xs sm:text-sm font-semibold tracking-tight transition-colors duration-200 ${
                 isHonkai
                   ? "border-transparent bg-[hsl(265,72%,62%,0.12)] text-[hsl(265,72%,62%)] ring-2 ring-[hsl(265,72%,62%,0.38)] ring-offset-1 ring-offset-background sm:ring-offset-2"
                   : hoyoTabInactive
               }`}
             >
-              <span className="leading-tight">Honkai Star Rail</span>
+              <svg className="h-4 w-4 sm:h-[18px] sm:w-[18px] shrink-0 opacity-90" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+                <path d="M4 17.25h16v1.75H4v-1.75zm8-13.5l2.05 6.33h6.64l-5.37 3.9 2.05 6.31L12 15.54l-5.37 3.75 2.05-6.31-5.37-3.9h6.64L12 3.75z" />
+              </svg>
+              <span className="leading-tight text-center">
+                <span className="sm:hidden">Honkai SR</span>
+                <span className="hidden sm:inline">Honkai: Star Rail</span>
+              </span>
             </button>
             <button
               type="button"
               onClick={() => switchTab("zzz")}
-              className={`touch-manipulation flex min-h-[3rem] min-w-0 flex-col items-center justify-center rounded-xl px-1 py-2.5 text-center text-[9px] min-[400px]:text-[10px] sm:flex-1 sm:px-2 sm:text-[11px] font-semibold tracking-tight transition-colors duration-200 ${
+              className={`touch-manipulation flex min-h-11 min-w-0 flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-xl px-1.5 min-[400px]:px-2 sm:flex-1 sm:px-3 py-2.5 sm:py-2.5 text-[11px] min-[400px]:text-xs sm:text-sm font-semibold tracking-tight transition-colors duration-200 ${
                 isZzz
                   ? "border-transparent bg-[hsl(24,92%,58%,0.12)] text-[hsl(24,92%,58%)] ring-2 ring-[hsl(24,92%,58%,0.38)] ring-offset-1 ring-offset-background sm:ring-offset-2"
                   : hoyoTabInactive
               }`}
             >
-              <span className="leading-tight">Zenless Zone Zero</span>
+              <svg className="h-4 w-4 sm:h-[18px] sm:w-[18px] shrink-0 opacity-90" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+                <path d="M14.2 2L4.5 14.25h6.8L10 22l9.7-11.75h-6.45l.95-8.25z" />
+              </svg>
+              <span className="leading-tight text-center">
+                <span className="sm:hidden">ZZZ</span>
+                <span className="hidden sm:inline">Zenless Zone Zero</span>
+              </span>
             </button>
             <button
               type="button"
               onClick={() => switchTab("brawlstars")}
-              className={`touch-manipulation flex min-h-[3rem] min-w-0 flex-col items-center justify-center rounded-xl px-1 py-2.5 text-center text-[9px] min-[400px]:text-[10px] sm:flex-1 sm:px-2 sm:text-[11px] font-semibold tracking-tight transition-colors duration-200 ${
+              className={`touch-manipulation flex min-h-11 min-w-0 flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-xl px-1.5 min-[400px]:px-2 sm:flex-1 sm:px-3 py-2.5 sm:py-2.5 text-[11px] min-[400px]:text-xs sm:text-sm font-semibold tracking-tight transition-colors duration-200 ${
                 isBrawl
                   ? "border-transparent bg-[hsl(44,98%,52%,0.12)] text-[hsl(44,98%,52%)] ring-2 ring-[hsl(44,98%,52%,0.38)] ring-offset-1 ring-offset-background sm:ring-offset-2"
                   : hoyoTabInactive
               }`}
             >
-              <span className="leading-tight">Brawl Stars</span>
+              <svg className="h-4 w-4 sm:h-[18px] sm:w-[18px] shrink-0 opacity-90" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+                <path d="M12 3 20 7v6l-8 10-8-10V7l8-4z" />
+              </svg>
+              <span className="leading-tight text-center">Brawl Stars</span>
             </button>
           </div>
         </nav>
@@ -2393,7 +2453,7 @@ const Contas = () => {
                       : isGenshin
                         ? "Genshin Impact"
                         : isHonkai
-                          ? "Honkai Star Rail"
+                          ? "Honkai: Star Rail"
                           : isZzz
                             ? "Zenless Zone Zero"
                             : isBrawl
@@ -2414,7 +2474,7 @@ const Contas = () => {
                     : isGenshin
                       ? "Contas Genshin Impact"
                       : isHonkai
-                        ? "Contas Honkai Star Rail"
+                        ? "Contas Honkai: Star Rail"
                         : isZzz
                           ? "Contas Zenless Zone Zero"
                           : isBrawl

@@ -34,6 +34,7 @@ import {
 } from "@/lib/domEventHelpers";
 import { isRecord } from "@/types/ticketChat";
 import { prefetchAccountDetail } from "@/lib/lztPrefetch";
+import { useCoarsePointerDetailPrefetch } from "@/hooks/useCoarsePointerDetailPrefetch";
 import { getProxiedImageUrl } from "@/lib/lztImageProxy";
 import type { LztItem } from "@/lib/contasMarketTypes";
 import { lolRankFilters, lolRankToFilterId } from "@/lib/contasLolRankFilters";
@@ -211,10 +212,13 @@ export const ValorantCard = memo(({ item, skinsMap, priceLabel, queryClient }: {
     touchRef.current = null;
   }, []);
 
+  const touchPrefetch = useCoarsePointerDetailPrefetch(queryClient, "valorant", item.item_id);
+
   return (
     <Link
       to={`/conta/${item.item_id}`}
       onPointerEnter={() => prefetchAccountDetail(queryClient, "valorant", item.item_id)}
+      {...touchPrefetch}
       className="group touch-manipulation cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-colors duration-200 hover:border-success/50 sm:hover:shadow-[0_4px_24px_hsl(var(--success)/0.12)] flex flex-col h-full no-underline text-inherit"
     >
       <div
@@ -372,10 +376,13 @@ export const LolCard = memo(({ item, champKeyMap, priceLabel, queryClient }: { i
   }, [lolInventory, champKeyMap, champKeyMapReady]);
   const skinCount = (item.riot_lol_skin_count ?? 0) > 0 ? (item.riot_lol_skin_count ?? 0) : skinPreviews.length;
 
+  const touchPrefetch = useCoarsePointerDetailPrefetch(queryClient, "lol", item.item_id);
+
   return (
     <Link
       to={`/lol/${item.item_id}`}
       onPointerEnter={() => prefetchAccountDetail(queryClient, "lol", item.item_id)}
+      {...touchPrefetch}
       className="group touch-manipulation cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-colors duration-200 hover:border-[hsl(198,100%,45%)/50%] sm:hover:shadow-[0_4px_24px_hsl(198,100%,45%,0.12)] flex flex-col h-full no-underline text-inherit"
     >
       <div className="relative flex h-28 sm:h-36 items-center justify-center overflow-hidden bg-secondary/20">
@@ -509,10 +516,13 @@ export const FortniteCard = memo(({ item, skinsDb, priceLabel, queryClient }: { 
     return rows.slice(0, FORTNITE_LISTING_PREVIEW_CAP);
   }, [item.fortniteSkins, item.fortnitePickaxe, skinsDb]);
 
+  const touchPrefetch = useCoarsePointerDetailPrefetch(queryClient, "fortnite", item.item_id);
+
   return (
     <Link
       to={`/fortnite/${item.item_id}`}
       onPointerEnter={() => prefetchAccountDetail(queryClient, "fortnite", item.item_id)}
+      {...touchPrefetch}
       className="group touch-manipulation cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-colors duration-200 hover:border-[hsl(265,80%,65%)/50%] sm:hover:shadow-[0_4px_24px_hsl(265,80%,65%,0.12)] flex flex-col h-full no-underline text-inherit"
     >
       <div className="relative flex h-28 sm:h-36 items-center justify-center overflow-hidden bg-secondary/20">
@@ -607,10 +617,13 @@ export const MinecraftCard = memo(({ item, priceLabel, queryClient }: { item: Lz
     ? `https://mineskin.eu/helm/${encodeURIComponent(nickname)}/64.png`
     : null;
 
+  const touchPrefetch = useCoarsePointerDetailPrefetch(queryClient, "minecraft", item.item_id);
+
   return (
     <Link
       to={`/minecraft/${item.item_id}`}
       onPointerEnter={() => prefetchAccountDetail(queryClient, "minecraft", item.item_id)}
+      {...touchPrefetch}
       className="group touch-manipulation cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-colors duration-200 flex flex-col h-full no-underline text-inherit"
       style={{ "--hover-shadow": `0 0 24px ${MC_GREEN}15` } as CSSProperties}
       onMouseEnter={(e) => setBorderAndBoxShadow(e, `${MC_GREEN}80`, `0 4px 24px ${MC_GREEN}15`)}
@@ -705,10 +718,13 @@ export const MihoyoCard = memo(
           ? `TL ${level}`
           : `LV ${level}`;
 
+    const touchPrefetch = useCoarsePointerDetailPrefetch(queryClient, gameType, item.item_id);
+
     return (
       <Link
         to={`/${basePath}/${item.item_id}`}
         onPointerEnter={() => prefetchAccountDetail(queryClient, gameType, item.item_id)}
+        {...touchPrefetch}
         className="group touch-manipulation cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-colors duration-200 flex flex-col h-full no-underline text-inherit"
         style={{ "--hover-shadow": `0 4px 24px ${accent}18` } as CSSProperties}
         onMouseEnter={(e) => setBorderAndBoxShadow(e, `${accent}80`, `0 4px 24px ${accent}15`)}
@@ -744,7 +760,7 @@ export const MihoyoCard = memo(
           style={{ borderBottomColor: `${accent}22` }}
         >
           <span className="text-[9px] sm:text-[11px] font-semibold text-foreground truncate">
-            {variant === "genshin" ? "Genshin" : variant === "honkai" ? "Star Rail" : "ZZZ"}
+            {variant === "genshin" ? "Genshin" : variant === "honkai" ? "Honkai" : "ZZZ"}
           </span>
           <span className="text-[9px] sm:text-[11px] font-semibold text-muted-foreground">
             {charCount > 0 ? `${charCount} pers.` : "Conta verificada"}
@@ -800,10 +816,13 @@ export const BrawlStarsCard = memo(
 
     const cleanedTitle = getListingCardTitle(item, "brawlstars");
 
+    const touchPrefetch = useCoarsePointerDetailPrefetch(queryClient, "brawlstars", item.item_id);
+
     return (
       <Link
         to={`/brawlstars/${item.item_id}`}
         onPointerEnter={() => prefetchAccountDetail(queryClient, "brawlstars", item.item_id)}
+        {...touchPrefetch}
         className="group touch-manipulation cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-colors duration-200 flex flex-col h-full no-underline text-inherit"
         style={{ "--hover-shadow": `0 4px 24px ${BRAWL_GOLD}18` } as CSSProperties}
         onMouseEnter={(e) => setBorderAndBoxShadow(e, `${BRAWL_GOLD}90`, `0 4px 24px ${BRAWL_GOLD}14`)}

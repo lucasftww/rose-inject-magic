@@ -8,16 +8,23 @@ import {
 import type { GoneAccountDetailKey } from "@/lib/lztAccountDetailGoneStore";
 import { rememberAccountDetailGone } from "@/lib/lztAccountDetailGoneStore";
 
-/** Modo agressivo: hover prefetch só com `?warm=1` (evita rajada/cancel na grelha). */
-const ENABLE_DETAIL_HOVER_PREFETCH =
-  typeof window !== "undefined" &&
-  (() => {
-    try {
-      return new URLSearchParams(window.location.search).get("warm") === "1";
-    } catch {
-      return false;
-    }
-  })();
+/**
+ * Prefetch de detalhe ao pairar no card:
+ * - Ativo em **`pointer: fine`** (rato/trackpad): intenção clara, melhora abertura do detalhe.
+ * - Desligar com **`?warm=0`** na URL (debug / poupar dados).
+ * - Forçar também em touch/rede fraca com **`?warm=1`**.
+ */
+function isDetailHoverPrefetchEnabled(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    const w = new URLSearchParams(window.location.search).get("warm");
+    if (w === "0" || w === "false") return false;
+    if (w === "1" || w === "true") return true;
+  } catch {
+    /* ignore */
+  }
+  return window.matchMedia?.("(pointer: fine)")?.matches === true;
+}
 
 /** Contas 410 (vendida/indisponível): não repetir GET ao passar o rato. */
 const detailPrefetchGoneKeys = new Set<string>();
@@ -55,8 +62,10 @@ export function notifyLztAccountDetailGone(gameType: string, itemId: string | nu
 
 const detailPrefetchInFlight = new Set<string>();
 
-/** Atraso antes do GET: reduz 410 e rajadas ao cruzar a grelha sem intenção de abrir o detalhe. */
+/** Atraso antes do GET (hover desktop): reduz 410 e rajadas ao cruzar a grelha sem intenção de abrir o detalhe. */
 const PREFETCH_HOVER_MS = 520;
+/** Touch / pointer grosso: intenção já filtrada no hook (anti-scroll) — fila quase imediata. */
+const PREFETCH_TOUCH_INTENT_MS = 0;
 
 /** Limita GET `detail` em paralelo ao pairar vários cards (Network “Finish” e carga LZT). */
 const PREFETCH_MAX_PARALLEL = 2;
@@ -102,19 +111,37 @@ async function runDetailPrefetch(
   }
 }
 
-/** Prefetch account detail data into React Query cache on hover for instant navigation. */
-export const prefetchAccountDetail = (
-  queryClient: QueryClient,
-  gameType: string,
-  itemId: string | number,
-) => {
-  if (!ENABLE_DETAIL_HOVER_PREFETCH) return;
+function isWarmUrlDisabled(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return new URLSearchParams(window.location.search).get("warm") === "0";
+  } catch {
+    return false;
+  }
+}
+
+function canPrefetchDetailNetwork(): boolean {
   if (typeof navigator !== "undefined") {
     const conn = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } })
       .connection;
-    if (conn?.saveData) return;
-    if (conn?.effectiveType === "2g" || conn?.effectiveType === "slow-2g") return;
+    if (conn?.saveData) return false;
+    if (conn?.effectiveType === "2g" || conn?.effectiveType === "slow-2g") return false;
   }
+  return true;
+}
+
+/**
+ * Agenda GET `action=detail` com debounce por item. Usado por hover (desktop) e por touch (intenção já filtrada).
+ */
+function scheduleAccountDetailPrefetch(
+  queryClient: QueryClient,
+  gameType: string,
+  itemId: string | number,
+  delayMs: number,
+): void {
+  if (typeof window === "undefined") return;
+  if (isWarmUrlDisabled()) return;
+  if (!canPrefetchDetailNetwork()) return;
 
   const id = String(itemId);
   const key = lztAccountDetailQueryKey(gameType, id);
@@ -138,6 +165,28 @@ export const prefetchAccountDetail = (
     if (queryClient.getQueryData(key) != null) return;
     if (detailPrefetchInFlight.has(dedupeKey)) return;
     void runDetailPrefetch(queryClient, gameType, id, dedupeKey, key);
-  }, PREFETCH_HOVER_MS);
+  }, delayMs);
   prefetchHoverTimers.set(dedupeKey, timerId);
+}
+
+/** Prefetch account detail data into React Query cache on hover for instant navigation. */
+export const prefetchAccountDetail = (
+  queryClient: QueryClient,
+  gameType: string,
+  itemId: string | number,
+) => {
+  if (!isDetailHoverPrefetchEnabled()) return;
+  scheduleAccountDetailPrefetch(queryClient, gameType, itemId, PREFETCH_HOVER_MS);
 };
+
+/**
+ * Prefetch após intenção explícita em touch / pointer grosso (anti-scroll no hook).
+ * Respeita `?warm=0`, save-data e 2G como o hover.
+ */
+export function prefetchAccountDetailTouchIntent(
+  queryClient: QueryClient,
+  gameType: string,
+  itemId: string | number,
+): void {
+  scheduleAccountDetailPrefetch(queryClient, gameType, itemId, PREFETCH_TOUCH_INTENT_MS);
+}

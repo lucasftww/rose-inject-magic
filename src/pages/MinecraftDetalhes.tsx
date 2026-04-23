@@ -144,7 +144,7 @@ const MinecraftDetalhes = () => {
             className="mb-5 inline-flex items-center gap-2 rounded-lg border border-border bg-card/50 px-4 py-2 text-sm text-muted-foreground transition-all hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4" />
-            Voltar para Contas Minecraft
+            Voltar às contas
           </Link>
         )}
 
@@ -159,7 +159,7 @@ const MinecraftDetalhes = () => {
           <LztAccountDetailErrorPanel
             error={error}
             backTo="/contas?game=minecraft"
-            backLabel="Voltar para Contas Minecraft"
+            backLabel="Voltar às contas"
           />
         )}
 
@@ -169,7 +169,7 @@ const MinecraftDetalhes = () => {
             <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
               <Link to="/" className="hover:text-foreground transition-colors">Início</Link>
               <ChevronRight className="h-3 w-3" />
-              <Link to="/contas" className="hover:text-foreground transition-colors">Contas</Link>
+              <Link to="/contas?game=minecraft" className="hover:text-foreground transition-colors">Contas</Link>
               <ChevronRight className="h-3 w-3" />
               <span style={{ color: MC_GREEN }} className="font-medium">Minecraft #{item.item_id}</span>
             </div>

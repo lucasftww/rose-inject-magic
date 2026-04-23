@@ -1,4 +1,5 @@
 import { supabase, supabaseUrl, supabaseAnonKey } from "@/integrations/supabase/client";
+import type { GameTab } from "@/lib/contasMarketTypes";
 
 /**
  * Meta Pixel (browser) + Conversions API (CAPI) — mapa para configurar o Events Manager / Ads sem surpresas.
@@ -123,18 +124,11 @@ function runWhenFbqReady(fn: () => void): void {
   }, FBQ_READY_POLL_MS);
 }
 
-/** Abas de jogo na página Contas — nomes alinhados ao Pixel (Events Manager → Eventos personalizados). */
-type ContasGameTabForPixel =
-  | "valorant"
-  | "lol"
-  | "fortnite"
-  | "minecraft"
-  | "genshin"
-  | "honkai"
-  | "zzz"
-  | "brawlstars";
-
-const IC_CATEGORY_EVENT_BY_TAB: Record<ContasGameTabForPixel, string> = {
+/**
+ * Abas da página Contas — eventos personalizados no Events Manager.
+ * Exportados para testes e para garantir paridade com `GameTab` em `contasMarketTypes.ts`.
+ */
+export const IC_CATEGORY_EVENT_BY_TAB: Record<GameTab, string> = {
   valorant: "IC_CATEGORY_VALORANT",
   lol: "IC_CATEGORY_LOL",
   fortnite: "IC_CATEGORY_FORTNITE",
@@ -143,6 +137,18 @@ const IC_CATEGORY_EVENT_BY_TAB: Record<ContasGameTabForPixel, string> = {
   honkai: "IC_CATEGORY_HONKAI",
   zzz: "IC_CATEGORY_ZZZ",
   brawlstars: "IC_CATEGORY_BRAWL_STARS",
+};
+
+/** `content_name` dos eventos IC por aba — alinhado aos títulos da página Contas / detalhe LZT. */
+export const IC_CATEGORY_CONTENT_NAME_BY_TAB: Record<GameTab, string> = {
+  valorant: "Contas Valorant",
+  lol: "Contas League of Legends",
+  fortnite: "Contas Fortnite",
+  minecraft: "Contas Minecraft",
+  genshin: "Contas Genshin Impact",
+  honkai: "Contas Honkai: Star Rail",
+  zzz: "Contas Zenless Zone Zero",
+  brawlstars: "Contas Brawl Stars",
 };
 
 /** Uma vez por visita à secção Contas — alimenta conversões/regras que usam `IC_SECTION_CONTAS`. */
@@ -161,7 +167,7 @@ export function trackContasSectionCustomEvent(): void {
 }
 
 /** Troca de aba Valorant / LoL / Fortnite / Minecraft — alimenta `IC_CATEGORY_FORTNITE`, etc. */
-export function trackContasCategoryCustomEvent(tab: ContasGameTabForPixel): void {
+export function trackContasCategoryCustomEvent(tab: GameTab): void {
   const eventName = IC_CATEGORY_EVENT_BY_TAB[tab];
   if (!eventName) return;
   runWhenFbqReady(() => {
@@ -170,22 +176,7 @@ export function trackContasCategoryCustomEvent(tab: ContasGameTabForPixel): void
       window.fbq("trackCustom", eventName, {
         section: "contas",
         content_category: tab,
-        content_name:
-          tab === "valorant"
-            ? "Contas Valorant"
-            : tab === "lol"
-              ? "Contas LoL"
-              : tab === "fortnite"
-                ? "Contas Fortnite"
-                : tab === "minecraft"
-                  ? "Contas Minecraft"
-                  : tab === "genshin"
-                    ? "Contas Genshin"
-                    : tab === "honkai"
-                      ? "Contas Honkai"
-                      : tab === "zzz"
-                        ? "Contas Zenless"
-                        : "Contas Brawl Stars",
+        content_name: IC_CATEGORY_CONTENT_NAME_BY_TAB[tab],
       });
     } catch (e: unknown) {
       devLog("trackContasCategoryCustomEvent failed", e);

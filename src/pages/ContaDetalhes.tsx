@@ -621,11 +621,11 @@ const ContaDetalhes = () => {
       <Header />
       <div className="mx-auto max-w-6xl px-4 min-[400px]:px-5 sm:px-6 pt-3 sm:pt-4 pb-28 sm:pb-20">
         <Link
-          to="/contas"
+          to="/contas?game=valorant"
           className="mb-5 inline-flex items-center gap-2 rounded-lg border border-border bg-card/50 px-4 py-2 text-sm text-muted-foreground transition-all hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
-          Voltar para Contas Valorant
+          Voltar às contas
         </Link>
 
         {isLoading &&
@@ -641,10 +641,11 @@ const ContaDetalhes = () => {
             <p className="text-lg font-semibold text-foreground">Conta indisponível</p>
             <p className="mt-1 text-sm text-muted-foreground">{errorMessage(error)}</p>
             <button
-              onClick={() => navigate("/contas")}
+              type="button"
+              onClick={() => navigate("/contas?game=valorant")}
               className="mt-5 flex items-center gap-2 rounded-xl border border-border bg-card/50 px-5 py-2.5 text-sm text-muted-foreground transition-all hover:border-success/40 hover:text-success">
               <ArrowLeft className="h-4 w-4" />
-              Ver outras contas
+              Voltar às contas
             </button>
           </div>
         }
@@ -655,7 +656,7 @@ const ContaDetalhes = () => {
             <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
               <Link to="/" className="hover:text-foreground transition-colors">Início</Link>
               <ChevronRight className="h-3 w-3" />
-              <Link to="/contas" className="hover:text-foreground transition-colors">Contas</Link>
+              <Link to="/contas?game=valorant" className="hover:text-foreground transition-colors">Contas</Link>
               <ChevronRight className="h-3 w-3" />
               <span className="text-success font-medium">Valorant #{item.item_id}</span>
             </div>

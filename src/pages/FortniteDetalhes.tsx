@@ -236,7 +236,7 @@ const FortniteDetalhes = () => {
             className="mb-5 inline-flex items-center gap-2 rounded-lg border border-border bg-card/50 px-4 py-2 text-sm text-muted-foreground transition-all hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4" />
-            Voltar para Contas Fortnite
+            Voltar às contas
           </Link>
         )}
 
@@ -251,7 +251,7 @@ const FortniteDetalhes = () => {
           <LztAccountDetailErrorPanel
             error={error}
             backTo="/contas?game=fortnite"
-            backLabel="Voltar para Contas Fortnite"
+            backLabel="Voltar às contas"
           />
         )}
 
@@ -261,7 +261,7 @@ const FortniteDetalhes = () => {
             <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
               <Link to="/" className="hover:text-foreground transition-colors">Início</Link>
               <ChevronRight className="h-3 w-3" />
-              <Link to="/contas" className="hover:text-foreground transition-colors">Contas</Link>
+              <Link to="/contas?game=fortnite" className="hover:text-foreground transition-colors">Contas</Link>
               <ChevronRight className="h-3 w-3" />
               <span style={{ color: FN_PURPLE }} className="font-medium">Fortnite #{item.item_id}</span>
             </div>

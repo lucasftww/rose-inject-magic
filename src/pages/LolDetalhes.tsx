@@ -422,7 +422,7 @@ const LolDetalhes = () => {
             className="mb-5 inline-flex items-center gap-2 rounded-lg border border-border bg-card/50 px-4 py-2 text-sm text-muted-foreground transition-all hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4" />
-            Voltar para Contas LoL
+            Voltar às contas
           </Link>
         )}
 
@@ -437,7 +437,7 @@ const LolDetalhes = () => {
           <LztAccountDetailErrorPanel
             error={error}
             backTo="/contas?game=lol"
-            backLabel="Voltar para Contas LoL"
+            backLabel="Voltar às contas"
           />
         )}
 

@@ -5,7 +5,12 @@ import "./i18n";
 import { initErrorTracker } from "./lib/errorTracker";
 import { runMetaDevChecks } from "./lib/metaDevChecks";
 import { supabaseUrl } from "./integrations/supabase/client";
-import { prefetchContasChunk, prefetchAccountDetailChunksForPathname } from "./lib/prefetchContasChunk";
+import {
+  prefetchContasChunk,
+  prefetchAccountDetailChunksForPathname,
+  prefetchAccountDetailChunkForMarketGame,
+} from "./lib/prefetchContasChunk";
+import { gameTabFromSearchParams } from "./lib/contasMarketTypes";
 
 function injectResourceHints() {
   if (typeof document === "undefined") return;
@@ -41,8 +46,16 @@ injectResourceHints();
 /** Rotas pesadas: chunk lazy o mais cedo possível (paralelo ao boot do React). */
 if (typeof window !== "undefined") {
   const p = window.location.pathname;
-  if (p === "/contas") prefetchContasChunk();
-  else prefetchAccountDetailChunksForPathname(p);
+  if (p === "/contas") {
+    prefetchContasChunk();
+    try {
+      prefetchAccountDetailChunkForMarketGame(gameTabFromSearchParams(new URLSearchParams(window.location.search)));
+    } catch {
+      /* ignore */
+    }
+  } else {
+    prefetchAccountDetailChunksForPathname(p);
+  }
 }
 
 initErrorTracker();
