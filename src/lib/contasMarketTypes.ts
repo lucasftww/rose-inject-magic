@@ -94,13 +94,17 @@ export type LztMarketListResponse = {
 };
 
 export function gameTabFromSearchParams(sp: URLSearchParams): GameTab {
-  const g = sp.get("game");
+  const g = String(sp.get("game") ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[_\s]+/g, "-")
+    .replace(/[–—]/g, "-");
   if (g === "lol") return "lol";
   if (g === "fortnite") return "fortnite";
   if (g === "minecraft") return "minecraft";
   if (g === "genshin") return "genshin";
   if (g === "honkai") return "honkai";
   if (g === "zzz") return "zzz";
-  if (g === "brawlstars") return "brawlstars";
+  if (g === "brawlstars" || g === "brawl-stars" || g === "brawl") return "brawlstars";
   return "valorant";
 }
