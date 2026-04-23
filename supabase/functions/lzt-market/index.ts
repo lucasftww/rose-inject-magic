@@ -992,7 +992,10 @@ Deno.serve(async (req) => {
         ]);
         appendLztPrefixedParams(url, params, [], [
           "brawler[]", "skin[]", "region[]", "not_region[]", "email_type[]", "origin[]", "not_origin[]",
+          "game[]",
         ]);
+        // /supercell inclui Brawl Stars, Clash Royale, CoC, etc. Sem filtro, o LZT pode devolver páginas só com outros jogos.
+        params.set("system", "brawlstars");
         if (!params.get("brawlers_min")) {
           params.set("brawlers_min", "3");
         }

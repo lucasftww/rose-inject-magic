@@ -14,6 +14,22 @@ export const DEFAULT_LZT_FX: LztFxRates = { rub: 0.055, usd: 5.16 };
 
 export type LztItemLike = Record<string, unknown>;
 
+
+/** Contagem de brawlers para preço/filtro — a listagem LZT às vezes só envia arrays (`brawlers`, `supercell_brawlers`). */
+function brawlstarsListedBrawlerCount(o: Record<string, unknown>): number {
+  const fromFields = Number(
+    o.brawlers_count ?? o.brawl_brawlers_count ?? o.supercell_brawlers_count ?? o.brawler_count ?? 0,
+  );
+  if (Number.isFinite(fromFields) && fromFields > 0) return Math.max(0, Math.trunc(fromFields));
+  if (Array.isArray(o.brawler)) return o.brawler.filter((x) => x != null && x !== "").length;
+  if (Array.isArray(o.brawlers)) return o.brawlers.filter((x) => x != null && x !== "").length;
+  const sb = o.supercell_brawlers;
+  if (Array.isArray(sb)) return sb.filter((x) => x != null && x !== "").length;
+  if (sb && typeof sb === "object" && !Array.isArray(sb)) return Object.keys(sb as Record<string, unknown>).length;
+  return Number.isFinite(fromFields) ? Math.max(0, Math.trunc(fromFields)) : 0;
+}
+
+
 export function getContentFloorBrl(item: LztItemLike, gameType?: string): number {
   if (gameType === "fortnite") {
     const skins = Number(item.fortnite_skin_count || item.fortnite_outfit_count || 0);
@@ -55,12 +71,7 @@ export function getContentFloorBrl(item: LztItemLike, gameType?: string): number
     return chars * 1.2 + leg * 4 + level * 0.05 + Math.min(cur, 500000) * 0.00002;
   }
   if (gameType === "brawlstars") {
-    const brawlers = Number(
-      (item as Record<string, unknown>).brawlers_count ??
-        (item as Record<string, unknown>).brawl_brawlers_count ??
-        (item as Record<string, unknown>).supercell_brawlers_count ??
-        0,
-    );
+    const brawlers = brawlstarsListedBrawlerCount(item as Record<string, unknown>);
     const cups = Math.min(
       Number(
         (item as Record<string, unknown>).brawl_cup ??
@@ -141,12 +152,7 @@ export function getContentCeilingBrl(item: LztItemLike, gameType?: string): numb
     return Math.max(ceiling, MIN_PRICE_BRL);
   }
   if (gameType === "brawlstars") {
-    const brawlers = Number(
-      (item as Record<string, unknown>).brawlers_count ??
-        (item as Record<string, unknown>).brawl_brawlers_count ??
-        (item as Record<string, unknown>).supercell_brawlers_count ??
-        0,
-    );
+    const brawlers = brawlstarsListedBrawlerCount(item as Record<string, unknown>);
     const cups = Math.min(
       Number(
         (item as Record<string, unknown>).brawl_cup ??
@@ -337,9 +343,7 @@ export function shouldKeepItem(
     }
     if (gameType === "brawlstars") {
       const o = item as Record<string, unknown>;
-      const n = Number(
-        o.brawlers_count ?? o.brawl_brawlers_count ?? o.supercell_brawlers_count ?? o.brawler_count ?? 0,
-      );
+      const n = brawlstarsListedBrawlerCount(o);
       if (n < 3) return false;
     }
   }
