@@ -41,18 +41,18 @@ import {
   type LztMarketListResponse,
 } from "@/lib/contasMarketTypes";
 import { fetchAccountsRaw, lztMarketListQuerySignature, waitWithAbort } from "@/lib/contasMarketFetch";
-import { prefetchAccountDetailChunkForMarketGame } from "@/lib/prefetchContasChunk";
 import { isContasPerfDiagEnabled } from "@/lib/contasPerfDiag";
 import { isLikelyWrongGameInLolList } from "@/lib/contasLolFilter";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { lolRankFilters } from "@/lib/contasLolRankFilters";
-import { FN_PURPLE, FN_BLUE, MC_GREEN, GS_CYAN, HS_VIOLET, ZZZ_AMBER, BRAWL_GOLD } from "@/lib/contasGameAccents";
+import { FN_PURPLE, FN_BLUE, MC_GREEN } from "@/lib/contasGameAccents";
+
+const BRAWL_AMBER = "hsl(32,96%,52%)";
 import {
   ValorantCard,
   LolCard,
   FortniteCard,
   MinecraftCard,
-  MihoyoCard,
   BrawlStarsCard,
 } from "@/components/contas/ContasListingCards";
 
@@ -83,9 +83,6 @@ function purgeSoldIdsFromMarketCache(cache: Map<string, { items: LztItem[] }>, g
     goneKeys.has(`lol:${itemId}`) ||
     goneKeys.has(`fortnite:${itemId}`) ||
     goneKeys.has(`minecraft:${itemId}`) ||
-    goneKeys.has(`genshin:${itemId}`) ||
-    goneKeys.has(`honkai:${itemId}`) ||
-    goneKeys.has(`zzz:${itemId}`) ||
     goneKeys.has(`brawlstars:${itemId}`);
 
   for (const [mapKey, entry] of cache.entries()) {
@@ -105,9 +102,6 @@ function isKnownGoneItemId(itemId: string, goneKeys: ReadonlySet<GoneAccountDeta
     goneKeys.has(`lol:${itemId}`) ||
     goneKeys.has(`fortnite:${itemId}`) ||
     goneKeys.has(`minecraft:${itemId}`) ||
-    goneKeys.has(`genshin:${itemId}`) ||
-    goneKeys.has(`honkai:${itemId}`) ||
-    goneKeys.has(`zzz:${itemId}`) ||
     goneKeys.has(`brawlstars:${itemId}`)
   );
 }
@@ -285,8 +279,16 @@ const CONTAS_ADJACENT_PREFETCH_DELAY_MS = 2800;
 const CONTAS_PREFETCH_STABLE_WINDOW_MS = 2000;
 /** Se o utilizador trocar de aba logo após prefetch, não reconciliar imediatamente para evitar fetch descartado. */
 const CONTAS_RECONCILE_TAB_GUARD_MS = 1000;
-/** Prefetch de abas desativado para priorizar totalmente a busca da aba ativa. */
-const CONTAS_ENABLE_ADJACENT_PREFETCH = false;
+/** Modo agressivo: só ativa warmup de abas com `?warm=1` explícito para teste. */
+const CONTAS_ENABLE_ADJACENT_PREFETCH =
+  typeof window !== "undefined" &&
+  (() => {
+    try {
+      return new URLSearchParams(window.location.search).get("warm") === "1";
+    } catch {
+      return false;
+    }
+  })();
 
 /** Gap mínimo entre dois GET de lista completos — evita cancelar o anterior quando filtros oscilam. */
 const CONTAS_MIN_LIST_REFRESH_GAP_MS = 420;
@@ -298,8 +300,7 @@ const CONTAS_PROGRESSIVE_RENDER_SETTLE_MS_LIGHT = 420;
 function listAttemptTimeoutMs(tab: GameTab, light: boolean): number {
   // Mantém UX responsiva: falha mais rápido e deixa cache/fallback assumirem.
   if (tab === "fortnite") return light ? 12000 : 13000;
-  if (tab === "minecraft") return light ? 6000 : 7000;
-  if (tab === "genshin" || tab === "honkai" || tab === "zzz" || tab === "brawlstars") return light ? 11000 : 14000;
+  if (tab === "minecraft" || tab === "brawlstars") return light ? 8500 : 9500;
   return light ? 7000 : 9500;
 }
 
@@ -338,6 +339,7 @@ const Contas = () => {
     }
   }, [searchParams, setSearchParams]);
 
+  // Slugs desconhecidos (?game=genshin, etc.) — evita fetch com aba errada e URL incoerente com o estado.
   const VALID_CONTAS_GAME = new Set<string>([
     "valorant",
     "riot",
@@ -355,7 +357,12 @@ const Contas = () => {
   useLayoutEffect(() => {
     const raw = searchParams.get("game");
     if (!raw) return;
-    if (VALID_CONTAS_GAME.has(raw)) return;
+    const normalized = raw
+      .trim()
+      .toLowerCase()
+      .replace(/[_\s]+/g, "-")
+      .replace(/[–—]/g, "-");
+    if (VALID_CONTAS_GAME.has(normalized)) return;
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams(prev);
@@ -383,24 +390,6 @@ const Contas = () => {
     void import("@/lib/metaPixel").then(({ trackContasCategoryCustomEvent }) => {
       trackContasCategoryCustomEvent(gameTab);
     });
-  }, [gameTab]);
-
-  /** Em idle, pré-carrega o bundle JS da página de detalhe da aba ativa (clique não espera pelo chunk). */
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    let idleId = 0;
-    const run = () => {
-      prefetchAccountDetailChunkForMarketGame(gameTab);
-    };
-    const useIdle =
-      typeof window.requestIdleCallback === "function" && typeof window.cancelIdleCallback === "function";
-    idleId = useIdle
-      ? window.requestIdleCallback(run, { timeout: 3200 })
-      : (window.setTimeout(run, 900) as unknown as number);
-    return () => {
-      if (useIdle) window.cancelIdleCallback(idleId as number);
-      else window.clearTimeout(idleId as number);
-    };
   }, [gameTab]);
 
   // Console: localhost sempre; produção com `?perf=1` (ex.: medir chunk vs lzt-market em royalstorebr.com).
@@ -901,11 +890,8 @@ const Contas = () => {
   const isLol = gameTab === "lol";
   const isFortnite = gameTab === "fortnite";
   const isMinecraft = gameTab === "minecraft";
-  const isGenshin = gameTab === "genshin";
-  const isHonkai = gameTab === "honkai";
-  const isZzz = gameTab === "zzz";
-  const isBrawl = gameTab === "brawlstars";
-
+  const isBrawlStars = gameTab === "brawlstars";
+  
   // ─── Persistent Cache (Session Storage) ───
   // Use session storage so when users navigate away and back, it's instant.
   type CacheEntry = { items: LztItem[]; hasNextPage: boolean; currentPage: number; timestamp: number };
@@ -915,7 +901,8 @@ const Contas = () => {
     // Lazy init — runs only once (avoids re-parsing JSON on every render)
     let map = new Map<string, CacheEntry>();
     try {
-      const stored = sessionStorage.getItem("royal_lzt_cache");
+      sessionStorage.removeItem("royal_lzt_cache");
+      const stored = sessionStorage.getItem("royal_lzt_cache_v2");
       if (stored) {
         const parsed: unknown = JSON.parse(stored);
         if (Array.isArray(parsed)) {
@@ -943,7 +930,7 @@ const Contas = () => {
         k,
         { ...v, items: v.items.map(({ description, ...rest }) => rest) },
       ]);
-      sessionStorage.setItem("royal_lzt_cache", JSON.stringify(slim));
+      sessionStorage.setItem("royal_lzt_cache_v2", JSON.stringify(slim));
     } catch { /* silent — quota exceeded or unavailable */ }
   }, []);
 
@@ -1006,6 +993,7 @@ const Contas = () => {
         rememberAccountDetailGone(`lol:${goneId}`);
         rememberAccountDetailGone(`fortnite:${goneId}`);
         rememberAccountDetailGone(`minecraft:${goneId}`);
+        rememberAccountDetailGone(`brawlstars:${goneId}`);
       }
       setStreamedItems((prev) => prev.filter((i) => String(i.item_id) !== goneId));
       const cache = fetchCacheRef.current;
@@ -1131,6 +1119,7 @@ const Contas = () => {
       params.game_type = "zzz";
     } else if (gameTab === "brawlstars") {
       params.game_type = "brawlstars";
+      // LZT Supercell feed inclui contas fracas; piso alinhado ao edge `shouldKeepItem` (≥3 lutadores).
       params.brawlers_min = "3";
     }
 
@@ -1298,29 +1287,6 @@ const Contas = () => {
   const prevNonSearchRef = useRef(nonSearchParamsKey);
   const prevSearchTrimRef = useRef(searchQuery.trim());
   const nonSearchDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  /**
-   * Troca de aba: sem esperar nonSearch debounce nem throttle da lista anterior.
-   * Não atualizar `prevGameTabRef` aqui — é usado em `fetchMultiplePages` para `tabChanged` (limpar a grelha ao mudar de jogo).
-   */
-  useLayoutEffect(() => {
-    listFetchNextAllowedAtRef.current = 0;
-    if (listFetchKeyThrottleTimerRef.current) {
-      clearTimeout(listFetchKeyThrottleTimerRef.current);
-      listFetchKeyThrottleTimerRef.current = null;
-    }
-    queuedListFetchKeyRef.current = null;
-    if (nonSearchDebounceTimerRef.current) {
-      clearTimeout(nonSearchDebounceTimerRef.current);
-      nonSearchDebounceTimerRef.current = null;
-    }
-    setDebouncedParamsKey(paramsKey);
-    prevNonSearchRef.current = nonSearchParamsKey;
-    prevSearchTrimRef.current = searchQuery.trim();
-    // paramsKey/nonSearch/search alinham ao render da nova aba; só reagimos a gameTab para não saltar o debounce em filtros da mesma aba.
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- intencional: só flush ao mudar aba de jogo
-  }, [gameTab]);
-
   useEffect(() => {
     // Non-search filter changes: short debounce to absorb hydration/sync bursts and cut canceled requests.
     if (prevNonSearchRef.current !== nonSearchParamsKey) {
@@ -1479,25 +1445,25 @@ const Contas = () => {
         timestamp: Date.now(),
       });
     } catch (err: unknown) {
-      // Request cancellation is expected during rapid filter/tab interactions.
-      // Treat it as "load settled" to avoid skeleton getting stuck.
-      if (controller.signal.aborted || isAbortLikeError(err)) {
+      if (!controller.signal.aborted) {
+        if (isAbortLikeError(err)) {
+          setFirstPageLoaded(true);
+          setIsRefetching(false);
+          setStreamingDone(true);
+          return;
+        }
+        if (cached && cached.items.length > 0) {
+          // Preserve last good data instead of showing fatal UI on transient upstream failures.
+          setFirstPageLoaded(true);
+          setIsRefetching(false);
+          setStreamingDone(true);
+          return;
+        }
         setFirstPageLoaded(true);
         setIsRefetching(false);
+        setStreamError(err instanceof Error ? err : new Error(String(err)));
         setStreamingDone(true);
-        return;
       }
-      if (cached && cached.items.length > 0) {
-        // Preserve last good data instead of showing fatal UI on transient upstream failures.
-        setFirstPageLoaded(true);
-        setIsRefetching(false);
-        setStreamingDone(true);
-        return;
-      }
-      setFirstPageLoaded(true);
-      setIsRefetching(false);
-      setStreamError(err instanceof Error ? err : new Error(String(err)));
-      setStreamingDone(true);
     } finally {
       prevGameTabRef.current = gameTab;
     }
@@ -1527,6 +1493,7 @@ const Contas = () => {
     if (gameTab === "minecraft") {
       return !mcJava && !mcBedrock && !mcHypixelLvlMin && !mcCapesMin && !mcNoBan;
     }
+    if (gameTab === "brawlstars") return true;
     return true;
   }, [
     lightDevice,
@@ -1565,9 +1532,6 @@ const Contas = () => {
 
   const prefetchAdjacentTabs = useCallback(() => {
     clearPrefetchTimeouts();
-    // Minecraft estava sofrendo com bursts de requests em background;
-    // reduzimos carga para priorizar a busca da aba atual.
-    if (gameTab === "minecraft") return;
     prefetchRunIdRef.current += 1;
     const runId = prefetchRunIdRef.current;
 
@@ -1576,7 +1540,7 @@ const Contas = () => {
     if (Date.now() - lastUserListInteractionAtRef.current < CONTAS_PREFETCH_STABLE_WINDOW_MS) return;
 
     // Only prefetch the *next* tab in fixed order (cuts ~3× background list egress vs warming all three).
-    const tabOrder: GameTab[] = ["valorant", "lol", "fortnite", "minecraft"];
+    const tabOrder: GameTab[] = ["valorant", "lol", "fortnite", "minecraft", "brawlstars"];
     const idx = tabOrder.indexOf(gameTab);
     if (idx < 0) return;
     const tab = tabOrder[(idx + 1) % tabOrder.length];
@@ -1584,7 +1548,13 @@ const Contas = () => {
     if (prefetchRef.current.has(tab)) return;
     prefetchRef.current.add(tab);
 
-    const gameTypeMap: Record<GameTab, string> = { valorant: "riot", lol: "lol", fortnite: "fortnite", minecraft: "minecraft" };
+    const gameTypeMap: Record<GameTab, string> = {
+      valorant: "riot",
+      lol: "lol",
+      fortnite: "fortnite",
+      minecraft: "minecraft",
+      brawlstars: "brawlstars",
+    };
     const listParams: Record<string, string | string[]> = {
       page: "1",
       order_by: "pdate_to_down",
@@ -1593,6 +1563,7 @@ const Contas = () => {
     if (tab === "fortnite") listParams.smin = "10";
     if (tab === "valorant") listParams["country[]"] = ["Bra"];
     if (tab === "lol") listParams["lol_region[]"] = ["BR1"];
+    if (tab === "brawlstars") listParams.brawlers_min = "3";
 
     const timeoutId = setTimeout(() => {
       if (runId !== prefetchRunIdRef.current) return;
@@ -1615,12 +1586,6 @@ const Contas = () => {
 
   // Enhanced fetchMultiplePages: check prefetch cache on tab switch
   const fetchMultiplePagesWithPrefetch = useCallback(async (controller: AbortController) => {
-    // Para Minecraft, evitar qualquer caminho de prefetch/reconcile (tráfego extra percebido como lentidão).
-    if (gameTab === "minecraft") {
-      await fetchMultiplePages(controller);
-      return;
-    }
-
     // Check if we have a prefetched result for this game tab
     const prefetchKey = `__prefetch__${gameTab}`;
     const prefetched = fetchCacheRef.current.get(prefetchKey);
@@ -1777,9 +1742,6 @@ const Contas = () => {
       lol: "Contas LoL | Royal Store",
       fortnite: "Contas Fortnite | Royal Store",
       minecraft: "Contas Minecraft | Royal Store",
-      genshin: "Contas Genshin Impact | Royal Store",
-      honkai: "Contas Honkai: Star Rail | Royal Store",
-      zzz: "Contas Zenless Zone Zero | Royal Store",
       brawlstars: "Contas Brawl Stars | Royal Store",
     };
     document.title = titles[gameTab];
@@ -1875,21 +1837,13 @@ const Contas = () => {
   const catalogGame: GameCategory =
     gameTab === "valorant"
       ? "valorant"
-      : gameTab === "lol"
-        ? "lol"
-        : gameTab === "fortnite"
-          ? "fortnite"
-          : gameTab === "minecraft"
-            ? "minecraft"
-            : gameTab === "genshin"
-              ? "genshin"
-              : gameTab === "honkai"
-                ? "honkai"
-                : gameTab === "zzz"
-                  ? "zzz"
-                  : gameTab === "brawlstars"
-                    ? "brawlstars"
-                    : "valorant";
+      : gameTab === "fortnite"
+        ? "fortnite"
+        : gameTab === "minecraft"
+          ? "minecraft"
+          : gameTab === "brawlstars"
+            ? "brawlstars"
+            : "lol";
 
   const gridRows = useMemo(
     () =>
@@ -1982,10 +1936,8 @@ const Contas = () => {
     isMinecraft && mcNoBan,
     priceMin !== "" || priceMax !== "",
     searchQuery !== "",
-    isValorant && invMin !== "",
-    isValorant && invMax !== "",
-    (isValorant || gameTab === "lol") && lvlMin !== "",
-    (isValorant || gameTab === "lol") && lvlMax !== "",
+    invMin !== "", invMax !== "",
+    lvlMin !== "", lvlMax !== "",
   ].filter(Boolean).length;
 
   const accentColor = isValorant
@@ -1994,30 +1946,18 @@ const Contas = () => {
       ? FN_PURPLE
       : isMinecraft
         ? MC_GREEN
-        : isGenshin
-          ? GS_CYAN
-          : isHonkai
-            ? HS_VIOLET
-            : isZzz
-              ? ZZZ_AMBER
-              : isBrawl
-                ? BRAWL_GOLD
-                : "hsl(198,100%,45%)";
+        : isBrawlStars
+          ? BRAWL_AMBER
+          : "hsl(198,100%,45%)";
   const accentClass = isValorant
     ? "text-success border-success bg-success/10"
     : isFortnite
     ? "text-[hsl(265,80%,65%)] border-[hsl(265,80%,65%)] bg-[hsl(265,80%,65%,0.1)]"
     : isMinecraft
     ? "text-[hsl(120,60%,45%)] border-[hsl(120,60%,45%)] bg-[hsl(120,60%,45%,0.1)]"
-    : isGenshin
-      ? "text-[hsl(200,88%,58%)] border-[hsl(200,88%,58%)] bg-[hsl(200,88%,58%,0.1)]"
-      : isHonkai
-        ? "text-[hsl(265,72%,62%)] border-[hsl(265,72%,62%)] bg-[hsl(265,72%,62%,0.1)]"
-        : isZzz
-          ? "text-[hsl(24,92%,58%)] border-[hsl(24,92%,58%)] bg-[hsl(24,92%,58%,0.1)]"
-          : isBrawl
-            ? "text-[hsl(44,98%,52%)] border-[hsl(44,98%,52%)] bg-[hsl(44,98%,52%,0.08)]"
-            : "text-[hsl(198,100%,45%)] border-[hsl(198,100%,45%)] bg-[hsl(198,100%,45%,0.1)]";
+    : isBrawlStars
+      ? "text-[hsl(32,96%,52%)] border-[hsl(32,96%,52%)] bg-[hsl(32,96%,52%,0.12)]"
+    : "text-[hsl(198,100%,45%)] border-[hsl(198,100%,45%)] bg-[hsl(198,100%,45%,0.1)]";
 
   const searchPlaceholder = isFortnite
     ? "Buscar por skin... (ex: Travis Scott)"
@@ -2025,12 +1965,9 @@ const Contas = () => {
       ? "Buscar por skin... (ex: Reaver)"
       : gameTab === "lol"
         ? "Buscar conta..."
-        : isGenshin || isHonkai || isZzz || isBrawl
-          ? "Buscar por personagem ou palavra-chave..."
-          : "Buscar conta...";
-
-  const hoyoTabInactive =
-    "border border-border/60 bg-secondary/30 text-muted-foreground hover:bg-secondary/45 hover:text-foreground";
+        : isBrawlStars
+          ? "Buscar conta Brawl Stars..."
+        : "Buscar conta...";
 
   const renderFilterContent = () => (
     <>
@@ -2402,70 +2339,25 @@ const Contas = () => {
             <svg className="h-4 w-4 sm:h-[18px] sm:w-[18px] shrink-0 opacity-90" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M4,2H20A2,2 0 0,1 22,4V20A2,2 0 0,1 20,22H4A2,2 0 0,1 2,20V4A2,2 0 0,1 4,2M6,6V10H10V12H8V18H10V16H14V18H16V12H14V10H18V6H14V10H10V6H6Z" /></svg>
             <span className="leading-none">Minecraft</span>
           </button>
-          </div>
-          <div className="mt-1.5 grid grid-cols-2 gap-0.5 min-[400px]:gap-1 min-[520px]:grid-cols-4 sm:flex sm:flex-nowrap sm:gap-1">
-            <button
-              type="button"
-              onClick={() => switchTab("genshin")}
-              className={`touch-manipulation flex min-h-11 min-w-0 flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-xl px-1.5 min-[400px]:px-2 sm:flex-1 sm:px-3 py-2.5 sm:py-2.5 text-[11px] min-[400px]:text-xs sm:text-sm font-semibold tracking-tight transition-colors duration-200 ${
-                isGenshin
-                  ? "border-transparent bg-[hsl(200,88%,58%,0.12)] text-[hsl(200,88%,58%)] ring-2 ring-[hsl(200,88%,58%,0.35)] ring-offset-1 ring-offset-background sm:ring-offset-2"
-                  : hoyoTabInactive
-              }`}
-            >
-              <svg className="h-4 w-4 sm:h-[18px] sm:w-[18px] shrink-0 opacity-90" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-                <path d="M12 2l2.15 6.62h6.93l-5.6 4.07 2.14 6.58L12 15.96 6.38 19.27l2.14-6.58L2.92 8.62h6.93L12 2z" />
-              </svg>
-              <span className="leading-tight text-center">Genshin Impact</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => switchTab("honkai")}
-              className={`touch-manipulation flex min-h-11 min-w-0 flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-xl px-1.5 min-[400px]:px-2 sm:flex-1 sm:px-3 py-2.5 sm:py-2.5 text-[11px] min-[400px]:text-xs sm:text-sm font-semibold tracking-tight transition-colors duration-200 ${
-                isHonkai
-                  ? "border-transparent bg-[hsl(265,72%,62%,0.12)] text-[hsl(265,72%,62%)] ring-2 ring-[hsl(265,72%,62%,0.38)] ring-offset-1 ring-offset-background sm:ring-offset-2"
-                  : hoyoTabInactive
-              }`}
-            >
-              <svg className="h-4 w-4 sm:h-[18px] sm:w-[18px] shrink-0 opacity-90" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-                <path d="M4 17.25h16v1.75H4v-1.75zm8-13.5l2.05 6.33h6.64l-5.37 3.9 2.05 6.31L12 15.54l-5.37 3.75 2.05-6.31-5.37-3.9h6.64L12 3.75z" />
-              </svg>
-              <span className="leading-tight text-center">
-                <span className="sm:hidden">Honkai SR</span>
-                <span className="hidden sm:inline">Honkai: Star Rail</span>
-              </span>
-            </button>
-            <button
-              type="button"
-              onClick={() => switchTab("zzz")}
-              className={`touch-manipulation flex min-h-11 min-w-0 flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-xl px-1.5 min-[400px]:px-2 sm:flex-1 sm:px-3 py-2.5 sm:py-2.5 text-[11px] min-[400px]:text-xs sm:text-sm font-semibold tracking-tight transition-colors duration-200 ${
-                isZzz
-                  ? "border-transparent bg-[hsl(24,92%,58%,0.12)] text-[hsl(24,92%,58%)] ring-2 ring-[hsl(24,92%,58%,0.38)] ring-offset-1 ring-offset-background sm:ring-offset-2"
-                  : hoyoTabInactive
-              }`}
-            >
-              <svg className="h-4 w-4 sm:h-[18px] sm:w-[18px] shrink-0 opacity-90" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-                <path d="M14.2 2L4.5 14.25h6.8L10 22l9.7-11.75h-6.45l.95-8.25z" />
-              </svg>
-              <span className="leading-tight text-center">
-                <span className="sm:hidden">ZZZ</span>
-                <span className="hidden sm:inline">Zenless Zone Zero</span>
-              </span>
-            </button>
-            <button
-              type="button"
-              onClick={() => switchTab("brawlstars")}
-              className={`touch-manipulation flex min-h-11 min-w-0 flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-xl px-1.5 min-[400px]:px-2 sm:flex-1 sm:px-3 py-2.5 sm:py-2.5 text-[11px] min-[400px]:text-xs sm:text-sm font-semibold tracking-tight transition-colors duration-200 ${
-                isBrawl
-                  ? "border-transparent bg-[hsl(44,98%,52%,0.12)] text-[hsl(44,98%,52%)] ring-2 ring-[hsl(44,98%,52%,0.38)] ring-offset-1 ring-offset-background sm:ring-offset-2"
-                  : hoyoTabInactive
-              }`}
-            >
-              <svg className="h-4 w-4 sm:h-[18px] sm:w-[18px] shrink-0 opacity-90" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-                <path d="M12 3 20 7v6l-8 10-8-10V7l8-4z" />
-              </svg>
-              <span className="leading-tight text-center">Brawl Stars</span>
-            </button>
+          <button
+            type="button"
+            onClick={() => switchTab("brawlstars")}
+            className={`touch-manipulation flex min-h-11 min-w-0 flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-xl px-1.5 min-[400px]:px-2 sm:flex-1 sm:px-3 py-2.5 sm:py-2.5 text-[11px] min-[400px]:text-xs sm:text-sm font-semibold tracking-tight transition-colors duration-200 ${
+              isBrawlStars
+                ? "ring-2 ring-offset-1 ring-offset-background sm:ring-offset-2"
+                : "text-muted-foreground hover:bg-background/70 hover:text-foreground"
+            }`}
+            style={
+              isBrawlStars
+                ? { background: `${BRAWL_AMBER}22`, color: BRAWL_AMBER, boxShadow: `0 0 0 2px ${BRAWL_AMBER}55` }
+                : {}
+            }
+          >
+            <span className="text-sm sm:text-base leading-none" aria-hidden>
+              ★
+            </span>
+            <span className="leading-none">Brawl Stars</span>
+          </button>
           </div>
         </nav>
 
@@ -2480,15 +2372,9 @@ const Contas = () => {
                     ? "Fortnite"
                     : isMinecraft
                       ? "Minecraft"
-                      : isGenshin
-                        ? "Genshin Impact"
-                        : isHonkai
-                          ? "Honkai: Star Rail"
-                          : isZzz
-                            ? "Zenless Zone Zero"
-                            : isBrawl
-                              ? "Brawl Stars"
-                              : "League of Legends"}
+                      : isBrawlStars
+                        ? "Brawl Stars"
+                        : "League of Legends"}
               </span>
             </p>
             <h1
@@ -2501,15 +2387,9 @@ const Contas = () => {
                   ? "Contas Fortnite"
                   : isMinecraft
                     ? "Contas Minecraft"
-                    : isGenshin
-                      ? "Contas Genshin Impact"
-                      : isHonkai
-                        ? "Contas Honkai: Star Rail"
-                        : isZzz
-                          ? "Contas Zenless Zone Zero"
-                          : isBrawl
-                            ? "Contas Brawl Stars"
-                            : "Contas League of Legends"}
+                    : isBrawlStars
+                      ? "Contas Brawl Stars"
+                      : "Contas League of Legends"}
             </h1>
             <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">
               {streamError ? "Não foi possível carregar a lista. Tente atualizar." : isLoading ? "Buscando contas disponíveis…" : `${allItems.length} ${allItems.length === 1 ? "conta listada" : "contas listadas"} · página ${displayPage} de ${totalDisplayPages}`}
@@ -2695,13 +2575,7 @@ const Contas = () => {
                         <FortniteCard item={item} skinsDb={fnSkinsDb} priceLabel={priceLabel} queryClient={queryClient} />
                       ) : isMinecraft ? (
                         <MinecraftCard item={item} priceLabel={priceLabel} queryClient={queryClient} />
-                      ) : isGenshin ? (
-                        <MihoyoCard variant="genshin" item={item} priceLabel={priceLabel} queryClient={queryClient} />
-                      ) : isHonkai ? (
-                        <MihoyoCard variant="honkai" item={item} priceLabel={priceLabel} queryClient={queryClient} />
-                      ) : isZzz ? (
-                        <MihoyoCard variant="zzz" item={item} priceLabel={priceLabel} queryClient={queryClient} />
-                      ) : isBrawl ? (
+                      ) : isBrawlStars ? (
                         <BrawlStarsCard item={item} priceLabel={priceLabel} queryClient={queryClient} />
                       ) : (
                         <LolCard item={item} champKeyMap={champKeyMap} priceLabel={priceLabel} queryClient={queryClient} />
@@ -2777,20 +2651,18 @@ const Contas = () => {
                       Página {displayPage} de {totalDisplayPages} · {allItems.length} contas
                     </span>
 
-                  </div>
-                )}
-                {hasNextPage && streamingDone && (
-                  <div className={`${totalDisplayPages > 1 ? "mt-3" : "mt-8"} flex justify-center`}>
-                    <button
-                      onClick={loadMorePages}
-                      disabled={loadingMore || loadMoreCoolingDown || !!streamError}
-                      className="flex items-center gap-2 rounded-lg border border-border bg-card px-6 py-2 text-xs font-medium text-muted-foreground transition-colors disabled:opacity-50"
-                      onMouseEnter={(e) => setLinkAccentHover(e, accentColor)}
-                      onMouseLeave={clearLinkAccentHover}
-                    >
-                      {loadingMore || loadMoreCoolingDown ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ChevronDown className="h-3.5 w-3.5" />}
-                      {loadingMore ? "Carregando..." : loadMoreCoolingDown ? "Aguarde..." : "Buscar mais contas"}
-                    </button>
+                    {hasNextPage && (
+                      <button
+                        onClick={loadMorePages}
+                        disabled={loadingMore || loadMoreCoolingDown || !!streamError}
+                        className="flex items-center gap-2 rounded-lg border border-border bg-card px-6 py-2 text-xs font-medium text-muted-foreground transition-colors disabled:opacity-50"
+                        onMouseEnter={(e) => setLinkAccentHover(e, accentColor)}
+                        onMouseLeave={clearLinkAccentHover}
+                      >
+                        {loadingMore || loadMoreCoolingDown ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                        {loadingMore ? "Carregando..." : loadMoreCoolingDown ? "Aguarde..." : "Buscar mais contas"}
+                      </button>
+                    )}
                   </div>
                 )}
               </>

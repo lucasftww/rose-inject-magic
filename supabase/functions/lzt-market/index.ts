@@ -1091,10 +1091,9 @@ Deno.serve(async (req) => {
     const cacheKey = `${apiUrl}|m=${activeMarkup}|max=${listFetchCapBrl}`;
     const staleCached = shouldCache ? globalLztCache.get(cacheKey) : null;
     // Smaller TTL for list reduces "conta já vendida" ghosts without hurting detail latency.
-    const listCacheMaxAge = previewMode ? 45 : 30;
     const listMemoryTtlMs = previewMode ? 45_000 : 30_000;
-    /** Navegação repetida: o browser pode servir JSON “velho” enquanto revalida em background. */
-    const listCacheControl = `public, max-age=${listCacheMaxAge}, s-maxage=${listCacheMaxAge}, stale-while-revalidate=30`;
+    /** Lista: não permitir cache HTTP/CDN — `globalLztCache` já deduplica no isolate (~30s). */
+    const listCacheControl = "private, no-store";
 
     if (shouldCache) {
       const cached = globalLztCache.get(cacheKey);
@@ -1477,11 +1476,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Shorter cache: lista ~60s (preview 90s), detalhe 10s
-    const cacheMaxAge = action === "detail" ? 10 : listCacheMaxAge;
     const responseCacheControl =
       action === "detail"
-        ? `public, max-age=${cacheMaxAge}, s-maxage=${cacheMaxAge}, stale-while-revalidate=30`
+        ? "public, max-age=10, s-maxage=10, stale-while-revalidate=30"
         : listCacheControl;
 
     if (shouldCache) {
@@ -1502,7 +1499,7 @@ Deno.serve(async (req) => {
         action,
         gameType,
         itemId: itemId || undefined,
-        cache_mode: shouldCache ? "list_mem+cdn" : "direct",
+        cache_mode: shouldCache ? "list_mem" : "direct",
         items_count: itemsCount,
         ...perf,
       });
