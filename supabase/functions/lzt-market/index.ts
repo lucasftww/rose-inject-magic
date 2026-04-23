@@ -475,6 +475,51 @@ function appendLztPrefixedParams(
   }
 }
 
+
+let supercellBrawlGameIdCache: { id: string; expiry: number } | null = null;
+const SUPERCELL_BRAWL_GAME_ID_TTL_MS = 24 * 60 * 60 * 1000;
+
+/** ID numérico LZT para Brawl Stars em `game[]` (GET /supercell/games). */
+async function resolveSupercellBrawlStarsGameId(token: string): Promise<string | null> {
+  const envId = Deno.env.get("LZT_BRAWL_STARS_GAME_ID")?.trim();
+  if (envId && /^\d+$/.test(envId)) return envId;
+
+  const now = Date.now();
+  if (supercellBrawlGameIdCache && supercellBrawlGameIdCache.expiry > now) {
+    return supercellBrawlGameIdCache.id;
+  }
+
+  const ac = new AbortController();
+  const tid = setTimeout(() => ac.abort(), 4500);
+  try {
+    const r = await fetch(`${LZT_API_MINECRAFT_BASE_URL}/supercell/games`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+      signal: ac.signal,
+    });
+    if (!r.ok) return null;
+    const data = (await r.json()) as Record<string, unknown>;
+    const rawGames = data.games ?? data.items;
+    if (!Array.isArray(rawGames)) return null;
+    for (const raw of rawGames) {
+      if (!raw || typeof raw !== "object") continue;
+      const g = raw as Record<string, unknown>;
+      const title = String(g.title ?? g.name ?? "").toLowerCase();
+      const slug = String(g.url ?? "").toLowerCase();
+      if (!title.includes("brawl") && !slug.includes("brawl")) continue;
+      const id = String(g.app_id ?? g.game_id ?? g.id ?? "").trim();
+      if (id && /^\d+$/.test(id)) {
+        supercellBrawlGameIdCache = { id, expiry: now + SUPERCELL_BRAWL_GAME_ID_TTL_MS };
+        return id;
+      }
+    }
+  } catch {
+    /* rede / payload inesperado */
+  } finally {
+    clearTimeout(tid);
+  }
+  return null;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -823,7 +868,8 @@ Deno.serve(async (req) => {
         gameType !== "minecraft" &&
         gameType !== "genshin" &&
         gameType !== "honkai" &&
-        gameType !== "zzz";
+        gameType !== "zzz" &&
+        gameType !== "brawlstars";
       if (shouldEnforceQualityDefaults) {
         const minDays = gameType === "fortnite" ? FORTNITE_MIN_INACTIVE_DAYS : MIN_INACTIVE_DAYS;
         if (!params.get("daybreak") || Number(params.get("daybreak")) < minDays) {
@@ -994,8 +1040,10 @@ Deno.serve(async (req) => {
           "brawler[]", "skin[]", "region[]", "not_region[]", "email_type[]", "origin[]", "not_origin[]",
           "game[]",
         ]);
-        // /supercell inclui Brawl Stars, Clash Royale, CoC, etc. Sem filtro, o LZT pode devolver páginas só com outros jogos.
-        params.set("system", "brawlstars");
+        if (params.getAll("game[]").length === 0) {
+          const gid = await resolveSupercellBrawlStarsGameId(token);
+          if (gid) params.append("game[]", gid);
+        }
         if (!params.get("brawlers_min")) {
           params.set("brawlers_min", "3");
         }

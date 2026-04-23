@@ -289,7 +289,7 @@ const CONTAS_RECONCILE_TAB_GUARD_MS = 1000;
 const CONTAS_ENABLE_ADJACENT_PREFETCH = false;
 
 /** Gap mínimo entre dois GET de lista completos — evita cancelar o anterior quando filtros oscilam. */
-const CONTAS_MIN_LIST_REFRESH_GAP_MS = 560;
+const CONTAS_MIN_LIST_REFRESH_GAP_MS = 420;
 const CONTAS_LOAD_MORE_MIN_GAP_MS = 650;
 const CONTAS_MANUAL_REFRESH_MIN_GAP_MS = 650;
 const CONTAS_PROGRESSIVE_RENDER_SETTLE_MS_DESKTOP = 260;
@@ -557,7 +557,7 @@ const Contas = () => {
     saveData || navConn?.effectiveType === "2g" || navConn?.effectiveType === "slow-2g";
   const lightDevice = coarsePointer || slowNetwork;
   /** Funde `debouncedParamsKey`→`listFetchKey`; maior em touch/rede lenta → menos GET cancelados. */
-  const listFetchKeyCoalesceMs = lightDevice ? 400 : 320;
+  const listFetchKeyCoalesceMs = lightDevice ? 340 : 220;
   /** Debounce curto só para filtros não-busca (sync URL/hidratação em rajadas). */
   const nonSearchParamsDebounceMs = lightDevice ? 260 : 220;
   const listSearchDebounceMs = lightDevice ? 480 : 280;
