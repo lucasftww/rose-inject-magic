@@ -175,4 +175,22 @@ describe("shouldKeepItem", () => {
     const price = getDisplayedPriceBrl(item, undefined, "valorant");
     expect(shouldKeepItem(item, "valorant", price, { skipMinSkins: true })).toBe(true);
   });
+
+  it("rejects brawlstars with < 3 brawlers", () => {
+    const item = { price: 500, price_currency: "rub", brawlers_count: 2, not_sold_before: true, canBuyItem: true };
+    expect(shouldKeepItem(item, "brawlstars", 100)).toBe(false);
+  });
+
+  it("accepts brawlstars with enough brawlers", () => {
+    const item = {
+      price: 800,
+      price_currency: "rub",
+      brawlers_count: 12,
+      brawl_cups: 8000,
+      not_sold_before: true,
+      canBuyItem: true,
+    };
+    const price = getDisplayedPriceBrl(item, undefined, "brawlstars");
+    expect(shouldKeepItem(item, "brawlstars", price)).toBe(true);
+  });
 });

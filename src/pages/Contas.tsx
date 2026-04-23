@@ -278,7 +278,7 @@ function createAttemptSignal(parent: AbortSignal, timeoutMs: number) {
 // RARITY_PRIORITY, SkinEntry, fetchAllValorantSkins imported from @/lib/valorantData
 
 /** Após mostrar lista do prefetch na troca de aba: atrasa o GET de reconciliação para não competir com paint/chunk. */
-const CONTAS_RECONCILE_AFTER_PREFETCH_MS = 450;
+const CONTAS_RECONCILE_AFTER_PREFETCH_MS = 720;
 /** Prefetch de aba adjacente só depois de estabilizar a interação inicial. */
 const CONTAS_ADJACENT_PREFETCH_DELAY_MS = 2800;
 /** Janela mínima sem mudança de filtros/aba antes de disparar prefetch de aba adjacente. */
@@ -336,6 +336,35 @@ const Contas = () => {
       );
       setGameTab("valorant");
     }
+  }, [searchParams, setSearchParams]);
+
+  const VALID_CONTAS_GAME = new Set<string>([
+    "valorant",
+    "riot",
+    "lol",
+    "fortnite",
+    "minecraft",
+    "genshin",
+    "honkai",
+    "zzz",
+    "zenless",
+    "brawlstars",
+    "brawl-stars",
+    "brawl",
+  ]);
+  useLayoutEffect(() => {
+    const raw = searchParams.get("game");
+    if (!raw) return;
+    if (VALID_CONTAS_GAME.has(raw)) return;
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.set("game", "valorant");
+        return next;
+      },
+      { replace: true },
+    );
+    setGameTab("valorant");
   }, [searchParams, setSearchParams]);
 
   // Scroll to top on mount
@@ -1102,6 +1131,7 @@ const Contas = () => {
       params.game_type = "zzz";
     } else if (gameTab === "brawlstars") {
       params.game_type = "brawlstars";
+      params.brawlers_min = "3";
     }
 
     return params;
