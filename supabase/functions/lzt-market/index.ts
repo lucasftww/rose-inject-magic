@@ -1284,7 +1284,7 @@ Deno.serve(async (req) => {
           return false;
         }
         if (hasLztItemBuyerAssigned(item)) { filteredByOther++; return false; }
-        if (item.canBuyItem === false) { filteredByOther++; return false; }
+        if (gameType !== "brawlstars" && item.canBuyItem === false) { filteredByOther++; return false; }
         return true;
       });
 
@@ -1310,11 +1310,13 @@ Deno.serve(async (req) => {
 
         const skipMihoyoMinSkins =
           gameType === "genshin" || gameType === "honkai" || gameType === "zzz";
+        const skipBrawlListMinSkins = gameType === "brawlstars";
 
         if (
           !shouldKeepItem(item, gameType, displayedPriceBrl, {
             skipValueGate: hasAdminOverride,
-            skipMinSkins: skipMihoyoMinSkins,
+            skipMinSkins: skipMihoyoMinSkins || skipBrawlListMinSkins,
+            skipCanBuyCheck: gameType === "brawlstars",
           }, listFxRates)
         ) {
           filteredByOther++;

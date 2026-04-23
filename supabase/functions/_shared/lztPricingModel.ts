@@ -304,7 +304,7 @@ export function shouldKeepItem(
 ): boolean {
   if (hasLztItemBuyerAssigned(item)) return false;
   if (!opts?.skipCanBuyCheck && item.canBuyItem === false) return false;
-  if (itemFailsNotSoldBeforePolicy(item)) return false;
+  if (gameType !== "brawlstars" && itemFailsNotSoldBeforePolicy(item)) return false;
 
   if (!opts?.skipMinSkins) {
     const isValorant = gameType === "riot" || gameType === "valorant";
