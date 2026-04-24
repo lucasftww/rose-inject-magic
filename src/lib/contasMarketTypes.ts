@@ -104,7 +104,7 @@ export function gameTabFromSearchParams(sp: URLSearchParams): GameTab {
   if (g === "minecraft") return "minecraft";
   if (g === "genshin") return "genshin";
   if (g === "honkai") return "honkai";
-  if (g === "zzz") return "zzz";
+  if (g === "zzz" || g === "zenless") return "zzz";
   if (g === "brawlstars" || g === "brawl-stars" || g === "brawl") return "brawlstars";
   return "valorant";
 }

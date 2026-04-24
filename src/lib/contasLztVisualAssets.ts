@@ -72,25 +72,42 @@ function brawlifySlug(name: string): string {
 
 /** Nomes de brawlers a partir de campos comuns da resposta LZT Supercell. */
 export function extractBrawlBrawlerNames(item: Record<string, unknown>): string[] {
+  const names: string[] = [];
+
+  const pushFromArray = (c: unknown) => {
+    if (!c || !Array.isArray(c)) return;
+    for (const el of c) {
+      if (typeof el === "string" && el.trim()) names.push(el.trim());
+      else if (el && typeof el === "object") {
+        const o = el as Record<string, unknown>;
+        const n = o.name ?? o.title ?? o.id;
+        if (typeof n === "string" && n.trim()) names.push(n.trim());
+      }
+    }
+  };
+
+  /** Lista LZT às vezes manda `supercell_brawlers` como mapa (contagem no pricing model). */
+  const sb = item.supercell_brawlers;
+  if (sb && typeof sb === "object" && !Array.isArray(sb)) {
+    for (const [k, v] of Object.entries(sb as Record<string, unknown>)) {
+      if (typeof v === "string" && v.trim()) {
+        names.push(v.trim());
+      } else if (v === true || v === 1 || v === "1") {
+        const key = k.trim();
+        if (key && /[A-Za-zÀ-ÿ]/.test(key)) names.push(key);
+      }
+    }
+  }
+
   const candidates = [
     item.brawl_brawlers,
     item.brawlers,
+    item.brawler,
     item.supercell_brawlers,
     item.brawler_list,
   ];
-  const names: string[] = [];
   for (const c of candidates) {
-    if (!c) continue;
-    if (Array.isArray(c)) {
-      for (const el of c) {
-        if (typeof el === "string" && el.trim()) names.push(el.trim());
-        else if (el && typeof el === "object") {
-          const o = el as Record<string, unknown>;
-          const n = o.name ?? o.title ?? o.id;
-          if (typeof n === "string" && n.trim()) names.push(n.trim());
-        }
-      }
-    }
+    pushFromArray(c);
     if (names.length >= 8) break;
   }
   const seen = new Set<string>();

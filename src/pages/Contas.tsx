@@ -45,7 +45,7 @@ import { isContasPerfDiagEnabled } from "@/lib/contasPerfDiag";
 import { isLikelyWrongGameInLolList } from "@/lib/contasLolFilter";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { lolRankFilters } from "@/lib/contasLolRankFilters";
-import { FN_PURPLE, FN_BLUE, MC_GREEN } from "@/lib/contasGameAccents";
+import { FN_PURPLE, FN_BLUE, MC_GREEN, GS_CYAN, HS_VIOLET, ZZZ_AMBER } from "@/lib/contasGameAccents";
 
 const BRAWL_AMBER = "hsl(32,96%,52%)";
 import {
@@ -54,6 +54,7 @@ import {
   FortniteCard,
   MinecraftCard,
   BrawlStarsCard,
+  MihoyoListingCard,
 } from "@/components/contas/ContasListingCards";
 
 import weaponAres from "@/assets/weapon-ares.png";
@@ -202,6 +203,22 @@ const VAL_WEAPON_IDS = new Set(weapons.map((w) => w.id));
 const VAL_REGION_IDS = new Set(valorantRegions.map((r) => r.id));
 const LOL_REGION_IDS = new Set(lolRegions.map((r) => r.id));
 
+/** Slugs aceites em `?game=` — constante no módulo evita recriar `Set` a cada render do Contas. */
+const VALID_CONTAS_GAME_PARAMS = new Set<string>([
+  "valorant",
+  "riot",
+  "lol",
+  "fortnite",
+  "minecraft",
+  "genshin",
+  "honkai",
+  "zzz",
+  "zenless",
+  "brawlstars",
+  "brawl-stars",
+  "brawl",
+]);
+
 /** Query keys escritos pelo sync de filtros / switchTab (preserva utm_*, etc.). */
 const CONTAS_MANAGED_QUERY_KEYS: string[] = [
   "rank", "weapon", "knife", "region", "champMin", "skinsMin", "vbMin",
@@ -339,21 +356,7 @@ const Contas = () => {
     }
   }, [searchParams, setSearchParams]);
 
-  // Slugs desconhecidos (?game=genshin, etc.) — evita fetch com aba errada e URL incoerente com o estado.
-  const VALID_CONTAS_GAME = new Set<string>([
-    "valorant",
-    "riot",
-    "lol",
-    "fortnite",
-    "minecraft",
-    "genshin",
-    "honkai",
-    "zzz",
-    "zenless",
-    "brawlstars",
-    "brawl-stars",
-    "brawl",
-  ]);
+  // Slugs desconhecidos em `?game=` — evita fetch com aba errada e URL incoerente com o estado.
   useLayoutEffect(() => {
     const raw = searchParams.get("game");
     if (!raw) return;
@@ -362,7 +365,7 @@ const Contas = () => {
       .toLowerCase()
       .replace(/[_\s]+/g, "-")
       .replace(/[–—]/g, "-");
-    if (VALID_CONTAS_GAME.has(normalized)) return;
+    if (VALID_CONTAS_GAME_PARAMS.has(normalized)) return;
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams(prev);
@@ -891,6 +894,10 @@ const Contas = () => {
   const isFortnite = gameTab === "fortnite";
   const isMinecraft = gameTab === "minecraft";
   const isBrawlStars = gameTab === "brawlstars";
+  const isGenshin = gameTab === "genshin";
+  const isHonkai = gameTab === "honkai";
+  const isZzz = gameTab === "zzz";
+  const isMihoyo = isGenshin || isHonkai || isZzz;
   
   // ─── Persistent Cache (Session Storage) ───
   // Use session storage so when users navigate away and back, it's instant.
@@ -1743,6 +1750,9 @@ const Contas = () => {
       fortnite: "Contas Fortnite | Royal Store",
       minecraft: "Contas Minecraft | Royal Store",
       brawlstars: "Contas Brawl Stars | Royal Store",
+      genshin: "Contas Genshin Impact | Royal Store",
+      honkai: "Contas Honkai Star Rail | Royal Store",
+      zzz: "Contas Zenless Zone Zero | Royal Store",
     };
     document.title = titles[gameTab];
     return () => { document.title = "Royal Store"; };
@@ -1843,7 +1853,13 @@ const Contas = () => {
           ? "minecraft"
           : gameTab === "brawlstars"
             ? "brawlstars"
-            : "lol";
+            : gameTab === "genshin"
+              ? "genshin"
+              : gameTab === "honkai"
+                ? "honkai"
+                : gameTab === "zzz"
+                  ? "zzz"
+                  : "lol";
 
   const gridRows = useMemo(
     () =>
@@ -1948,7 +1964,13 @@ const Contas = () => {
         ? MC_GREEN
         : isBrawlStars
           ? BRAWL_AMBER
-          : "hsl(198,100%,45%)";
+          : isGenshin
+            ? GS_CYAN
+            : isHonkai
+              ? HS_VIOLET
+              : isZzz
+                ? ZZZ_AMBER
+                : "hsl(198,100%,45%)";
   const accentClass = isValorant
     ? "text-success border-success bg-success/10"
     : isFortnite
@@ -1957,6 +1979,12 @@ const Contas = () => {
     ? "text-[hsl(120,60%,45%)] border-[hsl(120,60%,45%)] bg-[hsl(120,60%,45%,0.1)]"
     : isBrawlStars
       ? "text-[hsl(32,96%,52%)] border-[hsl(32,96%,52%)] bg-[hsl(32,96%,52%,0.12)]"
+      : isGenshin
+        ? "text-[hsl(200,88%,58%)] border-[hsl(200,88%,58%)] bg-[hsl(200,88%,58%,0.12)]"
+        : isHonkai
+          ? "text-[hsl(265,72%,62%)] border-[hsl(265,72%,62%)] bg-[hsl(265,72%,62%,0.12)]"
+          : isZzz
+            ? "text-[hsl(24,92%,58%)] border-[hsl(24,92%,58%)] bg-[hsl(24,92%,58%,0.12)]"
     : "text-[hsl(198,100%,45%)] border-[hsl(198,100%,45%)] bg-[hsl(198,100%,45%,0.1)]";
 
   const searchPlaceholder = isFortnite
@@ -1967,9 +1995,13 @@ const Contas = () => {
         ? "Buscar conta..."
         : isBrawlStars
           ? "Buscar conta Brawl Stars..."
+          : isMihoyo
+            ? "Buscar por personagem ou palavra-chave..."
         : "Buscar conta...";
 
-  const renderFilterContent = () => (
+  /** JSX pesado dos filtros: só recria quando estado relevante muda (não a cada scroll/render da grelha). */
+  const filterSidebarContent = useMemo(
+    () => (
     <>
       {/* Search */}
       <div className="relative mt-5">
@@ -2272,6 +2304,45 @@ const Contas = () => {
         </div>
       )}
     </>
+    ),
+    [
+      accentColor,
+      searchPlaceholder,
+      searchQuery,
+      gameTab,
+      isValorant,
+      isFortnite,
+      isMinecraft,
+      rankOpen,
+      skinsOpen,
+      selectedRank,
+      selectedWeapon,
+      onlyKnife,
+      valRegion,
+      lolRank,
+      lolChampMin,
+      lolSkinsMin,
+      lolRegion,
+      fnVbMin,
+      fnSkinsMin,
+      fnLevelMin,
+      fnHasBattlePass,
+      mcJava,
+      mcBedrock,
+      mcHypixelLvlMin,
+      mcCapesMin,
+      mcNoBan,
+      priceOpen,
+      priceMin,
+      priceMax,
+      priceFieldBlur,
+      invOpen,
+      invMin,
+      invMax,
+      lvlOpen,
+      lvlMin,
+      lvlMax,
+    ],
   );
 
   return (
@@ -2359,6 +2430,43 @@ const Contas = () => {
             <span className="leading-none">Brawl Stars</span>
           </button>
           </div>
+          <div
+            className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-2 border-t border-border/50 pt-2.5 sm:pt-3"
+            aria-label="Contas HoYoverse"
+          >
+            <span className="w-full text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:w-auto sm:mr-1">
+              HoYoverse
+            </span>
+            <div className="flex min-w-0 flex-1 flex-nowrap gap-2 overflow-x-auto pb-0.5 [-webkit-overflow-scrolling:touch] sm:flex-wrap sm:overflow-visible">
+              <Link
+                to="/contas?game=genshin"
+                className={`shrink-0 touch-manipulation rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  isGenshin ? "text-white shadow-sm" : "border border-border/60 bg-secondary/40 text-muted-foreground hover:text-foreground"
+                }`}
+                style={isGenshin ? { background: GS_CYAN, boxShadow: `0 0 0 2px ${GS_CYAN}55` } : undefined}
+              >
+                Genshin
+              </Link>
+              <Link
+                to="/contas?game=honkai"
+                className={`shrink-0 touch-manipulation rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  isHonkai ? "text-white shadow-sm" : "border border-border/60 bg-secondary/40 text-muted-foreground hover:text-foreground"
+                }`}
+                style={isHonkai ? { background: HS_VIOLET, boxShadow: `0 0 0 2px ${HS_VIOLET}55` } : undefined}
+              >
+                Honkai
+              </Link>
+              <Link
+                to="/contas?game=zzz"
+                className={`shrink-0 touch-manipulation rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  isZzz ? "text-white shadow-sm" : "border border-border/60 bg-secondary/40 text-muted-foreground hover:text-foreground"
+                }`}
+                style={isZzz ? { background: ZZZ_AMBER, boxShadow: `0 0 0 2px ${ZZZ_AMBER}55` } : undefined}
+              >
+                ZZZ
+              </Link>
+            </div>
+          </div>
         </nav>
 
         <div className="flex min-w-0 flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -2374,7 +2482,13 @@ const Contas = () => {
                       ? "Minecraft"
                       : isBrawlStars
                         ? "Brawl Stars"
-                        : "League of Legends"}
+                        : isGenshin
+                          ? "Genshin Impact"
+                          : isHonkai
+                            ? "Honkai: Star Rail"
+                            : isZzz
+                              ? "Zenless Zone Zero"
+                              : "League of Legends"}
               </span>
             </p>
             <h1
@@ -2389,7 +2503,13 @@ const Contas = () => {
                     ? "Contas Minecraft"
                     : isBrawlStars
                       ? "Contas Brawl Stars"
-                      : "Contas League of Legends"}
+                      : isGenshin
+                        ? "Contas Genshin Impact"
+                        : isHonkai
+                          ? "Contas Honkai: Star Rail"
+                          : isZzz
+                            ? "Contas Zenless Zone Zero"
+                            : "Contas League of Legends"}
             </h1>
             <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">
               {streamError ? "Não foi possível carregar a lista. Tente atualizar." : isLoading ? "Buscando contas disponíveis…" : `${allItems.length} ${allItems.length === 1 ? "conta listada" : "contas listadas"} · página ${displayPage} de ${totalDisplayPages}`}
@@ -2483,7 +2603,7 @@ const Contas = () => {
                   </div>
                 </div>
                 <div className="p-4 min-[400px]:p-5">
-                  {renderFilterContent()}
+                  {filterSidebarContent}
                 </div>
                 <div className="sticky bottom-0 border-t border-border bg-card p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
                   <button
@@ -2513,7 +2633,7 @@ const Contas = () => {
                   </h3>
                   <button onClick={clearFilters} className="text-xs text-muted-foreground transition-colors" style={{}} onMouseEnter={e => (e.currentTarget.style.color = accentColor)} onMouseLeave={e => (e.currentTarget.style.color = '')}>Limpar</button>
                 </div>
-                {renderFilterContent()}
+                {filterSidebarContent}
               </div>
             </div>
           </aside>
@@ -2577,6 +2697,12 @@ const Contas = () => {
                         <MinecraftCard item={item} priceLabel={priceLabel} queryClient={queryClient} />
                       ) : isBrawlStars ? (
                         <BrawlStarsCard item={item} priceLabel={priceLabel} queryClient={queryClient} />
+                      ) : isGenshin ? (
+                        <MihoyoListingCard item={item} variant="genshin" priceLabel={priceLabel} queryClient={queryClient} />
+                      ) : isHonkai ? (
+                        <MihoyoListingCard item={item} variant="honkai" priceLabel={priceLabel} queryClient={queryClient} />
+                      ) : isZzz ? (
+                        <MihoyoListingCard item={item} variant="zzz" priceLabel={priceLabel} queryClient={queryClient} />
                       ) : (
                         <LolCard item={item} champKeyMap={champKeyMap} priceLabel={priceLabel} queryClient={queryClient} />
                       )}

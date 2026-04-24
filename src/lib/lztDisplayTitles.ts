@@ -5,10 +5,10 @@ export type LztGameKind =
   | "lol"
   | "fortnite"
   | "minecraft"
+  | "brawlstars"
   | "genshin"
   | "honkai"
-  | "zzz"
-  | "brawlstars";
+  | "zzz";
 
 /** Campos mínimos dos itens LZT para montar título de card / detalhe */
 type LztItemForTitle = {
@@ -26,6 +26,15 @@ type LztItemForTitle = {
   minecraft_nickname?: string;
   minecraft_java?: number;
   minecraft_bedrock?: number;
+  brawlers_count?: number;
+  brawl_cups?: number;
+  brawl_level?: number;
+  genshin_char_count?: number;
+  genshin_legendary_count?: number;
+  honkai_char_count?: number;
+  honkai_eidolon_count?: number;
+  zenless_char_count?: number;
+  zenless_legendary_count?: number;
 };
 
 function stripCyrillic(raw: string | undefined): string {
@@ -69,6 +78,10 @@ export function shouldReplaceLztTitle(raw: string | undefined, game: LztGameKind
     const letters = (t.match(/[a-zA-ZÀ-ÿ]/g) || []).length;
     if (letters < 4 && t.length < 28) return true;
   }
+  if (game === "genshin" || game === "honkai" || game === "zzz") {
+    const letters = (t.match(/[a-zA-ZÀ-ÿ]/g) || []).length;
+    if (letters < 3 && t.length < 32) return true;
+  }
   return false;
 }
 
@@ -95,11 +108,9 @@ export function getListingCardTitle(item: LztItemForTitle, game: LztGameKind): s
       return `CONTA LOL • ${skinCount} SKINS • ${rankShort.toUpperCase()} • NV ${level}`;
     }
     case "fortnite": {
-      const rawSkinCount = item.fortnite_skin_count ?? item.fortnite_outfit_count ?? 0;
+      const skinCount = item.fortnite_skin_count ?? item.fortnite_outfit_count ?? 0;
       const level = item.fortnite_level ?? 0;
-      let t = rawSkinCount > 0
-        ? `CONTA FORTNITE • ${rawSkinCount} SKINS`
-        : "CONTA FORTNITE • SKINS VERIFICADAS";
+      let t = `CONTA FORTNITE • ${skinCount} SKINS`;
       if (level > 0) t += ` • NV ${level}`;
       return t;
     }
@@ -111,33 +122,38 @@ export function getListingCardTitle(item: LztItemForTitle, game: LztGameKind): s
       const nick = item.minecraft_nickname?.trim();
       return `CONTA MINECRAFT • ${nick ? nick.toUpperCase() : "VERIFICADA"} • ${edition}`;
     }
+    case "brawlstars": {
+      const br = item.brawlers_count ?? 0;
+      const cups = item.brawl_cups ?? 0;
+      const lvl = item.brawl_level ?? 0;
+      let t = `CONTA BRAWL STARS • ${br} BRAWLERS`;
+      if (cups > 0) t += ` • ${cups.toLocaleString("pt-BR")} TROFÉUS`;
+      if (lvl > 0) t += ` • NV ${lvl}`;
+      return t;
+    }
     case "genshin": {
-      const r = item as Record<string, unknown>;
-      const n = Number(r.genshin_char_count ?? r.genshin_characters ?? r.genshin_character_count ?? 0);
-      const lv = Number(r.genshin_level ?? 0);
-      const mid = n > 0 ? `${n} PERSONAGENS` : "VERIFICADA";
-      return `CONTA GENSHIN • ${mid}${lv > 0 ? ` • AR ${lv}` : ""}`;
+      const ch = Number(item.genshin_char_count ?? 0);
+      const leg = Number(item.genshin_legendary_count ?? 0);
+      let t = "CONTA GENSHIN IMPACT";
+      if (ch > 0) t += ` • ${ch} PERSONAGENS`;
+      if (leg > 0) t += ` • ${leg} 5★`;
+      return `${t} • VERIFICADA`;
     }
     case "honkai": {
-      const r = item as Record<string, unknown>;
-      const n = Number(r.honkai_char_count ?? r.honkai_characters ?? r.honkai_character_count ?? 0);
-      const lv = Number(r.honkai_level ?? 0);
-      const mid = n > 0 ? `${n} PERSONAGENS` : "VERIFICADA";
-      return `CONTA HONKAI: STAR RAIL • ${mid}${lv > 0 ? ` • TL ${lv}` : ""}`;
+      const ch = Number(item.honkai_char_count ?? 0);
+      const eid = Number(item.honkai_eidolon_count ?? 0);
+      let t = "CONTA HONKAI STAR RAIL";
+      if (ch > 0) t += ` • ${ch} PERSONAGENS`;
+      if (eid > 0) t += ` • ${eid} EIDOLONS`;
+      return `${t} • VERIFICADA`;
     }
     case "zzz": {
-      const r = item as Record<string, unknown>;
-      const n = Number(r.zenless_char_count ?? r.zenless_characters ?? r.zenless_character_count ?? 0);
-      const lv = Number(r.zenless_level ?? 0);
-      const mid = n > 0 ? `${n} AGENTES` : "VERIFICADA";
-      return `CONTA ZENLESS ZONE ZERO • ${mid}${lv > 0 ? ` • LV ${lv}` : ""}`;
-    }
-    case "brawlstars": {
-      const r = item as Record<string, unknown>;
-      const br = Number(r.brawlers_count ?? r.brawl_brawlers_count ?? 0);
-      const cups = Number(r.brawl_cup ?? r.brawl_trophies ?? 0);
-      const mid = br > 0 ? `${br} LUTADORES` : "VERIFICADA";
-      return `CONTA BRAWL STARS • ${mid}${cups > 0 ? ` • ${cups.toLocaleString("pt-BR")} TROFÉUS` : ""}`;
+      const ch = Number(item.zenless_char_count ?? 0);
+      const leg = Number(item.zenless_legendary_count ?? 0);
+      let t = "CONTA ZENLESS ZONE ZERO";
+      if (ch > 0) t += ` • ${ch} PERSONAGENS`;
+      if (leg > 0) t += ` • ${leg} S-RANK`;
+      return `${t} • VERIFICADA`;
     }
   }
 }
@@ -146,7 +162,8 @@ type DetailCtx =
   | { game: "valorant"; rankName: string; skinCount: number }
   | { game: "fortnite"; skinCount: number; level: number; vbucks: number }
   | { game: "lol"; rankText: string; level: number; skinCount: number }
-  | { game: "minecraft"; nickname?: string; hasJava: boolean; hasBedrock: boolean };
+  | { game: "minecraft"; nickname?: string; hasJava: boolean; hasBedrock: boolean }
+  | { game: "brawlstars"; brawlers: number; trophies: number; level: number };
 
 function buildSyntheticDetailTitle(ctx: DetailCtx): string {
   switch (ctx.game) {
@@ -172,6 +189,12 @@ function buildSyntheticDetailTitle(ctx: DetailCtx): string {
               ? "Bedrock Edition"
               : "Full Access";
       return `Conta Minecraft · Full Acesso · ${ctx.nickname?.trim() || "Conta Verificada"} · ${edition}`;
+    }
+    case "brawlstars": {
+      let s = `Conta Brawl Stars · Full Acesso · ${ctx.brawlers} Brawlers`;
+      if (ctx.trophies > 0) s += ` · ${ctx.trophies.toLocaleString("pt-BR")} troféus`;
+      if (ctx.level > 0) s += ` · Nv.${ctx.level}`;
+      return s;
     }
   }
 }

@@ -22,10 +22,11 @@ import {
   Trophy,
   Shield,
   ArrowRight,
+  Sparkles,
 } from "lucide-react";
 import { translateRegion } from "@/lib/regionTranslation";
 import { rankUnranked, rankMap, type SkinEntry } from "@/lib/valorantData";
-import { getListingCardTitle, type LztGameKind } from "@/lib/lztDisplayTitles";
+import { getListingCardTitle } from "@/lib/lztDisplayTitles";
 import { compareFortniteCardRows, type FortniteCosmeticDbRow } from "@/lib/fortniteCosmeticSort";
 import {
   hideImgOnError,
@@ -34,17 +35,18 @@ import {
 } from "@/lib/domEventHelpers";
 import { isRecord } from "@/types/ticketChat";
 import { prefetchAccountDetail } from "@/lib/lztPrefetch";
-import { useCoarsePointerDetailPrefetch } from "@/hooks/useCoarsePointerDetailPrefetch";
 import { getProxiedImageUrl } from "@/lib/lztImageProxy";
 import type { LztItem } from "@/lib/contasMarketTypes";
-import { lolRankFilters, lolRankToFilterId } from "@/lib/contasLolRankFilters";
-import { FN_PURPLE, FN_BLUE, MC_GREEN, GS_CYAN, HS_VIOLET, ZZZ_AMBER, BRAWL_GOLD } from "@/lib/contasGameAccents";
+import { brawlersCountFromLztItem, brawlLevelFromLztItem, brawlTrophiesFromLztItem } from "@/lib/lztBrawlStats";
 import {
-  brawlifyAvatarUrl,
   extractBrawlBrawlerNames,
+  brawlifyAvatarUrl,
+  extractLztItemImageUrls,
   extractMihoyoCardPreviews,
   type MihoyoCardVariant,
 } from "@/lib/contasLztVisualAssets";
+import { lolRankFilters, lolRankToFilterId } from "@/lib/contasLolRankFilters";
+import { FN_PURPLE, FN_BLUE, MC_GREEN, GS_CYAN, HS_VIOLET, ZZZ_AMBER } from "@/lib/contasGameAccents";
 
 /** Data Dragon champion keys from champion.json are already valid (e.g. LeeSin); do not sentence-case them. */
 const ddragonChampionId = (internalNameFromMap: string) => internalNameFromMap;
@@ -127,6 +129,7 @@ SmoothImg.displayName = "SmoothImg";
 
 export const ValorantCard = memo(({ item, skinsMap, priceLabel, queryClient }: { item: LztItem; skinsMap: Map<string, SkinEntry>; priceLabel: string; queryClient: QueryClient }) => {
   const rank = item.riot_valorant_rank ? rankMap[item.riot_valorant_rank] : null;
+  const skinCount = item.riot_valorant_skin_count ?? 0;
   const hasKnife = (item.riot_valorant_knife ?? 0) > 0;
 
   const cleanedTitle = getListingCardTitle(item, "valorant");
@@ -141,7 +144,6 @@ export const ValorantCard = memo(({ item, skinsMap, priceLabel, queryClient }: {
   }, [item.valorantInventory]);
 
   const hasInventoryData = inventoryUuids.length > 0;
-  const skinCount = (item.riot_valorant_skin_count ?? 0) > 0 ? (item.riot_valorant_skin_count ?? 0) : inventoryUuids.length;
   const skinsMapReady = skinsMap.size > 0;
 
   const skinPreviews = useMemo(() => {
@@ -212,13 +214,10 @@ export const ValorantCard = memo(({ item, skinsMap, priceLabel, queryClient }: {
     touchRef.current = null;
   }, []);
 
-  const touchPrefetch = useCoarsePointerDetailPrefetch(queryClient, "valorant", item.item_id);
-
   return (
     <Link
       to={`/conta/${item.item_id}`}
       onPointerEnter={() => prefetchAccountDetail(queryClient, "valorant", item.item_id)}
-      {...touchPrefetch}
       className="group touch-manipulation cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-colors duration-200 hover:border-success/50 sm:hover:shadow-[0_4px_24px_hsl(var(--success)/0.12)] flex flex-col h-full no-underline text-inherit"
     >
       <div
@@ -319,6 +318,7 @@ export const LolCard = memo(({ item, champKeyMap, priceLabel, queryClient }: { i
   const rankFilterId = lolRankToFilterId(rankText);
   const rankFilterData = lolRankFilters.find(r => r.id === rankFilterId);
   const champCount = item.riot_lol_champion_count ?? 0;
+  const skinCount = item.riot_lol_skin_count ?? 0;
   const level = item.riot_lol_level ?? 0;
   const winRate = item.riot_lol_rank_win_rate;
 
@@ -374,15 +374,11 @@ export const LolCard = memo(({ item, champKeyMap, priceLabel, queryClient }: { i
 
     return results;
   }, [lolInventory, champKeyMap, champKeyMapReady]);
-  const skinCount = (item.riot_lol_skin_count ?? 0) > 0 ? (item.riot_lol_skin_count ?? 0) : skinPreviews.length;
-
-  const touchPrefetch = useCoarsePointerDetailPrefetch(queryClient, "lol", item.item_id);
 
   return (
     <Link
       to={`/lol/${item.item_id}`}
       onPointerEnter={() => prefetchAccountDetail(queryClient, "lol", item.item_id)}
-      {...touchPrefetch}
       className="group touch-manipulation cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-colors duration-200 hover:border-[hsl(198,100%,45%)/50%] sm:hover:shadow-[0_4px_24px_hsl(198,100%,45%,0.12)] flex flex-col h-full no-underline text-inherit"
     >
       <div className="relative flex h-28 sm:h-36 items-center justify-center overflow-hidden bg-secondary/20">
@@ -480,9 +476,7 @@ LolCard.displayName = "LolCard";
 // ─── Fortnite Card ───
 export const FortniteCard = memo(({ item, skinsDb, priceLabel, queryClient }: { item: LztItem; skinsDb: Map<string, FortniteCosmeticDbRow>; priceLabel: string; queryClient: QueryClient }) => {
   const vbucks = (item.fortnite_balance || item.fortnite_vbucks) ?? 0;
-  const skinCountFromApi = item.fortnite_skin_count ?? item.fortnite_outfit_count ?? 0;
-  const fallbackSkinCount = Array.isArray(item.fortniteSkins) ? item.fortniteSkins.length : 0;
-  const skinCount = skinCountFromApi > 0 ? skinCountFromApi : fallbackSkinCount;
+  const skinCount = item.fortnite_skin_count ?? 0;
   const level = item.fortnite_level ?? 0;
 
   const cleanedTitle = getListingCardTitle(item, "fortnite");
@@ -516,13 +510,10 @@ export const FortniteCard = memo(({ item, skinsDb, priceLabel, queryClient }: { 
     return rows.slice(0, FORTNITE_LISTING_PREVIEW_CAP);
   }, [item.fortniteSkins, item.fortnitePickaxe, skinsDb]);
 
-  const touchPrefetch = useCoarsePointerDetailPrefetch(queryClient, "fortnite", item.item_id);
-
   return (
     <Link
       to={`/fortnite/${item.item_id}`}
       onPointerEnter={() => prefetchAccountDetail(queryClient, "fortnite", item.item_id)}
-      {...touchPrefetch}
       className="group touch-manipulation cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-colors duration-200 hover:border-[hsl(265,80%,65%)/50%] sm:hover:shadow-[0_4px_24px_hsl(265,80%,65%,0.12)] flex flex-col h-full no-underline text-inherit"
     >
       <div className="relative flex h-28 sm:h-36 items-center justify-center overflow-hidden bg-secondary/20">
@@ -577,9 +568,7 @@ export const FortniteCard = memo(({ item, skinsDb, priceLabel, queryClient }: { 
           {level > 0 && <span className="rounded px-1 py-0.5 text-[8px] sm:text-[10px] font-bold text-white" style={{ background: FN_PURPLE }}>Nv.{level}</span>}
           {vbucks > 0 && <span className="rounded px-1 py-0.5 text-[8px] sm:text-[10px] font-bold text-white" style={{ background: FN_BLUE }}>{vbucks.toLocaleString()} VB</span>}
         </div>
-        <span className="text-[9px] sm:text-[11px] font-semibold text-muted-foreground">
-          {skinCount > 0 ? `${skinCount} skins` : "Skins verificadas"}
-        </span>
+        <span className="text-[9px] sm:text-[11px] font-semibold text-muted-foreground">{skinCount} skins</span>
       </div>
       <div className="p-2.5 sm:p-3 flex flex-col flex-1 gap-1.5">
         <div className="flex items-center gap-1.5 rounded-md px-2 py-1" style={{ background: "hsl(142,71%,45%,0.1)", border: "1px solid hsl(142,71%,45%,0.2)" }}>
@@ -617,13 +606,10 @@ export const MinecraftCard = memo(({ item, priceLabel, queryClient }: { item: Lz
     ? `https://mineskin.eu/helm/${encodeURIComponent(nickname)}/64.png`
     : null;
 
-  const touchPrefetch = useCoarsePointerDetailPrefetch(queryClient, "minecraft", item.item_id);
-
   return (
     <Link
       to={`/minecraft/${item.item_id}`}
       onPointerEnter={() => prefetchAccountDetail(queryClient, "minecraft", item.item_id)}
-      {...touchPrefetch}
       className="group touch-manipulation cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-colors duration-200 flex flex-col h-full no-underline text-inherit"
       style={{ "--hover-shadow": `0 0 24px ${MC_GREEN}15` } as CSSProperties}
       onMouseEnter={(e) => setBorderAndBoxShadow(e, `${MC_GREEN}80`, `0 4px 24px ${MC_GREEN}15`)}
@@ -680,8 +666,153 @@ export const MinecraftCard = memo(({ item, priceLabel, queryClient }: { item: Lz
 });
 MinecraftCard.displayName = "MinecraftCard";
 
-// ─── miHoYo (Genshin / HSR / ZZZ) — miniaturas a partir de URLs no JSON LZT + título padronizado ───
-export const MihoyoCard = memo(
+// ─── Brawl Stars (Supercell / LZT) ───
+const BRAWL_CARD_ACCENT = "hsl(32,96%,52%)";
+
+export const BrawlStarsCard = memo(({ item, priceLabel, queryClient }: { item: LztItem; priceLabel: string; queryClient: QueryClient }) => {
+  const raw = item as unknown as Record<string, unknown>;
+  const br = brawlersCountFromLztItem(raw);
+  const cups = brawlTrophiesFromLztItem(raw);
+  const lvl = brawlLevelFromLztItem(raw);
+  const cleanedTitle = getListingCardTitle(
+    {
+      ...item,
+      brawlers_count: br,
+      brawl_cups: cups,
+      brawl_level: lvl,
+    },
+    "brawlstars",
+  );
+
+  const brawlPreview = useMemo(() => {
+    const brawlers = extractBrawlBrawlerNames(raw);
+    const cells: { src: string; alt: string }[] = [];
+    for (const n of brawlers) {
+      const u = brawlifyAvatarUrl(n);
+      if (u) cells.push({ src: getProxiedImageUrl(u), alt: n });
+      if (cells.length >= 6) break;
+    }
+    if (cells.length === 0) {
+      for (const u of extractLztItemImageUrls(raw, 6)) {
+        cells.push({ src: getProxiedImageUrl(u), alt: "Brawl Stars" });
+      }
+    }
+    return cells;
+  }, [raw]);
+
+  return (
+    <Link
+      to={`/brawlstars/${item.item_id}`}
+      onPointerEnter={() => prefetchAccountDetail(queryClient, "brawlstars", item.item_id)}
+      className="group touch-manipulation cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-colors duration-200 flex flex-col h-full no-underline text-inherit"
+      style={{ "--hover-shadow": `0 0 24px ${BRAWL_CARD_ACCENT}18` } as CSSProperties}
+      onMouseEnter={(e) => setBorderAndBoxShadow(e, `${BRAWL_CARD_ACCENT}80`, `0 4px 24px ${BRAWL_CARD_ACCENT}15`)}
+      onMouseLeave={clearBorderAndBoxShadow}
+    >
+      <div className="relative flex h-28 sm:h-36 items-center justify-center overflow-hidden bg-secondary/20">
+        <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse at center, ${BRAWL_CARD_ACCENT}12, transparent 70%)` }} />
+        {brawlPreview.length === 0 ? (
+          <div className="relative z-[1] flex flex-col items-center justify-center gap-1 px-2 text-center">
+            <Trophy className="h-10 w-10 opacity-25" style={{ color: BRAWL_CARD_ACCENT }} />
+            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: BRAWL_CARD_ACCENT }}>
+              Brawl Stars
+            </span>
+          </div>
+        ) : brawlPreview.length === 1 ? (
+          <div className="relative z-[1] flex h-full w-full items-center justify-center p-1">
+            <SmoothImg
+              src={brawlPreview[0].src}
+              alt={brawlPreview[0].alt}
+              className="h-full w-full object-contain"
+              onError={hideImgOnError}
+            />
+          </div>
+        ) : brawlPreview.length === 2 ? (
+          <div className="relative z-[1] grid h-full w-full grid-cols-2 gap-0">
+            {brawlPreview.map((c, i) => (
+              <div key={i} className="relative overflow-hidden">
+                <SmoothImg src={c.src} alt={c.alt} className="h-full w-full object-cover object-center" onError={hideImgOnError} />
+              </div>
+            ))}
+          </div>
+        ) : brawlPreview.length <= 4 ? (
+          <div className="relative z-[1] grid h-full w-full grid-cols-2 grid-rows-2 gap-0">
+            {brawlPreview.map((c, i) => (
+              <div key={i} className="relative overflow-hidden">
+                <SmoothImg src={c.src} alt={c.alt} className="h-full w-full object-cover object-center" onError={hideImgOnError} />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="relative z-[1] grid h-full w-full grid-cols-3 grid-rows-2 gap-0">
+            {brawlPreview.map((c, i) => (
+              <div key={i} className="relative overflow-hidden">
+                <SmoothImg src={c.src} alt={c.alt} className="h-full w-full object-cover object-center" onError={hideImgOnError} />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      <div className="flex items-center justify-between px-2.5 py-1 bg-secondary/40 border-b border-border/20">
+        <div className="flex flex-wrap items-center gap-1">
+          {lvl > 0 && (
+            <span
+              className="rounded px-1 py-0.5 text-[8px] sm:text-[10px] font-bold text-white"
+              style={{ background: BRAWL_CARD_ACCENT }}
+            >
+              Nv.{lvl}
+            </span>
+          )}
+          {cups > 0 && (
+            <span className="rounded px-1 py-0.5 text-[8px] sm:text-[10px] font-bold bg-secondary text-foreground">
+              {cups.toLocaleString("pt-BR")} troféus
+            </span>
+          )}
+        </div>
+        <span className="text-[9px] sm:text-[11px] font-semibold text-muted-foreground">{br} brawlers</span>
+      </div>
+      <div className="p-2.5 sm:p-3 flex flex-col flex-1 gap-1.5">
+        <div className="flex items-center gap-1.5 rounded-md px-2 py-1" style={{ background: `${BRAWL_CARD_ACCENT}14`, border: `1px solid ${BRAWL_CARD_ACCENT}33` }}>
+          <svg className="h-3 w-3 flex-shrink-0 text-positive" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+          </svg>
+          <span className="text-[9px] sm:text-[11px] font-semibold text-positive">Full Acesso · Entrega Automática</span>
+        </div>
+        <div className="mt-auto pt-1.5 border-t border-border/30">
+          <h3 className="text-[11px] sm:text-xs font-semibold text-foreground line-clamp-2 text-balance leading-snug tracking-tight mb-1">
+            {cleanedTitle}
+          </h3>
+          <p className="text-sm sm:text-base font-bold text-positive tracking-tight">{priceLabel}</p>
+          <span className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg bg-foreground py-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-background">
+            Explorar detalhes <ArrowRight className="h-2.5 w-2.5" />
+          </span>
+        </div>
+      </div>
+    </Link>
+  );
+});
+BrawlStarsCard.displayName = "BrawlStarsCard";
+
+// ─── miHoYo (Genshin / Honkai / ZZZ) — listagem Contas ───
+const MIHOYO_ACCENT: Record<MihoyoCardVariant, string> = {
+  genshin: GS_CYAN,
+  honkai: HS_VIOLET,
+  zzz: ZZZ_AMBER,
+};
+
+const MIHOYO_ROUTE: Record<MihoyoCardVariant, string> = {
+  genshin: "genshin",
+  honkai: "honkai",
+  zzz: "zzz",
+};
+
+const MIHOYO_LABEL: Record<MihoyoCardVariant, string> = {
+  genshin: "Genshin",
+  honkai: "Honkai",
+  zzz: "ZZZ",
+};
+
+export const MihoyoListingCard = memo(
   ({
     item,
     variant,
@@ -693,186 +824,78 @@ export const MihoyoCard = memo(
     priceLabel: string;
     queryClient: QueryClient;
   }) => {
-    const accent =
-      variant === "genshin" ? GS_CYAN : variant === "honkai" ? HS_VIOLET : ZZZ_AMBER;
-    const basePath = variant === "genshin" ? "genshin" : variant === "honkai" ? "honkai" : "zzz";
-    const gameType = variant === "genshin" ? "genshin" : variant === "honkai" ? "honkai" : "zzz";
+    const raw = item as unknown as Record<string, unknown>;
+    const accent = MIHOYO_ACCENT[variant];
+    const routeSeg = MIHOYO_ROUTE[variant];
+    const cleanedTitle = getListingCardTitle(item, variant);
 
-    const cleanedTitle = getListingCardTitle(item, variant as LztGameKind);
-    const previews = useMemo(
-      () => extractMihoyoCardPreviews(item as unknown as Record<string, unknown>, variant),
-      [item, variant],
-    );
+    const previews = useMemo(() => {
+      return extractMihoyoCardPreviews(raw, variant).slice(0, 6).map((u) => getProxiedImageUrl(u));
+    }, [raw, variant]);
 
-    const o = item as Record<string, unknown>;
-    const p = variant === "genshin" ? "genshin" : variant === "honkai" ? "honkai" : "zenless";
-    const charCount = Number(
-      o[`${p}_char_count`] ?? o[`${p}_characters`] ?? o[`${p}_character_count`] ?? 0,
-    );
-    const level = Number(o[`${p}_level`] ?? 0);
-    const currency = Number(o[`${p}_currency`] ?? 0);
-    const levelBadge =
-      variant === "genshin"
-        ? `AR ${level}`
-        : variant === "honkai"
-          ? `TL ${level}`
-          : `LV ${level}`;
-
-    const touchPrefetch = useCoarsePointerDetailPrefetch(queryClient, gameType, item.item_id);
+    const shortLabel = MIHOYO_LABEL[variant];
 
     return (
       <Link
-        to={`/${basePath}/${item.item_id}`}
-        onPointerEnter={() => prefetchAccountDetail(queryClient, gameType, item.item_id)}
-        {...touchPrefetch}
+        to={`/${routeSeg}/${item.item_id}`}
+        onPointerEnter={() => prefetchAccountDetail(queryClient, variant, item.item_id)}
         className="group touch-manipulation cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-colors duration-200 flex flex-col h-full no-underline text-inherit"
-        style={{ "--hover-shadow": `0 4px 24px ${accent}18` } as CSSProperties}
+        style={{ "--hover-shadow": `0 0 24px ${accent}18` } as CSSProperties}
         onMouseEnter={(e) => setBorderAndBoxShadow(e, `${accent}80`, `0 4px 24px ${accent}15`)}
         onMouseLeave={clearBorderAndBoxShadow}
       >
         <div className="relative flex h-28 sm:h-36 items-center justify-center overflow-hidden bg-secondary/20">
-          <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse at center, ${accent}12, transparent 72%)` }} />
-          {previews.length === 1 ? (
-            <div className="relative z-[1] w-full h-full flex items-center justify-center p-1">
+          <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse at center, ${accent}14, transparent 70%)` }} />
+          {previews.length === 0 ? (
+            <div className="relative z-[1] flex flex-col items-center justify-center gap-1 px-2 text-center">
+              <Sparkles className="h-10 w-10 opacity-25" style={{ color: accent }} />
+              <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: accent }}>
+                {shortLabel}
+              </span>
+            </div>
+          ) : previews.length === 1 ? (
+            <div className="relative z-[1] flex h-full w-full items-center justify-center p-1">
               <SmoothImg
-                src={getProxiedImageUrl(previews[0])}
+                src={previews[0]}
                 alt=""
-                className="max-h-full w-full object-contain drop-shadow-md"
+                className="h-full w-full object-contain"
+                onError={hideImgOnError}
               />
             </div>
-          ) : previews.length >= 2 ? (
-            <div className="relative z-[1] grid grid-cols-2 grid-rows-2 gap-0.5 p-1.5 w-full h-full">
-              {previews.slice(0, 4).map((src, i) => (
-                <div key={i} className="flex items-center justify-center rounded bg-secondary/25 overflow-hidden">
-                  <SmoothImg src={getProxiedImageUrl(src)} alt="" className="h-full w-full object-cover" />
+          ) : previews.length === 2 ? (
+            <div className="relative z-[1] grid h-full w-full grid-cols-2 gap-0">
+              {previews.map((src, i) => (
+                <div key={i} className="relative overflow-hidden">
+                  <SmoothImg src={src} alt="" className="h-full w-full object-cover object-center" onError={hideImgOnError} />
+                </div>
+              ))}
+            </div>
+          ) : previews.length <= 4 ? (
+            <div className="relative z-[1] grid h-full w-full grid-cols-2 grid-rows-2 gap-0">
+              {previews.map((src, i) => (
+                <div key={i} className="relative overflow-hidden">
+                  <SmoothImg src={src} alt="" className="h-full w-full object-cover object-center" onError={hideImgOnError} />
                 </div>
               ))}
             </div>
           ) : (
-            <div className="relative z-[1] flex flex-col items-center justify-center gap-1 text-muted-foreground/40">
-              <Shield className="h-10 w-10" />
-              <span className="text-[9px] font-medium uppercase tracking-wider">HoYoverse</span>
-            </div>
-          )}
-        </div>
-        <div
-          className="flex items-center justify-between px-2.5 py-1 bg-secondary/40 border-b border-border/20"
-          style={{ borderBottomColor: `${accent}22` }}
-        >
-          <span className="text-[9px] sm:text-[11px] font-semibold text-foreground truncate">
-            {variant === "genshin" ? "Genshin" : variant === "honkai" ? "Honkai" : "ZZZ"}
-          </span>
-          <span className="text-[9px] sm:text-[11px] font-semibold text-muted-foreground">
-            {charCount > 0 ? `${charCount} pers.` : "Conta verificada"}
-          </span>
-        </div>
-        <div className="p-2.5 sm:p-3 flex flex-col flex-1 gap-1.5">
-          <div className="flex flex-wrap gap-1 text-[9px] sm:text-[10px] text-muted-foreground">
-            {level > 0 && (
-              <span className="rounded px-1 py-0.5 font-bold text-white" style={{ background: accent }}>
-                {levelBadge}
-              </span>
-            )}
-            {currency > 0 && (
-              <span className="rounded border border-border/40 px-1 py-0.5">
-                {currency >= 1000 ? `${Math.round(currency / 1000)}k` : currency} moeda
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-1.5 rounded-md px-2 py-1 bg-positive/10 border border-positive/20">
-            <svg className="h-3 w-3 flex-shrink-0 text-positive" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-            </svg>
-            <span className="text-[9px] sm:text-[11px] font-semibold text-positive">Full Acesso · Entrega Automática</span>
-          </div>
-          <div className="mt-auto pt-1.5 border-t border-border/30">
-            <h3 className="text-[11px] sm:text-xs font-semibold text-foreground line-clamp-2 text-balance leading-snug tracking-tight mb-1">
-              {cleanedTitle}
-            </h3>
-            <p className="text-sm sm:text-base font-bold text-positive tracking-tight">{priceLabel}</p>
-            <span className="mt-1.5 w-full flex items-center justify-center gap-1 rounded-lg bg-foreground py-1.5 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-background">
-              Explorar detalhes <ArrowRight className="h-2.5 w-2.5" />
-            </span>
-          </div>
-        </div>
-      </Link>
-    );
-  },
-);
-MihoyoCard.displayName = "MihoyoCard";
-
-export const BrawlStarsCard = memo(
-  ({ item, priceLabel, queryClient }: { item: LztItem; priceLabel: string; queryClient: QueryClient }) => {
-    const o = item as Record<string, unknown>;
-    const brawlers = extractBrawlBrawlerNames(o);
-    const cups = Number(o.brawl_cup ?? o.brawl_trophies ?? o.supercell_brawl_cup ?? 0);
-    const lvl = Number(o.brawl_level ?? 0);
-    const nBrawlers = Number(o.brawlers_count ?? o.brawl_brawlers_count ?? brawlers.length ?? 0);
-
-    const urls = useMemo(
-      () => brawlers.map(brawlifyAvatarUrl).filter(Boolean).slice(0, 4),
-      [brawlers],
-    );
-
-    const cleanedTitle = getListingCardTitle(item, "brawlstars");
-
-    const touchPrefetch = useCoarsePointerDetailPrefetch(queryClient, "brawlstars", item.item_id);
-
-    return (
-      <Link
-        to={`/brawlstars/${item.item_id}`}
-        onPointerEnter={() => prefetchAccountDetail(queryClient, "brawlstars", item.item_id)}
-        {...touchPrefetch}
-        className="group touch-manipulation cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-colors duration-200 flex flex-col h-full no-underline text-inherit"
-        style={{ "--hover-shadow": `0 4px 24px ${BRAWL_GOLD}18` } as CSSProperties}
-        onMouseEnter={(e) => setBorderAndBoxShadow(e, `${BRAWL_GOLD}90`, `0 4px 24px ${BRAWL_GOLD}14`)}
-        onMouseLeave={clearBorderAndBoxShadow}
-      >
-        <div className="relative flex h-28 sm:h-36 items-center justify-center overflow-hidden bg-secondary/20">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(44,98%,52%,0.09),transparent_70%)]" />
-          {urls.length >= 4 ? (
-            <div className="relative z-[1] grid grid-cols-2 grid-rows-2 gap-0.5 p-1.5 w-full h-full">
-              {urls.map((src, i) => (
-                <div key={i} className="relative flex items-center justify-center overflow-hidden rounded bg-secondary/30">
-                  <SmoothImg src={src} alt={brawlers[i] || ""} className="h-full w-full object-cover" />
+            <div className="relative z-[1] grid h-full w-full grid-cols-3 grid-rows-2 gap-0">
+              {previews.map((src, i) => (
+                <div key={i} className="relative overflow-hidden">
+                  <SmoothImg src={src} alt="" className="h-full w-full object-cover object-center" onError={hideImgOnError} />
                 </div>
               ))}
-            </div>
-          ) : urls.length >= 1 ? (
-            <div className="relative z-[1] grid grid-cols-2 gap-0.5 p-2 w-full h-full">
-              {urls.slice(0, 2).map((src, i) => (
-                <div key={i} className="flex items-center justify-center">
-                  <SmoothImg src={src} alt={brawlers[i] || ""} className="max-h-full max-w-full object-contain" />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="relative z-[1] flex flex-col items-center justify-center text-muted-foreground/35">
-              <span className="text-4xl leading-none">⭐</span>
-              <span className="mt-1 text-[9px] uppercase tracking-wider">Brawl Stars</span>
             </div>
           )}
         </div>
         <div className="flex items-center justify-between px-2.5 py-1 bg-secondary/40 border-b border-border/20">
-          <div className="flex items-center gap-1">
-            {lvl > 0 && (
-              <span
-                className="rounded px-1 py-0.5 text-[8px] sm:text-[10px] font-bold text-black"
-                style={{ background: BRAWL_GOLD }}
-              >
-                Nv.{lvl}
-              </span>
-            )}
-            {cups > 0 && (
-              <span className="text-[9px] sm:text-[11px] font-semibold text-muted-foreground">{cups.toLocaleString()} trof.</span>
-            )}
-          </div>
-          <span className="text-[9px] sm:text-[11px] font-semibold text-muted-foreground">
-            {nBrawlers > 0 ? `${nBrawlers} lutadores` : "Supercell"}
+          <span className="rounded px-1 py-0.5 text-[8px] sm:text-[10px] font-bold text-white" style={{ background: accent }}>
+            {shortLabel}
           </span>
+          <span className="text-[9px] sm:text-[11px] font-semibold text-muted-foreground">HoYoverse</span>
         </div>
         <div className="p-2.5 sm:p-3 flex flex-col flex-1 gap-1.5">
-          <div className="flex items-center gap-1.5 rounded-md px-2 py-1 bg-positive/10 border border-positive/20">
+          <div className="flex items-center gap-1.5 rounded-md px-2 py-1" style={{ background: `${accent}14`, border: `1px solid ${accent}33` }}>
             <svg className="h-3 w-3 flex-shrink-0 text-positive" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
             </svg>
@@ -892,5 +915,5 @@ export const BrawlStarsCard = memo(
     );
   },
 );
-BrawlStarsCard.displayName = "BrawlStarsCard";
+MihoyoListingCard.displayName = "MihoyoListingCard";
 
